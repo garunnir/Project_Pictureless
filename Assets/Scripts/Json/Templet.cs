@@ -66,7 +66,7 @@ public class CsvHandler
         rawdata = ConvertReadScvToRawData(reader);
         rawdata = ConvertReadScvToRawData(reader);
         reader.Close();
-        IReadOnlyList<>
+        //IReadOnlyList<>
     }
     //이 셋을 묶어야 하는데..
     string GetData(string sid,string did,List<List<string>> data)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
@@ -11,7 +12,7 @@ public class GraphSaveUtility
 {
     private DialougeGraphView _targetGraphView;
     private DialougeContainer _containerCache;
-
+    public const string _saveKey = "EditerWindow_DialogueEditor_Key";
     private List<Edge> Edges => _targetGraphView.edges.ToList();
     private List<DialogueNode> Nodes => _targetGraphView.nodes.ToList().Cast<DialogueNode>().ToList();
     public static GraphSaveUtility  Getinstance(DialougeGraphView targetGraphView)
@@ -54,22 +55,30 @@ public class GraphSaveUtility
             });
         }
 
-
+        
         if (!AssetDatabase.IsValidFolder("Assets/Resources"))
             AssetDatabase.CreateFolder("Assets","Resources");
         AssetDatabase.CreateAsset(dialogueContainer, $"Assets/Resources/SODialogue/{fileName}.asset");
         AssetDatabase.SaveAssets();
     }
-    public void LoadGraph(string fileName)
+    public bool LoadGraph(string fileName)
     {
         _containerCache = Resources.Load<DialougeContainer>("SODialogue/"+ fileName);
         if (_containerCache == null)
         {
             EditorUtility.DisplayDialog("파일을 찾을 수 없음", "대상 대화 그래프가 존재하지 않습니다.", "확인");
+            PlayerPrefs.DeleteKey(GraphSaveUtility._saveKey);
+            return false;
         }
-        ClearGraph();
-        CreateNodes();
-        ConnectNodes();
+        else
+        {
+            PlayerPrefs.SetString(GraphSaveUtility._saveKey, fileName);
+            ClearGraph();
+            CreateNodes();
+            ConnectNodes();
+            return true;
+        }
+
     }
 
     private void ConnectNodes()
@@ -119,6 +128,7 @@ public class GraphSaveUtility
     private void ClearGraph()
     {
         //set entry points guid back from the save. discard existing guid.
+        if (_containerCache.NodeLinks!=null&& _containerCache.NodeLinks.Count() < 0) return;
         Nodes.Find(x => x.EntryPoint).GUID = _containerCache.NodeLinks[0].BaseNodeGuid;
 
         foreach(var node in Nodes)
@@ -130,5 +140,23 @@ public class GraphSaveUtility
             //then remove the node
             _targetGraphView.RemoveElement(node);
         }
+    }
+    public void ClearNodes()
+    {
+        Nodes.Find(x => x.EntryPoint);
+        foreach (var node in Nodes)
+        {
+            if (node.EntryPoint) continue;
+
+            //remove edges that connected to this node
+            Edges.Where(x => x.input.node == node).ToList().ForEach(edge => _targetGraphView.RemoveElement(edge));
+            //then remove the node
+            _targetGraphView.RemoveElement(node);
+        }
+
+    }
+    public bool FileExist(string fileName)
+    {
+        return File.Exists($"Assets/Resources/SODialogue/{fileName}.asset");
     }
 }

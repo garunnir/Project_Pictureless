@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Pararmater : MonoBehaviour
+public class CharPararmater : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
@@ -16,3 +16,4 @@ public class Pararmater : MonoBehaviour
         
     }
 }
+
