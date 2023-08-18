@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 
 namespace PixelCrushers.DialogueSystem.Wrappers
 {
@@ -13,9 +14,11 @@ namespace PixelCrushers.DialogueSystem.Wrappers
     [AddComponentMenu("Pixel Crushers/Dialogue System/UI/Standard UI/Dialogue/Standard Dialogue UI")]
     public class StandardDialogueUI : PixelCrushers.DialogueSystem.StandardDialogueUI
     {
-        private void Start()
+        public override void Awake()
         {
-            Localization.GetLanguage(SystemLanguage.Korean);
+            base.Awake();
+            print("~~~");
+            Localization.language=Localization.GetLanguage(SystemLanguage.Korean);
         }
     }
 

@@ -177,7 +177,7 @@ namespace PixelCrushers.DialogueSystem
         /// </param>
         public static FormattedText Parse(string rawText, EmphasisSetting[] emphasisSettings = null)
         {
-            Debug.Log(rawText);
+            //Debug.Log(rawText);
             if (emphasisSettings == null && DialogueManager.instance != null) emphasisSettings = DialogueManager.masterDatabase.emphasisSettings;
             string text = rawText ?? string.Empty;
             ReplaceLuaTags(ref text);
@@ -203,6 +203,7 @@ namespace PixelCrushers.DialogueSystem
             Emphasis[] emphases = DialogueManager.instance.displaySettings.subtitleSettings.richTextEmphases
                 ? ReplaceEmphasisTagsWithRichText(ref text, emphasisSettings)
                 : ExtractEmphasisTags(ref text, emphasisSettings);
+            text = PixelCrushers.Wrappers.UILocalizationManager.instance.AddLoc(text);
             return new FormattedText(text, emphases, italic, position, forceMenu, forceAuto, pic, pica, picc, variableInputPrompt, subtitlePanelNumber, noSubtitle);
         }
 

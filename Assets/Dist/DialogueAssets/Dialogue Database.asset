@@ -64,7 +64,7 @@ MonoBehaviour:
     - title: Name
       value: npc
       type: 0
-      typeString: 
+      typeString: CustomFieldType_Text
     - title: Pictures
       value: '[]'
       type: 3
@@ -103,21 +103,6 @@ MonoBehaviour:
     spritePortrait: {fileID: 21300000, guid: 4990a1666c011cd44a4f11bbdd94719f, type: 3}
     alternatePortraits: []
     spritePortraits: []
-  - id: 9999999
-    fields:
-    - title: player
-      value: dd
-      type: 5
-      typeString: pls
-    - title: Name
-      value: superj
-      type: 0
-      typeString: 
-    portrait: {fileID: 2800000, guid: 115ec3b4ca6d7914b9e88be17ab2631b, type: 3}
-    spritePortrait: {fileID: 0}
-    alternatePortraits: []
-    spritePortraits:
-    - {fileID: 21300000, guid: cfe6b8c2bc51dd84d9c21cd4ff468e13, type: 3}
   items: []
   locations: []
   variables:
@@ -242,11 +227,11 @@ MonoBehaviour:
       - title: Title
         value: 
         type: 0
-        typeString: 
+        typeString: CustomFieldType_Text
       - title: Description
         value: 
         type: 0
-        typeString: 
+        typeString: CustomFieldType_Text
       - title: Actor
         value: 2
         type: 5
@@ -258,17 +243,17 @@ MonoBehaviour:
       - title: Menu Text
         value: 
         type: 0
-        typeString: 
+        typeString: CustomFieldType_Text
       - title: Dialogue Text
-        value: npcpcpcp
+        value: "\uB044\uC544\uC545(\uC744)\uB97C \uC5B4\uB5A8\uAE4C? \uBC25(\uC774)\uB77C\uB2A5~"
         type: 0
-        typeString: 
+        typeString: CustomFieldType_Text
       - title: Sequence
         value: 
         type: 0
-        typeString: 
+        typeString: CustomFieldType_Text
       - title: kor
-        value: npcpcpcp
+        value: "\uB77C\uBA74(\uC774)\uB77C\uBA74 \uC5B4\uB5A8\uAE4C? \uBC25(\uC774)\uB77C\uB2A5~"
         type: 4
         typeString: CustomFieldType_Localization
       conversationID: 1
@@ -413,12 +398,12 @@ MonoBehaviour:
       canvasRect:
         serializedVersion: 2
         x: 160
-        y: 180
+        y: 179.13043
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 0, y: 1.8247411}
-    canvasZoom: 0.97
+    canvasScrollPosition: {x: 57.27913, y: 0}
+    canvasZoom: 1.1499999
   syncInfo:
     syncActors: 0
     syncItems: 0

@@ -5325,6 +5325,7 @@ GameObject:
   - component: {fileID: 1599066868}
   - component: {fileID: 1599066870}
   - component: {fileID: 1599066871}
+  - component: {fileID: 1599066872}
   m_Layer: 0
   m_Name: memo
   m_TagString: Untagged
@@ -5464,6 +5465,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dialogueDatabase: {fileID: 11400000, guid: 84dc5666d358cc3458d86e33d83aff76, type: 2}
+--- !u!114 &1599066872
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1599066865}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd574eda5f362f64baf275d5ace5d253, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1654399324
 GameObject:
   m_ObjectHideFlags: 0
@@ -5973,7 +5986,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e168378c6dd4b8408a51d7be3b9c422, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_currentLanguagePlayerPrefsKey: kor
+  m_currentLanguagePlayerPrefsKey: ko
   m_textTable: {fileID: 0}
   m_additionalTextTables: []
   m_localizedFonts: {fileID: 0}

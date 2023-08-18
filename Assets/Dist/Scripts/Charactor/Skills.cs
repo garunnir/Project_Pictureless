@@ -27,22 +27,22 @@ public class CharacterSkill : Skills
     //반격
 
 }
-public class Character
-{
+//public class Character
+//{
     
-    public string belong;//소속팀
-    public int relationship;//관계
-    public CharacterSkill[] skills;
-    public int hp;
-    public int sp;
-    public int mp;
-}
+//    public string belong;//소속팀
+//    public int relationship;//관계
+//    public CharacterSkill[] skills;
+//    public int hp;
+//    public int sp;
+//    public int mp;
+//}
 
-public class BattleSimulate
-{
+//public class BattleSimulate
+//{
 
-    void BattleStart(Character[] character)
-    {
+//    void BattleStart(Character[] character)
+//    {
 
-    }
-}
+//    }
+//}
