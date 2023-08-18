@@ -19,6 +19,8 @@ namespace Character.BodySystem
     {
         //public abstract void build();
     }
+  
+
     public class Humanoid:BodyFactory
     {
         public Humanoid()
@@ -26,42 +28,87 @@ namespace Character.BodySystem
             HumanoidBody body = new HumanoidBody("head");
             BodyParts upperbody = body.SetNext("neck").SetNext("upperBody");
             BodyParts lhand = upperbody.SetNext("leftshoulder").SetNext("leftupperarm").SetNext("leftelbow").SetNext("leftwrist").SetNext("lhand");
-            Debug.Log(lhand.GetField().ContainsKey("DiseaseRate"));
             BodyParts rhand = upperbody.SetNext("rightshoulder").SetNext("rightupperarm").SetNext("rightelbow").SetNext("rightwrist").SetNext("rhand");
-            BodyParts pelvis= upperbody.SetNext("velly").SetNext("waist").SetNext("pelvis");
-            pelvis.SetNext("rupperleg").SetNext("rknee").SetNext("rfoot");
-            lhand.SetNext("lthumb");
-            lhand.SetNext("lindexfinger");
-            lhand.SetNext("lmiddlefinger");
-            lhand.SetNext("lringfinger");
-            lhand.SetNext("lpinky");
-
-            rhand.SetNext("rthumb");
-            rhand.SetNext("rindexfinger");
-            rhand.SetNext("rmiddlefinger");
-            rhand.SetNext("rringfinger");
-            rhand.SetNext("rpinky");
+            BodyParts pelvis= upperbody.SetNext("velly").SetNext<MechBody>("waist").SetNext("pelvis");
+            BodyParts rfoot= pelvis.SetNext("rupperleg").SetNext("rknee").SetNext("rfoot");
+            BodyParts lfoot= pelvis.SetNext("lupperleg").SetNext("lknee").SetNext("lfoot");
+            lhand.SetNext("lthumb", "lindexfinger", "lmiddlefinger", "lringfinger", "lpinky");
+            rhand.SetNext("rthumb", "rindexfinger", "rmiddlefinger", "rringfinger", "rpinky");
+            rfoot.SetNext("rbigtoe", "rsecondtoe", "rthirdtoe", "rforthtoe", "rlittletoe");
+            lfoot.SetNext("lbigtoe", "lsecondtoe", "lthirdtoe", "lforthtoe", "llittletoe");
 
             //조건 파츠교체가 가능할것
             //허리교체를 시도한다
-            body.Find("waist").Swap(new MechBody("waist"));
+            //Debug.Log(body.Find("waist"));
+            //BodyParts mpart= new MechBody("waist");
+            //body.Find("waist").Swap(mpart);
+            BodyParts tmpb = body.Find("waist");
+            //tmpb.GetField().ContainsKey("DiseaseRate");
+            Debug.Log(""+tmpb.GetField().ContainsKey("DiseaseRate") + tmpb.GetField().ContainsKey("EnergyRate")+ tmpb.GetField().ContainsKey("DamageRate"));
             //교체해도 이름은 동일할 것이므로 타입을 넣어서 바꾸는 방법을 고려해봐도 될것같다.
         }
     }
-    public abstract class BodyParts
+    public class Core
     {
-        //start at head
+        public List<BodyParts> corelist = new List<BodyParts>();
+        public List<BodyParts> partslist = new List<BodyParts>();
+        public Core() { }
+    }
+
+    public abstract class BodyParts 
+    {
+        public bool isCore;
+        public Core core;
+
         public Dictionary<string, float> field = new Dictionary<string, float>();
         public string name;//부위명
         public int durability;
         public List<BodyParts> next = new List<BodyParts>();
         public List<BodyParts> prev = new List<BodyParts>();
-        public BodyParts(string name)
+
+        public BodyParts() 
+        {
+            if (core == null)
+            {
+                isCore = true;
+                core = new Core();
+                core.partslist.Add(this);
+                core.corelist.Add(this);
+            }
+            else
+            {
+                isCore = false;
+                core.partslist.Add(this);
+            }
+        }
+        public BodyParts(string name) : this()
         {
             this.name = name;
         }
+        public BodyParts(string name,bool isCore=false):this(name)
+        {
+            if(isCore)
+            {
+                this.isCore = true;
+                if (core == null)
+                {
+                    core = new Core();
+                }
+                core.partslist.Add(this);
+                core.corelist.Add(this);
+            }
+
+        }
+        public T SetNext<T>(string name) where T : BodyParts, new()
+        {
+            T parts = new T();
+            parts.name = name;
+            next.Add(parts);
+            parts.prev.Add(this);
+            return parts;
+        }
         public abstract BodyParts SetNext(string name);
-        //{
+        public abstract BodyParts[] SetNext(params string[] name);
             //BodyParts parts= new BodyParts(name);
             //next.Add(parts);
             //parts.prev.Add(this);
@@ -86,7 +133,8 @@ namespace Character.BodySystem
             }
             else
             {
-                if(next.Count == 0)return null;
+                BodyParts parts;
+                //if(next.Count == 0)return null;
                 foreach (var part in next)
                 {
                     if (part == null)
@@ -95,7 +143,8 @@ namespace Character.BodySystem
                     }
                     else
                     {
-                        return part.Find(name);
+                        parts = part.Find(name);
+                        if(parts != null)return parts;
                     }
                 }
                 return null;
@@ -105,6 +154,16 @@ namespace Character.BodySystem
         {
             parts.next=this.next;
             parts.prev=this.prev;
+            foreach (var part in prev)//전노드의 연결과 쌍방통행이므로 전노드와 다음노드의 참조도 바꿔줘야 한다.
+            {
+                part.next.Remove(this);
+                part.next.Add(parts);
+            }
+            foreach (var part in next)
+            {
+                part.prev.Remove(this);
+                part.prev.Add(parts);
+            }
             next.Clear();
             prev.Clear();
         }
@@ -115,6 +174,11 @@ namespace Character.BodySystem
     }
     public class HumanoidBody:BodyParts
     {
+        public HumanoidBody() : base()
+        {
+            field.Add("DiseaseRate", 0);
+            field.Add("DamageRate", 0);
+        }
         //start at head
         public HumanoidBody(string name):base (name)
         {
@@ -128,9 +192,28 @@ namespace Character.BodySystem
             parts.prev.Add(this);
             return parts;
         }
+
+        public override BodyParts[] SetNext(params string[] name)
+        {
+            BodyParts[] rtn= new BodyParts[name.Length];
+            for (int i = 0; i < name.Length; i++)
+            {
+                HumanoidBody parts = new HumanoidBody(name[i]);
+                rtn[i]= parts;
+                next.Add(parts);
+                parts.prev.Add(this);
+            }
+            return rtn;
+        }
+
     }
     public class MechBody : BodyParts
     {
+        public MechBody():base()
+        {
+            field.Add("EnergyRate", 1);
+            field.Add("DamageRate", 0);
+        }
         public MechBody(string name):base (name)
         {
             field.Add("EnergyRate", 1);
@@ -142,6 +225,11 @@ namespace Character.BodySystem
             next.Add(parts);
             parts.prev.Add(this);
             return parts;
+        }
+
+        public override BodyParts[] SetNext(params string[] name)
+        {
+            throw new System.NotImplementedException();
         }
     }
     public abstract class BodyField

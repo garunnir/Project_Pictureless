@@ -12,6 +12,7 @@ public class Test : MonoBehaviour
     {
         //print(fnDll1());
         Debug.Log(Sum(2, 1));
+        new Character.BodySystem.Humanoid();
     }
 
     // Update is called once per frame
