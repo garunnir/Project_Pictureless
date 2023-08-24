@@ -11,7 +11,7 @@ public class CharCreater : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //Create();
+        Create();
     }
 
     // Update is called once per frame
@@ -21,16 +21,7 @@ public class CharCreater : MonoBehaviour
     }
     void Create()
     {
-        Actor actor=new Actor();
-        //필드정보입력
-        int createID=cacheLastIdNum+1;
-        string name = "default";
-        //런타임에 액터정보를 추가할 수 있을까? 시도해본다.
-        createID=EditDuplicated(createID);
-        actor.Name = name;
-        actor.id = createID;
 
-        dialogueDatabase.actors.Add(actor);
         //추가는 가능하지만..?
     }
     int EditDuplicated(int checkId)

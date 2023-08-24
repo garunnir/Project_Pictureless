@@ -405,7 +405,7 @@ MonoBehaviour:
     canvasScrollPosition: {x: 57.27913, y: 0}
     canvasZoom: 1.1499999
   syncInfo:
-    syncActors: 0
+    syncActors: 1
     syncItems: 0
     syncLocations: 0
     syncVariables: 0

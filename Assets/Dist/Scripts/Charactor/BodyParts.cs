@@ -4,47 +4,17 @@ using UnityEngine;
 
 namespace Character.BodySystem
 {
-    public class BodyGenerator
-    {
-        BodyGenerator()
-        {
-
-        }
-        public BodyFactory DefaultBody()
-        {
-            return new Humanoid() as BodyFactory;
-        }
-    }
-    public abstract class BodyFactory
+    public class BodyFactory
     {
         //public abstract void build();
-        protected event EventHandler<CoreEventArgs> update;
-        public void Update(object obj,CoreEventArgs e)
-        {
-            update?.Invoke(obj, e);
-        }
-    }
-
-    public abstract class Profile
-    {
-        public string name;
-        public string description;
-        public string age;
-        public string outerAge;
-    }
-    public class HumanProfile : Profile
-    {
-    }
-    public class Humanoid : BodyFactory
-    {
-        public Humanoid()
+        public static Core CreateDefault()
         {
             HumanoidBody body = new HumanoidBody("head");
             body.AddCore(new Core());
-            BodyParts upperbody = body.SetNext("neck").SetNext<HumanoidBody>("upperBody",new Inner.Organs.Breast());
+            BodyParts upperbody = body.SetNext("neck").SetNext<HumanoidBody>("upperBody", new Inner.Organs.Breast());
             BodyParts lhand = upperbody.SetNext("leftshoulder").SetNext("leftupperarm").SetNext("leftelbow").SetNext("leftwrist").SetNext("lhand");
             BodyParts rhand = upperbody.SetNext("rightshoulder").SetNext("rightupperarm").SetNext("rightelbow").SetNext("rightwrist").SetNext("rhand");
-            BodyParts pelvis = upperbody.SetNext("velly").SetNext<MechBody>("waist").SetNext<HumanoidBody>("pelvis",new Inner.Organs.Womb());
+            BodyParts pelvis = upperbody.SetNext("velly").SetNext<MechBody>("waist").SetNext<HumanoidBody>("pelvis", new Inner.Organs.Womb());
             BodyParts rfoot = pelvis.SetNext("rupperleg").SetNext("rknee").SetNext("rfoot");
             BodyParts lfoot = pelvis.SetNext("lupperleg").SetNext("lknee").SetNext("lfoot");
             lhand.SetNext("lthumb", "lindexfinger", "lmiddlefinger", "lringfinger", "lpinky");
@@ -57,14 +27,15 @@ namespace Character.BodySystem
             //Debug.Log(body.Find("waist"));
             //BodyParts mpart= new MechBody("waist");
             //body.Find("waist").Swap(mpart);
-            update += body.core.Update;
-            BodyParts tmpb = body.Find("waist");
+            //BodyParts tmpb = body.Find("waist");
             //tmpb.GetField().ContainsKey("DiseaseRate");
-            Debug.Log("" + tmpb.GetField().ContainsKey("DiseaseRate") + tmpb.GetField().ContainsKey("EnergyRate") + tmpb.GetField().ContainsKey("DamageRate"));
+            //Debug.Log("" + tmpb.GetField().ContainsKey("DiseaseRate") + tmpb.GetField().ContainsKey("EnergyRate") + tmpb.GetField().ContainsKey("DamageRate"));
             //교체해도 이름은 동일할 것이므로 타입을 넣어서 바꾸는 방법을 고려해봐도 될것같다.
+            return body.core;
         }
-
     }
+
+
     public class CoreEventArgs:EventArgs
     {
         public int time { get; set; }
