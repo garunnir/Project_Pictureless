@@ -18,17 +18,29 @@ namespace Character.BodySystem
     public abstract class BodyFactory
     {
         //public abstract void build();
-        public Action<int> update;
+        protected event EventHandler<CoreEventArgs> update;
+        public void Update(object obj,CoreEventArgs e)
+        {
+            update?.Invoke(obj, e);
+        }
     }
 
-
+    public abstract class Profile
+    {
+        public string name;
+        public string description;
+        public string age;
+        public string outerAge;
+    }
+    public class HumanProfile : Profile
+    {
+    }
     public class Humanoid : BodyFactory
     {
         public Humanoid()
         {
             HumanoidBody body = new HumanoidBody("head");
-            update += body.core.update;
-            body.core.Update(update);
+            body.AddCore(new Core());
             BodyParts upperbody = body.SetNext("neck").SetNext<HumanoidBody>("upperBody",new Inner.Organs.Breast());
             BodyParts lhand = upperbody.SetNext("leftshoulder").SetNext("leftupperarm").SetNext("leftelbow").SetNext("leftwrist").SetNext("lhand");
             BodyParts rhand = upperbody.SetNext("rightshoulder").SetNext("rightupperarm").SetNext("rightelbow").SetNext("rightwrist").SetNext("rhand");
@@ -45,21 +57,52 @@ namespace Character.BodySystem
             //Debug.Log(body.Find("waist"));
             //BodyParts mpart= new MechBody("waist");
             //body.Find("waist").Swap(mpart);
+            update += body.core.Update;
             BodyParts tmpb = body.Find("waist");
             //tmpb.GetField().ContainsKey("DiseaseRate");
             Debug.Log("" + tmpb.GetField().ContainsKey("DiseaseRate") + tmpb.GetField().ContainsKey("EnergyRate") + tmpb.GetField().ContainsKey("DamageRate"));
             //교체해도 이름은 동일할 것이므로 타입을 넣어서 바꾸는 방법을 고려해봐도 될것같다.
         }
+
+    }
+    public class CoreEventArgs:EventArgs
+    {
+        public int time { get; set; }
+        public DateTime TimeReached { get; set; }
     }
     public class Core
     {
         public List<BodyParts> corelist = new List<BodyParts>();
         public List<BodyParts> partslist = new List<BodyParts>();
         public Dictionary<string,InnerParts> innerDic = new Dictionary<string, InnerParts>();
-        public Action<int> update;
+        public event EventHandler<CoreEventArgs> coreChanged;
+        public Guid instanceID;
         public Core() 
         {
-            update += AccUpdate;
+            Subscribe();
+            instanceID= Guid.NewGuid();
+            Debug.Log(instanceID);
+        }
+        public void Subscribe()
+        {
+        }
+        private void Core_coreChanged(object sender, CoreEventArgs e)
+        {
+            //Debug.LogError("core subupdate" +instanceID);
+            int orginTime=e.time;
+            int atime = GetMinEventTime(e.time);
+            e.time = atime;
+            coreChanged?.Invoke(sender,e);
+            if (atime != e.time) 
+            {
+                e.time = orginTime - atime;
+                coreChanged?.Invoke(sender, e);
+            }
+        }
+        public void Update(object obj, CoreEventArgs e)
+        {
+            //Debug.LogError("coreupdate" + instanceID);
+            Core_coreChanged(obj, e);
         }
         public void CoreCommend(string commend)//다른 파츠에 명령전달
         {
@@ -69,16 +112,7 @@ namespace Character.BodySystem
         {
             return innerDic[name];
         }
-        public void Update(Action<int> timeupdate)
-        {
-            timeupdate += update;//매개변수로 들어와서 복사취급이 되는것인가..?
-        }
-        void AccUpdate(int time)
-        {
-            int atime = GetMinEventTime(time);
-            update(GetMinEventTime(atime));
-            if (atime != time) update(atime);
-        }
+
         //~Core() 
         //{
         //    update -= AccUpdate;
@@ -118,18 +152,7 @@ namespace Character.BodySystem
 
         public BodyParts()
         {
-            if (core == null)
-            {
-                isCore = true;
-                core = new Core();
-                core.partslist.Add(this);
-                core.corelist.Add(this);
-            }
-            else
-            {
-                isCore = false;
-                core.partslist.Add(this);
-            }
+
         }
         public BodyParts(string name) : this()
         {
@@ -153,10 +176,28 @@ namespace Character.BodySystem
             }
 
         }
+        public void AddCore(Core core)
+        {
+            if (core == null)
+            {
+                isCore = true;
+                this.core = new Core();
+                Debug.Log("created");
+                this.core.partslist.Add(this);
+                this.core.corelist.Add(this);
+            }
+            else
+            {
+                this.core = core;
+                isCore = false;
+                this.core.partslist.Add(this);
+            }
+        }
         public T SetNext<T>(string name) where T : BodyParts, new()
         {
             T parts = new T();
             parts.name = name;
+            parts.AddCore(this.core);
             next.Add(parts);
             parts.prev.Add(this);
             return parts;
@@ -164,11 +205,11 @@ namespace Character.BodySystem
         public T SetNext<T>(string name, InnerParts inner) where T : BodyParts, new()
         {
             T parts = new T();
+            parts.core = core;
             parts.name = name;
+            parts.AddCore(this.core);
             parts.innerParts.Add(inner);
-            inner.outerBody = parts;
-            inner.Init();
-            inner.CoreAdd(inner);
+            inner.Init(parts);
             next.Add(parts);
             parts.prev.Add(this);
             return parts;
@@ -237,6 +278,7 @@ namespace Character.BodySystem
         {
             return field;
         }
+
     }
     public class HumanoidBody : BodyParts
     {
@@ -258,10 +300,7 @@ namespace Character.BodySystem
         }
         public override BodyParts SetNext(string name)
         {
-            HumanoidBody parts = new HumanoidBody(name);
-            next.Add(parts);
-            parts.prev.Add(this);
-            return parts;
+            return SetNext<HumanoidBody>(name);
         }
 
         public override BodyParts[] SetNext(params string[] name)
@@ -318,9 +357,17 @@ namespace Character.BodySystem
     public abstract class InnerParts
     {
         public BodyParts outerBody;
-        public abstract void Init();
+        public abstract void Init(BodyParts outerBody);
         public abstract int CheckMinEventTime(int time);
-        abstract public void CoreAdd(InnerParts thisparts);
+        abstract public void CoreAddInnerDic();
+        public void AddUpdate(EventHandler<CoreEventArgs> e)
+        {
+            outerBody.core.coreChanged += e;//통상적용
+        }
+        public void RemoveUpdate(EventHandler<CoreEventArgs> e)
+        {
+            outerBody.core.coreChanged -= e;
+        }
 
     }
     public abstract class Organ:InnerParts
@@ -332,11 +379,13 @@ namespace Character.BodySystem
         {
             outerBody = parts;
         }
-        public override void Init()
+        public override void Init(BodyParts outerBody)
         {
-            outerBody.core.update += sequnce;
+            this.outerBody = outerBody;
+            outerBody.core.coreChanged += CoreUpdate;
+            CoreAddInnerDic();
         }
-        public Action<int> sequnce;
+        public abstract void CoreUpdate(object obj, CoreEventArgs e);
 
     }
     namespace Inner.Organs
@@ -356,24 +405,6 @@ namespace Character.BodySystem
 
             public Womb() : base()
             {
-                sequnce += Fnc;
-            }
-            public void Fnc(int time)//타임 단위는 1분
-            {
-                //시간을 오버하면....
-                //특정지점에서 한번 멈춰야 한다.
-                //특정시점에서 멈추고 이벤트를 진행해야 한다.
-                int minActTime = CheckMinEventTime(time);
-                int remainTime = time - minActTime;
-                if (remainTime > 0)
-                {
-                    ActALL(minActTime);
-                    Fnc(remainTime);
-                }
-            }
-            public void ActALL(int time)
-            {
-                Menstruation(time);
             }
             public override int CheckMinEventTime(int time)//이걸 실행하면 오버시 최소 시간을 반환한다.
             {
@@ -396,46 +427,72 @@ namespace Character.BodySystem
                     }
                     if (readyFragRate > 1) actMenstruation = true;
                 }
-            }
-            public void Fragnant(int time)
-            {
                 if (semenRate > 0)
                 {
                     semenRate -= 1f / 5760 * time * menstruationRate;
-                    if (canfrag)
-                    {
-                        isfrag = true;
-                        sequnce += FragSequence;
-                    }
                 }
                 else
                 {
-                    if (isfrag)
-                    {
-                        isfrag = false;
-                        sequnce -= FragSequence;
-                    }
                     semenRate = 0;
                 }
+                if(canfrag)
+                CheckFragnant();
             }
-            public void FragSequence(int time)
+            public void CheckFragnant()
+            {
+                Breast breast = (Breast)outerBody.core.FindInner("Breast");
+                if (breast != null)
+                {
+                    Debug.Log("~!@!");
+                    breast.StartFillUp();
+                }
+
+                //if (semenRate > 0||canfrag)
+                //{
+                //    isfrag = true;
+                //    AddUpdate(FragSequence);
+                //    //브레이크를 걸면 작동하지 않고 최소시간을 반환한다. 그리고 다시 작동
+                //    //이벤트시간을 미리 예측하려면..
+
+                //    Breast breast = (Breast)outerBody.core.FindInner("breast");
+                //    if (breast != null)
+                //    {
+                //        Debug.Log("~!@!");
+                //        breast.StartFillUp();
+                //    }
+                //}
+            }
+            public void EndFrag()
+            {
+                if (isfrag)
+                {
+                    isfrag = false;
+                    RemoveUpdate(FragSequence);
+                    Breast breast = (Breast)outerBody.core.FindInner("breast");
+                    if (breast != null)
+                    {
+                        Debug.Log("~!@!");
+                        breast.EndFillUp();
+                    }
+                }
+            }
+            public void FragSequence(object obj,CoreEventArgs e)
             {
                 //outerBody.core.corelist[0]
                 //breast 검색 코어한테 피드백
                 //그냥 직접 명령하자......
                 //검색을 어떻게 할지 생각한다.
-                Breast breast = (Breast)outerBody.core.FindInner("breast");
-                if (breast != null)
-                {
-                    Debug.Log("~!@!");
-                    breast.lv++;
-                    breast.StartFillUp();
-                }
+
             }
 
-            public override void CoreAdd(InnerParts thisparts)
+            public override void CoreAddInnerDic()
             {
                 outerBody.core.innerDic.Add(nameof(Womb), this);
+            }
+
+            public override void CoreUpdate(object obj, CoreEventArgs e)
+            {
+                Menstruation(e.time);
             }
         }
         public class Breast : Organ
@@ -448,21 +505,31 @@ namespace Character.BodySystem
 
             public void StartFillUp()
             {
-                sequnce += FillUp;
+                Debug.LogWarning("fillup");
+                AddUpdate(FillUp);
+                lv++;
             }
-            public void FillUp(int time)
+            public void EndFillUp()
             {
-                milkRate += 0.001f;
+                RemoveUpdate(FillUp);
+                lv--;
             }
 
             public override int CheckMinEventTime(int time)
             {
-                throw new NotImplementedException();
+                return time;
             }
 
-            public override void CoreAdd(InnerParts thisparts)
+            public override void CoreAddInnerDic()
             {
                 outerBody.core.innerDic.Add(nameof(Breast), this);
+            }
+            public override void CoreUpdate(object obj, CoreEventArgs e)
+            {
+            }
+            public void FillUp(object obj, CoreEventArgs e)
+            {
+                milkRate += 0.001f;
             }
         }
     }

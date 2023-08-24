@@ -23,7 +23,7 @@ public class Test : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
-            body.update(5);
+            body.Update(this,new CoreEventArgs {time=5});
         }
     }
 }
