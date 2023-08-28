@@ -136,6 +136,7 @@ GameObject:
   - component: {fileID: 80613079}
   - component: {fileID: 80613083}
   - component: {fileID: 80613084}
+  - component: {fileID: 80613085}
   m_Layer: 0
   m_Name: s
   m_TagString: Untagged
@@ -199,7 +200,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 689b4b1238e337d4590a91183947bcd5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_key: 
+  m_key: dialogue
   m_appendSaverTypeToKey: 0
   m_saveAcrossSceneChanges: 0
   m_restoreStateOnStart: 0
@@ -222,6 +223,22 @@ MonoBehaviour:
   encrypt: 0
   encryptionPassword: My Password
   m_debug: 1
+--- !u!114 &80613085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 80613078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f02ea1fa6dfc9244947a71139b39213, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_key: charactor
+  m_appendSaverTypeToKey: 0
+  m_saveAcrossSceneChanges: 0
+  m_restoreStateOnStart: 0
 --- !u!224 &391657540 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7122482872527311254, guid: 5932fee7562eab647973727b0f083f44,

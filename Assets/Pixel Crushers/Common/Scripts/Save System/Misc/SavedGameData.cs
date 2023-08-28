@@ -47,7 +47,7 @@ namespace PixelCrushers
         private List<SaveRecord> m_list = new List<SaveRecord>();
 
         [SerializeField]
-        public List<Garunnir.Charactor> charactors = new List<Garunnir.Charactor>();
+        public List<Garunnir.Character> charactors = new List<Garunnir.Character>();
 
         /// <summary>
         /// The save file format version. This is an arbitrary value that you

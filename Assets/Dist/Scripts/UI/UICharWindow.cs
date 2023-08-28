@@ -1,4 +1,3 @@
-using Character.BodySystem;
 using PixelCrushers.DialogueSystem;
 using PixelCrushers.Wrappers;
 using System.Collections;
@@ -41,7 +40,7 @@ public class UICharWindow : MonoBehaviour
             Destroy(target.transform.GetChild(i).gameObject);
         }
     }
-    void ShowUp(Garunnir.Charactor character)
+    void ShowUp(Garunnir.Character character)
     {
         ClearComponents();
         if(character == null)

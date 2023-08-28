@@ -1,4 +1,4 @@
-using Character.BodySystem;
+using Garunnir.CharacterAppend.BodySystem;
 using PixelCrushers.DialogueSystem;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,21 +7,23 @@ using UnityEngine.Profiling;
 
 namespace Garunnir
 {
-    public class Charactor
+    public class Character
     {
         public string name;
         //캐릭터 개체정보
         public Actor dialogueActor;
         
         public Core bodyCore;
-        public Charactor()
+        public Character()
         {
-            bodyCore=BodyFactory.CreateDefault();
-            profiles.Add(new HumanProfile(bodyCore));
         }
         public List<Profile> profiles = new List<Profile>();
         
-
+        public void CreateDefault()
+        {
+            bodyCore = BodyFactory.CreateDefault();
+            profiles.Add(new HumanProfile(bodyCore));
+        }
         public void SetProfile(params Profile[] profiles)
         {
             foreach (var item in profiles)
@@ -53,7 +55,7 @@ namespace Garunnir
         }
         void Garam()
         {
-            Charactor cha=new Charactor();
+            Character cha=new Character();
             cha.SetProfile<HumanProfile>(
                 ("sprite", "Garam", ComponentType.img),
                 ("name", "가람", ComponentType.text),
@@ -107,5 +109,20 @@ namespace Garunnir
     {
 
     }
+    public class Utillity
+    {
+        public static string ConvertToSaver(string head,params object[] objects)
+        {
+            string assemble = head+":{";
+            foreach (object obj in objects)
+            {
+                assemble += obj.ToString();
+                assemble += "\n";
+            }
+            assemble += "}";
+            Debug.Log("Convert: " + assemble);
+            return assemble;
 
+        }
+    }
 }

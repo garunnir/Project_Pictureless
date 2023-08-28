@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Character.BodySystem
+namespace Garunnir.CharacterAppend.BodySystem
 {
     public class BodyFactory
     {
@@ -50,6 +50,7 @@ namespace Character.BodySystem
         public Dictionary<string,InnerParts> innerDic = new Dictionary<string, InnerParts>();
         public event EventHandler<CoreEventArgs> coreChanged;
         public Guid instanceID;
+        #region Method
         public Core() 
         {
             Subscribe();
@@ -86,10 +87,6 @@ namespace Character.BodySystem
             return innerDic[name];
         }
 
-        //~Core() 
-        //{
-        //    update -= AccUpdate;
-        //}
         internal int GetMinEventTime(int time)
         {
             int min = int.MaxValue;
@@ -108,12 +105,31 @@ namespace Character.BodySystem
             }
             return min;
         }
+        #endregion
+        public string GetJsonConvert()
+        {
+            string assemble = "Core: {";
+            assemble+= "Parts: {";
+            foreach (var item in partslist)
+            {
+                assemble += item.ToJson();
+            }
+            assemble += "}";
+
+            assemble += "Inner: {";
+            foreach (var item in innerDic.Values)
+            {
+                assemble += item.ToJson();
+            }
+            assemble += "}";
+            assemble += "}";
+            return assemble;
+        }
     }
     [SerializeField]
     public abstract class BodyParts
     {
         //public Action<int> update;
-        public bool isCore;
         public Core core;
 
         public Dictionary<string, float> field = new Dictionary<string, float>();
@@ -123,6 +139,7 @@ namespace Character.BodySystem
         public List<BodyParts> prev = new List<BodyParts>();
         public List<InnerParts> innerParts = new List<InnerParts>();
 
+        #region Method
         public BodyParts()
         {
 
@@ -139,7 +156,6 @@ namespace Character.BodySystem
         {
             if (isCore)
             {
-                this.isCore = true;
                 if (core == null)
                 {
                     core = new Core();
@@ -153,7 +169,6 @@ namespace Character.BodySystem
         {
             if (core == null)
             {
-                isCore = true;
                 this.core = new Core();
                 Debug.Log("created");
                 this.core.partslist.Add(this);
@@ -162,7 +177,6 @@ namespace Character.BodySystem
             else
             {
                 this.core = core;
-                isCore = false;
                 this.core.partslist.Add(this);
             }
         }
@@ -251,11 +265,23 @@ namespace Character.BodySystem
         {
             return field;
         }
+        #endregion
+        public virtual string ToJson()
+        {
+            foreach(var part in prev)
+            {
 
+            }
+            foreach (var part in next)
+            {
+            }
+            return Utillity.ConvertToSaver(nameof(BodyParts), name, prev,next,durability);
+        }
     }
     public class HumanoidBody : BodyParts
     {
         public List<Organ> organs = new List<Organ>();
+        #region constructor
         public HumanoidBody() : base()
         {
             field.Add("DiseaseRate", 0);
@@ -271,6 +297,8 @@ namespace Character.BodySystem
         {
             SetOrgan(organ);
         }
+        #endregion
+        #region method
         public override BodyParts SetNext(string name)
         {
             return SetNext<HumanoidBody>(name);
@@ -299,10 +327,15 @@ namespace Character.BodySystem
         {
             organs.Add(organ);
         }
-
+#endregion
+        public override string ToJson()
+        {
+            return base.ToJson()+Utillity.ConvertToSaver(nameof(HumanoidBody),organs);
+        }
     }
     public class MechBody : BodyParts
     {
+        #region Constructor
         public MechBody() : base()
         {
             field.Add("EnergyRate", 1);
@@ -313,6 +346,8 @@ namespace Character.BodySystem
             field.Add("EnergyRate", 1);
             field.Add("DamageRate", 0);
         }
+        #endregion
+        #region Method
         public override BodyParts SetNext(string name)
         {
             BodyParts parts = new HumanoidBody(name);
@@ -325,6 +360,11 @@ namespace Character.BodySystem
         {
             throw new System.NotImplementedException();
         }
+        #endregion
+        public override string ToJson()
+        {
+            return base.ToJson();
+        }
     }
 
     public abstract class InnerParts
@@ -333,6 +373,7 @@ namespace Character.BodySystem
         public abstract void Init(BodyParts outerBody);
         public abstract int CheckMinEventTime(int time);
         abstract public void CoreAddInnerDic();
+        abstract public string ToJson();
         public void AddUpdate(EventHandler<CoreEventArgs> e)
         {
             outerBody.core.coreChanged += e;//통상적용
@@ -379,6 +420,7 @@ namespace Character.BodySystem
             public Womb() : base()
             {
             }
+            #region Method
             public override int CheckMinEventTime(int time)//이걸 실행하면 오버시 최소 시간을 반환한다.
             {
                 return Mathf.Min(time, actMenstruation ? (int)Mathf.Ceil(readyFragRate / menstruationRate * 2880) : (int)Mathf.Ceil((readyFragRate - 1) / menstruationRate * 43200));
@@ -467,6 +509,11 @@ namespace Character.BodySystem
             {
                 Menstruation(e.time);
             }
+            #endregion
+            public override string ToJson()
+            {
+                return Utillity.ConvertToSaver(nameof(Inner)+nameof(Womb),bloodLv, level, isEnable, readyFragRate, menstruationRate, actMenstruation, canfrag, semenRate, isfrag);
+            }
         }
         public class Breast : Organ
         {
@@ -475,7 +522,7 @@ namespace Character.BodySystem
             int milkmlMax;
             public int lv;
 
-
+            #region Method
             public void StartFillUp()
             {
                 Debug.LogWarning("fillup");
@@ -503,6 +550,12 @@ namespace Character.BodySystem
             public void FillUp(object obj, CoreEventArgs e)
             {
                 milkRate += 0.001f;
+            }
+            #endregion
+
+            public override string ToJson()
+            {
+                return Utillity.ConvertToSaver(nameof(Inner)+nameof(Breast),milkRate, milkml, milkmlMax,lv);
             }
         }
     }
