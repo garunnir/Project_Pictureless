@@ -2,6 +2,7 @@
 
 using UnityEngine;
 using System.Collections.Generic;
+using Character.BodySystem;
 
 namespace PixelCrushers.DialogueSystem
 {
@@ -12,7 +13,7 @@ namespace PixelCrushers.DialogueSystem
     [System.Serializable]
     public class Actor : Asset
     {
-
+       
         /// <summary>
         /// The actor's (optional) portrait image. Corresponds to <c>[pic=1]</c> tag.
         /// </summary>
@@ -36,6 +37,11 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// Gets or sets a value indicating whether this actor is a player character or an NPC.
         /// </summary>
+        public Actor()
+        {
+            //fields = new List<Field>();
+            //TempGaram();
+        }
         /// <value>
         /// <c>true</c> if this actor is a player character; otherwise, <c>false</c>.
         /// </value>
@@ -65,7 +71,6 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// Initializes a new Actor.
         /// </summary>
-        public Actor() { }
 
         /// <summary>
         /// Copy constructor.

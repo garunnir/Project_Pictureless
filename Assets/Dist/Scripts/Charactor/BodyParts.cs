@@ -41,8 +41,10 @@ namespace Character.BodySystem
         public int time { get; set; }
         public DateTime TimeReached { get; set; }
     }
+    [SerializeField]
     public class Core
     {
+        [SerializeField]
         public List<BodyParts> corelist = new List<BodyParts>();
         public List<BodyParts> partslist = new List<BodyParts>();
         public Dictionary<string,InnerParts> innerDic = new Dictionary<string, InnerParts>();
@@ -107,7 +109,7 @@ namespace Character.BodySystem
             return min;
         }
     }
-
+    [SerializeField]
     public abstract class BodyParts
     {
         //public Action<int> update;

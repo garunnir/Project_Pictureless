@@ -7,7 +7,6 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-
 public enum ComponentType
 {
     none,img, text, bar
@@ -28,16 +27,7 @@ public class UICharWindow : MonoBehaviour
     void Start()
     {
         //ShowUp(ComponentType.img,ComponentType.img,ComponentType.text);
-        CustomActor actor = new CustomActor();
-        //필드정보입력
-        int createID = 4;
-        string name = "Garam";
         //런타임에 액터정보를 추가할 수 있을까? 시도해본다.
-        actor.Name = name;
-        actor.id = createID;
-
-        DialogueManager.masterDatabase.actors.Add(actor);
-        ShowUp((CustomActor)DialogueManager.MasterDatabase.actors.Find(x=>x.Name=="Garam"));
     }
 
     // Update is called once per frame
@@ -51,17 +41,17 @@ public class UICharWindow : MonoBehaviour
             Destroy(target.transform.GetChild(i).gameObject);
         }
     }
-    void ShowUp(CustomActor actor)
+    void ShowUp(Garunnir.Charactor character)
     {
         ClearComponents();
-        if(actor==null)
+        if(character == null)
         {
             Debug.LogWarning("actor not exist");
             return;
         }
         GameObject obj = null;
 
-        foreach (var item in actor.profiles)
+        foreach (var item in character.profiles)
         {
 
             //첫번쨰부터 검사

@@ -4,7 +4,6 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
 namespace PixelCrushers
 {
 
@@ -47,6 +46,9 @@ namespace PixelCrushers
         [SerializeField]
         private List<SaveRecord> m_list = new List<SaveRecord>();
 
+        [SerializeField]
+        public List<Garunnir.Charactor> charactors = new List<Garunnir.Charactor>();
+
         /// <summary>
         /// The save file format version. This is an arbitrary value that you
         /// can assign by setting SaveSystem.version.
@@ -71,6 +73,7 @@ namespace PixelCrushers
         /// Use with caution.
         /// </summary>
         public Dictionary<string, SaveRecord> Dict { get { return m_dict; } }
+
 
         public void OnBeforeSerialize()
         {

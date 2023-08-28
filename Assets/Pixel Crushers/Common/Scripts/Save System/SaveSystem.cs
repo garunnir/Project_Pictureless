@@ -4,7 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-
 namespace PixelCrushers
 {
 
@@ -369,7 +368,7 @@ namespace PixelCrushers
 
         public void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
         {
-            FinishedLoadingScene(scene.name, scene.buildIndex);
+            //FinishedLoadingScene(scene.name, scene.buildIndex);
         }
 
 #else
@@ -392,6 +391,7 @@ namespace PixelCrushers
 
         private static IEnumerator LoadSceneInternal(string sceneName, SceneValidationMode sceneValidationMode)
         {
+            Debug.LogWarning("!!!");
             m_addedScenes.Clear();
             if (sceneTransitionManager == null)
             {
