@@ -2,6 +2,7 @@ using Garunnir.CharacterAppend.BodySystem;
 using PixelCrushers.DialogueSystem;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -108,21 +109,5 @@ namespace Garunnir
     public class CustomField : Field
     {
 
-    }
-    public class Utillity
-    {
-        public static string ConvertToSaver(string head,params object[] objects)
-        {
-            string assemble = head+":{";
-            foreach (object obj in objects)
-            {
-                assemble += obj.ToString();
-                assemble += "\n";
-            }
-            assemble += "}";
-            Debug.Log("Convert: " + assemble);
-            return assemble;
-
-        }
     }
 }

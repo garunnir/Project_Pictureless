@@ -20,16 +20,16 @@ public class Test : MonoBehaviour
         character.CreateDefault();
         SaveSystem.currentSavedGameData.charactors.Add(character);
         print(SaveSystem.currentSavedGameData.charactors[0].profiles.Find((x) => x.componentType == ComponentType.none).body.FindInner("Breast"));
-        //SaveSystem.saveStarted += () => print("savstart");
-        //SaveSystem.saveEnded += () => 
-        //{
-        //    print("saveend");
-        //    SaveSystem.currentSavedGameData = null;
-        //    SaveSystem.LoadFromSlot(0);
-        //};
-        //SaveSystem.loadStarted += () => print("loadStart");
-        //SaveSystem.loadEnded += () => print(SaveSystem.currentSavedGameData.charactors[0].profiles.Find((x) => x.componentType == ComponentType.none).body.FindInner("Breast"));
-        //SaveSystem.saveDataApplied += () => print(SaveSystem.currentSavedGameData.charactors[0].profiles.Find((x) => x.componentType == ComponentType.none).body.FindInner("Breast"));
+        SaveSystem.saveStarted += () => print("savstart");
+        SaveSystem.saveEnded += () =>
+        {
+            print("saveend");
+            SaveSystem.currentSavedGameData = null;
+            SaveSystem.LoadFromSlot(0);
+        };
+        SaveSystem.loadStarted += () => print("loadStart");
+        SaveSystem.loadEnded += () => print(SaveSystem.currentSavedGameData.charactors[0].profiles.Find((x) => x.componentType == ComponentType.none).body.FindInner("Breast"));
+        SaveSystem.saveDataApplied += () => print(SaveSystem.currentSavedGameData.charactors[0].profiles.Find((x) => x.componentType == ComponentType.none).body.FindInner("Breast"));
         SaveSystem.SaveToSlotImmediate(0);
 
     }
