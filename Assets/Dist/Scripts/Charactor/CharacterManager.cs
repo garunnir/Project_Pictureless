@@ -1,7 +1,141 @@
+using Garunnir.CharacterAppend.BodySystem;
+using PixelCrushers.DialogueSystem;
+using PixelCrushers.Wrappers;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.Profiling;
+using UnityEngine.TextCore.Text;
 
+namespace Garunnir
+{
+    [Serializable]
+    public class Character
+    {
+        public string name;
+        public int id;
+        //캐릭터 개체정보
+        public Actor dialogueActor;
+        
+        public Core bodyCore;
+        public Character(string name,int id)
+        {
+            this.name = name;
+            this.id = id;
+        }
+        public List<Profile> profiles = new List<Profile>();
+        
+        public void CreateDefault()
+        {
+            bodyCore = BodyFactory.CreateDefault();
+            profiles.Add(new HumanProfile(bodyCore));
+        }
+        public void SetProfile(params Profile[] profiles)
+        {
+            foreach (var item in profiles)
+            {
+                this.profiles.Add(item);
+            }
+        }
+        public void SetProfile<T>(params (string,string,ComponentType)[] profiles)where T : Profile, new()
+        {
+            foreach (var item in profiles)
+            {
+                T addT = new T();
+                addT.title = item.Item1;
+                addT.value = item.Item2;
+                addT.componentType = item.Item3;
+                this.profiles.Add(addT);
+            }
+        }
+        public void SetProfile(object profile)
+        {
+
+        }
+
+    }
+    public class CharactorManager:Singleton<CharactorManager>
+    {
+        public List<Character> Characters = new List<Character>();
+        private void Awake()
+        {
+            SaveSystem.saveDataApplied += CreateNPCs;
+        }
+        void Garam()
+        {
+            Character cha = Characters.Find(x => x.id == 1);
+            if (cha != null) return;
+            cha=new Character("Garam",1);
+            cha.CreateDefault();
+            cha.SetProfile<HumanProfile>(
+                ("sprite", "Garam", ComponentType.img),
+                ("name", "가람", ComponentType.text),
+                ("age", "15", ComponentType.text),
+                ("exp", "34/50", ComponentType.bar)
+                );
+            Characters.Add(cha);
+        }
+        public void CreateNPCs()
+        {
+            if (SaveSystem.currentSavedGameData.charactors.Count!=0) return;
+
+                Garam();
+
+            SaveSystem.currentSavedGameData.charactors=Characters;
+        }
+        public void Init()
+        {
+            //처음 시작할때
+        }
+    }
+    public abstract class Profile
+    {
+        public string title;
+        public string value;
+        public Core body;
+        public ComponentType componentType;
+        public Profile(string title, string value, ComponentType type)
+        {
+            this.title = title;
+            this.value = value;
+            this.componentType = type;
+        }
+        public Profile(Core body)
+        {
+            this.body = body;
+        }
+        public Profile()
+        {
+
+        }
+    }
+    public class HumanProfile : Profile
+    {
+        public Actor father;
+        public Actor mother;
+        public HumanProfile()
+        {
+
+        }
+        public HumanProfile(string title, string value, ComponentType type) : base(title, value, type)
+        {
+        }
+        public HumanProfile(Core body) : base(body)
+        {
+            componentType = ComponentType.none;
+        }
+    }
+    public class CustomField : Field
+    {
+
+    }
+
+
+
+
+}
 namespace Garunnir.CharacterAppend.BodySystem
 {
     public class BodyFactory
@@ -9,12 +143,11 @@ namespace Garunnir.CharacterAppend.BodySystem
         //public abstract void build();
         public static Core CreateDefault()
         {
-            HumanoidBody body = new HumanoidBody("head");
-            body.AddCore(new Core());
-            BodyParts upperbody = body.SetNext("neck").SetNext<HumanoidBody>("upperBody", new Inner.Organs.Breast());
+            HumanoidBody body = new HumanoidBody("head",null);
+            BodyParts upperbody = body.SetNext("neck").SetNext<HumanoidBody>("upperBody", new Inner.Organs.Breast("1"));
             BodyParts lhand = upperbody.SetNext("leftshoulder").SetNext("leftupperarm").SetNext("leftelbow").SetNext("leftwrist").SetNext("lhand");
             BodyParts rhand = upperbody.SetNext("rightshoulder").SetNext("rightupperarm").SetNext("rightelbow").SetNext("rightwrist").SetNext("rhand");
-            BodyParts pelvis = upperbody.SetNext("velly").SetNext<MechBody>("waist").SetNext<HumanoidBody>("pelvis", new Inner.Organs.Womb());
+            BodyParts pelvis = upperbody.SetNext("velly").SetNext<MechBody>("waist").SetNext<HumanoidBody>("pelvis", new Inner.Organs.Womb("1"));
             BodyParts rfoot = pelvis.SetNext("rupperleg").SetNext("rknee").SetNext("rfoot");
             BodyParts lfoot = pelvis.SetNext("lupperleg").SetNext("lknee").SetNext("lfoot");
             lhand.SetNext("lthumb", "lindexfinger", "lmiddlefinger", "lringfinger", "lpinky");
@@ -36,38 +169,31 @@ namespace Garunnir.CharacterAppend.BodySystem
     }
 
 
-    public class CoreEventArgs:EventArgs
+    public class CoreEventArgs : EventArgs
     {
         public int time { get; set; }
         public DateTime TimeReached { get; set; }
     }
-    [SerializeField]
+    [Serializable]
     public class Core
     {
-        [SerializeField]
         public List<BodyParts> corelist = new List<BodyParts>();
         public List<BodyParts> partslist = new List<BodyParts>();
-        public Dictionary<string,InnerParts> innerDic = new Dictionary<string, InnerParts>();
+        public Dictionary<string, InnerParts> innerDic = new Dictionary<string, InnerParts>();
         public event EventHandler<CoreEventArgs> coreChanged;
-        public Guid instanceID;
         #region Method
-        public Core() 
+        public Core(BodyParts parts)
         {
-            Subscribe();
-            instanceID= Guid.NewGuid();
-            Debug.Log(instanceID);
-        }
-        public void Subscribe()
-        {
+            corelist.Add(parts);
         }
         private void Core_coreChanged(object sender, CoreEventArgs e)
         {
             //Debug.LogError("core subupdate" +instanceID);
-            int orginTime=e.time;
+            int orginTime = e.time;
             int atime = GetMinEventTime(e.time);
             e.time = atime;
-            coreChanged?.Invoke(sender,e);
-            if (atime != e.time) 
+            coreChanged?.Invoke(sender, e);
+            if (atime != e.time)
             {
                 e.time = orginTime - atime;
                 coreChanged?.Invoke(sender, e);
@@ -92,13 +218,13 @@ namespace Garunnir.CharacterAppend.BodySystem
             int min = int.MaxValue;
             foreach (var item in innerDic)
             {
-                int newv=item.Value.CheckMinEventTime(time);
+                int newv = item.Value.CheckMinEventTime(time);
                 if (newv < min)
                 {
-                    min= newv;
+                    min = newv;
                 }
             }
-            if(int.MaxValue == min)
+            if (int.MaxValue == min)
             {
                 Debug.LogWarning("innerDic is empty");
                 return time;
@@ -108,32 +234,59 @@ namespace Garunnir.CharacterAppend.BodySystem
         #endregion
         public string GetJsonConvert()
         {
-            Utillity.stringBuilder.Append("Core: {");
-            Utillity.stringBuilder.Append("Parts: {");
+            Utillity.stringBuilder.Append("<Core>");
+            Utillity.stringBuilder.Append("</Core>");
+            Utillity.stringBuilder.Append("<Parts>\n");
             foreach (var item in partslist)
             {
                 item.ToJson();
             }
-            Utillity.stringBuilder.Append("}");
-
-            Utillity.stringBuilder.Append("Inner: {");
+            Utillity.stringBuilder.Append("</Parts>");
+            Utillity.stringBuilder.Append("<Inner>\n");
             foreach (var item in innerDic.Values)
             {
                 item.ToJson();
             }
-            Utillity.stringBuilder.Append("}");
-            Utillity.stringBuilder.Append("}");
+            Utillity.stringBuilder.Append("</Inner>");
             return Utillity.stringBuilder.ToString();
         }
     }
     public abstract class Shape
     {
         public string name;//부위명
+        abstract public void ToJson();
+        abstract public void FromJson(string[] strings);
+        public void ObjectParser<T>(ref T obj,string str)
+        {
+            if (obj is bool)
+            {
+                obj= (T)(object)bool.Parse(str);
+            }
+            else if(obj is float)
+            {
+                obj =(T)(object)float.Parse(str);
+            }
+            else if(obj is int)
+            {
+                obj=(T)(object)int.Parse(str);
+            }
+            else if(obj is string)
+            {
+                obj = (T)(object)str;
+            }
+        }
+        //public void ObjectParser(string[] str, params object[] obj)
+        //{
+        //    for (int i = 0; i < obj.Length; i++)
+        //    {
+        //        ObjectParser<bool>(obj[i], str[i]);
+        //    }
+        //}
     }
-    public abstract class BodyParts:Shape
+    public abstract class BodyParts : Shape
     {
         //public Action<int> update;
-        public Core core;
+        public Core core { get; private set; }
         public Dictionary<string, float> field = new Dictionary<string, float>();
         public int durability;
         public List<BodyParts> next = new List<BodyParts>();
@@ -145,41 +298,27 @@ namespace Garunnir.CharacterAppend.BodySystem
         {
 
         }
-        public BodyParts(string name) : this()
+        public BodyParts(Core core)
+        {
+            AddCore(core);
+        }
+        public BodyParts(string name, Core core) : this(core)
         {
             this.name = name;
         }
-        public BodyParts(string name,InnerParts inner) : this(name)
+        //public BodyParts(string name) : this()
+        //{
+        //    this.name = name;
+        //    if(core==null)core= new Core(this);
+        //}
+        public BodyParts(string name, InnerParts inner) : this()
         {
             innerParts.Add(inner);
         }
-        public BodyParts(string name, bool isCore = false) : this(name)
+        void AddCore(Core core)
         {
-            if (isCore)
-            {
-                if (core == null)
-                {
-                    core = new Core();
-                }
-                core.partslist.Add(this);
-                core.corelist.Add(this);
-            }
-
-        }
-        public void AddCore(Core core)
-        {
-            if (core == null)
-            {
-                this.core = new Core();
-                Debug.Log("created");
-                this.core.partslist.Add(this);
-                this.core.corelist.Add(this);
-            }
-            else
-            {
-                this.core = core;
-                this.core.partslist.Add(this);
-            }
+            this.core = core ?? new Core(this);
+            this.core.partslist.Add(this);
         }
         public T SetNext<T>(string name) where T : BodyParts, new()
         {
@@ -200,7 +339,7 @@ namespace Garunnir.CharacterAppend.BodySystem
             inner.Init(parts);
             next.Add(parts);
             parts.prev.Add(this);
-            
+
             return parts;
         }
         public abstract BodyParts SetNext(string name);
@@ -268,7 +407,7 @@ namespace Garunnir.CharacterAppend.BodySystem
             return field;
         }
         #endregion
-        public virtual void ToJson()
+        public override void ToJson()
         {
             //string json="prev: {";
             //foreach(var part in prev)
@@ -284,15 +423,19 @@ namespace Garunnir.CharacterAppend.BodySystem
             //    json += ",";
             //}
             //json += "}";
-            Utillity.stringBuilder.Append(Utillity.lf);
-            Utillity.ConvertToSaver("BodyParts", name, durability);
-            Utillity.DicConverter("Field", field);
-            Utillity.ListConverter("Inner", innerParts);
-            Utillity.ListConverter("Prev", prev);
-            Utillity.ListConverter("Next", next);
-            Utillity.stringBuilder.Append("<" + Utillity.lf);
+            Utillity.ConvertToSaver(DataConfig.GetTypeDic(this.GetType()), name, durability);
+            Utillity.DicConverter(DataConfig.form_parts_field, field);
+            Utillity.ListConverter(DataConfig.form_parts_inner, innerParts);
+            Utillity.ListConverter(DataConfig.form_parts_prev, prev);
+            Utillity.ListConverter(DataConfig.form_parts_next, next);
+            Utillity.stringBuilder.Append(Utillity.divider + Utillity.lf);
+        }
+        public override void FromJson(string[] strings)
+        {
+            throw new NotImplementedException();
         }
     }
+    [Serializable]
     public class HumanoidBody : BodyParts
     {
         //public List<Organ> organs = new List<Organ>();
@@ -303,7 +446,12 @@ namespace Garunnir.CharacterAppend.BodySystem
             field.Add("DamageRate", 0);
         }
         //start at head
-        public HumanoidBody(string name) : base(name)
+        //public HumanoidBody(string name) : base(name)
+        //{
+        //    field.Add("DiseaseRate", 0);
+        //    field.Add("DamageRate", 0);
+        //}
+        public HumanoidBody(string name, Core core) : base(name, core)
         {
             field.Add("DiseaseRate", 0);
             field.Add("DamageRate", 0);
@@ -324,7 +472,7 @@ namespace Garunnir.CharacterAppend.BodySystem
             BodyParts[] rtn = new BodyParts[name.Length];
             for (int i = 0; i < name.Length; i++)
             {
-                HumanoidBody parts = new HumanoidBody(name[i]);
+                HumanoidBody parts = new HumanoidBody(name[i],core);
                 rtn[i] = parts;
                 next.Add(parts);
                 parts.prev.Add(this);
@@ -342,22 +490,29 @@ namespace Garunnir.CharacterAppend.BodySystem
         //{
         //    organs.Add(organ);
         //}
-#endregion
-        //public override string ToJson()
+        #endregion
+        //public override void ToJson()
         //{
-            
-        //    return base.ToJson()+Utillity.ListConverter("oragns",organs);
+        //    Utillity.ConvertToSaver(DataConfig.GetTypeDic(this.GetType()), name, durability);
+        //    base.ToJson();
         //}
     }
+    [Serializable]
     public class MechBody : BodyParts
     {
         #region Constructor
         public MechBody() : base()
         {
-            field.Add("EnergyRate", 1);
+            field.Add("EnergyRate", 1);        
             field.Add("DamageRate", 0);
         }
-        public MechBody(string name) : base(name)
+        //public MechBody(string name) : base(name)
+        //{
+        //    field.Add("EnergyRate", 1);
+        //    field.Add("DamageRate", 0);
+        //}
+
+        public MechBody(string name, Core core) : base(name, core)
         {
             field.Add("EnergyRate", 1);
             field.Add("DamageRate", 0);
@@ -366,7 +521,7 @@ namespace Garunnir.CharacterAppend.BodySystem
         #region Method
         public override BodyParts SetNext(string name)
         {
-            BodyParts parts = new HumanoidBody(name);
+            BodyParts parts = new HumanoidBody(name,core);
             next.Add(parts);
             parts.prev.Add(this);
             return parts;
@@ -377,23 +532,20 @@ namespace Garunnir.CharacterAppend.BodySystem
             throw new System.NotImplementedException();
         }
         #endregion
-        public override void ToJson()
-        {
-            base.ToJson();
-        }
+        //public override void ToJson()
+        //{
+        //    Utillity.ConvertToSaver("BodyParts.Human", name, durability);
+        //    base.ToJson();
+        //}
     }
 
-    public abstract class InnerParts:Shape
+    public abstract class InnerParts : Shape
     {
         public BodyParts outerBody;
-        public InnerParts()
-        {
-            name=typeof(InnerParts).Name;
-        }
         public abstract void Init(BodyParts outerBody);
         public abstract int CheckMinEventTime(int time);
         abstract public void CoreAddInnerDic();
-        abstract public void ToJson();
+
         public void AddUpdate(EventHandler<CoreEventArgs> e)
         {
             outerBody.core.coreChanged += e;//통상적용
@@ -404,11 +556,11 @@ namespace Garunnir.CharacterAppend.BodySystem
         }
 
     }
-    public abstract class Organ:InnerParts
+    public abstract class Organ : InnerParts
     {
-        public Organ() : base()
+        public Organ(string name)
         {
-            name=typeof(Organ).Name;
+            this.name = "Organ."+GetType().Name + "." + name;
         }
         //public Organ(BodyParts parts):this()
         //{
@@ -437,10 +589,9 @@ namespace Garunnir.CharacterAppend.BodySystem
             public bool canfrag;
             public float semenRate;
             public bool isfrag;
-
-            public Womb() : base()
+            public Womb(string name) : base(name)
             {
-                name=typeof(Womb).Name;
+
             }
             #region Method
             public override int CheckMinEventTime(int time)//이걸 실행하면 오버시 최소 시간을 반환한다.
@@ -472,8 +623,8 @@ namespace Garunnir.CharacterAppend.BodySystem
                 {
                     semenRate = 0;
                 }
-                if(canfrag)
-                CheckFragnant();
+                if (canfrag)
+                    CheckFragnant();
             }
             public void CheckFragnant()
             {
@@ -513,7 +664,7 @@ namespace Garunnir.CharacterAppend.BodySystem
                     }
                 }
             }
-            public void FragSequence(object obj,CoreEventArgs e)
+            public void FragSequence(object obj, CoreEventArgs e)
             {
                 //outerBody.core.corelist[0]
                 //breast 검색 코어한테 피드백
@@ -534,7 +685,30 @@ namespace Garunnir.CharacterAppend.BodySystem
             #endregion
             public override void ToJson()
             {
-                Utillity.ConvertToSaver(name,bloodLv, level, isEnable, readyFragRate, menstruationRate, actMenstruation, canfrag, semenRate, isfrag);
+                Utillity.ConvertToSaver(name, bloodLv, level, isEnable, readyFragRate, menstruationRate, actMenstruation, canfrag, semenRate, isfrag);
+            }
+            public override void FromJson(string[] strings)
+            {
+                int idx=0;
+                ObjectParser(ref bloodLv, strings[idx++]);
+                ObjectParser(ref level, strings[idx++]);
+                ObjectParser(ref isEnable, strings[idx++]);
+                ObjectParser(ref readyFragRate, strings[idx++]);
+                ObjectParser(ref menstruationRate, strings[idx++]);
+                ObjectParser(ref actMenstruation, strings[idx++]);
+                ObjectParser(ref canfrag, strings[idx++]);
+                ObjectParser(ref semenRate, strings[idx++]);
+                ObjectParser(ref isfrag, strings[idx++]);
+                //bloodLv = float.Parse(strings[idx++]);
+                //level = float.Parse(strings[idx++]);
+                //isEnable = float.Parse(strings[idx++]);
+                //readyFragRate = float.Parse(strings[idx++]);
+                //menstruationRate = float.Parse(strings[idx++]);
+                //actMenstruation = bool.Parse(strings[idx++]);
+                //canfrag = bool.Parse(strings[idx++]);
+                //semenRate = float.Parse(strings[idx++]);
+                //isfrag = bool.Parse(strings[idx++]);
+
             }
         }
         public class Breast : Organ
@@ -543,10 +717,9 @@ namespace Garunnir.CharacterAppend.BodySystem
             int milkml;
             int milkmlMax;
             public int lv;
-
-            public Breast()
+            public Breast(string name) : base(name)
             {
-                name=typeof(Breast).Name;
+
             }
             #region Method
             public void StartFillUp()
@@ -581,7 +754,15 @@ namespace Garunnir.CharacterAppend.BodySystem
 
             public override void ToJson()
             {
-                Utillity.ConvertToSaver(name,milkRate, milkml, milkmlMax,lv);
+                Utillity.ConvertToSaver(name, milkRate, milkml, milkmlMax, lv);
+            }
+
+            public override void FromJson(string[] strings)
+            {
+                int idx = 0;
+                ObjectParser(ref milkRate, strings[idx++]);
+                ObjectParser(ref milkml, strings[idx++]);
+                ObjectParser(ref milkmlMax, strings[idx++]);
             }
         }
     }

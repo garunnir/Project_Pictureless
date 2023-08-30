@@ -14,17 +14,12 @@ public class Test : MonoBehaviour
 
     void Start()
     {
-        SaveSystem.currentSavedGameData=new SavedGameData();
-        Character character = new Character();
-        character.name = "Garam";
-        character.CreateDefault();
-        SaveSystem.currentSavedGameData.charactors.Add(character);
         print(SaveSystem.currentSavedGameData.charactors[0].profiles.Find((x) => x.componentType == ComponentType.none).body.FindInner("Breast"));
         SaveSystem.saveStarted += () => print("savstart");
         SaveSystem.saveEnded += () =>
         {
             print("saveend");
-            SaveSystem.currentSavedGameData = null;
+            SaveSystem.currentSavedGameData = new SavedGameData();
             SaveSystem.LoadFromSlot(0);
         };
         SaveSystem.loadStarted += () => print("loadStart");
