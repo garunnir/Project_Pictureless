@@ -35,8 +35,8 @@ namespace Garunnir
                 m_data = data;
             print("char::"+data.characterData[0]);
             Character cha=SplitSolution(data.characterData[0]);
-            print(cha.bodyCore.FindInner("Organ.Breast"));
-
+            print(cha.bodyCore.FindInner("Organ.Breast.1"));
+            SaveSystem.currentSavedGameData.charactors.Add(cha);
             //SaveSystem.currentSavedGameData.charactors.Add(data.charactor);
             //ComponentUtility.SetComponentEnabled(componentToWatch, data.enabled);
         }
@@ -61,18 +61,42 @@ namespace Garunnir
             Core core = null;
             int id = -1;
             string name = string.Empty;
-            string[] strings = s.Split("==");
+            string[] tmpst= s.Split("<Inner>");
+            string[] strings = tmpst[0].Split("==");
             Dictionary<string, SavedLink> link = new Dictionary<string, SavedLink>();
             Dictionary<string, BodyParts> partsDic=new Dictionary<string, BodyParts>();
             Dictionary<string,InnerParts>innerDic=new Dictionary<string, InnerParts>();
+            string[] inn = tmpst[1].Split('\n');
+            foreach (var item in inn)
+            {
+                string[] inner = item.Split(':');
+                if (inner == null || inner.Length == 0) continue;
+
+                if (inner[0].Contains("Organ.Breast"))
+                {
+                    Breast breast = new Breast(inner[0].Split('.').Last());
+                    innerDic.Add(breast.name, breast);
+                    string[] mems = inner[1].Split(',');
+                    breast.FromJson(mems);
+
+                }
+                else if (inner[0].Contains("Organ.Womb"))
+                {
+                    Womb womb = new Womb(inner[0].Split('.').Last());
+                    innerDic.Add(womb.name, womb);
+                    string[] mems = inner[1].Split(',');
+                    womb.FromJson(mems);
+                }
+            }
             for (int i = 0; i < strings.Length; i++)
             {
                 BodyParts parts = null;
                 SavedLink savedLink = new SavedLink();
-                string[] innerstrings = strings[i].Split('』');
+                string[] innerstrings = strings[i].Split('\n');
 
                 for (int j = 0; j < innerstrings.Length; j++)
                 {
+                    if (innerstrings[j].Contains('<')|| innerstrings[j]==string.Empty) continue;
                     if (i == 0)
                     {
                         if (innerstrings[j].Contains(DataConfig.form_cha_id))
@@ -116,7 +140,14 @@ namespace Garunnir
                         foreach (string part in items)
                         {
                             string[] tmpstr = part.Split("=");
-                            parts.field.Add(tmpstr[0], float.Parse(tmpstr[1]));
+                            if (parts.field.ContainsKey(tmpstr[0]))
+                            {
+                                parts.field[tmpstr[0]] = float.Parse(tmpstr[1]);
+                            }
+                            else
+                            {
+                                parts.field.Add(tmpstr[0], float.Parse(tmpstr[1]));
+                            }
                         }
                     }
                     else if (innerstrings[j].Contains(DataConfig.form_parts_inner))
@@ -132,54 +163,34 @@ namespace Garunnir
                         savedLink.prevlinks = innerstrings[j].Split(':')[1].Split(',');
                     }
                 }
-                if (strings[i].Contains("<Inner>"))
-                {
-                    string[] inn = strings[i].Split('』');
-                    foreach (var item in inn)
-                    {
-                        string[] inner = item.Split(':');
-                        if (inner == null || inner.Length == 0) continue;
-                        if (inner[0].Contains("Organ.Breast"))
-                        {
-                            Breast breast = new Breast(inner[0]);
-                            innerDic.Add(inner[0],breast);
-                            string[] mems = inner[1].Split(',');
-                            breast.FromJson(mems);
-
-                        }
-                        else if (inner[0].Contains("Organ.Womb"))
-                        {
-                            Womb womb = new Womb(inner[0]);
-                            innerDic.Add(inner[0], womb);
-                            string[] mems = inner[1].Split(',');
-                            womb.FromJson(mems);
-                        }
-                    }
-                }
-   
             }
             if (tmpchar != null)
             {
                 tmpchar.bodyCore = core;
-                foreach(var item in partsDic.Values)
+                foreach (var item in partsDic.Values)
                 {
-                    SavedLink tmplink=link[item.name];
+                    SavedLink tmplink = link[item.name];
+                    if (tmplink.innerlinks != null)
+                        foreach (string v in tmplink.innerlinks)
+                        {
+                            if (v != string.Empty) 
+                            {
+                                item.innerParts.Add(innerDic[v]);
+                                innerDic[v].Init(item);
+                            } 
+                        }
+                    if (tmplink.prevlinks != null)
 
-                    string[] inner = tmplink.innerlinks;
-                    for (int i = 0; i < inner.Length; i++)
-                    {
-                        item.innerParts.Add(innerDic[inner[i]]);
-                    }
-                    string[] tmpprvs= tmplink.prevlinks;
-                    for (int i = 0; i < tmpprvs.Length; i++)
-                    {
-                        item.prev.Add(partsDic[tmpprvs[i]]);
-                    }
-                    string[] tmpnexts = tmplink.nextlinks;
-                    for (int i = 0; i < tmpprvs.Length; i++)
-                    {
-                        item.next.Add(partsDic[tmpnexts[i]]);
-                    }
+                        foreach (string v in tmplink.prevlinks)
+                        {
+                            if (v != string.Empty) item.prev.Add(partsDic[v]);
+                        }
+                    if (tmplink.nextlinks != null)
+
+                        foreach (string v in tmplink.nextlinks)
+                        {
+                            if (v != string.Empty) item.next.Add(partsDic[v]);
+                        }
                 }
             }
             return tmpchar;
@@ -200,6 +211,7 @@ namespace Garunnir
         {
             //var value = (componentToWatch != null) ? ComponentUtility.IsComponentEnabled(componentToWatch) : false;
             //m_data.enabled = value;
+            m_data=new Data();
             foreach (var item in SaveSystem.currentSavedGameData.charactors)
             {
                 m_data.characterData.Add(Utillity.GetJsonConvert(item));
@@ -216,7 +228,7 @@ namespace Garunnir
         public static StringBuilder stringBuilder = new StringBuilder();
         public static void ConvertToSaver(string head, params object[] objects)
         {
-            stringBuilder.Append($"』{head}:");
+            stringBuilder.Append($"{head}:");
             foreach (object obj in objects)
             {
                 stringBuilder.Append(obj);
@@ -231,11 +243,11 @@ namespace Garunnir
         {
             if (list != null && list.Count > 0 && list[0] is Organ)
             {
-                stringBuilder.Append($"』{typeof(Organ).Name}.{head}/List:");
+                stringBuilder.Append($"{typeof(Organ).Name}.{head}/List:");
             }
             else
             {
-                stringBuilder.Append($"』{typeof(T).Name}.{head}/List:");
+                stringBuilder.Append($"{typeof(T).Name}.{head}/List:");
             }
             foreach (var obj in list)
             {
@@ -247,7 +259,7 @@ namespace Garunnir
         }
         public static void DicConverter(string head, Dictionary<string, float> dic)
         {
-            stringBuilder.Append($"』{head}/Dic:");
+            stringBuilder.Append($"{head}/Dic:");
             foreach (var obj in dic)
             {
                 stringBuilder.Append(obj.Key);
@@ -262,9 +274,9 @@ namespace Garunnir
         }
         public static string GetJsonConvert(Character character)
         {
-            Utillity.stringBuilder.Append($"\n』{DataConfig.form_cha_id}:");
+            Utillity.stringBuilder.Append($"\n{DataConfig.form_cha_id}:");
             Utillity.stringBuilder.Append(character.id);
-            Utillity.stringBuilder.Append($"\n』{DataConfig.form_cha_name}:");
+            Utillity.stringBuilder.Append($"\n{DataConfig.form_cha_name}:");
             Utillity.stringBuilder.Append(character.name);
             Utillity.stringBuilder.Append("\n");
             character.bodyCore.GetJsonConvert();

@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Garunnir;
+using PixelCrushers.Wrappers;
 
 public static class DataConfig
 {
@@ -39,12 +40,17 @@ public class GameManager : Singleton<GameManager>
     {
         charactorManager=CharactorManager.Instance;
         charactorManager.transform.SetParent(transform);
-        StarterInit();
+        LoadChar();
+        //StarterInit();
     }
     private void StarterInit()
     {
         //처음 시작하기를 눌렀을때 시행됨.
         charactorManager.CreateNPCs();
+    }
+    private void LoadChar()
+    {
+        SaveSystem.LoadFromSlot(0);
     }
     // Start is called before the first frame update
     void Start()

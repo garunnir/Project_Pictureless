@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.TextCore.Text;
@@ -18,10 +19,12 @@ namespace Garunnir
         public int id;
         //캐릭터 개체정보
         public Actor dialogueActor;
-        
         public Core bodyCore;
+        public Guid guid;
         public Character(string name,int id)
         {
+            guid= Guid.NewGuid();
+            Debug.Log(guid);
             this.name = name;
             this.id = id;
         }
@@ -61,7 +64,7 @@ namespace Garunnir
         public List<Character> Characters = new List<Character>();
         private void Awake()
         {
-            SaveSystem.saveDataApplied += CreateNPCs;
+            //SaveSystem.saveDataApplied += CreateNPCs;
         }
         void Garam()
         {
@@ -179,12 +182,16 @@ namespace Garunnir.CharacterAppend.BodySystem
     {
         public List<BodyParts> corelist = new List<BodyParts>();
         public List<BodyParts> partslist = new List<BodyParts>();
-        public Dictionary<string, InnerParts> innerDic = new Dictionary<string, InnerParts>();
+        private Dictionary<string, InnerParts> innerDic = new Dictionary<string, InnerParts>();
+        public Dictionary<string, InnerParts> GetInner() => innerDic;
         public event EventHandler<CoreEventArgs> coreChanged;
+        Guid guid;
         #region Method
         public Core(BodyParts parts)
         {
+            guid = Guid.NewGuid();
             corelist.Add(parts);
+            Debug.Log(guid);
         }
         private void Core_coreChanged(object sender, CoreEventArgs e)
         {
@@ -213,7 +220,7 @@ namespace Garunnir.CharacterAppend.BodySystem
             return innerDic[name];
         }
 
-        internal int GetMinEventTime(int time)
+        public int GetMinEventTime(int time)
         {
             int min = int.MaxValue;
             foreach (var item in innerDic)
@@ -253,35 +260,45 @@ namespace Garunnir.CharacterAppend.BodySystem
     }
     public abstract class Shape
     {
-        public string name;//부위명
+        public string name { get { return _name; } protected set { Debug.Log(_name); _name = value; } }//부위명
+        public string _name;
         abstract public void ToJson();
         abstract public void FromJson(string[] strings);
-        public void ObjectParser<T>(ref T obj,string str)
+        //public void ObjectParser(ref bool obj,string str)
+        //{
+        //    obj = bool.Parse(str);
+        //}
+        //public void ObjectParser(ref float obj,string str)
+        //{
+        //    obj = float.Parse(str);
+        //}
+        //public void ObjectParser(ref int obj,string str)
+        //{
+        //    obj = int.Parse(str);
+        //}        
+        //public void ObjectParser(ref string obj,string str)
+        //{
+        //    obj = str;    
+        //}
+        public void ObjectParser<T>(ref T obj, string str)
         {
             if (obj is bool)
             {
-                obj= (T)(object)bool.Parse(str);
+                obj = (T)(object)bool.Parse(str);
             }
-            else if(obj is float)
+            else if (obj is float)
             {
-                obj =(T)(object)float.Parse(str);
+                obj = (T)(object)float.Parse(str);
             }
-            else if(obj is int)
+            else if (obj is int)
             {
-                obj=(T)(object)int.Parse(str);
+                obj = (T)(object)int.Parse(str);
             }
-            else if(obj is string)
+            else
             {
                 obj = (T)(object)str;
             }
         }
-        //public void ObjectParser(string[] str, params object[] obj)
-        //{
-        //    for (int i = 0; i < obj.Length; i++)
-        //    {
-        //        ObjectParser<bool>(obj[i], str[i]);
-        //    }
-        //}
     }
     public abstract class BodyParts : Shape
     {
@@ -596,7 +613,7 @@ namespace Garunnir.CharacterAppend.BodySystem
             #region Method
             public override int CheckMinEventTime(int time)//이걸 실행하면 오버시 최소 시간을 반환한다.
             {
-                return Mathf.Min(time, actMenstruation ? (int)Mathf.Ceil(readyFragRate / menstruationRate * 2880) : (int)Mathf.Ceil((readyFragRate - 1) / menstruationRate * 43200));
+                return Mathf.Min(time, actMenstruation ? (int)Mathf.Ceil(readyFragRate / menstruationRate * 2880) : (int)Mathf.Ceil((1-readyFragRate) / menstruationRate * 43200));
             }
             public void Menstruation(int time)
             {
@@ -675,7 +692,7 @@ namespace Garunnir.CharacterAppend.BodySystem
 
             public override void CoreAddInnerDic()
             {
-                outerBody.core.innerDic.Add(nameof(Womb), this);
+                outerBody.core.GetInner().Add(name, this);
             }
 
             public override void CoreUpdate(object obj, CoreEventArgs e)
@@ -741,14 +758,14 @@ namespace Garunnir.CharacterAppend.BodySystem
 
             public override void CoreAddInnerDic()
             {
-                outerBody.core.innerDic.Add(nameof(Breast), this);
+                outerBody.core.GetInner().Add(name, this);
             }
             public override void CoreUpdate(object obj, CoreEventArgs e)
             {
             }
             public void FillUp(object obj, CoreEventArgs e)
             {
-                milkRate += 0.001f;
+                milkRate += 0.001f*e.time;
             }
             #endregion
 
