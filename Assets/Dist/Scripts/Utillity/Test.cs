@@ -14,6 +14,8 @@ public class Test : MonoBehaviour
 
     void Start()
     {
+        Lua.RegisterFunction("dd", this, SymbolExtensions.GetMethodInfo(() => DD((int)0)));
+        Lua.UnregisterFunction("dd");
         //SaveSystem.saveStarted += () => print("savstart");
         //SaveSystem.saveEnded += () =>
         //{
@@ -29,8 +31,10 @@ public class Test : MonoBehaviour
         //};
         //SaveSystem.loadEnded += () =>
         //{
-
         //};
+    }
+    void DD(int i)
+    {
 
     }
     public void Btn_Update()

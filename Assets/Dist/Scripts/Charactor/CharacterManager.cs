@@ -15,12 +15,15 @@ namespace Garunnir
     [Serializable]
     public class Character
     {
+        //캐릭터 개체정보
         public string name;
         public int id;
-        //캐릭터 개체정보
         public Actor dialogueActor;
         public Core bodyCore;
         public Guid guid;
+        public List<string>uiParam = new List<string>();
+        private Dictionary<string,object> field=new Dictionary<string, object>();
+        public Dictionary<string, object> GetFieldDic() => field;
         public Character(string name,int id)
         {
             guid= Guid.NewGuid();
@@ -28,34 +31,25 @@ namespace Garunnir
             this.name = name;
             this.id = id;
         }
-        public List<Profile> profiles = new List<Profile>();
-        
+        public T GetField<T>(string key)
+        {
+            return (T)field[key];
+        }
+        public void SetField(string key, object value)
+        {
+            if (field.ContainsKey(key))
+            {
+                field[key] = value;
+            }
+            else field.Add(key, value);
+        }
+        public void DeleteField(string key)
+        {
+            if(field.ContainsKey(key)) field.Remove(key);
+        }
         public void CreateDefault()
         {
             bodyCore = BodyFactory.CreateDefault();
-            profiles.Add(new HumanProfile(bodyCore));
-        }
-        public void SetProfile(params Profile[] profiles)
-        {
-            foreach (var item in profiles)
-            {
-                this.profiles.Add(item);
-            }
-        }
-        public void SetProfile<T>(params (string,string,ComponentType)[] profiles)where T : Profile, new()
-        {
-            foreach (var item in profiles)
-            {
-                T addT = new T();
-                addT.title = item.Item1;
-                addT.value = item.Item2;
-                addT.componentType = item.Item3;
-                this.profiles.Add(addT);
-            }
-        }
-        public void SetProfile(object profile)
-        {
-
         }
 
     }
@@ -72,12 +66,14 @@ namespace Garunnir
             if (cha != null) return;
             cha=new Character("Garam",1);
             cha.CreateDefault();
-            cha.SetProfile<HumanProfile>(
-                ("sprite", "Garam", ComponentType.img),
-                ("name", "가람", ComponentType.text),
-                ("age", "15", ComponentType.text),
-                ("exp", "34/50", ComponentType.bar)
-                );
+            //cha.SetProfile<HumanProfile>(
+            //    ("sprite", "Garam", ComponentType.img),
+            //    ("name", "가람", ComponentType.text),
+            //    ("age", "15", ComponentType.text),
+            //    ("exp", "34/50", ComponentType.bar)
+            //자식
+            //부모
+            //    );
             Characters.Add(cha);
         }
         public void CreateNPCs()

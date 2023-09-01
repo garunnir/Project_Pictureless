@@ -49,37 +49,38 @@ public class UICharWindow : MonoBehaviour
             return;
         }
         GameObject obj = null;
+        //특정 키워드가 유아이 필드에 있으면 클릭해서 다음장으로 넘어갈 수 있게 한다.
+        //H스테이터스 전투 스테이터스 인적사항 프로필(부모누르면 보여주는 프로필을 이동한다.)
+        //foreach (var item in character.profiles)
+        //{
 
-        foreach (var item in character.profiles)
-        {
+        //    //첫번쨰부터 검사
+        //    switch (item.componentType)
+        //    {
+        //        case ComponentType.img:
+        //            obj = Instantiate(prf_img);
+        //            break; 
+        //        case ComponentType.text:
+        //            obj = Instantiate(prf_text);
+        //            TMP_Text text = obj.GetComponentInChildren<TMP_Text>();
+        //            text.text=item.title+": "+item.value;
+        //            text.font= UILocalizationManager.instance.localizedFonts.GetTextMeshProFont(Localization.language);
+        //            break;
+        //        case ComponentType.bar:
+        //            string[] str= item.value.Split('/');
+        //            obj = Instantiate(prf_bar);
+        //            obj.GetComponentsInChildren<Image>().Last().fillAmount = float.Parse(str[0]) / float.Parse(str[1]);
+        //            TMP_Text text1 = obj.GetComponentInChildren<TMP_Text>();
+        //            text1.text = item.title;
+        //            text1.enabled = true;
+        //            text1.font=UILocalizationManager.instance.localizedFonts.GetTextMeshProFont(Localization.language);
+        //            break;
 
-            //첫번쨰부터 검사
-            switch (item.componentType)
-            {
-                case ComponentType.img:
-                    obj = Instantiate(prf_img);
-                    break; 
-                case ComponentType.text:
-                    obj = Instantiate(prf_text);
-                    TMP_Text text = obj.GetComponentInChildren<TMP_Text>();
-                    text.text=item.title+": "+item.value;
-                    text.font= UILocalizationManager.instance.localizedFonts.GetTextMeshProFont(Localization.language);
-                    break;
-                case ComponentType.bar:
-                    string[] str= item.value.Split('/');
-                    obj = Instantiate(prf_bar);
-                    obj.GetComponentsInChildren<Image>().Last().fillAmount = float.Parse(str[0]) / float.Parse(str[1]);
-                    TMP_Text text1 = obj.GetComponentInChildren<TMP_Text>();
-                    text1.text = item.title;
-                    text1.enabled = true;
-                    text1.font=UILocalizationManager.instance.localizedFonts.GetTextMeshProFont(Localization.language);
-                    break;
-
-            }
-            //어떤 원소가 들었는지 판별
-            //맞는 원소에 따라 유아이 생성
-            if (obj) obj.transform.SetParent(target.transform);
-        }
+        //    }
+        //    //어떤 원소가 들었는지 판별
+        //    //맞는 원소에 따라 유아이 생성
+        //    if (obj) obj.transform.SetParent(target.transform);
+        //}
 
 
     }
