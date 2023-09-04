@@ -99,11 +99,11 @@ namespace Garunnir
                     if (innerstrings[j].Contains('<')|| innerstrings[j]==string.Empty) continue;
                     if (i == 0)
                     {
-                        if (innerstrings[j].Contains(DataConfig.form_cha_id))
+                        if (innerstrings[j].Contains(GameManager.form_cha_id))
                         {
                             id = int.Parse(innerstrings[j].Split(':')[1]);
                         }
-                        else if (innerstrings[j].Contains(DataConfig.form_cha_name))
+                        else if (innerstrings[j].Contains(GameManager.form_cha_name))
                         {
                             name = innerstrings[j].Split(':')[1];
                         }
@@ -112,7 +112,7 @@ namespace Garunnir
                             tmpchar = new Character(name, id);
                         }
                     }
-                    if (innerstrings[j].Contains(DataConfig.GetTypeDic(typeof(HumanoidBody))))
+                    if (innerstrings[j].Contains(GameManager.Instance.GetTypeDic(typeof(HumanoidBody))))
                     {
                         string[] items = innerstrings[j].Split(':')[1].Split(',');
                         parts = new HumanoidBody(items[0],core);
@@ -121,7 +121,7 @@ namespace Garunnir
                         parts.durability = int.Parse(items[1]);
                         link.Add(parts.name, savedLink);
                     }
-                    else if (innerstrings[j].Contains(DataConfig.GetTypeDic(typeof(MechBody))))
+                    else if (innerstrings[j].Contains(GameManager.Instance.GetTypeDic(typeof(MechBody))))
                     {
                         string[] items = innerstrings[j].Split(':')[1].Split(',');
                         parts = new MechBody(items[0], core);
@@ -134,7 +134,7 @@ namespace Garunnir
                     {
                         //Debug.LogError("SaveFileError : Can't Find BodyData");
                     }
-                    else if (innerstrings[j].Contains(DataConfig.form_parts_field))
+                    else if (innerstrings[j].Contains(GameManager.form_parts_field))
                     {
                         string[] items = innerstrings[j].Split(':')[1].Split(',');
                         foreach (string part in items)
@@ -150,15 +150,15 @@ namespace Garunnir
                             }
                         }
                     }
-                    else if (innerstrings[j].Contains(DataConfig.form_parts_inner))
+                    else if (innerstrings[j].Contains(GameManager.form_parts_inner))
                     {
                         savedLink.innerlinks = innerstrings[j].Split(':')[1].Split(',');
                     }
-                    else if (innerstrings[j].Contains(DataConfig.form_parts_prev))
+                    else if (innerstrings[j].Contains(GameManager.form_parts_prev))
                     {
                         savedLink.prevlinks = innerstrings[j].Split(':')[1].Split(',');
                     }
-                    else if (innerstrings[j].Contains(DataConfig.form_parts_next))
+                    else if (innerstrings[j].Contains(GameManager.form_parts_next))
                     {
                         savedLink.prevlinks = innerstrings[j].Split(':')[1].Split(',');
                     }
@@ -300,13 +300,13 @@ namespace Garunnir
         }
         public static string GetJsonConvert(Character character)
         {
-            Utillity.stringBuilder.Append($"{lf}{DataConfig.form_cha_id}:");
+            Utillity.stringBuilder.Append($"{lf}{GameManager.form_cha_id}:");
             Utillity.stringBuilder.Append(character.id);
-            Utillity.stringBuilder.Append($"{lf}{DataConfig.form_cha_name}:");
+            Utillity.stringBuilder.Append($"{lf}{GameManager.form_cha_name}:");
             Utillity.stringBuilder.Append(character.name);
-            Utillity.stringBuilder.Append($"{lf}{DataConfig.form_cha_name}:");
+            Utillity.stringBuilder.Append($"{lf}{GameManager.form_cha_name}:");
             ListConverter("Character.UI", character.uiParam);
-            Utillity.stringBuilder.Append($"{lf}{DataConfig.form_cha_name}:");
+            Utillity.stringBuilder.Append($"{lf}{GameManager.form_cha_name}:");
             DicConverter("Character.Field",character.GetFieldDic());
             Utillity.stringBuilder.Append(lf);
             character.bodyCore.GetJsonConvert();

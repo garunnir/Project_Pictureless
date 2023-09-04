@@ -7,7 +7,7 @@ public class CharCreater : MonoBehaviour
 {
     public DialogueDatabase dialogueDatabase;
     
-    int cacheLastIdNum = DataConfig.createStart;
+    int cacheLastIdNum = GameManager.createStart;
     // Start is called before the first frame update
     void Start()
     {

@@ -5,42 +5,57 @@ using System.Collections.Generic;
 using UnityEngine;
 using Garunnir;
 using PixelCrushers.Wrappers;
-
-public static class DataConfig
+using System.IO;
+public class GameManager : Singleton<GameManager>
 {
+    #region GameManager.Instance
+
     public const int createStart = 10000;//start id to created charactor
     private static Dictionary<Type, string> TypeDic;
     public const string form_cha_name = "Name";
-    public const string form_cha_id= "Id";
-    public const string form_parts_field= "Field";
-    public const string form_parts_inner = "Inner";
-    public const string form_parts_prev = "prev";
-    public const string form_parts_next = "next";
-
-
-    static DataConfig()
+    public const string form_cha_id  = "Id";
+    public const string form_parts_field = "Field";
+    public const string form_parts_inner  = "Inner";
+    public const string form_parts_prev  = "prev";
+    public const string form_parts_next  = "next";
+    public static string path_img_mainP { get; private set; }
+    void DataConfig()
     {
         TypeDic = new Dictionary<Type, string>();
         TypeDic.Add(typeof(MechBody), "Bodyparts.Mech");
         TypeDic.Add(typeof(HumanoidBody), "Bodyparts.Human");
+        path_img_mainP = Path.Combine(Application.persistentDataPath,"mainChara");
+        //Debug.Log("DT:" + path_img_mainP);//??이거 안들어가면 인식 안됨 ㅋㅋ
     }
-    public static void Init()
-    {
-
-    }
-    public static string GetTypeDic(Type type)
+    public string GetTypeDic(Type type)
     {
         return TypeDic[type];
     }
-}
-public class GameManager : Singleton<GameManager> 
-{
+    public static string CheckFolderInPath(string path)
+    {
+        string[] dirs = path.Split('/');
+        string tmpstr = dirs[0];
+        for (int i = 1; i < dirs.Length; i++)
+        {
+            if (!Directory.Exists(tmpstr))
+            {
+                Directory.CreateDirectory(tmpstr);
+            }
+            tmpstr += "/" + dirs[i];
+        }
+        return path;
+    }
+    #endregion
+    #region Managers
     CharactorManager charactorManager;
+    #endregion
     private void Awake()
     {
+        DataConfig();
         charactorManager=CharactorManager.Instance;
         charactorManager.transform.SetParent(transform);
         LoadChar();
+        SetDontDistroy();
         //StarterInit();
     }
     private void StarterInit()

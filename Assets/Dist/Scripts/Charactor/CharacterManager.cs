@@ -436,11 +436,11 @@ namespace Garunnir.CharacterAppend.BodySystem
             //    json += ",";
             //}
             //json += "}";
-            Utillity.ConvertToSaver(DataConfig.GetTypeDic(this.GetType()), name, durability);
-            Utillity.DicConverter(DataConfig.form_parts_field, field);
-            Utillity.ListConverter(DataConfig.form_parts_inner, innerParts);
-            Utillity.ListConverter(DataConfig.form_parts_prev, prev);
-            Utillity.ListConverter(DataConfig.form_parts_next, next);
+            Utillity.ConvertToSaver(GameManager.Instance.GetTypeDic(this.GetType()), name, durability);
+            Utillity.DicConverter(GameManager.form_parts_field, field);
+            Utillity.ListConverter(GameManager.form_parts_inner, innerParts);
+            Utillity.ListConverter(GameManager.form_parts_prev, prev);
+            Utillity.ListConverter(GameManager.form_parts_next, next);
             Utillity.stringBuilder.Append(Utillity.divider + Utillity.lf);
         }
         public override void FromJson(string[] strings)
@@ -506,7 +506,7 @@ namespace Garunnir.CharacterAppend.BodySystem
         #endregion
         //public override void ToJson()
         //{
-        //    Utillity.ConvertToSaver(DataConfig.GetTypeDic(this.GetType()), name, durability);
+        //    Utillity.ConvertToSaver(GameManager.Instance.GetTypeDic(this.GetType()), name, durability);
         //    base.ToJson();
         //}
     }
