@@ -24,11 +24,6 @@ namespace Garunnir
         public override void ApplyData(string s)
         {
             if (string.IsNullOrEmpty(s)) return;
-            //s=s.Replace("\\", "");
-            //s = s.Replace("\\n", "\n");
-            //print("custom::" + s);
-
-
 
             var data = SaveSystem.Deserialize<Data>(s, m_data);
             if (data == null)
@@ -94,6 +89,10 @@ namespace Garunnir
                     if (innerstrings[j].Contains('<')|| innerstrings[j]==string.Empty) continue;
                     if (i == 0)
                     {
+                        if (tmpchar == null && name != string.Empty && id != -1)
+                        {
+                            tmpchar = new Character(name, id);
+                        }
                         if (innerstrings[j].Contains(GameManager.form_cha_id))
                         {
                             id = int.Parse(innerstrings[j].Split(':')[1]);
@@ -102,9 +101,16 @@ namespace Garunnir
                         {
                             name = innerstrings[j].Split(':')[1];
                         }
-                        else if(tmpchar == null&&name!=string.Empty&&id!=-1)
+
+                        else if (innerstrings[j].Contains(GameManager.form_parts_field))
                         {
-                            tmpchar = new Character(name, id);
+                            string[] tmpStrings = innerstrings[j].Split(':')[1].Split(',');
+                            foreach (var item in tmpStrings)
+                            {
+                                string[] strs =item.Split('=');
+                                string[] strrs = strs[1].Split("|");
+                                tmpchar.SetField(strs[0], strrs[1], Utillity.ObjectParser<bool>(strrs[0]));
+                            }
                         }
                     }
                     if (innerstrings[j].Contains(GameManager.Instance.GetTypeDic(typeof(HumanoidBody))))
@@ -213,6 +219,25 @@ namespace Garunnir
         public const string divider = "==";
         public const string lf = "\n";
         public static StringBuilder stringBuilder = new StringBuilder();
+        public static T ObjectParser<T>(string str)
+        {
+            if (typeof(T) == typeof(bool))
+            {
+                return (T)(object)bool.Parse(str);
+            }
+            else if (typeof(T) == typeof(float))
+            {
+                return (T)(object)float.Parse(str);
+            }
+            else if (typeof(T) == typeof(int))
+            {
+                return (T)(object)int.Parse(str);
+            }
+            else
+            {
+                return (T)(object)str;
+            }
+        }
         public static void ConvertToSaver(string head, params object[] objects)
         {
             stringBuilder.Append($"{head}:");
@@ -304,12 +329,14 @@ namespace Garunnir
         }
         public static string GetJsonConvert(Character character)
         {
+            Utillity.stringBuilder.Clear();
             Utillity.stringBuilder.Append($"{lf}{GameManager.form_cha_id}:");
             Utillity.stringBuilder.Append(character.id);
             Utillity.stringBuilder.Append($"{lf}{GameManager.form_cha_name}:");
             Utillity.stringBuilder.Append(character.name);
             Utillity.stringBuilder.Append(lf);
             TupleDicConv(GameManager.form_parts_field,character.GetFieldDic());
+            Utillity.stringBuilder.Append(divider);
             Utillity.stringBuilder.Append(lf);
             character.bodyCore.GetJsonConvert();
             return Utillity.stringBuilder.ToString();
