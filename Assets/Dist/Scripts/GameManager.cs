@@ -18,6 +18,8 @@ public class GameManager : Singleton<GameManager>
     public const string form_parts_inner  = "Inner";
     public const string form_parts_prev  = "prev";
     public const string form_parts_next  = "next";
+    //public const string form_cha_profile_syntax_show  = "[show]";
+    //public const string form_cha_profile_syntax_hide  = "[hide]";
     public static string path_img_mainP { get; private set; }
     void DataConfig()
     {
@@ -56,7 +58,7 @@ public class GameManager : Singleton<GameManager>
         charactorManager.transform.SetParent(transform);
         LoadChar();
         SetDontDistroy();
-        //StarterInit();
+        StarterInit();
     }
     private void StarterInit()
     {

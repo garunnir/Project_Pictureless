@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Singleton<T> : MonoBehaviour where T : class
 {
-    public static Lazy<T> L_instance = new Lazy<T>(() =>
+    static Lazy<T> L_instance = new Lazy<T>(() =>
     {
         if (_instance == null)
         {
@@ -11,6 +11,10 @@ public class Singleton<T> : MonoBehaviour where T : class
             if (findinst == null)
             {
                 _instance=new GameObject(typeof(T).Name, typeof(T)).GetComponent<T>();
+            }
+            else
+            {
+                _instance = findinst;
             }
             return _instance;
         }

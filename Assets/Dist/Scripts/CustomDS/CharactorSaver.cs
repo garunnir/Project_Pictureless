@@ -40,11 +40,6 @@ namespace Garunnir
             //SaveSystem.currentSavedGameData.charactors.Add(data.charactor);
             //ComponentUtility.SetComponentEnabled(componentToWatch, data.enabled);
         }
-
-        void SubStringSolution(string s)
-        {
-
-        }
         BodyParts CreateBody(string st)
         {
             return null;
@@ -195,17 +190,9 @@ namespace Garunnir
             }
             return tmpchar;
         }
-        string SerializeBody(Core core)
+        Character SubStringSolution(string s)
         {
-            //BodyParts bodytype;
-
-
-            //string bodyType;
-            //string innerType;
-            //string prev;
-            //string next;
-            //string values;
-            return core.GetJsonConvert();
+            return null;
         }
         public override string RecordData()
         {
@@ -298,16 +285,31 @@ namespace Garunnir
             }
             stringBuilder.Append(lf);
         }
+        public static void TupleDicConv(string head,Dictionary<string,(bool,object)>tupledic)
+        {
+            stringBuilder.Append($"{head}/Dic:");
+            foreach (var obj in tupledic)
+            {
+                stringBuilder.Append(obj.Key);
+                stringBuilder.Append("=");
+                stringBuilder.Append(obj.Value.Item1);
+                stringBuilder.Append('|');
+                stringBuilder.Append(obj.Value.Item2);
+                if (obj.Key != tupledic.Last().Key)
+                {
+                    stringBuilder.Append(",");
+                }
+            }
+            stringBuilder.Append(lf);
+        }
         public static string GetJsonConvert(Character character)
         {
             Utillity.stringBuilder.Append($"{lf}{GameManager.form_cha_id}:");
             Utillity.stringBuilder.Append(character.id);
             Utillity.stringBuilder.Append($"{lf}{GameManager.form_cha_name}:");
             Utillity.stringBuilder.Append(character.name);
-            Utillity.stringBuilder.Append($"{lf}{GameManager.form_cha_name}:");
-            ListConverter("Character.UI", character.uiParam);
-            Utillity.stringBuilder.Append($"{lf}{GameManager.form_cha_name}:");
-            DicConverter("Character.Field",character.GetFieldDic());
+            Utillity.stringBuilder.Append(lf);
+            TupleDicConv(GameManager.form_parts_field,character.GetFieldDic());
             Utillity.stringBuilder.Append(lf);
             character.bodyCore.GetJsonConvert();
             return Utillity.stringBuilder.ToString();

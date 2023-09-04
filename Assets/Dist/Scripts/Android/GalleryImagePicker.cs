@@ -11,7 +11,7 @@ public class GalleryImagePicker : MonoBehaviour
     {
         chanage.onClick.AddListener(()=>ChangeImage());
     }
-    // °¶·¯¸®¿¡¼­ ÀÌ¹ÌÁö ¼±ÅÃ ÈÄ È£ÃâµÇ´Â Äİ¹é ¸Ş¼­µå
+    // ê°¤ëŸ¬ë¦¬ì—ì„œ ì´ë¯¸ì§€ ì„ íƒ í›„ í˜¸ì¶œë˜ëŠ” ì½œë°± ë©”ì„œë“œ
     public void OnImagePicked(string imagePath)
     {
         //NativeGallery.SaveImageToGallery(byte[] mediaBytes, string album, string filename, MediaSaveCallback callback = null)
@@ -32,7 +32,7 @@ public class GalleryImagePicker : MonoBehaviour
             File.Copy(path, GameManager.path_img_mainP,true);
             print("Dest:"+ GameManager.path_img_mainP);
             ImgApply(path);
-        }, "0", "image/*");
+        }, "ìºë¦­í„° í”„ë¡œí•„ ì‚¬ì§„ ì„ íƒ", "image/*");
     }
     private void ImgApply(string path)
     {

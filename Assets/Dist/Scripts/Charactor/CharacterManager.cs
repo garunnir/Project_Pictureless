@@ -15,15 +15,14 @@ namespace Garunnir
     [Serializable]
     public class Character
     {
-        //Ä³¸¯ÅÍ °³Ã¼Á¤º¸
+        //ìºë¦­í„° ê°œì²´ì •ë³´
         public string name;
         public int id;
         public Actor dialogueActor;
         public Core bodyCore;
         public Guid guid;
-        public List<string>uiParam = new List<string>();
-        private Dictionary<string,object> field=new Dictionary<string, object>();
-        public Dictionary<string, object> GetFieldDic() => field;
+        private Dictionary<string,(bool,object)> field=new Dictionary<string, (bool,object)>();
+        public Dictionary<string, (bool, object)> GetFieldDic() => field;
         public Character(string name,int id)
         {
             guid= Guid.NewGuid();
@@ -33,15 +32,15 @@ namespace Garunnir
         }
         public T GetField<T>(string key)
         {
-            return (T)field[key];
+            return (T)field[key].Item2;
         }
-        public void SetField(string key, object value)
+        public void SetField(string key, object value,bool open=true)
         {
             if (field.ContainsKey(key))
             {
-                field[key] = value;
+                field[key]=(open, value);
             }
-            else field.Add(key, value);
+            else field.Add(key, (open, value));
         }
         public void DeleteField(string key)
         {
@@ -68,12 +67,17 @@ namespace Garunnir
             cha.CreateDefault();
             //cha.SetProfile<HumanProfile>(
             //    ("sprite", "Garam", ComponentType.img),
-            //    ("name", "°¡¶÷", ComponentType.text),
+            //    ("name", "ê°€ëŒ", ComponentType.text),
             //    ("age", "15", ComponentType.text),
             //    ("exp", "34/50", ComponentType.bar)
-            //ÀÚ½Ä
-            //ºÎ¸ğ
+            //ìì‹
+            //ë¶€ëª¨
             //    );
+            cha.SetField("Image.Profile", "Garam",true);
+            cha.SetField("Text.Name", "ì˜¤ë¥´ì¹´ë¦‡íŠ¸ ë¹„ëŒëŒ ê°€ëŒ",true);
+            cha.SetField("Text.OuterAge", "15", true);
+            cha.SetField("Bar.Exp", "34/50", false);
+            //ë“¤ì–´ê°„ ìˆœì„œê°€ ì¶œë ¥ìˆœì„œê°€ ëœë‹¤.
             Characters.Add(cha);
         }
         public void CreateNPCs()
@@ -86,7 +90,7 @@ namespace Garunnir
         }
         public void Init()
         {
-            //Ã³À½ ½ÃÀÛÇÒ¶§
+            //ì²˜ìŒ ì‹œì‘í• ë•Œ
         }
     }
     public abstract class Profile
@@ -154,15 +158,15 @@ namespace Garunnir.CharacterAppend.BodySystem
             rfoot.SetNext("rbigtoe", "rsecondtoe", "rthirdtoe", "rforthtoe", "rlittletoe");
             lfoot.SetNext("lbigtoe", "lsecondtoe", "lthirdtoe", "lforthtoe", "llittletoe");
 
-            //Á¶°Ç ÆÄÃ÷±³Ã¼°¡ °¡´ÉÇÒ°Í
-            //Çã¸®±³Ã¼¸¦ ½ÃµµÇÑ´Ù
+            //ì¡°ê±´ íŒŒì¸ êµì²´ê°€ ê°€ëŠ¥í• ê²ƒ
+            //í—ˆë¦¬êµì²´ë¥¼ ì‹œë„í•œë‹¤
             //Debug.Log(body.Find("waist"));
             //BodyParts mpart= new MechBody("waist");
             //body.Find("waist").Swap(mpart);
             //BodyParts tmpb = body.Find("waist");
             //tmpb.GetField().ContainsKey("DiseaseRate");
             //Debug.Log("" + tmpb.GetField().ContainsKey("DiseaseRate") + tmpb.GetField().ContainsKey("EnergyRate") + tmpb.GetField().ContainsKey("DamageRate"));
-            //±³Ã¼ÇØµµ ÀÌ¸§Àº µ¿ÀÏÇÒ °ÍÀÌ¹Ç·Î Å¸ÀÔÀ» ³Ö¾î¼­ ¹Ù²Ù´Â ¹æ¹ıÀ» °í·ÁÇØºÁµµ µÉ°Í°°´Ù.
+            //êµì²´í•´ë„ ì´ë¦„ì€ ë™ì¼í•  ê²ƒì´ë¯€ë¡œ íƒ€ì…ì„ ë„£ì–´ì„œ ë°”ê¾¸ëŠ” ë°©ë²•ì„ ê³ ë ¤í•´ë´ë„ ë ê²ƒê°™ë‹¤.
             return body.core;
         }
     }
@@ -207,7 +211,7 @@ namespace Garunnir.CharacterAppend.BodySystem
             //Debug.LogError("coreupdate" + instanceID);
             Core_coreChanged(obj, e);
         }
-        public void CoreCommend(string commend)//´Ù¸¥ ÆÄÃ÷¿¡ ¸í·ÉÀü´Ş
+        public void CoreCommend(string commend)//ë‹¤ë¥¸ íŒŒì¸ ì— ëª…ë ¹ì „ë‹¬
         {
 
         }
@@ -256,7 +260,7 @@ namespace Garunnir.CharacterAppend.BodySystem
     }
     public abstract class Shape
     {
-        public string name { get { return _name; } protected set { Debug.Log(_name); _name = value; } }//ºÎÀ§¸í
+        public string name { get { return _name; } protected set { Debug.Log(_name); _name = value; } }//ë¶€ìœ„ëª…
         public string _name;
         abstract public void ToJson();
         abstract public void FromJson(string[] strings);
@@ -402,7 +406,7 @@ namespace Garunnir.CharacterAppend.BodySystem
         {
             parts.next = this.next;
             parts.prev = this.prev;
-            foreach (var part in prev)//Àü³ëµåÀÇ ¿¬°á°ú ½Ö¹æÅëÇàÀÌ¹Ç·Î Àü³ëµå¿Í ´ÙÀ½³ëµåÀÇ ÂüÁ¶µµ ¹Ù²ãÁà¾ß ÇÑ´Ù.
+            foreach (var part in prev)//ì „ë…¸ë“œì˜ ì—°ê²°ê³¼ ìŒë°©í†µí–‰ì´ë¯€ë¡œ ì „ë…¸ë“œì™€ ë‹¤ìŒë…¸ë“œì˜ ì°¸ì¡°ë„ ë°”ê¿”ì¤˜ì•¼ í•œë‹¤.
             {
                 part.next.Remove(this);
                 part.next.Add(parts);
@@ -561,7 +565,7 @@ namespace Garunnir.CharacterAppend.BodySystem
 
         public void AddUpdate(EventHandler<CoreEventArgs> e)
         {
-            outerBody.core.coreChanged += e;//Åë»óÀû¿ë
+            outerBody.core.coreChanged += e;//í†µìƒì ìš©
         }
         public void RemoveUpdate(EventHandler<CoreEventArgs> e)
         {
@@ -592,7 +596,7 @@ namespace Garunnir.CharacterAppend.BodySystem
     {
         public class Womb : Organ
         {
-            //Ç÷·ù¸¸ °ø±ŞµÇ¸é ÀÛµ¿ÇÑ´Ù. Àå±â ´ÜÀ§·Î ½Ã½ºÅÛ ÀÛµ¿ÇÑ´Ù.
+            //í˜ˆë¥˜ë§Œ ê³µê¸‰ë˜ë©´ ì‘ë™í•œë‹¤. ì¥ê¸° ë‹¨ìœ„ë¡œ ì‹œìŠ¤í…œ ì‘ë™í•œë‹¤.
             public float bloodLv;
             public int level;
             public bool isEnable;
@@ -607,7 +611,7 @@ namespace Garunnir.CharacterAppend.BodySystem
 
             }
             #region Method
-            public override int CheckMinEventTime(int time)//ÀÌ°É ½ÇÇàÇÏ¸é ¿À¹ö½Ã ÃÖ¼Ò ½Ã°£À» ¹İÈ¯ÇÑ´Ù.
+            public override int CheckMinEventTime(int time)//ì´ê±¸ ì‹¤í–‰í•˜ë©´ ì˜¤ë²„ì‹œ ìµœì†Œ ì‹œê°„ì„ ë°˜í™˜í•œë‹¤.
             {
                 return Mathf.Min(time, actMenstruation ? (int)Mathf.Ceil(readyFragRate / menstruationRate * 2880) : (int)Mathf.Ceil((1-readyFragRate) / menstruationRate * 43200));
             }
@@ -652,8 +656,8 @@ namespace Garunnir.CharacterAppend.BodySystem
                 //{
                 //    isfrag = true;
                 //    AddUpdate(FragSequence);
-                //    //ºê·¹ÀÌÅ©¸¦ °É¸é ÀÛµ¿ÇÏÁö ¾Ê°í ÃÖ¼Ò½Ã°£À» ¹İÈ¯ÇÑ´Ù. ±×¸®°í ´Ù½Ã ÀÛµ¿
-                //    //ÀÌº¥Æ®½Ã°£À» ¹Ì¸® ¿¹ÃøÇÏ·Á¸é..
+                //    //ë¸Œë ˆì´í¬ë¥¼ ê±¸ë©´ ì‘ë™í•˜ì§€ ì•Šê³  ìµœì†Œì‹œê°„ì„ ë°˜í™˜í•œë‹¤. ê·¸ë¦¬ê³  ë‹¤ì‹œ ì‘ë™
+                //    //ì´ë²¤íŠ¸ì‹œê°„ì„ ë¯¸ë¦¬ ì˜ˆì¸¡í•˜ë ¤ë©´..
 
                 //    Breast breast = (Breast)outerBody.core.FindInner("breast");
                 //    if (breast != null)
@@ -680,9 +684,9 @@ namespace Garunnir.CharacterAppend.BodySystem
             public void FragSequence(object obj, CoreEventArgs e)
             {
                 //outerBody.core.corelist[0]
-                //breast °Ë»ö ÄÚ¾îÇÑÅ× ÇÇµå¹é
-                //±×³É Á÷Á¢ ¸í·ÉÇÏÀÚ......
-                //°Ë»öÀ» ¾î¶»°Ô ÇÒÁö »ı°¢ÇÑ´Ù.
+                //breast ê²€ìƒ‰ ì½”ì–´í•œí…Œ í”¼ë“œë°±
+                //ê·¸ëƒ¥ ì§ì ‘ ëª…ë ¹í•˜ì......
+                //ê²€ìƒ‰ì„ ì–´ë–»ê²Œ í• ì§€ ìƒê°í•œë‹¤.
 
             }
 
