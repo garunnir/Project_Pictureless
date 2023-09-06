@@ -21,7 +21,7 @@ namespace PixelCrushers.DialogueSystem
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.PropertyField(serializedObject.FindProperty("persistentDataName"), true);
-            if (GUILayout.Button(new GUIContent("Unique", "Assign a unique persistent data name."), GUILayout.Width(60)))
+            if (GUILayout.Button(new GUIContent("Unique", "Assign a unique persistent data firstName."), GUILayout.Width(60)))
             {
                 AssignUniquePersistentDataName();
             }

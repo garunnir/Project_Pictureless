@@ -20,7 +20,7 @@ namespace PixelCrushers
         [SerializeField]
         private string m_destinationSceneName;
 
-        [Tooltip("If not blank, move the player to the GameObject with this name.")]
+        [Tooltip("If not blank, move the player to the GameObject with this firstName.")]
         [SerializeField]
         private string m_spawnpointNameInDestinationScene;
 

@@ -23,7 +23,7 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("(Optional) Image to show PC portrait during response menu.")]
         public UnityEngine.UI.Image pcImage;
 
-        [Tooltip("(Optional) Text element to show PC name during response menu.")]
+        [Tooltip("(Optional) Text element to show PC firstName during response menu.")]
         public UITextField pcName;
 
         [Tooltip("Set PC Image to actor portrait's native size. Image's Rect Transform can't use Stretch anchors.")]

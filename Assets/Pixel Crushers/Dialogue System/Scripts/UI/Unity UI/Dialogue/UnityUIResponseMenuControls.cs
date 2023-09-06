@@ -31,7 +31,7 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// The label that will show the PC name.
         /// </summary>
-        [Tooltip("The label that will show the PC name.")]
+        [Tooltip("The label that will show the PC firstName.")]
         public UnityEngine.UI.Text pcName;
 
         /// <summary>

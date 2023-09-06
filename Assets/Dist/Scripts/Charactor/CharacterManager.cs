@@ -15,20 +15,26 @@ namespace Garunnir
     [Serializable]
     public class Character
     {
-        //캐릭터 개체정보
-        public string name;
         public int id;
         public Actor dialogueActor;
         public Core bodyCore;
         public Guid guid;
-        private Dictionary<string,(bool,object)> field=new Dictionary<string, (bool,object)>();
-        public Dictionary<string, (bool, object)> GetFieldDic() => field;
+        public Dictionary<string, (bool, object)> field { get; private set; }
+
+        #region cache
+        public Texture2D img_profile;
+        public string name{ get { return GetField<string>(key_name); } set { SetField(key_name, value);  } }
+        string key_name="Name";
+        #endregion
+
+
         public Character(string name,int id)
         {
+            field = new Dictionary<string, (bool, object)>();
             guid= Guid.NewGuid();
             Debug.Log(guid);
-            this.name = name;
             this.id = id;
+            this.name=name;
         }
         public T GetField<T>(string key)
         {
@@ -59,10 +65,10 @@ namespace Garunnir
         {
             //SaveSystem.saveDataApplied += CreateNPCs;
         }
-        void Garam()
+        Character Garam()
         {
             Character cha = Characters.Find(x => x.id == 1);
-            if (cha != null) return;
+            if (cha != null) return cha;
             cha=new Character("Garam",1);
             cha.CreateDefault();
             //cha.SetProfile<HumanProfile>(
@@ -73,20 +79,18 @@ namespace Garunnir
             //자식
             //부모
             //    );
-            cha.SetField("Image.Profile", "Garam",true);
-            cha.SetField("Text.Name", "오르카릇트 비돌돌 가람",true);
-            cha.SetField("Text.OuterAge", "15", true);
-            cha.SetField("Bar.Exp", "34/50", false);
+            cha.SetField(GameManager.Instance.GetFormDic(Form0.image,Form.profile), "Garam",true);
+            cha.SetField(GameManager.Instance.GetFormDic(Form0.text,Form.firstName), "오르카릇트 비돌돌 가람",true);
+            cha.SetField(GameManager.Instance.GetFormDic(Form0.text,Form.outerAge), "15", true);
+            cha.SetField(GameManager.Instance.GetFormDic(Form0.bar,Form.exp), "34/50", true);
             //들어간 순서가 출력순서가 된다.
-            Characters.Add(cha);
+            return cha;
         }
-        public void CreateNPCs()
+        public List<Character> CreateNPCs()
         {
-            if (SaveSystem.currentSavedGameData.charactors.Count!=0) return;
-
-                Garam();
-
-            SaveSystem.currentSavedGameData.charactors=Characters;
+            List<Character> list = new List<Character>();
+            list.Add(Garam());
+            return list;
         }
         public void Init()
         {
@@ -441,10 +445,10 @@ namespace Garunnir.CharacterAppend.BodySystem
             //}
             //json += "}";
             Utillity.ConvertToSaver(GameManager.Instance.GetTypeDic(this.GetType()), name, durability);
-            Utillity.DicConverter(GameManager.form_parts_field, field);
-            Utillity.ListConverter(GameManager.form_parts_inner, innerParts);
-            Utillity.ListConverter(GameManager.form_parts_prev, prev);
-            Utillity.ListConverter(GameManager.form_parts_next, next);
+            Utillity.DicConverter(GameManager.Instance.GetFormDic(Form0.bodyparts, Form.field), field);
+            Utillity.ListConverter(GameManager.Instance.GetFormDic(Form0.bodyparts, Form.inner), innerParts);
+            Utillity.ListConverter(GameManager.Instance.GetFormDic(Form0.bodyparts, Form.prev), prev);
+            Utillity.ListConverter(GameManager.Instance.GetFormDic(Form0.bodyparts, Form.next), next);
             Utillity.stringBuilder.Append(Utillity.divider + Utillity.lf);
         }
         public override void FromJson(string[] strings)

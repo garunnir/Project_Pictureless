@@ -20,16 +20,16 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("(Optional) Image for actor's portrait.")]
         public UnityEngine.UI.Image portraitImage;
 
-        [Tooltip("(Optional) Text element for actor's name.")]
+        [Tooltip("(Optional) Text element for actor's firstName.")]
         public UITextField portraitName;
 
         [Tooltip("Subtitle text.")]
         public UITextField subtitleText;
 
-        [Tooltip("Add speaker's name to subtitle text.")]
+        [Tooltip("Add speaker's firstName to subtitle text.")]
         public bool addSpeakerName = false;
 
-        [Tooltip("Format to add speaker name, where {0} is name and {1} is subtitle text.")]
+        [Tooltip("Format to add speaker firstName, where {0} is firstName and {1} is subtitle text.")]
         public string addSpeakerNameFormat = "{0}: {1}";
 
         [Tooltip("Each subtitle adds to Subtitle Text instead of replacing it.")]
@@ -56,7 +56,7 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("When unfocusing panel, set this animator trigger.")]
         public string unfocusAnimationTrigger = string.Empty;
 
-        [Tooltip("If a player actor uses this panel, don't show player portrait name & image; keep previous NPC portrait visible instead.")]
+        [Tooltip("If a player actor uses this panel, don't show player portrait firstName & image; keep previous NPC portrait visible instead.")]
         public bool onlyShowNPCPortraits = false;
 
         [Tooltip("Check Dialogue Actors for portrait animator controllers. Portrait image must have an Animator.")]

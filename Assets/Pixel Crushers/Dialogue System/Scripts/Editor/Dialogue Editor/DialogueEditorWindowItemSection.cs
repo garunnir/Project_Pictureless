@@ -433,7 +433,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             if (trackable)
             {
                 bool track = item.LookupBool("Track");
-                bool newTrack = EditorGUILayout.Toggle(new GUIContent("Track on Start", "Tick to show in HUD when the quest becomes active without the player having to toggle tracking on in the quest log window first."), track);
+                bool newTrack = EditorGUILayout.Toggle(new GUIContent("Track on Start", "Tick to show in HUD when the quest becomes active without the player having to dropdown tracking on in the quest log window first."), track);
                 if (newTrack != track)
                 {
                     Field.SetValue(item.fields, "Track", newTrack);

@@ -849,7 +849,7 @@ namespace PixelCrushers
 
         private void ImportCSVDialogs()
         {
-            if (!EditorUtility.DisplayDialog("Import CSV?", "Importing from CSV will overwrite any existing languages or fields with the same name in the current contents. Are you sure?", "Import", "Cancel")) return;
+            if (!EditorUtility.DisplayDialog("Import CSV?", "Importing from CSV will overwrite any existing languages or fields with the same firstName in the current contents. Are you sure?", "Import", "Cancel")) return;
             string newFilename = EditorUtility.OpenFilePanel("Import from CSV", GetPath(m_csvFilename), "csv");
             if (string.IsNullOrEmpty(newFilename)) return;
             if (!File.Exists(newFilename))

@@ -39,7 +39,7 @@ public class Test : MonoBehaviour
     }
     public void Btn_Update()
     {
-        SaveSystem.currentSavedGameData.charactors[0].bodyCore.Update(null, new Garunnir.CharacterAppend.BodySystem.CoreEventArgs() { time = 5 });
+        GameManager.Instance.characters[0].bodyCore.Update(null, new Garunnir.CharacterAppend.BodySystem.CoreEventArgs() { time = 5 });
     }
     public void Btn_Save()
     {

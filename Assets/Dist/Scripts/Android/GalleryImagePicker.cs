@@ -1,8 +1,9 @@
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
-
-public class GalleryImagePicker : MonoBehaviour
+namespace Garunnir
+{
+    public class GalleryImagePicker : MonoBehaviour
 {
     public Button chanage;
     public RawImage img;
@@ -22,7 +23,7 @@ public class GalleryImagePicker : MonoBehaviour
     {
         if(string.IsNullOrEmpty(filename)) { filename = "mainChara"; }
         if(File.Exists(GameManager.path_img_mainP))
-        img.texture = LoadImage(GameManager.path_img_mainP);
+        img.texture = Utillity.LoadImage(GameManager.path_img_mainP);
     }
     public void ChangeImage()
     {
@@ -36,23 +37,8 @@ public class GalleryImagePicker : MonoBehaviour
     }
     private void ImgApply(string path)
     {
-        img.texture=LoadImage(path);
+        img.texture=Utillity.LoadImage(path);
     }
-    Texture2D LoadImage(string path)
-    {
-        byte[] bytes = File.ReadAllBytes(path);
-        if (bytes != null)
-        {
-            print("findByte");
-            Texture2D texture = new Texture2D(1, 1, TextureFormat.ARGB32, false);
-            bool boolen=texture.LoadImage(bytes);
-            if (boolen)
-            {
-                print("loadDone");
-                return texture;
-            }
-            else return null;
-        }
-        else { return null; }
-    }
+
+}
 }

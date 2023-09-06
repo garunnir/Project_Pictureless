@@ -399,7 +399,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_currentLanguagePlayerPrefsKey: ko
-  m_textTable: {fileID: 0}
+  m_textTable: {fileID: 11400000, guid: cad0cb0e6b9d70449a7c2733759d2028, type: 2}
   m_additionalTextTables: []
   m_localizedFonts: {fileID: 11400000, guid: d18ca68dafa56db4ca7b901d1ef9e40a, type: 2}
   m_saveLanguageInPlayerPrefs: 1
@@ -1249,6 +1249,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ce7094a52eeaad6498f0417846fe3fc6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  localizeTable: {fileID: 11400000, guid: cad0cb0e6b9d70449a7c2733759d2028, type: 2}
+  characters: []
 --- !u!4 &1913202923
 Transform:
   m_ObjectHideFlags: 0

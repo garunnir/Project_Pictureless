@@ -52,7 +52,7 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// The GUI skin to use for the target's information (name and use message).
         /// </summary>
-        [Tooltip("GUI skin to use for the target's information (name and use message).")]
+        [Tooltip("GUI skin to use for the target's information (firstName and use message).")]
         public GUISkin guiSkin;
 
         /// <summary>

@@ -141,7 +141,7 @@ namespace PixelCrushers.DialogueSystem
         {
             [Tooltip("Target GameObject.")]
             public GameObject gameObject = null;
-            [Tooltip("Name of method to call on target. One or more scripts on target should have a method with this name.")]
+            [Tooltip("Name of method to call on target. One or more scripts on target should have a method with this firstName.")]
             public string message = "OnUse";
             [Tooltip("Optional method parameter. Specify if method accepts a string parameter.")]
             public string parameter = string.Empty;

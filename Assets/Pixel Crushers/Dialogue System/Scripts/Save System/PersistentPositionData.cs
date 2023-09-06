@@ -77,7 +77,7 @@ namespace PixelCrushers.DialogueSystem
                 var spawnpoint = Tools.GameObjectHardFind(spawnpointName);
                 if (spawnpoint == null)
                 {
-                    if (DialogueDebug.logWarnings) Debug.LogWarning("Dialogue System: Persistent Position Data found Actor[" + actorName + "].Spawnpoint value '" + spawnpointName + "' but can't find a GameObject with this name in the scene. Moving actor to saved position instead.", this);
+                    if (DialogueDebug.logWarnings) Debug.LogWarning("Dialogue System: Persistent Position Data found Actor[" + actorName + "].Spawnpoint value '" + spawnpointName + "' but can't find a GameObject with this firstName in the scene. Moving actor to saved position instead.", this);
                 }
                 else
                 {

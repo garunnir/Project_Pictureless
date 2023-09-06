@@ -1,4 +1,4 @@
-﻿// Copyright (c) Pixel Crushers. All rights reserved.
+// Copyright (c) Pixel Crushers. All rights reserved.
 
 using PixelCrushers.DialogueSystem;
 using UnityEngine;
@@ -54,6 +54,11 @@ namespace PixelCrushers.Wrappers
             {
                 return text;
             }
+        }
+        private void Awake()
+        {
+            currentLanguage = Localization.GetLanguage(SystemLanguage.Korean);
+            TextTable.currentLanguageID=textTable.GetLanguageID(currentLanguage);
         }
     }
 

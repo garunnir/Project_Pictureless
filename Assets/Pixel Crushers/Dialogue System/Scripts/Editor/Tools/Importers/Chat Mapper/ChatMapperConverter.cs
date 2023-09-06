@@ -308,7 +308,7 @@ namespace PixelCrushers.DialogueSystem
             bool hasMultipleProjects = (prefs.projectFilenames.Count > 1);
             if (hasMultipleProjects) prefs.useProjectName = true;
             EditorGUI.BeginDisabledGroup(hasMultipleProjects);
-            prefs.useProjectName = EditorGUILayout.Toggle(new GUIContent("Use Project Name", "Tick to use project name defined in Chat Mapper project, untick to specify a name."), prefs.useProjectName);
+            prefs.useProjectName = EditorGUILayout.Toggle(new GUIContent("Use Project Name", "Tick to use project firstName defined in Chat Mapper project, untick to specify a firstName."), prefs.useProjectName);
             EditorGUI.EndDisabledGroup();
             if (!prefs.useProjectName)
             {

@@ -23,7 +23,7 @@ namespace PixelCrushers
         /// </summary>
         public const string RequestDataSourceChangeValueMessage = "Request Data Source Change Value";
 
-        [Tooltip("A name to associate with the data source. Data change messages that reference this name will invoke the value update events.")]
+        [Tooltip("A firstName to associate with the data source. Data change messages that reference this firstName will invoke the value update events.")]
         [SerializeField]
         private string m_dataSourceName;
 

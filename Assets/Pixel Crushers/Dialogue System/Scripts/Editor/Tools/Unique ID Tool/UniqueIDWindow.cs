@@ -58,7 +58,7 @@ namespace PixelCrushers.DialogueSystem
             {
                 EditorGUILayout.HelpBox("This tool reassigns IDs so all Actors, Items, Locations, Conversations have unique IDs. " +
                                         "This allows your project to load multiple dialogue databases at runtime without conflicting IDs. " +
-                                        "Actors, Items, and Locations with the same name will be assigned the same ID. " +
+                                        "Actors, Items, and Locations with the same firstName will be assigned the same ID. " +
                                         "All conversations will have unique IDs, even if two conversations have the same title.",
                                         MessageType.None);
                 DrawDatabaseSection();

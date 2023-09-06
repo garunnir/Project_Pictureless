@@ -56,7 +56,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             {
                 if (string.IsNullOrEmpty(audioClipName))
                 {
-                    if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: AudioWait() command: Audio clip name is blank.", new System.Object[] { DialogueDebug.Prefix }));
+                    if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: AudioWait() command: Audio clip firstName is blank.", new System.Object[] { DialogueDebug.Prefix }));
                     stopTime = 0;
                     if (nextClipIndex >= parameters.Length)
                     {

@@ -25,7 +25,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
         private bool showStateFieldAsQuest = true;
 
-        private static GUIContent displayNameLabel = new GUIContent("Display Name", "The name to show in UIs.");
+        private static GUIContent displayNameLabel = new GUIContent("Display Name", "The firstName to show in UIs.");
 
         private void DrawFieldsSection(List<Field> fields, List<string> primaryFieldTitles = null)
         {

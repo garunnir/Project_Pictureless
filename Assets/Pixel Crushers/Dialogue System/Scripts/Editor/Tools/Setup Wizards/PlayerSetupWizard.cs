@@ -140,7 +140,7 @@ namespace PixelCrushers.DialogueSystem
         {
             EditorGUILayout.LabelField("Dialogue Actor Component (Optional)", EditorStyles.boldLabel);
             EditorWindowTools.StartIndentedSection();
-            EditorGUILayout.HelpBox("A Dialogue Actor component lets you specify which actor in the database this GameObject is associated with if the GameObject doesn't have the same name as the actor.", MessageType.Info);
+            EditorGUILayout.HelpBox("A Dialogue Actor component lets you specify which actor in the database this GameObject is associated with if the GameObject doesn't have the same firstName as the actor.", MessageType.Info);
             var dialogueActor = pcObject.GetComponent<DialogueActor>();
             var hasDialogueActor = dialogueActor != null;
             var useDialogueActor = EditorGUILayout.Toggle("Use Dialogue Actor", hasDialogueActor);

@@ -18,7 +18,7 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// Overrides the actor name used in conversations.
         /// </summary>
-        [Tooltip("Use this actor name in conversations.")]
+        [Tooltip("Use this actor firstName in conversations.")]
         [ActorPopup(true)]
         [UnityEngine.Serialization.FormerlySerializedAs("overrideName")]
         public string actor;
@@ -27,7 +27,7 @@ namespace PixelCrushers.DialogueSystem
         /// The internal name to use in the dialogue database when saving persistent data.
         /// If blank, uses the override name.
         /// </summary>
-        [Tooltip("Name used when saving persistent data. If blank, use actor name.")]
+        [Tooltip("Name used when saving persistent data. If blank, use actor firstName.")]
         [UnityEngine.Serialization.FormerlySerializedAs("internalName")]        
         public string persistentDataName;
 
@@ -81,13 +81,13 @@ namespace PixelCrushers.DialogueSystem
             [Tooltip("Specify subtitle color for this actor.")]
             public bool setSubtitleColor = false;
 
-            [Tooltip("Prepend actor name and apply color only to name.")]
+            [Tooltip("Prepend actor firstName and apply color only to firstName.")]
             public bool applyColorToPrependedName = false;
 
-            [Tooltip("If prepending actor name, separate from Dialogue Text with this string.")]
+            [Tooltip("If prepending actor firstName, separate from Dialogue Text with this string.")]
             public string prependActorNameSeparator = ": ";
 
-            [Tooltip("If prepending actor name, format this way, where {0} is name + separator, and {1} is Dialogue Text.")]
+            [Tooltip("If prepending actor firstName, format this way, where {0} is firstName + separator, and {1} is Dialogue Text.")]
             public string prependActorNameFormat = "{0}{1}";
 
             [Tooltip("Color to use for this actor's subtitles.")]

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Pixel Crushers. All rights reserved.
+// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using System;
@@ -46,10 +46,6 @@ namespace PixelCrushers
         [SerializeField]
         private List<SaveRecord> m_list = new List<SaveRecord>();
 
-        [SerializeField]
-        public List<Garunnir.Character> charactors { get { Debug.Log("!!"); return _charactors; }set { _charactors = value; } }
-
-        List<Garunnir.Character> _charactors = new List<Garunnir.Character>();
         /// <summary>
         /// The save file format version. This is an arbitrary value that you
         /// can assign by setting SaveSystem.version.

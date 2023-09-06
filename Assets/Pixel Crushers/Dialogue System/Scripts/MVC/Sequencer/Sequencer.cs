@@ -1348,7 +1348,7 @@ namespace PixelCrushers.DialogueSystem
             }
             else if (string.IsNullOrEmpty(animation))
             {
-                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: Animation() command: Animation name is blank.", new System.Object[] { DialogueDebug.Prefix }));
+                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: Animation() command: Animation firstName is blank.", new System.Object[] { DialogueDebug.Prefix }));
             }
             else
             {
@@ -1473,7 +1473,7 @@ namespace PixelCrushers.DialogueSystem
             }
             else if (string.IsNullOrEmpty(animatorParameter))
             {
-                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: AnimatorBool() command: animator parameter name is blank.", new System.Object[] { DialogueDebug.Prefix }));
+                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: AnimatorBool() command: animator parameter firstName is blank.", new System.Object[] { DialogueDebug.Prefix }));
             }
             else
             {
@@ -1510,7 +1510,7 @@ namespace PixelCrushers.DialogueSystem
             }
             else if (string.IsNullOrEmpty(animatorParameter))
             {
-                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: AnimatorInt() command: animator parameter name is blank.", new System.Object[] { DialogueDebug.Prefix }));
+                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: AnimatorInt() command: animator parameter firstName is blank.", new System.Object[] { DialogueDebug.Prefix }));
             }
             else
             {
@@ -1553,7 +1553,7 @@ namespace PixelCrushers.DialogueSystem
                 }
                 else if (string.IsNullOrEmpty(animatorParameter))
                 {
-                    if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: AnimatorFloat() command: animator parameter name is blank.", new System.Object[] { DialogueDebug.Prefix }));
+                    if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: AnimatorFloat() command: animator parameter firstName is blank.", new System.Object[] { DialogueDebug.Prefix }));
                 }
                 else
                 {
@@ -1632,7 +1632,7 @@ namespace PixelCrushers.DialogueSystem
             }
             else if (string.IsNullOrEmpty(stateName))
             {
-                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: AnimatorPlay() command: state name is blank.", new System.Object[] { DialogueDebug.Prefix }));
+                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: AnimatorPlay() command: state firstName is blank.", new System.Object[] { DialogueDebug.Prefix }));
             }
             else
             {

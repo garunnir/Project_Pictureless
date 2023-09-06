@@ -1160,7 +1160,7 @@ namespace PixelCrushers.DialogueSystem
                 {
                     if (string.IsNullOrEmpty(questName))
                     {
-                        if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: A quest name (item name in Item[] table) is null or empty", new System.Object[] { DialogueDebug.Prefix }));
+                        if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: A quest firstName (item firstName in Item[] table) is null or empty", new System.Object[] { DialogueDebug.Prefix }));
                     }
                     else if (!filterGroup || string.Equals(group, thisGroup))
                     {
@@ -1222,7 +1222,7 @@ namespace PixelCrushers.DialogueSystem
                 {
                     if (string.IsNullOrEmpty(questName))
                     {
-                        if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: A quest name (item name in Item[] table) is null or empty", new System.Object[] { DialogueDebug.Prefix }));
+                        if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: A quest firstName (item firstName in Item[] table) is null or empty", new System.Object[] { DialogueDebug.Prefix }));
                     }
                     else if (IsQuestInStateMask(questName, flags))
                     {

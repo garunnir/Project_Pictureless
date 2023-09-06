@@ -30,7 +30,7 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// The text for the name of the current selection.
         /// </summary>
-        [Tooltip("Text element for name of current selection.")]
+        [Tooltip("Text element for firstName of current selection.")]
         public UITextField nameText = null;
 
         /// <summary>

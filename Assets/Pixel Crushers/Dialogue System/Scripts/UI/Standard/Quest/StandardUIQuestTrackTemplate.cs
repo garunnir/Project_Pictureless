@@ -16,7 +16,7 @@ namespace PixelCrushers.DialogueSystem
     {
 
         [Header("Quest Heading")]
-        [Tooltip("The heading - name or description depends on tracker setting")]
+        [Tooltip("The heading - firstName or description depends on tracker setting")]
         public UITextField description;
 
         public StandardUIQuestTemplateAlternateDescriptions alternateDescriptions = new StandardUIQuestTemplateAlternateDescriptions();

@@ -301,7 +301,7 @@ namespace PixelCrushers.DialogueSystem
         {
             if (environment.ContainsKey(new Language.Lua.LuaString(functionName)))
             {
-                if (warnRegisteringExistingFunction && DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Can't register Lua function {1}. A function with that name is already registered.", new System.Object[] { DialogueDebug.Prefix, functionName }));
+                if (warnRegisteringExistingFunction && DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Can't register Lua function {1}. A function with that firstName is already registered.", new System.Object[] { DialogueDebug.Prefix, functionName }));
             }
             else
             {

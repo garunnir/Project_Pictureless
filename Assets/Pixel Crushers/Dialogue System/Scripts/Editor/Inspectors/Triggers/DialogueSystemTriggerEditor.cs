@@ -695,7 +695,7 @@ namespace PixelCrushers.DialogueSystem
             var hd = 14f;
             var fw = (rect.width - hd) / 3;
             EditorGUI.LabelField(new Rect(rect.x + hd, rect.y, fw, rect.height), new GUIContent("Recipient", "GameObject to send message to (i.e, call script method)."));
-            EditorGUI.LabelField(new Rect(rect.x + hd + fw, rect.y, fw, rect.height), new GUIContent("Message", "Method name in a script on recipient."));
+            EditorGUI.LabelField(new Rect(rect.x + hd + fw, rect.y, fw, rect.height), new GUIContent("Message", "Method firstName in a script on recipient."));
             EditorGUI.LabelField(new Rect(rect.x + hd + 2 * fw, rect.y, fw, rect.height), new GUIContent("Parameter", "Optional string parameter to pass to method."));
         }
 
@@ -818,7 +818,7 @@ namespace PixelCrushers.DialogueSystem
             var hd = 14f;
             var fw = (rect.width - hd - ToggleWidth - 4) / 2;
             EditorGUI.LabelField(new Rect(rect.x + hd, rect.y, fw, rect.height), new GUIContent("Animator", "GameObject whose animator to control."));
-            EditorGUI.LabelField(new Rect(rect.x + hd + fw + 2, rect.y, fw, rect.height), new GUIContent("State", "Animator state name to crossfade into."));
+            EditorGUI.LabelField(new Rect(rect.x + hd + fw + 2, rect.y, fw, rect.height), new GUIContent("State", "Animator state firstName to crossfade into."));
             EditorGUI.LabelField(new Rect(rect.x + rect.width - ToggleWidth, rect.y, ToggleWidth, rect.height), new GUIContent("Fade", "Crossfade duration in seconds."));
         }
 
