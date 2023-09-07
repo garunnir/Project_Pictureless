@@ -17,7 +17,7 @@ MonoBehaviour:
   - ko
   - eng
   m_languageValues: 000000000100000002000000
-  m_fieldKeys: 030000000400000005000000
+  m_fieldKeys: 030000000400000005000000060000000700000008000000090000000a0000000b0000000c0000000d0000000e000000
   m_fieldValues:
   - m_fieldName: Text.Name
     m_keys: 010000000000000002000000
@@ -35,5 +35,50 @@ MonoBehaviour:
     m_values:
     - "\uACBD\uD5D8\uCE58"
     - 
+  - m_fieldName: Null
+    m_keys: 0100000000000000
+    m_values:
+    - "\uC5C6\uC74C"
+    - 
+  - m_fieldName: Text.FirstName
+    m_keys: 0100000000000000
+    m_values:
+    - "\uC774\uB984"
+    - 
+  - m_fieldName: Text.NickName
+    m_keys: 0100000000000000
+    m_values:
+    - "\uBCC4\uBA85"
+    - 
+  - m_fieldName: Text.LastName
+    m_keys: 0100000000000000
+    m_values:
+    - "\uC131"
+    - 
+  - m_fieldName: Text.Age
+    m_keys: 0100000000000000
+    m_values:
+    - "\uB098\uC774"
+    - 
+  - m_fieldName: Text.Gender
+    m_keys: 0100000000000000
+    m_values:
+    - "\uC131\uBCC4"
+    - 
+  - m_fieldName: Gender.Male
+    m_keys: 0100000000000000
+    m_values:
+    - "\uB0A8"
+    - 
+  - m_fieldName: Gender.female
+    m_keys: 0100000000000000
+    m_values:
+    - "\uC5EC"
+    - 
+  - m_fieldName: Gender.None
+    m_keys: 0100000000000000
+    m_values:
+    - "\uBB34\uC131"
+    - 
   m_nextLanguageID: 3
-  m_nextFieldID: 6
+  m_nextFieldID: 15

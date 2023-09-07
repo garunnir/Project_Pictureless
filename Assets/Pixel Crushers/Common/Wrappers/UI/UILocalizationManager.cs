@@ -57,6 +57,7 @@ namespace PixelCrushers.Wrappers
         }
         private void Awake()
         {
+            if (textTable == null) return;
             currentLanguage = Localization.GetLanguage(SystemLanguage.Korean);
             TextTable.currentLanguageID=textTable.GetLanguageID(currentLanguage);
         }

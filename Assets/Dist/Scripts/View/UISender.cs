@@ -25,13 +25,23 @@ public class UISender : MonoBehaviour
     public string GetTitle() => title.text;
     public string GetField() => field.text;
     public string[] dropList;
-    public System.Enum Enum;
     private void Start()
     {
+        if(form==Form.gender&&mode==Mode.dropdown)
+        {
+            dropdown.options.Clear();
+            string[] str=System.Enum.GetNames(typeof(Gender));
+            foreach(string str2 in str)
+            {
+                TMP_Dropdown.OptionData data = new TMP_Dropdown.OptionData();
+                data.text= UILocalizationManager.instance.textTable.GetFieldText(GameManager.Instance.GetFormDic(Form.gender,(Gender)System.Enum.Parse(typeof(Gender),str2)));
+                dropdown.options.Add(data);
+            }
+        }
     }
     private void OnEnable()
     {
-        title.text = UILocalizationManager.instance.textTable.GetField(GameManager.Instance.GetFormDic(form0, form)).texts[TextTable.currentLanguageID];
+        title.text = UILocalizationManager.instance.textTable.GetFieldText(GameManager.Instance.GetFormDic(form0, form));
         mother = FindAnyObjectByType<UIModel>();
         if(mother != null)
         mother.field += FieldReturn;
@@ -39,14 +49,20 @@ public class UISender : MonoBehaviour
     }
     void FieldReturn(object o, UIEventArgs e)
     {
+        if (!string.IsNullOrEmpty(e.sfield))
+        {
+            e.sfield += ',';
+        }
         switch (mode)
         {
             case Mode.inputfield:
                 //텍스트 테이블로 번역
-                e.field += Utillity.TupleSigleConv(GetTitle(), true, GetField());
+                e.field.Add(title.text, (true,GetField()));
+                e.sfield += Utillity.TupleSigleConv(GetTitle(), true, GetField());
                 break;
             case Mode.dropdown:
-                e.field += Utillity.TupleSigleConv(GetTitle(), true, dropdown.options[dropdown.value]);
+                e.field.Add(title.text,(true,dropdown.value));
+                e.sfield += Utillity.TupleSigleConv(GetTitle(), true, dropdown.value);
                 break;
         }
     }

@@ -1,3 +1,4 @@
+using Garunnir;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,14 +10,20 @@ public class UIModel : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        var inst = new UIEventArgs();
-        field?.Invoke(null,inst);
-        print(inst.field);
-    }
 
-    private void UIModel_field(object sender, UIEventArgs e)
+    }
+    public void Excute(int id)
     {
-        throw new NotImplementedException();
+        var inst = new UIEventArgs();
+        Character cha=GameManager.Instance.characters.Find(x => x.id == id);
+        if (cha == null)
+        {
+            Debug.LogWarning("isn't Exist charactor. id=" + id);
+            return;
+        }
+        field?.Invoke(cha, inst);
+        cha.SetField(inst.field);
+        Debug.Log(inst.sfield);
     }
 
     // Update is called once per frame
@@ -27,5 +34,6 @@ public class UIModel : MonoBehaviour
 }
 public class UIEventArgs : EventArgs
 {
-    public string field;
+    public string sfield;
+    public Dictionary<string, (bool, object)> field = new Dictionary<string, (bool, object)>();
 }

@@ -3,6 +3,8 @@ using UnityEngine;
 using UnityEditor;
 using System;
 using UnityEditorInternal;
+using UnityEditor.SceneManagement;
+
 namespace Garunnir
 {
     [CustomEditor(typeof(UISender), true)]
@@ -13,7 +15,6 @@ namespace Garunnir
         GenericMenu mform;
         UISender storer;
         GUIContent content;
-        List<string> droplist = new List<string>();
         private ReorderableList list;
         private void Awake()
         {
@@ -33,6 +34,7 @@ namespace Garunnir
                     tmp.AddItem(new GUIContent(item), false, () =>
                     {
                         SetForm<T>(item);
+                        EditorUtility.SetDirty(target);
                     });
                 }
                 return tmp;
@@ -72,17 +74,18 @@ namespace Garunnir
             };
 
         }
-        private void OnDisable()
-        {
-            var prop = serializedObject.FindProperty("dropList");
-            storer.dropdown.options.Clear();
-            for (int i = 0; i < list.count; i++)
-            {
-                TMPro.TMP_Dropdown.OptionData data = new TMPro.TMP_Dropdown.OptionData();
-                data.text = prop.GetArrayElementAtIndex(i).stringValue;
-                storer.dropdown.options.Add(data);
-            }
-        }
+        //private void OnDisable()
+        //{
+        //    storer = target as UISender;
+        //    var prop = serializedObject.FindProperty("dropList");
+        //    storer.dropdown.options.Clear();
+        //    for (int i = 0; i < list.count; i++)
+        //    {
+        //        TMPro.TMP_Dropdown.OptionData data = new TMPro.TMP_Dropdown.OptionData();
+        //        data.text = prop.GetArrayElementAtIndex(i).stringValue;
+        //        storer.dropdown.options.Add(data);
+        //    }
+        //}
         public void SetForm<T>(string form)
         {
             if (typeof(T).Name == typeof(Form0).Name)
@@ -100,8 +103,6 @@ namespace Garunnir
         }
         public override void OnInspectorGUI()
         {
-            //base.OnInspectorGUI();
-
             Draw();
         }
         protected virtual void Draw()
@@ -117,12 +118,10 @@ namespace Garunnir
             switch (storer.mode)
             {
                 case UISender.Mode.dropdown:
-                    storer.dropdown = EditorGUILayout.ObjectField("dropdown", storer.dropdown, typeof(TMPro.TMP_Dropdown), true) as TMPro.TMP_Dropdown;
                     serializedObject.Update();
+                    storer.dropdown = EditorGUILayout.ObjectField("dropdown", storer.dropdown, typeof(TMPro.TMP_Dropdown), true) as TMPro.TMP_Dropdown;
                     list.DoLayoutList();
                     serializedObject.ApplyModifiedProperties();
-
-
                     break;
                 case UISender.Mode.inputfield:
                     storer.field = EditorGUILayout.ObjectField("inputfield", storer.field, typeof(TMPro.TMP_InputField), true) as TMPro.TMP_InputField;

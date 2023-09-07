@@ -48,6 +48,13 @@ namespace Garunnir
             }
             else field.Add(key, (open, value));
         }
+        public void SetField(Dictionary<string, (bool, object)> fielddic)
+        {
+            foreach (var item in fielddic)
+            {
+                SetField(item.Key, item.Value.Item2, item.Value.Item1);
+            }
+        }
         public void DeleteField(string key)
         {
             if(field.ContainsKey(key)) field.Remove(key);
@@ -64,6 +71,14 @@ namespace Garunnir
         private void Awake()
         {
             //SaveSystem.saveDataApplied += CreateNPCs;
+        }
+        Character MainC()
+        {
+            Character cha = Characters.Find(x => x.id == 0);
+            if (cha != null) return cha;
+            cha = new Character("MainPlayer", 0);
+            cha.CreateDefault();
+            return cha;
         }
         Character Garam()
         {
@@ -89,6 +104,7 @@ namespace Garunnir
         public List<Character> CreateNPCs()
         {
             List<Character> list = new List<Character>();
+            list.Add(MainC());
             list.Add(Garam());
             return list;
         }
@@ -139,7 +155,17 @@ namespace Garunnir
 
     }
 
-
+    //[CreateAssetMenu(fileName ="createNPCSO")]
+    public class NPCCharacterSO : ScriptableObject
+    {
+        public SOContainer[] imgContainer;
+    }
+    [Serializable]
+    public class SOContainer
+    {
+        public int id;
+        public Texture2D texture;
+    }
 
 
 }
@@ -181,7 +207,6 @@ namespace Garunnir.CharacterAppend.BodySystem
         public int time { get; set; }
         public DateTime TimeReached { get; set; }
     }
-    [Serializable]
     public class Core
     {
         public List<BodyParts> corelist = new List<BodyParts>();

@@ -8,9 +8,10 @@ namespace Garunnir
     public Button chanage;
     public RawImage img;
     public string filename;
+        string _filepath;
     private void Awake()
     {
-        chanage.onClick.AddListener(()=>ChangeImage());
+        chanage.onClick.AddListener(()=>ChangeImage(_filepath));
     }
     // 갤러리에서 이미지 선택 후 호출되는 콜백 메서드
     public void OnImagePicked(string imagePath)
@@ -21,17 +22,18 @@ namespace Garunnir
     
     private void OnEnable()
     {
-        if(string.IsNullOrEmpty(filename)) { filename = "mainChara"; }
-        if(File.Exists(GameManager.path_img_mainP))
-        img.texture = Utillity.LoadImage(GameManager.path_img_mainP);
+        if(string.IsNullOrEmpty(filename)) { _filepath = GameManager.charProfleImg + 0; }
+           else _filepath = Path.Combine(GameManager.charProfleImg + filename);
+            if (File.Exists(_filepath))
+        img.texture = Utillity.LoadImage(_filepath);
     }
-    public void ChangeImage()
+    public void ChangeImage(string filepath)
     {
         NativeGallery.GetImageFromGallery((path) =>
         {
             print("CI:" + path);
-            File.Copy(path, GameManager.path_img_mainP,true);
-            print("Dest:"+ GameManager.path_img_mainP);
+            File.Copy(path, filepath, true);
+            print("Dest:"+ filepath);
             ImgApply(path);
         }, "캐릭터 프로필 사진 선택", "image/*");
     }

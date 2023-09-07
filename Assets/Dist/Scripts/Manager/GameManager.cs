@@ -17,7 +17,7 @@ namespace Garunnir
         none,
         id, field, inner, prev, next,
         
-        profile,firstName, outerAge, exp,nickName, gender, lastName,
+        profile,firstName, outerAge, exp,nickName, gender, lastName,age
 
     }
     public enum Form0
@@ -35,12 +35,13 @@ namespace Garunnir
     {
         #region SO
         [SerializeField] TextTable localizeTable;
+        [SerializeField] NPCCharacterSO characterSO;
         public TextTable GetLoTable() => localizeTable;
         #endregion
         #region DataConfig
         public const int createStart = 10000;//start id to created charactor
         private Dictionary<Type, string> TypeDic;
-        public Dictionary<(Form0, Form), string> FormStrDic { get; private set; }
+        public Dictionary<(Enum, Enum), string> FormStrDic { get; private set; }
         //public const string form_cha_name = "Name";
         //public const string form_cha_id = "Id";
         //public const string form_parts_field = "Field";
@@ -49,14 +50,14 @@ namespace Garunnir
         //public const string form_parts_next = "next";
         //public const string form_cha_profile_syntax_show  = "[show]";
         //public const string form_cha_profile_syntax_hide  = "[hide]";
-        public static string path_img_mainP { get; private set; }
+        public static string charProfleImg { get; private set; }
         void DataConfig()
         {
             TypeDic = new Dictionary<Type, string>();
             TypeDic.Add(typeof(MechBody), "Bodyparts.Mech");
             TypeDic.Add(typeof(HumanoidBody), "Bodyparts.Human");
 
-            FormStrDic = new Dictionary<(Form0, Form), string>();
+            FormStrDic = new Dictionary<(Enum, Enum), string>();
             FormStrDic.Add((Form0.character,Form.id), "Id");
             FormStrDic.Add((Form0.character,Form.field), "Field");
             FormStrDic.Add((Form0.bodyparts,Form.field), "Field");
@@ -71,15 +72,18 @@ namespace Garunnir
             FormStrDic.Add((Form0.text, Form.nickName), "Text.NickName");
             FormStrDic.Add((Form0.text, Form.lastName), "Text.LastName");
             FormStrDic.Add((Form0.text, Form.gender), "Text.Gender");
-
-            path_img_mainP = Path.Combine(Application.persistentDataPath, "mainChara");
-            //Debug.Log("DT:" + path_img_mainP);//??이거 안들어가면 인식 안됨 ㅋㅋ
+            FormStrDic.Add((Form0.text, Form.age), "Text.Age");
+            FormStrDic.Add((Form.gender, Gender.male),"Gender.Male");
+            FormStrDic.Add((Form.gender, Gender.none),"Gender.None");
+            FormStrDic.Add((Form.gender, Gender.female),"Gender.female");
+            charProfleImg = Path.Combine(Application.persistentDataPath, "Char","CharProfile");
+            Utillity.CheckFolderInPath(charProfleImg);
         }
         public string GetTypeDic(Type type)
         {
             return TypeDic[type];
         }
-        public string GetFormDic(Form0 form0, Form form)
+        public string GetFormDic(Enum form0, Enum form)
         {
             return FormStrDic[(form0,form)];
         }
@@ -99,15 +103,17 @@ namespace Garunnir
             }
             AddTableField(Form0.none, Form.none, "없음");
             AddTableField(Form0.text, Form.firstName, "이름");
+            AddTableField(Form0.text, Form.nickName, "별명");
             AddTableField(Form0.text, Form.outerAge, "외관나이");
             AddTableField(Form0.bar, Form.exp, "경험치");
-            AddTableField(Form0.none, Form.none, "성");
-            AddTableField(Form0.none, Form.none, "이름");
-            AddTableField(Form0.none, Form.none, "나이");
-            AddTableField(Form0.none, Form.none, "외형나이");
-            AddTableField(Form0.none, Form.none, "성별");
+            AddTableField(Form0.text, Form.lastName, "성");
+            AddTableField(Form0.text, Form.age, "나이");
+            AddTableField(Form0.text, Form.gender, "성별");
+            AddTableField(Form.gender, Gender.male, "남");
+            AddTableField(Form.gender, Gender.female, "여");
+            AddTableField(Form.gender, Gender.none, "무성");
         }
-        void AddTableField(Form0 arg0,Form arg,string value, string lang = "ko")
+        void AddTableField(Enum arg0,Enum arg,string value, string lang = "ko")
         {
             localizeTable.AddField(GetFormDic(arg0, arg));
             localizeTable.SetFieldTextForLanguage(GetFormDic(arg0, arg), lang, value);
@@ -142,6 +148,14 @@ namespace Garunnir
         private void StarterInit()
         {
             characters=charactorManager.CreateNPCs();
+            foreach (Character character in characters)
+            {
+                if(character.img_profile==null)
+                {
+                    SOContainer charaimg =characterSO.imgContainer.Where(x => x.id == character.id) as SOContainer;
+                    character.img_profile = charaimg.texture;
+                }
+            }
         }
         private void LoadChar()
         {
@@ -156,7 +170,10 @@ namespace Garunnir
         void LoadCharPicture()
         {
             if (characters.Count == 0) return;
-            characters[0].img_profile=Utillity.LoadImage(GameManager.path_img_mainP);
+            for (int i = 0; i < characters.Count; i++)
+            {
+                characters[i].img_profile = Utillity.LoadImage(GameManager.charProfleImg + i);
+            }
         }
     }
     public class Utillity
@@ -186,20 +203,14 @@ namespace Garunnir
         }
         public static string CheckFolderInPath(string path)
         {
-            string[] dirs = path.Split('/');
-            string tmpstr = dirs[0];
-            for (int i = 1; i < dirs.Length; i++)
-            {
-                if (!Directory.Exists(tmpstr))
-                {
-                    Directory.CreateDirectory(tmpstr);
-                }
-                tmpstr += "/" + dirs[i];
-            }
+            path=path.Remove(path.LastIndexOf('\\'));
+            DirectoryInfo directoryInfo = new DirectoryInfo(path);
+            directoryInfo.Create();
             return path;
         }
         public static Texture2D LoadImage(string path)
         {
+            if (!File.Exists(path)) return null;
             byte[] bytes = File.ReadAllBytes(path);
             if (bytes != null)
             {
@@ -289,12 +300,8 @@ namespace Garunnir
         }
         public static string TupleSigleConv(string a,bool b,object c)
         {
+            if (c.ToString() == string.Empty) c = "Null";
             return string.Format("{0}={1}|{2}",a, b, c);
-            //stringBuilder.Append(a);
-            //stringBuilder.Append("=");
-            //stringBuilder.Append(b);
-            //stringBuilder.Append('|');
-            //stringBuilder.Append(c);
         }
         public static void TupleDicConv(string head, Dictionary<string, (bool, object)> tupledic)
         {
