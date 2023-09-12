@@ -32,6 +32,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             }
             set
             {
+                Debug.Log("!@!");
                 _currentConversation = value;
                 if (value != null) currentConversationID = value.id;
             }
@@ -66,6 +67,10 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             conversationTitles = null;
             OpenConversation(database.GetConversation(currentConversationID));
             if (toolbar.Current == Toolbar.Tab.Conversations && Selection.activeObject == database)
+            {
+                SetCurrentEntryByID();
+            }
+            else if (toolbar.Current == Toolbar.Tab.Maps && Selection.activeObject == database)
             {
                 SetCurrentEntryByID();
             }

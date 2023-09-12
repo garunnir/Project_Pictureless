@@ -1,4 +1,4 @@
-﻿// Copyright (c) Pixel Crushers. All rights reserved.
+// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using UnityEditor;
@@ -21,7 +21,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         [SerializeField]
         private bool searchCaseSensitive = false;
 
-        private bool IsSearchBarVisible { get { return isSearchBarOpen && (toolbar.Current == Toolbar.Tab.Conversations); } }
+        private bool IsSearchBarVisible { get { return isSearchBarOpen && ((toolbar.Current == Toolbar.Tab.Conversations)|| toolbar.Current == Toolbar.Tab.Maps); } }
 
         private void ToggleDialogueTreeSearchBar()
         {

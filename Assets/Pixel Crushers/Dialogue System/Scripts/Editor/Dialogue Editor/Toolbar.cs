@@ -1,4 +1,4 @@
-﻿// Copyright (c) Pixel Crushers. All rights reserved.
+// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using UnityEditor;
@@ -14,7 +14,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
     public class Toolbar
     {
 
-        public enum Tab { Database, Actors, Items, Locations, Variables, Conversations, Templates }
+        public enum Tab { Database, Actors, Items, Locations, Variables, Conversations, Templates ,Maps}
 
         public Tab current = Tab.Database;
         public Tab Current
@@ -23,7 +23,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             set { current = value; }
         }
 
-        private string[] ToolbarStrings = { "Database", "Actors", "Items", "Locations", "Variables", "Conversations", "Templates" };
+        private string[] ToolbarStrings = { "Database", "Actors", "Items", "Locations", "Variables", "Conversations", "Templates" ,"Maps"};
         private const int ItemsToolbarIndex = 2;
         private const string ItemsToolbarString = "Items";
         private const string ItemsAsQuestsToolbarString = "Quests/Items";

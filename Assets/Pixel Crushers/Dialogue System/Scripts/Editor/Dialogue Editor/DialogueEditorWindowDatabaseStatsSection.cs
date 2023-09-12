@@ -1,4 +1,4 @@
-﻿// Copyright (c) Pixel Crushers. All rights reserved.
+// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using UnityEditor;
@@ -24,6 +24,9 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             public int numConversations;
             public int numDialogueEntries;
             public int numDialogueEntriesNonBlank;
+            public int numMapContainers;
+            public int numMapEntries;
+            public int numMapEntriesNonBlank;
             public int numSceneEvents;
 
             public int questWordCount;
@@ -53,6 +56,9 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 EditorGUILayout.IntField("Variables", stats.numVariables);
                 EditorGUILayout.IntField("Conversations", stats.numConversations);
                 EditorGUILayout.IntField("Dialogue Entries", stats.numDialogueEntries);
+                EditorGUILayout.IntField("MapContainers", stats.numMapContainers);
+                EditorGUILayout.IntField("Map Entries", stats.numMapEntries);
+                EditorGUILayout.IntField("Map non-blank", stats.numMapEntriesNonBlank);
                 EditorGUILayout.IntField("Entries non-blank", stats.numDialogueEntriesNonBlank);
                 EditorGUILayout.IntField("Scene Events", stats.numSceneEvents);
                 EditorGUILayout.Space(EditorGUIUtility.singleLineHeight);

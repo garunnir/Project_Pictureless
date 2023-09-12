@@ -1,4 +1,4 @@
-﻿// Copyright (c) Pixel Crushers. All rights reserved.
+// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using UnityEditor;
@@ -459,11 +459,11 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             DrawOtherQuestPrimaryFields(item);
 
             // Descriptions:
-            DrawRevisableTextAreaField(questDescriptionLabel, item, null, item.fields, "Description");
+            DrawRevisableTextAreaField(questDescriptionLabel, item, item.fields, "Description");
             DrawLocalizedVersions(item, item.fields, "Description {0}", false, FieldType.Text);
-            DrawRevisableTextAreaField(questSuccessDescriptionLabel, item, null, item.fields, "Success Description");
+            DrawRevisableTextAreaField(questSuccessDescriptionLabel, item,  item.fields, "Success Description");
             DrawLocalizedVersions(item, item.fields, "Success Description {0}", false, FieldType.Text);
-            DrawRevisableTextAreaField(questFailureDescriptionLabel, item, null, item.fields, "Failure Description");
+            DrawRevisableTextAreaField(questFailureDescriptionLabel, item, item.fields, "Failure Description");
             DrawLocalizedVersions(item, item.fields, "Failure Description {0}", false, FieldType.Text);
 
             // Entries:
@@ -653,7 +653,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
             // Text:
             DrawRevisableTextField(new GUIContent(entryTitle), item, null, item.fields, entryTitle);
-            DrawLocalizedVersions(item, null, item.fields, entryTitle + " {0}", false, FieldType.Text, alreadyDrawn);
+            DrawLocalizedVersions(item, item.fields, entryTitle + " {0}", false, FieldType.Text, alreadyDrawn);
 
             // Other "Entry # " fields:
             string entryTitleWithSpace = entryTitle + " ";

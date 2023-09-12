@@ -96,14 +96,299 @@ namespace PixelCrushers.DialogueSystem
             gameObjectDragDropCommand = commands.gameObjectDragDropCommand;
             alternateGameObjectDragDropCommand = commands.alternateGameObjectDragDropCommand;
         }
-
-        public static string DrawLayout(GUIContent guiContent, string sequence, ref Rect rect, DialogueEntry entry = null, Field field = null)
+        //public static string DrawLayout(GUIContent guiContent, string sequence, ref Rect rect)
+        //{
+        //    var syntaxState = SequenceSyntaxState.Unchecked;
+        //    return DrawLayout(guiContent, sequence, ref rect, ref syntaxState, null, null);
+        //}
+        public static string DrawLayout(GUIContent guiContent, string sequence, ref Rect rect, DialogueEntry entry, Field field)
         {
             var syntaxState = SequenceSyntaxState.Unchecked;
             return DrawLayout(guiContent, sequence, ref rect, ref syntaxState, entry, field);
         }
+        public static string DrawLayout(GUIContent guiContent, string sequence, ref Rect rect, MapEntry entry, Field field)
+        {
+            var syntaxState = SequenceSyntaxState.Unchecked;
+            return DrawLayout(guiContent, sequence, ref rect, ref syntaxState, entry, field);
+        }
+        public static string DrawLayout(GUIContent guiContent, string sequence, ref Rect rect, ref SequenceSyntaxState syntaxState)
+        {
+            if (!string.IsNullOrEmpty(queuedText))
+            {
+                if (!string.IsNullOrEmpty(sequence)) sequence += ";\n";
+                sequence += queuedText;
+                queuedText = string.Empty;
+                GUI.changed = true;
+            }
 
-        public static string DrawLayout(GUIContent guiContent, string sequence, ref Rect rect, ref SequenceSyntaxState syntaxState, DialogueEntry entry = null, Field field = null)
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(guiContent);
+
+
+            EditorGUI.BeginDisabledGroup(string.IsNullOrEmpty(sequence));
+            if (GUILayout.Button(new GUIContent("Check", "Check sequence for errors."), EditorStyles.miniButton, GUILayout.Width(52)))
+            {
+                syntaxState = CheckSyntax(sequence);
+            }
+            EditorGUI.EndDisabledGroup();
+
+            EditorGUI.BeginChangeCheck();
+
+            if (GUILayout.Button("+", EditorStyles.miniButton, GUILayout.Width(26)))
+            {
+                DrawContextMenu(sequence);
+            }
+            EditorGUILayout.EndHorizontal();
+            if (menuResult != MenuResult.Unselected)
+            {
+                sequence = ApplyMenuResult(menuResult, sequence);
+                menuResult = MenuResult.Unselected;
+            }
+
+            SetSyntaxStateGUIColor(syntaxState);
+
+            var newSequence = EditorGUILayout.TextArea(sequence);
+
+            ClearSyntaxStateGUIColor();
+            if (!string.Equals(newSequence, sequence))
+            {
+                sequence = newSequence;
+                GUI.changed = true;
+            }
+
+            switch (Event.current.type)
+            {
+                case EventType.Repaint:
+                    rect = GUILayoutUtility.GetLastRect();
+                    break;
+                case EventType.DragUpdated:
+                case EventType.DragPerform:
+                    if (rect.Contains(Event.current.mousePosition))
+                    {
+                        DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                        if (Event.current.type == EventType.DragPerform)
+                        {
+                            DragAndDrop.AcceptDrag();
+                            foreach (var obj in DragAndDrop.objectReferences)
+                            {
+                                if (tryDragAndDrop != null && tryDragAndDrop(obj, ref sequence))
+                                {
+                                    GUI.changed = true;
+                                }
+                                else if (obj is AudioClip)
+                                {
+                                    // Drop audio clip according to selected audio command:
+                                    var currentAudioCommand = GetCurrentAudioCommand();
+                                    if (string.IsNullOrEmpty(currentAudioCommand)) continue;
+                                    var clip = obj as AudioClip;
+                                    var path = AssetDatabase.GetAssetPath(clip);
+                                    if (path.Contains("Resources"))
+                                    {
+                                        sequence = AddCommandToSequence(sequence, currentAudioCommand + "(" + GetResourceName(path) + ")");
+                                        GUI.changed = true;
+                                    }
+                                    else if (currentAudioCommand == "LipSync")
+                                    {
+                                        sequence = AddCommandToSequence(sequence, currentAudioCommand + "(" + System.IO.Path.GetFileNameWithoutExtension(path) + ")");
+                                        GUI.changed = true;
+                                    }
+                                    else
+                                    {
+                                        EditorUtility.DisplayDialog("Not in Resources Folder", "To use drag-n-drop, audio clips must be located in the hierarchy of a Resources folder.", "OK");
+                                    }
+                                }
+                                else if (obj is GameObject)
+                                {
+                                    // Drop GameObject.
+                                    var go = obj as GameObject;
+                                    if (sequence.EndsWith("("))
+                                    {
+                                        // If sequence ends in open paren, add GameObject and close:
+                                        sequence += go.name + ")";
+                                    }
+                                    else
+                                    {
+                                        // Drop GameObject according to selected GameObject command:
+                                        var command = Event.current.alt ? alternateGameObjectDragDropCommand : gameObjectDragDropCommand;
+                                        var currentGameObjectCommand = GetCurrentGameObjectCommand(command, go.name);
+                                        if (string.IsNullOrEmpty(currentGameObjectCommand)) continue;
+                                        sequence = AddCommandToSequence(sequence, currentGameObjectCommand);
+                                    }
+                                    GUI.changed = true;
+                                }
+                                else if (obj is Component)
+                                {
+                                    // Drop component.
+                                    var component = obj as Component;
+                                    var go = component.gameObject;
+                                    if (sequence.EndsWith("("))
+                                    {
+                                        // If sequence ends in open paren, add component and close:
+                                        sequence += component.GetType().Name + ")";
+                                    }
+                                    else
+                                    {
+                                        // Drop component according to selected component command:
+                                        var command = Event.current.alt ? alternateComponentDragDropCommand : componentDragDropCommand;
+                                        var currentComponentCommand = GetCurrentComponentCommand(command, component.GetType().Name, go.name);
+                                        if (string.IsNullOrEmpty(currentComponentCommand)) continue;
+                                        sequence = AddCommandToSequence(sequence, currentComponentCommand);
+                                    }
+                                    GUI.changed = true;
+                                }
+                            }
+                        }
+                    }
+                    break;
+            }
+
+            // If content changed, reset syntax check state:
+            if (EditorGUI.EndChangeCheck()) syntaxState = SequenceSyntaxState.Unchecked;
+
+            return sequence;
+        }
+        public static string DrawLayout(GUIContent guiContent, string sequence, ref Rect rect, ref SequenceSyntaxState syntaxState, MapEntry entry, Field field = null)
+        {
+            if (!string.IsNullOrEmpty(queuedText))
+            {
+                if (!string.IsNullOrEmpty(sequence)) sequence += ";\n";
+                sequence += queuedText;
+                queuedText = string.Empty;
+                GUI.changed = true;
+            }
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(guiContent);
+
+            if (entry != null && field != null && DialogueEditor.DialogueEditorWindow.instance != null)
+            {
+                DialogueEditor.DialogueEditorWindow.instance.DrawAISequence(entry, field);
+            }
+
+            EditorGUI.BeginDisabledGroup(string.IsNullOrEmpty(sequence));
+            if (GUILayout.Button(new GUIContent("Check", "Check sequence for errors."), EditorStyles.miniButton, GUILayout.Width(52)))
+            {
+                syntaxState = CheckSyntax(sequence);
+            }
+            EditorGUI.EndDisabledGroup();
+
+            EditorGUI.BeginChangeCheck();
+
+            if (GUILayout.Button("+", EditorStyles.miniButton, GUILayout.Width(26)))
+            {
+                DrawContextMenu(sequence);
+            }
+            EditorGUILayout.EndHorizontal();
+            if (menuResult != MenuResult.Unselected)
+            {
+                sequence = ApplyMenuResult(menuResult, sequence);
+                menuResult = MenuResult.Unselected;
+            }
+
+            SetSyntaxStateGUIColor(syntaxState);
+
+            var newSequence = EditorGUILayout.TextArea(sequence);
+
+            ClearSyntaxStateGUIColor();
+            if (!string.Equals(newSequence, sequence))
+            {
+                sequence = newSequence;
+                GUI.changed = true;
+            }
+
+            switch (Event.current.type)
+            {
+                case EventType.Repaint:
+                    rect = GUILayoutUtility.GetLastRect();
+                    break;
+                case EventType.DragUpdated:
+                case EventType.DragPerform:
+                    if (rect.Contains(Event.current.mousePosition))
+                    {
+                        DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                        if (Event.current.type == EventType.DragPerform)
+                        {
+                            DragAndDrop.AcceptDrag();
+                            foreach (var obj in DragAndDrop.objectReferences)
+                            {
+                                if (tryDragAndDrop != null && tryDragAndDrop(obj, ref sequence))
+                                {
+                                    GUI.changed = true;
+                                }
+                                else if (obj is AudioClip)
+                                {
+                                    // Drop audio clip according to selected audio command:
+                                    var currentAudioCommand = GetCurrentAudioCommand();
+                                    if (string.IsNullOrEmpty(currentAudioCommand)) continue;
+                                    var clip = obj as AudioClip;
+                                    var path = AssetDatabase.GetAssetPath(clip);
+                                    if (path.Contains("Resources"))
+                                    {
+                                        sequence = AddCommandToSequence(sequence, currentAudioCommand + "(" + GetResourceName(path) + ")");
+                                        GUI.changed = true;
+                                    }
+                                    else if (currentAudioCommand == "LipSync")
+                                    {
+                                        sequence = AddCommandToSequence(sequence, currentAudioCommand + "(" + System.IO.Path.GetFileNameWithoutExtension(path) + ")");
+                                        GUI.changed = true;
+                                    }
+                                    else
+                                    {
+                                        EditorUtility.DisplayDialog("Not in Resources Folder", "To use drag-n-drop, audio clips must be located in the hierarchy of a Resources folder.", "OK");
+                                    }
+                                }
+                                else if (obj is GameObject)
+                                {
+                                    // Drop GameObject.
+                                    var go = obj as GameObject;
+                                    if (sequence.EndsWith("("))
+                                    {
+                                        // If sequence ends in open paren, add GameObject and close:
+                                        sequence += go.name + ")";
+                                    }
+                                    else
+                                    {
+                                        // Drop GameObject according to selected GameObject command:
+                                        var command = Event.current.alt ? alternateGameObjectDragDropCommand : gameObjectDragDropCommand;
+                                        var currentGameObjectCommand = GetCurrentGameObjectCommand(command, go.name);
+                                        if (string.IsNullOrEmpty(currentGameObjectCommand)) continue;
+                                        sequence = AddCommandToSequence(sequence, currentGameObjectCommand);
+                                    }
+                                    GUI.changed = true;
+                                }
+                                else if (obj is Component)
+                                {
+                                    // Drop component.
+                                    var component = obj as Component;
+                                    var go = component.gameObject;
+                                    if (sequence.EndsWith("("))
+                                    {
+                                        // If sequence ends in open paren, add component and close:
+                                        sequence += component.GetType().Name + ")";
+                                    }
+                                    else
+                                    {
+                                        // Drop component according to selected component command:
+                                        var command = Event.current.alt ? alternateComponentDragDropCommand : componentDragDropCommand;
+                                        var currentComponentCommand = GetCurrentComponentCommand(command, component.GetType().Name, go.name);
+                                        if (string.IsNullOrEmpty(currentComponentCommand)) continue;
+                                        sequence = AddCommandToSequence(sequence, currentComponentCommand);
+                                    }
+                                    GUI.changed = true;
+                                }
+                            }
+                        }
+                    }
+                    break;
+            }
+
+            // If content changed, reset syntax check state:
+            if (EditorGUI.EndChangeCheck()) syntaxState = SequenceSyntaxState.Unchecked;
+
+            return sequence;
+        }
+
+        public static string DrawLayout(GUIContent guiContent, string sequence, ref Rect rect, ref SequenceSyntaxState syntaxState, DialogueEntry entry, Field field = null)
         {
             if (!string.IsNullOrEmpty(queuedText))
             {

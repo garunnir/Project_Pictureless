@@ -1,4 +1,4 @@
-﻿// Copyright (c) Pixel Crushers. All rights reserved.
+// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using UnityEditor;
@@ -26,6 +26,24 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 case Toolbar.Tab.Variables:
                     break;
                 case Toolbar.Tab.Conversations:
+                    // If undid creating a conversation, reset conversation section:
+                    if (currentConversation != null)
+                    {
+                        if (database.GetConversation(currentConversation.id) == null)
+                        {
+                            if (debug) Debug.Log("Dialogue Editor: Undo create conversation");
+                            ResetConversationSection();
+                            Repaint();
+                        }
+                        else if (currentEntry != null && !currentConversation.dialogueEntries.Contains(currentEntry))
+                        {
+                            if (debug) Debug.Log("Dialogue Editor: Undo create dialogue entry");
+                            RefreshConversation();
+                            Repaint();
+                        }
+                    }
+                    break;
+                case Toolbar.Tab.Maps:
                     // If undid creating a conversation, reset conversation section:
                     if (currentConversation != null)
                     {

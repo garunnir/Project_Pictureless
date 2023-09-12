@@ -1,4 +1,4 @@
-﻿// Copyright (c) Pixel Crushers. All rights reserved.
+// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using UnityEditor;
@@ -249,6 +249,10 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             {
                 InitializeConversation(asset as Conversation);
             }
+            else if(asset is MapContainer)
+            {
+                InitializeMapContainer(asset as MapContainer);
+            }
             else if (asset is Item)
             {
                 string itemTypeLabel = template.treatItemsAsQuests ? "Quest" : "Item";
@@ -313,6 +317,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             if (asset is Location) return template.locationFields;
             if (asset is Variable) return template.variableFields;
             if (asset is Conversation) return template.conversationFields;
+            if (asset is MapContainer) return template.mapFields;
             return template.locationFields;
         }
 

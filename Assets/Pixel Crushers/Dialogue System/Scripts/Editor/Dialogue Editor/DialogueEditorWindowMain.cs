@@ -1,4 +1,4 @@
-﻿// Copyright (c) Pixel Crushers. All rights reserved.
+// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using UnityEditor;
@@ -298,6 +298,9 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     timeSinceLastRuntimeUpdate = 0;
                     switch (toolbar.Current)
                     {
+                        case Toolbar.Tab.Maps:
+                            UpdateRuntimeConversationsTab();
+                            break;
                         case Toolbar.Tab.Conversations:
                             UpdateRuntimeConversationsTab();
                             break;
@@ -330,7 +333,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 {
                     if (instance == null) instance = this;
                     RecordUndo();
-                    var isInNodeEditor = (toolbar.Current == Toolbar.Tab.Conversations) && showNodeEditor;
+                    var isInNodeEditor = (toolbar.Current == Toolbar.Tab.Conversations||toolbar.current==Toolbar.Tab.Maps) && showNodeEditor;
                     if (!isInNodeEditor) DrawDatabaseName(); // Node editor draws name after grid.
                     DrawToolbar();
                     DrawMainBody();
@@ -408,6 +411,11 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     UpdateConversationTitles();
                     ResetNodeEditorConversationList();
                 }
+                if (toolbar.Current == Toolbar.Tab.Maps)
+                {
+                    UpdateConversationTitles();
+                    ResetNodeEditorConversationList();
+                }
                 if (toolbar.current == Toolbar.Tab.Database)
                 {
                     ResetDatabaseTab();
@@ -439,7 +447,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         {
             EditorGUI.BeginChangeCheck();
             EditorStyles.textField.wordWrap = true;
-            var isInNodeEditor = (toolbar.Current == Toolbar.Tab.Conversations) && showNodeEditor;
+            var isInNodeEditor = (toolbar.Current == Toolbar.Tab.Conversations|| toolbar.Current == Toolbar.Tab.Maps) && showNodeEditor;
             if (isInNodeEditor) HandleNodeEditorScrollWheelEvents();
             if (!isInNodeEditor) scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
             try
@@ -463,6 +471,9 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                         break;
                     case Toolbar.Tab.Conversations:
                         DrawConversationSection();
+                        break;
+                    case Toolbar.Tab.Maps:
+                        DrawMapSection();
                         break;
                     case Toolbar.Tab.Templates:
                         if (Application.isPlaying)

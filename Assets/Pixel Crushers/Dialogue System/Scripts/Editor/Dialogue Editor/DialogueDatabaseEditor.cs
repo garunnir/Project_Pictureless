@@ -262,6 +262,35 @@ namespace PixelCrushers.DialogueSystem
                         DialogueEditor.DialogueEditorWindow.instance.DrawConversationOutline();
                     }
                 }
+                else if (selectionType == typeof(MapContainer))
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    DrawInspectorSelectionTitle("MapContainer");
+                    GUILayout.FlexibleSpace();
+                    DialogueEditor.DialogueEditorWindow.instance.DrawAIBranchingMapButton(selection as MapContainer);
+                    EditorGUILayout.EndHorizontal();
+                    if (DialogueEditor.DialogueEditorWindow.instance.showNodeEditor)
+                    {
+                        if (DialogueEditor.DialogueEditorWindow.instance.DrawConversationProperties())
+                        {
+                            DialogueEditor.DialogueEditorWindow.instance.UpdateConversationTitles();
+                        }
+                        DialogueEditor.DialogueEditorWindow.instance.DrawMapFieldsFoldout();
+                    }
+                    else
+                    {
+                        DialogueEditor.DialogueEditorWindow.instance.DrawMapOutline();
+                    }
+                }
+                else if (selectionType == typeof(MapEntry))
+                {
+                    DrawInspectorSelectionTitle("Map Entry");
+                    if (DialogueEditor.DialogueEditorWindow.instance.DrawMapEntryInspector())
+                    {
+                        DialogueEditor.DialogueEditorWindow.instance.ResetMapEntryText(selection as MapEntry);
+                        DialogueEditor.DialogueEditorWindow.instance.Repaint();
+                    }
+                }
                 else if (selectionType == typeof(DialogueEntry))
                 {
                     DrawInspectorSelectionTitle("Dialogue Entry");

@@ -1,4 +1,4 @@
-﻿#if !USE_OPENAI
+#if !USE_OPENAI
 
 using UnityEngine;
 using UnityEditor;
@@ -29,12 +29,23 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         public void DrawAIBranchingConversationButton(Conversation conversation)
         {
         }
-
+        public void DrawAIBranchingMapButton(MapContainer mapContainer)
+        {
+        }
         private void DrawAIReviseTextButton(Asset asset, DialogueEntry entry, Field field)
+        {
+        }
+        private void DrawAIReviseTextButton(Asset asset, Field field)
+        {
+        }
+        private void DrawAIReviseTextButton(Asset asset, MapEntry entry, Field field)
         {
         }
 
         private void DrawAILocalizeTextButton(Asset asset, DialogueEntry entry, Field field)
+        {
+        }
+        private void DrawAILocalizeTextButton(Asset asset, MapEntry entry, Field field)
         {
         }
 
@@ -49,7 +60,9 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         public void DrawAISequence(DialogueEntry entry, Field field)
         {
         }
-
+        public void DrawAISequence(MapEntry entry, Field field)
+        {
+        }
     }
 }
 #endif

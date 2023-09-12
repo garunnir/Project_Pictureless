@@ -1,4 +1,4 @@
-﻿// Copyright (c) Pixel Crushers. All rights reserved.
+// Copyright (c) Pixel Crushers. All rights reserved.
 
 using System;
 using System.Collections.Generic;
@@ -68,6 +68,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         private DialogueEntry _currentEntry = null;
         [SerializeField]
         private int currentEntryID = -1;
+      
         private DialogueEntry currentEntry
         {
             get
