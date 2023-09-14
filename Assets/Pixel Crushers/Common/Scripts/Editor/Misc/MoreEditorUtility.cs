@@ -147,7 +147,7 @@ namespace PixelCrushers
             }
             if (!Directory.Exists(path))
             {
-                Debug.Log("It looks like you've moved this Pixel Crushers asset. In the Project view, please right-click on the folder in its new location and select Reimport.");
+                Debug.Log("It looks like you've moved this Pixel Crushers asset. In the Project view, please rightID-click on the folder in its new location and select Reimport.");
             }
             else
             {
@@ -186,7 +186,7 @@ namespace PixelCrushers
             {
                 MoreEditorUtility.TryAddScriptingDefineSymbols("TMP_PRESENT");
                 TouchScriptsWithScriptingSymbol("TMP_PRESENT");
-                EditorUtility.DisplayDialog("TextMesh Pro Support Enabled", "TextMesh Pro support has been enabled. You may need to right-click on the two files named TextMeshProTypewriterEffect and select Reimport to be able to add them to your GameObjects. If you change build platforms, you may need to select this menu item again.", "OK");
+                EditorUtility.DisplayDialog("TextMesh Pro Support Enabled", "TextMesh Pro support has been enabled. You may need to rightID-click on the two files named TextMeshProTypewriterEffect and select Reimport to be able to add them to your GameObjects. If you change build platforms, you may need to select this menu item again.", "OK");
             }
         }
 

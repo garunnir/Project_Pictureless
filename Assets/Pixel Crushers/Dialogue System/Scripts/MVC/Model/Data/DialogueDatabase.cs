@@ -183,18 +183,48 @@ namespace PixelCrushers.DialogueSystem
 
         private Dictionary<string, T> CreateCache<T>(List<T> assets) where T : Asset
         {
-            var useTitle = typeof(T) == typeof(Conversation);
-            var cache = new Dictionary<string, T>();
-            if (Application.isPlaying) // Only build cache at runtime so Dialogue Editor doesn't have to worry about updating it.
+            if (typeof(T) == typeof(Conversation))
             {
-                for (int i = 0; i < assets.Count; i++)
+                var cache = new Dictionary<string, T>();
+                if (Application.isPlaying) // Only build cache at runtime so Dialogue Editor doesn't have to worry about updating it.
                 {
-                    var asset = assets[i];
-                    var key = useTitle ? (asset as Conversation).Title : asset.Name;
-                    if (!cache.ContainsKey(key)) cache.Add(key, asset);
+                    for (int i = 0; i < assets.Count; i++)
+                    {
+                        var asset = assets[i];
+                        var key = (asset as Conversation).Title;
+                        if (!cache.ContainsKey(key)) cache.Add(key, asset);
+                    }
                 }
+                return cache;
             }
-            return cache;
+            else if(typeof(T) == typeof(MapContainer))
+            {
+                var cache = new Dictionary<string, T>();
+                if (Application.isPlaying) // Only build cache at runtime so Dialogue Editor doesn't have to worry about updating it.
+                {
+                    for (int i = 0; i < assets.Count; i++)
+                    {
+                        var asset = assets[i];
+                        var key = (asset as MapContainer).Title;
+                        if (!cache.ContainsKey(key)) cache.Add(key, asset);
+                    }
+                }
+                return cache;
+            }
+            else
+            {
+                var cache = new Dictionary<string, T>();
+                if (Application.isPlaying) // Only build cache at runtime so Dialogue Editor doesn't have to worry about updating it.
+                {
+                    for (int i = 0; i < assets.Count; i++)
+                    {
+                        var asset = assets[i];
+                        var key = asset.Name;
+                        if (!cache.ContainsKey(key)) cache.Add(key, asset);
+                    }
+                }
+                return cache;
+            }
         }
 
         /// <summary>
@@ -489,19 +519,66 @@ namespace PixelCrushers.DialogueSystem
 
         private void AddAssets<T>(List<T> myAssets, List<T> assetsToAdd, Dictionary<string, T> cache) where T : Asset
         {
-            var useTitle = typeof(T) == typeof(Conversation);
-            for (int i = 0; i < assetsToAdd.Count; i++)
+            if (typeof(T) == typeof(Conversation))
             {
-                var asset = assetsToAdd[i];
-                var key = useTitle ? (asset as Conversation).Title : asset.Name;
-                if (!cache.ContainsKey(key))
+                for (int i = 0; i < assetsToAdd.Count; i++)
                 {
-                    cache.Add(key, asset);
-                    myAssets.Add(asset);
-                    //--- Removed for speed: if (DialogueDebug.logInfo) Debug.Log("Dialogue System: Add " + typeof(T).Name + ": " + key);
+                    var asset = assetsToAdd[i];
+                    var key = (asset as Conversation).Title;
+                    if (!cache.ContainsKey(key))
+                    {
+                        cache.Add(key, asset);
+                        myAssets.Add(asset);
+                        //--- Removed for speed: if (DialogueDebug.logInfo) Debug.Log("Dialogue System: Add " + typeof(T).Name + ": " + key);
+                    }
                 }
             }
+            else if(typeof(T) == typeof(MapContainer))
+            {
+                for (int i = 0; i < assetsToAdd.Count; i++)
+                {
+                    var asset = assetsToAdd[i];
+                    var key = (asset as MapContainer).Title;
+                    if (!cache.ContainsKey(key))
+                    {
+                        cache.Add(key, asset);
+                        myAssets.Add(asset);
+                        //--- Removed for speed: if (DialogueDebug.logInfo) Debug.Log("Dialogue System: Add " + typeof(T).Name + ": " + key);
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < assetsToAdd.Count; i++)
+                {
+                    var asset = assetsToAdd[i];
+                    var key =  asset.Name;
+                    if (!cache.ContainsKey(key))
+                    {
+                        cache.Add(key, asset);
+                        myAssets.Add(asset);
+                        //--- Removed for speed: if (DialogueDebug.logInfo) Debug.Log("Dialogue System: Add " + typeof(T).Name + ": " + key);
+                    }
+                }
+            }
+
+
         }
+        //private void AddAssets(List<MapContainer> myAssets, List<MapContainer> assetsToAdd, Dictionary<string, MapContainer> cache)
+        //{
+        //    var useTitle = 
+        //    for (int i = 0; i < assetsToAdd.Count; i++)
+        //    {
+        //        var asset = assetsToAdd[i];
+        //        var key = useTitle ? asset.Title : asset.Name;
+        //        if (!cache.ContainsKey(key))
+        //        {
+        //            cache.Add(key, asset);
+        //            myAssets.Add(asset);
+        //            //--- Removed for speed: if (DialogueDebug.logInfo) Debug.Log("Dialogue System: Add " + typeof(T).Name + ": " + key);
+        //        }
+        //    }
+        //}
 
         private void AddEmphasisSettings(EmphasisSetting[] newEmphasisSettings)
         {

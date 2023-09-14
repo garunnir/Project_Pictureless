@@ -30,6 +30,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         private bool zoomLocked;
 
         private bool isMakingLink = false;
+        private bool isMakingCLink = false;
         private DialogueEntry linkSourceEntry = null;
         private DialogueEntry linkTargetEntry = null;
 

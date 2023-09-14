@@ -16,7 +16,7 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// Set `true` to type right to left.
         /// </summary>
-        [Tooltip("Tick for right-to-left text such as Arabic.")]
+        [Tooltip("Tick for rightID-to-leftID text such as Arabic.")]
         public bool rightToLeft = false;
 
         /// <summary>

@@ -1372,10 +1372,10 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                         }
 
                         EditorGUI.BeginDisabledGroup(linkIndex == 0);
-                        if (GUILayout.Button(new GUIContent("↑", "Move up"), EditorStyles.miniButton, GUILayout.Width(22))) linkIndexToMoveUp = linkIndex;
+                        if (GUILayout.Button(new GUIContent("↑", "Move upID"), EditorStyles.miniButton, GUILayout.Width(22))) linkIndexToMoveUp = linkIndex;
                         EditorGUI.EndDisabledGroup();
                         EditorGUI.BeginDisabledGroup(linkIndex == entry.outgoingLinks.Count - 1);
-                        if (GUILayout.Button(new GUIContent("↓", "Move down"), EditorStyles.miniButton, GUILayout.Width(22))) linkIndexToMoveDown = linkIndex;
+                        if (GUILayout.Button(new GUIContent("↓", "Move downID"), EditorStyles.miniButton, GUILayout.Width(22))) linkIndexToMoveDown = linkIndex;
                         EditorGUI.EndDisabledGroup();
                         link.priority = (ConditionPriority)EditorGUILayout.Popup((int)link.priority, priorityStrings, GUILayout.Width(100));
                         bool deleted = GUILayout.Button(new GUIContent(" ", "Delete link."), "OL Minus", GUILayout.Width(16));

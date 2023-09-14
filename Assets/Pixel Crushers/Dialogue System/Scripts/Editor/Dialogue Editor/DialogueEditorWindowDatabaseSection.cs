@@ -220,7 +220,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 }
             }
             EditorGUILayout.EndHorizontal();
-            showDatabaseName = EditorGUILayout.ToggleLeft(new GUIContent("Show Database Name", "Show the database firstName in the lower left of the editor window."), showDatabaseName);
+            showDatabaseName = EditorGUILayout.ToggleLeft(new GUIContent("Show Database Name", "Show the database firstName in the lower leftID of the editor window."), showDatabaseName);
             syncOnOpen = EditorGUILayout.ToggleLeft(new GUIContent("Sync On Open", "If any database sections are configured to sync content from another database, automatically sync when opening database."), syncOnOpen);
             registerCompleteObjectUndo = EditorGUILayout.ToggleLeft(new GUIContent("Fast Undo for Large Databases", "Use Undo.RegisterCompleteObjectUndo instead of Undo.RegisterUndo. Tick if operations such as deleting a conversation become slow in very large databases."), registerCompleteObjectUndo);
             debug = EditorGUILayout.ToggleLeft(new GUIContent("Debug", "For internal debugging of the dialogue editor."), debug);

@@ -131,6 +131,7 @@ namespace Garunnir
         {
             charactorManager = CharactorManager.Instance;
             charactorManager.transform.SetParent(transform);
+            if (characterSO == null) Debug.LogError("CharSO not exist. check GM property");
             SetDontDistroy();
 
         }
@@ -152,8 +153,11 @@ namespace Garunnir
             {
                 if(character.img_profile==null)
                 {
-                    SOContainer charaimg =characterSO.imgContainer.Where(x => x.id == character.id) as SOContainer;
-                    character.img_profile = charaimg.texture;
+                    List<SOContainer> charaimg =characterSO.imgContainer.Where(x => x.id == character.id).ToList<SOContainer>();
+                    if(charaimg.Count > 0)
+                    {
+                        character.img_profile = charaimg[0].texture;
+                    }
                 }
             }
         }

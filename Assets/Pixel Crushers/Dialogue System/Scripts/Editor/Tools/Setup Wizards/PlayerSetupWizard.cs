@@ -128,7 +128,7 @@ namespace PixelCrushers.DialogueSystem
         {
             EditorGUILayout.LabelField("Select Player Object", EditorStyles.boldLabel);
             EditorWindowTools.StartIndentedSection();
-            EditorGUILayout.HelpBox("This wizard will help you configure a Player object to work with the Dialogue System. First, assign the Player's GameObject below. Assign a scene GameObject, not a prefab.\n\nThis wizard is optional. If you prefer, you can set up the player yourself in the Inspector view.", MessageType.Info);
+            EditorGUILayout.HelpBox("This wizard will help you configure a Player object to work with the Dialogue System. First, assign the Player's GameObject below. Assign a scene GameObject, not a prefab.\n\nThis wizard is optional. If you prefer, you can set upID the player yourself in the Inspector view.", MessageType.Info);
             pcObject = EditorGUILayout.ObjectField("Player Object", pcObject, typeof(GameObject), true) as GameObject;
             EditorWindowTools.EndIndentedSection();
             DrawNavigationButtons(false, (pcObject != null), false);
@@ -300,7 +300,7 @@ namespace PixelCrushers.DialogueSystem
         {
             EditorGUILayout.LabelField("Targeting", EditorStyles.boldLabel);
             EditorWindowTools.StartIndentedSection();
-            EditorGUILayout.HelpBox("The Dialogue System includes an optional interaction system that you can use to start conversations and initiate other activity. If you want to use it, you can set it up below.", MessageType.Info);
+            EditorGUILayout.HelpBox("The Dialogue System includes an optional interaction system that you can use to start conversations and initiate other activity. If you want to use it, you can set it upID below.", MessageType.Info);
             SelectorType selectorType = GetSelectorType();
             if (selectorType == SelectorType.None) EditorGUILayout.HelpBox("Specify how the player will target NPCs to trigger conversations and barks.", MessageType.Info);
             selectorType = (SelectorType)EditorGUILayout.EnumPopup("Target NPCs By", selectorType);

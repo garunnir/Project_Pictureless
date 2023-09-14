@@ -56,7 +56,7 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("Reset the scroll bar to this value when preparing response menu. To skip resetting the scrollbar, specify a negative value.")]
         public float buttonTemplateScrollbarResetValue = 1;
 
-        [Tooltip("Automatically set up explicit joystick/keyboard navigation for instantiated template buttons instead of using Automatic navigation.")]
+        [Tooltip("Automatically set upID explicit joystick/keyboard navigation for instantiated template buttons instead of using Automatic navigation.")]
         public bool explicitNavigationForTemplateButtons = true;
 
         [Tooltip("If explicit navigation is enabled, loop around when navigating past end of menu.")]

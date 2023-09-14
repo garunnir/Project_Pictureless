@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Graphs;
 using UnityEngine;
@@ -26,6 +27,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         private Dictionary<int, bool> mapEntryFoldouts = new Dictionary<int, bool>();
         private Dictionary<int, bool> mapEntryNodeHasSequence = new Dictionary<int, bool>();
         private Dictionary<int, GUIContent> mapEntryNodeDescription = new Dictionary<int, GUIContent>();
+        private MapEntry serializedObjectCurrentMapEntry = null;
 
         private HashSet<int> mapOrphanIDs = new HashSet<int>();
         private int mapOrphanIDsMapContainerID = -1;
@@ -49,6 +51,11 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         private MapEntry currentMapHoveredEntry = null;
         private List<MapEntry> nodesInMapEntryGroup = null;
         private List<EntryGroup> subgroupsInMapEntryGroup = null;
+
+        private bool entryPositionFoldout = false;
+
+        private float canvasMapRectWidth { get { return canvasRectWidthMultiplier * MapEntry.CanvasRectWidth; } }
+        private float canvasMapRectHeight { get { return MapEntry.CanvasRectHeight; } }
         private class MapNode
         {
             public MapEntry entry;
@@ -254,7 +261,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 EditorGUILayout.LabelField("Dialogue Tree: Assign Actor and Mapcontainer first.");
             }
         }
-        private string BuildMapEntryText(MapEntry entry)
+        private string BuildMapEntryText(MapEntry entry)//text
         {
             string text = entry.currentMenuText;
             if (string.IsNullOrEmpty(text)) text = entry.currentDialogueText;
@@ -268,7 +275,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 if (!string.IsNullOrEmpty(entry.conditionsString)) text += " [condition]";
                 if (!string.IsNullOrEmpty(entry.userScript)) text += " {script}";
             }
-            if ((entry.outgoingLinks == null) || (entry.outgoingLinks.Count == 0)) text += " [END]";
+            //if ((entry.outgoingLinks == null) || (entry.outgoingLinks.Count == 0)) text += " [END]";
             return text;
         }
         private string GetMapEntryText(MapEntry entry)
@@ -395,7 +402,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         {
             DrawLocalizedVersions(null, entry, fields, titleFormat, alwaysAdd, fieldType, null, useSequenceEditor);
         }
-        private void DrawLocalizedVersions(Asset asset,MapEntry entry, List<Field> fields, string titleFormat, bool alwaysAdd, FieldType fieldType, bool useSequenceEditor = false)
+        private void DrawLocalizedVersions(Asset asset, MapEntry entry, List<Field> fields, string titleFormat, bool alwaysAdd, FieldType fieldType, bool useSequenceEditor = false)
         {
             DrawLocalizedVersions(null, entry, fields, titleFormat, alwaysAdd, fieldType, null, useSequenceEditor);
         }
@@ -486,18 +493,18 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             EditorGUI.BeginChangeCheck();
 
             MapEntry entry = currentMapEntry;
-            bool isStartEntry = (entry == startMapEntry) || (entry.id == 0);
+            bool isstartMapEntry = (entry == startMapEntry) || (entry.id == 0);
 
             EditorGUI.BeginDisabledGroup(true); // Don't let user modify ID. Breaks things way more often than not.
             entry.id = StringToInt(EditorGUILayout.TextField(new GUIContent("ID", "Internal ID. Change at your own risk."), entry.id.ToString()), entry.id);
             EditorGUI.EndDisabledGroup();
 
             // Title:
-            EditorGUI.BeginDisabledGroup(isStartEntry);
+            EditorGUI.BeginDisabledGroup(isstartMapEntry);
             entry.Title = EditorGUILayout.TextField(new GUIContent("Title", "Optional title for your reference only."), entry.Title);
             EditorGUI.EndDisabledGroup();
 
-            if (isStartEntry)
+            if (isstartMapEntry)
             {
                 EditorGUILayout.HelpBox("This is the START entry. In most cases, you should leave this entry alone and begin your mapContainer with its child entries.", MessageType.Warning);
                 if (!allowEditStartEntry)
@@ -526,7 +533,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             // Actor & conversant:
             DrawMapEntryParticipants(entry);
 
-            EditorGUI.BeginDisabledGroup(isStartEntry && !allowEditStartEntry);
+            EditorGUI.BeginDisabledGroup(isstartMapEntry && !allowEditStartEntry);
 
             // Is this a group or regular entry:
             entry.isGroup = EditorGUILayout.Toggle(new GUIContent("Group", "Tick to organize children as a group."), entry.isGroup);
@@ -618,7 +625,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
             // Events:
             entryEventFoldout = EditorGUILayout.Foldout(entryEventFoldout, "Events");
-            if (entryEventFoldout) DrawUnityEvents();
+            if (entryEventFoldout) DrawUnityMapEvents();
 
             // Notes: (special handling to use TextArea)
             Field notes = Field.Lookup(entry.fields, "Notes");
@@ -633,6 +640,71 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             {
                 customDrawMapEntryInspector(database, entry);
             }
+
+            //entryPositionFoldout = EditorGUILayout.Foldout(entryPositionFoldout, "Position");
+            //if (entryPositionFoldout)
+            //{
+            //}
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.BeginHorizontal();
+
+            if (currentMapEntry.postion.upID != -1)
+            {
+                if (GUILayout.Button(new GUIContent("North", "")))
+                {
+                    AlignNearCardinalPosition(currentMapEntry);
+                    SetCurrentMapEntry(currentMapContainer.GetMapEntry(currentMapEntry.postion.upID));
+                }
+                if (GUILayout.Button(new GUIContent("-"), EditorStyles.miniButtonRight, GUILayout.Width(21)))
+                {
+                    var target = currentMapContainer.GetMapEntry(currentMapEntry.postion.upID);
+                    DeleteCardinalConnect(entry, target, CardinalPoint.North);
+                }
+            }
+            if (currentMapEntry.postion.downID != -1)
+            {
+                if (GUILayout.Button(new GUIContent("South", "")))
+                {
+                    AlignNearCardinalPosition(currentMapEntry);
+                    SetCurrentMapEntry(currentMapContainer.GetMapEntry(currentMapEntry.postion.downID));
+                }
+                if (GUILayout.Button(new GUIContent("-"), EditorStyles.miniButtonRight, GUILayout.Width(21)))
+                {
+                    var target = currentMapContainer.GetMapEntry(currentMapEntry.postion.downID);
+                    DeleteCardinalConnect(entry, target, CardinalPoint.South);
+                }
+            }
+            if (currentMapEntry.postion.leftID != -1)
+            {
+                if (GUILayout.Button(new GUIContent("West", "")))
+                {
+                    AlignNearCardinalPosition(currentMapEntry);
+                    SetCurrentMapEntry(currentMapContainer.GetMapEntry(currentMapEntry.postion.leftID));
+                }
+                if (GUILayout.Button(new GUIContent("-"), EditorStyles.miniButtonRight, GUILayout.Width(21)))
+                {
+                    var target = currentMapContainer.GetMapEntry(currentMapEntry.postion.leftID);
+                    DeleteCardinalConnect(entry, target, CardinalPoint.West);
+                }
+
+            }
+            if (currentMapEntry.postion.rightID != -1)
+            {
+                if (GUILayout.Button(new GUIContent("East", "")))
+                {
+                    AlignNearCardinalPosition(currentMapEntry);
+                    SetCurrentMapEntry(currentMapContainer.GetMapEntry(currentMapEntry.postion.rightID));
+                }
+                if (GUILayout.Button(new GUIContent("-"), EditorStyles.miniButtonRight, GUILayout.Width(21)))
+                {
+                    var target = currentMapContainer.GetMapEntry(currentMapEntry.postion.rightID);
+                    DeleteCardinalConnect(entry, target, CardinalPoint.East);
+                }
+            }
+
+            EditorGUILayout.EndHorizontal();
+            EditorGUI.EndChangeCheck();
+   
 
             // All Fields foldout:
             changed = EditorGUI.EndChangeCheck() || changed;
@@ -679,6 +751,106 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 SetDatabaseDirty("Dialogue Entry Fields Changed");
             }
             return changed;
+        }
+        private void AlignAllCardinalPosition()
+        {
+            //스타트 엔트리를 먼저 기준으로 잡는다
+            //스타트 엔트리에 연결점이 없다면 나올때 까지 다른 엔트리를 검색한다.
+            //없다면 종료
+            //있다면 그 엔트리부터 시작하면서 저장해간다.
+            //주변이 전부 전기록에 저장되어있는 게 존재한다면 (없을거같음) 무한반복되면 이부분 수정
+            
+            List<int> prevEnt = new List<int>();
+            prevEnt.Add(-1);
+            MapEntry entry =currentMapContainer.GetFirstMapEntry();
+            if (entry != null&&entry.IsExistCardinalPoints())
+            {
+                AlignNearCardinalPosition(entry, ref prevEnt);
+            }
+            else
+            {
+                var item =currentMapContainer.mapEntries.Where(x =>!prevEnt.Contains(x.postion.upID)|| !prevEnt.Contains(x.postion.downID) || !prevEnt.Contains(x.postion.leftID)|| !prevEnt.Contains(x.postion.rightID)).ToList<MapEntry>();
+                if (item != null && item.Count != 0)
+                {
+                    AlignNearCardinalPosition(item[0], ref prevEnt);
+                }
+            }
+
+            if (!prevEnt.Contains(entry.id))
+            {
+                prevEnt.Add(entry.id);
+            }
+
+        }
+        private void AlignNearCardinalPosition(MapEntry entry, ref List<int> prevEnt)
+        {
+            Debug.LogWarning(entry.id+"/"+prevEnt.Count);
+            MapEntry target;
+            if (entry.postion.upID != -1)
+            {
+                target = currentMapContainer.GetMapEntry(entry.postion.upID);
+                if (!prevEnt.Contains(target.postion.upID))
+                {
+                    target.canvasRect = new Rect(entry.canvasRect.x, entry.canvasRect.y - entry.canvasRect.height - AutoHeightBetweenNodes, entry.canvasRect.width, entry.canvasRect.height);
+                    prevEnt.Add(target.id);
+                    AlignNearCardinalPosition(target, ref prevEnt);
+                }
+            }
+            if (entry.postion.downID != -1)
+            {
+                target = currentMapContainer.GetMapEntry(entry.postion.downID);
+                if (!prevEnt.Contains(target.postion.downID))
+                {
+                    target.canvasRect = new Rect(entry.canvasRect.x, entry.canvasRect.y + entry.canvasRect.height + AutoHeightBetweenNodes, entry.canvasRect.width, entry.canvasRect.height);
+                    prevEnt.Add(target.id);
+                    AlignNearCardinalPosition(target, ref prevEnt);
+                }
+            }
+            if (entry.postion.leftID != -1)
+            {
+                target = currentMapContainer.GetMapEntry(entry.postion.leftID);
+                if (!prevEnt.Contains(target.postion.leftID))
+                {
+                    target.canvasRect = new Rect(entry.canvasRect.x - entry.canvasRect.width - AutoWidthBetweenNodes, entry.canvasRect.y, entry.canvasRect.width, entry.canvasRect.height);
+                    prevEnt.Add(target.id);
+                    AlignNearCardinalPosition(target, ref prevEnt);
+                }
+            }
+            if (entry.postion.rightID != -1)
+            {
+                target = currentMapContainer.GetMapEntry(entry.postion.rightID);
+                if (!prevEnt.Contains(target.postion.rightID))
+                {
+                    target.canvasRect = new Rect(entry.canvasRect.x + entry.canvasRect.width + AutoWidthBetweenNodes, entry.canvasRect.y, entry.canvasRect.width, entry.canvasRect.height);
+                    prevEnt.Add(target.id);
+                    AlignNearCardinalPosition(target, ref prevEnt);
+                }
+            }
+        }
+        private void AlignNearCardinalPosition(MapEntry entry)
+        {
+            MapEntry target;
+
+            if (entry.postion.upID != -1)
+            {
+                target = currentMapContainer.GetMapEntry(entry.postion.upID);
+                target.canvasRect = new Rect(entry.canvasRect.x, entry.canvasRect.y - entry.canvasRect.height - 20 , entry.canvasRect.width, entry.canvasRect.height);
+            }
+            if (entry.postion.downID != -1)
+            {
+                target = currentMapContainer.GetMapEntry(entry.postion.downID);
+                target.canvasRect = new Rect(entry.canvasRect.x, entry.canvasRect.y + entry.canvasRect.height + 20 , entry.canvasRect.width, entry.canvasRect.height);
+            }
+            if (entry.postion.leftID != -1)
+            {
+                target = currentMapContainer.GetMapEntry(entry.postion.leftID);
+                target.canvasRect = new Rect(entry.canvasRect.x - entry.canvasRect.width - 20, entry.canvasRect.y, entry.canvasRect.width, entry.canvasRect.height);
+            }
+            if (entry.postion.rightID != -1)
+            {
+                target = currentMapContainer.GetMapEntry(entry.postion.rightID);
+                target.canvasRect = new Rect(entry.canvasRect.x + entry.canvasRect.width + 20, entry.canvasRect.y, entry.canvasRect.width, entry.canvasRect.height);
+            }
         }
         private void PrepareLinkToDestinations(MapEntry entry)
         {
@@ -730,14 +902,14 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             }
             return -1;
         }
-        private void SetCurrentMapEntry(MapEntry entry)
+        private void SetCurrentMapEntry(MapEntry entry)//현재 맵 엔트리 선택.
         {
             if (entry != null && currentMapContainer != null && entry.conversationID != currentMapContainer.id)
             {
                 var conversation = database.GetConversation(entry.conversationID);
                 OpenConversation(conversation);
                 SetConversationDropdownIndex(GetcurrentMapContainerIndex());
-                InitializeDialogueTree();
+                InitializeMapTree();
                 inspectorSelection = entry;
             }
             newSelectedLink = null;
@@ -911,10 +1083,10 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                         }
 
                         EditorGUI.BeginDisabledGroup(linkIndex == 0);
-                        if (GUILayout.Button(new GUIContent("↑", "Move up"), EditorStyles.miniButton, GUILayout.Width(22))) linkIndexToMoveUp = linkIndex;
+                        if (GUILayout.Button(new GUIContent("↑", "Move upID"), EditorStyles.miniButton, GUILayout.Width(22))) linkIndexToMoveUp = linkIndex;
                         EditorGUI.EndDisabledGroup();
                         EditorGUI.BeginDisabledGroup(linkIndex == entry.outgoingLinks.Count - 1);
-                        if (GUILayout.Button(new GUIContent("↓", "Move down"), EditorStyles.miniButton, GUILayout.Width(22))) linkIndexToMoveDown = linkIndex;
+                        if (GUILayout.Button(new GUIContent("↓", "Move downID"), EditorStyles.miniButton, GUILayout.Width(22))) linkIndexToMoveDown = linkIndex;
                         EditorGUI.EndDisabledGroup();
                         link.priority = (ConditionPriority)EditorGUILayout.Popup((int)link.priority, priorityStrings, GUILayout.Width(100));
                         bool deleted = GUILayout.Button(new GUIContent(" ", "Delete link."), "OL Minus", GUILayout.Width(16));
@@ -1028,7 +1200,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 {
                     CreateLink(entryToLinkFrom, entryToLinkTo);
                 }
-                InitializeDialogueTree();
+                InitializeMapTree();
             }
 
             // Draw orphans:
@@ -1082,7 +1254,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         }
         private void RecordMapOrphans(List<MapEntry> visited)
         {
-            
+
             if (visited.Count < currentMapContainer.mapEntries.Count)
             {
                 for (int i = 0; i < currentMapContainer.mapEntries.Count; i++)
@@ -1108,7 +1280,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             GUIStyle guiStyle = wasEntryAlreadyVisited ? grayGUIStyle
                 : isLeaf ? GetMapLeafStyle(entry) : GetMapEntryStyle(entry);
             MapNode node = new MapNode(entry, originLink, guiStyle, indent, !wasEntryAlreadyVisited, hasFoldout);
-            if (!dialogueEntryFoldouts.ContainsKey(entry.id)) dialogueEntryFoldouts[entry.id] = true;
+            if (!mapEntryFoldouts.ContainsKey(entry.id)) mapEntryFoldouts[entry.id] = true;
 
             // Add children:
             if (!wasEntryAlreadyVisited)
@@ -1201,7 +1373,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             }
         }
         int currentMapContainerID;
-        MultinodeMapSelection multinodeMapSelection=new MultinodeMapSelection();
+        MultinodeMapSelection multinodeMapSelection = new MultinodeMapSelection();
         public class MultinodeMapSelection
         {
             public List<MapEntry> nodes = new List<MapEntry>();
@@ -1215,10 +1387,13 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 offsets.Clear();
             }
         }
-        private void DeletecurrentMapInNodeEditor()
+        private void DeleteCurrentMapInNodeEditor()
         {
             nodeEditorDeleteCurrentMapContainer = false;
-            if (currentMapContainer != null) database.maps.Remove(database.maps.Find(c => c.id == currentMapContainer.id));
+            if (currentMapContainer != null)
+            {
+                database.maps.Remove(database.maps.Find(c => c.id == currentMapContainer.id));
+            }
             ResetMapSection();
             ActivateMapNodeEditorMode();
             inspectorSelection = database;
@@ -1306,7 +1481,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 nextMapStack.Clear();
                 SetMapDropdownIndex(newIndex);
                 OpenMapContainer(GetMapByTitleIndex(mapContainerIndex));
-                InitializeDialogueTree();
+                InitializeMapTree();
                 inspectorSelection = currentMapContainer;
             }
         }
@@ -1340,9 +1515,9 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         }
         private void GotoStartMapNodePosition()
         {
-            var startEntry = currentMapContainer.GetFirstMapEntry();
-            if (startEntry == null) return;
-            canvasScrollPosition = new Vector2(Mathf.Max(0, startEntry.canvasRect.x - ((position.width - startEntry.canvasRect.width) / 2)), Mathf.Max(0, startEntry.canvasRect.y - 8));
+            var startMapEntry = currentMapContainer.GetFirstMapEntry();
+            if (startMapEntry == null) return;
+            canvasScrollPosition = new Vector2(Mathf.Max(0, startMapEntry.canvasRect.x - ((position.width - startMapEntry.canvasRect.width) / 2)), Mathf.Max(0, startMapEntry.canvasRect.y - 8));
         }
         private void DrawMapNodeEditorMenu()
         {
@@ -1502,7 +1677,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             string mapContainerTitle = prevMapStack[prevMapStack.Count - 1];
             prevMapStack.RemoveAt(prevMapStack.Count - 1);
             OpenMapContainer(database.GetMapContainer(mapContainerTitle));
-            InitializeDialogueTree();
+            InitializeMapTree();
             inspectorSelection = currentMapContainer;
             mapContainerIndex = GetCurrentMapsIndex();
         }
@@ -1516,7 +1691,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             string mapContainerTitle = nextMapStack[0];
             nextMapStack.RemoveAt(0);
             OpenMapContainer(database.GetMapContainer(mapContainerTitle));
-            InitializeDialogueTree();
+            InitializeMapTree();
             inspectorSelection = currentMapContainer;
             mapContainerIndex = GetCurrentMapsIndex();
         }
@@ -1537,11 +1712,11 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             {
                 newMapContainer.ActorID = currentMapContainer.ActorID;
                 newMapContainer.ConversantID = currentMapContainer.ConversantID;
-                var startEntry = newMapContainer.GetFirstMapEntry();
-                if (startEntry != null)
+                var startMapEntry = newMapContainer.GetFirstMapEntry();
+                if (startMapEntry != null)
                 {
-                    startEntry.ActorID = currentMapContainer.ActorID;
-                    startEntry.ConversantID = currentMapContainer.ConversantID;
+                    startMapEntry.ActorID = currentMapContainer.ActorID;
+                    startMapEntry.ConversantID = currentMapContainer.ConversantID;
                 }
             }
 
@@ -1598,7 +1773,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 entryGroupLabelStyle.fontSize = entryGroupHeadingStyle.fontSize;
             }
 
-            if (nodeEditorDeleteCurrentMapContainer) DeletecurrentMapInNodeEditor();
+            if (nodeEditorDeleteCurrentMapContainer) DeleteCurrentMapInNodeEditor();
             //--- Unnecessary: if (inspectorSelection == null) inspectorSelection = currentMap;
 
             DrawNodeEditorMapTopControls();
@@ -1617,7 +1792,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             {
                 DrawMapCanvas();
                 HandleEmptyMapCanvasEvents();
-                HandleKeyEvents();
+                HandleKeyMapEvents();
             }
             finally
             {
@@ -1630,6 +1805,151 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             Handles.color = MajorGridLineColor;
             Handles.DrawLine(new Vector2(0, topOffset), new Vector2(position.width, topOffset));
         }
+        private void DeleteMapLinkCallback(object o)
+        {
+            Link linkToDelete = o as Link;
+            if (linkToDelete == null) return;
+            if (!confirmDelete || EditorUtility.DisplayDialog("Delete selected link?", "You cannot undo this action.", "Delete", "Cancel"))
+            {
+                MapEntry origin = currentMapContainer.GetMapEntry(linkToDelete.originDialogueID);
+                DeleteNodeLinkToMapID(origin, linkToDelete.destinationConversationID, linkToDelete.destinationDialogueID);
+                InitializeMapTree();
+                ResetMapEntryText();
+                Repaint();
+                SetDatabaseDirty("Delete Link");
+            }
+        }
+        private void HandleKeyMapEvents()//단축키 설정
+        {
+            if (Event.current.isKey && Event.current.type == EventType.KeyDown)
+            {
+                if (Event.current.keyCode == KeyCode.Home && !showQuickDialogueTextEntry)
+                {
+                    // Home (top of canvas):
+                    GotoCanvasHomePosition();
+                    Event.current.Use();
+                }
+                if (Event.current.keyCode == KeyCode.PageUp)
+                {
+                    // PageUp canvas:
+                    PageUpCanvas();
+                    Event.current.Use();
+                }
+                if (Event.current.keyCode == KeyCode.PageDown)
+                {
+                    // PageDown canvas:
+                    PageDownCanvas();
+                    Event.current.Use();
+                }
+                else if (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter)
+                {
+                    if (showQuickDialogueTextEntry)
+                    {
+                        CloseQuickDialogueTextEntry();
+                    }
+                    else if (string.Equals(GUI.GetNameOfFocusedControl(), "SearchTextField"))
+                    {
+                        // Find next search result if press enter in search text field:
+                        SearchDialogueTree(1);
+                    }
+                }
+                else if (Event.current.keyCode == KeyCode.Delete || Event.current.keyCode == KeyCode.Backspace)
+                {
+                    // Delete/backspace key:
+                    if (showQuickDialogueTextEntry)
+                    {
+                        // Do nothing; using quick Dialogue Text entry.
+                    }
+                    else if (string.Equals(GUI.GetNameOfFocusedControl(), "SearchTextField"))
+                    {
+                        // Do nothing; is editing search bar text.
+                    }
+                    else if (selectedLink != null)
+                    {
+                        Event.current.Use();
+                        DeleteMapLinkCallback(selectedLink);
+                    }
+                    else if (currentMapEntry != null)
+                    {
+                        Event.current.Use();
+                        if (multinodeSelection.nodes.Count > 1)
+                        {
+                            DeleteMultipleMapEntriesCallback(currentMapContainer);
+                        }
+                        else if (currentMapEntry != startMapEntry)
+                        {
+                            DeleteMapEntryCallback(currentMapContainer);
+                        }
+                    }
+                }
+                else if (Event.current.keyCode == KeyCode.D && (Event.current.command || Event.current.control) && Event.current.alt)
+                {
+                    // Ctrl/Cmd+Alt+D (Duplicate) key:
+                    if (currentMapEntry != null && !showQuickDialogueTextEntry)
+                    {
+                        Event.current.Use();
+                        DuplicateMultipleEntries();
+                    }
+                }
+                else if (Event.current.keyCode == KeyCode.N && (Event.current.command || Event.current.control) && Event.current.alt)
+                {
+                    wasShiftDown = Event.current.shift;
+                    // Ctrl/Cmd+Alt+N (New) key:
+                    if (currentMapEntry != null && !showQuickDialogueTextEntry)
+                    {
+                        AddChildCallback(currentMapEntry);
+                    }
+                    else
+                    {
+                        AddChildCallback(null);
+                    }
+                    Event.current.Use();
+                }
+                else if (Event.current.keyCode == KeyCode.C && (Event.current.command || Event.current.control) && Event.current.alt)
+                {
+                    // Ctrl/Cmd+Alt+C (Copy) key:
+                    if (showQuickDialogueTextEntry)
+                    {
+                        // Do nothing; in quick dialogue text entry.
+                    }
+                    else if (multinodeSelection.nodes.Count > 1)
+                    {
+                        CopyMultipleEntriesCallback(null);
+                    }
+                    else if (currentMapEntry != null)
+                    {
+                        CopyEntryCallback(currentMapEntry);
+                    }
+                    Event.current.Use();
+                }
+                else if (Event.current.keyCode == KeyCode.V && (Event.current.command || Event.current.control) && Event.current.alt)
+                {
+                    // Ctrl/Cmd+Alt+V (Paste) key:
+                    if (showQuickDialogueTextEntry)
+                    {
+                        // Do nothing; in quick dialogue text entry.
+                    }
+                    if (!IsNodeClipboardEmpty())
+                    {
+                        PasteMultipleEntriesCallback(currentMapEntry);
+                    }
+                    Event.current.Use();
+                }
+                else if (Event.current.keyCode == KeyCode.Comma && (Event.current.command || Event.current.control) && Event.current.shift)
+                {
+                    // Ctrl/Cmd+Shift+< key: (previous conversation)
+                    OpenPreviousConversation();
+                    Event.current.Use();
+                }
+                else if (Event.current.keyCode == KeyCode.Period && (Event.current.command || Event.current.control) && Event.current.shift)
+                {
+                    // Ctrl/Cmd+Shift+> key: (next conversation)
+                    OpenNextConversation();
+                    Event.current.Use();
+                }
+            }
+        }
+
         private void DrawQuickMapTextEntry()
         {
             if (currentMapEntry == null) return;
@@ -1646,7 +1966,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         {
             return quickDialogueTextEntryRect;
         }
-        private string BuildMapEntryNodeText(MapEntry entry)
+        private string BuildMapEntryNodeText(MapEntry entry)//node TExt
         {
             var text = string.Empty;
             if (prefs.showTitlesInsteadOfText)
@@ -1679,7 +1999,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 if (!string.IsNullOrEmpty(entry.conditionsString)) text += " [condition]";
                 if (!string.IsNullOrEmpty(entry.userScript)) text += " {script}";
             }
-            if ((entry.outgoingLinks == null) || (entry.outgoingLinks.Count == 0)) text += " [END]";
+            //if ((entry.outgoingLinks == null) || (entry.outgoingLinks.Count == 0)) text += " [END]";
             return text.Substring(0, Mathf.Min(text.Length, canvasRectWidthMultiplier * MaxNodeTextLength + extraLength));
         }
         private void DrawMapCanvasContents()
@@ -1690,10 +2010,25 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             DrawAllMapConnectors();
             DrawAllMapNodes();
             DrawLasso();
-            CheckNewSelectedLink();
+            CheckNewSelectedMapLink();
             if (showQuickDialogueTextEntry) DrawQuickMapTextEntry();
             else if (isRenamingEntryGroup) DrawEntryGroupRenameField();
             newSelectedLink = null;
+        }
+        private void CheckNewSelectedCLink()
+        {
+            if ((newSelectedLink != null) && (newSelectedLink != selectedLink))
+            {
+                selectedLink = newSelectedLink;
+                inspectorSelection = selectedLink;
+                isLassoing = false;
+                multinodeSelection.Clear();
+                Event.current.Use();
+            }
+            else if (currentEntry != null)
+            {
+                selectedLink = null;
+            }
         }
         private void AddEntryToSelection(MapEntry entry)
         {
@@ -1702,10 +2037,70 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             multinodeMapSelection.nodes.Add(entry);
             UpdateMapEntrySelection();
         }
+        private void MakeMapCardinalLinkCallback(object o)
+        {
+            maplinkSourceEntry = o as MapEntry;
+            isMakingCLink = (maplinkSourceEntry != null);
+        }
         private void MakeMapLinkCallback(object o)
         {
             maplinkSourceEntry = o as MapEntry;
             isMakingLink = (maplinkSourceEntry != null);
+        }
+        private void DeleteNodeLinkToMapID(MapEntry origin, int destinationConversationID, int destinationDialogueID)
+        {
+            if (origin == null) return;
+            Link link = origin.outgoingLinks.Find(x => (x.destinationConversationID == destinationConversationID) && (x.destinationDialogueID == destinationDialogueID));
+            if (link == null) return;
+            origin.outgoingLinks.Remove(link);
+            SetDatabaseDirty("Delete Node Link");
+        }
+        private void DeleteMapEntryCallback(object o)
+        {
+            MapEntry entryToDelete = o as MapEntry;
+            if (entryToDelete == null) return;
+            if (!confirmDelete || EditorUtility.DisplayDialog("Delete selected entry?", "You cannot undo this action.", "Delete", "Cancel"))
+            {
+                if (entryToDelete.IsExistCardinalPoints())
+                {
+                    DeleteCardinalConnect(entryToDelete,CardinalPoint.West);
+                    if (entryToDelete.postion.leftID != -1) currentMapContainer.GetMapEntry(entryToDelete.postion.leftID).postion.rightID=-1;
+                }
+                foreach (var origin in currentMapContainer.mapEntries)
+                {
+                    DeleteNodeLinkToMapID(origin, entryToDelete.conversationID, entryToDelete.id);
+                }
+                MapEntry entry = currentMapContainer.mapEntries.Find(x => x.id == entryToDelete.id);
+                entry.postion = new MapEntry.Postion();
+
+                currentMapContainer.mapEntries.Remove(entry);
+                InitializeMapTree();
+                ResetMapEntryText();
+                Repaint();
+                SetDatabaseDirty("Delete Dialogue Entry");
+            }
+        }
+        private void DeleteMultipleMapEntriesCallback(object o)
+        {
+            if (!confirmDelete || EditorUtility.DisplayDialog("Delete selected entries?", "You cannot undo this action.", "Delete", "Cancel"))
+            {
+                foreach (MapEntry entryToDelete in multinodeMapSelection.nodes)
+                {
+                    if (entryToDelete != startMapEntry)
+                    {
+                        foreach (var origin in currentMapContainer.mapEntries)
+                        {
+                            DeleteNodeLinkToMapID(origin, entryToDelete.conversationID, entryToDelete.id);
+                        }
+                        MapEntry entry = currentMapContainer.mapEntries.Find(x => x.id == entryToDelete.id);
+                        currentMapContainer.mapEntries.Remove(entry);
+                    }
+                }
+                InitializeMapTree();
+                ResetMapEntryText();
+                Repaint();
+                SetDatabaseDirty("Delete Map Entries");
+            }
         }
         private void ShowNodeContextMenu(MapEntry entry)
         {
@@ -1713,6 +2108,11 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             wasShiftDown = Event.current.shift;
 
             GenericMenu contextMenu = new GenericMenu();
+            contextMenu.AddItem(new GUIContent("New CardinalPoint/New Upper"), false, AddMapUpChildCallback, entry);
+            contextMenu.AddItem(new GUIContent("New CardinalPoint/New Down"), false, AddMapDownChildCallback, entry);
+            contextMenu.AddItem(new GUIContent("New CardinalPoint/New Right"), false, AddMapRightChildCallback, entry);
+            contextMenu.AddItem(new GUIContent("New CardinalPoint/New Left"), false, AddMapLeftChildCallback, entry);
+            contextMenu.AddItem(new GUIContent("Make Cardinal Link"), false, MakeMapCardinalLinkCallback, entry);
             contextMenu.AddItem(new GUIContent("Create Child Node"), false, AddMapChildCallback, entry);
             contextMenu.AddItem(new GUIContent("Make Link"), false, MakeMapLinkCallback, entry);
             if ((multinodeMapSelection.nodes.Count > 1) && (multinodeMapSelection.nodes.Contains(entry)))
@@ -1726,7 +2126,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 {
                     contextMenu.AddItem(new GUIContent("Paste"), false, PasteMultipleEntriesCallback, entry);
                 }
-                contextMenu.AddItem(new GUIContent("Delete"), false, DeleteMultipleEntriesCallback, entry);
+                contextMenu.AddItem(new GUIContent("Delete"), false, DeleteMultipleMapEntriesCallback, entry);
             }
             else if (entry == startMapEntry)
             {
@@ -1752,7 +2152,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 {
                     contextMenu.AddItem(new GUIContent("Paste"), false, PasteEntryCallback, entry);
                 }
-                contextMenu.AddItem(new GUIContent("Delete"), false, DeleteEntryCallback, entry);
+                contextMenu.AddItem(new GUIContent("Delete"), false, DeleteMapEntryCallback, entry);
             }
             contextMenu.AddItem(new GUIContent("Arrange Nodes/Vertically"), false, ArrangeNodesCallback, AutoArrangeStyle.Vertically);
             contextMenu.AddItem(new GUIContent("Arrange Nodes/Vertically (alternate)"), false, ArrangeNodesCallback, AutoArrangeStyle.VerticallyOld);
@@ -1785,7 +2185,51 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             Link link = origin.outgoingLinks.Find(x => ((x.destinationConversationID == destination.conversationID) && (x.destinationDialogueID == destination.id)));
             return (link != null);
         }
+        private void FinishMakingMapCLink()
+        {
+            if ((maplinkSourceEntry != null) && (maplinkTargetEntry != null) &&
+                (maplinkSourceEntry != maplinkTargetEntry))
+            {
+                float rx= maplinkSourceEntry.canvasRect.x - maplinkTargetEntry.canvasRect.x;
+                float ry= maplinkSourceEntry.canvasRect.y - maplinkTargetEntry.canvasRect.y;
+                if(Mathf.Abs(rx)> Mathf.Abs(ry))
+                {
+                    //좌우
+                    if (rx > 0)
+                    {
+                        //좌
+                        CardinalConnectMapEntry(maplinkSourceEntry, maplinkTargetEntry, CardinalPoint.West);
+                    }
+                    else
+                    {
+                        //우
+                        CardinalConnectMapEntry(maplinkSourceEntry, maplinkTargetEntry, CardinalPoint.East);
+                    }
+                }
+                else
+                {
+                    //위아래
+                    if (ry > 0)
+                    {
+                        //위
+                        CardinalConnectMapEntry(maplinkSourceEntry, maplinkTargetEntry, CardinalPoint.North);
+                    }
+                    else
+                    {
+                        //아래
+                        CardinalConnectMapEntry(maplinkSourceEntry, maplinkTargetEntry, CardinalPoint.South);
 
+                    }
+                }
+                InitializeMapTree();
+                ResetMapEntryText();
+                Repaint();
+            }
+            isMakingCLink = false;
+            maplinkSourceEntry = null;
+            maplinkTargetEntry = null;
+            SetDatabaseDirty("Make CLink");
+        }
         private void FinishMakingMapLink()
         {
             if ((maplinkSourceEntry != null) && (maplinkTargetEntry != null) &&
@@ -1835,7 +2279,11 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                         {
                             CloseQuickDialogueTextEntry();
                             newSelectedLink = null;
-                            if (isMakingLink)
+                            if (isMakingCLink)
+                            {
+                                FinishMakingMapCLink();
+                            }
+                            else if (isMakingLink)
                             {
                                 FinishMakingMapLink();
                             }
@@ -1916,7 +2364,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     }
                     break;
             }
-            if (isMakingLink && Event.current.isMouse)
+            if ((isMakingLink||isMakingCLink) && Event.current.isMouse)
             {
                 if (entry.canvasRect.Contains(Event.current.mousePosition))
                 {
@@ -2072,9 +2520,11 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             for (int i = 0; i < currentMapContainer.mapEntries.Count; i++)
             {
                 var entry = currentMapContainer.mapEntries[i];
+                DrawCardianlPosition(entry);
                 DrawEntryConnectors(entry);
             }
             if (isMakingLink) DrawNewMapLinkConnector();
+            if (isMakingCLink) DrawNewMapCLinkConnector();
         }
         private void DrawNewMapLinkConnector()
         {
@@ -2094,14 +2544,128 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 DrawLink(start, end, Color.white, false);
             }
         }
+        private void DrawNewMapCLinkConnector()
+        {
+            if (isMakingCLink && (maplinkSourceEntry != null))
+            {
+                Vector3 start = new Vector3(maplinkSourceEntry.canvasRect.center.x, maplinkSourceEntry.canvasRect.center.y, 0);
+                if ((maplinkTargetEntry != null) && Event.current.isMouse)
+                {
+                    if (!maplinkTargetEntry.canvasRect.Contains(Event.current.mousePosition))
+                    {
+                        maplinkTargetEntry = null;
+                    }
+                }
+                Vector3 end = (maplinkTargetEntry != null)
+                    ? new Vector3(maplinkTargetEntry.canvasRect.center.x, maplinkTargetEntry.canvasRect.center.y, 0)
+                    : new Vector3(Event.current.mousePosition.x, Event.current.mousePosition.y, 0);
+                DrawLink(start, end, Color.cyan, false);
+            }
+        }
         private bool IsCurrentRuntimeEntry(MapEntry entry)
         {
             return (currentRuntimeMapEntry != null) && (entry.conversationID == currentRuntimeMapEntry.conversationID) && (entry.id == currentRuntimeMapEntry.id);
         }
-        private void DrawEntryConnectors(MapEntry entry)
+        public void DrawCardinalLink(Vector3 start, Vector3 end, Color color)
+        {
+            if (Event.current.type != EventType.Repaint) return;
+#if UNITY_2022_1_OR_NEWER
+            if (start.y < canvasScrollPosition.y && end.y < canvasScrollPosition.y) return;
+            ClipLine(ref start, ref end);
+#endif
+            //Vector3 cross = Vector3.Cross((start - end).normalized, Vector3.forward);
+            Texture2D connectionTexture = (Texture2D)UnityEditor.Graphs.Styles.connectionTexture.image;
+            Handles.color = color;
+            Handles.DrawAAPolyLine(connectionTexture, 4f, new Vector3[] { start, end });
+            Vector3 diff = (start - end);
+            Vector3 direction = diff.normalized;
+            //if ((end.y - canvasScrollPosition.y - 3f) > 0)
+            //{
+            //    DrawArrow(cross, direction, end, color);
+            //}
+        }
+        private void DrawCardianlPosition(MapEntry entry)
+        {
+            if (entry.postion.upID != -1)
+            {
+                DrawCardinalLink(entry.canvasRect.center, currentMapContainer.GetMapEntry(entry.postion.upID).canvasRect.center, Color.cyan);
+            }
+            if (entry.postion.downID != -1)
+            {
+                DrawCardinalLink(entry.canvasRect.center, currentMapContainer.GetMapEntry(entry.postion.downID).canvasRect.center, Color.cyan);
+            }
+            if (entry.postion.rightID != -1)
+            {
+                DrawCardinalLink(entry.canvasRect.center, currentMapContainer.GetMapEntry(entry.postion.rightID).canvasRect.center, Color.cyan);
+            }
+            if (entry.postion.leftID != -1)
+            {
+                DrawCardinalLink(entry.canvasRect.center, currentMapContainer.GetMapEntry(entry.postion.leftID).canvasRect.center, Color.cyan);
+            }
+        }
+        private void HandleCConnectorEvents(Link link, Vector3 start, Vector3 end)
+        {
+            switch (Event.current.type)
+            {
+                case EventType.MouseUp:
+                    bool isReallyLassoing = isLassoing && (Mathf.Abs(lassoRect.width) > 10f) && (Mathf.Abs(lassoRect.height) > 10f) && (selectedEntryGroup != null);
+                    if (!isReallyLassoing && (Event.current.button == LeftMouseButton) &&
+                        IsPointOnLineSegment(Event.current.mousePosition, start, end) &&
+                        !IsMouseInQuickDialogueTextRect())
+                    {
+                        newSelectedLink = link;
+                        currentEntry = null;
+                        inspectorSelection = newSelectedLink;
+                        if (IsMouseInQuickDialogueTextRect())
+                        {
+                            CloseQuickDialogueTextEntry();
+                        }
+                    }
+                    break;
+            }
+        }
+        private void HandleMapConnectorEvents(Link link, Vector3 start, Vector3 end)
+        {
+            switch (Event.current.type)
+            {
+                case EventType.MouseUp:
+                    bool isReallyLassoing = isLassoing && (Mathf.Abs(lassoRect.width) > 10f) && (Mathf.Abs(lassoRect.height) > 10f) && (selectedEntryGroup != null);
+                    if (!isReallyLassoing && (Event.current.button == LeftMouseButton) &&
+                        IsPointOnLineSegment(Event.current.mousePosition, start, end) &&
+                        !IsMouseInQuickDialogueTextRect())
+                    {
+                        newSelectedLink = link;
+                        currentMapEntry = null;
+                        inspectorSelection = newSelectedLink;
+                        if (IsMouseInQuickDialogueTextRect())
+                        {
+                            CloseQuickDialogueTextEntry();
+                        }
+                    }
+                    break;
+            }
+        }
+
+        private void CheckNewSelectedMapLink()
+        {
+            if ((newSelectedLink != null) && (newSelectedLink != selectedLink))
+            {
+                selectedLink = newSelectedLink;
+                inspectorSelection = selectedLink;
+                isLassoing = false;
+                multinodeMapSelection.Clear();
+                Event.current.Use();
+            }
+            else if (currentMapEntry != null)
+            {
+                selectedLink = null;
+            }
+        }
+        private void DrawEntryConnectors(MapEntry entry)//링크 선
         {
             if (entry == null) return;
             int numCrossConversationLinks = 0;
+            DrawCardianlPosition(entry);
             for (int i = 0; i < entry.outgoingLinks.Count; i++)
             {
                 var link = entry.outgoingLinks[i];
@@ -2140,7 +2704,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                             connectorColor = IncomingLinkColor;
                         }
                         DrawLink(start, end, connectorColor, link.priority != ConditionPriority.Normal);
-                        HandleConnectorEvents(link, start, end);
+                        HandleMapConnectorEvents(link, start, end);
                         if (prefs.showLinkOrderOnConnectors && entry.outgoingLinks.Count > 1)
                         {
                             Vector3 cross = Vector3.Cross((start - end).normalized, Vector3.forward);
@@ -2204,6 +2768,117 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             GUI.color = originalColor;
 
         }
+        private void DrawUnityMapEvents()
+        {
+            // Draw scene-independent OnExecute() event:
+            if (database == null) return;
+            EditorGUILayout.LabelField(new GUIContent("Scene-Independent Event", "This UnityEvent cannot point to scene objects. It can point to assets and prefabs."), EditorStyles.boldLabel);
+            if (serializedObject == null)
+            {
+                serializedObject = new SerializedObject(database);
+                //EditorGUILayout.LabelField("Error displaying UnityEvent. Please report to developer.");
+                //return;
+            }
+            if (serializedObjectCurrentMapEntry != currentMapEntry)
+            {
+                serializedObject.Update();
+                serializedObjectCurrentMapEntry = currentMapEntry;
+                var conversationsProperty = serializedObject.FindProperty("maps");
+                if (conversationsProperty == null || !conversationsProperty.isArray) return;
+                SerializedProperty conversationProperty = null;
+                for (int i = 0; i < conversationsProperty.arraySize; i++)
+                {
+                    var sp = conversationsProperty.GetArrayElementAtIndex(i);
+                    if (sp.FindPropertyRelative("id").intValue == currentMapContainer.id)
+                    {
+                        conversationProperty = sp;
+                        break;
+                    }
+                }
+                if (conversationProperty == null) return;
+                var entriesProperty = conversationProperty.FindPropertyRelative("mapEntries");
+                if (entriesProperty == null || !entriesProperty.isArray) return;
+                SerializedProperty entryProperty = null;
+                for (int i = 0; i < entriesProperty.arraySize; i++)
+                {
+                    var sp = entriesProperty.GetArrayElementAtIndex(i);
+                    if (sp.FindPropertyRelative("id").intValue == currentMapEntry.id)
+                    {
+                        entryProperty = sp;
+                        break;
+                    }
+                }
+                if (entryProperty == null) return;
+                onExecuteProperty = entryProperty.FindPropertyRelative("onExecute");
+            }
+            if (onExecuteProperty != null)
+            {
+                EditorGUI.BeginChangeCheck();
+                EditorGUILayout.PropertyField(onExecuteProperty);
+                if (EditorGUI.EndChangeCheck()) serializedObject.ApplyModifiedProperties();
+            }
+
+            // Draw scene-specific event:
+            var sceneEventGuid = currentMapEntry.sceneEventGuid;
+            int sceneEventIndex = -1;
+            if (string.IsNullOrEmpty(sceneEventGuid))
+            {
+                // If this entry is not associated with a scene event, show Add button:
+                if (GUILayout.Button(new GUIContent("Add Scene Event", "Add a UnityEvent that operates on GameObjects in the currently-open scene.")))
+                {
+                    MakeSureDialogueSystemSceneEventsExists();
+                    sceneEventIndex = DialogueSystemSceneEvents.AddNewDialogueEntrySceneEvent(out sceneEventGuid);
+                    currentMapEntry.sceneEventGuid = sceneEventGuid;
+                }
+            }
+            else
+            {
+                // Otherwise check if the entry's scene event is defined in this scene:
+                sceneEventIndex = DialogueSystemSceneEvents.GetDialogueEntrySceneEventIndex(sceneEventGuid);
+            }
+            if (sceneEventIndex == -1 && !string.IsNullOrEmpty(sceneEventGuid))
+            {
+                // If scene event is assigned but not in this scene, show Delete button:
+                GUILayout.Label("Scene Event operates in another scene.");
+                if (GUILayout.Button("Delete Scene Event"))
+                {
+                    currentMapEntry.sceneEventGuid = string.Empty;
+                }
+            }
+            if (sceneEventIndex != -1)
+            {
+                // Make sure our serialized object points to this scene's DialogueSystemSceneEvents:
+                if (dialogueSystemSceneEvents != DialogueSystemSceneEvents.sceneInstance || dialogueSystemSceneEventsSerializedObject == null)
+                {
+                    dialogueSystemSceneEvents = DialogueSystemSceneEvents.sceneInstance;
+                    dialogueSystemSceneEventsSerializedObject = new SerializedObject(dialogueSystemSceneEvents);
+                }
+            }
+            if (sceneEventIndex != -1 && dialogueSystemSceneEventsSerializedObject != null)
+            {
+                // Scene event is in this scene. Draw it:
+                dialogueSystemSceneEventsSerializedObject.Update();
+                var sceneEventsListProperty = dialogueSystemSceneEventsSerializedObject.FindProperty("dialogueEntrySceneEvents");
+                if (sceneEventsListProperty != null && 0 <= sceneEventIndex && sceneEventIndex < sceneEventsListProperty.arraySize)
+                {
+                    var sceneEventProperty = sceneEventsListProperty.GetArrayElementAtIndex(sceneEventIndex);
+                    EditorGUILayout.LabelField("Scene Event", EditorStyles.boldLabel);
+                    EditorGUI.BeginDisabledGroup(true);
+                    EditorGUILayout.PropertyField(sceneEventProperty.FindPropertyRelative("guid"), true);
+                    EditorGUI.EndDisabledGroup();
+                    if (sceneEventProperty != null)
+                    {
+                        EditorGUILayout.PropertyField(sceneEventProperty.FindPropertyRelative("onExecute"), true);
+                    }
+                }
+                dialogueSystemSceneEventsSerializedObject.ApplyModifiedProperties();
+                if (GUILayout.Button("Delete Scene Event"))
+                {
+                    DialogueSystemSceneEvents.RemoveDialogueEntrySceneEvent(sceneEventGuid);
+                    currentMapEntry.sceneEventGuid = string.Empty;
+                }
+            }
+        }
         private void LinkToNewMapEntry(MapEntry source, bool useSameActorAssignments = false)
         {
             if (source != null)
@@ -2243,14 +2918,167 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             SetDatabaseDirty("Create New Dialogue Entry");
             return entry;
         }
+        private void DeleteCardinalConnect(MapEntry source, MapEntry target, CardinalPoint point)
+        {
+            switch (point)
+            {
+                case CardinalPoint.North:
+                    source.postion.upID = -1;
+                    target.postion.downID = -1;
+                    break;
+                case CardinalPoint.South:
+                    source.postion.downID = -1;
+                    target.postion.upID = -1;
+                    break;
+                case CardinalPoint.West:
+                    source.postion.leftID = -1;
+                    target.postion.rightID = -1;
+                    break;
+                case CardinalPoint.East:
+                    source.postion.rightID = -1;
+                    target.postion.leftID = -1;
+                    break;
+            }
+        }
+        private void DeleteCardinalConnect(MapEntry source,CardinalPoint point)
+        {
+            switch (point)
+            {
+                case CardinalPoint.North:
+                    if (source.postion.upID == -1) return;
+                    currentMapContainer.GetMapEntry(source.postion.upID).postion.downID = -1;
+                    source.postion.upID = -1;
+                    break;
+                case CardinalPoint.South:
+                    if (source.postion.downID == -1) return;
+                    currentMapContainer.GetMapEntry(source.postion.downID).postion.upID = -1;
+                    source.postion.downID = -1;
+                    break;
+                case CardinalPoint.West:
+                    if (source.postion.leftID == -1) return;
+                    currentMapContainer.GetMapEntry(source.postion.leftID).postion.rightID = -1;
+                    source.postion.leftID = -1;
+                    break;
+                case CardinalPoint.East:
+                    if (source.postion.rightID == -1) return;
+                    currentMapContainer.GetMapEntry(source.postion.rightID).postion.leftID = -1;
+                    source.postion.rightID = -1;
+                    break;
+            }
+        }
+        private void CardinalConnectMapEntry(MapEntry source,MapEntry target,CardinalPoint point)
+        {
+            switch (point)
+            {
+                case CardinalPoint.North:
+                    source.postion.upID = target.id;
+                    target.postion.downID = source.id;
+                    break;
+                case CardinalPoint.South:
+                    source.postion.downID = target.id;
+                    target.postion.upID = source.id;
+                    break;
+                case CardinalPoint.West:
+                    source.postion.leftID = target.id;
+                    target.postion.rightID = source.id;
+                    break;
+                case CardinalPoint.East:
+                    source.postion.rightID = target.id;
+                    target.postion.leftID = source.id;
+                    break;
+            }
+        }
+        private void AlignCardinalPoint(MapEntry source, MapEntry target,CardinalPoint point)
+        {
+            switch (point)
+            {
+                case CardinalPoint.North:
+                    target.canvasRect.x = source.canvasRect.x;
+                    target.canvasRect.y = source.canvasRect.y - source.canvasRect.height - AutoHeightBetweenNodes;
+                    break;
+                case CardinalPoint.South:
+                    target.canvasRect.x = source.canvasRect.x;
+                    target.canvasRect.y = source.canvasRect.y + source.canvasRect.height + AutoHeightBetweenNodes;
+                    break;
+                case CardinalPoint.West:
+                    target.canvasRect.x = source.canvasRect.x - source.canvasRect.width - AutoWidthBetweenNodes;
+                    target.canvasRect.y = source.canvasRect.y;
+                    break;
+                case CardinalPoint.East:
+                    target.canvasRect.x = source.canvasRect.x + source.canvasRect.width + AutoWidthBetweenNodes;
+                    target.canvasRect.y = source.canvasRect.y;
+                    break;
+            }
+        }
+        enum CardinalPoint
+        {
+            North,South,West,East
+        }
+        private void AddMapUpChildCallback(object o)=>AddCardianlCallback(o, CardinalPoint.North);
+        private void AddMapDownChildCallback(object o)=>AddCardianlCallback(o, CardinalPoint.South);
+        private void AddMapLeftChildCallback(object o)=>AddCardianlCallback(o, CardinalPoint.West);
+        private void AddMapRightChildCallback(object o)=>AddCardianlCallback(o, CardinalPoint.East);
+        void AddCardianlCallback(object o,CardinalPoint point, bool useSameActorAssignments = false)
+        {
+            //MapEntry parentEntry = o as MapEntry;
+            //if (parentEntry == null) parentEntry = startMapEntry;
+            //LinkToNewMapEntry(parentEntry, wasShiftDown);
+            //wasShiftDown = false;
+            //InitializeMapTree();
+            //if (prefs.addNewNodesToRight)
+            //{
+            //    currentMapEntry.canvasRect.x = parentEntry.canvasRect.x + parentEntry.canvasRect.width + AutoWidthBetweenNodes;
+            //    currentMapEntry.canvasRect.y = parentEntry.canvasRect.y;
+            //}
+            //else
+            //{
+            //    currentMapEntry.canvasRect.x = parentEntry.canvasRect.x;
+            //    currentMapEntry.canvasRect.y = parentEntry.canvasRect.y + parentEntry.canvasRect.height + AutoHeightBetweenNodes;
+            //}
+            //SetCurrentMapEntry(currentMapEntry);
+            //inspectorSelection = currentMapEntry;
+            //ResetMapEntryText();
+            //if (prefs.autoArrangeOnCreate) AutoArrangeNodes(!prefs.addNewNodesToRight);
+            //Repaint();
+            MapEntry parentEntry = o as MapEntry;
+            if (parentEntry == null) parentEntry = startMapEntry;
+            MapEntry newEntry = CreateNewMapEntry(string.Empty);
+            newEntry.canvasRect = new Rect(parentEntry.canvasRect.x, parentEntry.canvasRect.y - parentEntry.canvasRect.height - 20, parentEntry.canvasRect.width, parentEntry.canvasRect.height);
 
+            CardinalConnectMapEntry(parentEntry, newEntry,point);
+            AlignCardinalPoint(parentEntry, newEntry, point);
+            //wasShiftDown = false;
+            if (parentEntry != null)
+            {
+
+                if (useSameActorAssignments)
+                {
+                    newEntry.ActorID = (parentEntry.ActorID == parentEntry.ConversantID) ? database.playerID : parentEntry.ActorID;
+                    newEntry.ConversantID = parentEntry.ConversantID;
+                }
+                else
+                {
+                    newEntry.ActorID = parentEntry.ConversantID;
+                    newEntry.ConversantID = (parentEntry.ActorID == parentEntry.ConversantID) ? database.playerID : parentEntry.ActorID;
+                }
+
+            }
+
+            InitializeMapTree();
+            SetCurrentMapEntry(currentMapEntry);
+            inspectorSelection = currentMapEntry;
+            ResetMapEntryText();
+            if (prefs.autoArrangeOnCreate) AutoArrangeMapNodes(!prefs.addNewNodesToRight);
+            SetDatabaseDirty("Link to New Entry");
+            Repaint();
+        }
         private void AddMapChildCallback(object o)
         {
             MapEntry parentEntry = o as MapEntry;
             if (parentEntry == null) parentEntry = startMapEntry;
             LinkToNewMapEntry(parentEntry, wasShiftDown);
             wasShiftDown = false;
-            InitializeDialogueTree();
+            InitializeMapTree();
             if (prefs.addNewNodesToRight)
             {
                 currentMapEntry.canvasRect.x = parentEntry.canvasRect.x + parentEntry.canvasRect.width + AutoWidthBetweenNodes;
@@ -2263,7 +3091,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             }
             SetCurrentMapEntry(currentMapEntry);
             inspectorSelection = currentMapEntry;
-            ResetDialogueEntryText();
+            ResetMapEntryText();
             if (prefs.autoArrangeOnCreate) AutoArrangeNodes(!prefs.addNewNodesToRight);
             Repaint();
         }
@@ -2283,7 +3111,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                                  Mathf.Abs(lassoRect.width),
                                  Mathf.Abs(lassoRect.height));
             currentMapEntry = null;
-            if (IsControlDown() && lassoRect.width > DialogueEntry.CanvasRectWidth && lassoRect.height > 2 * DialogueEntry.CanvasRectHeight)
+            if (IsControlDown() && lassoRect.width > MapEntry.CanvasRectWidth && lassoRect.height > 2 * MapEntry.CanvasRectHeight)
             {
                 CreateMapEntryGroup(lassoRect);
             }
@@ -2619,7 +3447,170 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             SetCurrentMapContainer(mapContainer);
             startMapEntry = GetOrCreateFirstMapEntry();
             CheckNodeWidths();
-            if (showNodeEditor) CheckNodeArrangement();
+            if (showNodeEditor) CheckMapNodeArrangement();
+            AlignAllCardinalPosition();
+        }
+        private void CheckMapNodeArrangement()
+        {
+            if (startMapEntry == null) return;
+            if ((startMapEntry.canvasRect.x == 0) && (startMapEntry.canvasRect.y == 0)) AutoArrangeMapNodes(!prefs.addNewNodesToRight);
+        }
+        public void AutoArrangeMapNodes(bool vertically)
+        {
+            AutoArrangeMapNodes(vertically ? AutoArrangeStyle.Vertically : AutoArrangeStyle.Horizontally);
+        }
+        private float GetTreeHeight(List<List<MapEntry>> tree)
+        {
+            float maxHeight = 0;
+            for (int i = 0; i < tree.Count; i++)
+            {
+                var level = tree[i];
+                float levelHeight = level.Count * (canvasMapRectHeight + AutoHeightBetweenNodes);
+                maxHeight = Mathf.Max(maxHeight, levelHeight);
+            }
+            return maxHeight;
+        }
+        private void ArrangeLevel(List<MapEntry> nodes, float x, float y, float treeWidth, float treeHeight, bool vertically)
+        {
+            if (nodes == null || nodes.Count == 0) return;
+            if (vertically)
+            {
+                float nodeCanvasWidth = treeWidth / nodes.Count;
+                float nodeCanvasOffset = (nodeCanvasWidth - canvasMapRectWidth) / 2;
+                for (int i = 0; i < nodes.Count; i++)
+                {
+                    float nodeX = x + (i * nodeCanvasWidth) + nodeCanvasOffset;
+                    nodes[i].canvasRect = new Rect(nodeX, y, canvasMapRectWidth, canvasMapRectHeight);
+                }
+            }
+            else
+            {
+                float nodeCanvasHeight = treeHeight / nodes.Count;
+                float nodeCanvasOffset = (nodeCanvasHeight - canvasMapRectHeight) / 2;
+                for (int i = 0; i < nodes.Count; i++)
+                {
+                    float nodeY = y + (i * nodeCanvasHeight) + nodeCanvasOffset;
+                    nodes[i].canvasRect = new Rect(x, nodeY, canvasMapRectWidth, canvasMapRectHeight);
+                }
+            }
+        }
+        private float GetTreeWidth(List<List<MapEntry>> tree)
+        {
+            float maxWidth = 0;
+            for (int i = 0; i < tree.Count; i++)
+            {
+                var level = tree[i];
+                float levelWidth = level.Count * (canvasMapRectWidth + AutoWidthBetweenNodes);
+                maxWidth = Mathf.Max(maxWidth, levelWidth);
+            }
+            return maxWidth;
+        }
+
+        private void ArrangeTree(List<List<MapEntry>> tree, AutoArrangeStyle style)
+        {
+            if (style == AutoArrangeStyle.Horizontally)
+            {
+                float treeHeight = GetTreeHeight(tree);
+                float y = AutoStartY;
+                if (orphans.Count > 0) y += canvasMapRectHeight + AutoHeightBetweenNodes;
+                float x = AutoStartX;
+                for (int level = 0; level < tree.Count; level++)
+                {
+                    ArrangeLevel(tree[level], x, y, 0, treeHeight, false);
+                    x += canvasMapRectWidth + AutoWidthBetweenNodes;
+                }
+            }
+            else
+            {
+                if (currentConversation == null || currentConversation.dialogueEntries == null || currentConversation.dialogueEntries.Count == 0) return;
+                if (style == AutoArrangeStyle.VerticallyOld || (multinodeSelection != null && multinodeSelection.nodes.Count > 1))
+                {
+                    // Use old algorithm if specified or for subsections of conversation tree:
+                    float treeWidth = GetTreeWidth(tree);
+                    float x = AutoStartX;
+                    if (orphans.Count > 0) x += canvasMapRectWidth + AutoWidthBetweenNodes;
+                    float y = AutoStartY;
+                    for (int level = 0; level < tree.Count; level++)
+                    {
+                        ArrangeLevel(tree[level], x, y, treeWidth, 0, true);
+                        y += canvasMapRectHeight + AutoHeightBetweenNodes;
+                    }
+                }
+                else
+                {
+                    // Use new algorithm provided by digiwombat [Fairmoon Museum]:
+                    CalculatePositions(currentConversation.dialogueEntries[0], 0, 0);
+                    visited.Clear();
+                    subtreeVisited.Clear();
+                    subTreeWidths.Clear();
+                }
+            }
+        }
+        public void AutoArrangeMapNodes(AutoArrangeStyle style)
+        {
+            InitializeMapTree();
+            var tree = new List<List<MapEntry>>();
+            ArrangeGatherMapChildren(mapTree, 0, tree);
+            ArrangeTree(tree, style);
+            ArrangeMapOrphans(style != AutoArrangeStyle.Horizontally);
+            SetDatabaseDirty("Auto-Arrange Nodes");
+        }
+        private void ArrangeMapOrphans(bool vertically)
+        {
+            if (vertically)
+            {
+                float y = AutoStartY;
+                foreach (var orphan in mapOrphans)
+                {
+                    var skip = multinodeMapSelection.nodes.Count > 1 && !multinodeMapSelection.nodes.Contains(orphan.entry);
+                    if (skip) continue;
+                    orphan.entry.canvasRect.x = AutoStartX;
+                    orphan.entry.canvasRect.y = y;
+                    y += orphan.entry.canvasRect.height + AutoHeightBetweenNodes;
+                }
+            }
+            else
+            {
+                float x = AutoStartX;
+                foreach (var orphan in mapOrphans)
+                {
+                    var skip = multinodeMapSelection.nodes.Count > 1 && !multinodeMapSelection.nodes.Contains(orphan.entry);
+                    if (skip) continue;
+                    orphan.entry.canvasRect.x = x;
+                    x += orphan.entry.canvasRect.width + AutoWidthBetweenNodes;
+                    orphan.entry.canvasRect.y = AutoStartY;
+                }
+            }
+        }
+        private void ArrangeGatherMapChildren(MapNode node, int level, List<List<MapEntry>> tree)
+        {
+            if (node == null) return;
+            var skip = multinodeMapSelection.nodes.Count > 1 && !multinodeMapSelection.nodes.Contains(node.entry);
+            while (tree.Count <= level)
+            {
+                tree.Add(new List<MapEntry>());
+            }
+            if (!(skip || tree[level].Contains(node.entry))) tree[level].Add(node.entry);
+            if (node.hasFoldout)
+            {
+                for (int i = 0; i < node.children.Count; i++)
+                {
+                    var child = node.children[i];
+                    ArrangeGatherMapChildren(child, level + 1, tree);
+                }
+            }
+        }
+
+        private void ResetMapTreeSection()
+        {
+            mapTreeFoldout = false;
+            orphansFoldout = false;
+            ResetMapEntryText();
+            mapEntryFoldouts.Clear();
+            ResetMapTree();
+            currentMapEntry = null;
+            ResetLuaWizards();
+            allowEditStartEntry = false;
         }
         private void ResetMapSection()
         {
@@ -2628,10 +3619,10 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             actorField = null;
             conversantField = null;
             areParticipantsValid = false;
-            startEntry = null;
+            startMapEntry = null;
             selectedLink = null;
             actorNamesByID.Clear();
-            ResetDialogueTreeSection();
+            ResetMapTreeSection();
             ResetMapNodeSection();
         }
         private void ResetMapNodeSection()
@@ -2719,6 +3710,24 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 _zoom = currentMapContainer.canvasZoom;
             }
         }
+        private void ArrangeMapNodesCallback(object o) => AutoArrangeMapNodes((bool)o ? AutoArrangeStyle.Vertically : AutoArrangeStyle.Horizontally);
+        private void ShowMapLinkContextMenu()
+        {
+            EditorZoomArea.End();
+
+            GenericMenu contextMenu = new GenericMenu();
+            contextMenu.AddItem(new GUIContent("Delete Link"), false, DeleteMapLinkCallback, selectedLink);
+            contextMenu.AddItem(new GUIContent("Arrange Nodes/Vertically"), false, ArrangeMapNodesCallback, AutoArrangeStyle.Vertically);
+            contextMenu.AddItem(new GUIContent("Arrange Nodes/Vertically (alternate)"), false, ArrangeMapNodesCallback, AutoArrangeStyle.VerticallyOld);
+            contextMenu.AddItem(new GUIContent("Arrange Nodes/Horizontally"), false, ArrangeMapNodesCallback, AutoArrangeStyle.Horizontally);
+
+            AddCanvasContextMenuGotoItems(contextMenu);
+
+            contextMenu.ShowAsContext();
+            contextMenuPosition = Event.current.mousePosition;
+
+            EditorZoomArea.Begin(_zoom, _zoomArea);
+        }
         private void HandleEmptyMapCanvasEvents() // Also handles entry group events.
         {
             wantsMouseMove = true;
@@ -2741,7 +3750,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     {
                         if (selectedLink != null)
                         {
-                            ShowLinkContextMenu();
+                            ShowMapLinkContextMenu();
                         }
                         else
                         {
@@ -2837,14 +3846,14 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         {
             mapContainer.Title = string.Format("New Map {0}", mapContainer.id);
             mapContainer.ActorID = database.playerID;
-            MapEntry startEntry = new MapEntry();
-            startEntry.fields = new List<Field>();
-            InitializeFieldsFromTemplate(startEntry.fields, template.dialogueEntryFields);
-            startEntry.Title = "START";
-            startEntry.currentSequence = "None()";
-            startEntry.ActorID = database.playerID;
-            startEntry.canvasRect = new Rect(MapEntry.CanvasRectWidth, canvasRectHeight, canvasRectWidth, canvasRectHeight);
-            mapContainer.mapEntries.Add(startEntry);
+            MapEntry startMapEntry = new MapEntry();
+            startMapEntry.fields = new List<Field>();
+            InitializeFieldsFromTemplate(startMapEntry.fields, template.dialogueEntryFields);
+            startMapEntry.Title = "START";
+            startMapEntry.currentSequence = "None()";
+            startMapEntry.ActorID = database.playerID;
+            startMapEntry.canvasRect = new Rect(MapEntry.CanvasRectWidth, canvasMapRectHeight, canvasMapRectWidth, canvasMapRectHeight);
+            mapContainer.mapEntries.Add(startMapEntry);
             SetDatabaseDirty("Initialize Conversation");
         }
         private void AddNewMapToOutlineEditor()

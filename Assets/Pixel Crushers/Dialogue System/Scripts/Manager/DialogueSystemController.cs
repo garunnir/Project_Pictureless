@@ -77,10 +77,10 @@ namespace PixelCrushers.DialogueSystem
 
         public enum WarmUpMode { On, Extra, Off }
 
-        [Tooltip("Warm up conversation engine and dialogue UI at Start to avoid a small amount of overhead on first use. 'Extra' performs deeper warmup that takes 1.25s at startup.")]
+        [Tooltip("Warm upID conversation engine and dialogue UI at Start to avoid a small amount of overhead on first use. 'Extra' performs deeper warmup that takes 1.25s at startup.")]
         public WarmUpMode warmUpConversationController = WarmUpMode.On;
 
-        [Tooltip("Don't run HideImmediate on dialogue UI when warming it up on start.")]
+        [Tooltip("Don't run HideImmediate on dialogue UI when warming it upID on start.")]
         public bool dontHideImmediateDuringWarmup = false;
 
         /// <summary>

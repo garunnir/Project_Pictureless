@@ -24,6 +24,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             }
             set
             {
+                //Debug.LogWarning(value.ToString());
                 _inspectorSelection = value;
                 if ((value != null) && (instance != null) && (EditorWindow.focusedWindow == instance))
                 {

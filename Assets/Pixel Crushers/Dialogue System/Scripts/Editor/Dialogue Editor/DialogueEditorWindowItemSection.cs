@@ -616,13 +616,13 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
             //--- Framework for future move up/down buttons:
             EditorGUI.BeginDisabledGroup(entryNumber <= 1);
-            if (GUILayout.Button(new GUIContent("↑", "Move up"), EditorStyles.miniButtonLeft, GUILayout.Width(22)))
+            if (GUILayout.Button(new GUIContent("↑", "Move upID"), EditorStyles.miniButtonLeft, GUILayout.Width(22)))
             {
                 entryToMoveUp = entryNumber;
             }
             EditorGUI.EndDisabledGroup();
             EditorGUI.BeginDisabledGroup(entryNumber >= entryCount);
-            if (GUILayout.Button(new GUIContent("↓", "Move down"), EditorStyles.miniButtonMid, GUILayout.Width(22)))
+            if (GUILayout.Button(new GUIContent("↓", "Move downID"), EditorStyles.miniButtonMid, GUILayout.Width(22)))
             {
                 entryToMoveDown = entryNumber;
             }

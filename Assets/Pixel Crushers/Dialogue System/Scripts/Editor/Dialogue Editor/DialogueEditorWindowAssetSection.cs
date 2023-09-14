@@ -71,10 +71,10 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 if (!foldouts.properties.ContainsKey(index)) foldouts.properties.Add(index, false);
                 foldouts.properties[index] = EditorGUILayout.Foldout(foldouts.properties[index], EditorTools.GetAssetName(asset));
                 EditorGUI.BeginDisabledGroup(index >= (assets.Count - 1));
-                if (GUILayout.Button(new GUIContent("↓", "Move down"), GUILayout.Width(16))) indexToMoveDown = index;
+                if (GUILayout.Button(new GUIContent("↓", "Move downID"), GUILayout.Width(16))) indexToMoveDown = index;
                 EditorGUI.EndDisabledGroup();
                 EditorGUI.BeginDisabledGroup(index == 0);
-                if (GUILayout.Button(new GUIContent("↑", "Move up"), GUILayout.Width(16))) indexToMoveUp = index;
+                if (GUILayout.Button(new GUIContent("↑", "Move upID"), GUILayout.Width(16))) indexToMoveUp = index;
                 EditorGUI.EndDisabledGroup();
                 if (GUILayout.Button(new GUIContent(" ", string.Format("Delete {0}.", EditorTools.GetAssetName(asset))), "OL Minus", GUILayout.Width(16))) assetToRemove = asset;
                 EditorGUILayout.EndHorizontal();

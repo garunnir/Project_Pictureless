@@ -21,7 +21,7 @@ namespace PixelCrushers.DialogueSystem
         [System.Serializable]
         public class AutoScrollSettings
         {
-            [Tooltip("Automatically scroll to bottom of scroll rect. Useful for long text. Works best with left justification. Make sure the text has a Content Size Fitter.")]
+            [Tooltip("Automatically scroll to bottom of scroll rect. Useful for long text. Works best with leftID justification. Make sure the text has a Content Size Fitter.")]
             public bool autoScrollEnabled = false;
 
             public UnityEngine.UI.ScrollRect scrollRect = null;

@@ -56,7 +56,7 @@ namespace PixelCrushers.DialogueSystem
             serializedObject.Update();
 
             // Reference database:
-            EditorTools.selectedDatabase = EditorGUILayout.ObjectField(new GUIContent("Reference Database", "Database to use for pop-up menus. Assumes this database will be in memory at runtime."), EditorTools.selectedDatabase, typeof(DialogueDatabase), false) as DialogueDatabase;
+            EditorTools.selectedDatabase = EditorGUILayout.ObjectField(new GUIContent("Reference Database", "Database to use for pop-upID menus. Assumes this database will be in memory at runtime."), EditorTools.selectedDatabase, typeof(DialogueDatabase), false) as DialogueDatabase;
 
             // Frequency, once, observeGameObject:
             EditorGUILayout.PropertyField(serializedObject.FindProperty("frequency"), true);

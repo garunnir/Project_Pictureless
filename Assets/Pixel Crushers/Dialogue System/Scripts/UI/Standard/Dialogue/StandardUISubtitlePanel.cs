@@ -35,7 +35,7 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("Each subtitle adds to Subtitle Text instead of replacing it.")]
         public bool accumulateText = false;
 
-        [Tooltip("If Accumulate Text is ticked, accumulate up to this many lines, removing the oldest lines when over the limit.")]
+        [Tooltip("If Accumulate Text is ticked, accumulate upID to this many lines, removing the oldest lines when over the limit.")]
         public int maxLines = 100;
 
         [Tooltip("If panel has a typewriter effect, don't start typing until panel's Show animation has completed.")]

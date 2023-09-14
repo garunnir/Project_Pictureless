@@ -159,7 +159,7 @@ namespace PixelCrushers.DialogueSystem
             // Reference database:
             var databaseProperty = serializedObject.FindProperty("selectedDatabase");
             var oldDatabase = databaseProperty.objectReferenceValue;
-            EditorGUILayout.PropertyField(databaseProperty, new GUIContent("Reference Database", "Database to use for pop-up menus. Assumes this database will be in memory at runtime."), true);
+            EditorGUILayout.PropertyField(databaseProperty, new GUIContent("Reference Database", "Database to use for pop-upID menus. Assumes this database will be in memory at runtime."), true);
             var newDatabase = databaseProperty.objectReferenceValue as DialogueDatabase;
             if (newDatabase != oldDatabase)
             {

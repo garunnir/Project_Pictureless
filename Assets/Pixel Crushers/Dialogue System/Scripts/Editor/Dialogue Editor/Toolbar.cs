@@ -23,7 +23,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             set { current = value; }
         }
 
-        private string[] ToolbarStrings = { "Database", "Actors", "Items", "Locations", "Variables", "Conversations", "Templates" ,"Maps"};
+        private string[] ToolbarStrings = { "Database", "Actors", "Items", "Locations", "Variables", "Conversations", "Templates" ,"Maps(Unstable)"};
         private const int ItemsToolbarIndex = 2;
         private const string ItemsToolbarString = "Items";
         private const string ItemsAsQuestsToolbarString = "Quests/Items";

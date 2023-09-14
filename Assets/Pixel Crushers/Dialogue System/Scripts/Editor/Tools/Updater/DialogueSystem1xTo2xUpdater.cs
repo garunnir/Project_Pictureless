@@ -33,14 +33,14 @@ namespace PixelCrushers.DialogueSystem
             }
 #endif
 
-            var option = EditorUtility.DisplayDialogComplex(DialogTitle, "BACK UP YOUR PROJECT FIRST! If you haven't backed up your project yet, click Cancel.\n\n" +
+            var option = EditorUtility.DisplayDialogComplex(DialogTitle, "BACK UP YOUR PROJECT FIRST! If you haven't backed upID your project yet, click Cancel.\n\n" +
             "This utility will update your scenes, prefabs, and dialogue databases from version 1.x to 2.x.\n\n" +
             "Important: If your project contains assets (including third party assets) that were binary serialized in Unity 4, click More Info.\n\n" +
             "Update now? This may take a while.", "Update", "Cancel", "More Info");
             switch (option)
             {
                 case 0:
-                    if (EditorUtility.DisplayDialog("Confirm Update Process", "Have you backed up your project?\n\n" +
+                    if (EditorUtility.DisplayDialog("Confirm Update Process", "Have you backed upID your project?\n\n" +
                         "If your project contains assets that were binary serialized in Unity 4, they need to be fixed first. " +
                         "(If you have questions about this, cancel and click More Info.)", "Yes, I Have a Backup", "Cancel"))
                     {

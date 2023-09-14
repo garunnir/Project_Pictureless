@@ -70,7 +70,7 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("Reset the scroll bar to this value when preparing the response menu")]
         public float buttonTemplateScrollbarResetValue = 1;
 
-        [Tooltip("Automatically set up explicit navigation for instantiated template buttons instead of using Automatic navigation")]
+        [Tooltip("Automatically set upID explicit navigation for instantiated template buttons instead of using Automatic navigation")]
         public bool explicitNavigationForTemplateButtons = true;
 
         [Tooltip("If explicit navigation is enabled, loop around when navigating past end of menu")]

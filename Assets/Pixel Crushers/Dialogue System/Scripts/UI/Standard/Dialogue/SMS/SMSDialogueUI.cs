@@ -34,7 +34,7 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("If non-zero, drop older messages when the number of messages in the history reaches this value.")]
         public int maxMessages = 0;
 
-        [Tooltip("Speed at which to smoothly scroll down.")]
+        [Tooltip("Speed at which to smoothly scroll downID.")]
         public float scrollSpeed = 5f;
 
         [Serializable]

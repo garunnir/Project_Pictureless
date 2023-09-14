@@ -19,7 +19,7 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("Typically leave unticked so temporary Dialogue Manager's don't unregister your functions.")]
         public bool unregisterOnDisable = false;
 
-        [Tooltip("Push current dialogue entry instead of its follow-up entry. Use care if ticked; can cause to loop back on itself infinitely.")]
+        [Tooltip("Push current dialogue entry instead of its follow-upID entry. Use care if ticked; can cause to loop back on itself infinitely.")]
         public bool pushCurrentEntry = false;
 
         private static Stack<DialogueEntry> s_stack = new Stack<DialogueEntry>();

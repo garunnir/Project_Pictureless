@@ -18,7 +18,15 @@ namespace PixelCrushers.DialogueSystem
     [System.Serializable]
     public class MapEntry
     {
-
+        public Postion postion = new Postion();
+        [System.Serializable]
+        public class Postion
+        {
+            public int leftID = -1;
+            public int rightID = -1;
+            public int upID = -1;
+            public int downID = -1;
+        }
         /// <summary>
         /// The dialogue entry ID. Links reference dialogue entries by ID.
         /// </summary>
@@ -88,19 +96,22 @@ namespace PixelCrushers.DialogueSystem
         /// </summary>
         public string userScript = null;
 
+        public bool IsExistCardinalPoints()
+        {
+            return Mathf.Max(-1,postion.leftID,postion.rightID,postion.upID,postion.downID)!=-1?true:false;
+        }
         /// <summary>
         /// 
         /// </summary>
         public UnityEngine.Events.UnityEvent onExecute = new UnityEngine.Events.UnityEvent();
 
-        public const float CanvasRectWidth = 160f;
-        public const float CanvasRectHeight = 30f;
+        public const float CanvasRectWidth = 100f;
+        public const float CanvasRectHeight = 100f;
 
         /// <summary>
         /// The position of this entry on the Dialogue Editor's node canvas.
         /// </summary>
         public Rect canvasRect = new Rect(0, 0, CanvasRectWidth, CanvasRectHeight);
-
         public const string SceneEventGuidFieldName = "EventGuid";
 
         /// <summary>
