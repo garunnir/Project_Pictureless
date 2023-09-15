@@ -100,6 +100,14 @@ namespace PixelCrushers.DialogueSystem
         {
             return Mathf.Max(-1,postion.leftID,postion.rightID,postion.upID,postion.downID)!=-1?true:false;
         }
+        public bool IsConnectedWith(int id)
+        {
+            if(postion.leftID == id|| postion.rightID == id|| postion.upID == id|| postion.downID == id)
+            {
+                return true;
+            }
+            else { return false; }
+        }
         /// <summary>
         /// 
         /// </summary>
