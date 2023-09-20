@@ -16,20 +16,20 @@ namespace Garunnir
     {
         none,
         id, field, inner, prev, next,
-        
-        profile,firstName, outerAge, exp,nickName, gender, lastName,age
+
+        profile, firstName, outerAge, exp, nickName, gender, lastName, age
 
     }
     public enum Form0
     {
         none,
         image, text, bar,
-        character,bodyparts,
+        character, bodyparts,
     }
     public enum Gender
     {
         none,
-        male,female
+        male, female
     }
     public class GameManager : Singleton<GameManager>
     {
@@ -57,10 +57,10 @@ namespace Garunnir
             TypeDic.Add(typeof(HumanoidBody), "Bodyparts.Human");
 
             FormStrDic = new Dictionary<(Enum, Enum), string>();
-            FormStrDic.Add((Form0.character,Form.id), "Id");
-            FormStrDic.Add((Form0.character,Form.field), "Field");
-            FormStrDic.Add((Form0.bodyparts,Form.field), "Field");
-            FormStrDic.Add((Form0.bodyparts,Form.inner), "Inner");
+            FormStrDic.Add((Form0.character, Form.id), "Id");
+            FormStrDic.Add((Form0.character, Form.field), "Field");
+            FormStrDic.Add((Form0.bodyparts, Form.field), "Field");
+            FormStrDic.Add((Form0.bodyparts, Form.inner), "Inner");
             FormStrDic.Add((Form0.bodyparts, Form.prev), "prev");
             FormStrDic.Add((Form0.bodyparts, Form.next), "next");
             FormStrDic.Add((Form0.image, Form.profile), "Image.Profile");
@@ -72,10 +72,10 @@ namespace Garunnir
             FormStrDic.Add((Form0.text, Form.lastName), "Text.LastName");
             FormStrDic.Add((Form0.text, Form.gender), "Text.Gender");
             FormStrDic.Add((Form0.text, Form.age), "Text.Age");
-            FormStrDic.Add((Form.gender, Gender.male),"Gender.Male");
-            FormStrDic.Add((Form.gender, Gender.none),"Gender.None");
-            FormStrDic.Add((Form.gender, Gender.female),"Gender.female");
-            charProfleImg = Path.Combine(Application.persistentDataPath, "Char","CharProfile");
+            FormStrDic.Add((Form.gender, Gender.male), "Gender.Male");
+            FormStrDic.Add((Form.gender, Gender.none), "Gender.None");
+            FormStrDic.Add((Form.gender, Gender.female), "Gender.female");
+            charProfleImg = Path.Combine(Application.persistentDataPath, "Char", "CharProfile");
             Utillity.CheckFolderInPath(charProfleImg);
         }
 
@@ -85,7 +85,7 @@ namespace Garunnir
         }
         public string GetFormDic(Enum form0, Enum form)
         {
-            return FormStrDic[(form0,form)];
+            return FormStrDic[(form0, form)];
         }
 
         #endregion
@@ -113,7 +113,7 @@ namespace Garunnir
             AddTableField(Form.gender, Gender.female, "여");
             AddTableField(Form.gender, Gender.none, "무성");
         }
-        void AddTableField(Enum arg0,Enum arg,string value, string lang = "ko")
+        void AddTableField(Enum arg0, Enum arg, string value, string lang = "ko")
         {
             localizeTable.AddField(GetFormDic(arg0, arg));
             localizeTable.SetFieldTextForLanguage(GetFormDic(arg0, arg), lang, value);
@@ -125,18 +125,19 @@ namespace Garunnir
         #endregion
 
         #region CacheData
-        public List<Character>characters = new List<Character>();
+        public List<Character> characters = new List<Character>();
         #endregion
         private void Init()
         {
             charactorManager = CharactorManager.Instance;
             charactorManager.transform.SetParent(transform);
-            if (characterSO == null) Debug.LogError("CharSO not exist. check GM property");
+            //if (characterSO == null) Debug.LogError("CharSO not exist. check GM property");
             SetDontDistroy();
 
         }
         private void Awake()
         {
+            InitCharImg();
             Init();
             DataConfig();
 #if UNITY_EDITOR
@@ -148,16 +149,16 @@ namespace Garunnir
         }
         private void StarterInit()
         {
-            characters=charactorManager.CreateNPCs();
+            characters = charactorManager.CreateNPCs();
             foreach (Character character in characters)
             {
-                if(character.img_profile==null)
+                if (character.img_profile == null)
                 {
-                    List<SOContainer> charaimg =characterSO.imgContainer.Where(x => x.id == character.id).ToList<SOContainer>();
-                    if(charaimg.Count > 0)
-                    {
-                        character.img_profile = charaimg[0].texture;
-                    }
+                    //List<SOContainer> charaimg =characterSO.imgContainer.Where(x => x.id == character.id).ToList<SOContainer>();
+                    //if(charaimg.Count > 0)
+                    //{
+                    //    character.img_profile = charaimg[0].texture;
+                    //}
                 }
             }
         }
@@ -170,6 +171,59 @@ namespace Garunnir
             //Texture2D[] textures= Resources.LoadAll<Texture2D>("Character");
             Texture2D[] textures = Resources.LoadAll<Texture2D>("Background");
             print(textures.Length);
+        }
+        void InitCharImg()
+        {
+            //가지고 있던 이미지들을 전부 겔러리에 저장한다.
+            //팝업이 뜨면 실패.
+            //가지고 있는것이 있는지 먼저 판단
+            //파일명부터 가져오자 경로를 긁어오는 메서드 있는지?
+            AndroidJavaClass ajc = new AndroidJavaClass("com.garunnir.File.FileController");
+            string path = ajc.CallStatic<string>("GetFileEnvPath", "DCIM", "");
+            Debug.LogWarning(ajc.CallStatic<bool>("IsExistFileEnv", "DCIM", "/.PPResource/Background/portal.png"));
+            Debug.LogWarning(ajc.CallStatic<bool>("CreateDirectoryIn", "DCIM", "/.PPResource/Background"));
+            Debug.LogWarning(Directory.Exists(path));
+            Texture2D[] textures = Resources.LoadAll<Texture2D>("Img/Background");
+            Debug.LogWarning(textures.Length);
+            Debug.LogWarning(path);
+
+            int tmpDone = textures.Length;
+            foreach (Texture2D tex in textures)
+            {
+                if (ajc.CallStatic<bool>("IsExistFileEnv", "DCIM", "/.PPResource/Background/" + tex.name + ".png"))
+                {
+                    Debug.Log("already Exist" + tex.name + ".png");
+                    tmpDone--;
+                    continue;
+                }
+
+                //File.WriteAllBytes(path+"/"+tex.name+ ".png", tex.GetRawTextureData());
+                if (textures.Last() != tex)
+                {
+
+                }
+                else
+                {
+
+                }
+                NativeGallery.SaveImageToGallery(tex.GetRawTextureData(), ".PPResource/Background", tex.name + ".png", (x, y) =>
+                {
+                    print(y);
+                    tmpDone--;
+                    if(tmpDone == 0)
+                    ajc.CallStatic<bool>("deleteDirectoryIn", "DCIM", "_.PPResource");
+                });
+
+            }
+            //if (!File.Exists(path))
+            //{
+            //    Utillity.CheckFolderInPath(path);
+            //}
+
+            print("end");
+            //파일있는지 확인하고 없으면 그 경로에 파일을 복사해넣는다.
+
+
         }
         private void ResourceLoad()
         {
@@ -214,9 +268,8 @@ namespace Garunnir
         }
         public static string CheckFolderInPath(string path)
         {
-            path=path.Remove(path.LastIndexOf('\\'));
-            DirectoryInfo directoryInfo = new DirectoryInfo(path);
-            directoryInfo.Create();
+            path = path.Remove(path.LastIndexOf('\\'));
+            Directory.CreateDirectory(path);
             return path;
         }
         public static Texture2D LoadImage(string path)
@@ -309,10 +362,10 @@ namespace Garunnir
             }
             stringBuilder.Append(lf);
         }
-        public static string TupleSigleConv(string a,bool b,object c)
+        public static string TupleSigleConv(string a, bool b, object c)
         {
             if (c.ToString() == string.Empty) c = "Null";
-            return string.Format("{0}={1}|{2}",a, b, c);
+            return string.Format("{0}={1}|{2}", a, b, c);
         }
         public static void TupleDicConv(string head, Dictionary<string, (bool, object)> tupledic)
         {
@@ -330,10 +383,10 @@ namespace Garunnir
         public static string GetJsonConvert(Character character)
         {
             Utillity.stringBuilder.Clear();
-            Utillity.stringBuilder.Append($"{lf}{GameManager.Instance.GetFormDic(Form0.character,Form.id)}:");
+            Utillity.stringBuilder.Append($"{lf}{GameManager.Instance.GetFormDic(Form0.character, Form.id)}:");
             Utillity.stringBuilder.Append(character.id);
             Utillity.stringBuilder.Append(lf);
-            TupleDicConv(GameManager.Instance.GetFormDic(Form0.character,Form.field), character.field);
+            TupleDicConv(GameManager.Instance.GetFormDic(Form0.character, Form.field), character.field);
             Utillity.stringBuilder.Append(divider);
             Utillity.stringBuilder.Append(lf);
             character.bodyCore.GetJsonConvert();
