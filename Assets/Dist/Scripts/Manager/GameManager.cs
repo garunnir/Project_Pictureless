@@ -35,7 +35,6 @@ namespace Garunnir
     {
         #region SO
         [SerializeField] TextTable localizeTable;
-        [SerializeField] NPCCharacterSO characterSO;
         public TextTable GetLoTable() => localizeTable;
         #endregion
         #region DataConfig
@@ -79,6 +78,7 @@ namespace Garunnir
             charProfleImg = Path.Combine(Application.persistentDataPath, "Char","CharProfile");
             Utillity.CheckFolderInPath(charProfleImg);
         }
+
         public string GetTypeDic(Type type)
         {
             return TypeDic[type];
@@ -165,8 +165,15 @@ namespace Garunnir
         {
             SaveSystem.LoadFromSlot(0);
         }
+        void LoadAllImg()
+        {
+            //Texture2D[] textures= Resources.LoadAll<Texture2D>("Character");
+            Texture2D[] textures = Resources.LoadAll<Texture2D>("Background");
+            print(textures.Length);
+        }
         private void ResourceLoad()
         {
+            LoadAllImg();
             //로드시 시간이 걸리는 데이터들을 미리 로드한다.
             //캐릭터 프로필사진들을 로드한다.
             LoadCharPicture();

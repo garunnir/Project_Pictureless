@@ -32,7 +32,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             }
             set
             {
-                Debug.Log("!@!");
+                //Debug.Log("!@!");
                 _currentConversation = value;
                 if (value != null) currentConversationID = value.id;
             }
