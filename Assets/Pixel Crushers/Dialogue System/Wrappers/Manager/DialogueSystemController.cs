@@ -1,4 +1,4 @@
-﻿// Copyright (c) Pixel Crushers. All rights reserved.
+// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 
@@ -13,6 +13,7 @@ namespace PixelCrushers.DialogueSystem.Wrappers
     [AddComponentMenu("Pixel Crushers/Dialogue System/Misc/Dialogue System Controller")]
     public class DialogueSystemController : PixelCrushers.DialogueSystem.DialogueSystemController
     {
+        
     }
 
 }

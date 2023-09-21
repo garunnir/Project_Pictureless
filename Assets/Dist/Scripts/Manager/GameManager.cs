@@ -9,6 +9,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using PixelCrushers.DialogueSystem;
+using UnityEngine.XR;
+using UnityEngine.UI;
+using System.Threading.Tasks;
 
 namespace Garunnir
 {
@@ -75,8 +78,8 @@ namespace Garunnir
             FormStrDic.Add((Form.gender, Gender.male), "Gender.Male");
             FormStrDic.Add((Form.gender, Gender.none), "Gender.None");
             FormStrDic.Add((Form.gender, Gender.female), "Gender.female");
-            charProfleImg = Path.Combine(Application.persistentDataPath, "Char", "CharProfile");
-            Utillity.CheckFolderInPath(charProfleImg);
+            charProfleImg = Utillity.CombinePath(Application.persistentDataPath, "Char", "CharProfile");
+            Utillity.CheckFolderInPath(charProfleImg,false);
         }
 
         public string GetTypeDic(Type type)
@@ -126,6 +129,16 @@ namespace Garunnir
 
         #region CacheData
         public List<Character> characters = new List<Character>();
+#if !UNITY_EDITOR
+        AndroidJavaClass ajc = new AndroidJavaClass("com.garunnir.File.FileController");
+#endif
+        public Dictionary<string,Texture2D> imgDic = new Dictionary<string, Texture2D>();
+        List<string> tmpPathContainer = new List<string>();
+        #region view
+        public RawImage Background { private set; get; }
+        public void SetBackground(RawImage raw)=>Background = raw;
+
+        #endregion
         #endregion
         private void Init()
         {
@@ -137,7 +150,6 @@ namespace Garunnir
         }
         private void Awake()
         {
-            InitCharImg();
             Init();
             DataConfig();
 #if UNITY_EDITOR
@@ -166,54 +178,98 @@ namespace Garunnir
         {
             SaveSystem.LoadFromSlot(0);
         }
+        public Action ResourceLoadDoneEvent;
+        bool isResourceLoadDone = false;
         void LoadAllImg()
         {
-            //Texture2D[] textures= Resources.LoadAll<Texture2D>("Character");
-            Texture2D[] textures = Resources.LoadAll<Texture2D>("Background");
-            print(textures.Length);
+            InitCharImg(() => { LoadImgByDir(); isResourceLoadDone = true; ResourceLoadDoneEvent?.Invoke(); });
+            print(tmpPathContainer.Count);
         }
-        void InitCharImg()
+        void LoadImgByDir()
         {
+            //이미지를 경로로부터 가져온다.
+            //경로를 어떻게?
+            foreach (string key in tmpPathContainer)
+            {
+#if !UNITY_EDITOR
+                imgDic.Add(Path.GetFileName(key), NativeGallery.LoadImageAtPath(key));
+#else
+                Texture2D tex=new Texture2D(8,8);
+                if (!File.Exists(key))
+                {
+                    Debug.LogError("cantfind:" + key);
+                }
+                tex.LoadImage(File.ReadAllBytes(key));
+                imgDic.Add(Path.GetFileName(key),tex);
+                Debug.LogWarning(Path.GetFileName(key));
+#endif
+            }
+        }
+        
+#if !UNITY_EDITOR
+        int currentLoad = 0;
+        void InitCharImg(Action done)
+        {
+            int totalTasks = 2; // 총 작업 수
+            int completedTasks = 0; // 완료된 작업 수
+            Action action= () => { 
+                completedTasks++;
+                if (completedTasks == totalTasks)
+                {
+                    Debug.Log("delete");
+                    ajc.CallStatic<bool>("deleteDirectoryIn", "DCIM", "/_.PPResource");
+                    done();
+                }
+            };
+            ImgResourceInit("Background", action);
+            ImgResourceInit("Character", action);
+        }
+        private void ImgResourceInit(string rpath,Action done)
+        {
+            currentLoad++;
             //가지고 있던 이미지들을 전부 겔러리에 저장한다.
             //팝업이 뜨면 실패.
             //가지고 있는것이 있는지 먼저 판단
             //파일명부터 가져오자 경로를 긁어오는 메서드 있는지?
-            AndroidJavaClass ajc = new AndroidJavaClass("com.garunnir.File.FileController");
+            Texture2D[] textures = Resources.LoadAll<Texture2D>("Img/" + rpath);
+            //AndroidJavaClass ajc = new AndroidJavaClass("com.garunnir.File.FileController");
             string path = ajc.CallStatic<string>("GetFileEnvPath", "DCIM", "");
-            Debug.LogWarning(ajc.CallStatic<bool>("IsExistFileEnv", "DCIM", "/.PPResource/Background/portal.png"));
-            Debug.LogWarning(ajc.CallStatic<bool>("CreateDirectoryIn", "DCIM", "/.PPResource/Background"));
-            Debug.LogWarning(Directory.Exists(path));
-            Texture2D[] textures = Resources.LoadAll<Texture2D>("Img/Background");
-            Debug.LogWarning(textures.Length);
-            Debug.LogWarning(path);
-
+            //Debug.LogWarning(ajc.CallStatic<bool>("IsExistFileEnv", "DCIM", "/.PPResource/Background/portal.png"));
+            print(ajc.CallStatic<bool>("CreateDirectoryIn", "DCIM", $"/.PPResource/{rpath}"));
             int tmpDone = textures.Length;
             foreach (Texture2D tex in textures)
             {
-                if (ajc.CallStatic<bool>("IsExistFileEnv", "DCIM", "/.PPResource/Background/" + tex.name + ".png"))
+                tmpPathContainer.Add(path + $"/.PPResource/{rpath}/" + tex.name + ".png");
+
+                if (ajc.CallStatic<bool>("IsExistFileEnv", "DCIM", $"/.PPResource/{rpath}/" + tex.name + ".png"))
                 {
-                    Debug.Log("already Exist" + tex.name + ".png");
+                    Debug.Log("already Exist: " + tex.name + ".png");
                     tmpDone--;
                     continue;
                 }
 
                 //File.WriteAllBytes(path+"/"+tex.name+ ".png", tex.GetRawTextureData());
-                if (textures.Last() != tex)
-                {
+                //if (textures.Last() != tex)
+                //{
 
-                }
-                else
-                {
+                //}
+                //else
+                //{
 
-                }
-                NativeGallery.SaveImageToGallery(tex.GetRawTextureData(), ".PPResource/Background", tex.name + ".png", (x, y) =>
+                //}
+                NativeGallery.Permission permission =NativeGallery.SaveImageToGallery(tex, $".PPResource/{rpath}", tex.name + ".png", (x, y) =>
                 {
-                    print(y);
+                    print(y);//path
+                    if (!x)
+                    {
+                        Debug.LogError("Save Failed");
+                    }
                     tmpDone--;
-                    if(tmpDone == 0)
-                    ajc.CallStatic<bool>("deleteDirectoryIn", "DCIM", "_.PPResource");
+                    ajc.CallStatic<bool>("MoveTo", "DCIM", $"/_.PPResource/{rpath}/" + tex.name + ".png", $"/.PPResource/{rpath}/" + tex.name + ".png");
+                    if (tmpDone == 0)
+                        done();
                 });
-
+                
             }
             //if (!File.Exists(path))
             //{
@@ -222,9 +278,40 @@ namespace Garunnir
 
             print("end");
             //파일있는지 확인하고 없으면 그 경로에 파일을 복사해넣는다.
-
-
         }
+#else
+        async void InitCharImg(Action done)
+        {
+            List<Task> tasks = new List<Task>();
+
+            // 비동기 작업들을 tasks 리스트에 추가
+            tasks.Add(ImgResourceInit("Background"));
+            tasks.Add(ImgResourceInit("Character"));
+
+            // 모든 작업이 완료될 때까지 기다림
+            await Task.WhenAll(tasks);
+
+            done();
+            Console.WriteLine("모든 작업이 완료되었습니다.");
+        }
+        async Task ImgResourceInit(string rpath)
+        {
+            //가지고 있던 이미지들을 전부 겔러리에 저장한다.
+            //팝업이 뜨면 실패.
+            //가지고 있는것이 있는지 먼저 판단
+            //파일명부터 가져오자 경로를 긁어오는 메서드 있는지?
+            Texture2D[] textures = Resources.LoadAll<Texture2D>("Img/" + rpath);
+            string path =Utillity.CheckFolderInPath(Application.persistentDataPath + ("/Img/" + rpath));
+            print("start");
+            foreach (var item in textures)
+            {
+                await File.WriteAllBytesAsync(path +"/"+ item.name + ".png", Utillity.GetTextureBytesFromCopy(item));
+                tmpPathContainer.Add(path + "/" + item.name + ".png");
+            }
+            print("end");
+            //파일있는지 확인하고 없으면 그 경로에 파일을 복사해넣는다.
+        }
+#endif
         private void ResourceLoad()
         {
             LoadAllImg();
@@ -240,7 +327,12 @@ namespace Garunnir
                 characters[i].img_profile = Utillity.LoadImage(GameManager.charProfleImg + i);
             }
         }
+        //private void Update()
+        //{
+        //    Debug.Log("!");
+        //}
     }
+    
     public class Utillity
     {
         //public const string lf = "\r\n";
@@ -266,10 +358,27 @@ namespace Garunnir
                 return (T)(object)str;
             }
         }
-        public static string CheckFolderInPath(string path)
+        public static string CombinePath(params string[] path)
         {
-            path = path.Remove(path.LastIndexOf('\\'));
-            Directory.CreateDirectory(path);
+            string str=string.Empty;
+            foreach (var item in path)
+            {
+                str += item;
+                if(path.Last()!=item)
+                str += "/";
+            }
+            return str;
+        }
+        public static string CheckFolderInPath(string path,bool isOnlyDir=true)
+        {
+            Debug.LogWarning(path);
+            if (!isOnlyDir)
+                path = Path.GetDirectoryName(path);
+            if (!Directory.Exists(path))
+            {
+                Debug.Log("Create");
+                Directory.CreateDirectory(path);
+            }
             return path;
         }
         public static Texture2D LoadImage(string path)
@@ -391,6 +500,51 @@ namespace Garunnir
             Utillity.stringBuilder.Append(lf);
             character.bodyCore.GetJsonConvert();
             return Utillity.stringBuilder.ToString();
+        }
+        public static byte[] GetTextureBytesFromCopy(Texture2D texture, bool isJpeg=false)
+        {
+            // Texture is marked as non-readable, create a readable copy and save it instead
+            Debug.LogWarning("Saving non-readable textures is slower than saving readable textures");
+
+            Texture2D sourceTexReadable = null;
+            RenderTexture rt = RenderTexture.GetTemporary(texture.width, texture.height);
+            RenderTexture activeRT = RenderTexture.active;
+
+            try
+            {
+                Graphics.Blit(texture, rt);
+                RenderTexture.active = rt;
+
+                sourceTexReadable = new Texture2D(texture.width, texture.height, isJpeg ? TextureFormat.RGB24 : TextureFormat.RGBA32, false);
+                sourceTexReadable.ReadPixels(new Rect(0, 0, texture.width, texture.height), 0, 0, false);
+                sourceTexReadable.Apply(false, false);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+
+                UnityEngine.Object.DestroyImmediate(sourceTexReadable);
+                return null;
+            }
+            finally
+            {
+                RenderTexture.active = activeRT;
+                RenderTexture.ReleaseTemporary(rt);
+            }
+
+            try
+            {
+                return isJpeg ? sourceTexReadable.EncodeToJPG(100) : sourceTexReadable.EncodeToPNG();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                return null;
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(sourceTexReadable);
+            }
         }
     }
 }

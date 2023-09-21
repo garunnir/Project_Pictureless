@@ -1,16 +1,19 @@
 using UnityEngine;
 using System.Collections;
 using PixelCrushers.DialogueSystem;
+using Garunnir;
+using UnityEngine.UI;
 
 namespace PixelCrushers.DialogueSystem.SequencerCommands
 {
 
     public class SequencerCommandChangeBG : SequencerCommand
     {
-        int changeTo;
+        string changeTo;
         public void Awake()
         {
-            changeTo=GetParameterAsInt(0);
+            changeTo=GetParameterAs<string>(0,changeTo);
+            Change();
             // Add your initialization code here. You can use the GetParameter***() and GetSubject()
             // functions to get information from the command's parameters. You can also use the
             // Sequencer property to access the SequencerCamera, CameraAngle, Speaker, Listener,
@@ -30,6 +33,8 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
         {
             //이미지를 로드한다
             //
+            RawImage img=GameManager.Instance.Background;
+            img.texture=GameManager.Instance.imgDic[changeTo];
         }
         //public void Update()
         //{

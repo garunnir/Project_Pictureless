@@ -279,7 +279,7 @@ namespace Garunnir.CharacterAppend.BodySystem
     }
     public abstract class Shape
     {
-        public string name { get { return _name; } protected set { Debug.Log(_name); _name = value; } }//부위명
+        public string name { get { return _name; } protected set { /*Debug.Log(_name);*/ _name = value; } }//부위명
         public string _name;
         abstract public void ToJson();
         abstract public void FromJson(string[] strings);

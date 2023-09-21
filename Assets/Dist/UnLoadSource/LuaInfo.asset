@@ -12,5 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1dbbc84c70300ba489dc1fe1961516ec, type: 3}
   m_Name: LuaInfo
   m_EditorClassIdentifier: 
-  conditionFunctions: []
-  scriptFunctions: []
+  conditionFunctions:
+  - functionName: 
+    parameters: 
+    returnValue: 0
+  scriptFunctions:
+  - functionName: 
+    parameters: 00000000
+    returnValue: 0
