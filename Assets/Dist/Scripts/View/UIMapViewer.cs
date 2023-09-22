@@ -38,7 +38,6 @@ public class UIMapViewer : MonoBehaviour
     {
         if(Input.GetMouseButtonUp(0))
         {
-
             Vector3 wp = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x,Input.mousePosition.y,Camera.main.nearClipPlane));
             //마우스 스크린포인트를 가져온다
             Debug.LogWarning(wp);
@@ -198,7 +197,7 @@ public class UIMapViewer : MonoBehaviour
     void CreateSprite(MapEntry entry, Vector2 vecCenter)
     {
         //이미지 생성
-        if (prevlist.Where(x => x.anchoredPosition == vecCenter).Count() != 0||createAmount>createLimit) return;
+        if (createAmount>createLimit|| mapdic.ContainsKey(entry.id)|| prevlist.Where(x => x.anchoredPosition == vecCenter).Count() != 0) return;
         createAmount++; 
         GameObject imgobj = new GameObject(entry.Title);
         imgobj.AddComponent<RawImage>();
