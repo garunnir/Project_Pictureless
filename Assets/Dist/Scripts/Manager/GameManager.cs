@@ -150,6 +150,7 @@ namespace Garunnir
         }
         private void Awake()
         {
+            ResourceLoadDoneEvent += ()=>FindObjectOfType<DialogueSystemTrigger>().OnUse();
             Init();
             DataConfig();
 #if UNITY_EDITOR
@@ -182,7 +183,7 @@ namespace Garunnir
         bool isResourceLoadDone = false;
         void LoadAllImg()
         {
-            InitCharImg(() => { LoadImgByDir(); isResourceLoadDone = true; ResourceLoadDoneEvent?.Invoke(); });
+            InitCharImg(() => { LoadImgByDir(); isResourceLoadDone = true; print("Invoke"); ResourceLoadDoneEvent?.Invoke(); });
             print(tmpPathContainer.Count);
         }
         void LoadImgByDir()
@@ -205,15 +206,15 @@ namespace Garunnir
 #endif
             }
         }
-        
+
 #if !UNITY_EDITOR
-        int currentLoad = 0;
         void InitCharImg(Action done)
         {
             int totalTasks = 2; // 총 작업 수
             int completedTasks = 0; // 완료된 작업 수
             Action action= () => { 
                 completedTasks++;
+                Debug.LogWarning("com: "+completedTasks);
                 if (completedTasks == totalTasks)
                 {
                     Debug.Log("delete");
@@ -226,7 +227,6 @@ namespace Garunnir
         }
         private void ImgResourceInit(string rpath,Action done)
         {
-            currentLoad++;
             //가지고 있던 이미지들을 전부 겔러리에 저장한다.
             //팝업이 뜨면 실패.
             //가지고 있는것이 있는지 먼저 판단
@@ -237,6 +237,7 @@ namespace Garunnir
             //Debug.LogWarning(ajc.CallStatic<bool>("IsExistFileEnv", "DCIM", "/.PPResource/Background/portal.png"));
             print(ajc.CallStatic<bool>("CreateDirectoryIn", "DCIM", $"/.PPResource/{rpath}"));
             int tmpDone = textures.Length;
+            bool check=false;
             foreach (Texture2D tex in textures)
             {
                 tmpPathContainer.Add(path + $"/.PPResource/{rpath}/" + tex.name + ".png");
@@ -257,6 +258,7 @@ namespace Garunnir
                 //{
 
                 //}
+                check=true;
                 NativeGallery.Permission permission =NativeGallery.SaveImageToGallery(tex, $".PPResource/{rpath}", tex.name + ".png", (x, y) =>
                 {
                     print(y);//path
@@ -267,7 +269,9 @@ namespace Garunnir
                     tmpDone--;
                     ajc.CallStatic<bool>("MoveTo", "DCIM", $"/_.PPResource/{rpath}/" + tex.name + ".png", $"/.PPResource/{rpath}/" + tex.name + ".png");
                     if (tmpDone == 0)
+                    {
                         done();
+                    }
                 });
                 
             }
@@ -275,6 +279,8 @@ namespace Garunnir
             //{
             //    Utillity.CheckFolderInPath(path);
             //}
+           if (tmpDone == 0&&!check)
+           done();
 
             print("end");
             //파일있는지 확인하고 없으면 그 경로에 파일을 복사해넣는다.
