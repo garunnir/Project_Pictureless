@@ -125,6 +125,7 @@ namespace Garunnir
 #endif
         #region Managers
         CharactorManager charactorManager;
+        public DialogueSystemController dialogueSystemController { get; private set; }
         #endregion
 
         #region CacheData
@@ -144,6 +145,7 @@ namespace Garunnir
         {
             charactorManager = CharactorManager.Instance;
             charactorManager.transform.SetParent(transform);
+            dialogueSystemController=FindObjectOfType<DialogueSystemController>();
             //if (characterSO == null) Debug.LogError("CharSO not exist. check GM property");
             SetDontDistroy();
 

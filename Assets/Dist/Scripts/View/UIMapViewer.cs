@@ -1,12 +1,14 @@
+using Garunnir;
 using PixelCrushers.DialogueSystem;
 using PixelCrushers.DialogueSystem.Wrappers;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-
+[RequireComponent(typeof(ScrollRect))]
 public class UIMapViewer : MonoBehaviour
 {
     public int spacing = 10;
@@ -15,7 +17,7 @@ public class UIMapViewer : MonoBehaviour
     int currentEntry;
     RectTransform selectRect;
     RectTransform mother;
-    RectTransform thisRect;
+    RectTransform contentRect;
     Vector2 offsetmin = Vector2.zero;
     Vector2 offsetmax = Vector2.zero;
     Vector2 texSize = new Vector2(50, 6);
@@ -24,13 +26,55 @@ public class UIMapViewer : MonoBehaviour
     Dictionary<int, RectTransform> mapdic = new Dictionary<int, RectTransform>();
     int createAmount=0;
     int createLimit;
+    [SerializeField]Button toggleBtn;
+    [SerializeField] RectTransform window;
+    [SerializeField] RectTransform minRect;
+    [SerializeField] RectTransform maxRect;
+    int currentRectLv=0;
     // Start is called before the first frame update
     void Start()
     {
-        thisRect = GetComponent<RectTransform>();
+        contentRect=new GameObject("MapContent").AddComponent<RectTransform>();
         mother=transform.parent.GetComponent<RectTransform>();
+        GetComponent<ScrollRect>().content=contentRect;
+        toggleBtn.onClick.AddListener(() =>MapToggle());
+        window.gameObject.SetActive(false);
         ShowMap(0);
         
+    }
+
+    private void MapToggle()
+    {
+        currentRectLv++;
+        if (currentRectLv == 3)
+        {
+            currentRectLv = 0;
+        }
+
+        switch (currentRectLv)
+        {
+            case 0:
+                window.gameObject.SetActive(false);
+                break;
+            case 1:
+                window.gameObject.SetActive(true);
+                CopyValues(window, minRect);
+                break;
+            case 2:
+                CopyValues(window,maxRect);
+                break;
+        }
+    }
+    private void CopyValues(RectTransform target,RectTransform source)
+    {
+        target.anchoredPosition = source.anchoredPosition;
+        target.sizeDelta = source.sizeDelta;
+        target.anchorMin = source.anchorMin;
+        target.anchorMax = source.anchorMax;
+        target.pivot = source.pivot;
+        target.rotation = source.rotation;
+        target.localScale = source.localScale;
+        target.rect.Set(source.rect.x,source.rect.y,source.rect.width,source.rect.height);
     }
 
     // Update is called once per frame
@@ -70,7 +114,7 @@ public class UIMapViewer : MonoBehaviour
         //중심을 선택된 상자 위주로 재조정한다.
         //지금 선택된 상자와 중심의 위치의 차이만큼 그룹을 이동시킨다.
         //선택상자의 위치
-        thisRect.position-=selectRect.position - mother.position;
+        contentRect.position-=selectRect.position - mother.position;
     }
     void MoveTo(int entryid,bool ignoreBridge=false)
     {
@@ -92,13 +136,10 @@ public class UIMapViewer : MonoBehaviour
     }
     private void ShowMap(int id)
     {
-
-        Transform parent = transform.parent;
-        thisRect.transform.parent = null;
-        offsetmin = thisRect.offsetMin;
-        offsetmax = thisRect.offsetMax;
+        offsetmin = contentRect.offsetMin;
+        offsetmax = contentRect.offsetMax;
         Debug.LogWarning(offsetmin);
-        PosInit(thisRect);
+        PosInit(contentRect);
         if (DialogueManager.masterDatabase.maps.Count == 0)
         {
             return;
@@ -107,7 +148,7 @@ public class UIMapViewer : MonoBehaviour
         createLimit=currentMap.mapEntries.Count() * 3;
         MapEntry First = currentMap.GetFirstMapEntry();
         currentEntry = First.id;
-        CreateSprite(First, thisRect.position);
+        CreateSprite(First, contentRect.position);
 
         foreach (var rect in prevlist)
         {
@@ -143,15 +184,15 @@ public class UIMapViewer : MonoBehaviour
             //딱 맞는 캔버스의 좌표값과 비교한다 생성된 랙트의 위치가 이 캔버스를 벗어나면
             //크기를 변경해준다.
         }
-        thisRect.offsetMin = offsetmin;
-        thisRect.offsetMax = offsetmax;
-        thisRect.transform.parent = parent;
+        contentRect.offsetMin = offsetmin;
+        contentRect.offsetMax = offsetmax;
+        contentRect.transform.parent = transform;
         foreach (var rect in prevlist)
         {
-            rect.SetParent(thisRect);
+            rect.SetParent(contentRect);
         }
         RectTransform sr = GenSelectSprite(selectedSprite);
-        sr.SetParent(thisRect);
+        sr.SetParent(contentRect);
         sr.position = prevlist[0].position;
         selectRect = sr;
     }
