@@ -36,10 +36,6 @@ namespace Garunnir
     }
     public class GameManager : Singleton<GameManager>
     {
-        #region SO
-        [SerializeField] TextTable localizeTable;
-        public TextTable GetLoTable() => localizeTable;
-        #endregion
         #region DataConfig
         public const int createStart = 10000;//start id to created charactor
         private Dictionary<Type, string> TypeDic;
@@ -92,8 +88,10 @@ namespace Garunnir
         }
 
         #endregion
-#if UNITY_EDITOR
         #region SO
+#if UNITY_EDITOR
+        [SerializeField] TextTable localizeTable;
+        public TextTable GetLoTable() => localizeTable;
         private void UpdateSO()
         {
             UpdataLocTextTable();
@@ -121,8 +119,8 @@ namespace Garunnir
             localizeTable.AddField(GetFormDic(arg0, arg));
             localizeTable.SetFieldTextForLanguage(GetFormDic(arg0, arg), lang, value);
         }
-        #endregion
 #endif
+        #endregion
         #region Managers
         CharactorManager charactorManager;
         public DialogueSystemController dialogueSystemController { get; private set; }
@@ -135,6 +133,8 @@ namespace Garunnir
 #endif
         public Dictionary<string,Texture2D> imgDic = new Dictionary<string, Texture2D>();
         List<string> tmpPathContainer = new List<string>();
+        RectTransform _upperWindowRect;
+        public RectTransform GetUpperRect() => _upperWindowRect;
         #region view
         public RawImage Background { private set; get; }
         public void SetBackground(RawImage raw)=>Background = raw;
@@ -146,13 +146,14 @@ namespace Garunnir
             charactorManager = CharactorManager.Instance;
             charactorManager.transform.SetParent(transform);
             dialogueSystemController=FindObjectOfType<DialogueSystemController>();
+            _upperWindowRect=Background.rectTransform;
             //if (characterSO == null) Debug.LogError("CharSO not exist. check GM property");
             SetDontDistroy();
 
         }
         private void Awake()
         {
-            ResourceLoadDoneEvent += ()=>FindObjectOfType<DialogueSystemTrigger>().OnUse();
+            ResourceLoadDoneEvent += ()=>FindObjectOfType<DialogueSystemTrigger>()?.OnUse();
             Init();
             DataConfig();
 #if UNITY_EDITOR
@@ -508,6 +509,69 @@ namespace Garunnir
             Utillity.stringBuilder.Append(lf);
             character.bodyCore.GetJsonConvert();
             return Utillity.stringBuilder.ToString();
+        }
+        //static Rect CalculateAbsoluteRect(RectTransform target)
+        //{
+        //    // 부모 Transform의 위치
+        //    Vector3 parentPosition = target.parent.position;
+
+        //    // Rect의 위치와 크기를 부모 위치에 더하여 절대 좌표를 계산
+        //    float absoluteX = target.rect.x + parentPosition.x;
+        //    float absoluteY = target.rect.y + parentPosition.y;
+        //    float absoluteWidth = target.rect.width;
+        //    float absoluteHeight = target.rect.height;
+
+        //    // 계산된 절대 좌표로 Rect 생성
+        //    Rect absoluteRect = new Rect(absoluteX, absoluteY, absoluteWidth, absoluteHeight);
+
+        //    return absoluteRect;
+        //}
+        //public static void CopyDifParentRect(RectTransform source,RectTransform target)
+        //{
+        //    Rect rect=CalculateAbsoluteRect(source);
+        //    Transform parent = target.parent;
+        //    target.parent = null;
+        //    target.ForceUpdateRectTransforms();
+        //    target.rect.Set(0,0,rect.width,rect.height);
+        //    target.parent = parent;
+        //}
+        public static void CopyValues(RectTransform target, RectTransform source)
+        {
+            target.anchoredPosition = source.anchoredPosition;
+            target.sizeDelta = source.sizeDelta;
+            target.anchorMin = source.anchorMin;
+            target.anchorMax = source.anchorMax;
+            target.pivot = source.pivot;
+            target.rotation = source.rotation;
+            target.localScale = source.localScale;
+        }
+        public static void CopyValuesCover(RectTransform target, RectTransform source)
+        {
+            //target.sizeDelta = source.sizeDelta;
+            target.anchorMax = new(0.5f, 0.5f);
+            target.anchorMin = new(0.5f, 0.5f);
+            target.pivot = new(0.5f, 0.5f);
+            target.offsetMin = new((target.anchorMin.x-1)*source.rect.width, (target.anchorMin.y - 1) * source.rect.height);
+            target.offsetMax = new((1-target.anchorMax.x) * source.rect.width, (1-target.anchorMax.y) * source.rect.height);
+            target.position = source.position;
+            target.localScale=source.localScale;
+
+            //source.anchoredPosition;
+            //Transform parent = target.parent;
+            //target.parent= source.parent;
+            //target.ForceUpdateRectTransforms();
+            //target.anchoredPosition = source.anchoredPosition;
+            //target.sizeDelta = source.sizeDelta;
+            //target.anchorMin = source.anchorMin;
+            //target.anchorMax = source.anchorMax;
+            //target.pivot = source.pivot;
+            //target.rotation = source.rotation;
+            //target.localScale = source.localScale;
+            //target.parent = parent;
+        }
+        public static void Cover(RectTransform target, RectTransform source)
+        {
+           
         }
         public static byte[] GetTextureBytesFromCopy(Texture2D texture, bool isJpeg=false)
         {

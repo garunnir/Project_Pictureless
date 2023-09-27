@@ -58,24 +58,14 @@ public class UIMapViewer : MonoBehaviour
                 break;
             case 1:
                 window.gameObject.SetActive(true);
-                CopyValues(window, minRect);
+                Utillity.CopyValues(window, minRect);
                 break;
             case 2:
-                CopyValues(window,maxRect);
+                Utillity.CopyValues(window,maxRect);
                 break;
         }
     }
-    private void CopyValues(RectTransform target,RectTransform source)
-    {
-        target.anchoredPosition = source.anchoredPosition;
-        target.sizeDelta = source.sizeDelta;
-        target.anchorMin = source.anchorMin;
-        target.anchorMax = source.anchorMax;
-        target.pivot = source.pivot;
-        target.rotation = source.rotation;
-        target.localScale = source.localScale;
-        target.rect.Set(source.rect.x,source.rect.y,source.rect.width,source.rect.height);
-    }
+
 
     // Update is called once per frame
     void Update()
@@ -84,7 +74,7 @@ public class UIMapViewer : MonoBehaviour
         {
             Vector3 wp = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x,Input.mousePosition.y,Camera.main.nearClipPlane));
             //마우스 스크린포인트를 가져온다
-            Debug.LogWarning(wp);
+            //Debug.LogWarning(wp);
 
             //랙트유틸리티로 곂치는지 확인
             //마우스와 가장 근접한 랙트를 가져온다.
