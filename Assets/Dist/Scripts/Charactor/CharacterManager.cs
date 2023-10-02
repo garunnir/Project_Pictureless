@@ -1,4 +1,5 @@
 using Garunnir.CharacterAppend.BodySystem;
+using Language.Lua;
 using PixelCrushers.DialogueSystem;
 using PixelCrushers.Wrappers;
 using System;
@@ -498,6 +499,10 @@ namespace Garunnir.CharacterAppend.BodySystem
         //}
         #endregion
         #region method
+        //public static BodyParts operator +(BodyParts a,BodyParts b)
+        //{
+        //    return new BodyParts(a, b);
+        //}
         public override BodyParts SetNext(string name)
         {
             return SetNext<HumanoidBody>(name);

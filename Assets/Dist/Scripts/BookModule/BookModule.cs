@@ -10,15 +10,16 @@ using UnityEngine.UI;
 
 public class BookModule : MonoBehaviour
 {
-    // Start is called before the first frame update
-    public GUIStyle textStyle;
-    public TMP_Text tmp;
-    [SerializeField] RectTransform descriptionBody;
-    [SerializeField] RectTransform headTemplet;
-    [SerializeField] RectTransform keywordsParentLeft;
-    [SerializeField] RectTransform keywordsParentRight;
+
+    [SerializeField] private RectTransform m_window;
+    [SerializeField] private RectTransform m_descriptionBody;
+    [SerializeField] private RectTransform m_elementTemplet;
+    [SerializeField] private RectTransform m_keywordsParentLeft;
+    [SerializeField] private RectTransform m_keywordsParentRight;
+    [Header("Buttons")]
+    [SerializeField] private Button m_btn_open;
+    [SerializeField] private Button m_btn_close;
     TMP_Text text_description;
-    //Dictionary<string, string> keywords=new Dictionary<string, string>();
     List<(string, string)> keywords =new List<(string, string)>();
     
     List<KeywordBox> keywordsSlot = new List<KeywordBox>();
@@ -46,6 +47,11 @@ public class BookModule : MonoBehaviour
                 });
         }
     }
+    private void Awake()
+    {
+        m_btn_close?.onClick.AddListener(Close);
+        m_btn_open?.onClick.AddListener(Open);
+    }
     private void Start()
     {
         print("d");
@@ -67,7 +73,7 @@ public class BookModule : MonoBehaviour
         //디스크립션 표시를 위해서는 자신의 부모렉트의 영향을 벗어나는
         //절대랙트값을 가져올수 있어야 한다.
         //어떻게 개별로 디스크립션을 지정할 것인가?
-        text_description=descriptionBody.GetComponentInChildren<TMP_Text>();
+        text_description=m_descriptionBody.GetComponentInChildren<TMP_Text>();
         InitBookKeys(20);
         AddKeyWord("ddddd","AAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
         AddKeyWord("dsdfdddd","AAaaaaaaaaaaaaaaaaaaaaaaaaaasdfaaaaaaaaaaaaaaaaaaaa");
@@ -93,6 +99,7 @@ public class BookModule : MonoBehaviour
         AddKeyWord("11","131");
         AddKeyWord("31","13");
         ShowPage(0);
+        m_window.gameObject.SetActive(false);
     }
     public void NextPage()
     {
@@ -180,7 +187,7 @@ public class BookModule : MonoBehaviour
     {
         RectTransform CreateItem(RectTransform parent)
         {
-            RectTransform item = Instantiate(headTemplet);
+            RectTransform item = Instantiate(m_elementTemplet);
             item.gameObject.SetActive(true);
             Button btn = item.GetComponentInChildren<Button>();
             TMP_Text text = item.GetComponentInChildren<TMP_Text>();
@@ -198,33 +205,33 @@ public class BookModule : MonoBehaviour
             //    ? ((headTemplet.rect.height * keywordsParentLeft.childCount > keywordsParentLeft.rect.height)? true: CreateItem(keywordsParentLeft)) : CreateItem(keywordsParentLeft);
 
             //if (stop) return;
-            if (headTemplet.rect.height * keywordsParentLeft.childCount > keywordsParentLeft.rect.height)
+            if (m_elementTemplet.rect.height * m_keywordsParentLeft.childCount > m_keywordsParentLeft.rect.height)
             {
-                if (headTemplet.rect.height * keywordsParentRight.childCount > keywordsParentRight.rect.height)
+                if (m_elementTemplet.rect.height * m_keywordsParentRight.childCount > m_keywordsParentRight.rect.height)
                 {
                     Debug.Log("CreateFailed");
                     return;
                 }
                 else
                 {
-                    CreateItem(keywordsParentRight);
+                    CreateItem(m_keywordsParentRight);
                 }
             }
             else
             {
-                CreateItem(keywordsParentLeft);
+                CreateItem(m_keywordsParentLeft);
             }
         }
     }
     void OpenDiscription(string discription)
     {
-        descriptionBody.gameObject.SetActive(true);
+        m_descriptionBody.gameObject.SetActive(true);
         RectTransform rect = GameManager.Instance.GetUpperRect();
         // Bounds b = RectTransformUtility.CalculateRelativeRectTransformBounds(transform.parent.GetComponent<RectTransform>(),rect );
         //Rect r=RectTransformUtility.(rect, GetComponentInParent<Canvas>());
         //discriptionBody.rect.Set(r.x,r.y,r.width,r.height);
         //Utillity.CopyDifParentRect(rect,discriptionBody);
-        Utillity.CopyValuesCover(descriptionBody, rect);
+        Utillity.CopyValuesCover(m_descriptionBody, rect);
         text_description.text = discription;
         text_description.font = UILocalizationManager.instance.localizedFonts.GetTextMeshProFont(Localization.language);
     }
@@ -244,5 +251,17 @@ public class BookModule : MonoBehaviour
 
         Rect fittingRect = new Rect(baseRect.x, baseRect.y, baseRect.width, style.lineHeight * lines);
         return fittingRect;
+    }
+    public void Open()
+    {
+        m_window.gameObject.SetActive(true);
+        m_btn_open?.gameObject.SetActive(false);
+        m_btn_close?.gameObject.SetActive(true);
+    }
+    public void Close()
+    {
+        m_window.gameObject.SetActive(false);
+        m_btn_open?.gameObject.SetActive(true);
+        m_btn_close?.gameObject.SetActive(false);
     }
 }
