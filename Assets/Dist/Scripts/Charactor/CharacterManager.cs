@@ -151,10 +151,10 @@ namespace Garunnir
             componentType = ComponentType.none;
         }
     }
-    public class CustomField : Field
-    {
+    //public class CustomField : Field
+    //{
 
-    }
+    //}
 
 
 
@@ -178,6 +178,7 @@ namespace Garunnir.CharacterAppend.BodySystem
             rhand.SetNext("rthumb", "rindexfinger", "rmiddlefinger", "rringfinger", "rpinky");
             rfoot.SetNext("rbigtoe", "rsecondtoe", "rthirdtoe", "rforthtoe", "rlittletoe");
             lfoot.SetNext("lbigtoe", "lsecondtoe", "lthirdtoe", "lforthtoe", "llittletoe");
+
 
             //조건 파츠교체가 가능할것
             //허리교체를 시도한다
@@ -348,6 +349,10 @@ namespace Garunnir.CharacterAppend.BodySystem
         //    this.name = name;
         //    if(core==null)core= new Core(this);
         //}
+        public static BodyParts operator +(BodyParts a, BodyParts b)
+        {
+            return ConnectLink(a,b);
+        }
         public BodyParts(string name, InnerParts inner) : this()
         {
             innerParts.Add(inner);
@@ -357,13 +362,18 @@ namespace Garunnir.CharacterAppend.BodySystem
             this.core = core ?? new Core(this);
             this.core.partslist.Add(this);
         }
+        public static BodyParts ConnectLink(BodyParts from,BodyParts to)
+        {
+            from.next.Add(to);
+            to.prev.Add(from);
+            return from;
+        }
         public T SetNext<T>(string name) where T : BodyParts, new()
         {
             T parts = new T();
             parts.name = name;
             parts.AddCore(this.core);
-            next.Add(parts);
-            parts.prev.Add(this);
+            ConnectLink(this, parts);
             return parts;
         }
         public T SetNext<T>(string name, InnerParts inner) where T : BodyParts, new()
@@ -374,8 +384,7 @@ namespace Garunnir.CharacterAppend.BodySystem
             parts.AddCore(this.core);
             parts.innerParts.Add(inner);
             inner.Init(parts);
-            next.Add(parts);
-            parts.prev.Add(this);
+            ConnectLink(this, parts);
 
             return parts;
         }
@@ -499,10 +508,7 @@ namespace Garunnir.CharacterAppend.BodySystem
         //}
         #endregion
         #region method
-        //public static BodyParts operator +(BodyParts a,BodyParts b)
-        //{
-        //    return new BodyParts(a, b);
-        //}
+
         public override BodyParts SetNext(string name)
         {
             return SetNext<HumanoidBody>(name);
