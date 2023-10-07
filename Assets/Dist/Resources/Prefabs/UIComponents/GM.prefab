@@ -1127,6 +1127,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb25a88043ae46240a558116a63a3931, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_controller: {fileID: 8300429830112059781}
   m_window: {fileID: 620278832}
   m_descriptionBody: {fileID: 1050904338}
   m_elementTemplet: {fileID: 1163689876}
@@ -2075,7 +2076,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 860425598}
   m_HandleRect: {fileID: 860425596}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -2125,6 +2126,7 @@ GameObject:
   - component: {fileID: 620278834}
   - component: {fileID: 620278833}
   - component: {fileID: 8701511471744833078}
+  - component: {fileID: 8300429830112059781}
   m_Layer: 5
   m_Name: Book
   m_TagString: Untagged
@@ -2205,6 +2207,23 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 1
+--- !u!114 &8300429830112059781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 620278831}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66955d53322c2824688f270fc22dae22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_canvas: {fileID: 0}
+  m_blocksRaycasts: 1
+  m_rect: {fileID: 0}
+  isEnable: 0
+  complete: 0
 --- !u!1 &669326578
 GameObject:
   m_ObjectHideFlags: 0
@@ -6874,7 +6893,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 8197976091360038177}
   m_HandleRect: {fileID: 5877956625523921880}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:

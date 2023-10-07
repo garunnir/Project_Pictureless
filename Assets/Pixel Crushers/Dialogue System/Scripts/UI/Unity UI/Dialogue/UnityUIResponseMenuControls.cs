@@ -64,7 +64,7 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("If using Button Template, instantiated buttons are parented under this GameObject")]
         public UnityEngine.UI.Graphic buttonTemplateHolder;
 
-        [Tooltip("Optional scrollbar if the instantiated button holder is in a scroll rect")]
+        [Tooltip("Optional scrollbar if the instantiated button holder is in a scroll m_rect")]
         public UnityEngine.UI.Scrollbar buttonTemplateScrollbar;
 
         [Tooltip("Reset the scroll bar to this value when preparing the response menu")]

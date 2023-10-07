@@ -10,8 +10,7 @@ using UnityEngine.UI;
 
 public class BookModule : MonoBehaviour
 {
-
-    [SerializeField] private RectTransform m_window;
+    [SerializeField] CanvasGroupController m_controller;
     [SerializeField] private RectTransform m_descriptionBody;
     [SerializeField] private RectTransform m_elementTemplet;
     [SerializeField] private RectTransform m_keywordsParentLeft;
@@ -19,9 +18,9 @@ public class BookModule : MonoBehaviour
     [Header("Buttons")]
     [SerializeField] private Button m_btn_open;
     [SerializeField] private Button m_btn_close;
-    TMP_Text text_description;
-    List<(string, string)> keywords =new List<(string, string)>();
-    
+    private TMP_Text m_text_description;
+    List<(string, string)> keywords = new List<(string, string)>();
+
     List<KeywordBox> keywordsSlot = new List<KeywordBox>();
 
     int currentPage = 0;
@@ -34,7 +33,7 @@ public class BookModule : MonoBehaviour
         public void SetDescription(string value)
         {
             btn_opendescription.onClick.RemoveAllListeners();
-            btn_opendescription.onClick.AddListener(() => 
+            btn_opendescription.onClick.AddListener(() =>
             {
                 if (mother.gameObject.activeSelf)
                 {
@@ -44,13 +43,15 @@ public class BookModule : MonoBehaviour
                 {
                     mother.gameObject.SetActive(false); description.text = "null";
                 }
-                });
+            });
         }
     }
     private void Awake()
     {
-        m_btn_close?.onClick.AddListener(Close);
-        m_btn_open?.onClick.AddListener(Open);
+        m_btn_close?.onClick.AddListener(m_controller.Hide);
+        m_btn_open?.onClick.AddListener(m_controller.Show);
+        m_controller.AddHideAct += AddHideAct;
+        m_controller.AddShowAct += AddShowAct;
     }
     private void Start()
     {
@@ -73,65 +74,65 @@ public class BookModule : MonoBehaviour
         //디스크립션 표시를 위해서는 자신의 부모렉트의 영향을 벗어나는
         //절대랙트값을 가져올수 있어야 한다.
         //어떻게 개별로 디스크립션을 지정할 것인가?
-        text_description=m_descriptionBody.GetComponentInChildren<TMP_Text>();
+        m_text_description = m_descriptionBody.GetComponentInChildren<TMP_Text>();
         InitBookKeys(20);
-        AddKeyWord("ddddd","AAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-        AddKeyWord("dsdfdddd","AAaaaaaaaaaaaaaaaaaaaaaaaaaasdfaaaaaaaaaaaaaaaaaaaa");
-        AddKeyWord("1","1");
-        AddKeyWord("2","2");
-        AddKeyWord("13","3");
-        AddKeyWord("13","14");
-        AddKeyWord("dsdffdffddd","AAaaaaaaaaaaaafaaffaaaaaaaaaaaasdfaaaaaaaaaaaaaaaaaaaa");
-        AddKeyWord("12","1123");
-        AddKeyWord("11","1123");
-        AddKeyWord("132","231");
-        AddKeyWord("1123213","1231231");
-        AddKeyWord("1123","1123");
-        AddKeyWord("1123","1123");
-        AddKeyWord("1123","1123");
-        AddKeyWord("dsdffdddd","AAaaaaaaaaaaaafaaaaaaaaaaaaaasdfaaaaaaaaaaaaaaaaaaaa");
-        AddKeyWord("1123","1123");
-        AddKeyWord("1123","1123");
-        AddKeyWord("1123213","1231231");
-        AddKeyWord("1123","1123");
-        AddKeyWord("1123","1123");
-        AddKeyWord("1123","1123");
-        AddKeyWord("11","131");
-        AddKeyWord("31","13");
+        AddKeyWord("ddddd", "AAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        AddKeyWord("dsdfdddd", "AAaaaaaaaaaaaaaaaaaaaaaaaaaasdfaaaaaaaaaaaaaaaaaaaa");
+        AddKeyWord("1", "1");
+        AddKeyWord("2", "2");
+        AddKeyWord("13", "3");
+        AddKeyWord("13", "14");
+        AddKeyWord("dsdffdffddd", "AAaaaaaaaaaaaafaaffaaaaaaaaaaaasdfaaaaaaaaaaaaaaaaaaaa");
+        AddKeyWord("12", "1123");
+        AddKeyWord("11", "1123");
+        AddKeyWord("132", "231");
+        AddKeyWord("1123213", "1231231");
+        AddKeyWord("1123", "1123");
+        AddKeyWord("1123", "1123");
+        AddKeyWord("1123", "1123");
+        AddKeyWord("dsdffdddd", "AAaaaaaaaaaaaafaaaaaaaaaaaaaasdfaaaaaaaaaaaaaaaaaaaa");
+        AddKeyWord("1123", "1123");
+        AddKeyWord("1123", "1123");
+        AddKeyWord("1123213", "1231231");
+        AddKeyWord("1123", "1123");
+        AddKeyWord("1123", "1123");
+        AddKeyWord("1123", "1123");
+        AddKeyWord("11", "131");
+        AddKeyWord("31", "13");
         ShowPage(0);
-        m_window.gameObject.SetActive(false);
+        m_controller.HideForce();
     }
     public void NextPage()
     {
         currentPage++;
-        if(currentPage*keywordsSlot.Count>keywords.Count)
+        if (currentPage * keywordsSlot.Count > keywords.Count)
         {
             currentPage = 0;
         }
         ShowPage(currentPage);
     }
-    public void PrevPage() 
-    { 
+    public void PrevPage()
+    {
         currentPage--;
         if (currentPage < 0)
         {
             int testpage = 0;
-            while(testpage * keywordsSlot.Count < keywords.Count && testpage<100)
+            while (testpage * keywordsSlot.Count < keywords.Count && testpage < 100)
             {
                 testpage++;
             }
-            currentPage = Mathf.Max(0, testpage-1);
+            currentPage = Mathf.Max(0, testpage - 1);
         }
         ShowPage(currentPage);
     }
 
     public void ShowPage(int page)
     {
-        int slotcount=keywordsSlot.Count;
+        int slotcount = keywordsSlot.Count;
 
         for (int i = 0; i < slotcount; i++)
         {
-            if(keywords.Count> i + slotcount * page)
+            if (keywords.Count > i + slotcount * page)
             {
                 keywordsSlot[i].mother.gameObject.SetActive(true);
                 keywordsSlot[i].keyword.text = keywords[i + slotcount * page].Item1;
@@ -148,7 +149,7 @@ public class BookModule : MonoBehaviour
     {
         gameObject.SetActive(!gameObject.activeSelf);
     }
-    public void AddKeyWord(string keyWord,string description)
+    public void AddKeyWord(string keyWord, string description)
     {
         //if (keywords.ContainsKey(keyWord))
         //{
@@ -196,7 +197,7 @@ public class BookModule : MonoBehaviour
             item.transform.parent = parent;
             item.transform.localScale = Vector3.one;
 
-            keywordsSlot.Add(new KeywordBox { mother = item, btn_opendescription = btn, keyword = text, description = text_description });
+            keywordsSlot.Add(new KeywordBox { mother = item, btn_opendescription = btn, keyword = text, description = m_text_description });
             return item;
         }
         for (int i = 0; i < count; i++)
@@ -232,8 +233,8 @@ public class BookModule : MonoBehaviour
         //discriptionBody.rect.Set(r.x,r.y,r.width,r.height);
         //Utillity.CopyDifParentRect(rect,discriptionBody);
         Utillity.CopyValuesCover(m_descriptionBody, rect);
-        text_description.text = discription;
-        text_description.font = UILocalizationManager.instance.localizedFonts.GetTextMeshProFont(Localization.language);
+        m_text_description.text = discription;
+        m_text_description.font = UILocalizationManager.instance.localizedFonts.GetTextMeshProFont(Localization.language);
     }
     private int CalculateMaxCharacterCount(string text, GUIStyle style, Rect rect)
     {
@@ -252,16 +253,19 @@ public class BookModule : MonoBehaviour
         Rect fittingRect = new Rect(baseRect.x, baseRect.y, baseRect.width, style.lineHeight * lines);
         return fittingRect;
     }
-    public void Open()
+    public IEnumerator AddHideAct()
     {
-        m_window.gameObject.SetActive(true);
-        m_btn_open?.gameObject.SetActive(false);
-        m_btn_close?.gameObject.SetActive(true);
-    }
-    public void Close()
-    {
-        m_window.gameObject.SetActive(false);
+        print("hide");
         m_btn_open?.gameObject.SetActive(true);
         m_btn_close?.gameObject.SetActive(false);
+        yield return null;
+    }
+
+    public IEnumerator AddShowAct()
+    {
+        print("show");
+        m_btn_open?.gameObject.SetActive(false);
+        m_btn_close?.gameObject.SetActive(true);
+        yield return null;
     }
 }

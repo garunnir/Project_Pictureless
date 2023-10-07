@@ -22,10 +22,10 @@ namespace PixelCrushers.DialogueSystem
 
         [Header("Message Panel")]
 
-        [Tooltip("The scroll rect containing the content panel.")]
+        [Tooltip("The scroll m_rect containing the content panel.")]
         public UnityEngine.UI.ScrollRect scrollRect;
 
-        [Tooltip("The content panel inside the scroll rect containing the message panel and response panel.")]
+        [Tooltip("The content panel inside the scroll m_rect containing the message panel and response panel.")]
         public RectTransform contentPanel;
 
         [Tooltip("Add messages to this panel.")]

@@ -26,7 +26,7 @@ namespace PixelCrushers.DialogueSystem
         [System.Serializable]
         public class AutoScrollSettings
         {
-            [Tooltip("Automatically scroll to bottom of scroll rect. Useful for long text. Works best with leftID justification.")]
+            [Tooltip("Automatically scroll to bottom of scroll m_rect. Useful for long text. Works best with leftID justification.")]
             public bool autoScrollEnabled = false;
             public UnityEngine.UI.ScrollRect scrollRect = null;
             [Tooltip("Optional. Add a UIScrollBarEnabler to main dialogue panel, assign UI elements, then assign it here to automatically enable scrollbar if content is taller than viewport.")]

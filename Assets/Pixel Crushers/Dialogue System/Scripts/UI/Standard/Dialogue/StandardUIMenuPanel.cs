@@ -47,7 +47,7 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("If using Button Template, instantiate buttons under this GameObject.")]
         public UnityEngine.UI.Graphic buttonTemplateHolder;
 
-        [Tooltip("(Optional) Scrollbar to use if instantiated button holder is in a scroll rect.")]
+        [Tooltip("(Optional) Scrollbar to use if instantiated button holder is in a scroll m_rect.")]
         public UnityEngine.UI.Scrollbar buttonTemplateScrollbar;
 
         [Tooltip("(Optional) Component that enables or disables scrollbar as necessary for content.")]
