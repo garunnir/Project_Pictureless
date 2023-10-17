@@ -76,29 +76,29 @@ public class BookModule : MonoBehaviour
         //어떻게 개별로 디스크립션을 지정할 것인가?
         m_text_description = m_descriptionBody.GetComponentInChildren<TMP_Text>();
         InitBookKeys(20);
-        AddKeyWord("ddddd", "AAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-        AddKeyWord("dsdfdddd", "AAaaaaaaaaaaaaaaaaaaaaaaaaaasdfaaaaaaaaaaaaaaaaaaaa");
-        AddKeyWord("1", "1");
-        AddKeyWord("2", "2");
-        AddKeyWord("13", "3");
-        AddKeyWord("13", "14");
-        AddKeyWord("dsdffdffddd", "AAaaaaaaaaaaaafaaffaaaaaaaaaaaasdfaaaaaaaaaaaaaaaaaaaa");
-        AddKeyWord("12", "1123");
-        AddKeyWord("11", "1123");
-        AddKeyWord("132", "231");
-        AddKeyWord("1123213", "1231231");
-        AddKeyWord("1123", "1123");
-        AddKeyWord("1123", "1123");
-        AddKeyWord("1123", "1123");
-        AddKeyWord("dsdffdddd", "AAaaaaaaaaaaaafaaaaaaaaaaaaaasdfaaaaaaaaaaaaaaaaaaaa");
-        AddKeyWord("1123", "1123");
-        AddKeyWord("1123", "1123");
-        AddKeyWord("1123213", "1231231");
-        AddKeyWord("1123", "1123");
-        AddKeyWord("1123", "1123");
-        AddKeyWord("1123", "1123");
-        AddKeyWord("11", "131");
-        AddKeyWord("31", "13");
+        //AddKeyWord("ddddd", "AAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        //AddKeyWord("dsdfdddd", "AAaaaaaaaaaaaaaaaaaaaaaaaaaasdfaaaaaaaaaaaaaaaaaaaa");
+        //AddKeyWord("1", "1");
+        //AddKeyWord("2", "2");
+        //AddKeyWord("13", "3");
+        //AddKeyWord("13", "14");
+        //AddKeyWord("dsdffdffddd", "AAaaaaaaaaaaaafaaffaaaaaaaaaaaasdfaaaaaaaaaaaaaaaaaaaa");
+        //AddKeyWord("12", "1123");
+        //AddKeyWord("11", "1123");
+        //AddKeyWord("132", "231");
+        //AddKeyWord("1123213", "1231231");
+        //AddKeyWord("1123", "1123");
+        //AddKeyWord("1123", "1123");
+        //AddKeyWord("1123", "1123");
+        //AddKeyWord("dsdffdddd", "AAaaaaaaaaaaaafaaaaaaaaaaaaaasdfaaaaaaaaaaaaaaaaaaaa");
+        //AddKeyWord("1123", "1123");
+        //AddKeyWord("1123", "1123");
+        //AddKeyWord("1123213", "1231231");
+        //AddKeyWord("1123", "1123");
+        //AddKeyWord("1123", "1123");
+        //AddKeyWord("1123", "1123");
+        //AddKeyWord("11", "131");
+        //AddKeyWord("31", "13");
         ShowPage(0);
         m_controller.HideForce();
     }
@@ -194,7 +194,7 @@ public class BookModule : MonoBehaviour
             TMP_Text text = item.GetComponentInChildren<TMP_Text>();
             text.text = "null";
             btn.onClick.AddListener(() => OpenDiscription("null"));
-            item.transform.parent = parent;
+            item.transform.SetParent(parent);
             item.transform.localScale = Vector3.one;
 
             keywordsSlot.Add(new KeywordBox { mother = item, btn_opendescription = btn, keyword = text, description = m_text_description });
@@ -227,7 +227,7 @@ public class BookModule : MonoBehaviour
     void OpenDiscription(string discription)
     {
         m_descriptionBody.gameObject.SetActive(true);
-        RectTransform rect = GameManager.Instance.GetUpperRect();
+        RectTransform rect = GameManager.Instance.GetUIManager().GetUpperRT();
         // Bounds b = RectTransformUtility.CalculateRelativeRectTransformBounds(transform.parent.GetComponent<RectTransform>(),rect );
         //Rect r=RectTransformUtility.(rect, GetComponentInParent<Canvas>());
         //discriptionBody.rect.Set(r.x,r.y,r.width,r.height);

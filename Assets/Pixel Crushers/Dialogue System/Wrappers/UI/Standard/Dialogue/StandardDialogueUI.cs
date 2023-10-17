@@ -19,7 +19,6 @@ namespace PixelCrushers.DialogueSystem.Wrappers
         [SerializeField] private RawImage bg; 
         public override void Awake()
         {
-            GameManager.Instance.SetBackground(bg);
             base.Awake();
             print("~~~");
             Localization.language=Localization.GetLanguage(SystemLanguage.Korean);

@@ -33,8 +33,20 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
         {
             //이미지를 로드한다
             //
-            RawImage img=GameManager.Instance.Background;
+            RawImage img=GameManager.Instance.GetUIManager().GetBackground();
             img.texture=GameManager.Instance.imgDic[changeTo];
+            //이미지 비율을 비교해서 적용한다.
+            //원본 이미지 비율을 가져옴
+            //지금 적용되어있는 랙트를 비교
+            //원본이미지 폭에따라 길이를 재적용
+            UIManager.AdjustSize(GameManager.Instance.GetUIManager().GetUpperRect(),img.rectTransform,img.texture);
+            //float heightfactor = (float)img.texture.height / img.texture.width;
+            //float adjust = img.rectTransform.rect.width * heightfactor;//height pixel
+            //print(adjust - img.rectTransform.rect.height);
+            //img.rectTransform.sizeDelta = new Vector2(0, adjust - img.rectTransform.rect.height);
+            //모든 앵커에 적용될려면....
+
+
         }
         //public void Update()
         //{

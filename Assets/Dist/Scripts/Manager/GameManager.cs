@@ -34,10 +34,12 @@ namespace Garunnir
         none,
         male, female
     }
+    
     public class GameManager : Singleton<GameManager>
     {
         #region DataConfig
         public const int createStart = 10000;//start id to created charactor
+
         private Dictionary<Type, string> TypeDic;
         public Dictionary<(Enum, Enum), string> FormStrDic { get; private set; }
         //public const string form_cha_name = "Name";
@@ -124,6 +126,8 @@ namespace Garunnir
         #region Managers
         CharactorManager charactorManager;
         public DialogueSystemController dialogueSystemController { get; private set; }
+        [SerializeField]UIManager _uiManager;
+        public UIManager GetUIManager() => _uiManager;
         #endregion
 
         #region CacheData
@@ -133,26 +137,21 @@ namespace Garunnir
 #endif
         public Dictionary<string,Texture2D> imgDic = new Dictionary<string, Texture2D>();
         List<string> tmpPathContainer = new List<string>();
-        RectTransform _upperWindowRect;
-        public RectTransform GetUpperRect() => _upperWindowRect;
-        #region view
-        public RawImage Background { private set; get; }
-        public void SetBackground(RawImage raw)=>Background = raw;
 
-        #endregion
+      
         #endregion
         private void Init()
         {
             charactorManager = CharactorManager.Instance;
             charactorManager.transform.SetParent(transform);
             dialogueSystemController=FindObjectOfType<DialogueSystemController>();
-            _upperWindowRect=Background.rectTransform;
             //if (characterSO == null) Debug.LogError("CharSO not exist. check GM property");
             SetDontDistroy();
 
         }
         private void Awake()
         {
+            Debug.Log("StartGameManagerInit");
             ResourceLoadDoneEvent += ()=>FindObjectOfType<DialogueSystemTrigger>()?.OnUse();
             Init();
             DataConfig();
@@ -162,6 +161,7 @@ namespace Garunnir
             StarterInit();
             LoadChar();
             ResourceLoad();
+            Debug.Log("EndGameManagerInit");
         }
         private void StarterInit()
         {
@@ -204,8 +204,8 @@ namespace Garunnir
                     Debug.LogError("cantfind:" + key);
                 }
                 tex.LoadImage(File.ReadAllBytes(key));
-                imgDic.Add(Path.GetFileName(key),tex);
-                Debug.LogWarning(Path.GetFileName(key));
+                imgDic.Add(Path.GetFileNameWithoutExtension(key),tex);
+                Debug.LogWarning(Path.GetFileNameWithoutExtension(key));
 #endif
             }
         }
@@ -225,7 +225,7 @@ namespace Garunnir
                     done();
                 }
             };
-            ImgResourceInit("Background", action);
+            ImgResourceInit("m_Background", action);
             ImgResourceInit("Character", action);
         }
         private void ImgResourceInit(string rpath,Action done)

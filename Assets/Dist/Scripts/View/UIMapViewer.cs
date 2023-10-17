@@ -176,7 +176,7 @@ public class UIMapViewer : MonoBehaviour
         }
         contentRect.offsetMin = offsetmin;
         contentRect.offsetMax = offsetmax;
-        contentRect.transform.parent = transform;
+        contentRect.transform.SetParent(transform);
         foreach (var rect in prevlist)
         {
             rect.SetParent(contentRect);
