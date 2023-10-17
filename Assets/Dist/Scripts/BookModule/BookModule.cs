@@ -19,35 +19,74 @@ public class BookModule : MonoBehaviour
     [SerializeField] private Button m_btn_open;
     [SerializeField] private Button m_btn_close;
     private TMP_Text m_text_description;
-    List<(string, string)> keywords = new List<(string, string)>();
+    List<KeywordInfo> keywords = new List<KeywordInfo>();
 
     List<KeywordBox> keywordsSlot = new List<KeywordBox>();
 
     int currentPage = 0;
+
+    TMP_FontAsset m_fontAsset;
+    class KeywordInfo
+    {
+        public bool IsHighlight = true;
+        public string head;
+        public string body;
+    }
     class KeywordBox
     {
-        public RectTransform mother;
-        public TMP_Text keyword;
-        public TMP_Text description;
-        public Button btn_opendescription;
-        public void SetDescription(string value)
+        private static int Curid = 0;
+        private RectTransform m_mother;
+        private RectTransform m_Descriptionbody;
+        private TMP_Text m_keyword;
+        private TMP_Text m_description;
+        private Button m_btn_opendescription;
+        private Image m_highlight;
+        private readonly int id;
+        public RectTransform GetMother() => m_mother;
+        public KeywordBox(RectTransform mother, RectTransform descriptionBody, TMP_Text head, TMP_Text description, Button activation, Image highLight)
         {
-            btn_opendescription.onClick.RemoveAllListeners();
-            btn_opendescription.onClick.AddListener(() =>
+            id = Curid++;
+            m_mother= mother;
+            m_description = description;
+            m_btn_opendescription = activation;
+            m_highlight = highLight;
+            m_keyword = head;
+            m_Descriptionbody=descriptionBody;
+        }
+        public void SetDescription(KeywordInfo value)
+        {
+            m_highlight.gameObject.SetActive(value.IsHighlight);
+            m_keyword.text = value.head;
+            m_btn_opendescription.onClick.RemoveAllListeners();
+            m_btn_opendescription.onClick.AddListener(() =>
             {
-                if (mother.gameObject.activeSelf)
+                if (m_Descriptionbody.gameObject.activeSelf && Curid == id)//캔버스가 켜져있고 이게 열려있으면 닫음
                 {
-                    mother.gameObject.SetActive(true); description.text = value;
+                    m_Descriptionbody.gameObject.SetActive(false);
+                    Curid = -1;
+                    m_description.text = "null";
+                }
+                else if (m_Descriptionbody.gameObject.activeSelf && Curid != id)//캔버스가 켜져있고 이게 꺼져있으면 켬
+                {
+                    value.IsHighlight = false;
+                    m_description.text = value.body;
+                    Curid = id;
                 }
                 else
                 {
-                    mother.gameObject.SetActive(false); description.text = "null";
+                    value.IsHighlight = false;
+                    m_Descriptionbody.gameObject.SetActive(true);
+                    m_description.text = value.body;
+                    Curid = id;
                 }
+                m_highlight.gameObject.SetActive(value.IsHighlight);
             });
+
         }
     }
     private void Awake()
     {
+        m_fontAsset = UILocalizationManager.instance.localizedFonts.GetTextMeshProFont(Localization.language);
         m_btn_close?.onClick.AddListener(m_controller.Hide);
         m_btn_open?.onClick.AddListener(m_controller.Show);
         m_controller.AddHideAct += AddHideAct;
@@ -55,7 +94,6 @@ public class BookModule : MonoBehaviour
     }
     private void Start()
     {
-        print("d");
         //tmp.font=textStyle.font; 
         //tmp.fontSize=textStyle.fontSize;
         //int maxCharacterCount = CalculateMaxCharacterCount(text, textStyle, rect);
@@ -134,55 +172,45 @@ public class BookModule : MonoBehaviour
         {
             if (keywords.Count > i + slotcount * page)
             {
-                keywordsSlot[i].mother.gameObject.SetActive(true);
-                keywordsSlot[i].keyword.text = keywords[i + slotcount * page].Item1;
-                keywordsSlot[i].SetDescription(keywords[i + slotcount * page].Item2);
+                keywordsSlot[i].GetMother().gameObject.SetActive(true);
+                keywordsSlot[i].SetDescription(keywords[i + slotcount * page]);
             }
             else
             {
-                keywordsSlot[i].mother.gameObject.SetActive(false);
+                keywordsSlot[i].GetMother().gameObject.SetActive(false);
             }
         }
 
+    }
+    public void RePaint()
+    {
+        ShowPage(currentPage);
     }
     public void ToggleBook()
     {
         gameObject.SetActive(!gameObject.activeSelf);
     }
-    public void AddKeyWord(string keyWord, string description)
+    public void AddKeyWord(string keyWord, string description,bool overWrite)
     {
-        //if (keywords.ContainsKey(keyWord))
-        //{
-        //    keywords[keyWord]=description;
-        //    return;
-        //}
-        keywords.Add((keyWord, description));
-        //RectTransform item = Instantiate(headTemplet);
-        //item.gameObject.SetActive(true);
-        //Button btn=item.GetComponentInChildren<Button>();
-        //TMP_Text text= item.GetComponentInChildren<TMP_Text>();
-        //text.text = keyWord;
-        //btn?.onClick.AddListener(() => OpenDiscription(description));
+        if(!overWrite)
+        {
+            KeywordInfo info = keywords.FirstOrDefault(x => x.head == keyWord);
 
-        //if (headTemplet.rect.height * keywordsParentLeft.childCount > keywordsParentLeft.rect.height)
-        //{
-        //    if(headTemplet.rect.height * keywordsParentLeft.childCount > keywordsParentLeft.rect.height)
-        //    {
+            if (info != null)
+            {
+                info.body += '\n' + description;
+                info.IsHighlight = true;
+            }
+            else
+            {
+                keywords.Add(new KeywordInfo() { head = keyWord, body = description, IsHighlight = true });
+            }
+        }
+        else
+        {
+            keywords.Add(new KeywordInfo() { head = keyWord, body = description, IsHighlight = true });
+        }
 
-        //    }
-        //    else
-        //    {
-        //        item.transform.parent = keywordsParentRight;
-        //        item.transform.localScale = Vector3.one;
-        //    }
-
-        //}
-        //else
-        //{
-        //    item.transform.parent = keywordsParentLeft;
-        //    item.transform.localScale = Vector3.one;
-        //}
-        //keywordsSlot.Add(new KeywordBox { mother = item, btn_opendescription = btn, keyword = text, description = text_description });
     }
     private void InitBookKeys(int count)
     {
@@ -192,12 +220,15 @@ public class BookModule : MonoBehaviour
             item.gameObject.SetActive(true);
             Button btn = item.GetComponentInChildren<Button>();
             TMP_Text text = item.GetComponentInChildren<TMP_Text>();
+            Image img = item.Find("Img_Highlight").GetComponent<Image>();
+            text.font = m_fontAsset;
             text.text = "null";
-            btn.onClick.AddListener(() => OpenDiscription("null"));
+            InitDiscription();
+            //btn.onClick.AddListener(() => InitDiscription());
             item.transform.SetParent(parent);
             item.transform.localScale = Vector3.one;
 
-            keywordsSlot.Add(new KeywordBox { mother = item, btn_opendescription = btn, keyword = text, description = m_text_description });
+            keywordsSlot.Add(new KeywordBox(item, m_descriptionBody, text, m_text_description, btn, img));
             return item;
         }
         for (int i = 0; i < count; i++)
@@ -224,16 +255,15 @@ public class BookModule : MonoBehaviour
             }
         }
     }
-    void OpenDiscription(string discription)
+    void InitDiscription()
     {
-        m_descriptionBody.gameObject.SetActive(true);
+        //m_descriptionBody.gameObject.SetActive(true);
         RectTransform rect = GameManager.Instance.GetUIManager().GetUpperRT();
         // Bounds b = RectTransformUtility.CalculateRelativeRectTransformBounds(transform.parent.GetComponent<RectTransform>(),rect );
         //Rect r=RectTransformUtility.(rect, GetComponentInParent<Canvas>());
         //discriptionBody.rect.Set(r.x,r.y,r.width,r.height);
         //Utillity.CopyDifParentRect(rect,discriptionBody);
-        Utillity.CopyValuesCover(m_descriptionBody, rect);
-        m_text_description.text = discription;
+        UIManager.CopyValuesCover(m_descriptionBody, rect);
         m_text_description.font = UILocalizationManager.instance.localizedFonts.GetTextMeshProFont(Localization.language);
     }
     private int CalculateMaxCharacterCount(string text, GUIStyle style, Rect rect)

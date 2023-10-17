@@ -58,10 +58,10 @@ public class UIMapViewer : MonoBehaviour
                 break;
             case 1:
                 window.gameObject.SetActive(true);
-                Utillity.CopyValues(window, minRect);
+                UIManager.CopyValues(window, minRect);
                 break;
             case 2:
-                Utillity.CopyValues(window,maxRect);
+                UIManager.CopyValues(window,maxRect);
                 break;
         }
     }

@@ -26,59 +26,70 @@ MonoBehaviour:
     - 
     - 
   - m_fieldName: Text.OuterAge
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uC678\uAD00\uB098\uC774"
     - 
+    - 
   - m_fieldName: Bar.Exp
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uACBD\uD5D8\uCE58"
     - 
+    - 
   - m_fieldName: Null
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uC5C6\uC74C"
     - 
+    - 
   - m_fieldName: Text.FirstName
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uC774\uB984"
     - 
+    - 
   - m_fieldName: Text.NickName
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uBCC4\uBA85"
     - 
+    - 
   - m_fieldName: Text.LastName
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uC131"
     - 
+    - 
   - m_fieldName: Text.Age
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uB098\uC774"
     - 
+    - 
   - m_fieldName: Text.Gender
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uC131\uBCC4"
     - 
+    - 
   - m_fieldName: Gender.Male
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uB0A8"
     - 
+    - 
   - m_fieldName: Gender.female
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uC5EC"
     - 
+    - 
   - m_fieldName: Gender.None
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uBB34\uC131"
     - 
+    - 
   m_nextLanguageID: 3
-  m_nextFieldID: 15
+  m_nextFieldID: 16

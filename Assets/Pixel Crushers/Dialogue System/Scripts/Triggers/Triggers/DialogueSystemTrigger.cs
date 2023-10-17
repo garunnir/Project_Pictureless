@@ -103,7 +103,7 @@ namespace PixelCrushers.DialogueSystem
         /// commands can reference 'speaker' and 'listener', so you may need to define them
         /// in this component.
         /// </summary>
-        [Tooltip("Optional GameObject to use if sequence uses 'speaker' keyword.")]
+        [Tooltip("Optional GameObject to use if sequence uses 'speaker' m_keyword.")]
         public Transform sequenceSpeaker;
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace PixelCrushers.DialogueSystem
         /// commands can reference 'speaker' and 'listener', so you may need to define them
         /// in this component.
         /// </summary>
-        [Tooltip("Optional GameObject to use if sequence uses 'listener' keyword.")]
+        [Tooltip("Optional GameObject to use if sequence uses 'listener' m_keyword.")]
         public Transform sequenceListener;
 
         public bool waitOneFrameOnStartOrEnable = true;

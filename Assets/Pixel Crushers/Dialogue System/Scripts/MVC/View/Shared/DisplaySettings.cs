@@ -254,7 +254,7 @@ namespace PixelCrushers.DialogueSystem
             /// <summary>
             /// The format to use for the <c>entrytag</c> keyword.
             /// </summary>
-            [Tooltip("Format to use for the 'entrytag' keyword.")]
+            [Tooltip("Format to use for the 'entrytag' m_keyword.")]
             public EntrytagFormat entrytagFormat = EntrytagFormat.ActorName_ConversationID_EntryID;
 
             /// <summary>

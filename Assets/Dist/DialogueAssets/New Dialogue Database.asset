@@ -626,7 +626,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 398.6623
+        x: 399.6932
         y: 130.12708
         width: 160
         height: 30
@@ -955,13 +955,14 @@ MonoBehaviour:
         isConnector: 0
         priority: 2
       conditionsString: 
-      userScript: "AddKeyWord(\"\uBC29\uC5ED\uCC98\uB9AC\uBD80\",\"abcd\")"
+      userScript: "AddKeyWord(\"\uBC29\uC5ED\uCC98\uB9AC\uBD80\",\"Keyword.TaskForce.Quarantine_0\");ShowAlert(\"\uBC29\uC5ED
+        \uCC98\uB9AC\uBD80 \uD0A4\uC6CC\uB4DC \uD68D\uB4DD\")\n"
       onExecute:
         m_PersistentCalls:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 397.57132
+        x: 396.54037
         y: 434.28568
         width: 160
         height: 30

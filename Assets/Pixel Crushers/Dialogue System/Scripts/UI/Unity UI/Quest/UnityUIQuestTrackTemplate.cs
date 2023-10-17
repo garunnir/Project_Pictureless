@@ -16,7 +16,7 @@ namespace PixelCrushers.DialogueSystem
     {
 
         [Header("Quest Heading")]
-        [Tooltip("The heading - firstName or description depends on tracker setting")]
+        [Tooltip("The heading - firstName or m_description depends on tracker setting")]
         public UnityEngine.UI.Text description;
 
         public UnityUIQuestTemplateAlternateDescriptions alternateDescriptions = new UnityUIQuestTemplateAlternateDescriptions();
