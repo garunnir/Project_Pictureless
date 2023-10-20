@@ -208,7 +208,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                ""typeString"":""""
             }
          ],
-         ""conversationID"":14,
+         ""MapID"":14,
          ""isRoot"":false,
          ""isGroup"":false,
          ""nodeColor"":"""",
@@ -304,7 +304,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                ""typeString"":""CustomFieldType_Text""
             }
          ],
-         ""conversationID"":14,
+         ""MapID"":14,
          ""isRoot"":false,
          ""isGroup"":false,
          ""nodeColor"":"""",
@@ -392,7 +392,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                ""typeString"":""CustomFieldType_Text""
             }
          ],
-         ""conversationID"":14,
+         ""MapID"":14,
          ""isRoot"":false,
          ""isGroup"":false,
          ""nodeColor"":"""",
@@ -480,7 +480,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                ""typeString"":""CustomFieldType_Text""
             }
          ],
-         ""conversationID"":14,
+         ""MapID"":14,
          ""isRoot"":false,
          ""isGroup"":false,
          ""nodeColor"":"""",
@@ -560,7 +560,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                ""typeString"":""CustomFieldType_Text""
             }
          ],
-         ""conversationID"":14,
+         ""MapID"":14,
          ""isRoot"":false,
          ""isGroup"":false,
          ""nodeColor"":"""",
@@ -633,7 +633,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                ""typeString"":""CustomFieldType_Text""
             }
          ],
-         ""conversationID"":14,
+         ""MapID"":14,
          ""isRoot"":false,
          ""isGroup"":false,
          ""nodeColor"":"""",
@@ -706,7 +706,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                ""typeString"":""CustomFieldType_Text""
             }
          ],
-         ""conversationID"":14,
+         ""MapID"":14,
          ""isRoot"":false,
          ""isGroup"":false,
          ""nodeColor"":"""",
@@ -779,7 +779,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                ""typeString"":""CustomFieldType_Text""
             }
          ],
-         ""conversationID"":14,
+         ""MapID"":14,
          ""isRoot"":false,
          ""isGroup"":false,
          ""nodeColor"":"""",
@@ -859,7 +859,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                ""typeString"":""CustomFieldType_Text""
             }
          ],
-         ""conversationID"":14,
+         ""MapID"":14,
          ""isRoot"":false,
          ""isGroup"":false,
          ""nodeColor"":"""",
@@ -939,7 +939,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                ""typeString"":""CustomFieldType_Text""
             }
          ],
-         ""conversationID"":14,
+         ""MapID"":14,
          ""isRoot"":false,
          ""isGroup"":false,
          ""nodeColor"":"""",
@@ -1012,7 +1012,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                ""typeString"":""CustomFieldType_Text""
             }
          ],
-         ""conversationID"":14,
+         ""MapID"":14,
          ""isRoot"":false,
          ""isGroup"":false,
          ""nodeColor"":"""",

@@ -184,7 +184,7 @@ namespace Garunnir
         {
             SaveSystem.LoadFromSlot(0);
         }
-        public Action ResourceLoadDoneEvent;
+        public event Action ResourceLoadDoneEvent;
         bool isResourceLoadDone = false;
         void LoadAllImg()
         {

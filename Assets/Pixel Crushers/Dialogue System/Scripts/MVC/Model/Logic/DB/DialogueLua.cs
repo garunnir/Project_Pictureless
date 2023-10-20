@@ -200,7 +200,7 @@ namespace PixelCrushers.DialogueSystem
         }
         public static string GetSimStatus(MapEntry dialogueEntry)
         {
-            return (dialogueEntry != null) ? GetSimStatus(dialogueEntry.conversationID, dialogueEntry.id) : string.Empty;
+            return (dialogueEntry != null) ? GetSimStatus(dialogueEntry.MapID, dialogueEntry.id) : string.Empty;
         }
         /// <summary>
         /// Returns the SimStatus of a dialogue entry, or a blank string if Include Sim Status isn't ticked.

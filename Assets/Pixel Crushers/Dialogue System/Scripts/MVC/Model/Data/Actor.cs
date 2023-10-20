@@ -12,7 +12,7 @@ namespace PixelCrushers.DialogueSystem
     [System.Serializable]
     public class Actor : Asset
     {
-        public int mapPosID=-1;
+        public (int,int) mapPosID=(-1,-1);
         public int conversationIdx=-1;
         /// <summary>
         /// The actor's (optional) portrait image. Corresponds to <c>[pic=1]</c> tag.

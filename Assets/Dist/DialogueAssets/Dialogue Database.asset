@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 935899b62f48ae5498594680ed17d133, type: 3}
-  m_Name: New Dialogue Database (Auto-Backup)
+  m_Name: Dialogue Database
   m_EditorClassIdentifier: 
   version: 
   author: 
@@ -57,7 +57,6 @@ MonoBehaviour:
       value: 2
       type: 5
       typeString: CustomFieldType_Actor
-    mapPosID: -1
     conversationIdx: -1
     portrait: {fileID: 2800000, guid: 4990a1666c011cd44a4f11bbdd94719f, type: 3}
     spritePortrait: {fileID: 2877471580529523173, guid: c15ba1dcb835b28498cc6239dc893a2e,
@@ -83,9 +82,8 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    mapPosID: 0
     conversationIdx: -1
-    portrait: {fileID: 0}
+    portrait: {fileID: 2800000, guid: 4990a1666c011cd44a4f11bbdd94719f, type: 3}
     spritePortrait: {fileID: 21300000, guid: 3d3b4b1d32565c944b0452176b513899, type: 3}
     alternatePortraits: []
     spritePortraits: []
@@ -107,7 +105,6 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    mapPosID: -1
     conversationIdx: -1
     portrait: {fileID: 0}
     spritePortrait: {fileID: 21300000, guid: 4990a1666c011cd44a4f11bbdd94719f, type: 3}
@@ -131,7 +128,6 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    mapPosID: -1
     conversationIdx: -1
     portrait: {fileID: 0}
     spritePortrait: {fileID: 0}
@@ -155,7 +151,6 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    mapPosID: -1
     conversationIdx: 1
     portrait: {fileID: 0}
     spritePortrait: {fileID: 0}
@@ -179,7 +174,6 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    mapPosID: 1
     conversationIdx: 2
     portrait: {fileID: 0}
     spritePortrait: {fileID: 0}
@@ -334,12 +328,6 @@ MonoBehaviour:
       - originConversationID: 1
         originDialogueID: 0
         destinationConversationID: 1
-        destinationDialogueID: 1
-        isConnector: 0
-        priority: 2
-      - originConversationID: 1
-        originDialogueID: 0
-        destinationConversationID: 1
         destinationDialogueID: 4
         isConnector: 0
         priority: 2
@@ -358,185 +346,6 @@ MonoBehaviour:
         serializedVersion: 2
         x: 160
         y: 30
-        width: 160
-        height: 30
-    - id: 1
-      fields:
-      - title: Title
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Description
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Actor
-        value: 2
-        type: 5
-        typeString: CustomFieldType_Actor
-      - title: Conversant
-        value: 1
-        type: 5
-        typeString: CustomFieldType_Actor
-      - title: Menu Text
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Dialogue Text
-        value: "\uB044\uC544\uC545(\uC744)\uB97C \uC5B4\uB5A8\uAE4C? \uBC25(\uC774)\uB77C\uB2A5~"
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Sequence
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: kor
-        value: "\uB77C\uBA74(\uC774)\uB77C\uBA74 \uC5B4\uB5A8\uAE4C? \uBC25(\uC774)\uB77C\uB2A5~"
-        type: 4
-        typeString: CustomFieldType_Localization
-      conversationID: 1
-      isRoot: 0
-      isGroup: 0
-      nodeColor: 
-      delaySimStatus: 0
-      falseConditionAction: Block
-      conditionPriority: 2
-      outgoingLinks:
-      - originConversationID: 1
-        originDialogueID: 1
-        destinationConversationID: 1
-        destinationDialogueID: 2
-        isConnector: 0
-        priority: 2
-      conditionsString: 
-      userScript: 
-      onExecute:
-        m_PersistentCalls:
-          m_Calls: []
-      canvasRect:
-        serializedVersion: 2
-        x: 160
-        y: 80
-        width: 160
-        height: 30
-    - id: 2
-      fields:
-      - title: Title
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Description
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Actor
-        value: 1
-        type: 5
-        typeString: CustomFieldType_Actor
-      - title: Conversant
-        value: 2
-        type: 5
-        typeString: CustomFieldType_Actor
-      - title: Menu Text
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Dialogue Text
-        value: 'playayay
-
-'
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Sequence
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: kor
-        value: 'playayay
-
-'
-        type: 4
-        typeString: CustomFieldType_Localization
-      conversationID: 1
-      isRoot: 0
-      isGroup: 0
-      nodeColor: 
-      delaySimStatus: 0
-      falseConditionAction: Block
-      conditionPriority: 2
-      outgoingLinks:
-      - originConversationID: 1
-        originDialogueID: 2
-        destinationConversationID: 1
-        destinationDialogueID: 3
-        isConnector: 0
-        priority: 2
-      conditionsString: 
-      userScript: 
-      onExecute:
-        m_PersistentCalls:
-          m_Calls: []
-      canvasRect:
-        serializedVersion: 2
-        x: 160
-        y: 130
-        width: 160
-        height: 30
-    - id: 3
-      fields:
-      - title: Title
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Description
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Actor
-        value: 3
-        type: 5
-        typeString: CustomFieldType_Actor
-      - title: Conversant
-        value: -1
-        type: 5
-        typeString: CustomFieldType_Actor
-      - title: Menu Text
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Dialogue Text
-        value: 'nararara
-
-'
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: Sequence
-        value: 
-        type: 0
-        typeString: CustomFieldType_Text
-      - title: kor
-        value: 'nararara
-
-'
-        type: 4
-        typeString: CustomFieldType_Localization
-      conversationID: 1
-      isRoot: 0
-      isGroup: 0
-      nodeColor: 
-      delaySimStatus: 0
-      falseConditionAction: Block
-      conditionPriority: 2
-      outgoingLinks: []
-      conditionsString: 
-      userScript: 
-      onExecute:
-        m_PersistentCalls:
-          m_Calls: []
-      canvasRect:
-        serializedVersion: 2
-        x: 160
-        y: 179.13043
         width: 160
         height: 30
     - id: 4
@@ -632,6 +441,10 @@ MonoBehaviour:
         value: 
         type: 4
         typeString: CustomFieldType_Localization
+      - title: EventGuid
+        value: 
+        type: 0
+        typeString: 
       conversationID: 1
       isRoot: 0
       isGroup: 0
@@ -647,7 +460,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 353.45453
+        x: 354.67404
         y: 128.13637
         width: 160
         height: 30
@@ -764,8 +577,8 @@ MonoBehaviour:
         width: 160
         height: 30
     entryGroups: []
-    canvasScrollPosition: {x: 98.86365, y: 0}
-    canvasZoom: 0.8800001
+    canvasScrollPosition: {x: 0, y: 0}
+    canvasZoom: 0.8199998
   - id: 2
     fields:
     - title: Title
@@ -2163,7 +1976,7 @@ MonoBehaviour:
     canvasScrollPosition: {x: 0, y: 0}
     canvasZoom: 0.85000014
   maps:
-  - id: 1
+  - id: 0
     fields:
     - title: Title
       value: New Map 1
@@ -2214,6 +2027,8 @@ MonoBehaviour:
         rightID: 4
         upID: 1
         downID: 5
+      backGroundTexture: {fileID: 2800000, guid: 43f492e6648039445963899b80c9e688,
+        type: 3}
       id: 0
       fields:
       - title: Title
@@ -2244,7 +2059,7 @@ MonoBehaviour:
         value: None()
         type: 0
         typeString: 
-      conversationID: 1
+      MapID: 0
       isRoot: 0
       isGroup: 0
       nodeColor: 
@@ -2268,6 +2083,8 @@ MonoBehaviour:
         rightID: 3
         upID: -1
         downID: 0
+      backGroundTexture: {fileID: 2800000, guid: cb11c1ca3f7023442b32038680719119,
+        type: 3}
       id: 1
       fields:
       - title: Title
@@ -2298,7 +2115,7 @@ MonoBehaviour:
         value: 
         type: 0
         typeString: 
-      conversationID: 1
+      MapID: 0
       isRoot: 0
       isGroup: 0
       nodeColor: 
@@ -2313,8 +2130,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 530
-        y: 137
+        x: 527.561
+        y: 123.58539
         width: 100
         height: 100
     - postion:
@@ -2322,6 +2139,7 @@ MonoBehaviour:
         rightID: 0
         upID: -1
         downID: -1
+      backGroundTexture: {fileID: 0}
       id: 2
       fields:
       - title: Title
@@ -2352,7 +2170,7 @@ MonoBehaviour:
         value: 
         type: 0
         typeString: 
-      conversationID: 1
+      MapID: 0
       isRoot: 0
       isGroup: 0
       nodeColor: 
@@ -2367,8 +2185,8 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 410
-        y: 257
+        x: 413.65854
+        y: 253.34146
         width: 100
         height: 100
     - postion:
@@ -2376,6 +2194,8 @@ MonoBehaviour:
         rightID: -1
         upID: -1
         downID: 4
+      backGroundTexture: {fileID: 2800000, guid: 4990a1666c011cd44a4f11bbdd94719f,
+        type: 3}
       id: 3
       fields:
       - title: Title
@@ -2406,7 +2226,7 @@ MonoBehaviour:
         value: 
         type: 0
         typeString: 
-      conversationID: 1
+      MapID: 0
       isRoot: 0
       isGroup: 0
       nodeColor: 
@@ -2430,6 +2250,7 @@ MonoBehaviour:
         rightID: -1
         upID: 3
         downID: 6
+      backGroundTexture: {fileID: 0}
       id: 4
       fields:
       - title: Title
@@ -2460,7 +2281,7 @@ MonoBehaviour:
         value: 
         type: 0
         typeString: 
-      conversationID: 1
+      MapID: 0
       isRoot: 0
       isGroup: 0
       nodeColor: 
@@ -2484,6 +2305,7 @@ MonoBehaviour:
         rightID: -1
         upID: 0
         downID: -1
+      backGroundTexture: {fileID: 0}
       id: 5
       fields:
       - title: Title
@@ -2514,7 +2336,7 @@ MonoBehaviour:
         value: 
         type: 0
         typeString: 
-      conversationID: 1
+      MapID: 0
       isRoot: 0
       isGroup: 0
       nodeColor: 
@@ -2538,6 +2360,7 @@ MonoBehaviour:
         rightID: -1
         upID: 4
         downID: 7
+      backGroundTexture: {fileID: 0}
       id: 6
       fields:
       - title: Title
@@ -2568,7 +2391,7 @@ MonoBehaviour:
         value: 
         type: 0
         typeString: 
-      conversationID: 1
+      MapID: 0
       isRoot: 0
       isGroup: 0
       nodeColor: 
@@ -2592,6 +2415,7 @@ MonoBehaviour:
         rightID: -1
         upID: 6
         downID: -1
+      backGroundTexture: {fileID: 0}
       id: 7
       fields:
       - title: Title
@@ -2622,7 +2446,7 @@ MonoBehaviour:
         value: 
         type: 0
         typeString: 
-      conversationID: 1
+      MapID: 0
       isRoot: 0
       isGroup: 0
       nodeColor: 
@@ -2646,6 +2470,7 @@ MonoBehaviour:
         rightID: 7
         upID: -1
         downID: -1
+      backGroundTexture: {fileID: 0}
       id: 8
       fields:
       - title: Title
@@ -2676,7 +2501,7 @@ MonoBehaviour:
         value: 
         type: 0
         typeString: 
-      conversationID: 1
+      MapID: 0
       isRoot: 0
       isGroup: 0
       nodeColor: 
@@ -2700,6 +2525,7 @@ MonoBehaviour:
         rightID: 8
         upID: -1
         downID: -1
+      backGroundTexture: {fileID: 0}
       id: 9
       fields:
       - title: Title
@@ -2730,7 +2556,7 @@ MonoBehaviour:
         value: 
         type: 0
         typeString: 
-      conversationID: 1
+      MapID: 0
       isRoot: 0
       isGroup: 0
       nodeColor: 
@@ -2750,8 +2576,8 @@ MonoBehaviour:
         width: 100
         height: 100
     entryGroups: []
-    canvasScrollPosition: {x: 10.638306, y: 78.72339}
-    canvasZoom: 0.94000006
+    canvasScrollPosition: {x: 0, y: 0}
+    canvasZoom: 0.8199998
   syncInfo:
     syncActors: 0
     syncItems: 0

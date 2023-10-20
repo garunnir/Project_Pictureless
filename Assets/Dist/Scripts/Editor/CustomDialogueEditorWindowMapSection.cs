@@ -531,8 +531,20 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     ResetMapEntryNodeDescription(entry);
                 }
             }
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("");
+            var newPortrait = EditorGUILayout.ObjectField(new GUIContent("Background", "Map Background Img"),
+                                         entry.backGroundTexture, typeof(Texture2D), false, GUILayout.Height(64)) as Texture2D;
+            if (newPortrait != entry.backGroundTexture)
+            {
+                entry.backGroundTexture = newPortrait;
+                SetCurrentMapEntry(entry);
+                ClearActorInfoCaches();
+                SetDatabaseDirty("MapEntry Portrait");
+            }
+            EditorGUILayout.EndHorizontal();
             var allacters = database.actors;
-            var acters=allacters.FindAll(x => x.mapPosID == entry.id);
+            var acters=allacters.FindAll(x =>x.mapPosID.Item1==entry.MapID&& x.mapPosID.Item2 == entry.id);
             if (acters != null)
             {
                 actorFoldout= EditorGUILayout.Foldout(actorFoldout, "Actors");
@@ -547,11 +559,12 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                         item.Name = EditorGUILayout.TextField(item.Name);
                         EditorGUILayout.LabelField(new GUIContent("mapID"));
                         EditorGUI.BeginDisabledGroup(true);
-                        item.mapPosID = EditorGUILayout.IntField(item.mapPosID);
+                        //item.mapPosID.Item1 = EditorGUILayout.IntField(item.mapPosID.Item1);
+                        item.mapPosID.Item2 = EditorGUILayout.IntField(item.mapPosID.Item2);
                         EditorGUI.EndDisabledGroup();
                         if (GUILayout.Button("-", EditorStyles.miniButtonRight, GUILayout.Width(21)))
                         {
-                            item.mapPosID = -1;
+                            item.mapPosID = (-1, -1);
                         }
                         EditorGUILayout.EndHorizontal();
                     }
@@ -559,7 +572,9 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     selectedPlusActor = DrawAssetPopup<Actor>(selectedPlusActor, allacters, null);
                     if(GUILayout.Button("+", EditorStyles.miniButtonRight, GUILayout.Width(21)))
                     {
-                        allacters[int.Parse(selectedPlusActor)-1].mapPosID=entry.id;
+                        Actor actor =allacters[int.Parse(selectedPlusActor) - 1];
+                        actor.mapPosID.Item2=entry.id;
+                        actor.mapPosID.Item1 = entry.MapID;
                     }
                     EditorGUILayout.EndHorizontal();
                     EditorGUI.indentLevel--;
@@ -946,11 +961,11 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         }
         private void SetCurrentMapEntry(MapEntry entry)//현재 맵 엔트리 선택.
         {
-            if (entry != null && currentMapContainer != null && entry.conversationID != currentMapContainer.id)
+            if (entry != null && currentMapContainer != null && entry.MapID != currentMapContainer.id)
             {
-                var conversation = database.GetConversation(entry.conversationID);
-                OpenConversation(conversation);
-                SetConversationDropdownIndex(GetcurrentMapContainerIndex());
+                var mapContainer = database.GetMapContainer(entry.MapID);
+                OpenMapContainer(mapContainer);
+                SetMapDropdownIndex(GetcurrentMapContainerIndex());
                 InitializeMapTree();
                 inspectorSelection = entry;
             }
@@ -1260,9 +1275,9 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             if (startMapEntry == null) startMapEntry = (currentMapContainer != null) ? currentMapContainer.GetFirstMapEntry() : null;
             if (startMapEntry != null)
             {
-                if (startMapEntry.conversationID != currentMapContainer.id)
+                if (startMapEntry.MapID != currentMapContainer.id)
                 {
-                    startMapEntry.conversationID = currentMapContainer.id;
+                    startMapEntry.MapID = currentMapContainer.id;
                     SetDatabaseDirty("Check/Set START entry mapContainer ID");
                 }
             }
@@ -2110,7 +2125,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 }
                 foreach (var origin in currentMapContainer.mapEntries)
                 {
-                    DeleteNodeLinkToMapID(origin, entryToDelete.conversationID, entryToDelete.id);
+                    DeleteNodeLinkToMapID(origin, entryToDelete.MapID, entryToDelete.id);
                 }
                 MapEntry entry = currentMapContainer.mapEntries.Find(x => x.id == entryToDelete.id);
                 entry.postion = new MapEntry.Postion();
@@ -2132,7 +2147,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     {
                         foreach (var origin in currentMapContainer.mapEntries)
                         {
-                            DeleteNodeLinkToMapID(origin, entryToDelete.conversationID, entryToDelete.id);
+                            DeleteNodeLinkToMapID(origin, entryToDelete.MapID, entryToDelete.id);
                         }
                         MapEntry entry = currentMapContainer.mapEntries.Find(x => x.id == entryToDelete.id);
                         currentMapContainer.mapEntries.Remove(entry);
@@ -2224,7 +2239,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         }
         private bool LinkExists(MapEntry origin, MapEntry destination)
         {
-            Link link = origin.outgoingLinks.Find(x => ((x.destinationConversationID == destination.conversationID) && (x.destinationDialogueID == destination.id)));
+            Link link = origin.outgoingLinks.Find(x => ((x.destinationConversationID == destination.MapID) && (x.destinationDialogueID == destination.id)));
             return (link != null);
         }
         private void FinishMakingMapCLink()
@@ -2606,7 +2621,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         }
         private bool IsCurrentRuntimeEntry(MapEntry entry)
         {
-            return (currentRuntimeMapEntry != null) && (entry.conversationID == currentRuntimeMapEntry.conversationID) && (entry.id == currentRuntimeMapEntry.id);
+            return (currentRuntimeMapEntry != null) && (entry.MapID == currentRuntimeMapEntry.MapID) && (entry.id == currentRuntimeMapEntry.id);
         }
         public void DrawCardinalLink(Vector3 start, Vector3 end, Color color)
         {
@@ -3479,7 +3494,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 SetDatabaseDirty("Create START dialogue entry");
             }
             if (entry.ActorID == 0) { entry.ActorID = currentMapContainer.ActorID; SetDatabaseDirty("Set START Actor"); }
-            if (entry.conversationID == 0) { entry.ConversantID = currentMapContainer.ConversantID; SetDatabaseDirty("Set START Conversant"); }
+            if (entry.MapID == 0) { entry.ConversantID = currentMapContainer.ConversantID; SetDatabaseDirty("Set START Conversant"); }
             return entry;
         }
 
@@ -3716,7 +3731,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             copy.Title = copyTitle;
             foreach (var entry in copy.mapEntries)
             {
-                entry.conversationID = newID;
+                entry.MapID = newID;
                 foreach (var link in entry.outgoingLinks)
                 {
                     if (link.originConversationID == oldID) link.originConversationID = newID;

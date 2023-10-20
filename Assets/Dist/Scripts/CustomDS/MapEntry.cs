@@ -19,6 +19,7 @@ namespace PixelCrushers.DialogueSystem
     public class MapEntry
     {
         public Postion postion = new Postion();
+        public Texture2D backGroundTexture;
         [System.Serializable]
         public class Postion
         {
@@ -40,7 +41,7 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// The ID of the conversation that this dialogue entry belongs to.
         /// </summary>
-        public int conversationID = 0;
+        public int MapID = 0;
 
         /// <summary>
         /// <c>true</c> if this is the root (first) entry in a conversation; otherwise 
@@ -579,7 +580,7 @@ namespace PixelCrushers.DialogueSystem
         {
             this.id = sourceEntry.id;
             this.fields = Field.CopyFields(sourceEntry.fields);
-            this.conversationID = sourceEntry.conversationID;
+            this.MapID = sourceEntry.MapID;
             this.isRoot = sourceEntry.isRoot;
             this.isGroup = sourceEntry.isGroup;
             this.nodeColor = sourceEntry.nodeColor;

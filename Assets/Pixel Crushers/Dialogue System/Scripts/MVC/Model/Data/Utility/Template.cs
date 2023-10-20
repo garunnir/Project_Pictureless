@@ -217,7 +217,7 @@ namespace PixelCrushers.DialogueSystem
             MapEntry entry = new MapEntry();
             entry.fields = CreateFields(mapEntryFields);
             entry.id = id;
-            entry.conversationID = conversationID;
+            entry.MapID = conversationID;
             entry.Title = title;
             return entry;
         }

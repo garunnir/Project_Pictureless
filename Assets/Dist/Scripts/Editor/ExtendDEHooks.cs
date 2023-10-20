@@ -31,7 +31,8 @@ public static class ExtendDEHooks
         {
             Actor target = (Actor)asset;
             GUILayout.Label("MapPosID:");
-            target.mapPosID = EditorGUILayout.IntField(target.mapPosID); 
+            target.mapPosID.Item1 = EditorGUILayout.Popup(target.mapPosID.Item1, database.maps.ConvertAll(x=>x.Title).ToArray(), GUILayout.Height(EditorGUIUtility.singleLineHeight));
+            target.mapPosID.Item2 = EditorGUILayout.IntField(target.mapPosID.Item2); 
             target.conversationIdx = EditorGUILayout.Popup(target.conversationIdx, database.conversations.ConvertAll(x=>x.Title).ToArray(), GUILayout.Height(EditorGUIUtility.singleLineHeight));
             //target.conversation = database.conversations[int.Parse(str)-1];
         }

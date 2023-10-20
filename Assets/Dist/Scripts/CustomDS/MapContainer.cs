@@ -174,7 +174,7 @@ namespace PixelCrushers.DialogueSystem
         private void AddConversationMapEntry(ChatMapper.DialogEntry chatMapperEntry)
         {
             var entry = new MapEntry(chatMapperEntry);
-            entry.conversationID = id;
+            entry.MapID = id;
             mapEntries.Add(entry);
         }
 
@@ -361,7 +361,7 @@ namespace PixelCrushers.DialogueSystem
         {
             var newEntry = new MapEntry();
             newEntry.id = GetHighestMapEntryID() + 1;
-            newEntry.conversationID = originalEntry.conversationID;
+            newEntry.MapID = originalEntry.MapID;
             newEntry.isRoot = originalEntry.isRoot;
             newEntry.isGroup = originalEntry.isGroup;
             newEntry.nodeColor = originalEntry.nodeColor;
@@ -404,11 +404,11 @@ namespace PixelCrushers.DialogueSystem
         private Link NewLink(MapEntry origin, MapEntry destination, ConditionPriority priority = ConditionPriority.Normal)
         {
             var newLink = new Link();
-            newLink.originConversationID = origin.conversationID;
+            newLink.originConversationID = origin.MapID;
             newLink.originDialogueID = origin.id;
-            newLink.destinationConversationID = destination.conversationID;
+            newLink.destinationConversationID = destination.MapID;
             newLink.destinationDialogueID = destination.id;
-            newLink.isConnector = (origin.conversationID != destination.conversationID);
+            newLink.isConnector = (origin.MapID != destination.MapID);
             newLink.priority = priority;
             return newLink;
         }

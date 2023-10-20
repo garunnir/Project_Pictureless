@@ -414,8 +414,8 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 }
                 if (toolbar.Current == Toolbar.Tab.Maps)
                 {
-                    UpdateConversationTitles();
-                    ResetNodeEditorConversationList();
+                    UpdateMapTitles();
+                    ResetNodeEditorMapList();
                 }
                 if (toolbar.current == Toolbar.Tab.Database)
                 {

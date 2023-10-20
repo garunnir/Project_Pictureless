@@ -1,3 +1,4 @@
+using Garunnir;
 using PixelCrushers.DialogueSystem;
 using PixelCrushers.DialogueSystem.Wrappers;
 using System.Collections;
@@ -9,6 +10,7 @@ using UnityEngine.UI;
 
 public class UIMapController : MonoBehaviour
 {
+    event UnityAction<MapEntry> MoveEvent;
     UIMapViewer view;
     public MapContainer currentMap;
     MapEntry currentEntry;
@@ -21,20 +23,33 @@ public class UIMapController : MonoBehaviour
         currentMap = DialogueManager.masterDatabase.GetMapContainer(1);
         view.MoveEvent += MoveTo;
         view.CreatedEvent += CreateOther;
+        MoveEvent += ShowBG;
     }
     void Start()
     {
         ShowMap(currentMap);
     }
+    private void ShowBG(MapEntry entry)
+    {
+        if (entry.backGroundTexture == null) return;
+        RawImage img = GameManager.Instance.GetUIManager().GetBackground();
+        img.texture = entry.backGroundTexture;
+        //이미지 비율을 비교해서 적용한다.
+        //원본 이미지 비율을 가져옴
+        //지금 적용되어있는 랙트를 비교
+        //원본이미지 폭에따라 길이를 재적용
+        UIManager.AdjustSize(GameManager.Instance.GetUIManager().GetUpperRect(), img.rectTransform, img.texture);
+    }
     private void ShowMap(MapContainer container)
     {
-        if (DialogueManager.masterDatabase.maps.Count == 0)
+        if (DialogueManager.masterDatabase.maps.Count == 0|| container==null)
         {
             return;
         }
         currentMap = container;
         view.createLimit = container.mapEntries.Count() * 3;
         MapEntry First = container.GetFirstMapEntry();
+        ShowBG(First);
         currentEntry = First;
         view.ShowMap(First.Title,First.id);
     }
@@ -46,6 +61,7 @@ public class UIMapController : MonoBehaviour
         currentEntry = currentMap.GetMapEntry(entryid);
         MapEntered?.Invoke(currentMap.id, entryid);
         view.AlignCenter();
+        MoveEvent?.Invoke(currentEntry);
         //해당 셀렉트안의 이벤트를 발생시킨다.
     }
     void CreateOther(int entryid)
