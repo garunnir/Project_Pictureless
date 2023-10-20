@@ -16,7 +16,7 @@ namespace PixelCrushers.DialogueSystem.Wrappers
     [AddComponentMenu("Pixel Crushers/Dialogue System/UI/Standard UI/Dialogue/Standard Dialogue UI")]
     public class StandardDialogueUI : PixelCrushers.DialogueSystem.StandardDialogueUI
     {
-        [SerializeField] private RawImage bg; 
+        //[SerializeField] private RawImage bg; 
         public override void Awake()
         {
             base.Awake();

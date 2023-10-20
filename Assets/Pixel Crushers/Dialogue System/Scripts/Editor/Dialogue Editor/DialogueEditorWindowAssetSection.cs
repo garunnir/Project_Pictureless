@@ -139,6 +139,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             if (EditorGUI.EndChangeCheck()) SetDatabaseDirty("Name");
             if (asset is Actor) DrawActorPortrait(asset as Actor);
             if (asset is Item) DrawItemPropertiesFirstPart(asset as Item);
+            //if (asset is MapContainer) DrawItemPropertiesFirstPart(asset as MapContainer);
             if (customDrawAssetInspector != null)
             {
                 customDrawAssetInspector(database, asset);

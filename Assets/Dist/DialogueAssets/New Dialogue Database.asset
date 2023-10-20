@@ -57,6 +57,8 @@ MonoBehaviour:
       value: 
       type: 0
       typeString: CustomFieldType_Text
+    mapPosID: 0
+    conversationIdx: -1
     portrait: {fileID: 2800000, guid: 4990a1666c011cd44a4f11bbdd94719f, type: 3}
     spritePortrait: {fileID: 2877471580529523173, guid: c15ba1dcb835b28498cc6239dc893a2e,
       type: 3}
@@ -81,6 +83,8 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
+    mapPosID: 0
+    conversationIdx: -1
     portrait: {fileID: 0}
     spritePortrait: {fileID: 21300000, guid: 3d3b4b1d32565c944b0452176b513899, type: 3}
     alternatePortraits: []
@@ -103,6 +107,8 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
+    mapPosID: 0
+    conversationIdx: -1
     portrait: {fileID: 0}
     spritePortrait: {fileID: 21300000, guid: 4990a1666c011cd44a4f11bbdd94719f, type: 3}
     alternatePortraits: []
@@ -125,6 +131,8 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
+    mapPosID: 0
+    conversationIdx: -1
     portrait: {fileID: 0}
     spritePortrait: {fileID: 0}
     alternatePortraits: []
@@ -1792,7 +1800,7 @@ MonoBehaviour:
       isGroup: 0
       nodeColor: 
       delaySimStatus: 0
-      falseConditionAction: 
+      falseConditionAction: Block
       conditionPriority: 2
       outgoingLinks: []
       conditionsString: 
@@ -2023,8 +2031,8 @@ MonoBehaviour:
         width: 100
         height: 100
     entryGroups: []
-    canvasScrollPosition: {x: 10.638306, y: 78.72339}
-    canvasZoom: 0.94000006
+    canvasScrollPosition: {x: 70.95822, y: 91.50034}
+    canvasZoom: 0.97
   syncInfo:
     syncActors: 0
     syncItems: 0

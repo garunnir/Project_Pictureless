@@ -1,20 +1,24 @@
 using Garunnir;
 using PixelCrushers.DialogueSystem;
-using PixelCrushers.DialogueSystem.Wrappers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
+using static UnityEngine.EventSystems.EventTrigger;
+using static UnityEngine.GraphicsBuffer;
+
 [RequireComponent(typeof(ScrollRect))]
 public class UIMapViewer : MonoBehaviour
 {
+    public event UnityAction<int,bool> MoveEvent;
+    public event UnityAction<int> CreatedEvent;
+    public bool IsIgnoreBridge = false;
     public int spacing = 10;
     public int square = 100;
-    public MapContainer currentMap;
-    int currentEntry;
     RectTransform selectRect;
     RectTransform mother;
     RectTransform contentRect;
@@ -22,27 +26,28 @@ public class UIMapViewer : MonoBehaviour
     Vector2 offsetmax = Vector2.zero;
     Vector2 texSize = new Vector2(50, 6);
     [SerializeField] Sprite selectedSprite;
-    List<RectTransform> prevlist = new List<RectTransform>();
-    Dictionary<int, RectTransform> mapdic = new Dictionary<int, RectTransform>();
+    public List<RectTransform> prevlist = new List<RectTransform>();
+    public Dictionary<int, RectTransform> mapdic = new Dictionary<int, RectTransform>();
     int createAmount=0;
-    int createLimit;
-    [SerializeField]Button toggleBtn;
+    public int createLimit;
+    [SerializeField] Button toggleBtn;
     [SerializeField] RectTransform window;
     [SerializeField] RectTransform minRect;
     [SerializeField] RectTransform maxRect;
     int currentRectLv=0;
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
-        contentRect=new GameObject("MapContent").AddComponent<RectTransform>();
-        mother=transform.parent.GetComponent<RectTransform>();
-        GetComponent<ScrollRect>().content=contentRect;
-        toggleBtn.onClick.AddListener(() =>MapToggle());
+        contentRect = new GameObject("MapContent").AddComponent<RectTransform>();
+        mother = transform.parent.GetComponent<RectTransform>();
+        GetComponent<ScrollRect>().content = contentRect;
+        toggleBtn.onClick.AddListener(() => MapToggle());
         window.gameObject.SetActive(false);
-        ShowMap(0);
-        
     }
-
+    public void SelectPositionMoveTo(int idx)
+    {
+        selectRect.position = mapdic[idx].position;
+    }
     private void MapToggle()
     {
         currentRectLv++;
@@ -68,51 +73,15 @@ public class UIMapViewer : MonoBehaviour
 
 
     // Update is called once per frame
-    void Update()
-    {
-        if(Input.GetMouseButtonUp(0))
-        {
-            Vector3 wp = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x,Input.mousePosition.y,Camera.main.nearClipPlane));
-            //마우스 스크린포인트를 가져온다
-            //Debug.LogWarning(wp);
 
-            //랙트유틸리티로 곂치는지 확인
-            //마우스와 가장 근접한 랙트를 가져온다.
-            //RectTransform closest = mapdic.Values.First();
-            //foreach (RectTransform t in mapdic.Values)
-            //{
-            //    if (Vector2.Distance(wp, closest.rect.center) < Vector2.Distance(wp, t.rect.center))
-            //    {
-            //        closest = t;
-            //    }
-            //}
-            //MoveTo(mapdic.Where(x => x.Value == closest).First().Key);
-
-            foreach(RectTransform t in mapdic.Values)
-            {
-                if (RectTransformUtility.RectangleContainsScreenPoint(t,Input.mousePosition))
-                {
-                    MoveTo(mapdic.Where(x => x.Value == t).First().Key);
-                    AlignCenter();
-                    break;
-                }
-            }
-        }
-    }
-    void AlignCenter()
+    public void AlignCenter()
     {
         //중심을 선택된 상자 위주로 재조정한다.
         //지금 선택된 상자와 중심의 위치의 차이만큼 그룹을 이동시킨다.
         //선택상자의 위치
         contentRect.position-=selectRect.position - mother.position;
     }
-    void MoveTo(int entryid,bool ignoreBridge=false)
-    {
-        if (!ignoreBridge&&!currentMap.GetMapEntry(currentEntry).IsConnectedWith(entryid)) return;
-        //셀렉트를 해당 아이디 위치로 이동한다
-        selectRect.position=mapdic[entryid].position;
-        currentEntry = entryid;
-    }
+
     RectTransform GenSelectSprite(Sprite sprite)
     {
         RectTransform rect = new GameObject("Select").AddComponent<RectTransform>();
@@ -124,21 +93,14 @@ public class UIMapViewer : MonoBehaviour
         
         return rect;
     }
-    private void ShowMap(int id)
+    public void ShowMap(string entryTitle, int entryid)
     {
         offsetmin = contentRect.offsetMin;
         offsetmax = contentRect.offsetMax;
         Debug.LogWarning(offsetmin);
         PosInit(contentRect);
-        if (DialogueManager.masterDatabase.maps.Count == 0)
-        {
-            return;
-        }
-        currentMap = DialogueManager.masterDatabase.maps[id];
-        createLimit=currentMap.mapEntries.Count() * 3;
-        MapEntry First = currentMap.GetFirstMapEntry();
-        currentEntry = First.id;
-        CreateSprite(First, contentRect.position);
+
+        CreateSprite(entryTitle, entryid, contentRect.position);
 
         foreach (var rect in prevlist)
         {
@@ -191,11 +153,11 @@ public class UIMapViewer : MonoBehaviour
         rect.anchorMin = rect.anchorMax = Vector2.zero;
         //rect.anchoredPosition = Vector2.zero;
     }
-    enum CP
+    public enum CP
     {
         updown, leftright,
     }
-    void GenerateBridge(Vector2 point, CP dir)
+    public void GenerateBridge(Vector2 point, CP dir)
     {
         GameObject go = new GameObject();
         RectTransform rect = go.AddComponent<RectTransform>();
@@ -225,12 +187,12 @@ public class UIMapViewer : MonoBehaviour
         }
         prevlist.Add(rect);
     }
-    void CreateSprite(MapEntry entry, Vector2 vecCenter)
+    public void CreateSprite(string entryTitle ,int entryid, Vector2 vecCenter)
     {
         //이미지 생성
-        if (createAmount>createLimit|| mapdic.ContainsKey(entry.id)|| prevlist.Where(x => x.anchoredPosition == vecCenter).Count() != 0) return;
+        if (createAmount>createLimit|| mapdic.ContainsKey(entryid) || prevlist.Where(x => x.anchoredPosition == vecCenter).Count() != 0) return;
         createAmount++; 
-        GameObject imgobj = new GameObject(entry.Title);
+        GameObject imgobj = new GameObject(entryTitle);
         imgobj.AddComponent<RawImage>();
         RectTransform rect = imgobj.GetComponent<RectTransform>();
         PosInit(rect);
@@ -238,51 +200,18 @@ public class UIMapViewer : MonoBehaviour
         rect.offsetMax = vecCenter+new Vector2(square / 2, square / 2);
         rect.offsetMin = vecCenter-new Vector2(square / 2, square / 2);
 
-        mapdic.Add(entry.id, rect);
+        mapdic.Add(entryid, rect);
         prevlist.Add(rect);
-        MapEntry target;
-        Vector2 v2;
-        if (entry.IsExistCardinalPoints())
+        CreatedEvent(entryid);
+    }
+    internal void CheckMoveable()
+    {
+        foreach (RectTransform t in mapdic.Values)
         {
-            if (entry.postion.upID != -1)
+            if (RectTransformUtility.RectangleContainsScreenPoint(t, Input.mousePosition))
             {
-                target = currentMap.GetMapEntry(entry.postion.upID);
-                v2 = vecCenter;
-                v2.y += square / 2f + spacing / 2f;
-                if (prevlist.Where(x => x.anchoredPosition == v2).Count() == 0)
-                    GenerateBridge(v2, CP.updown);
-                v2.y += square / 2f + spacing / 2f;
-                CreateSprite(target, v2);
-            }
-            if (entry.postion.downID != -1)
-            {
-                target = currentMap.GetMapEntry(entry.postion.downID);
-                v2 = vecCenter;
-                v2.y -= square / 2f + spacing / 2f;
-                if (prevlist.Where(x => x.anchoredPosition == v2).Count() == 0)
-                    GenerateBridge(v2, CP.updown);
-                v2.y -= square / 2f + spacing / 2f;
-                CreateSprite(target, v2);
-            }
-            if (entry.postion.leftID != -1)
-            {
-                target = currentMap.GetMapEntry(entry.postion.leftID);
-                v2 = vecCenter;
-                v2.x -= square / 2f + spacing / 2f;
-                if (prevlist.Where(x => x.anchoredPosition == v2).Count() == 0)
-                    GenerateBridge(v2, CP.leftright);
-                v2.x -= square / 2f + spacing / 2f;
-                CreateSprite(target, v2);
-            }
-            if (entry.postion.rightID != -1)
-            {
-                target = currentMap.GetMapEntry(entry.postion.rightID);
-                v2 = vecCenter;
-                v2.x += square / 2f + spacing / 2f;
-                if (prevlist.Where(x => x.anchoredPosition == v2).Count() == 0)
-                    GenerateBridge(v2, CP.leftright);
-                v2.x += square / 2f + spacing / 2f;
-                CreateSprite(target, v2);
+                MoveEvent(mapdic.Where(x => x.Value == t).First().Key, IsIgnoreBridge);
+                break;
             }
         }
     }

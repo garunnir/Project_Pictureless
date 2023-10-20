@@ -2,9 +2,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Drawing.Printing;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Graphs;
+using UnityEditor.Overlays;
 using UnityEngine;
 
 namespace PixelCrushers.DialogueSystem.DialogueEditor
@@ -529,100 +531,140 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     ResetMapEntryNodeDescription(entry);
                 }
             }
-
-            // Actor & conversant:
-            DrawMapEntryParticipants(entry);
-
-            EditorGUI.BeginDisabledGroup(isstartMapEntry && !allowEditStartEntry);
-
-            // Is this a group or regular entry:
-            entry.isGroup = EditorGUILayout.Toggle(new GUIContent("Group", "Tick to organize children as a group."), entry.isGroup);
-
-            if (!entry.isGroup)
+            var allacters = database.actors;
+            var acters=allacters.FindAll(x => x.mapPosID == entry.id);
+            if (acters != null)
             {
-                EditorWindowTools.EditorGUILayoutBeginGroup();
-
-                EditorGUI.BeginChangeCheck();
-
-                // Menu text (including localized if defined in template):
-                var menuTextField = Field.Lookup(entry.fields, "Menu Text");
-                if (menuTextField == null)
+                actorFoldout= EditorGUILayout.Foldout(actorFoldout, "Actors");
+                if (actorFoldout)
                 {
-                    menuTextField = new Field("Menu Text", "", FieldType.Text);
-                    entry.fields.Add(menuTextField);
+                    EditorGUI.BeginChangeCheck();
+                    EditorGUILayout.BeginVertical();
+                    EditorGUI.indentLevel++;
+                    foreach (var item in acters)
+                    {
+                        EditorGUILayout.BeginHorizontal();
+                        item.Name = EditorGUILayout.TextField(item.Name);
+                        EditorGUILayout.LabelField(new GUIContent("mapID"));
+                        EditorGUI.BeginDisabledGroup(true);
+                        item.mapPosID = EditorGUILayout.IntField(item.mapPosID);
+                        EditorGUI.EndDisabledGroup();
+                        if (GUILayout.Button("-", EditorStyles.miniButtonRight, GUILayout.Width(21)))
+                        {
+                            item.mapPosID = -1;
+                        }
+                        EditorGUILayout.EndHorizontal();
+                    }
+                    EditorGUILayout.BeginHorizontal();
+                    selectedPlusActor = DrawAssetPopup<Actor>(selectedPlusActor, allacters, null);
+                    if(GUILayout.Button("+", EditorStyles.miniButtonRight, GUILayout.Width(21)))
+                    {
+                        allacters[int.Parse(selectedPlusActor)-1].mapPosID=entry.id;
+                    }
+                    EditorGUILayout.EndHorizontal();
+                    EditorGUI.indentLevel--;
+                    EditorGUILayout.EndVertical();
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        changed = true;
+                        ResetMapEntryNodeDescription(entry);
+                    }
                 }
-                var menuText = menuTextField.value;
-                var menuTextLabel = string.IsNullOrEmpty(menuText) ? "Menu Text" : ("Menu Text (" + menuText.Length + " chars)");
-                DrawRevisableTextAreaField(new GUIContent(menuTextLabel, "Response menu text (e.g., short paraphrase). If blank, uses Dialogue Text."), null, currentMapEntry, menuTextField);
-                DrawLocalizedVersions(entry, entry.fields, "Menu Text {0}", false, FieldType.Text);
-
-                // Dialogue text (including localized):
-                var dialogueTextField = Field.Lookup(entry.fields, "Dialogue Text");
-                if (dialogueTextField == null)
-                {
-                    dialogueTextField = new Field("Dialogue Text", "", FieldType.Text);
-                    entry.fields.Add(dialogueTextField);
-                }
-                var dialogueText = dialogueTextField.value;
-                var dialogueTextLabel = string.IsNullOrEmpty(dialogueText) ? "Dialogue Text" : ("Dialogue Text (" + dialogueText.Length + " chars)");
-                DrawRevisableTextAreaField(new GUIContent(dialogueTextLabel, "Line spoken by actor. If blank, uses Menu Text."), null, currentMapEntry, dialogueTextField);
-                DrawLocalizedVersions(entry, entry.fields, "{0}", true, FieldType.Localization);
-
-                if (EditorGUI.EndChangeCheck())
-                {
-                    changed = true;
-                    if (string.Equals(entry.Title, "New Dialogue Entry")) entry.Title = string.Empty;
-                }
-
-                EditorWindowTools.EditorGUILayoutEndGroup();
-
-                // Sequence (including localized if defined):
-                EditorWindowTools.EditorGUILayoutBeginGroup();
-
-                var sequenceField = Field.Lookup(entry.fields, "Sequence");
-                EditorGUI.BeginChangeCheck();
-                sequenceField.value = SequenceEditorTools.DrawLayout(new GUIContent("Sequence", "Cutscene played when speaking this entry. If set, overrides Dialogue Manager's Default Sequence. Drag audio clips to add AudioWait() commands."), sequenceField.value, ref sequenceRect, ref sequenceSyntaxState, entry, sequenceField);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    changed = true;
-                    dialogueEntryNodeHasSequence[entry.id] = !string.IsNullOrEmpty(sequenceField.value);
-                }
-                DrawLocalizedVersions(entry, entry.fields, "Sequence {0}", false, FieldType.Text, true);
-
-                // Response Menu Sequence:
-                bool hasResponseMenuSequence = entry.HasResponseMenuSequence();
-                if (hasResponseMenuSequence)
-                {
-                    EditorGUILayout.LabelField(new GUIContent("Response Menu Sequence", "Cutscene played during response menu following this entry."));
-                    entry.ResponseMenuSequence = EditorGUILayout.TextArea(entry.ResponseMenuSequence);
-                    DrawLocalizedVersions(entry, entry.fields, "Response Menu Sequence {0}", false, FieldType.Text);
-                }
-                else
-                {
-                    hasResponseMenuSequence = EditorGUILayout.ToggleLeft(new GUIContent("Add Response Menu Sequence", "Tick to add a cutscene that plays during the response menu that follows this entry."), false);
-                    if (hasResponseMenuSequence) entry.ResponseMenuSequence = string.Empty;
-                }
-
-                EditorWindowTools.EditorGUILayoutEndGroup();
             }
+            #region Unused
+            //// Actor & conversant:
+            ////DrawMapEntryParticipants(entry);
 
-            // Conditions:
-            EditorWindowTools.EditorGUILayoutBeginGroup();
-            luaConditionWizard.database = database;
-            entry.conditionsString = luaConditionWizard.Draw(new GUIContent("Conditions", "Optional Lua statement that must be true to use this entry."), entry.conditionsString);
-            int falseConditionIndex = EditorGUILayout.Popup("False Condition Action", GetFalseConditionIndex(entry.falseConditionAction), falseConditionActionStrings);
-            entry.falseConditionAction = falseConditionActionStrings[falseConditionIndex];
-            EditorWindowTools.EditorGUILayoutEndGroup();
+            //EditorGUI.BeginDisabledGroup(isstartMapEntry && !allowEditStartEntry);
 
-            // Script:
-            EditorWindowTools.EditorGUILayoutBeginGroup();
-            luaScriptWizard.database = database;
-            entry.userScript = luaScriptWizard.Draw(new GUIContent("Script", "Optional Lua code to run when entry is spoken."), entry.userScript);
-            EditorWindowTools.EditorGUILayoutEndGroup();
+            //// Is this a group or regular entry:
+            //entry.isGroup = EditorGUILayout.Toggle(new GUIContent("Group", "Tick to organize children as a group."), entry.isGroup);
 
-            // Other primary fields defined in template:
-            DrawOtherMapEntryPrimaryFields(entry);
+            //if (!entry.isGroup)
+            //{
+            //    EditorWindowTools.EditorGUILayoutBeginGroup();
 
+            //    EditorGUI.BeginChangeCheck();
+
+            //    // Menu text (including localized if defined in template):
+            //    var menuTextField = Field.Lookup(entry.fields, "Menu Text");
+            //    if (menuTextField == null)
+            //    {
+            //        menuTextField = new Field("Menu Text", "", FieldType.Text);
+            //        entry.fields.Add(menuTextField);
+            //    }
+            //    var menuText = menuTextField.value;
+            //    var menuTextLabel = string.IsNullOrEmpty(menuText) ? "Menu Text" : ("Menu Text (" + menuText.Length + " chars)");
+            //    DrawRevisableTextAreaField(new GUIContent(menuTextLabel, "Response menu text (e.g., short paraphrase). If blank, uses Dialogue Text."), null, currentMapEntry, menuTextField);
+            //    DrawLocalizedVersions(entry, entry.fields, "Menu Text {0}", false, FieldType.Text);
+
+            //    // Dialogue text (including localized):
+            //    var dialogueTextField = Field.Lookup(entry.fields, "Dialogue Text");
+            //    if (dialogueTextField == null)
+            //    {
+            //        dialogueTextField = new Field("Dialogue Text", "", FieldType.Text);
+            //        entry.fields.Add(dialogueTextField);
+            //    }
+            //    var dialogueText = dialogueTextField.value;
+            //    var dialogueTextLabel = string.IsNullOrEmpty(dialogueText) ? "Dialogue Text" : ("Dialogue Text (" + dialogueText.Length + " chars)");
+            //    DrawRevisableTextAreaField(new GUIContent(dialogueTextLabel, "Line spoken by actor. If blank, uses Menu Text."), null, currentMapEntry, dialogueTextField);
+            //    DrawLocalizedVersions(entry, entry.fields, "{0}", true, FieldType.Localization);
+
+            //    if (EditorGUI.EndChangeCheck())
+            //    {
+            //        changed = true;
+            //        if (string.Equals(entry.Title, "New Dialogue Entry")) entry.Title = string.Empty;
+            //    }
+
+            //    EditorWindowTools.EditorGUILayoutEndGroup();
+
+            //    // Sequence (including localized if defined):
+            //    EditorWindowTools.EditorGUILayoutBeginGroup();
+
+            //    var sequenceField = Field.Lookup(entry.fields, "Sequence");
+            //    EditorGUI.BeginChangeCheck();
+            //    sequenceField.value = SequenceEditorTools.DrawLayout(new GUIContent("Sequence", "Cutscene played when speaking this entry. If set, overrides Dialogue Manager's Default Sequence. Drag audio clips to add AudioWait() commands."), sequenceField.value, ref sequenceRect, ref sequenceSyntaxState, entry, sequenceField);
+            //    if (EditorGUI.EndChangeCheck())
+            //    {
+            //        changed = true;
+            //        dialogueEntryNodeHasSequence[entry.id] = !string.IsNullOrEmpty(sequenceField.value);
+            //    }
+            //    DrawLocalizedVersions(entry, entry.fields, "Sequence {0}", false, FieldType.Text, true);
+
+            //    // Response Menu Sequence:
+            //    bool hasResponseMenuSequence = entry.HasResponseMenuSequence();
+            //    if (hasResponseMenuSequence)
+            //    {
+            //        EditorGUILayout.LabelField(new GUIContent("Response Menu Sequence", "Cutscene played during response menu following this entry."));
+            //        entry.ResponseMenuSequence = EditorGUILayout.TextArea(entry.ResponseMenuSequence);
+            //        DrawLocalizedVersions(entry, entry.fields, "Response Menu Sequence {0}", false, FieldType.Text);
+            //    }
+            //    else
+            //    {
+            //        hasResponseMenuSequence = EditorGUILayout.ToggleLeft(new GUIContent("Add Response Menu Sequence", "Tick to add a cutscene that plays during the response menu that follows this entry."), false);
+            //        if (hasResponseMenuSequence) entry.ResponseMenuSequence = string.Empty;
+            //    }
+
+            //    EditorWindowTools.EditorGUILayoutEndGroup();
+            //}
+
+            //// Conditions:
+            //EditorWindowTools.EditorGUILayoutBeginGroup();
+            //luaConditionWizard.database = database;
+            //entry.conditionsString = luaConditionWizard.Draw(new GUIContent("Conditions", "Optional Lua statement that must be true to use this entry."), entry.conditionsString);
+            //int falseConditionIndex = EditorGUILayout.Popup("False Condition Action", GetFalseConditionIndex(entry.falseConditionAction), falseConditionActionStrings);
+            //entry.falseConditionAction = falseConditionActionStrings[falseConditionIndex];
+            //EditorWindowTools.EditorGUILayoutEndGroup();
+
+            //// Script:
+            //EditorWindowTools.EditorGUILayoutBeginGroup();
+            //luaScriptWizard.database = database;
+            //entry.userScript = luaScriptWizard.Draw(new GUIContent("Script", "Optional Lua code to run when entry is spoken."), entry.userScript);
+            //EditorWindowTools.EditorGUILayoutEndGroup();
+
+            //// Other primary fields defined in template:
+            //DrawOtherMapEntryPrimaryFields(entry);
+            #endregion
             // Events:
             entryEventFoldout = EditorGUILayout.Foldout(entryEventFoldout, "Events");
             if (entryEventFoldout) DrawUnityMapEvents();

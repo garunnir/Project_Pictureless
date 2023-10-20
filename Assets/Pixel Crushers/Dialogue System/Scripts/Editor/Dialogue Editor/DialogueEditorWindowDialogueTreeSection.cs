@@ -56,6 +56,8 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         private Field currentEntryActor = null;
         private Field currentEntryConversant = null;
         private bool entryEventFoldout = false;
+        private bool actorFoldout=false;
+        private string selectedPlusActor = "(none)";
         private bool entryFieldsFoldout = false;
         private SequenceSyntaxState sequenceSyntaxState = SequenceSyntaxState.Unchecked;
         private GUIContent[] linkToDestinations = new GUIContent[0];
