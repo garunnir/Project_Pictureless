@@ -85,17 +85,17 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 var fieldTitle = fields[fieldToRemove].title;
                 if (isLocalizationTemplate)
                 {
-                    confirmRemove = EditorUtility.DisplayDialog("Delete Localization '" + fieldTitle + "'?", "This will also remove instances of this field from all assets in the database. Are you sure?", "OK", "Cancel");
+                    confirmRemove = EditorUtility.DisplayDialog("Delete Localization '" + fieldTitle + "'?", "This will also remove instances of this act_Field from all assets in the database. Are you sure?", "OK", "Cancel");
                 }
                 else if (isTemplateTab)
                 {
-                    var result = EditorUtility.DisplayDialogComplex("Delete '" + fieldTitle + "'", "Delete this field from all assets in the database, or only from the template?", "Remove All", "Template Only", "Cancel");
+                    var result = EditorUtility.DisplayDialogComplex("Delete '" + fieldTitle + "'", "Delete this act_Field from all assets in the database, or only from the template?", "Remove All", "Template Only", "Cancel");
                     confirmRemove = result != 2;
                     scrubFromDatabase = result == 0;
                 }
                 else if (string.Equals(fieldTitle, "Is Item") && toolbar.Current == Toolbar.Tab.Items)
                 {
-                    confirmRemove = EditorUtility.DisplayDialog("Delete 'Is Item' field?", "'Is Item' is a special built-in field that specifies whether this entry is an item or a quest. Unless you're really sure what you're doing, you shouldn't delete it. Are you sure you want to delete it?", "OK", "Cancel");
+                    confirmRemove = EditorUtility.DisplayDialog("Delete 'Is Item' act_Field?", "'Is Item' is a special built-in act_Field that specifies whether this entry is an item or a quest. Unless you're really sure what you're doing, you shouldn't delete it. Are you sure you want to delete it?", "OK", "Cancel");
                 }
                 if (confirmRemove)
                 {
@@ -162,7 +162,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             EditorGUI.EndDisabledGroup();
 
             // Delete button:
-            if (GUILayout.Button(new GUIContent(" ", string.Format("Delete field {0}.", fieldTitle)), "OL Minus", GUILayout.Width(16))) fieldToRemove = i;
+            if (GUILayout.Button(new GUIContent(" ", string.Format("Delete act_Field {0}.", fieldTitle)), "OL Minus", GUILayout.Width(16))) fieldToRemove = i;
         }
 
         private void DrawMainSectionField(Field field)

@@ -12,6 +12,7 @@ using PixelCrushers.DialogueSystem;
 using UnityEngine.XR;
 using UnityEngine.UI;
 using System.Threading.Tasks;
+using UnityEngine.Events;
 
 namespace Garunnir
 {
@@ -26,7 +27,7 @@ namespace Garunnir
     public enum Form0
     {
         none,
-        image, text, bar,
+        status,
         character, bodyparts,
     }
     public enum Gender
@@ -39,7 +40,7 @@ namespace Garunnir
     {
         #region DataConfig
         public const int createStart = 10000;//start id to created charactor
-
+        public const int PlayerID = 1;
         private Dictionary<Type, string> TypeDic;
         public Dictionary<(Enum, Enum), string> FormStrDic { get; private set; }
         //public const string form_cha_name = "Name";
@@ -64,15 +65,15 @@ namespace Garunnir
             FormStrDic.Add((Form0.bodyparts, Form.inner), "Inner");
             FormStrDic.Add((Form0.bodyparts, Form.prev), "prev");
             FormStrDic.Add((Form0.bodyparts, Form.next), "next");
-            FormStrDic.Add((Form0.image, Form.profile), "Image.Profile");
-            FormStrDic.Add((Form0.text, Form.firstName), "Text.FirstName");
-            FormStrDic.Add((Form0.text, Form.outerAge), "Text.OuterAge");
-            FormStrDic.Add((Form0.bar, Form.exp), "Bar.Exp");
+            FormStrDic.Add((Form0.character, Form.profile), "Character.Profile");
+            FormStrDic.Add((Form0.character, Form.firstName), "Character.FirstName");
+            FormStrDic.Add((Form0.character, Form.outerAge), "Character.OuterAge");
+            FormStrDic.Add((Form0.status, Form.exp), "Status.Exp");
             FormStrDic.Add((Form0.none, Form.none), "Null");
-            FormStrDic.Add((Form0.text, Form.nickName), "Text.NickName");
-            FormStrDic.Add((Form0.text, Form.lastName), "Text.LastName");
-            FormStrDic.Add((Form0.text, Form.gender), "Text.Gender");
-            FormStrDic.Add((Form0.text, Form.age), "Text.Age");
+            FormStrDic.Add((Form0.character, Form.nickName), "Character.Profile");
+            FormStrDic.Add((Form0.character, Form.lastName), "Character.LastName");
+            FormStrDic.Add((Form0.character, Form.gender), "Character.Gender");
+            FormStrDic.Add((Form0.character, Form.age), "Character.Age");
             FormStrDic.Add((Form.gender, Gender.male), "Gender.Male");
             FormStrDic.Add((Form.gender, Gender.none), "Gender.None");
             FormStrDic.Add((Form.gender, Gender.female), "Gender.female");
@@ -105,13 +106,13 @@ namespace Garunnir
                 localizeTable = UILocalizationManager.instance.textTable as TextTable;
             }
             AddTableField(Form0.none, Form.none, "없음");
-            AddTableField(Form0.text, Form.firstName, "이름");
-            AddTableField(Form0.text, Form.nickName, "별명");
-            AddTableField(Form0.text, Form.outerAge, "외관나이");
-            AddTableField(Form0.bar, Form.exp, "경험치");
-            AddTableField(Form0.text, Form.lastName, "성");
-            AddTableField(Form0.text, Form.age, "나이");
-            AddTableField(Form0.text, Form.gender, "성별");
+            AddTableField(Form0.character, Form.firstName, "이름");
+            AddTableField(Form0.character, Form.nickName, "별명");
+            AddTableField(Form0.character, Form.outerAge, "외관나이");
+            AddTableField(Form0.status, Form.exp, "경험치");
+            AddTableField(Form0.character, Form.lastName, "성");
+            AddTableField(Form0.character, Form.age, "나이");
+            AddTableField(Form0.character, Form.gender, "성별");
             AddTableField(Form.gender, Gender.male, "남");
             AddTableField(Form.gender, Gender.female, "여");
             AddTableField(Form.gender, Gender.none, "무성");
@@ -124,8 +125,8 @@ namespace Garunnir
 #endif
         #endregion
         #region Managers
-        CharactorManager charactorManager;
-        public DialogueSystemController dialogueSystemController { get; private set; }
+        [SerializeField]CharacterManager _charactorManager;
+        [SerializeField] DialogueSystemController _dialogueSystemController;
         [SerializeField]UIManager _uiManager;
         public UIManager GetUIManager() => _uiManager;
         #endregion
@@ -133,30 +134,38 @@ namespace Garunnir
         #region CacheData
         public int GetCurLocID() => Localization.GetCurrentLanguageID(UILocalizationManager.instance.textTable);
 
-        public List<Character> characters = new List<Character>();
 #if !UNITY_EDITOR
         AndroidJavaClass ajc = new AndroidJavaClass("com.garunnir.File.FileController");
 #endif
-        public Dictionary<string,Texture2D> imgDic = new Dictionary<string, Texture2D>();
+        private Dictionary<string,Texture2D> m_imgDic = new Dictionary<string, Texture2D>();
+        public Texture2D GetImg(string key) 
+        {
+            if (!m_imgDic.ContainsKey(key))
+            {
+                Debug.LogError("cantfind:" + key);
+                return null;
+            }
+            return m_imgDic[key]; 
+        }
         List<string> tmpPathContainer = new List<string>();
 
+        public static event UnityAction InitDone;
       
         #endregion
         private void Init()
         {
-            charactorManager = CharactorManager.Instance;
-            charactorManager.transform.SetParent(transform);
-            dialogueSystemController=FindObjectOfType<DialogueSystemController>();
-            //if (characterSO == null) Debug.LogError("CharSO not exist. check GM property");
-            SetDontDistroy();
+            _charactorManager.Init();
+            _uiManager.Init();
 
+            SetDontDistroy();
+            InitDone?.Invoke();
         }
         private void Awake()
         {
+            DataConfig();
             Debug.Log("StartGameManagerInit");
             ResourceLoadDoneEvent += ()=>FindObjectOfType<DialogueSystemTrigger>()?.OnUse();
             Init();
-            DataConfig();
 #if UNITY_EDITOR
             UpdateSO();
 #endif
@@ -167,18 +176,7 @@ namespace Garunnir
         }
         private void StarterInit()
         {
-            characters = charactorManager.CreateNPCs();
-            foreach (Character character in characters)
-            {
-                if (character.img_profile == null)
-                {
-                    //List<SOContainer> charaimg =characterSO.imgContainer.Where(x => x.id == character.id).ToList<SOContainer>();
-                    //if(charaimg.Count > 0)
-                    //{
-                    //    character.img_profile = charaimg[0].texture;
-                    //}
-                }
-            }
+
         }
         private void LoadChar()
         {
@@ -197,17 +195,18 @@ namespace Garunnir
             //경로를 어떻게?
             foreach (string key in tmpPathContainer)
             {
+                string keyname = key.Replace(Application.persistentDataPath+"/", string.Empty);
 #if !UNITY_EDITOR
-                imgDic.Add(Path.GetFileName(key), NativeGallery.LoadImageAtPath(key));
+                m_imgDic.Add(keyname, NativeGallery.LoadImageAtPath(key));
 #else
-                Texture2D tex=new Texture2D(8,8);
+                Texture2D tex =new Texture2D(8,8);
                 if (!File.Exists(key))
                 {
                     Debug.LogError("cantfind:" + key);
                 }
                 tex.LoadImage(File.ReadAllBytes(key));
-                imgDic.Add(Path.GetFileNameWithoutExtension(key),tex);
-                Debug.LogWarning(Path.GetFileNameWithoutExtension(key));
+                m_imgDic.Add(keyname, tex);
+                Debug.LogWarning(keyname);
 #endif
             }
         }
@@ -327,16 +326,14 @@ namespace Garunnir
         {
             LoadAllImg();
             //로드시 시간이 걸리는 데이터들을 미리 로드한다.
-            //캐릭터 프로필사진들을 로드한다.
+            //만들어진 캐릭터 프로필사진들을 로드한다.
             LoadCharPicture();
         }
         void LoadCharPicture()
         {
-            if (characters.Count == 0) return;
-            for (int i = 0; i < characters.Count; i++)
-            {
-                characters[i].img_profile = Utillity.LoadImage(GameManager.charProfleImg + i);
-            }
+            if (_charactorManager.characters.Count == 0) return;
+            var player = _charactorManager.characters.Find(x => x.Name == "Player");
+            player.portrait = Utillity.LoadImage(GameManager.charProfleImg + player.id);
         }
         //private void Update()
         //{
@@ -500,13 +497,13 @@ namespace Garunnir
             }
             stringBuilder.Append(lf);
         }
-        public static string GetJsonConvert(Character character)
+        public static string GetJsonConvert(Actor character)
         {
             Utillity.stringBuilder.Clear();
             Utillity.stringBuilder.Append($"{lf}{GameManager.Instance.GetFormDic(Form0.character, Form.id)}:");
             Utillity.stringBuilder.Append(character.id);
             Utillity.stringBuilder.Append(lf);
-            TupleDicConv(GameManager.Instance.GetFormDic(Form0.character, Form.field), character.field);
+            //TupleDicConv(GameManager.Instance.GetFormDic(Form0.character, Form.field), character.fields);
             Utillity.stringBuilder.Append(divider);
             Utillity.stringBuilder.Append(lf);
             character.bodyCore.GetJsonConvert();

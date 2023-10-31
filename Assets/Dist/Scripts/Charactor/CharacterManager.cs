@@ -1,5 +1,4 @@
 using Garunnir.CharacterAppend.BodySystem;
-using Language.Lua;
 using PixelCrushers.DialogueSystem;
 using PixelCrushers.Wrappers;
 using System;
@@ -8,157 +7,78 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Profiling;
 using UnityEngine.TextCore.Text;
 
 namespace Garunnir
 {
-    [Serializable]
-    public class Character
+    //[Serializable]
+    //public class Character
+    //{
+    //    public Actor dialogueActor;
+    //    public Core bodyCore;
+    //    public Guid guid;
+    //    public Dictionary<string, (bool, object)> field { get; private set; }
+
+    //    #region cache
+    //    public Texture2D img_profile;
+    //    string key_name="Name";
+    //    #endregion
+
+
+    //    public Character(string name,int id)
+    //    {
+    //        field = new Dictionary<string, (bool, object)>();
+    //        guid= Guid.NewGuid();
+    //        Debug.Log(guid);
+    //    }
+    //    public void DeleteField(string key)
+    //    {
+    //        if(field.ContainsKey(key)) field.Remove(key);
+    //    }
+    //    public void CreateDefault()
+    //    {
+    //        bodyCore = BodyFactory.CreateDefault();
+    //    }
+
+    //}
+    public class CharacterManager:Singleton<CharacterManager>
     {
-        public int id;
-        public Actor dialogueActor;
-        public Core bodyCore;
-        public Guid guid;
-        public Dictionary<string, (bool, object)> field { get; private set; }
+        public List<Actor> characters = new List<Actor>();
+        public static event UnityAction Act_CharLoaded;
+        public void Init()
+        {
+            characters = DialogueManager.databaseManager.masterDatabase.actors;
+            Garam();
+            Act_CharLoaded?.Invoke();
+        }
+        private void Start()
+        {
 
-        #region cache
-        public Texture2D img_profile;
-        public string name{ get { return GetField<string>(key_name); } set { SetField(key_name, value);  } }
-        string key_name="Name";
-        #endregion
-
-
-        public Character(string name,int id)
-        {
-            field = new Dictionary<string, (bool, object)>();
-            guid= Guid.NewGuid();
-            Debug.Log(guid);
-            this.id = id;
-            this.name=name;
         }
-        public T GetField<T>(string key)
+        Actor MainC()
         {
-            return (T)field[key].Item2;
-        }
-        public void SetField(string key, object value,bool open=true)
-        {
-            if (field.ContainsKey(key))
-            {
-                field[key]=(open, value);
-            }
-            else field.Add(key, (open, value));
-        }
-        public void SetField(Dictionary<string, (bool, object)> fielddic)
-        {
-            foreach (var item in fielddic)
-            {
-                SetField(item.Key, item.Value.Item2, item.Value.Item1);
-            }
-        }
-        public void DeleteField(string key)
-        {
-            if(field.ContainsKey(key)) field.Remove(key);
-        }
-        public void CreateDefault()
-        {
-            bodyCore = BodyFactory.CreateDefault();
-        }
-
-    }
-    public class CharactorManager:Singleton<CharactorManager>
-    {
-        public List<Character> Characters = new List<Character>();
-        private void Awake()
-        {
-            //SaveSystem.saveDataApplied += CreateNPCs;
-        }
-        Character MainC()
-        {
-            Character cha = Characters.Find(x => x.id == 0);
+            Actor cha = characters.Find(x => x.id == GameManager.PlayerID);
             if (cha != null) return cha;
-            cha = new Character("MainPlayer", 0);
-            cha.CreateDefault();
+            cha ??= new Actor();
+            cha.bodyCore ??= BodyFactory.CreateDefault();
             return cha;
         }
-        Character Garam()
+        Actor Garam()
         {
-            Character cha = Characters.Find(x => x.id == 1);
-            if (cha != null) return cha;
-            cha=new Character("Garam",1);
-            cha.CreateDefault();
-            //cha.SetProfile<HumanProfile>(
-            //    ("sprite", "Garam", ComponentType.img),
-            //    ("name", "가람", ComponentType.text),
-            //    ("age", "15", ComponentType.text),
-            //    ("exp", "34/50", ComponentType.bar)
-            //자식
-            //부모
-            //    );
-            cha.SetField(GameManager.Instance.GetFormDic(Form0.image,Form.profile), "Garam",true);
-            cha.SetField(GameManager.Instance.GetFormDic(Form0.text,Form.firstName), "오르카릇트 비돌돌 가람",true);
-            cha.SetField(GameManager.Instance.GetFormDic(Form0.text,Form.outerAge), "15", true);
-            cha.SetField(GameManager.Instance.GetFormDic(Form0.bar,Form.exp), "34/50", true);
+            Actor cha = characters.Find(x => x.Name=="Garam");
+            cha ??= new Actor();
+            cha.bodyCore ??= BodyFactory.CreateDefault();
+            //스테이터스 표시구분은 따로 결정해주는게 좋을것 같음.
+            cha.fields.Add(new Field(GameManager.Instance.GetFormDic(Form0.character, Form.profile),"Garam", FieldType.Files));
+            cha.fields.Add(new Field(GameManager.Instance.GetFormDic(Form0.character, Form.firstName), "오르카릇트 비돌돌 가람", FieldType.Text));
+            cha.fields.Add(new Field(GameManager.Instance.GetFormDic(Form0.character, Form.outerAge), "15", FieldType.Text));
+            cha.fields.Add(new Field(GameManager.Instance.GetFormDic(Form0.status, Form.exp), "34/50", FieldType.Text));
             //들어간 순서가 출력순서가 된다.
             return cha;
         }
-        public List<Character> CreateNPCs()
-        {
-            List<Character> list = new List<Character>();
-            list.Add(MainC());
-            list.Add(Garam());
-            return list;
-        }
-        public void Init()
-        {
-            //처음 시작할때
-        }
     }
-    public abstract class Profile
-    {
-        public string title;
-        public string value;
-        public Core body;
-        public ComponentType componentType;
-        public Profile(string title, string value, ComponentType type)
-        {
-            this.title = title;
-            this.value = value;
-            this.componentType = type;
-        }
-        public Profile(Core body)
-        {
-            this.body = body;
-        }
-        public Profile()
-        {
-
-        }
-    }
-    public class HumanProfile : Profile
-    {
-        public Actor father;
-        public Actor mother;
-        public HumanProfile()
-        {
-
-        }
-        public HumanProfile(string title, string value, ComponentType type) : base(title, value, type)
-        {
-        }
-        public HumanProfile(Core body) : base(body)
-        {
-            componentType = ComponentType.none;
-        }
-    }
-    //public class CustomField : Field
-    //{
-
-    //}
-
-
-
-
 }
 namespace Garunnir.CharacterAppend.BodySystem
 {

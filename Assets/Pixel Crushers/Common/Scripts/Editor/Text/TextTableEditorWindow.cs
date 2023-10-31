@@ -308,7 +308,7 @@ namespace PixelCrushers
             var languageValueProperty = languageValuesProperty.GetArrayElementAtIndex(list.index);
             var languageID = languageValueProperty.intValue;
             if (!EditorUtility.DisplayDialog("Delete " + languageName, "Are you sure you want to delete the language '" + languageName +
-                "' and all field values associated with it?", "OK", "Cancel")) return;
+                "' and all act_Field values associated with it?", "OK", "Cancel")) return;
             m_serializedObject.ApplyModifiedProperties();
             m_textTable.RemoveLanguage(languageID);
             m_serializedObject.Update();
@@ -521,7 +521,7 @@ namespace PixelCrushers
             var fieldValueProperty = fieldValuesProperty.GetArrayElementAtIndex(list.index);
             var fieldNameProperty = fieldValueProperty.FindPropertyRelative("m_fieldName");
             var fieldName = fieldNameProperty.stringValue;
-            if (!EditorUtility.DisplayDialog("Delete Field", "Are you sure you want to delete the field '" + fieldName +
+            if (!EditorUtility.DisplayDialog("Delete Field", "Are you sure you want to delete the act_Field '" + fieldName +
                 "' and all values associated with it?", "OK", "Cancel")) return;
             m_serializedObject.ApplyModifiedProperties();
             m_textTable.RemoveField(fieldID);

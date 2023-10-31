@@ -13,21 +13,14 @@ public class UIManager : MonoBehaviour
     [SerializeField] RawImage m_Background;
     public void SetBackground(RawImage raw) => m_Background = raw;
     public RawImage GetBackground() => m_Background;
-
+    [SerializeField] UIController m_Controller;
     #endregion
-    private void Awake()
-    {
-        Init();
-    }
-    void Init()
+    public void Init()
     {
         m_resolutionUpperRect = m_upperWindowRect.rect;
+        m_Controller.Init();
     }
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+
     public static void AdjustSize(Rect refMaxRange, RectTransform target, Texture texture)
     {
         target.sizeDelta = Vector2.zero;
@@ -82,5 +75,14 @@ public class UIManager : MonoBehaviour
     public static void Cover(RectTransform target, RectTransform source)
     {
 
+    }
+    public static Rect RectTransformToScreenSpace(RectTransform transform)
+    {
+        Vector2 size = Vector2.Scale(transform.rect.size, transform.lossyScale);
+
+        float newRectX = transform.position.x + (Screen.width / 2) - (size.x * (1 - transform.pivot.x));
+        float newRectY = Mathf.Abs(transform.position.y - (Screen.height / 2)) - (size.y * (1 - transform.pivot.y));
+
+        return new Rect(newRectX, newRectY, size.x, size.y);
     }
 }

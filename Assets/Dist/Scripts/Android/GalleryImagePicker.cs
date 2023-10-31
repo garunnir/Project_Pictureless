@@ -22,7 +22,7 @@ namespace Garunnir
     
     private void OnEnable()
     {
-        if(string.IsNullOrEmpty(filename)) { _filepath = GameManager.charProfleImg + 0; }
+        if(string.IsNullOrEmpty(filename)) { _filepath = GameManager.charProfleImg +GameManager.PlayerID; }
            else _filepath = Path.Combine(GameManager.charProfleImg + filename);
             if (File.Exists(_filepath))
         img.texture = Utillity.LoadImage(_filepath);

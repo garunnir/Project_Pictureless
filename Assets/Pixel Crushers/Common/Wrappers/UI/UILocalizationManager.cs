@@ -1,5 +1,6 @@
 // Copyright (c) Pixel Crushers. All rights reserved.
 
+using Garunnir;
 using PixelCrushers.DialogueSystem;
 using UnityEngine;
 
@@ -13,6 +14,9 @@ namespace PixelCrushers.Wrappers
     [AddComponentMenu("Pixel Crushers/Common/UI/UI Localization Manager")]
     public class UILocalizationManager : PixelCrushers.UILocalizationManager
     {
+        public TextTable ActorTable => (TextTable)additionalTextTables[1];
+        public TextTable KeywordTable=> (TextTable)additionalTextTables[0];
+
         private static UILocalizationManager s_instance = null;
         private static bool s_isQuitting = false;
 
@@ -60,6 +64,30 @@ namespace PixelCrushers.Wrappers
             if (textTable == null) return;
             currentLanguage = Localization.GetLanguage(SystemLanguage.Korean);
             TextTable.currentLanguageID=textTable.GetLanguageID(currentLanguage);
+        }
+        public string GetLocText(string locTablekey, TextTable textTable)
+        {
+            int locid = Localization.GetCurrentLanguageID(this.textTable);
+            var field = textTable.GetField(locTablekey);
+            if (field == null) return $"{Localization.language}: Not exist Localization Field Data";
+            else return field.HasTextForLanguage(locid) ? field.GetTextForLanguage(locid) : $"{Localization.language}: Not exist Localization Text Data";
+        }
+        public string GetLocText(string locTablekey)
+        {
+            TextTable textTable=null;
+            if (locTablekey.Contains("Actor."))
+            {
+                textTable = ActorTable;
+            }
+            else if (locTablekey.Contains("Keyword."))
+            {
+                textTable = KeywordTable;
+            }
+            else
+            {
+                textTable = (TextTable)this.textTable;
+            }
+            return GetLocText(locTablekey, textTable);
         }
     }
 

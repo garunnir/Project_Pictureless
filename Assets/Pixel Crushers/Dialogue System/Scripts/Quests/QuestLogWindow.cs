@@ -34,7 +34,7 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("Text to show (or localize) when there are no completed quests.")]
         public string noCompletedQuestsText = "No Completed Quests";
 
-        [Tooltip("Check if quest has a field named 'Visible'. If field is false, don't show quest.")]
+        [Tooltip("Check if quest has a act_Field named 'Visible'. If act_Field is false, don't show quest.")]
         public bool checkVisibleField = false;
 
         public enum QuestHeadingSource

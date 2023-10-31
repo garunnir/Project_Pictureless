@@ -560,7 +560,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                         EditorGUILayout.LabelField(new GUIContent("mapID"));
                         EditorGUI.BeginDisabledGroup(true);
                         //item.mapPosID.Item1 = EditorGUILayout.IntField(item.mapPosID.Item1);
-                        item.mapPosID.Item2 = EditorGUILayout.IntField(item.mapPosID.Item2);
+                        item.mapPos = EditorGUILayout.IntField(item.mapPosID.Item2);
                         EditorGUI.EndDisabledGroup();
                         if (GUILayout.Button("-", EditorStyles.miniButtonRight, GUILayout.Width(21)))
                         {
@@ -573,8 +573,8 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     if(GUILayout.Button("+", EditorStyles.miniButtonRight, GUILayout.Width(21)))
                     {
                         Actor actor =allacters[int.Parse(selectedPlusActor) - 1];
-                        actor.mapPosID.Item2=entry.id;
-                        actor.mapPosID.Item1 = entry.MapID;
+                        actor.mapPos =entry.id;
+                        actor.mapPage = entry.MapID;
                     }
                     EditorGUILayout.EndHorizontal();
                     EditorGUI.indentLevel--;
@@ -787,7 +787,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                         PasteFields(entry.fields);
                     }
                     EditorGUI.EndDisabledGroup();
-                    if (GUILayout.Button(new GUIContent(" ", "Add new field."), "OL Plus", GUILayout.Width(16))) entry.fields.Add(new Field());
+                    if (GUILayout.Button(new GUIContent(" ", "Add new m_field."), "OL Plus", GUILayout.Width(16))) entry.fields.Add(new Field());
                 }
                 EditorGUILayout.EndHorizontal();
                 if (entryFieldsFoldout)
@@ -1393,7 +1393,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 }
                 EditorGUI.EndDisabledGroup();
             }
-            if (GUILayout.Button(new GUIContent(" ", "Add new field."), "OL Plus", GUILayout.Width(16)))
+            if (GUILayout.Button(new GUIContent(" ", "Add new m_field."), "OL Plus", GUILayout.Width(16)))
             {
                 currentMapContainer.fields.Add(new Field());
                 SetDatabaseDirty("Add Conversation Field");

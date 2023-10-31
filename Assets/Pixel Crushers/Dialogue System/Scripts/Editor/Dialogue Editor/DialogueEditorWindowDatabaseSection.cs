@@ -876,7 +876,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     {
                         if (database.GetLocation(Tools.StringToInt(field.value)) == null)
                         {
-                            if (debug) Debug.Log(string.Format("Fixing location field '{0}' for conversation {1}", field.title, conversation.id));
+                            if (debug) Debug.Log(string.Format("Fixing location act_Field '{0}' for conversation {1}", field.title, conversation.id));
                             if (database.locations.Count < 1) database.locations.Add(template.CreateLocation(1, "Nowhere"));
                             field.value = database.locations[0].id.ToString();
                         }
@@ -885,7 +885,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     {
                         if (database.GetItem(Tools.StringToInt(field.value)) == null)
                         {
-                            if (debug) Debug.Log(string.Format("Fixing item field '{0}' for conversation {1}", field.title, conversation.id));
+                            if (debug) Debug.Log(string.Format("Fixing item act_Field '{0}' for conversation {1}", field.title, conversation.id));
                             if (database.items.Count < 1) database.items.Add(template.CreateItem(1, "No Item"));
                             field.value = database.items[0].id.ToString();
                         }

@@ -24,7 +24,7 @@ namespace PixelCrushers.DialogueSystem
         /// If localizedTextTable is assigned, message is the field name of a field
         /// in the localized text table.
         /// </summary>
-        [Tooltip("Optional localized text table; if assigned, Message is the field in the table.")]
+        [Tooltip("Optional localized text table; if assigned, Message is the m_field in the table.")]
         public LocalizedTextTable localizedTextTable;
 
         /// <summary>

@@ -708,7 +708,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 }
                 EditorGUI.EndDisabledGroup();
             }
-            if (GUILayout.Button(new GUIContent(" ", "Add new field."), "OL Plus", GUILayout.Width(16)))
+            if (GUILayout.Button(new GUIContent(" ", "Add new m_field."), "OL Plus", GUILayout.Width(16)))
             {
                 currentConversation.fields.Add(new Field());
                 SetDatabaseDirty("Add Conversation Field");

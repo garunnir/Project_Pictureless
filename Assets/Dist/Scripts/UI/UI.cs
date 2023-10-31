@@ -6,7 +6,7 @@ using UnityEngine.Events;
 
 public abstract class UI : MonoBehaviour
 {
-    public RectTransform rect;
+    public RectTransform rect { get; private set; }
     private void Awake()
     {
         rect = GetComponent<RectTransform>();

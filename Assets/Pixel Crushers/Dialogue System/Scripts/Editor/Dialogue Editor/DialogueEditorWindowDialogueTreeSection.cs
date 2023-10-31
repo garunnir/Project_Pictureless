@@ -798,7 +798,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                         PasteFields(entry.fields);
                     }
                     EditorGUI.EndDisabledGroup();
-                    if (GUILayout.Button(new GUIContent(" ", "Add new field."), "OL Plus", GUILayout.Width(16))) entry.fields.Add(new Field());
+                    if (GUILayout.Button(new GUIContent(" ", "Add new act_Field."), "OL Plus", GUILayout.Width(16))) entry.fields.Add(new Field());
                 }
                 EditorGUILayout.EndHorizontal();
                 if (entryFieldsFoldout)

@@ -463,7 +463,7 @@ namespace PixelCrushers
             var field = GetField(fieldID);
             if (field == null)
             {
-                if (Debug.isDebugBuild) Debug.LogWarning("TextTable.SetLanguageText(" + fieldID + ", " + languageID + ", \"" + text + "\") failed: Field doesn't exist. Use Text Table Editor or AddField() to add the field first.", this);
+                if (Debug.isDebugBuild) Debug.LogWarning("TextTable.SetLanguageText(" + fieldID + ", " + languageID + ", \"" + text + "\") failed: Field doesn't exist. Use Text Table Editor or AddField() to add the m_field first.", this);
                 return;
             }
             field.SetTextForLanguage(languageID, text);

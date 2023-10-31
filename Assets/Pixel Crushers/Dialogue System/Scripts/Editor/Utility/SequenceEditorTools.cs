@@ -581,7 +581,7 @@ namespace PixelCrushers.DialogueSystem
 
         private static void ShowSequenceEditorAudioHelp(object data)
         {
-            EditorUtility.DisplayDialog("Audio Drag & Drop Help", "Select an item in this Audio submenu to specify which command to add when dragging an audio clip onto the Sequence field. Audio clips must be in a Resources folder.\n\nAudio commands can use AssetBundles and Addressables, but not with this drag-n-drop feature.\n\nIf using LipSync(), to use drag-n-drop the LipSync data file and audio file must be named the same, and you must drag the audio file into the Sequence field, but the audio file doesn't have to be in Resources.", "OK");
+            EditorUtility.DisplayDialog("Audio Drag & Drop Help", "Select an item in this Audio submenu to specify which command to add when dragging an audio clip onto the Sequence act_Field. Audio clips must be in a Resources folder.\n\nAudio commands can use AssetBundles and Addressables, but not with this drag-n-drop feature.\n\nIf using LipSync(), to use drag-n-drop the LipSync data file and audio file must be named the same, and you must drag the audio file into the Sequence act_Field, but the audio file doesn't have to be in Resources.", "OK");
         }
 
         private static void SetAudioDragDropCommand(object data)
@@ -608,7 +608,7 @@ namespace PixelCrushers.DialogueSystem
 
         private static void ShowSequenceEditorGameObjectHelp(object data)
         {
-            EditorUtility.DisplayDialog("GameObject Drag & Drop Help", "Select an item in this GameObject submenu to specify which command to add when dragging a GameObject onto the Sequence field.", "OK");
+            EditorUtility.DisplayDialog("GameObject Drag & Drop Help", "Select an item in this GameObject submenu to specify which command to add when dragging a GameObject onto the Sequence act_Field.", "OK");
         }
 
         private static void SetGameObjectDragDropCommand(object data)

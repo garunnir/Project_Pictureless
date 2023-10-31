@@ -99,7 +99,7 @@ namespace Language.Lua
 
                     if (newIndex == LuaNil.Nil)
                     {
-                        throw new Exception("Assign field of userdata without __newindex defined.");
+                        throw new Exception("Assign act_Field of userdata without __newindex defined.");
                     }
                 }
             }

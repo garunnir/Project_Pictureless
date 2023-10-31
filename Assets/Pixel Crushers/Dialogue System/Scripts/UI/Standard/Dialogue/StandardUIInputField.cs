@@ -14,13 +14,13 @@ namespace PixelCrushers.DialogueSystem
     public class StandardUIInputField : UIPanel, ITextFieldUI
     {
 
-        [Tooltip("(Optional) Text field panel.")]
+        [Tooltip("(Optional) Text m_field panel.")]
         public UnityEngine.UI.Graphic panel;
 
         [Tooltip("(Optional) Text element for prompt.")]
         public UITextField label;
 
-        [Tooltip("Input field.")]
+        [Tooltip("Input m_field.")]
         public UIInputField inputField;
 
         [Tooltip("(Optional) Key code that accepts user's text input.")]
@@ -63,7 +63,7 @@ namespace PixelCrushers.DialogueSystem
 
         protected override void Start()
         {
-            if (DialogueDebug.logWarnings && (inputField == null)) Debug.LogWarning("Dialogue System: No InputField is assigned to the text field UI " + name + ". TextInput() sequencer commands or [var?=] won't work.");
+            if (DialogueDebug.logWarnings && (inputField == null)) Debug.LogWarning("Dialogue System: No InputField is assigned to the text m_field UI " + name + ". TextInput() sequencer commands or [var?=] won't work.");
             SetActive(false);
         }
 

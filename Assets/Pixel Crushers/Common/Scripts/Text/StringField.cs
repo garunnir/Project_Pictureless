@@ -14,19 +14,19 @@ namespace PixelCrushers
     public class StringField : IEquatable<StringField>
     {
 
-        [Tooltip("The string that holds the value of this string field. Unused if String Asset or Text Table is assigned.")]
+        [Tooltip("The string that holds the value of this string act_Field. Unused if String Asset or Text Table is assigned.")]
         [SerializeField]
         private string m_text;
 
-        [Tooltip("The String Asset that holds the value of this string field. Unused if Text or Text Table is assigned.")]
+        [Tooltip("The String Asset that holds the value of this string act_Field. Unused if Text or Text Table is assigned.")]
         [SerializeField]
         private StringAsset m_stringAsset;
 
-        [Tooltip("The Text Table that holds the value of this string field. Unused if Text or String Asset is assigned.")]
+        [Tooltip("The Text Table that holds the value of this string act_Field. Unused if Text or String Asset is assigned.")]
         [SerializeField]
         private TextTable m_textTable;
 
-        [Tooltip("The field ID in the Text Table.")]
+        [Tooltip("The act_Field ID in the Text Table.")]
         [SerializeField]
         private int m_textTableFieldID;
 

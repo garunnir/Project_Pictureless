@@ -17,21 +17,21 @@ MonoBehaviour:
   - ko
   - eng
   m_languageValues: 000000000100000002000000
-  m_fieldKeys: 030000000400000005000000060000000700000008000000090000000a0000000b0000000c0000000d0000000e000000
+  m_fieldKeys: 030000000400000005000000060000000700000013000000080000000c0000000d0000000e000000110000001400000015000000
   m_fieldValues:
-  - m_fieldName: Text.Name
+  - m_fieldName: Character.Name
     m_keys: 010000000000000002000000
     m_values:
     - "\uC774\uB984"
     - 
     - 
-  - m_fieldName: Text.OuterAge
+  - m_fieldName: Character.OuterAge
     m_keys: 010000000000000002000000
     m_values:
     - "\uC678\uAD00\uB098\uC774"
     - 
     - 
-  - m_fieldName: Bar.Exp
+  - m_fieldName: Status.Exp
     m_keys: 010000000000000002000000
     m_values:
     - "\uACBD\uD5D8\uCE58"
@@ -43,34 +43,21 @@ MonoBehaviour:
     - "\uC5C6\uC74C"
     - 
     - 
-  - m_fieldName: Text.FirstName
+  - m_fieldName: Character.FirstName
     m_keys: 010000000000000002000000
     m_values:
     - "\uC774\uB984"
     - 
     - 
-  - m_fieldName: Text.NickName
-    m_keys: 010000000000000002000000
-    m_values:
-    - "\uBCC4\uBA85"
-    - 
-    - 
-  - m_fieldName: Text.LastName
-    m_keys: 010000000000000002000000
+  - m_fieldName: Character.LastName
+    m_keys: 0100000000000000
     m_values:
     - "\uC131"
     - 
-    - 
-  - m_fieldName: Text.Age
+  - m_fieldName: Character.NickName
     m_keys: 010000000000000002000000
     m_values:
-    - "\uB098\uC774"
-    - 
-    - 
-  - m_fieldName: Text.Gender
-    m_keys: 010000000000000002000000
-    m_values:
-    - "\uC131\uBCC4"
+    - "\uBCC4\uBA85"
     - 
     - 
   - m_fieldName: Gender.Male
@@ -91,5 +78,20 @@ MonoBehaviour:
     - "\uBB34\uC131"
     - 
     - 
+  - m_fieldName: Character.Profile
+    m_keys: 0100000000000000
+    m_values:
+    - "\uBCC4\uBA85"
+    - 
+  - m_fieldName: Character.Age
+    m_keys: 0100000000000000
+    m_values:
+    - "\uB098\uC774"
+    - 
+  - m_fieldName: Character.Gender
+    m_keys: 0100000000000000
+    m_values:
+    - "\uC131\uBCC4"
+    - 
   m_nextLanguageID: 3
-  m_nextFieldID: 16
+  m_nextFieldID: 22

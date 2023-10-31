@@ -378,7 +378,7 @@ namespace PixelCrushers.DialogueSystem
             EditorGUILayout.HelpBox("The Dialogue System uses an integrated, text-based cutscene sequencer. Every line of dialogue can have a cutscene sequence -- for example to move the camera, play animations on the speaker, or play a lip-synced voiceover.", MessageType.Info);
             EditorWindowTools.DrawHorizontalLine();
 
-            EditorGUILayout.HelpBox("You can set upID a camera object or prefab specifically for sequences. This can be useful to apply depth of field effects or other filters that you wouldn't normally apply to your gameplay camera. If you've set upID a sequencer camera, assign it below. Otherwise the sequencer will just use the current main camera.", MessageType.None);
+            EditorGUILayout.HelpBox("You can set upID a camera object or prefab specifically for sequences. This can be useful to apply depth of act_Field effects or other filters that you wouldn't normally apply to your gameplay camera. If you've set upID a sequencer camera, assign it below. Otherwise the sequencer will just use the current main camera.", MessageType.None);
             EditorGUILayout.BeginHorizontal();
             DialogueManager.instance.displaySettings.cameraSettings.sequencerCamera = EditorGUILayout.ObjectField("Sequencer Camera", DialogueManager.instance.displaySettings.cameraSettings.sequencerCamera, typeof(UnityEngine.Camera), true) as UnityEngine.Camera;
             EditorGUILayout.EndHorizontal();
@@ -650,7 +650,7 @@ namespace PixelCrushers.DialogueSystem
                 }
                 if (hasTransitionManager)
                 {
-                    EditorGUILayout.HelpBox("The Dialogue Manager's Scene Transition Manager will fade to black by default. If you want to use a separate loading scene, inspect the Dialogue Manager and set the Loading Scene Name field.", MessageType.None);
+                    EditorGUILayout.HelpBox("The Dialogue Manager's Scene Transition Manager will fade to black by default. If you want to use a separate loading scene, inspect the Dialogue Manager and set the Loading Scene Name act_Field.", MessageType.None);
                 }
             }
 

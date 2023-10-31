@@ -2,6 +2,7 @@
 
 using UnityEngine;
 using System.Collections.Generic;
+using Garunnir.CharacterAppend.BodySystem;
 
 namespace PixelCrushers.DialogueSystem
 {
@@ -12,8 +13,11 @@ namespace PixelCrushers.DialogueSystem
     [System.Serializable]
     public class Actor : Asset
     {
-        public (int,int) mapPosID=(-1,-1);
+        public (int, int) mapPosID { get => (mapPage, mapPos); set { mapPage = value.Item1; mapPos = value.Item2; } }
+        public int mapPage=-1;
+        public int mapPos=-1;
         public int conversationIdx=-1;
+        public Core bodyCore;
         /// <summary>
         /// The actor's (optional) portrait image. Corresponds to <c>[pic=1]</c> tag.
         /// </summary>

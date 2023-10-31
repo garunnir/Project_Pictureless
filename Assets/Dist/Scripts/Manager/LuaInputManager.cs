@@ -4,6 +4,8 @@ using PixelCrushers;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using PixelCrushers.Wrappers;
+using PixelCrushers.DialogueSystem.Wrappers;
 
 public class LuaInputManager : MonoBehaviour
 {
@@ -15,6 +17,8 @@ public class LuaInputManager : MonoBehaviour
     {
         Lua.RegisterFunction(nameof(AddKeyWord), this, SymbolExtensions.GetMethodInfo(() => AddKeyWord(string.Empty,string.Empty)));
         Lua.RegisterFunction(nameof(OverwriteKeyWord), this, SymbolExtensions.GetMethodInfo(() => OverwriteKeyWord(string.Empty,string.Empty)));
+        Lua.RegisterFunction(nameof(OpenCustomResponse), this, SymbolExtensions.GetMethodInfo(() => OpenCustomResponse(string.Empty)));
+
         //Lua.UnregisterFunction("dd");
     }
     private void OnDisable()
@@ -36,9 +40,23 @@ public class LuaInputManager : MonoBehaviour
     }
     string FindDescription(string locTablekey)
     {
-        int locid = GameManager.Instance.GetCurLocID();
-        var field = UILocalizationManager.instance.additionalTextTables[0].GetField(locTablekey);
-        if (field == null) return $"{Localization.language}: Not exist Localization Field Data";
-        else return field.HasTextForLanguage(locid) ? field.GetTextForLanguage(locid) : $"{Localization.language}: Not exist Localization Text Data";
+        PixelCrushers.Wrappers.UILocalizationManager instance = PixelCrushers.Wrappers.UILocalizationManager.instance;
+        return instance.GetLocText(locTablekey, instance.KeywordTable);
     }
+    void OpenCustomResponse(string excute)
+    {
+        switch (excute)
+        {
+            case "Conversation":
+                //캐릭터 목록을 소환
+                Debug.Log("Cov");
+                break;
+            case "Investigate":
+                break;
+                default: 
+                Debug.LogError(excute+" is Not Vaild. Please Check DialogueData");
+                break;
+        }
+    }
+
 }
