@@ -85,7 +85,7 @@ namespace Language.Lua
                 }
 
 				//[PixelCrushers] Changed wording:
-				throw new Exception(string.Format("Lookup of m_field '{0}' in the table element failed because the table element itself isn't in the table.", key.Value));
+				throw new Exception(string.Format("Lookup of field '{0}' in the table element failed because the table element itself isn't in the table.", key.Value));
             }
         }
     }

@@ -29,10 +29,10 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("Tick to include all conversation fields.")]
         public bool includeAllConversationFields = false;
 
-        [Tooltip("Optional act_Field to use when saving a conversation's SimStatus info (e.g., Title). If blank, uses conversation ID.")]
+        [Tooltip("Optional field to use when saving a conversation's SimStatus info (e.g., Title). If blank, uses conversation ID.")]
         public string saveConversationSimStatusWithField = string.Empty;
 
-        [Tooltip("Optional act_Field to use when saving a dialogue entry's SimStatus info (e.g,. Title). If blank, uses entry's ID.")]
+        [Tooltip("Optional field to use when saving a dialogue entry's SimStatus info (e.g,. Title). If blank, uses entry's ID.")]
         public string saveDialogueEntrySimStatusWithField = string.Empty;
 
         [Tooltip("How many scene GameObjects are sent OnRecordPersistentData each frame.")]

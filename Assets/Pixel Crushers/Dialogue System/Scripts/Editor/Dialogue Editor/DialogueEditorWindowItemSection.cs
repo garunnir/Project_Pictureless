@@ -45,8 +45,8 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         private Field newEntryField;
 
         private static GUIContent questDescriptionLabel = new GUIContent("Description", "The description when the quest is active.");
-        private static GUIContent questSuccessDescriptionLabel = new GUIContent("Success Description", "The description when the quest has been completed successfully. If blank, the Description act_Field is used.");
-        private static GUIContent questFailureDescriptionLabel = new GUIContent("Failure Description", "The description when the quest has failed. If blank, the Description act_Field is used.");
+        private static GUIContent questSuccessDescriptionLabel = new GUIContent("Success Description", "The description when the quest has been completed successfully. If blank, the Description field is used.");
+        private static GUIContent questFailureDescriptionLabel = new GUIContent("Failure Description", "The description when the quest has failed. If blank, the Description field is used.");
         private static GUIContent groupLabel = new GUIContent("Group", "Use to categorize quests into groups.");
 
         private void ResetItemSection()

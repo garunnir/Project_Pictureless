@@ -220,7 +220,7 @@ namespace PixelCrushers.DialogueSystem
             {
                 if (string.IsNullOrEmpty(prefs.pathToChatMapperExe))
                 {
-                    EditorGUILayout.HelpBox("To directly convert CMP files, the Dialogue System will run ChatMapper.exe in the background. Specify the location of ChatMapper.exe in the act_Field below.", MessageType.Info);
+                    EditorGUILayout.HelpBox("To directly convert CMP files, the Dialogue System will run ChatMapper.exe in the background. Specify the location of ChatMapper.exe in the field below.", MessageType.Info);
                 }
             }
             EditorGUILayout.BeginHorizontal();
@@ -292,7 +292,7 @@ namespace PixelCrushers.DialogueSystem
             // Save To:
             if (string.IsNullOrEmpty(prefs.outputFolder))
             {
-                EditorGUILayout.HelpBox("In the act_Field below, specify the folder to create the dialogue database asset(s) in.", MessageType.Info);
+                EditorGUILayout.HelpBox("In the field below, specify the folder to create the dialogue database asset(s) in.", MessageType.Info);
             }
             EditorGUILayout.BeginHorizontal();
             prefs.outputFolder = EditorGUILayout.TextField(new GUIContent("Save To", "Folder where dialogue database assets will be saved."), prefs.outputFolder);

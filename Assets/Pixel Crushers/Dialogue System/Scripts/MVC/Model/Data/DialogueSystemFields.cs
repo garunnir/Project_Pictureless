@@ -12,7 +12,7 @@ namespace PixelCrushers.DialogueSystem
         public const string Name = "Name";
         public const string Pictures = "Pictures";
         public const string TextureFiles = "Texture Files";
-        public const string ModelFiles = "_model Files";
+        public const string ModelFiles = "Model Files";
         public const string AudioFiles = "Audio Files";
         public const string LipsyncFiles = "Lipsync Files";
         public const string AnimationFiles = "Animation Files";

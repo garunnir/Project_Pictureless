@@ -175,7 +175,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 }
                 EditorGUI.EndDisabledGroup();
             }
-            if (GUILayout.Button(new GUIContent(" ", "Add new act_Field."), "OL Plus", GUILayout.Width(16)))
+            if (GUILayout.Button(new GUIContent(" ", "Add new field."), "OL Plus", GUILayout.Width(16)))
             {
                 asset.fields.Add(new Field());
                 foldouts.fields[index] = true;

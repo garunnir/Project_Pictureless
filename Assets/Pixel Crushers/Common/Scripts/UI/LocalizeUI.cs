@@ -19,7 +19,7 @@ namespace PixelCrushers
         [SerializeField]
         private LocalizedFonts m_localizedFonts;
 
-        [Tooltip("(Optional) If assigned, use this instead of the UI element's text's value as the act_Field lookup value.")]
+        [Tooltip("(Optional) If assigned, use this instead of the UI element's text's value as the field lookup value.")]
         [SerializeField]
         private string m_fieldName = string.Empty;
 
@@ -170,7 +170,7 @@ namespace PixelCrushers
             {
                 if (!HasField(fieldName))
                 {
-                    Debug.LogWarning("Text table does not have a act_Field '" + fieldName + "'.", textTable);
+                    Debug.LogWarning("Text table does not have a field '" + fieldName + "'.", textTable);
                 }
                 else
                 {
@@ -212,7 +212,7 @@ namespace PixelCrushers
                 }
                 if (!HasField(fieldName))
                 {
-                    Debug.LogWarning("Text table does not have a act_Field '" + fieldName + "'.", textTable);
+                    Debug.LogWarning("Text table does not have a field '" + fieldName + "'.", textTable);
                 }
                 else
                 {
@@ -228,7 +228,7 @@ namespace PixelCrushers
                 }
                 if (!HasField(fieldName))
                 {
-                    Debug.LogWarning("Text table does not have a act_Field '" + fieldName + "'.", textTable);
+                    Debug.LogWarning("Text table does not have a field '" + fieldName + "'.", textTable);
                 }
                 else
                 {

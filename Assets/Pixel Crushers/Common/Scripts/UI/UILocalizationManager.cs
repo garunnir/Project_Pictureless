@@ -38,7 +38,7 @@ namespace PixelCrushers
         [SerializeField]
         private bool m_alsoUpdateInactiveLocalizeUI = true;
 
-        [Tooltip("If a language's act_Field value is blank, use default language's act_Field value.")]
+        [Tooltip("If a language's field value is blank, use default language's field value.")]
         [SerializeField]
         private bool m_useDefaultLanguageForBlankTranslations = true;
 

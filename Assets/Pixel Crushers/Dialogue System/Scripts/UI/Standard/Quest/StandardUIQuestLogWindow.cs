@@ -41,7 +41,7 @@ namespace PixelCrushers.DialogueSystem
         public StandardUIQuestTitleButtonTemplate selectedCompletedQuestHeadingTemplate;
         [Tooltip("If there are no quests to show, show the No Active/Completed Quests Text above.")]
         public bool showNoQuestsText = true;
-        [Tooltip("Select first quest in list when open. If unticked and Always Auto Focus is ticked, selects button assigned to main panel's First Selected act_Field (Close button).")]
+        [Tooltip("Select first quest in list when open. If unticked and Always Auto Focus is ticked, selects button assigned to main panel's First Selected field (Close button).")]
         public bool selectFirstQuestOnOpen = false;
         [Tooltip("Show details when quest button is selected (highlighted/hovered), not when clicked.")]
         public bool showDetailsOnSelect = false;

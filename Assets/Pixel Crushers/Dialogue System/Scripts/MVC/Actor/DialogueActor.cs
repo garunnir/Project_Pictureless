@@ -31,10 +31,10 @@ namespace PixelCrushers.DialogueSystem
         [UnityEngine.Serialization.FormerlySerializedAs("internalName")]        
         public string persistentDataName;
 
-        [Tooltip("Optional portrait. If unassigned, will use portrait of actor in database. This act_Field allows you to assign a Texture.")]
+        [Tooltip("Optional portrait. If unassigned, will use portrait of actor in database. This field allows you to assign a Texture.")]
         public Texture2D portrait;
 
-        [Tooltip("Optional portrait. If unassigned, will use portrait of actor in database. This act_Field allows you to assign a Sprite.")]
+        [Tooltip("Optional portrait. If unassigned, will use portrait of actor in database. This field allows you to assign a Sprite.")]
         public Sprite spritePortrait;
 
         [Serializable]

@@ -311,8 +311,8 @@ namespace PixelCrushers.DialogueSystem
 
         private void DeleteField(int fieldIndex)
         {
-            if (EditorUtility.DisplayDialog("Delete act_Field?",
-                                            string.Format("Are you sure you want to delete act_Field {0} (\"{1}\")?", fieldIndex, table.fields[fieldIndex].name),
+            if (EditorUtility.DisplayDialog("Delete field?",
+                                            string.Format("Are you sure you want to delete field {0} (\"{1}\")?", fieldIndex, table.fields[fieldIndex].name),
                                             "Delete", "Cancel"))
             {
                 table.fields.RemoveAt(fieldIndex);
