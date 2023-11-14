@@ -147,6 +147,16 @@ namespace Garunnir
             }
             return m_imgDic[key]; 
         }
+        public Texture2D GetBG(string key)
+        {
+            key = "Img/Background/" + key + ".png";
+            if (!m_imgDic.ContainsKey(key))
+            {
+                Debug.LogError("cantfind:" + key);
+                return null;
+            }
+            return m_imgDic[key];
+        }
         List<string> tmpPathContainer = new List<string>();
 
         public static event UnityAction InitDone;

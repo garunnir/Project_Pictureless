@@ -13,7 +13,7 @@ namespace PixelCrushers.DialogueSystem
     public static class DialogueManager
     {
 
-        private static DialogueSystemController m_instance = null;
+        private static Wrappers.DialogueSystemController m_instance = null;
 
         /// <summary>
         /// Gets the instance of DialogueSystemController.
@@ -21,11 +21,11 @@ namespace PixelCrushers.DialogueSystem
         /// <value>
         /// The instance.
         /// </value>
-        public static DialogueSystemController instance
+        public static Wrappers.DialogueSystemController instance
         {
             get
             {
-                if (m_instance == null) m_instance = GameObjectUtility.FindFirstObjectByType<DialogueSystemController>();
+                if (m_instance == null) m_instance = GameObjectUtility.FindFirstObjectByType<Wrappers.DialogueSystemController>();
                 return m_instance;
             }
         }

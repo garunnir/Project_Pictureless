@@ -423,6 +423,7 @@ namespace PixelCrushers.DialogueSystem
             if (menuResult != MenuResult.Unselected)
             {
                 sequence = ApplyMenuResult(menuResult, sequence);
+                GUI.changed = true;
                 menuResult = MenuResult.Unselected;
             }
 

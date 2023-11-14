@@ -1,12 +1,8 @@
 // Copyright (c) Pixel Crushers. All rights reserved.
 
 using Garunnir;
-using PixelCrushers.Wrappers;
-using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Xml.Linq;
 using UnityEngine;
 using static UnityEngine.EventSystems.EventTrigger;
 
@@ -41,16 +37,17 @@ namespace PixelCrushers.DialogueSystem.Wrappers
         {
             base.Awake();
             map=FindObjectOfType<UIMapController>();
-            map.MapEntered += Map_ShowCharSelect;
+            map.MapEntered += Map_FindCharInMap;
             GameManager.Instance.ResourceLoadDoneEvent += () =>
             {
                 Init();
-                StartConversation(databaseManager.DefaultDatabase.conversations[0].Title);
+                //StartConversation(basicConv.Title);
+                StartConversation(masterDatabase.GetConversation(2).Title);
             };
         }
         void Init()
         {
-            basicConv = masterDatabase.conversations[0];
+            basicConv = masterDatabase.GetConversation(1);
         }
         private void SelectionEnable(Execute execute,bool boolean)
         {
@@ -65,21 +62,63 @@ namespace PixelCrushers.DialogueSystem.Wrappers
         {
             conversationController.GotoState(conversationModel.GetState(entry));
         }
+        public void AskToChar(string value)
+        {
+            Actor actor = null;
+            Conversation conversation = masterDatabase.GetConversation(conversationModel.conversationTitle);
+            string keyword = value;
+            DialogueEntry entry = conversation.dialogueEntries.Find(x => x.Title == keyword);
+            if (entry != null)
+            {
+                DialogueManager.StartConversation(conversationModel.conversationTitle, null, null, entry.id);
+            }
+            else
+            {
+                InterceptDialogue();
+                //아돈노 대사 출력
+                //
+            }
+            //캐릭터한테 키워드로 말건다
+            //캐릭터에 해당키워드가 존재하면 다음으로 넘어가고 아니면 잘 모르겠다는 대사를 출력시킨다.
+            //키워드에 맞는 대화로 이동한다.
+        }
+        public void InterceptDialogue()
+        {
+            Actor actor = null;
+            //엑터가 대화중에 갑툭튀한다.
+            CharacterInfo actorInfo = conversationModel.GetCharacterInfo(5);
+            CharacterInfo listenerInfo = conversationModel.GetCharacterInfo(1);
+            DialogueEntry entry= currentConversationState.subtitle.dialogueEntry;
+            FormattedText formattedText = FormattedText.Parse("모루겟소요", masterDatabase.emphasisSettings);
+            var prev=currentConversationState.subtitle;
+            Subtitle subtitle = new Subtitle(actorInfo, listenerInfo, formattedText, "SetContinueMode(true);", "", entry);
+            conversationView.dialogueUI.ShowSubtitle(subtitle);
+            conversationModel.ForceNextStateToLinkToEntry(entry);
+            //conversationController.currentState
+            conversationView.FinishedSubtitleHandler += (x,y) => { Debug.LogError(x); };
+        }
         /// <summary>
         /// 기본 선택창 표시
         /// </summary>
         private void StartConvPopBasicSelection()
         {
-            StartConversation(databaseManager.DefaultDatabase.conversations[0].Title);
+            StartConversation(basicConv.Title);
         }
-        public void Map_ShowCharSelect(MapEntry entry)
+        public void Map_FindCharInMap(MapEntry entry)
         {
             if (mapActorCache == null)
                 mapActorCache = FindActorOnMap(entry);
             bool finded = mapActorCache != null||mapActorCache.Count == 0;
             SelectionEnable(Execute.Conversation, finded);
             if(finded) Map_CharSelect(entry);
+            conversationView.SelectedResponseHandler += ChangeBtn;
             UpdateResponses();
+        }
+
+        private void ChangeBtn(object sender, SelectedResponseEventArgs e)
+        {
+            UpdateResponses();
+            conversationView.SelectedResponseHandler-= ChangeBtn;
         }
         public void Map_CharSelect(MapEntry entry)
         {
@@ -88,24 +127,10 @@ namespace PixelCrushers.DialogueSystem.Wrappers
             if(mapActorCache.Count > 0)
             {
                 Subtitle subtitle = null;
-                //Response[] response=new Response[mapActorCache.Count];
                 DialogueEntry dentry = GetBasicDialogueEntry(Execute.Conversation);
                 dentry.outgoingLinks.Clear();
-                for (int i = 0; i < mapActorCache.Count; i++)
-                {
-                    //response[i] = new Response(new FormattedText(text: PixelCrushers.Wrappers.UILocalizationManager.instance.GetLocText("Actor."+ mapActorCache[i].Name)), masterDatabase.conversations[mapActorCache[i].conversationIdx].GetFirstDialogueEntry());
-                }
                 List<string> strings=mapActorCache.ConvertAll(x=>x.Name);
                 AddActorsToResponse(dentry, mapActorCache);
-
-                //standardDialogueUI.dialogueControls.responseMenuControls.ShowResponses(subtitle,response,transform);
-                //UpdateResponses();
-                //conversationModel.GetState();
-                //standardDialogueUI.StopAllCoroutines();
-
-                //standardDialogueUI.ShowResponses(subtitle,response,0);
-                //GenFakeResponse();
-                //standardDialogueUI.SelectedResponseHandler += OnSelectEvent;
             }
         }
 
@@ -184,7 +209,8 @@ namespace PixelCrushers.DialogueSystem.Wrappers
             entry.conversationID = convid;
             entry.DialogueText = text;
             entry.Sequence = sequence;
-            DialogueLua.GetSimStatus(entry.ConversantID, entry.id);//simstatus등록
+            DialogueLua.GetSimStatus(entry.conversationID, entry.id);//simstatus등록
+            //DialogueLua.GetSimStatus(1, 1);//simstatus등록
             return entry;
         }
         void AddResponse(DialogueEntry mother,string[] item)

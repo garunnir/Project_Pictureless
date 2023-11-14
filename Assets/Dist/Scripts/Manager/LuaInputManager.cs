@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using PixelCrushers.Wrappers;
 using PixelCrushers.DialogueSystem.Wrappers;
+using UnityEngine.UI;
 
 public class LuaInputManager : MonoBehaviour
 {
@@ -18,12 +19,19 @@ public class LuaInputManager : MonoBehaviour
         Lua.RegisterFunction(nameof(AddKeyWord), this, SymbolExtensions.GetMethodInfo(() => AddKeyWord(string.Empty,string.Empty)));
         Lua.RegisterFunction(nameof(OverwriteKeyWord), this, SymbolExtensions.GetMethodInfo(() => OverwriteKeyWord(string.Empty,string.Empty)));
         Lua.RegisterFunction(nameof(OpenCustomResponse), this, SymbolExtensions.GetMethodInfo(() => OpenCustomResponse(string.Empty)));
+        Lua.RegisterFunction(nameof(BGChange), this, SymbolExtensions.GetMethodInfo(() => BGChange(string.Empty)));
+        Lua.RegisterFunction(nameof(JumpToOtherConv), this, SymbolExtensions.GetMethodInfo(() => JumpToOtherConv(string.Empty)));
+        
 
         //Lua.UnregisterFunction("dd");
     }
     private void OnDisable()
     {
         Lua.UnregisterFunction(nameof(AddKeyWord));
+        Lua.UnregisterFunction(nameof(OverwriteKeyWord));
+        Lua.UnregisterFunction(nameof(OpenCustomResponse));
+        Lua.UnregisterFunction(nameof(BGChange));
+        Lua.UnregisterFunction(nameof(JumpToOtherConv));
     }
 
     void AddKeyWord(string keyWord,string locTablekey)
@@ -43,6 +51,12 @@ public class LuaInputManager : MonoBehaviour
         PixelCrushers.Wrappers.UILocalizationManager instance = PixelCrushers.Wrappers.UILocalizationManager.instance;
         return instance.GetLocText(locTablekey, instance.KeywordTable);
     }
+    private void BGChange(string imgname)
+    {
+        RawImage img = GameManager.Instance.GetUIManager().GetBackground();
+        img.texture = GameManager.Instance.GetBG(imgname);
+        UIManager.AdjustSize(GameManager.Instance.GetUIManager().GetUpperRect(), img.rectTransform, img.texture);
+    }
     void OpenCustomResponse(string excute)
     {
         switch (excute)
@@ -57,6 +71,11 @@ public class LuaInputManager : MonoBehaviour
                 Debug.LogError(excute+" is Not Vaild. Please Check DialogueData");
                 break;
         }
+    }
+    void JumpToOtherConv(string title)
+    {
+        DialogueManager.StopConversation();
+        DialogueManager.StartConversation(title);
     }
 
 }

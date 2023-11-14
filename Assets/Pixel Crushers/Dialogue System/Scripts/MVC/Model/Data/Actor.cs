@@ -18,6 +18,7 @@ namespace PixelCrushers.DialogueSystem
         public int mapPos=-1;
         public int conversationIdx=-1;
         public Core bodyCore;
+        public Vector2 alignment;//y+good y-evil x-law x+chaos
         /// <summary>
         /// The actor's (optional) portrait image. Corresponds to <c>[pic=1]</c> tag.
         /// </summary>

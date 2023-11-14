@@ -17,7 +17,9 @@ public static class ExtendDEHooks
         SequenceEditorTools.customSequenceMenuSetup += AddItemsToSequenceMenu;
         SequenceEditorTools.tryDragAndDrop += TryDragAndDrop;
     }
-
+    static Texture cachedAlignment;
+    static Texture cachedAlignmentCursor;
+    static Rect alignRect;
     private static void AddToMapNodeDisplay(DialogueDatabase database, MapEntry entry)
     {
         GUILayout.Label("Extra Info in entry " + entry.id);
@@ -40,8 +42,29 @@ public static class ExtendDEHooks
             target.conversationIdx = EditorGUILayout.Popup(target.conversationIdx, database.conversations.ConvertAll(x=>x.Title).ToArray(), GUILayout.Height(EditorGUIUtility.singleLineHeight));
             GUILayout.EndVertical();
             //target.conversation = database.conversations[int.Parse(str)-1];
+            GUILayout.BeginVertical();
+            GUILayout.Label("Alignment");
+            GUILayout.Box(GUIContent.none, new GUILayoutOption[] { GUILayout.Height(100), GUILayout.Width(100) });
+            GUI.DrawTexture(GUILayoutUtility.GetLastRect(), cachedAlignment ??= EditorGUIUtility.Load("Custom/Alignment.png") as Texture2D);
+            alignRect = GUILayoutUtility.GetLastRect();
+            var rect = alignRect;
+            if (Event.current.type == EventType.MouseDown && Event.current.button == 0&&Event.current.mousePosition.x>alignRect.x&&
+                Event.current.mousePosition.x < alignRect.x+alignRect.width&&Event.current.mousePosition.y > alignRect.y && Event.current.mousePosition.y < alignRect.y + alignRect.height)
+            {
+                var calPos = Event.current.mousePosition - new Vector2(alignRect.x+50,alignRect.y+50);
+                calPos = -calPos/50;
+                if (calPos.magnitude>1)
+                calPos= calPos.normalized;
+                target.alignment = calPos;
+            }
+            GUI.DrawTexture(new Rect(alignRect .x- target.alignment.x*50+50-10, alignRect.y- target.alignment.y* 50 + 50-10,20,20), cachedAlignmentCursor ??= EditorGUIUtility.Load("Dialogue System/Event.png") as Texture2D);
+            GUILayout.EndVertical();
+
+
+
         }
         GUILayout.EndHorizontal();
+
     }
 
     private static void AddToEntryInspector(DialogueDatabase database, DialogueEntry entry)

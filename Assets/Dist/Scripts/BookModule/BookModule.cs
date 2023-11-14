@@ -1,4 +1,5 @@
 using Garunnir;
+using PixelCrushers.DialogueSystem.Wrappers;
 using PixelCrushers.DialogueSystem;
 using PixelCrushers.Wrappers;
 using System.Collections;
@@ -6,9 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
-
-public class BookModule : MonoBehaviour
+public class BookModule : MonoBehaviour,ILuaUIAcitate
 {
     [SerializeField] CanvasGroupController m_controller;
     [SerializeField] private RectTransform m_descriptionBody;
@@ -26,6 +27,22 @@ public class BookModule : MonoBehaviour
     int currentPage = 0;
 
     TMP_FontAsset m_fontAsset;
+    private void OnEnable()
+    {
+        ILuaUIAcitate.Active += SetActive;
+    }
+    public void SetActive(string commend, bool activation)
+    {
+        if (commend=="KeywordBook")
+        {
+            if (activation) m_controller.Show();
+            else m_controller.Hide();
+        }
+        else if (commend == "KeywordBookBtn")
+        {
+            m_btn_open.gameObject.SetActive(activation);
+        }
+    }
     class KeywordInfo
     {
         public bool IsHighlight = true;
@@ -39,17 +56,20 @@ public class BookModule : MonoBehaviour
         private RectTransform m_Descriptionbody;
         private TMP_Text m_keyword;
         private TMP_Text m_description;
+        private Button m_btn_ask;
         private Button m_btn_opendescription;
         private Image m_highlight;
         private readonly int id;
+        
         public RectTransform GetMother() => m_mother;
-        public KeywordBox(RectTransform mother, RectTransform descriptionBody, TMP_Text head, TMP_Text description, Button activation, Image highLight)
+        public KeywordBox(RectTransform mother, RectTransform descriptionBody, TMP_Text head, TMP_Text description, Button askBtn, Button activation, Image highLight)
         {
             id = Curid++;
             m_mother= mother;
             m_description = description;
             m_btn_opendescription = activation;
             m_highlight = highLight;
+            m_btn_ask= askBtn;
             m_keyword = head;
             m_Descriptionbody=descriptionBody;
         }
@@ -58,7 +78,16 @@ public class BookModule : MonoBehaviour
             m_highlight.gameObject.SetActive(value.IsHighlight);
             m_keyword.text = value.head;
             m_btn_opendescription.onClick.RemoveAllListeners();
-            m_btn_opendescription.onClick.AddListener(() =>
+            m_btn_opendescription.onClick.AddListener(OpenDiscription(value));
+        }
+        public void SetAskTo(UnityAction<string> action)
+        {
+            m_btn_ask.onClick.RemoveAllListeners();
+            m_btn_ask.onClick.AddListener(()=>action?.Invoke(m_keyword.text));
+        }
+        UnityAction OpenDiscription(KeywordInfo value)
+        {
+            return () =>
             {
                 if (m_Descriptionbody.gameObject.activeSelf && Curid == id)//캔버스가 켜져있고 이게 열려있으면 닫음
                 {
@@ -80,10 +109,10 @@ public class BookModule : MonoBehaviour
                     Curid = id;
                 }
                 m_highlight.gameObject.SetActive(value.IsHighlight);
-            });
-
+            };
         }
     }
+  
     private void Awake()
     {
         m_fontAsset = UILocalizationManager.instance.localizedFonts.GetTextMeshProFont(Localization.language);
@@ -174,6 +203,7 @@ public class BookModule : MonoBehaviour
             {
                 keywordsSlot[i].GetMother().gameObject.SetActive(true);
                 keywordsSlot[i].SetDescription(keywords[i + slotcount * page]);
+                keywordsSlot[i].SetAskTo(DialogueManager.instance.AskToChar);
             }
             else
             {
@@ -218,7 +248,8 @@ public class BookModule : MonoBehaviour
         {
             RectTransform item = Instantiate(m_elementTemplet);
             item.gameObject.SetActive(true);
-            Button btn = item.GetComponentInChildren<Button>();
+            Button askBtn = item.GetComponentsInChildren<Button>()[0];
+            Button btn = item.GetComponentsInChildren<Button>()[1];
             TMP_Text text = item.GetComponentInChildren<TMP_Text>();
             Image img = item.Find("Img_Highlight").GetComponent<Image>();
             text.font = m_fontAsset;
@@ -228,7 +259,7 @@ public class BookModule : MonoBehaviour
             item.transform.SetParent(parent);
             item.transform.localScale = Vector3.one;
 
-            keywordsSlot.Add(new KeywordBox(item, m_descriptionBody, text, m_text_description, btn, img));
+            keywordsSlot.Add(new KeywordBox(item, m_descriptionBody, text, m_text_description, askBtn, btn, img));
             return item;
         }
         for (int i = 0; i < count; i++)
@@ -298,4 +329,5 @@ public class BookModule : MonoBehaviour
         m_btn_close?.gameObject.SetActive(true);
         yield return null;
     }
+
 }

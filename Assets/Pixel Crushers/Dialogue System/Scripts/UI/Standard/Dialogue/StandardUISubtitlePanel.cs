@@ -1,4 +1,4 @@
-﻿// Copyright (c) Pixel Crushers. All rights reserved.
+// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using UnityEngine.Events;
@@ -660,8 +660,10 @@ namespace PixelCrushers.DialogueSystem
         protected virtual void SetPortraitImage(Sprite sprite)
         {
             if (portraitImage == null) return;
+            //스프라이트 사이즈를 조정한다.
             Tools.SetGameObjectActive(portraitImage, sprite != null);
             portraitImage.sprite = sprite;
+            UIManager.AdjustSize(portraitImage.transform.parent.GetComponent<RectTransform>().rect, portraitImage.transform.GetComponent<RectTransform>(), sprite.texture,new Vector2(0.5f,0));
             if (usePortraitNativeSize && sprite != null)
             {
                 portraitImage.rectTransform.sizeDelta = sprite.packed ?
