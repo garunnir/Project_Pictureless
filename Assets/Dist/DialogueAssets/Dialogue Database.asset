@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 935899b62f48ae5498594680ed17d133, type: 3}
   m_Name: Dialogue Database
   m_EditorClassIdentifier: 
+  CharDialogueTable: {fileID: 11400000, guid: 2d5a98f54bfe69141a4b70f07402614a, type: 2}
   version: 
   author: 
   description: 
@@ -916,7 +917,7 @@ MonoBehaviour:
       canvasRect:
         serializedVersion: 2
         x: 399.6932
-        y: 129.06323
+        y: 132.25471
         width: 160
         height: 30
     - id: 2
@@ -971,7 +972,7 @@ MonoBehaviour:
           m_Calls: []
       canvasRect:
         serializedVersion: 2
-        x: 415.65643
+        x: 394.37982
         y: 182.25095
         width: 160
         height: 30
@@ -1110,8 +1111,10 @@ MonoBehaviour:
         type: 0
         typeString: 
       - title: Dialogue Text
-        value: "\uBB54\uAC00 \uB5A0\uC62C\uB9AC\uB824\uACE0 \uD574\uB3C4 \uBA39\uAD6C\uB984\uC774
-          \uBA38\uB9AC\uD1B5\uC744 \uAC00\uB4DD \uB9E4\uC6B4\uAC83\uB9CC \uAC19\uB2E4."
+        value: "\uBB54\uAC00 \uB5A0\uC62C\uB9AC\uB824\uACE0 \uD574\uB3C4 \uBA38\uB9AC\uAC00
+          \uC544\uD504\uACE0 \uBA39\uAD6C\uB984\uC774 \uBA38\uB9AC\uD1B5\uC744 \uAC00\uB4DD
+          \uB9E4\uC6B4\uAC83\uB9CC \uAC19\uC544 \uB354\uC774\uC0C1 \uBB54\uAC00\uB97C
+          \uC0DD\uAC01\uD560 \uC218\uAC00 \uC5C6\uB2E4.."
         type: 0
         typeString: 
       - title: Sequence

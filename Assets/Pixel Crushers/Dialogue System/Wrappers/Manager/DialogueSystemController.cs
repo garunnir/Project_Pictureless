@@ -48,6 +48,17 @@ namespace PixelCrushers.DialogueSystem.Wrappers
         void Init()
         {
             basicConv = masterDatabase.GetConversation(1);
+            customResponseTimeoutHandler +=()=> CharacterWaitResponce();
+        }
+        void CharacterWaitResponce()
+        {
+            //대화상대
+            var actor = CurrentConversationState.subtitle.speakerInfo;
+            Actor aactor = masterDatabase.GetActor(actor.id);
+            var listener = CurrentConversationState.subtitle.listenerInfo;
+            string value = aactor.LookupValue("Dialogue.Waiting");
+            //어떻게 로컬라이징 할 것인지?
+            InterceptDialogue(actor, listener, value);
         }
         private void SelectionEnable(Execute execute,bool boolean)
         {
@@ -64,7 +75,6 @@ namespace PixelCrushers.DialogueSystem.Wrappers
         }
         public void AskToChar(string value)
         {
-            Actor actor = null;
             Conversation conversation = masterDatabase.GetConversation(conversationModel.conversationTitle);
             string keyword = value;
             DialogueEntry entry = conversation.dialogueEntries.Find(x => x.Title == keyword);
@@ -74,7 +84,7 @@ namespace PixelCrushers.DialogueSystem.Wrappers
             }
             else
             {
-                InterceptDialogue();
+                InterceptDialogue(5,1,"모루겟소요");
                 //아돈노 대사 출력
                 //
             }
@@ -82,20 +92,23 @@ namespace PixelCrushers.DialogueSystem.Wrappers
             //캐릭터에 해당키워드가 존재하면 다음으로 넘어가고 아니면 잘 모르겠다는 대사를 출력시킨다.
             //키워드에 맞는 대화로 이동한다.
         }
-        public void InterceptDialogue()
+        public void InterceptDialogue(int actor,int listener,string text)
         {
-            Actor actor = null;
+            CharacterInfo actorInfo = conversationModel.GetCharacterInfo(actor);
+            CharacterInfo listenerInfo = conversationModel.GetCharacterInfo(listener);
+            InterceptDialogue(actorInfo, listenerInfo,text);
+        }
+        public void InterceptDialogue(CharacterInfo actorInfo, CharacterInfo listenerInfo, string text)
+        {
             //엑터가 대화중에 갑툭튀한다.
-            CharacterInfo actorInfo = conversationModel.GetCharacterInfo(5);
-            CharacterInfo listenerInfo = conversationModel.GetCharacterInfo(1);
-            DialogueEntry entry= currentConversationState.subtitle.dialogueEntry;
-            FormattedText formattedText = FormattedText.Parse("모루겟소요", masterDatabase.emphasisSettings);
-            var prev=currentConversationState.subtitle;
+            DialogueEntry entry = currentConversationState.subtitle.dialogueEntry;
+            FormattedText formattedText = FormattedText.Parse(text, masterDatabase.emphasisSettings);
+            var prev = currentConversationState.subtitle;
             Subtitle subtitle = new Subtitle(actorInfo, listenerInfo, formattedText, "SetContinueMode(true);", "", entry);
             conversationView.dialogueUI.ShowSubtitle(subtitle);
             conversationModel.ForceNextStateToLinkToEntry(entry);
             //conversationController.currentState
-            conversationView.FinishedSubtitleHandler += (x,y) => { Debug.LogError(x); };
+            conversationView.FinishedSubtitleHandler += (x, y) => { Debug.LogError(x); };
         }
         /// <summary>
         /// 기본 선택창 표시

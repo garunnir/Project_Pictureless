@@ -14,6 +14,7 @@ namespace PixelCrushers.DialogueSystem
     /// </summary>
     public class DialogueDatabase : ScriptableObject
     {
+        public TextTable CharDialogueTable;
 
         /// <summary>
         /// The version of the database, typically only used internally by the developer.

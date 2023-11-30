@@ -50,9 +50,10 @@ MonoBehaviour:
     - 
     - 
   - m_fieldName: Character.LastName
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uC131"
+    - 
     - 
   - m_fieldName: Character.NickName
     m_keys: 010000000000000002000000
@@ -79,19 +80,22 @@ MonoBehaviour:
     - 
     - 
   - m_fieldName: Character.Profile
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uBCC4\uBA85"
     - 
+    - 
   - m_fieldName: Character.Age
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uB098\uC774"
     - 
+    - 
   - m_fieldName: Character.Gender
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uC131\uBCC4"
+    - 
     - 
   m_nextLanguageID: 3
   m_nextFieldID: 22

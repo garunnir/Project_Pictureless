@@ -3,9 +3,12 @@ using UnityEditor;
 using PixelCrushers.DialogueSystem;
 using PixelCrushers.DialogueSystem.DialogueEditor;
 using System.Collections.Generic;
+using PixelCrushers;
+using UnityEditorInternal;
+using static UnityEngine.GUI;
 
 [InitializeOnLoad]
-public static class ExtendDEHooks
+public static partial class ExtendDEHooks
 {
     static ExtendDEHooks()
     {
@@ -20,6 +23,8 @@ public static class ExtendDEHooks
     static Texture cachedAlignment;
     static Texture cachedAlignmentCursor;
     static Rect alignRect;
+
+
     private static void AddToMapNodeDisplay(DialogueDatabase database, MapEntry entry)
     {
         GUILayout.Label("Extra Info in entry " + entry.id);
@@ -28,9 +33,11 @@ public static class ExtendDEHooks
     private static void AddToAssetInspector(DialogueDatabase database, Asset asset)
     {
         GUILayout.Label("Extra Info in " + asset.GetType().Name);
-        GUILayout.BeginHorizontal();
         if (asset is Actor)
         {
+            m_serializedObject ??= new SerializedObject(database.CharDialogueTable);
+            GUILayout.BeginHorizontal();
+
             Actor target = (Actor)asset;
             GUILayout.BeginVertical();
             GUILayout.Label("MapPosID:");
@@ -59,11 +66,38 @@ public static class ExtendDEHooks
             }
             GUI.DrawTexture(new Rect(alignRect .x- target.alignment.x*50+50-10, alignRect.y- target.alignment.y* 50 + 50-10,20,20), cachedAlignmentCursor ??= EditorGUIUtility.Load("Dialogue System/Event.png") as Texture2D);
             GUILayout.EndVertical();
+ 
 
+            GUILayout.EndHorizontal();
+            Rect windowRect = new Rect(10, 30, 200, 100);
+            foldLocDialogue =EditorGUILayout.Foldout(foldLocDialogue, new GUIContent("CharBarkDialouge", "Portrait images using texture assets."));
+                        m_serializedObject ??= new SerializedObject(database.CharDialogueTable);
+            if (foldLocDialogue)
+            {
+                var newToolbarSelection = GUILayout.Toolbar(m_toolbarSelection, ToolbarLabels);
+                if (newToolbarSelection != m_toolbarSelection)
+                {
+                    m_toolbarSelection = newToolbarSelection;
+                    m_textTable = database.CharDialogueTable;
+                    m_needRefreshLists = true;
+                    actorID = target.id;
+                }
+                switch (m_toolbarSelection)
+                {
+                    case 0:
+                        DrawLanguagesTab(database, target);
+                        break;
+                    case 1:
+                        //m_fieldListScrollPosition = GUILayout.BeginScrollView(m_fieldListScrollPosition, GUILayout.ExpandWidth(true));
+                        //GUILayout.Box(GUIContent.none, new GUILayoutOption[] { GUILayout.Height(100), GUILayout.ExpandWidth(true)});
+                        DrawFieldsTab(database, target);
 
+                        //GUILayout.EndScrollView();
 
+                        break;
+                }
+            }
         }
-        GUILayout.EndHorizontal();
 
     }
 
