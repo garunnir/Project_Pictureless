@@ -36,7 +36,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             {
                 if (DialogueDebug.logWarnings)
                 {
-                    Debug.LogWarningFormat("{0}: Sequencer: AudioWaitOnce(): no audio clip firstName given", DialogueDebug.Prefix);
+                    Debug.LogWarningFormat("{0}: Sequencer: AudioWaitOnce(): no audio clip name given", DialogueDebug.Prefix);
                 }
                 if (!this.hasNextClip()) { Stop(); }
             }
@@ -81,7 +81,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             {
                 if (string.IsNullOrEmpty(audioClipName))
                 {
-                    if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: AudioWait() command: Audio clip firstName is blank.", new System.Object[] { DialogueDebug.Prefix }));
+                    if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: AudioWait() command: Audio clip name is blank.", new System.Object[] { DialogueDebug.Prefix }));
                     _stopTime = 0;
                 }
                 else if (this.hasPlayedAlready(audioClipName))

@@ -31,7 +31,7 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// The label that will show the PC name.
         /// </summary>
-        [Tooltip("The label that will show the PC firstName.")]
+        [Tooltip("The label that will show the PC name.")]
         public UnityEngine.UI.Text pcName;
 
         /// <summary>
@@ -64,13 +64,13 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("If using Button Template, instantiated buttons are parented under this GameObject")]
         public UnityEngine.UI.Graphic buttonTemplateHolder;
 
-        [Tooltip("Optional scrollbar if the instantiated button holder is in a scroll m_rect")]
+        [Tooltip("Optional scrollbar if the instantiated button holder is in a scroll rect")]
         public UnityEngine.UI.Scrollbar buttonTemplateScrollbar;
 
         [Tooltip("Reset the scroll bar to this value when preparing the response menu")]
         public float buttonTemplateScrollbarResetValue = 1;
 
-        [Tooltip("Automatically set upID explicit navigation for instantiated template buttons instead of using Automatic navigation")]
+        [Tooltip("Automatically set up explicit navigation for instantiated template buttons instead of using Automatic navigation")]
         public bool explicitNavigationForTemplateButtons = true;
 
         [Tooltip("If explicit navigation is enabled, loop around when navigating past end of menu")]

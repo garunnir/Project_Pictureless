@@ -15,7 +15,7 @@ namespace PixelCrushers.DialogueSystem
     {
 
         [Header("Quest Heading")]
-        [Tooltip("The heading - firstName or m_description depends on window setting")]
+        [Tooltip("The heading - name or description depends on window setting")]
         public UnityEngine.UI.Button heading;
 
         [Tooltip("Used for Description")]

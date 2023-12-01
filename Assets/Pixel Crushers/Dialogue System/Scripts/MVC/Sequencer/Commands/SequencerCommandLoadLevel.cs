@@ -31,14 +31,13 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             bool additive = string.Equals(GetParameter(2), "additive", System.StringComparison.OrdinalIgnoreCase);
             if (string.IsNullOrEmpty(levelName))
             {
-                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: LoadLevel() level firstName is an empty string", DialogueDebug.Prefix));
+                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: LoadLevel() level name is an empty string", DialogueDebug.Prefix));
             }
             else
             {
                 if (DialogueDebug.logInfo) Debug.Log(string.Format("{0}: Sequencer: LoadLevel({1})", DialogueDebug.Prefix, GetParameters()));
                 DialogueLua.SetActorField("Player", "Spawnpoint", spawnpoint);
-                var saveSystem = GameObjectUtility.FindFirstObjectByType<SaveSystem>();
-                if (saveSystem != null)
+                if (SaveSystem.hasInstance)
                 {
                     if (additive)
                     {

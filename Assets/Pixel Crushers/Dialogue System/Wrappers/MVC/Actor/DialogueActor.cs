@@ -13,7 +13,6 @@ namespace PixelCrushers.DialogueSystem.Wrappers
     [AddComponentMenu("Pixel Crushers/Dialogue System/Actor/Dialogue Actor")]
     public class DialogueActor : PixelCrushers.DialogueSystem.DialogueActor
     {
-
     }
 
 }

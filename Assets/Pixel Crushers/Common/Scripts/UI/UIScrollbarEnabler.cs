@@ -14,15 +14,15 @@ namespace PixelCrushers
     public class UIScrollbarEnabler : MonoBehaviour
     {
 
-        [Tooltip("The scroll m_rect.")]
+        [Tooltip("The scroll rect.")]
         [UnityEngine.Serialization.FormerlySerializedAs("container")]
         public UnityEngine.UI.ScrollRect scrollRect = null;
 
-        [Tooltip("The content inside the scroll m_rect. The scrollbar will be enabled if the content is taller than the scroll m_rect.")]
+        [Tooltip("The content inside the scroll rect. The scrollbar will be enabled if the content is taller than the scroll rect.")]
         [UnityEngine.Serialization.FormerlySerializedAs("content")]
         public RectTransform scrollContent = null;
 
-        [Tooltip("The scrollbar to enable or disable. If scroll m_rect doesn't have a scrollbar, just scrolls scroll m_rect.")]
+        [Tooltip("The scrollbar to enable or disable. If scroll rect doesn't have a scrollbar, just scrolls scroll rect.")]
         public UnityEngine.UI.Scrollbar scrollbar = null;
 
         [Tooltip("Scroll smoothly instead of jumping to reset value.")]

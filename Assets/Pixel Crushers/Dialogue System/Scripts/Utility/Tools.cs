@@ -352,8 +352,8 @@ namespace PixelCrushers.DialogueSystem
                 @"<align=\w+>|</align>|<font=[^>]+>|</font>|<indent=\w+\%>|<indent=\w+>|</indent>|" +
                 @"<line-height=\w+%>|<line-height=\w+>|</line-height>|<line-indent=\w+\%>|<line-ident=\w+>|</line-ident>|" +
                 @"<link=""[^""]+"">|</link>|<lowercase>|</lowercase>|<uppercase>|</uppercase>|" +
-                @"<smallcaps>|</smallcaps>|<margin=.+>|<margin-?\w+=.+>|</margin>|<mark=#\w+>|</mark>|" +
-                @"<nobr>|</nobr>|<size=\w+\%>|<size=\w+>|</size>|<sprite=.+>|<[Ss]>|</[Ss]>|<[Uu]>|</[Uu]>|" +
+                @"<smallcaps>|</smallcaps>|<margin=.+?>|<margin-?\w+=.+?>|</margin>|<mark=#\w+>|</mark>|" +
+                @"<nobr>|</nobr>|<size=\w+\%>|<size=\w+>|</size>|<sprite=.+?>|<[Ss]>|</[Ss]>|<[Uu]>|</[Uu]>|" +
                 @"<sup>|</sup>|<sub>|</sub>|<p>|</p>|<\\/p>", string.Empty);
         }
 
@@ -662,7 +662,7 @@ namespace PixelCrushers.DialogueSystem
 
         #region Replace HTML
 
-        private static string[] htmlTags = new string[] { "<html>", "<head>", "<style>", "#s0", "{text-align:leftID;}", "#s1",
+        private static string[] htmlTags = new string[] { "<html>", "<head>", "<style>", "#s0", "{text-align:left;}", "#s1",
             "{font-size:11pt;}", "</style>", "</head>", "<body>", "<p id=\"s0\">", "<span id=\"s1\">",
             "</span>", "</p>", "</body>", "</html>" };
 

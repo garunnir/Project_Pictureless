@@ -77,10 +77,10 @@ namespace PixelCrushers.DialogueSystem
 
         public enum WarmUpMode { On, Extra, Off }
 
-        [Tooltip("Warm upID conversation engine and dialogue UI at Start to avoid a small amount of overhead on first use. 'Extra' performs deeper warmup that takes 1.25s at startup.")]
+        [Tooltip("Warm up conversation engine and dialogue UI at Start to avoid a small amount of overhead on first use. 'Extra' performs deeper warmup that takes 1.25s at startup.")]
         public WarmUpMode warmUpConversationController = WarmUpMode.On;
 
-        [Tooltip("Don't run HideImmediate on dialogue UI when warming it upID on start.")]
+        [Tooltip("Don't run HideImmediate on dialogue UI when warming it up on start.")]
         public bool dontHideImmediateDuringWarmup = false;
 
         /// <summary>
@@ -134,6 +134,11 @@ namespace PixelCrushers.DialogueSystem
         /// Raised when a conversation ends. Parameter is primary actor.
         /// </summary>
         public event TransformDelegate conversationEnded = delegate { };
+
+        /// <summary>
+        /// Raised when StopAllConversations() is called.
+        /// </summary>
+        public event System.Action stoppingAllConversations = delegate { };
 
         /// <summary>
         /// Assign to replace the Dialogue System's built-in GetLocalizedText().
@@ -1152,10 +1157,12 @@ namespace PixelCrushers.DialogueSystem
         /// </summary>
         public void StopAllConversations()
         {
+            stoppingAllConversations?.Invoke();
             for (int i = DialogueManager.instance.activeConversations.Count - 1; i >= 0; i--)
             {
                 DialogueManager.instance.activeConversations[i].conversationController.Close();
             }
+
         }
 
         /// <summary>
@@ -2108,6 +2115,7 @@ namespace PixelCrushers.DialogueSystem
             Lua.RegisterFunction("ActorIDToName", this, SymbolExtensions.GetMethodInfo(() => ActorIDToName(0)));
             Lua.RegisterFunction("ItemIDToName", this, SymbolExtensions.GetMethodInfo(() => ItemIDToName(0)));
             Lua.RegisterFunction("QuestIDToName", this, SymbolExtensions.GetMethodInfo(() => ItemIDToName(0)));
+            Lua.RegisterFunction("GetTextTableValue", this, SymbolExtensions.GetMethodInfo(() => GetLocalizedText(string.Empty)));
             // Register DialogueLua in case they got unregistered:
             DialogueLua.RegisterLuaFunctions();
         }
@@ -2194,6 +2202,17 @@ namespace PixelCrushers.DialogueSystem
                 {
                     var info = DialogueManager.ConversationModel.GetCharacterInfo(actor.id);
                     if (info != null) info.Name = newDisplayName;
+                    foreach (var panel in DialogueManager.standardDialogueUI.conversationUIElements.subtitlePanels)
+                    {
+                        if (panel.portraitActorName == actorName)
+                        {
+                            if (panel.portraitName.gameObject != null)
+                            {
+                                panel.portraitName.text = newDisplayName;
+                            }
+                            break;
+                        }
+                    }
                 }
             }
         }

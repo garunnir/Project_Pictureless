@@ -26,7 +26,7 @@ namespace PixelCrushers.DialogueSystem
 
         public Shortcut[] shortcuts = new Shortcut[0];
 
-        [Tooltip("Optionally assign GameObjects referenced by firstName in sequencer commands below. Prevents having to search for them at runtime.")]
+        [Tooltip("Optionally assign GameObjects referenced by name in sequencer commands below. Prevents having to search for them at runtime.")]
         public Transform[] referencedSubjects = new Transform[0];
 
         void OnEnable()

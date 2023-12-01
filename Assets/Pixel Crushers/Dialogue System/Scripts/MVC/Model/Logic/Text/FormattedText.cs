@@ -1,4 +1,3 @@
-// Recompile at 2023-08-11 오후 1:40:21
 // Copyright (c) Pixel Crushers. All rights reserved.
 
 using System.Collections.Generic;
@@ -177,7 +176,6 @@ namespace PixelCrushers.DialogueSystem
         /// </param>
         public static FormattedText Parse(string rawText, EmphasisSetting[] emphasisSettings = null)
         {
-            //Debug.Log(rawText);
             if (emphasisSettings == null && DialogueManager.instance != null) emphasisSettings = DialogueManager.masterDatabase.emphasisSettings;
             string text = rawText ?? string.Empty;
             ReplaceLuaTags(ref text);

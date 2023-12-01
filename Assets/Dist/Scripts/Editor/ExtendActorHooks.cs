@@ -216,7 +216,6 @@ public static partial class ExtendDEHooks
             RebuildFieldCache();
         }
 
-        m_fieldList.DoList();
 
         CheckMouseEvents();
     }

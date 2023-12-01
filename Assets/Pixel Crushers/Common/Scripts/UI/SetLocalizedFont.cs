@@ -1,5 +1,4 @@
-// Recompile at 2023-08-11 오후 1:40:21
-
+// Recompile at 1/21/2023 3:18:05 PM
 // Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;

@@ -102,7 +102,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 canvasBackgroundColorTexture.Apply();
                 canvasBackgroundColorTexture.hideFlags = HideFlags.HideAndDontSave;
             }
-            //GUI.DrawTexture(new Rect(0, 0, CanvasSize, CanvasSize), canvasBackgroundColorTexture, ScaleMode.StretchToFill);
+            GUI.DrawTexture(new Rect(0, 0, CanvasSize, CanvasSize), canvasBackgroundColorTexture, ScaleMode.StretchToFill);
         }
 
         private void DrawGridLines(float gridSize, Color gridColor)

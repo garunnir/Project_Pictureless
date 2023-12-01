@@ -2942,7 +2942,6 @@ MonoBehaviour:
     entryGroups: []
     canvasScrollPosition: {x: 0, y: 0}
     canvasZoom: 1
-  maps: []
   syncInfo:
     syncActors: 0
     syncItems: 0

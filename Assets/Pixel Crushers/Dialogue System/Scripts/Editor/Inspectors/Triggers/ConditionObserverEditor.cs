@@ -56,7 +56,7 @@ namespace PixelCrushers.DialogueSystem
             serializedObject.Update();
 
             // Reference database:
-            EditorTools.selectedDatabase = EditorGUILayout.ObjectField(new GUIContent("Reference Database", "Database to use for pop-upID menus. Assumes this database will be in memory at runtime."), EditorTools.selectedDatabase, typeof(DialogueDatabase), false) as DialogueDatabase;
+            EditorTools.selectedDatabase = EditorGUILayout.ObjectField(new GUIContent("Reference Database", "Database to use for pop-up menus. Assumes this database will be in memory at runtime."), EditorTools.selectedDatabase, typeof(DialogueDatabase), false) as DialogueDatabase;
 
             // Frequency, once, observeGameObject:
             EditorGUILayout.PropertyField(serializedObject.FindProperty("frequency"), true);
@@ -166,7 +166,7 @@ namespace PixelCrushers.DialogueSystem
             var hd = 14f;
             var fw = (rect.width - hd) / 3;
             EditorGUI.LabelField(new Rect(rect.x + hd, rect.y, fw, rect.height), new GUIContent("Recipient", "GameObject to send message to (i.e, call script method)."));
-            EditorGUI.LabelField(new Rect(rect.x + hd + fw, rect.y, fw, rect.height), new GUIContent("Message", "Method firstName in a script on recipient."));
+            EditorGUI.LabelField(new Rect(rect.x + hd + fw, rect.y, fw, rect.height), new GUIContent("Message", "Method name in a script on recipient."));
             EditorGUI.LabelField(new Rect(rect.x + hd + 2 * fw, rect.y, fw, rect.height), new GUIContent("Parameter", "Optional string parameter to pass to method."));
         }
 

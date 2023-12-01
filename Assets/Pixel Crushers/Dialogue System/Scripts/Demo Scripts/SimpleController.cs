@@ -18,7 +18,7 @@ namespace PixelCrushers.DialogueSystem.Demo
         [Tooltip("Float parameter defined in animator controller that controls forward/backward speed.")]
         public string forwardSpeedFloatParameter = "Speed";
 
-        [Tooltip("Float parameter defined in animator controller that controls leftID/rightID side-step speed.")]
+        [Tooltip("Float parameter defined in animator controller that controls left/right side-step speed.")]
         public string lateralSpeedFloatParameter = "Strafe";
 
         [Tooltip("Bool parameter defined in animator controller that specifies whether to use two-hand weapon animation or one-hand.")]
@@ -36,7 +36,7 @@ namespace PixelCrushers.DialogueSystem.Demo
         public float mouseSensitivityX = 15f;
         public float mouseSensitivityY = 10f;
 
-        [Tooltip("Maximum upID/downID angles for mouse look.")]
+        [Tooltip("Maximum up/down angles for mouse look.")]
         public float mouseMinimumY = -60f;
         public float mouseMaximumY = 60f;
 

@@ -112,7 +112,7 @@ namespace PixelCrushers.DialogueSystem
                     {
                         if (string.IsNullOrEmpty(conversation))
                         {
-                            if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Bark triggered on {1}, but conversation firstName is blank.", new System.Object[] { DialogueDebug.Prefix, name }), GetBarker());
+                            if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Bark triggered on {1}, but conversation name is blank.", new System.Object[] { DialogueDebug.Prefix, name }), GetBarker());
                         }
                         else if (DialogueManager.isConversationActive && !allowDuringConversations)
                         {

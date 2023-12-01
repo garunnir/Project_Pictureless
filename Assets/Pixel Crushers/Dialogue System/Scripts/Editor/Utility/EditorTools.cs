@@ -106,12 +106,12 @@ namespace PixelCrushers.DialogueSystem
 
         public static void DrawReferenceDatabase()
         {
-            selectedDatabase = EditorGUILayout.ObjectField(new GUIContent("Reference Database", "Database to use for pop-upID menus. Assumes this database will be in memory at runtime."), selectedDatabase, typeof(DialogueDatabase), true) as DialogueDatabase;
+            selectedDatabase = EditorGUILayout.ObjectField(new GUIContent("Reference Database", "Database to use for pop-up menus. Assumes this database will be in memory at runtime."), selectedDatabase, typeof(DialogueDatabase), true) as DialogueDatabase;
         }
 
         public static void DrawReferenceDatabase(Rect rect)
         {
-            selectedDatabase = EditorGUI.ObjectField(rect, new GUIContent("Reference Database", "Database to use for pop-upID menus. Assumes this database will be in memory at runtime."), selectedDatabase, typeof(DialogueDatabase), true) as DialogueDatabase;
+            selectedDatabase = EditorGUI.ObjectField(rect, new GUIContent("Reference Database", "Database to use for pop-up menus. Assumes this database will be in memory at runtime."), selectedDatabase, typeof(DialogueDatabase), true) as DialogueDatabase;
         }
 
         public static void DrawSerializedProperty(SerializedObject serializedObject, string propertyName)
@@ -202,7 +202,7 @@ namespace PixelCrushers.DialogueSystem
 
         public static void ReimportScripts()
         {
-            Debug.Log("Recompiled scripts with updated options. If options are not working, please rightID-click on the Dialogue System's Scripts and Wrappers folders and select Reimport.");
+            Debug.Log("Recompiled scripts with updated options. If options are not working, please right-click on the Dialogue System's Scripts and Wrappers folders and select Reimport.");
             AssetDatabase.ImportAsset("Assets/Plugins/Pixel Crushers/Dialogue System/Scripts");
             AssetDatabase.ImportAsset("Assets/Plugins/Pixel Crushers/Dialogue System/Wrappers");
         }
@@ -218,7 +218,18 @@ namespace PixelCrushers.DialogueSystem
 
             if (asset == null || string.IsNullOrEmpty(filter)) return true;
             var assetName = asset.Name;
-            return string.IsNullOrEmpty(assetName) ? false : (assetName.IndexOf(filter, System.StringComparison.OrdinalIgnoreCase) >= 0);
+            return string.IsNullOrEmpty(assetName) ? false :
+                ((assetName.IndexOf(filter, System.StringComparison.OrdinalIgnoreCase) >= 0) ||
+                 IsQuestGroupInFilter(asset, filter));
+        }
+
+        private static bool IsQuestGroupInFilter(Asset asset, string filter)
+        {
+            var quest = asset as Item;
+            if (quest == null) return false;
+            var group = quest.Group;
+            return !string.IsNullOrEmpty(group) &&
+                (group.IndexOf(filter, System.StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         private static string[] imageExtensions = { ".png", ".tga", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".psd", ".psb", ".gif", ".pict" };

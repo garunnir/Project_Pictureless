@@ -25,7 +25,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
         private bool showStateFieldAsQuest = true;
 
-        private static GUIContent displayNameLabel = new GUIContent("Display Name", "The firstName to show in UIs.");
+        private static GUIContent displayNameLabel = new GUIContent("Display Name", "The name to show in UIs.");
 
         private void DrawFieldsSection(List<Field> fields, List<string> primaryFieldTitles = null)
         {
@@ -44,8 +44,8 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             EditorGUILayout.TextField("Type");
             if (isTemplate) EditorGUILayout.LabelField("Main", GUILayout.Width(30));
             EditorGUI.BeginDisabledGroup(true);
-            GUILayout.Button(new GUIContent("↑", "Move upID"), EditorStyles.miniButton, GUILayout.Width(22));
-            GUILayout.Button(new GUIContent("↓", "Move downID"), EditorStyles.miniButton, GUILayout.Width(22));
+            GUILayout.Button(new GUIContent("↑", "Move up"), EditorStyles.miniButton, GUILayout.Width(22));
+            GUILayout.Button(new GUIContent("↓", "Move down"), EditorStyles.miniButton, GUILayout.Width(22));
             EditorGUI.EndDisabledGroup();
             GUILayout.Button(" ", "OL Minus", GUILayout.Width(16));
             GUI.enabled = true;
@@ -155,10 +155,10 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         {
             // Up/down buttons:
             EditorGUI.BeginDisabledGroup(i == 0);
-            if (GUILayout.Button(new GUIContent("↑", "Move upID"), EditorStyles.miniButton, GUILayout.Width(22))) fieldToMoveUp = i;
+            if (GUILayout.Button(new GUIContent("↑", "Move up"), EditorStyles.miniButton, GUILayout.Width(22))) fieldToMoveUp = i;
             EditorGUI.EndDisabledGroup();
             EditorGUI.BeginDisabledGroup(i == fieldCount - 1);
-            if (GUILayout.Button(new GUIContent("↓", "Move downID"), EditorStyles.miniButton, GUILayout.Width(22))) fieldToMoveDown = i;
+            if (GUILayout.Button(new GUIContent("↓", "Move down"), EditorStyles.miniButton, GUILayout.Width(22))) fieldToMoveDown = i;
             EditorGUI.EndDisabledGroup();
 
             // Delete button:
@@ -207,6 +207,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             DrawAIReviseTextButton(asset, field);
             EditorGUILayout.EndHorizontal();
         }
+
         private void DrawRevisableTextAreaField(GUIContent label, Asset asset, DialogueEntry entry, List<Field> fields, string fieldTitle)
         {
             Field field = Field.Lookup(fields, fieldTitle);
@@ -218,17 +219,17 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             }
             DrawRevisableTextAreaField(label, asset, entry, field);
         }
-        private void DrawRevisableTextAreaField(GUIContent label, Asset asset, List<Field> fields, string fieldTitle)
-        {
-            Field field = Field.Lookup(fields, fieldTitle);
-            if (field == null)
-            {
-                field = new Field(fieldTitle, string.Empty, FieldType.Text);
-                fields.Add(field);
-                SetDatabaseDirty("Create Field " + fieldTitle);
-            }
-            DrawRevisableTextField(label, asset, field);
-        }
+        //private void DrawRevisableTextAreaField(GUIContent label, Asset asset, List<Field> fields, string fieldTitle)
+        //{
+        //    Field field = Field.Lookup(fields, fieldTitle);
+        //    if (field == null)
+        //    {
+        //        field = new Field(fieldTitle, string.Empty, FieldType.Text);
+        //        fields.Add(field);
+        //        SetDatabaseDirty("Create Field " + fieldTitle);
+        //    }
+        //    DrawRevisableTextField(label, asset, field);
+        //}
         private void DrawRevisableTextAreaField(GUIContent label, Asset asset, DialogueEntry entry, Field field)
         {
             EditorGUILayout.BeginHorizontal();

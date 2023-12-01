@@ -83,7 +83,7 @@ namespace PixelCrushers.DialogueSystem {
 		}
 
 		private static void AddRequiredActorFields(List<ChatMapper.Field> cmpFields) {
-			RequireField(cmpFields, 0, "Name", "Text", "New Actor", "A firstName to reference this actor.");
+			RequireField(cmpFields, 0, "Name", "Text", "New Actor", "A name to reference this actor.");
 			RequireField(cmpFields, 1, "Pictures", "Files", "[]", "A collection of images that represent this actor.");
 			RequireField(cmpFields, 2, "Description", "Text", "", "A short description of what makes this actor unique.");
 			RequireField(cmpFields, 3, "IsPlayer", "Boolean", "False", "Mark this box if this actor is the main player character.");
@@ -108,7 +108,7 @@ namespace PixelCrushers.DialogueSystem {
 		}
 		
 		private static void AddRequiredItemFields(List<ChatMapper.Field> cmpFields) {
-			RequireField(cmpFields, 0, "Name", "Text", "New Item", "A firstName to reference this item.");
+			RequireField(cmpFields, 0, "Name", "Text", "New Item", "A name to reference this item.");
 			RequireField(cmpFields, 1, "Pictures", "Files", "[]", "A collection of images that represent this item.");
 			RequireField(cmpFields, 2, "Description", "Text", "", "A short description of what this item looks like.");
 		}
@@ -130,7 +130,7 @@ namespace PixelCrushers.DialogueSystem {
 		}
 		
 		private static void AddRequiredLocationFields(List<ChatMapper.Field> cmpFields) {
-			RequireField(cmpFields, 0, "Name", "Text", "New Location", "A firstName to reference this location.");
+			RequireField(cmpFields, 0, "Name", "Text", "New Location", "A name to reference this location.");
 			RequireField(cmpFields, 1, "Pictures", "Files", "[]", "A collection of images that represent this location.");
 			RequireField(cmpFields, 2, "Description", "Text", "", "A short description of what this location looks like.");
 		}
@@ -151,7 +151,7 @@ namespace PixelCrushers.DialogueSystem {
 		}
 		
 		private static void AddRequiredUserVariableFields(List<ChatMapper.Field> cmpFields) {
-			RequireField(cmpFields, 0, "Name", "Text", "", "The firstName of this variable.");
+			RequireField(cmpFields, 0, "Name", "Text", "", "The name of this variable.");
 			RequireField(cmpFields, 1, "Initial Value", "Text", "", "The default initial value of this variable.");
 			RequireField(cmpFields, 2, "Description", "Text", "", "A short description of what this variable is for.");
 		}

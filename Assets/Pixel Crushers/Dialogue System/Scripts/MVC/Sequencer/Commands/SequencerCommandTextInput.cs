@@ -42,12 +42,12 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             if (DialogueDebug.logInfo) Debug.Log(string.Format("{0}: Sequencer: TextInput({1}, {2}, {3}, {4})", new System.Object[] { DialogueDebug.Prefix, Tools.GetObjectName(textFieldUIObject), labelText, variableName, maxLength }));
             if (string.IsNullOrEmpty(variableName))
             {
-                if (DialogueDebug.logWarnings) Debug.Log(string.Format("{0}: Sequencer: TextInput({1}): The third parameter must be the firstName of a Dialogue System variable.", new System.Object[] { DialogueDebug.Prefix, GetParameters() }));
+                if (DialogueDebug.logWarnings) Debug.Log(string.Format("{0}: Sequencer: TextInput({1}): The third parameter must be the name of a Dialogue System variable.", new System.Object[] { DialogueDebug.Prefix, GetParameters() }));
                 Stop();
             }
             else if (textFieldUI == null)
             {
-                if (DialogueDebug.logWarnings) Debug.Log(string.Format("{0}: Sequencer: TextInput(): Text Field UI not found on a GameObject '{1}'. Did you specify the correct GameObject firstName?", new System.Object[] { DialogueDebug.Prefix, GetParameter(0) }));
+                if (DialogueDebug.logWarnings) Debug.Log(string.Format("{0}: Sequencer: TextInput(): Text Field UI not found on a GameObject '{1}'. Did you specify the correct GameObject name?", new System.Object[] { DialogueDebug.Prefix, GetParameter(0) }));
                 Stop();
             }
             else

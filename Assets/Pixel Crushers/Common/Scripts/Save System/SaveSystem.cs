@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+
 namespace PixelCrushers
 {
 
@@ -63,6 +64,10 @@ namespace PixelCrushers
         private static bool m_autoUnloadAdditiveScenes = false;
 
         private static AsyncOperation m_currentAsyncOperation = null;
+
+#if USE_ADDRESSABLES
+        private static UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<UnityEngine.ResourceManagement.ResourceProviders.SceneInstance> m_currentAsyncOperationHandle;
+#endif
 
         private static int m_framesToWaitBeforeSaveDataAppliedEvent = 0;
 
@@ -260,13 +265,7 @@ namespace PixelCrushers
         /// </summary>
         public static SavedGameData currentSavedGameData
         {
-            get {
-                if (m_savedGameData == null)
-                {
-                    return new SavedGameData();
-                }
-                return m_savedGameData; 
-            }
+            get { return m_savedGameData; }
             set { m_savedGameData = value; }
         }
 
@@ -374,7 +373,7 @@ namespace PixelCrushers
 
         public void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
         {
-            //FinishedLoadingScene(scene.name, scene.buildIndex);
+            FinishedLoadingScene(scene.name, scene.buildIndex);
         }
 
 #else
@@ -395,9 +394,74 @@ namespace PixelCrushers
             return UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex;
         }
 
+        public static bool IsSceneInBuildSettings(string sceneName)
+        {
+            for (var n = 0; n < UnityEngine.SceneManagement.SceneManager.sceneCountInBuildSettings; ++n)
+            {
+                var scenePath = UnityEngine.SceneManagement.SceneUtility.GetScenePathByBuildIndex(n);
+                if (string.IsNullOrEmpty(scenePath)) continue;
+                if (string.Equals(System.IO.Path.GetFileNameWithoutExtension(scenePath), sceneName, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static void SceneManagerOrAddressablesLoadScene(string sceneName)
+        {
+            if (IsSceneInBuildSettings(sceneName))
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
+                return;
+            }
+#if USE_ADDRESSABLES
+            // If not in build settings, try loading an Addressable scene:
+            m_currentAsyncOperationHandle = UnityEngine.AddressableAssets.Addressables.LoadSceneAsync(sceneName);
+#else
+            Debug.LogError("Can't load scene. Scene is not in build settings: " + sceneName);
+#endif
+        }
+
+        private static void SceneManagerOrAddressablesLoadSceneAsync(string sceneName)
+        {
+            m_currentAsyncOperation = null;
+            if (IsSceneInBuildSettings(sceneName))
+            {
+                m_currentAsyncOperation = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName);
+                return;
+            }
+#if USE_ADDRESSABLES
+            // If not in build settings, try loading an Addressable scene:
+            m_currentAsyncOperationHandle = UnityEngine.AddressableAssets.Addressables.LoadSceneAsync(sceneName);
+#else
+            Debug.LogError("Can't load scene. Scene is not in build settings: " + sceneName);
+#endif
+        }
+
+        private static IEnumerator SceneManagerOrAddressablesLoadSceneAdditiveAsync(string sceneName)
+        {
+            if (IsSceneInBuildSettings(sceneName))
+            {
+                yield return UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Additive);
+            }
+            else
+            {
+#if USE_ADDRESSABLES
+                // If not in build settings, try loading an Addressable scene:
+                m_currentAsyncOperationHandle = UnityEngine.AddressableAssets.Addressables.LoadSceneAsync(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Additive);
+                while (!m_currentAsyncOperation.isDone)
+                {
+                    yield return null;
+                }
+#else
+                Debug.LogError("Can't load additive scene. Scene is not in build settings: " + sceneName);
+#endif
+            }
+        }
+
         private static IEnumerator LoadSceneInternal(string sceneName, SceneValidationMode sceneValidationMode)
         {
-            Debug.LogWarning("!!!");
             m_addedScenes.Clear();
             if (sceneTransitionManager == null)
             {
@@ -414,7 +478,7 @@ namespace PixelCrushers
                         if (debug) Debug.LogWarning("Scene '" + sceneName + "' is not a valid scene to load.");
                         yield break;
                     }
-                    UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
+                    SceneManagerOrAddressablesLoadScene(sceneName);
                 }
                 yield break;
             }
@@ -441,13 +505,26 @@ namespace PixelCrushers
                     if (debug) Debug.LogWarning("Scene '" + sceneName + "' is not a valid scene to load.");
                     yield break;
                 }
-                m_currentAsyncOperation = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName);
+                SceneManagerOrAddressablesLoadSceneAsync(sceneName);
             }
-            while (m_currentAsyncOperation != null && !m_currentAsyncOperation.isDone)
+            if (m_currentAsyncOperation != null)
             {
-                sceneTransitionManager.OnLoading(m_currentAsyncOperation.progress);
-                yield return null;
+                while (m_currentAsyncOperation != null && !m_currentAsyncOperation.isDone)
+                {
+                    sceneTransitionManager.OnLoading(m_currentAsyncOperation.progress);
+                    yield return null;
+                }
             }
+#if USE_ADDRESSABLES
+            else
+            {
+                while (!m_currentAsyncOperationHandle.IsDone)
+                {
+                    sceneTransitionManager.OnLoading(m_currentAsyncOperationHandle.PercentComplete);
+                    yield return null;
+                }
+            }
+#endif
             sceneTransitionManager.OnLoading(1);
             m_currentAsyncOperation = null;
             instance.StartCoroutine(sceneTransitionManager.EnterScene());
@@ -457,7 +534,7 @@ namespace PixelCrushers
         {
             if (validateNameScene != null) sceneName = validateNameScene(sceneName, sceneValidationMode);
             if (string.IsNullOrEmpty(sceneName)) yield break;
-            yield return UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Additive);
+            yield return SceneManagerOrAddressablesLoadSceneAdditiveAsync(sceneName);
             var scene = UnityEngine.SceneManagement.SceneManager.GetSceneByName(sceneName);
             if (!scene.IsValid()) yield break;
             var rootGOs = scene.GetRootGameObjects();
@@ -534,7 +611,7 @@ namespace PixelCrushers
 
 #else
 
-        public static string GetCurrentSceneName()
+            public static string GetCurrentSceneName()
         {
             return Application.loadedLevelName;
         }

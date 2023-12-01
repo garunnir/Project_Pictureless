@@ -19,10 +19,10 @@ namespace PixelCrushers.DialogueSystem
 
         public enum ApplyTo { DialogueText, PrependedActorName }
 
-        [Tooltip("Apply color to entire Dialogue Text or prepend actor firstName and apply color only to firstName.")]
+        [Tooltip("Apply color to entire Dialogue Text or prepend actor name and apply color only to name.")]
         public ApplyTo applyTo = ApplyTo.DialogueText;
 
-        [Tooltip("If prepending actor firstName, separate from Dialogue Text with this string.")]
+        [Tooltip("If prepending actor name, separate from Dialogue Text with this string.")]
         public string prependActorNameSeparator = ": ";
 
         public void OnConversationLine(Subtitle subtitle)

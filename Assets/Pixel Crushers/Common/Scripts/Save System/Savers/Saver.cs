@@ -12,11 +12,11 @@ namespace PixelCrushers
     public abstract class Saver : MonoBehaviour
     {
 
-        [Tooltip("Save data under this key. If blank, use GameObject firstName.")]
+        [Tooltip("Save data under this key. If blank, use GameObject name.")]
         [SerializeField]
         private string m_key;
 
-        [Tooltip("Append the firstName of this saver type to the key.")]
+        [Tooltip("Append the name of this saver type to the key.")]
         [SerializeField]
         private bool m_appendSaverTypeToKey;
 

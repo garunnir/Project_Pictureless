@@ -61,6 +61,8 @@ namespace PixelCrushers.DialogueSystem
 
         protected SequenceSyntaxState sequenceSyntaxState = SequenceSyntaxState.Unchecked;
 
+        protected Color originalColor = Color.white;
+
         public virtual void OnEnable()
         {
             var trigger = target as DialogueSystemTrigger;
@@ -121,6 +123,7 @@ namespace PixelCrushers.DialogueSystem
             trigger = target as DialogueSystemTrigger;
             if (trigger == null) return;
             serializedObject.Update();
+            originalColor = GUI.color;
             DrawTopInfo();
             DrawConditions();
             DrawActions();
@@ -159,7 +162,7 @@ namespace PixelCrushers.DialogueSystem
             // Reference database:
             var databaseProperty = serializedObject.FindProperty("selectedDatabase");
             var oldDatabase = databaseProperty.objectReferenceValue;
-            EditorGUILayout.PropertyField(databaseProperty, new GUIContent("Reference Database", "Database to use for pop-upID menus. Assumes this database will be in memory at runtime."), true);
+            EditorGUILayout.PropertyField(databaseProperty, new GUIContent("Reference Database", "Database to use for pop-up menus. Assumes this database will be in memory at runtime."), true);
             var newDatabase = databaseProperty.objectReferenceValue as DialogueDatabase;
             if (newDatabase != oldDatabase)
             {
@@ -331,7 +334,9 @@ namespace PixelCrushers.DialogueSystem
                     if (questPicker != null)
                     {
                         serializedObject.ApplyModifiedProperties();
+                        if (string.IsNullOrEmpty(trigger.questName)) GUI.color = Color.red;
                         questPicker.Draw();
+                        GUI.color = originalColor;
                         var hadQuestName = !string.IsNullOrEmpty(trigger.questName);
                         trigger.questName = questPicker.currentQuest;
                         trigger.useQuestNamePicker = questPicker.usePicker;
@@ -491,7 +496,9 @@ namespace PixelCrushers.DialogueSystem
                     EditorWindowTools.EditorGUILayoutBeginGroup();
                     EditorGUILayout.BeginHorizontal();
                     var barkSourceProperty = serializedObject.FindProperty("barkSource");
+                    if (barkSourceProperty.enumValueIndex < 0) GUI.color = Color.red;                         
                     EditorGUILayout.PropertyField(barkSourceProperty, true);
+                    GUI.color = originalColor;
                     if (GUILayout.Button("x", GUILayout.Width(18), GUILayout.Height(14)))
                     {
                         serializedObject.FindProperty("barkSource").enumValueIndex = 0;
@@ -505,7 +512,9 @@ namespace PixelCrushers.DialogueSystem
                     {
                         case DialogueSystemTrigger.BarkSource.Conversation:
                             var barkConversationProperty = serializedObject.FindProperty("barkConversation");
+                            if (string.IsNullOrEmpty(barkConversationProperty.stringValue)) GUI.color = Color.red;
                             EditorGUILayout.PropertyField(barkConversationProperty, true);
+                            GUI.color = originalColor;
                             if (!string.IsNullOrEmpty(barkConversationProperty.stringValue))
                             {
                                 EditorGUILayout.PropertyField(serializedObject.FindProperty("barkOrder"), true);
@@ -543,7 +552,9 @@ namespace PixelCrushers.DialogueSystem
                     var hadConversation = !string.IsNullOrEmpty(conversationProperty.stringValue);
                     EditorWindowTools.EditorGUILayoutBeginGroup();
                     EditorGUI.BeginChangeCheck();
+                    if (string.IsNullOrEmpty(conversationProperty.stringValue)) GUI.color = Color.red;
                     EditorGUILayout.PropertyField(conversationProperty, true);
+                    GUI.color = originalColor;
                     if (EditorGUI.EndChangeCheck())
                     {
                         conversationTitles = null;
@@ -602,6 +613,7 @@ namespace PixelCrushers.DialogueSystem
 
                         EditorGUILayout.PropertyField(serializedObject.FindProperty("exclusive"), true);
                         EditorGUILayout.PropertyField(serializedObject.FindProperty("replace"), true);
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty("queue"), true);
                         EditorGUILayout.PropertyField(serializedObject.FindProperty("skipIfNoValidEntries"), true);
                         EditorGUILayout.PropertyField(serializedObject.FindProperty("preventRestartOnSameFrameEnded"), true);
                         EditorGUILayout.PropertyField(serializedObject.FindProperty("stopConversationOnTriggerExit"), true);
@@ -695,7 +707,7 @@ namespace PixelCrushers.DialogueSystem
             var hd = 14f;
             var fw = (rect.width - hd) / 3;
             EditorGUI.LabelField(new Rect(rect.x + hd, rect.y, fw, rect.height), new GUIContent("Recipient", "GameObject to send message to (i.e, call script method)."));
-            EditorGUI.LabelField(new Rect(rect.x + hd + fw, rect.y, fw, rect.height), new GUIContent("Message", "Method firstName in a script on recipient."));
+            EditorGUI.LabelField(new Rect(rect.x + hd + fw, rect.y, fw, rect.height), new GUIContent("Message", "Method name in a script on recipient."));
             EditorGUI.LabelField(new Rect(rect.x + hd + 2 * fw, rect.y, fw, rect.height), new GUIContent("Parameter", "Optional string parameter to pass to method."));
         }
 
@@ -818,7 +830,7 @@ namespace PixelCrushers.DialogueSystem
             var hd = 14f;
             var fw = (rect.width - hd - ToggleWidth - 4) / 2;
             EditorGUI.LabelField(new Rect(rect.x + hd, rect.y, fw, rect.height), new GUIContent("Animator", "GameObject whose animator to control."));
-            EditorGUI.LabelField(new Rect(rect.x + hd + fw + 2, rect.y, fw, rect.height), new GUIContent("State", "Animator state firstName to crossfade into."));
+            EditorGUI.LabelField(new Rect(rect.x + hd + fw + 2, rect.y, fw, rect.height), new GUIContent("State", "Animator state name to crossfade into."));
             EditorGUI.LabelField(new Rect(rect.x + rect.width - ToggleWidth, rect.y, ToggleWidth, rect.height), new GUIContent("Fade", "Crossfade duration in seconds."));
         }
 

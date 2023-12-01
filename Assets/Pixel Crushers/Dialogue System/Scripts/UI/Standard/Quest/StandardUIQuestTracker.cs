@@ -17,7 +17,7 @@ namespace PixelCrushers.DialogueSystem
     public class StandardUIQuestTracker : MonoBehaviour
     {
 
-        [Tooltip("Record the quest tracker display dropdown in this PlayerPrefs key. Leave blank to not record tracker visible/invisible state.")]
+        [Tooltip("Record the quest tracker display toggle in this PlayerPrefs key. Leave blank to not record tracker visible/invisible state.")]
         public string playerPrefsToggleKey = "QuestTracker";
 
         /// <summary>

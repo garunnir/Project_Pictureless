@@ -21,13 +21,13 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// Hold down this key and press Second Key to open console.
         /// </summary>
-        [Tooltip("Hold downID this key and press Second Key to open console.")]
+        [Tooltip("Hold down this key and press Second Key to open console.")]
         public KeyCode firstKey = KeyCode.BackQuote;
 
         /// <summary>
         /// Hold down First Key and press this key to open console.
         /// </summary>
-        [Tooltip("Hold downID First Key and press this key to open console.")]
+        [Tooltip("Hold down First Key and press this key to open console.")]
         public KeyCode secondKey = KeyCode.L;
 
         /// <summary>

@@ -355,7 +355,7 @@ namespace PixelCrushers.DialogueSystem
             {
                 MoreEditorUtility.TryAddScriptingDefineSymbols("TMP_PRESENT");
                 EditorTools.ReimportScripts();
-                EditorUtility.DisplayDialog("TextMesh Pro Support Enabled", "TextMesh Pro support has been enabled. You may need to rightID-click on the two files named TextMeshProTypewriterEffect and select Reimport to be able to add them to your GameObjects. If you change build platforms, you may need to select this menu item again.", "OK");
+                EditorUtility.DisplayDialog("TextMesh Pro Support Enabled", "TextMesh Pro support has been enabled. You may need to right-click on the two files named TextMeshProTypewriterEffect and select Reimport to be able to add them to your GameObjects. If you change build platforms, you may need to select this menu item again.", "OK");
             }
         }
 

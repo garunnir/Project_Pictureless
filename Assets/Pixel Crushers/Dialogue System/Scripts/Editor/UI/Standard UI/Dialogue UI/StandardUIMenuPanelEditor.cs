@@ -16,7 +16,7 @@ namespace PixelCrushers.DialogueSystem
 
             EditorGUILayout.LabelField("UI Elements", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("panel"), true);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("pcName"), new GUIContent("PC Name", "(Optional) Text element to show PC firstName during response menu."), true);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("pcName"), new GUIContent("PC Name", "(Optional) Text element to show PC name during response menu."), true);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("pcImage"), new GUIContent("PC Image", "(Optional) Image to show PC portrait during response menu."), true);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("usePortraitNativeSize"), true);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("timerSlider"), true);

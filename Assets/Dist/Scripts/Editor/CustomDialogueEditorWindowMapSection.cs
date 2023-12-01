@@ -19,6 +19,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
     /// </summary>
     public partial class DialogueEditorWindow
     {
+        bool isMakingCLink;
         MapContainer _currentMap;
         private MapEntry _currentMapEntry = null;
         [SerializeField]
@@ -400,53 +401,53 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
             if (swap) SwapParticipants(ref currentMapEntryActor, ref currentMapEntryConversant);
         }
-        private void DrawLocalizedVersions(MapEntry entry, List<Field> fields, string titleFormat, bool alwaysAdd, FieldType fieldType, bool useSequenceEditor = false)
-        {
-            DrawLocalizedVersions(null, entry, fields, titleFormat, alwaysAdd, fieldType, null, useSequenceEditor);
-        }
-        private void DrawLocalizedVersions(Asset asset, MapEntry entry, List<Field> fields, string titleFormat, bool alwaysAdd, FieldType fieldType, bool useSequenceEditor = false)
-        {
-            DrawLocalizedVersions(null, entry, fields, titleFormat, alwaysAdd, fieldType, null, useSequenceEditor);
-        }
-        private void DrawLocalizedVersions(Asset asset, MapEntry entry, List<Field> fields, string titleFormat, bool alwaysAdd, FieldType fieldType, List<Field> alreadyDrawn, bool useSequenceEditor = false)
-        {
-            bool indented = false;
-            foreach (var language in languages)
-            {
-                string localizedTitle = string.Format(titleFormat, language);
-                Field field = Field.Lookup(fields, localizedTitle);
-                if ((field == null) && (alwaysAdd || (Field.FieldExists(template.dialogueEntryFields, localizedTitle))))
-                {
-                    field = new Field(localizedTitle, string.Empty, fieldType);
-                    fields.Add(field);
-                }
-                if (field != null)
-                {
-                    if (!indented)
-                    {
-                        indented = true;
-                        EditorWindowTools.StartIndentedSection();
-                    }
-                    if (useSequenceEditor)
-                    {
-                        EditorGUILayout.BeginHorizontal();
-                        EditorGUILayout.LabelField(localizedTitle);
-                        GUILayout.FlexibleSpace();
-                        if (entry != null) DrawAISequence(entry, field);
-                        EditorGUILayout.EndHorizontal();
-                        field.value = EditorGUILayout.TextArea(field.value);
-                    }
-                    else
-                    {
-                        //[AI] EditorGUILayout.LabelField(localizedTitle);
-                        //field.value = EditorGUILayout.TextArea(field.value);
-                        DrawLocalizableTextAreaMapField(new GUIContent(localizedTitle), asset, entry, field);
-                    }
-                    if (alreadyDrawn != null) alreadyDrawn.Add(field);
-                }
-            }
-            if (indented) EditorWindowTools.EndIndentedSection();
-        }
+        //private void DrawLocalizedVersions(MapEntry entry, List<Field> fields, string titleFormat, bool alwaysAdd, FieldType fieldType, bool useSequenceEditor = false)
+        //{
+        //    DrawLocalizedVersions(null, entry, fields, titleFormat, alwaysAdd, fieldType, null, useSequenceEditor);
+        //}
+        //private void DrawLocalizedVersions(Asset asset, MapEntry entry, List<Field> fields, string titleFormat, bool alwaysAdd, FieldType fieldType, bool useSequenceEditor = false)
+        //{
+        //    DrawLocalizedVersions(null, entry, fields, titleFormat, alwaysAdd, fieldType, null, useSequenceEditor);
+        //}
+        //private void DrawLocalizedVersions(Asset asset, MapEntry entry, List<Field> fields, string titleFormat, bool alwaysAdd, FieldType fieldType, List<Field> alreadyDrawn, bool useSequenceEditor = false)
+        //{
+        //    bool indented = false;
+        //    foreach (var language in languages)
+        //    {
+        //        string localizedTitle = string.Format(titleFormat, language);
+        //        Field field = Field.Lookup(fields, localizedTitle);
+        //        if ((field == null) && (alwaysAdd || (Field.FieldExists(template.dialogueEntryFields, localizedTitle))))
+        //        {
+        //            field = new Field(localizedTitle, string.Empty, fieldType);
+        //            fields.Add(field);
+        //        }
+        //        if (field != null)
+        //        {
+        //            if (!indented)
+        //            {
+        //                indented = true;
+        //                EditorWindowTools.StartIndentedSection();
+        //            }
+        //            if (useSequenceEditor)
+        //            {
+        //                EditorGUILayout.BeginHorizontal();
+        //                EditorGUILayout.LabelField(localizedTitle);
+        //                GUILayout.FlexibleSpace();
+        //                if (entry != null) DrawAISequence(entry, field);
+        //                EditorGUILayout.EndHorizontal();
+        //                field.value = EditorGUILayout.TextArea(field.value);
+        //            }
+        //            else
+        //            {
+        //                //[AI] EditorGUILayout.LabelField(localizedTitle);
+        //                //field.value = EditorGUILayout.TextArea(field.value);
+        //                DrawLocalizableTextAreaMapField(new GUIContent(localizedTitle), asset, entry, field);
+        //            }
+        //            if (alreadyDrawn != null) alreadyDrawn.Add(field);
+        //        }
+        //    }
+        //    if (indented) EditorWindowTools.EndIndentedSection();
+        //}
         private void DrawLocalizableTextAreaMapField(GUIContent label, Asset asset, MapEntry entry, Field field)
         {
             EditorGUILayout.BeginHorizontal();
@@ -468,17 +469,17 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 DrawMainSectionField(field);
             }
         }
-        private void DrawRevisableTextAreaField(GUIContent label, Asset asset, MapEntry entry, List<Field> fields, string fieldTitle)
-        {
-            Field field = Field.Lookup(fields, fieldTitle);
-            if (field == null)
-            {
-                field = new Field(fieldTitle, string.Empty, FieldType.Text);
-                fields.Add(field);
-                SetDatabaseDirty("Create Field " + fieldTitle);
-            }
-            DrawRevisableTextAreaField(label, asset, entry, field);
-        }
+        //private void DrawRevisableTextAreaField(GUIContent label, Asset asset, MapEntry entry, List<Field> fields, string fieldTitle)
+        //{
+        //    Field field = Field.Lookup(fields, fieldTitle);
+        //    if (field == null)
+        //    {
+        //        field = new Field(fieldTitle, string.Empty, FieldType.Text);
+        //        fields.Add(field);
+        //        SetDatabaseDirty("Create Field " + fieldTitle);
+        //    }
+        //    DrawRevisableTextAreaField(label, asset, entry, field);
+        //}
         private void DrawRevisableTextAreaField(GUIContent label, Asset asset, MapEntry entry, Field field)
         {
             EditorGUILayout.BeginHorizontal();
@@ -949,12 +950,12 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         }
         private int GetcurrentMapContainerIndex()
         {
-            if (currentMapContainer != null)
+            if (currentConversation != null)
             {
-                if (conversationTitles == null) conversationTitles = GetConversationTitles();
+                if (conversationTitles == null) RecordConversationTitles();
                 for (int i = 0; i < conversationTitles.Length; i++)
                 {
-                    if (string.Equals(currentMapContainer.Title, conversationTitles[i])) return i;
+                    if (string.Equals(currentConversation.Title, conversationTitles[i])) return i;
                 }
             }
             return -1;
@@ -2551,10 +2552,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 {
                     text += linkText;
                 }
-                if (Application.isPlaying && DialogueManager.instance != null && DialogueManager.instance.includeSimStatus)
-                {
-                    text += "\nSimStatus=" + DialogueLua.GetSimStatus(currentMapHoveredEntry);
-                }
                 currentHoverGUIContent = string.IsNullOrEmpty(text) ? null : new GUIContent(text);
                 if (currentHoverGUIContent != null)
                 {
@@ -2833,20 +2830,18 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             if (serializedObject == null)
             {
                 serializedObject = new SerializedObject(database);
-                //EditorGUILayout.LabelField("Error displaying UnityEvent. Please report to developer.");
-                //return;
             }
-            if (serializedObjectCurrentMapEntry != currentMapEntry)
+            if (serializedObjectCurrentEntry != currentEntry)
             {
                 serializedObject.Update();
-                serializedObjectCurrentMapEntry = currentMapEntry;
+                serializedObjectCurrentEntry = currentEntry;
                 var conversationsProperty = serializedObject.FindProperty("maps");
                 if (conversationsProperty == null || !conversationsProperty.isArray) return;
                 SerializedProperty conversationProperty = null;
                 for (int i = 0; i < conversationsProperty.arraySize; i++)
                 {
                     var sp = conversationsProperty.GetArrayElementAtIndex(i);
-                    if (sp.FindPropertyRelative("id").intValue == currentMapContainer.id)
+                    if (sp.FindPropertyRelative("id").intValue == currentConversation.id)
                     {
                         conversationProperty = sp;
                         break;
@@ -2859,7 +2854,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 for (int i = 0; i < entriesProperty.arraySize; i++)
                 {
                     var sp = entriesProperty.GetArrayElementAtIndex(i);
-                    if (sp.FindPropertyRelative("id").intValue == currentMapEntry.id)
+                    if (sp.FindPropertyRelative("id").intValue == currentEntry.id)
                     {
                         entryProperty = sp;
                         break;
@@ -2876,7 +2871,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             }
 
             // Draw scene-specific event:
-            var sceneEventGuid = currentMapEntry.sceneEventGuid;
+            var sceneEventGuid = currentEntry.sceneEventGuid;
             int sceneEventIndex = -1;
             if (string.IsNullOrEmpty(sceneEventGuid))
             {
@@ -2885,13 +2880,21 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 {
                     MakeSureDialogueSystemSceneEventsExists();
                     sceneEventIndex = DialogueSystemSceneEvents.AddNewDialogueEntrySceneEvent(out sceneEventGuid);
-                    currentMapEntry.sceneEventGuid = sceneEventGuid;
+                    currentEntry.sceneEventGuid = sceneEventGuid;
                 }
             }
             else
             {
-                // Otherwise check if the entry's scene event is defined in this scene:
-                sceneEventIndex = DialogueSystemSceneEvents.GetDialogueEntrySceneEventIndex(sceneEventGuid);
+                // Make sure our serialized object points to this scene's DialogueSystemSceneEvents:
+                if (dialogueSystemSceneEvents == null || dialogueSystemSceneEventsSerializedObject == null)
+                {
+                    dialogueSystemSceneEvents = GameObjectUtility.FindFirstObjectByType<DialogueSystemSceneEvents>();
+                    dialogueSystemSceneEventsSerializedObject = (dialogueSystemSceneEvents != null)
+                        ? new SerializedObject(dialogueSystemSceneEvents) : null;
+                }
+
+                // Then check if the entry's scene event is defined in this scene:
+                sceneEventIndex = DialogueSystemSceneEvents.GetDialogueEntrySceneEventIndex(sceneEventGuid, dialogueSystemSceneEvents);
             }
             if (sceneEventIndex == -1 && !string.IsNullOrEmpty(sceneEventGuid))
             {
@@ -2899,16 +2902,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 GUILayout.Label("Scene Event operates in another scene.");
                 if (GUILayout.Button("Delete Scene Event"))
                 {
-                    currentMapEntry.sceneEventGuid = string.Empty;
-                }
-            }
-            if (sceneEventIndex != -1)
-            {
-                // Make sure our serialized object points to this scene's DialogueSystemSceneEvents:
-                if (dialogueSystemSceneEvents != DialogueSystemSceneEvents.sceneInstance || dialogueSystemSceneEventsSerializedObject == null)
-                {
-                    dialogueSystemSceneEvents = DialogueSystemSceneEvents.sceneInstance;
-                    dialogueSystemSceneEventsSerializedObject = new SerializedObject(dialogueSystemSceneEvents);
+                    currentEntry.sceneEventGuid = string.Empty;
                 }
             }
             if (sceneEventIndex != -1 && dialogueSystemSceneEventsSerializedObject != null)
@@ -2932,7 +2926,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 if (GUILayout.Button("Delete Scene Event"))
                 {
                     DialogueSystemSceneEvents.RemoveDialogueEntrySceneEvent(sceneEventGuid);
-                    currentMapEntry.sceneEventGuid = string.Empty;
+                    currentEntry.sceneEventGuid = string.Empty;
                 }
             }
         }

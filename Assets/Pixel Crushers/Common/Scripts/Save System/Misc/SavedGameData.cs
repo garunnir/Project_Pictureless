@@ -1,9 +1,10 @@
-// Copyright (c) Pixel Crushers. All rights reserved.
+﻿// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 namespace PixelCrushers
 {
 
@@ -70,7 +71,6 @@ namespace PixelCrushers
         /// Use with caution.
         /// </summary>
         public Dictionary<string, SaveRecord> Dict { get { return m_dict; } }
-
 
         public void OnBeforeSerialize()
         {

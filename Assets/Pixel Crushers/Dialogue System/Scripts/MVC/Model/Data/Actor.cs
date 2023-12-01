@@ -39,14 +39,6 @@ namespace PixelCrushers.DialogueSystem
         /// </summary>
         public List<Sprite> spritePortraits = new List<Sprite>();
 
-        /// <summary>
-        /// Gets or sets a value indicating whether this actor is a player character or an NPC.
-        /// </summary>
-        public Actor()
-        {
-            //fields = new List<Field>();
-            //TempGaram();
-        }
         /// <value>
         /// <c>true</c> if this actor is a player character; otherwise, <c>false</c>.
         /// </value>
@@ -76,6 +68,7 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// Initializes a new Actor.
         /// </summary>
+        public Actor() { }
 
         /// <summary>
         /// Copy constructor.

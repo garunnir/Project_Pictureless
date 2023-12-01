@@ -14,7 +14,7 @@ namespace PixelCrushers.DialogueSystem
     {
 
         [Header("Quest Group Heading")]
-        [Tooltip("The quest group firstName")]
+        [Tooltip("The quest group name")]
         public UnityEngine.UI.Text heading;
 
         public bool ArePropertiesAssigned

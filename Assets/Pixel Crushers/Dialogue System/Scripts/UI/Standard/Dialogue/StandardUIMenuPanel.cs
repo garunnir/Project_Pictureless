@@ -1,12 +1,10 @@
-// Recompile at 2023-08-11 오후 1:40:21
-// Copyright (c) Pixel Crushers. All rights reserved.
+﻿// Copyright (c) Pixel Crushers. All rights reserved.
 
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.EventSystems;
 
 namespace PixelCrushers.DialogueSystem
 {
@@ -23,7 +21,7 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("(Optional) Image to show PC portrait during response menu.")]
         public UnityEngine.UI.Image pcImage;
 
-        [Tooltip("(Optional) Text element to show PC firstName during response menu.")]
+        [Tooltip("(Optional) Text element to show PC name during response menu.")]
         public UITextField pcName;
 
         [Tooltip("Set PC Image to actor portrait's native size. Image's Rect Transform can't use Stretch anchors.")]
@@ -47,7 +45,7 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("If using Button Template, instantiate buttons under this GameObject.")]
         public UnityEngine.UI.Graphic buttonTemplateHolder;
 
-        [Tooltip("(Optional) Scrollbar to use if instantiated button holder is in a scroll m_rect.")]
+        [Tooltip("(Optional) Scrollbar to use if instantiated button holder is in a scroll rect.")]
         public UnityEngine.UI.Scrollbar buttonTemplateScrollbar;
 
         [Tooltip("(Optional) Component that enables or disables scrollbar as necessary for content.")]
@@ -56,7 +54,7 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("Reset the scroll bar to this value when preparing response menu. To skip resetting the scrollbar, specify a negative value.")]
         public float buttonTemplateScrollbarResetValue = 1;
 
-        [Tooltip("Automatically set upID explicit joystick/keyboard navigation for instantiated template buttons instead of using Automatic navigation.")]
+        [Tooltip("Automatically set up explicit joystick/keyboard navigation for instantiated template buttons instead of using Automatic navigation.")]
         public bool explicitNavigationForTemplateButtons = true;
 
         [Tooltip("If explicit navigation is enabled, loop around when navigating past end of menu.")]
@@ -185,7 +183,21 @@ namespace PixelCrushers.DialogueSystem
                     return;
                 }
             }
+            CheckForBlankResponses(responses);
             ShowResponsesNow(subtitle, responses, target);
+        }
+
+        private void CheckForBlankResponses(Response[] responses)
+        {
+            if (!DialogueDebug.logWarnings) return;
+            if (responses == null) return;
+            foreach (Response response in responses)
+            {
+                if (string.IsNullOrEmpty(response.formattedText.text))
+                {
+                    Debug.LogWarning($"Dialogue System: Response [{response.destinationEntry.conversationID}:{response.destinationEntry.id}] has no text for a response button.");
+                }
+            }
         }
 
         protected virtual void ShowResponsesNow(Subtitle subtitle, Response[] responses, Transform target)
@@ -674,9 +686,9 @@ namespace PixelCrushers.DialogueSystem
                     methodInfo.Invoke(button, new object[] { 3, true }); // 3 = SelectionState.Selected
                 }
             }
-            if (EventSystem.current != null)
+            if (eventSystem != null)
             {
-                var inputModule = EventSystem.current.GetComponent<PointerInputModule>();
+                var inputModule = eventSystem.GetComponent<UnityEngine.EventSystems.PointerInputModule>();
                 if (inputModule != null) inputModule.enabled = value;
             }
             UIButtonKeyTrigger.monitorInput = value;
@@ -684,6 +696,10 @@ namespace PixelCrushers.DialogueSystem
             {
                 RefreshSelectablesList();
                 CheckFocus();
+                if (eventSystem != null && eventSystem.currentSelectedGameObject != null)
+                { // Also show in focused/selected state:
+                    UIUtility.Select(eventSystem.currentSelectedGameObject.GetComponent<UnityEngine.UI.Selectable>());
+                }
             }
         }
         #endregion

@@ -29,7 +29,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             }
             else if (string.IsNullOrEmpty(firstClipName))
             {
-                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: Animation({1}, {2},...) command: Animation firstName is blank.", new System.Object[] { DialogueDebug.Prefix, firstClipName, subject.name }));
+                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Sequencer: Animation({1}, {2},...) command: Animation name is blank.", new System.Object[] { DialogueDebug.Prefix, firstClipName, subject.name }));
             }
             else
             {

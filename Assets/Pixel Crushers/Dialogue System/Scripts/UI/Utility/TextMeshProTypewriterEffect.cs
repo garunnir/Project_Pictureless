@@ -1,5 +1,4 @@
-// Recompile at 2023-08-11 오후 1:40:21
-// Copyright (c) Pixel Crushers. All rights reserved.
+﻿// Copyright (c) Pixel Crushers. All rights reserved.
 
 using System.Collections;
 using System.Collections.Generic;
@@ -26,7 +25,7 @@ namespace PixelCrushers.DialogueSystem
         [System.Serializable]
         public class AutoScrollSettings
         {
-            [Tooltip("Automatically scroll to bottom of scroll m_rect. Useful for long text. Works best with leftID justification.")]
+            [Tooltip("Automatically scroll to bottom of scroll rect. Useful for long text. Works best with left justification.")]
             public bool autoScrollEnabled = false;
             public UnityEngine.UI.ScrollRect scrollRect = null;
             [Tooltip("Optional. Add a UIScrollBarEnabler to main dialogue panel, assign UI elements, then assign it here to automatically enable scrollbar if content is taller than viewport.")]
@@ -238,7 +237,7 @@ namespace PixelCrushers.DialogueSystem
         /// </summary>
         public virtual IEnumerator Play(int fromIndex)
         {
-            if ((textComponent != null) && (charactersPerSecond > 0))
+            if ((textComponent != null) && (charactersPerSecond > 0) && !string.IsNullOrEmpty(textComponent.text))
             {
                 if (waitOneFrameBeforeStarting) yield return null;
                 textComponent.text = textComponent.text.Replace("<br>", "\n");

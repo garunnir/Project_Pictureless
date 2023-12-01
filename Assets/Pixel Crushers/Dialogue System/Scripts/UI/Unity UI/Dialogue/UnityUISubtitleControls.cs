@@ -35,7 +35,7 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// The label that will show the name of the speaker.
         /// </summary>
-        [Tooltip("Optional label for speaker's firstName")]
+        [Tooltip("Optional label for speaker's name")]
         public UnityEngine.UI.Text portraitName;
 
         /// <summary>

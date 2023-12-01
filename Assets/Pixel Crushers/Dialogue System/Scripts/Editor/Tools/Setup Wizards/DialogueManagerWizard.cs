@@ -165,7 +165,7 @@ namespace PixelCrushers.DialogueSystem
             {
                 EditorGUILayout.LabelField("Dialogue Database", EditorStyles.boldLabel);
                 EditorWindowTools.StartIndentedSection();
-                EditorGUILayout.HelpBox("This wizard is optional. It can help you set upID the Dialogue Manager GameObject, which is the GameObject that coordinates Dialogue System activity. If you prefer, you can configure the Dialogue Manager through the Inspector view instead of using the wizard.\n\nThe first step is to assign a dialogue database asset. This asset contains your conversations and related data.", MessageType.Info);
+                EditorGUILayout.HelpBox("This wizard is optional. It can help you set up the Dialogue Manager GameObject, which is the GameObject that coordinates Dialogue System activity. If you prefer, you can configure the Dialogue Manager through the Inspector view instead of using the wizard.\n\nThe first step is to assign a dialogue database asset. This asset contains your conversations and related data.", MessageType.Info);
                 EditorGUILayout.BeginHorizontal();
                 DialogueManager.instance.initialDatabase = EditorGUILayout.ObjectField("Database", DialogueManager.instance.initialDatabase, typeof(DialogueDatabase), false) as DialogueDatabase;
                 bool disabled = (DialogueManager.instance.initialDatabase != null);
@@ -269,7 +269,7 @@ namespace PixelCrushers.DialogueSystem
             if (DialogueManager.instance.displaySettings.localizationSettings == null) DialogueManager.instance.displaySettings.localizationSettings = new DisplaySettings.LocalizationSettings();
             EditorGUILayout.LabelField("Localization Settings", EditorStyles.boldLabel);
             EditorWindowTools.StartIndentedSection();
-            EditorGUILayout.HelpBox("The Dialogue System supports language localization. If you don't want to set upID localization rightID now, you can just click Next.", MessageType.Info);
+            EditorGUILayout.HelpBox("The Dialogue System supports language localization. If you don't want to set up localization right now, you can just click Next.", MessageType.Info);
 
             EditorGUILayout.BeginHorizontal();
             DialogueManager.instance.displaySettings.localizationSettings.useSystemLanguage = EditorGUILayout.Toggle("Use System Language", DialogueManager.instance.displaySettings.localizationSettings.useSystemLanguage);
@@ -378,7 +378,7 @@ namespace PixelCrushers.DialogueSystem
             EditorGUILayout.HelpBox("The Dialogue System uses an integrated, text-based cutscene sequencer. Every line of dialogue can have a cutscene sequence -- for example to move the camera, play animations on the speaker, or play a lip-synced voiceover.", MessageType.Info);
             EditorWindowTools.DrawHorizontalLine();
 
-            EditorGUILayout.HelpBox("You can set upID a camera object or prefab specifically for sequences. This can be useful to apply depth of field effects or other filters that you wouldn't normally apply to your gameplay camera. If you've set upID a sequencer camera, assign it below. Otherwise the sequencer will just use the current main camera.", MessageType.None);
+            EditorGUILayout.HelpBox("You can set up a camera object or prefab specifically for sequences. This can be useful to apply depth of field effects or other filters that you wouldn't normally apply to your gameplay camera. If you've set up a sequencer camera, assign it below. Otherwise the sequencer will just use the current main camera.", MessageType.None);
             EditorGUILayout.BeginHorizontal();
             DialogueManager.instance.displaySettings.cameraSettings.sequencerCamera = EditorGUILayout.ObjectField("Sequencer Camera", DialogueManager.instance.displaySettings.cameraSettings.sequencerCamera, typeof(UnityEngine.Camera), true) as UnityEngine.Camera;
             EditorGUILayout.EndHorizontal();
@@ -399,7 +399,7 @@ namespace PixelCrushers.DialogueSystem
             }
             EditorWindowTools.DrawHorizontalLine();
 
-            EditorGUILayout.HelpBox("Cutscene sequence commands can reference camera angles defined on a camera angle prefab. You can set upID your own custom camera angle prefab. Otherwise the sequencer will use a default camera angle prefab with basic angles such as Closeup, Medium, and Wide.", MessageType.None);
+            EditorGUILayout.HelpBox("Cutscene sequence commands can reference camera angles defined on a camera angle prefab. You can set up your own custom camera angle prefab. Otherwise the sequencer will use a default camera angle prefab with basic angles such as Closeup, Medium, and Wide.", MessageType.None);
             EditorGUILayout.BeginHorizontal();
             DialogueManager.instance.displaySettings.cameraSettings.cameraAngles = EditorGUILayout.ObjectField("Camera Angles", DialogueManager.instance.displaySettings.cameraSettings.cameraAngles, typeof(GameObject), true) as GameObject;
             EditorGUILayout.EndHorizontal();

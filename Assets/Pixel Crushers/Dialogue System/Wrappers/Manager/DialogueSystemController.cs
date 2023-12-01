@@ -42,7 +42,7 @@ namespace PixelCrushers.DialogueSystem.Wrappers
             {
                 Init();
                 //StartConversation(basicConv.Title);
-                StartConversation(masterDatabase.GetConversation(2).Title);
+                StartConversation(masterDatabase.GetConversation(1).Title);
             };
         }
         void Init()
@@ -125,6 +125,7 @@ namespace PixelCrushers.DialogueSystem.Wrappers
             SelectionEnable(Execute.Conversation, finded);
             if(finded) Map_CharSelect(entry);
             conversationView.SelectedResponseHandler += ChangeBtn;
+            //대화 출력 구문?
             UpdateResponses();
         }
 
@@ -141,13 +142,13 @@ namespace PixelCrushers.DialogueSystem.Wrappers
             {
                 Subtitle subtitle = null;
                 DialogueEntry dentry = GetBasicDialogueEntry(Execute.Conversation);
-                dentry.outgoingLinks.Clear();
+                dentry.outgoingLinks.Clear();// 대화하기 버튼 누르면 강제로 연결함.
                 List<string> strings=mapActorCache.ConvertAll(x=>x.Name);
-                AddActorsToResponse(dentry, mapActorCache);
+                ConnectActorDialogueToResponseButton(dentry, mapActorCache);
             }
         }
 
-        private void AddActorsToResponse(DialogueEntry dentry, List<Actor> mapActor)
+        private void ConnectActorDialogueToResponseButton(DialogueEntry dentry, List<Actor> mapActor)
         {
             for (int i = 0; i < mapActor.Count; i++)
             {

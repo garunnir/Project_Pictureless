@@ -1,4 +1,4 @@
-// Copyright (c) Pixel Crushers. All rights reserved.
+﻿// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using UnityEditor;
@@ -107,6 +107,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             }
             if (indented) EditorWindowTools.EndIndentedSection();
         }
+
         private void DrawLocalizedVersions(DialogueEntry entry, List<Field> fields, string titleFormat, bool alwaysAdd, FieldType fieldType, bool useSequenceEditor = false)
         {
             DrawLocalizedVersions(null, entry, fields, titleFormat, alwaysAdd, fieldType, null, useSequenceEditor);

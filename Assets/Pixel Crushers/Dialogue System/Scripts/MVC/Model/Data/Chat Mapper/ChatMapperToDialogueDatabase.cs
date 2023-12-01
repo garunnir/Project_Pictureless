@@ -180,7 +180,7 @@ namespace PixelCrushers.DialogueSystem
             }
             catch (System.Exception e)
             {
-                Debug.LogWarning("Error fixing upID linked conversation: " + e.Message);
+                Debug.LogWarning("Error fixing up linked conversation: " + e.Message);
             }
         }
 

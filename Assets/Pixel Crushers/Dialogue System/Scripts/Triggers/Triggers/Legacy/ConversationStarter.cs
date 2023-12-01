@@ -81,7 +81,7 @@ namespace PixelCrushers.DialogueSystem
                     {
                         if (string.IsNullOrEmpty(conversation))
                         {
-                            if (DialogueDebug.logErrors) Debug.LogError(string.Format("{0}: Conversation triggered on {1}, but conversation firstName is blank.", new System.Object[] { DialogueDebug.Prefix, name }));
+                            if (DialogueDebug.logErrors) Debug.LogError(string.Format("{0}: Conversation triggered on {1}, but conversation name is blank.", new System.Object[] { DialogueDebug.Prefix, name }));
                         }
                         else if ((DialogueManager.isConversationActive && !DialogueManager.allowSimultaneousConversations) || (exclusive && DialogueManager.isConversationActive))
                         {

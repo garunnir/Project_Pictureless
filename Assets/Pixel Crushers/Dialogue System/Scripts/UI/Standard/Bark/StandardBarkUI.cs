@@ -30,13 +30,13 @@ namespace PixelCrushers.DialogueSystem
         /// The (optional) UI text control for the actor's name, if includeName is <c>true</c>.
         /// If <c>null</c>, the name is added to the front of the subtitle text instead.
         /// </summary>
-        [Tooltip("Optional UI text control for barker's firstName if Include Name is ticked. If unassigned and Include Name is ticked, firstName is prepended to Bark Text.")]
+        [Tooltip("Optional UI text control for barker's name if Include Name is ticked. If unassigned and Include Name is ticked, name is prepended to Bark Text.")]
         public UITextField nameText = null;
 
         /// <summary>
         /// Set <c>true</c> to include the barker's name in the text.
         /// </summary>
-        [Tooltip("If Name Text is unassigned, prepend barker's firstName to Bark Text.")]
+        [Tooltip("If Name Text is unassigned, prepend barker's name to Bark Text.")]
         public bool includeName = false;
 
         [Tooltip("Optional to show barker's portrait image.")]

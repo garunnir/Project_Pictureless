@@ -287,7 +287,7 @@ namespace PixelCrushers.DialogueSystem
             prefs.putEndSequenceOnLastSplit = EditorGUILayout.Toggle(new GUIContent("Smart Split", "When splitting at pipes (|), put {{end}} sequences on the last entry."), prefs.putEndSequenceOnLastSplit);
 
             // Reset CanvasRects:
-            prefs.resetNodePositions = EditorGUILayout.Toggle(new GUIContent("Reset Node Positions", "If all the nodes end upID in the upper leftID corner when importing, tick this to fix it."), prefs.resetNodePositions);
+            prefs.resetNodePositions = EditorGUILayout.Toggle(new GUIContent("Reset Node Positions", "If all the nodes end up in the upper left corner when importing, tick this to fix it."), prefs.resetNodePositions);
 
             // Save To:
             if (string.IsNullOrEmpty(prefs.outputFolder))
@@ -308,7 +308,7 @@ namespace PixelCrushers.DialogueSystem
             bool hasMultipleProjects = (prefs.projectFilenames.Count > 1);
             if (hasMultipleProjects) prefs.useProjectName = true;
             EditorGUI.BeginDisabledGroup(hasMultipleProjects);
-            prefs.useProjectName = EditorGUILayout.Toggle(new GUIContent("Use Project Name", "Tick to use project firstName defined in Chat Mapper project, untick to specify a firstName."), prefs.useProjectName);
+            prefs.useProjectName = EditorGUILayout.Toggle(new GUIContent("Use Project Name", "Tick to use project name defined in Chat Mapper project, untick to specify a name."), prefs.useProjectName);
             EditorGUI.EndDisabledGroup();
             if (!prefs.useProjectName)
             {

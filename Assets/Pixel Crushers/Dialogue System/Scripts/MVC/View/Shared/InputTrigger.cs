@@ -23,7 +23,7 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// The name of the button defined in UnityEngine.InputManager that fires the trigger.
         /// </summary>
-        [Tooltip("This button fires the trigger. The button firstName must be defined in your project's Input Settings.")]
+        [Tooltip("This button fires the trigger. The button name must be defined in your project's Input Settings.")]
         public string buttonName = string.Empty;
 
         /// <summary>

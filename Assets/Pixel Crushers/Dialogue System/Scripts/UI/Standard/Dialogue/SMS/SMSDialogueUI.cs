@@ -22,10 +22,10 @@ namespace PixelCrushers.DialogueSystem
 
         [Header("Message Panel")]
 
-        [Tooltip("The scroll m_rect containing the content panel.")]
+        [Tooltip("The scroll rect containing the content panel.")]
         public UnityEngine.UI.ScrollRect scrollRect;
 
-        [Tooltip("The content panel inside the scroll m_rect containing the message panel and response panel.")]
+        [Tooltip("The content panel inside the scroll rect containing the message panel and response panel.")]
         public RectTransform contentPanel;
 
         [Tooltip("Add messages to this panel.")]
@@ -34,7 +34,7 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("If non-zero, drop older messages when the number of messages in the history reaches this value.")]
         public int maxMessages = 0;
 
-        [Tooltip("Speed at which to smoothly scroll downID.")]
+        [Tooltip("Speed at which to smoothly scroll down.")]
         public float scrollSpeed = 5f;
 
         [Serializable]
@@ -279,7 +279,7 @@ namespace PixelCrushers.DialogueSystem
             var panel = go.GetComponent<StandardUISubtitlePanel>();
             if (panel.addSpeakerName)
             {
-                subtitle.formattedText.text = string.Format(panel.addSpeakerNameFormat, new object[] { subtitle.speakerInfo.Name, subtitle.formattedText.text });
+                subtitle.formattedText.text = FormattedText.Parse(string.Format(panel.addSpeakerNameFormat, new object[] { subtitle.speakerInfo.Name, subtitle.formattedText.text })).text;
             }
             if (dialogueActor != null && dialogueActor.standardDialogueUISettings.setSubtitleColor)
             {
@@ -311,6 +311,7 @@ namespace PixelCrushers.DialogueSystem
         public override void ShowContinueButton(Subtitle subtitle)
         {
             shouldShowContinueButton = true;
+            if (continueButton != null) continueButton.gameObject.SetActive(true);
         }
 
         public override void OnContinueConversation()
