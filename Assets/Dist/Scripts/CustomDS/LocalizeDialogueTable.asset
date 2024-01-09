@@ -17,15 +17,29 @@ MonoBehaviour:
   - ko
   - eng
   m_languageValues: 000000000100000002000000
-  m_fieldKeys: 1600000017000000
+  m_fieldKeys: 1900000022000000240000003a000000
   m_fieldValues:
-  - m_fieldName: Field 23
+  - m_fieldName: '[5].1112ffff'
+    m_keys: 020000000100000000000000
+    m_values:
+    - 
+    - 
+    - 
+  - m_fieldName: '[5].111233'
+    m_keys: 000000000200000001000000
+    m_values:
+    - 
+    - 
+    - 
+  - m_fieldName: '[5].11123344'
+    m_keys: 000000000200000001000000
+    m_values:
+    - dddd
+    - 
+    - 
+  - m_fieldName: '[3].NewField 58'
     m_keys: 00000000
     m_values:
     - 
-  - m_fieldName: '[3].'
-    m_keys: 00000000
-    m_values:
-    - ddd
   m_nextLanguageID: 5
-  m_nextFieldID: 25
+  m_nextFieldID: 59

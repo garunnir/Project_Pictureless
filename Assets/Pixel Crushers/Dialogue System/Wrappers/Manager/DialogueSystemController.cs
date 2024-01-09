@@ -123,16 +123,27 @@ namespace PixelCrushers.DialogueSystem.Wrappers
                 mapActorCache = FindActorOnMap(entry);
             bool finded = mapActorCache != null||mapActorCache.Count == 0;
             SelectionEnable(Execute.Conversation, finded);
-            if(finded) Map_CharSelect(entry);
-            conversationView.SelectedResponseHandler += ChangeBtn;
+            if (finded) 
+            {
+                conversationView.SelectedResponseHandler += ChangeBtn;
+                Map_CharSelect(entry);
+            }
+            else
+            {
+                conversationView.SelectedResponseHandler -= ChangeBtn;
+            }
             //대화 출력 구문?
             UpdateResponses();
         }
-
         private void ChangeBtn(object sender, SelectedResponseEventArgs e)
         {
             UpdateResponses();
-            conversationView.SelectedResponseHandler-= ChangeBtn;
+            //conversationView.SelectedResponseHandler -= ChangeBtn;
+            //현상: 이 메서드를 발동시켰을때 자기자신을 체인에서 빼면 작동하지 않았다.
+            //같은 것만 매칭됐을때 작동했다. 라는것은 체인지 버튼이 실행되면서 체인지버튼이 빠지게 하는것은 체인지 버튼이 작동하지 않게 한다는 이야기가 된다.
+            //그것이 합당하려면 체인지 버튼이 실행될때 체인지버튼이 빠지는것과 동시에 실행하지 않게 된다는 말밖에 안되거나
+            //대리자가 컴파일시점이나 그때쯤에 등록,해제가 된다면 말이 된다.
+            //대리자 실행원리를 자세히 알 필요가 있다.
         }
         public void Map_CharSelect(MapEntry entry)
         {
@@ -147,7 +158,11 @@ namespace PixelCrushers.DialogueSystem.Wrappers
                 ConnectActorDialogueToResponseButton(dentry, mapActorCache);
             }
         }
-
+        /// <summary>
+        /// 캐릭터와 대화를 하기 위해, 캐릭터 대화에 해당하는 다이얼로그 데이터가 나타날 수 있게, 리스폰스 버튼에 다이얼로그 데이터를 삽입한다.
+        /// </summary>
+        /// <param name="dentry"></param>
+        /// <param name="mapActor"></param>
         private void ConnectActorDialogueToResponseButton(DialogueEntry dentry, List<Actor> mapActor)
         {
             for (int i = 0; i < mapActor.Count; i++)
@@ -235,6 +250,13 @@ namespace PixelCrushers.DialogueSystem.Wrappers
                 AddResponse(mother, item[i], "OpenCustomResponse()");
             }
         }
+        /// <summary>
+        /// 링크를 연결하는 것으로, 리스폰스 아이템을 추가한다.
+        /// </summary>
+        /// <param name="mother"></param>
+        /// <param name="display"></param>
+        /// <param name="sequence"></param>
+        /// <returns></returns>
         DialogueEntry AddResponse(DialogueEntry mother, string display,string sequence)
         {
              var entry = CreateEntry(mother.conversationID, display, sequence);

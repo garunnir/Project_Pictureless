@@ -1004,6 +1004,7 @@ MonoBehaviour:
   startConversationEntryTitle: 
   exclusive: 0
   replace: 0
+  queue: 0
   skipIfNoValidEntries: 0
   preventRestartOnSameFrameEnded: 0
   stopConversationOnTriggerExit: 0

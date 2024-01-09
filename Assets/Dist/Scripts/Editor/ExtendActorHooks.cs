@@ -1,6 +1,6 @@
 using PixelCrushers;
 using PixelCrushers.DialogueSystem;
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEditor;
@@ -82,6 +82,7 @@ public static partial class ExtendDEHooks
     private static ReorderableList m_languageList = null;
     private static ReorderableList m_fieldList = null;
     private static SerializedObject m_serializedObject = null;
+    private static SerializedObject m_serializedObjectCopy = null;
     private static GUIStyle textAreaStyle = null;
     private static bool isTextAreaStyleInitialized = false;
 
@@ -94,6 +95,8 @@ public static partial class ExtendDEHooks
     private static bool m_needToApplyBeforeUpdateSO;
     private static bool m_isPickingOtherTextTable;
     private static System.DateTime m_lastApply;
+    private static int m_changeBarkField=-1;
+    private static string m_changeBarkStrField="Input";
 
     [System.Serializable]
     public class SearchBarSettings
@@ -117,6 +120,7 @@ public static partial class ExtendDEHooks
     {
         if (m_languageList == null)
         {
+            m_serializedObject ??= new SerializedObject(database.CharDialogueTable);
             m_languageList = new ReorderableList(m_serializedObject, m_serializedObject.FindProperty("m_languageKeys"), true, true, true, true);
             m_languageList.drawHeaderCallback = OnDrawLanguageListHeader;
             m_languageList.drawElementCallback = OnDrawLanguageListElement;
@@ -215,74 +219,81 @@ public static partial class ExtendDEHooks
 
             RebuildFieldCache();
         }
-
+        m_fieldList.DoLayoutList();
 
         CheckMouseEvents();
     }
     private static SerializedProperty RebuildProperty(SerializedObject sobj)
     {
-        
-        var property= m_serializedObject.FindProperty("m_fieldValues");
-        m_copyedMainProp = property.Copy();
-        Debug.Log(property.arraySize);
-        m_MainProp = property;
-        var fieldValuesProperty = m_copyedMainProp;
-        for (int index = 0; index < fieldValuesProperty.arraySize; index++)
-        {
-            var fieldValueProperty = fieldValuesProperty.GetArrayElementAtIndex(index);
-            var fieldNameProperty = fieldValueProperty.FindPropertyRelative("m_fieldName");
-
-            if (!fieldNameProperty.stringValue.Contains("[" + actorID + "]."))
-            {
-                fieldNameProperty.DeleteArrayElementAtIndex(index);
-                fieldValuesProperty.DeleteArrayElementAtIndex(index);
-            }
-        }
-        
-        return fieldValuesProperty;
-    }
-    private static void Update()
-    {
+        sobj.Update();
+        m_serializedObjectCopy = new SerializedObject(m_textTable);
+        m_copyedMainProp = m_serializedObjectCopy.FindProperty("m_fieldValues");
+        m_serializedObjectCopy.Update();
+        m_MainProp = sobj.FindProperty("m_fieldValues");
+        Debug.Log("!"+m_MainProp.arraySize + "/" + m_copyedMainProp.arraySize);
         for (int index = 0; index < m_copyedMainProp.arraySize; index++)
         {
-            var fieldValuePropertyCopy = m_copyedMainProp.GetArrayElementAtIndex(index);
-            var fieldNamePropertyCopy = fieldValuePropertyCopy.FindPropertyRelative("m_fieldName");
-            string copykey = fieldNamePropertyCopy.stringValue;
-            for (int i = 0; i<m_MainProp.arraySize; i++)
+            var fieldNameProperty = m_copyedMainProp.GetArrayElementAtIndex(index).FindPropertyRelative("m_fieldName");
+            Debug.Log(fieldNameProperty.stringValue + "/S");
+            if (!fieldNameProperty.stringValue.Contains("[" + actorID + "]."))
             {
-                var fieldValuePropertyMain = m_MainProp.GetArrayElementAtIndex(index);
-                var fieldNamePropertyMain = fieldValuePropertyMain.FindPropertyRelative("m_fieldName");
-                if (copykey == fieldNamePropertyMain.stringValue)
+                Debug.Log(fieldNameProperty.stringValue+"/D");
+                m_copyedMainProp.DeleteArrayElementAtIndex(index);
+                index--;
+            }
+        }
+        Debug.Log(m_MainProp.arraySize+"/"+ m_copyedMainProp.arraySize);
+        return m_copyedMainProp;
+    }
+    private static void Refresh()
+    {
+        m_serializedObject = new SerializedObject(m_textTable);
+        m_MainProp= m_serializedObject.FindProperty("m_fieldValues");
+        m_needRefreshLists = true;
+    }
+
+    private static void Update()
+    {
+        for (int index = 0; index < m_MainProp.arraySize; index++)
+        {
+            var fieldValuePropertyMain = m_MainProp.GetArrayElementAtIndex(index);
+            var fieldNamePropertyMain = fieldValuePropertyMain.FindPropertyRelative("m_fieldName");
+            string mainkey = fieldNamePropertyMain.stringValue;
+            Debug.Log(mainkey);
+            for (int i = 0; i<m_copyedMainProp.arraySize; i++)
+            {
+                var fieldValuePropertyCopy = m_copyedMainProp.GetArrayElementAtIndex(i);
+                var fieldNamePropertyCopy = fieldValuePropertyCopy.FindPropertyRelative("m_fieldName");
+                if (mainkey == fieldNamePropertyCopy.stringValue)//필드이름이 일치하면
                 {
                     var keysPropertyMain = fieldValuePropertyMain.FindPropertyRelative("m_keys");
                     var valuesPropertyMain = fieldValuePropertyMain.FindPropertyRelative("m_values");
                     int valueIndex = -1;
                     for (int j = 0; j < keysPropertyMain.arraySize; j++)
                     {
-                        if (keysPropertyMain.GetArrayElementAtIndex(j).intValue == m_selectedLanguageID)//원형과 필드이름일치, 랭귀지 일치,
+                        if (keysPropertyMain.GetArrayElementAtIndex(j).intValue == m_selectedLanguageID)//랭귀지 일치,
                         {
                             valueIndex = j;
-                            valuesPropertyMain.GetArrayElementAtIndex(j).stringValue = fieldValuePropertyCopy.FindPropertyRelative("m_values").GetArrayElementAtIndex(m_selectedLanguageID).stringValue;//메인에 복붙
-                            Debug.LogWarning(copykey + fieldValuePropertyCopy.FindPropertyRelative("m_values").GetArrayElementAtIndex(j).stringValue);
+                            valuesPropertyMain.GetArrayElementAtIndex(j).stringValue = fieldValuePropertyCopy.FindPropertyRelative("m_values").GetArrayElementAtIndex(j).stringValue;//메인에 복붙
+                            Debug.LogWarning(mainkey + fieldValuePropertyCopy.FindPropertyRelative("m_values").GetArrayElementAtIndex(j).stringValue);
                             break;
                         }
                     }
                     if (valueIndex == -1)
                     {
-                        //없으면 생성한다.
-                        //현재언어로
-
+                        //텍스트 테이블에 필드를 추가하면 언어인덱스가 비어있으므로 생성한다.
+                        //텍스트필드에서 찾을게 아니라 메인시리얼라이즈오브젝트를 변형하고 적용하면 되는거였다니..
                         valueIndex = keysPropertyMain.arraySize;
                         keysPropertyMain.arraySize++;
                         keysPropertyMain.GetArrayElementAtIndex(valueIndex).intValue = m_selectedLanguageID;
-                        keysPropertyMain.arraySize++;
-                        keysPropertyMain.GetArrayElementAtIndex(valueIndex).stringValue = fieldValuePropertyCopy.FindPropertyRelative("m_values").GetArrayElementAtIndex(m_selectedLanguageID).stringValue;
+                        valuesPropertyMain.arraySize++;
+                        valuesPropertyMain.GetArrayElementAtIndex(valueIndex).stringValue = fieldValuePropertyCopy.FindPropertyRelative("m_values").GetArrayElementAtIndex(m_selectedLanguageID).stringValue;
+                        Debug.LogWarning(mainkey + valuesPropertyMain.GetArrayElementAtIndex(valueIndex).stringValue);
                     }
                 }
             }
         }
         m_MainProp.serializedObject.ApplyModifiedProperties();
-        m_MainProp.serializedObject.Update();
     }
     private static void RebuildFieldCache()
     {
@@ -340,10 +351,16 @@ public static partial class ExtendDEHooks
             m_selectedLanguageID = languageValueProperty.intValue;
             RebuildFieldCache();
         }
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("Refresh"))
+        {
+            Refresh();
+        }
         if (GUILayout.Button("Update"))
         {
             Update();
         }
+        GUILayout.EndHorizontal(); 
     }
 
     private static void OnDrawFieldListElement(Rect rect, int index, bool isActive, bool isFocused)
@@ -364,8 +381,49 @@ public static partial class ExtendDEHooks
         var info = m_fieldCache[index];
 
         GUI.SetNextControlName(info.nameControl);
-        EditorGUI.PropertyField(new Rect(rect.x, rect.y + 1, columnWidth, EditorGUIUtility.singleLineHeight), info.fieldNameProperty, GUIContent.none, false);
+        int buttonwidth = 20;
+        string fieldname = info.fieldNameProperty.stringValue;
+        string[] fieldnamesplit = fieldname.Split('.');
+        bool fieldNameVaild = fieldnamesplit.Length > 1;
 
+
+        if (m_changeBarkField==index)
+        {
+            GUI.backgroundColor = Color.green;
+            m_changeBarkStrField = GUI.TextField(new Rect(rect.x, rect.y + 1, columnWidth-buttonwidth, EditorGUIUtility.singleLineHeight),m_changeBarkStrField);
+            GUI.backgroundColor = Color.white;
+        }
+        else
+        {
+            //GUI.enabled = false;
+            fieldname = (fieldnamesplit.Length > 1) ? fieldnamesplit[1]: "missing";
+            GUI.Label(new Rect(rect.x, rect.y + 1, columnWidth - buttonwidth, EditorGUIUtility.singleLineHeight), fieldname);
+            //EditorGUI.PropertyField(new Rect(rect.x, rect.y + 1, columnWidth-buttonwidth, EditorGUIUtility.singleLineHeight), info.fieldNameProperty, GUIContent.none, false);
+            //GUI.enabled = true;
+        }
+        if (GUI.Button(new Rect(rect.x+ columnWidth- buttonwidth, rect.y + 1, buttonwidth, EditorGUIUtility.singleLineHeight), "C"))
+        {
+            if(m_changeBarkField == -1 || index != m_changeBarkField)
+            {
+                m_changeBarkField = index;
+                m_changeBarkStrField = fieldnamesplit[1];
+            }
+            else
+            {
+                for (int i = 0; i < m_MainProp.arraySize; i++)
+                {
+                    if(m_MainProp.GetArrayElementAtIndex(i).FindPropertyRelative("m_fieldName").stringValue == info.fieldNameProperty.stringValue)
+                    {
+                        m_MainProp.GetArrayElementAtIndex(i).FindPropertyRelative("m_fieldName").stringValue = fieldNameVaild ?  $"[{actorID}].{m_changeBarkStrField}": fieldnamesplit[1];
+                        m_serializedObject.ApplyModifiedProperties();
+                        Refresh();
+                    }
+                }
+                m_changeBarkField = -1;
+            }
+
+            Debug.Log("work");
+        }
         if (info.fieldValueProperty != null)
         {
             GUI.SetNextControlName(info.valueControl);
@@ -382,28 +440,50 @@ public static partial class ExtendDEHooks
 
     private static void OnAddFieldListElement(ReorderableList list)
     {
-        m_serializedObject.ApplyModifiedProperties();
-        m_textTable.AddField("["+actorID+"].Field " + m_textTable.nextFieldID);
         m_serializedObject.Update();
+        m_textTable.AddField("["+actorID+"].NewField " + m_textTable.nextFieldID);
+        m_serializedObject.ApplyModifiedProperties();
+
+        RebuildProperty(m_serializedObject);
         RebuildFieldCache();
+        Refresh();
         //Repaint();
     }
-
+    /// <summary>
+    /// 복사본의 아이디의 스트링값을 참고로 메인의 인덱스를 알아낸다.
+    /// </summary>
+    /// <param name="idx"></param>
+    /// <returns></returns>
+    private static int FindSyncMain(int idx)
+    {
+        string srcname=m_copyedMainProp.GetArrayElementAtIndex(idx).FindPropertyRelative("m_fieldName").stringValue;
+        for (int index = 0; index < m_MainProp.arraySize; index++)
+        {
+            var fieldValuePropertyMain = m_MainProp.GetArrayElementAtIndex(index);
+            var fieldNamePropertyMain = fieldValuePropertyMain.FindPropertyRelative("m_fieldName");
+            string mainkey = fieldNamePropertyMain.stringValue;
+            if(mainkey == srcname)
+            {
+                return index;
+            }
+        }
+        return -1;
+    }
     private static void OnRemoveFieldListElement(ReorderableList list)
     {
-        var fieldKeysProperty = m_serializedObject.FindProperty("m_fieldKeys");
-        var fieldKeyProperty = fieldKeysProperty.GetArrayElementAtIndex(list.index);
-        var fieldID = fieldKeyProperty.intValue;
+        var fieldID = FindSyncMain(list.index);
         var fieldValuesProperty = m_copyedMainProp;
         var fieldValueProperty = fieldValuesProperty.GetArrayElementAtIndex(list.index);
         var fieldNameProperty = fieldValueProperty.FindPropertyRelative("m_fieldName");
         var fieldName = fieldNameProperty.stringValue;
         if (!EditorUtility.DisplayDialog("Delete Field", "Are you sure you want to delete the field '" + fieldName +
             "' and all values associated with it?", "OK", "Cancel")) return;
-        m_serializedObject.ApplyModifiedProperties();
-        m_textTable.RemoveField(fieldID);
         m_serializedObject.Update();
+        m_MainProp.DeleteArrayElementAtIndex(fieldID);
+        m_serializedObject.ApplyModifiedProperties();
+        RebuildProperty(m_serializedObject);
         RebuildFieldCache();
+        Refresh();
     }
 
     private static int m_selectedFieldListElement;

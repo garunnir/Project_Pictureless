@@ -20,14 +20,16 @@ MonoBehaviour:
   m_fieldKeys: 100000000f000000
   m_fieldValues:
   - m_fieldName: Actor.Garam
-    m_keys: 0000000001000000
+    m_keys: 000000000100000002000000
     m_values:
     - 
     - "\uAC00\uB78C"
+    - 
   - m_fieldName: Actor.Maki
-    m_keys: 0100000000000000
+    m_keys: 010000000000000002000000
     m_values:
     - "\uB9C8\uD0A4"
+    - 
     - 
   m_nextLanguageID: 3
   m_nextFieldID: 17
