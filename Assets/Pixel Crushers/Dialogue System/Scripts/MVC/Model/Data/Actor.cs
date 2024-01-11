@@ -13,9 +13,9 @@ namespace PixelCrushers.DialogueSystem
     [System.Serializable]
     public class Actor : Asset
     {
-        public (int, int) mapPosID { get => (mapPage, mapPos); set { mapPage = value.Item1; mapPos = value.Item2; } }
-        public int mapPage=-1;
-        public int mapPos=-1;
+        //public (int, int) mapPosID { get => (mapPage, mapPos); set { mapPage = value.Item1; mapPos = value.Item2; } }
+        //public int mapPage=-1;
+        //public int mapPos=-1;
         public int conversationIdx=-1;
         public Core bodyCore;
         public Vector2 alignment;//y+good y-evil x-law x+chaos

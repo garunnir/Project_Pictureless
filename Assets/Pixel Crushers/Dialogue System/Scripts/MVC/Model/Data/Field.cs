@@ -286,7 +286,7 @@ namespace PixelCrushers.DialogueSystem
         /// </returns>
         public static int LookupInt(List<Field> fields, string title)
         {
-            return Tools.StringToInt(LookupValue(fields, title));
+            return Tools.StringToInt(LookupValue(fields, title)??"-1");
         }
 
         /// <summary>

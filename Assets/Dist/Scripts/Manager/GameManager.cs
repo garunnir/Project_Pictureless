@@ -39,8 +39,7 @@ namespace Garunnir
     public class GameManager : Singleton<GameManager>
     {
         #region DataConfig
-        public const int createStart = 10000;//start id to created charactor
-        public const int PlayerID = 1;
+
         private Dictionary<Type, string> TypeDic;
         public Dictionary<(Enum, Enum), string> FormStrDic { get; private set; }
         //public const string form_cha_name = "Name";
@@ -351,6 +350,25 @@ namespace Garunnir
         //}
     }
     
+    public class ConstDataTable
+    {
+        public class Map
+        {
+            /// <summary>
+            /// 맵번호
+            /// </summary>
+            public const string ID = "MapID";
+            /// <summary>
+            /// 맵위치
+            /// </summary>
+            public const string Pos = "MapPosID";
+        }
+        public class Actor
+        {
+            public const int createStart = 10000;//start id to created charactor
+            public const int PlayerID = 1;
+        }
+    }
     public class Utillity
     {
         //public const string lf = "\r\n";

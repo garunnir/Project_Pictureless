@@ -59,7 +59,7 @@ namespace Garunnir
         }
         Actor MainC()
         {
-            Actor cha = characters.Find(x => x.id == GameManager.PlayerID);
+            Actor cha = characters.Find(x => x.id == ConstDataTable.Actor.PlayerID);
             if (cha != null) return cha;
             cha ??= new Actor();
             cha.bodyCore ??= BodyFactory.CreateDefault();

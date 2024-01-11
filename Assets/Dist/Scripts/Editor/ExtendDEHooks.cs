@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using PixelCrushers;
 using UnityEditorInternal;
 using static UnityEngine.GUI;
+using Garunnir;
 
 [InitializeOnLoad]
 public static partial class ExtendDEHooks
@@ -41,8 +42,8 @@ public static partial class ExtendDEHooks
             Actor target = (Actor)asset;
             GUILayout.BeginVertical();
             GUILayout.Label("MapPosID:");
-            target.mapPage = EditorGUILayout.Popup(target.mapPage, database.maps.ConvertAll(x=>x.Title).ToArray(), GUILayout.Height(EditorGUIUtility.singleLineHeight));
-            target.mapPos = EditorGUILayout.IntField(target.mapPos);
+            Field.SetValue(target.fields,ConstDataTable.Map.ID, EditorGUILayout.Popup(Field.LookupInt(target.fields, ConstDataTable.Map.ID), database.maps.ConvertAll(x => x.Title).ToArray(), GUILayout.Height(EditorGUIUtility.singleLineHeight)));
+            Field.SetValue(target.fields, ConstDataTable.Map.Pos, EditorGUILayout.IntField(Field.LookupInt(target.fields, ConstDataTable.Map.Pos)));
             GUILayout.EndVertical();
             GUILayout.BeginVertical();
             GUILayout.Label("OwnDialogue:");

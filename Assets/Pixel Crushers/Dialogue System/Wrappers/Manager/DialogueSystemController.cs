@@ -265,7 +265,7 @@ namespace PixelCrushers.DialogueSystem.Wrappers
         }
         public List<Actor> FindActorOnMap(MapEntry entry)
         {
-            return masterDatabase.actors.FindAll(x => x.mapPosID.Item1 == entry.MapID && x.mapPosID.Item2 == entry.id);
+            return masterDatabase.actors.FindAll(x => Field.LookupInt(x.fields, ConstDataTable.Map.Pos) == entry.MapID && Field.LookupInt(x.fields, ConstDataTable.Map.Pos) == entry.id);
         }
 
         private void OnSelectEvent(object sender, SelectedResponseEventArgs e)

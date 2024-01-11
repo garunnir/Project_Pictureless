@@ -8,7 +8,7 @@ namespace Garunnir
 {
     public DialogueDatabase dialogueDatabase;
     
-    int cacheLastIdNum = GameManager.createStart;
+    int cacheLastIdNum = ConstDataTable.Actor.createStart;
     // Start is called before the first frame update
     void Start()
     {

@@ -1,5 +1,6 @@
 // Copyright (c) Pixel Crushers. All rights reserved.
 
+using Garunnir;
 using System;
 using System.Collections.Generic;
 using System.Drawing.Printing;
@@ -545,7 +546,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             }
             EditorGUILayout.EndHorizontal();
             var allacters = database.actors;
-            var acters=allacters.FindAll(x =>x.mapPosID.Item1==entry.MapID&& x.mapPosID.Item2 == entry.id);
+            var acters=allacters.FindAll(x =>Field.LookupInt(x.fields,ConstDataTable.Map.ID)==entry.MapID&& Field.LookupInt(x.fields, ConstDataTable.Map.Pos) == entry.id);
             if (acters != null)
             {
                 actorFoldout= EditorGUILayout.Foldout(actorFoldout, "Actors");
@@ -561,11 +562,13 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                         EditorGUILayout.LabelField(new GUIContent("mapID"));
                         EditorGUI.BeginDisabledGroup(true);
                         //item.mapPosID.Item1 = EditorGUILayout.IntField(item.mapPosID.Item1);
-                        item.mapPos = EditorGUILayout.IntField(item.mapPosID.Item2);
+                        ;
+                        Field.SetValue(item.fields,ConstDataTable.Map.Pos,EditorGUILayout.IntField(Field.LookupInt(item.fields, ConstDataTable.Map.Pos)));
                         EditorGUI.EndDisabledGroup();
                         if (GUILayout.Button("-", EditorStyles.miniButtonRight, GUILayout.Width(21)))
                         {
-                            item.mapPosID = (-1, -1);
+                            Field.SetValue(item.fields, ConstDataTable.Map.Pos, -1);
+                            Field.SetValue(item.fields, ConstDataTable.Map.ID, -1);
                         }
                         EditorGUILayout.EndHorizontal();
                     }
@@ -574,8 +577,8 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     if(GUILayout.Button("+", EditorStyles.miniButtonRight, GUILayout.Width(21)))
                     {
                         Actor actor =allacters[int.Parse(selectedPlusActor) - 1];
-                        actor.mapPos =entry.id;
-                        actor.mapPage = entry.MapID;
+                        Field.SetValue(actor.fields, ConstDataTable.Map.Pos,entry.id);
+                        Field.SetValue(actor.fields, ConstDataTable.Map.ID,entry.MapID);
                     }
                     EditorGUILayout.EndHorizontal();
                     EditorGUI.indentLevel--;

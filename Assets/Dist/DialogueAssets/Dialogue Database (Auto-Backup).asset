@@ -58,8 +58,14 @@ MonoBehaviour:
       value: 2
       type: 5
       typeString: CustomFieldType_Actor
-    mapPage: -1
-    mapPos: -1
+    - title: MapID
+      value: -1
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: MapPosID
+      value: -1
+      type: 1
+      typeString: CustomFieldType_Number
     conversationIdx: -1
     alignment: {x: -0.02, y: -0}
     portrait: {fileID: 2800000, guid: d44cb67f15cc24a488efbd3df8e8908e, type: 3}
@@ -86,8 +92,14 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    mapPage: -1
-    mapPos: -1
+    - title: MapID
+      value: -1
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: MapPosID
+      value: -1
+      type: 1
+      typeString: CustomFieldType_Number
     conversationIdx: -1
     alignment: {x: 0, y: 0}
     portrait: {fileID: 2800000, guid: 4990a1666c011cd44a4f11bbdd94719f, type: 3}
@@ -112,8 +124,6 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    mapPage: -1
-    mapPos: -1
     conversationIdx: -1
     alignment: {x: 0, y: 0}
     portrait: {fileID: 0}
@@ -138,8 +148,6 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    mapPage: -1
-    mapPos: -1
     conversationIdx: -1
     alignment: {x: 0, y: 0}
     portrait: {fileID: 0}
@@ -164,8 +172,14 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    mapPage: 0
-    mapPos: 1
+    - title: MapID
+      value: 0
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: MapPosID
+      value: 1
+      type: 1
+      typeString: CustomFieldType_Number
     conversationIdx: 1
     alignment: {x: -0.7259527, y: 0.6877447}
     portrait: {fileID: 2800000, guid: 7ae4454cc970c7c45b47701762400561, type: 3}
@@ -190,8 +204,14 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    mapPage: 0
-    mapPos: 1
+    - title: MapID
+      value: 0
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: MapPosID
+      value: 1
+      type: 1
+      typeString: CustomFieldType_Number
     conversationIdx: 2
     alignment: {x: -0.62, y: 0.62}
     portrait: {fileID: 2800000, guid: 4990a1666c011cd44a4f11bbdd94719f, type: 3}
@@ -216,8 +236,14 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    mapPage: -1
-    mapPos: -1
+    - title: MapID
+      value: 0
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: MapPosID
+      value: 0
+      type: 1
+      typeString: CustomFieldType_Number
     conversationIdx: -1
     alignment: {x: 0, y: 0}
     portrait: {fileID: 2800000, guid: 905b85de37eed6e40839642e07b5028a, type: 3}
@@ -3668,7 +3694,7 @@ MonoBehaviour:
         width: 100
         height: 100
     entryGroups: []
-    canvasScrollPosition: {x: 74.39024, y: 0}
+    canvasScrollPosition: {x: 73.17073, y: 0}
     canvasZoom: 0.8199998
   - id: 1
     fields:
