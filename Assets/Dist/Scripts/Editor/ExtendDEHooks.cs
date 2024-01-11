@@ -40,6 +40,7 @@ public static partial class ExtendDEHooks
             GUILayout.BeginHorizontal();
 
             Actor target = (Actor)asset;
+            bool isTargetDataChanged = actorID != target.id;
             GUILayout.BeginVertical();
             GUILayout.Label("MapPosID:");
             Field.SetValue(target.fields,ConstDataTable.Map.ID, EditorGUILayout.Popup(Field.LookupInt(target.fields, ConstDataTable.Map.ID), database.maps.ConvertAll(x => x.Title).ToArray(), GUILayout.Height(EditorGUIUtility.singleLineHeight)));
@@ -83,6 +84,13 @@ public static partial class ExtendDEHooks
                     m_needRefreshLists = true;
                     actorID = target.id;
                 }
+                else if(isTargetDataChanged)
+                {
+                    m_toolbarSelection = 0;
+                    m_textTable = database.CharDialogueTable;
+                    m_needRefreshLists = true;
+                    actorID = target.id;
+                }
                 switch (m_toolbarSelection)
                 {
                     case 0:
@@ -98,6 +106,7 @@ public static partial class ExtendDEHooks
                         break;
                 }
             }
+            ShowDNDStatus(target,isTargetDataChanged);
         }
 
     }

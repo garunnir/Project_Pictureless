@@ -14,6 +14,7 @@ public class BattleSystem : MonoBehaviour
     //어떤 공격방식을 차용할것인가
     //반자동전투.
     //스피드를 기준으로 공격한다.
+    //무기에 따라 최종이 변한다.
 
     void Convert()
     {

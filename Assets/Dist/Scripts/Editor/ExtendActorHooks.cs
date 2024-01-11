@@ -1,14 +1,18 @@
+using Garunnir;
 using PixelCrushers;
 using PixelCrushers.DialogueSystem;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEditorInternal;
 using UnityEngine;
+using static UnityEngine.UI.CanvasScaler;
 
 public static partial class ExtendDEHooks
 {
+    #region langProperties
     static int actorID=-1;
     static Rect position;
     static bool foldLocDialogue;
@@ -29,7 +33,7 @@ public static partial class ExtendDEHooks
 
     static SerializedProperty m_copyedMainProp;
     static SerializedProperty m_MainProp;
-
+    #endregion
     #region Variables
 
     public static bool isOpen { get { return instance != null; } }
@@ -761,4 +765,45 @@ public static partial class ExtendDEHooks
     }
 
     #endregion
+
+    static bool m_StatusToggle = false;
+
+    static void ShowDNDStatus(Actor target, bool isTargetDataChanged) 
+    {
+        void SetIntField(string title,string label)
+        {
+            Field.SetValue(target.fields, title, EditorGUILayout.IntField(label, Field.LookupInt(target.fields, title)));
+        }
+        //어카지
+        //필드 구성요소를 가져온다
+        //빈필드일때 기본 구성요소를 제공한다
+        m_StatusToggle = EditorGUILayout.Foldout(m_StatusToggle,"BasicStatus");
+        if(isTargetDataChanged)
+        {
+            StatusInitialize(target);
+        }
+        if(m_StatusToggle)
+        {
+            SetIntField(ConstDataTable.ActorStatus.Str, "STR");
+            SetIntField(ConstDataTable.ActorStatus.Con, "CON");
+            SetIntField(ConstDataTable.ActorStatus.Dex, "DEX");
+            SetIntField(ConstDataTable.ActorStatus.Int, "INT");
+            SetIntField(ConstDataTable.ActorStatus.Wis, "WIS");
+            SetIntField(ConstDataTable.ActorStatus.Cha, "CHA");
+        }
+    }
+    static void StatusInitialize(Actor target) 
+    {
+        void Init(string fieldname,int value=5)
+        {
+            if (!Field.FieldExists(target.fields, fieldname))
+                Field.SetValue(target.fields, fieldname, value);
+        }
+        Init(ConstDataTable.ActorStatus.Str);
+        Init(ConstDataTable.ActorStatus.Con);
+        Init(ConstDataTable.ActorStatus.Dex);
+        Init(ConstDataTable.ActorStatus.Int);
+        Init(ConstDataTable.ActorStatus.Wis);
+        Init(ConstDataTable.ActorStatus.Cha);
+    }
 }

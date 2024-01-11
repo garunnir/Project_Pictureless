@@ -357,16 +357,47 @@ namespace Garunnir
             /// <summary>
             /// 맵번호
             /// </summary>
-            public const string ID = "MapID";
+            public const string ID = "Map.ID";
             /// <summary>
             /// 맵위치
             /// </summary>
-            public const string Pos = "MapPosID";
+            public const string Pos = "Map.PosID";
         }
         public class Actor
         {
             public const int createStart = 10000;//start id to created charactor
             public const int PlayerID = 1;
+        }
+        public class ActorStatus
+        {
+            /// <summary>
+            /// 힘
+            /// </summary>
+            public const string Str = "Status.Str";
+            /// <summary>
+            /// 생명력
+            /// </summary>
+            public const string Con = "Status.Con";
+            /// <summary>
+            /// 손재주
+            /// </summary>
+            public const string Dex = "Status.Dex";
+            /// <summary>
+            /// 지력
+            /// </summary>
+            public const string Int = "Status.Int";
+            /// <summary>
+            /// 영적감수성
+            /// </summary>
+            public const string Wis = "Status.Wis";
+            /// <summary>
+            /// 카리스마
+            /// </summary>
+            public const string Cha = "Status.Cha";
+        }
+        public class ActorHStatus
+        {
+
         }
     }
     public class Utillity

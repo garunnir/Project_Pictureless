@@ -58,12 +58,36 @@ MonoBehaviour:
       value: 2
       type: 5
       typeString: CustomFieldType_Actor
-    - title: MapID
+    - title: Map.ID
       value: -1
       type: 1
       typeString: CustomFieldType_Number
-    - title: MapPosID
+    - title: Map.PosID
       value: -1
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Str
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Con
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Dex
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Int
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Wis
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Cha
+      value: 5
       type: 1
       typeString: CustomFieldType_Number
     conversationIdx: -1
@@ -92,12 +116,36 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    - title: MapID
+    - title: Map.ID
       value: -1
       type: 1
       typeString: CustomFieldType_Number
-    - title: MapPosID
+    - title: Map.PosID
       value: -1
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Str
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Con
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Dex
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Int
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Wis
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Cha
+      value: 5
       type: 1
       typeString: CustomFieldType_Number
     conversationIdx: -1
@@ -124,6 +172,38 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
+    - title: Map.ID
+      value: -1
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Map.PosID
+      value: -1
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Str
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Con
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Dex
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Int
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Wis
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Cha
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
     conversationIdx: -1
     alignment: {x: 0, y: 0}
     portrait: {fileID: 0}
@@ -148,6 +228,38 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
+    - title: Map.ID
+      value: -1
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Map.PosID
+      value: -1
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Str
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Con
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Dex
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Int
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Wis
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Cha
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
     conversationIdx: -1
     alignment: {x: 0, y: 0}
     portrait: {fileID: 0}
@@ -172,12 +284,36 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    - title: MapID
-      value: 0
+    - title: Status.Str
+      value: 5
       type: 1
       typeString: CustomFieldType_Number
-    - title: MapPosID
-      value: 1
+    - title: Status.Con
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Dex
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Int
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Wis
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Cha
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Map.ID
+      value: -1
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Map.PosID
+      value: -1
       type: 1
       typeString: CustomFieldType_Number
     conversationIdx: 1
@@ -236,12 +372,36 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    - title: MapID
-      value: 0
+    - title: Map.ID
+      value: -1
       type: 1
       typeString: CustomFieldType_Number
-    - title: MapPosID
-      value: 0
+    - title: Map.PosID
+      value: -1
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Str
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Con
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Dex
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Int
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Wis
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Cha
+      value: 5
       type: 1
       typeString: CustomFieldType_Number
     conversationIdx: -1
