@@ -784,12 +784,15 @@ public static partial class ExtendDEHooks
         }
         if(m_StatusToggle)
         {
+            EditorGUILayout.LabelField("캐릭터기본스텟");
             SetIntField(ConstDataTable.ActorStatus.Str, "STR");
             SetIntField(ConstDataTable.ActorStatus.Con, "CON");
             SetIntField(ConstDataTable.ActorStatus.Dex, "DEX");
             SetIntField(ConstDataTable.ActorStatus.Int, "INT");
             SetIntField(ConstDataTable.ActorStatus.Wis, "WIS");
             SetIntField(ConstDataTable.ActorStatus.Cha, "CHA");
+            EditorGUILayout.LabelField("캐릭터자원");
+            SetIntField(ConstDataTable.ActorStatus.Hp, "HP");
         }
     }
     static void StatusInitialize(Actor target) 
@@ -805,5 +808,6 @@ public static partial class ExtendDEHooks
         Init(ConstDataTable.ActorStatus.Int);
         Init(ConstDataTable.ActorStatus.Wis);
         Init(ConstDataTable.ActorStatus.Cha);
+        Init(ConstDataTable.ActorStatus.Hp,100);
     }
 }

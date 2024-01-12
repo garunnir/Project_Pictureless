@@ -7,16 +7,15 @@ public class EquipSO : ScriptableObject
 {
     //장비능력치
     [SerializeField] string equipName;
-    [SerializeField,Range(1,3)] int range=1;
     [SerializeField] float damage;
     [Header("적합성")]
-    [SerializeField] float strSuitability;
-    [SerializeField] float conSuitability;
-    [SerializeField] float dexSuitability;
-    [SerializeField] float intSuitability;
-    [SerializeField] float wisSuitability;
-    [SerializeField] float chaSuitability;
-    [SerializeField] AnimationCurve rangeSuitabilty;
+    [SerializeField] float str;
+    [SerializeField] float con;
+    [SerializeField] float dex;
+    [SerializeField] float @int;
+    [SerializeField] float wis;
+    [SerializeField] float cha;
+    [SerializeField] AnimationCurve range;
 
     private void OnEnable()
     {
@@ -28,16 +27,16 @@ public class EquipSO : ScriptableObject
     }
     private void KeyNormalize()
     {
-        Keyframe[] frame=rangeSuitabilty.keys;
+        Keyframe[] frame=range.keys;
         for (int i = 0; i < frame.Length; i++)
         {
-            Keyframe keyframe = rangeSuitabilty.keys[i];
+            Keyframe keyframe = range.keys[i];
             keyframe.value = Mathf.Clamp(keyframe.value, 0, 1);
             keyframe.time = Mathf.Clamp(keyframe.time, 0, 1);
             Debug.Log("/"+ keyframe.value);
-            rangeSuitabilty.RemoveKey(i);
-            rangeSuitabilty.AddKey(keyframe);
-            Debug.Log(rangeSuitabilty.keys[i].value);
+            range.RemoveKey(i);
+            range.AddKey(keyframe);
+            Debug.Log(range.keys[i].value);
 
         }
     }

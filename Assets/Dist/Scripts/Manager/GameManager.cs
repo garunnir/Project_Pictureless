@@ -394,6 +394,11 @@ namespace Garunnir
             /// 카리스마
             /// </summary>
             public const string Cha = "Status.Cha";
+            /// <summary>
+            /// 생명력
+            /// </summary>
+            public const string Hp = "Status.Hp";
+
         }
         public class ActorHStatus
         {

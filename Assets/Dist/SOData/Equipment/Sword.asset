@@ -13,15 +13,14 @@ MonoBehaviour:
   m_Name: Sword
   m_EditorClassIdentifier: 
   equipName: "\uC96D\uC774\uB294 \uCE7C(\uC9C4\uC9DC\uC8FD\uC784)"
-  range: 1
   damage: 10
-  strSuitability: 0
-  conSuitability: 0
-  dexSuitability: 23
-  intSuitability: 0
-  wisSuitability: 1
-  chaSuitability: 0
-  rangeSuitabilty:
+  str: 1
+  con: 0
+  dex: 0
+  int: 0
+  wis: 0
+  cha: 0
+  range:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
