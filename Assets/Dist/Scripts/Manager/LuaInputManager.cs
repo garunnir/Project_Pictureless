@@ -54,7 +54,7 @@ public class LuaInputManager : MonoBehaviour
     private void BGChange(string imgname)
     {
         RawImage img = GameManager.Instance.GetUIManager().GetBackground();
-        img.texture = GameManager.Instance.GetBG(imgname);
+        img.texture = GameManager.Instance.GetResourceManager().GetBG(imgname);
         UIManager.AdjustSize(GameManager.Instance.GetUIManager().GetUpperRect(), img.rectTransform, img.texture);
     }
     void OpenCustomResponse(string excute)

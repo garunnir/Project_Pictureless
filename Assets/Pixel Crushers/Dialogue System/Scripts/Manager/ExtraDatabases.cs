@@ -43,7 +43,7 @@ namespace PixelCrushers.DialogueSystem
         /// Add/remove one database per frame instead of adding them all at the same time.
         /// Useful to avoid stutter when adding several databases.
         /// </summary>
-        [Tooltip("Add/remove one database per frame instead of adding them all at the same time. Useful to avoid stutter when adding several databases.")]
+        [Tooltip("Add/remove one m_database per frame instead of adding them all at the same time. Useful to avoid stutter when adding several databases.")]
         public bool onePerFrame = false;
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace PixelCrushers.DialogueSystem
         {
             if (database != null)
             {
-                if (DialogueDebug.logInfo) Debug.Log("Dialogue System: Adding database " + database.name, this);
+                if (DialogueDebug.logInfo) Debug.Log("Dialogue System: Adding m_database " + database.name, this);
                 DialogueManager.AddDatabase(database);
             }
         }
@@ -192,7 +192,7 @@ namespace PixelCrushers.DialogueSystem
         {
             if (database != null)
             {
-                if (DialogueDebug.logInfo) Debug.Log("Dialogue System: Removing database " + database.name, this);
+                if (DialogueDebug.logInfo) Debug.Log("Dialogue System: Removing m_database " + database.name, this);
                 DialogueManager.RemoveDatabase(database);
             }
         }

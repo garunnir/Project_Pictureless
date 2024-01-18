@@ -218,7 +218,7 @@ public class UICharModel : UIModel
             }
             else if (ImgExpression.Contains(item.title))
             {
-                Texture2D tex = GameManager.Instance.GetImg(GetPicName(item));
+                Texture2D tex = GameManager.Instance.GetResourceManager().GetImg(GetPicName(item));
                 var obj = viewobj.ShowImg(tex, out y);
             }
             else

@@ -34,7 +34,7 @@ namespace PixelCrushers.DialogueSystem
         /// <summary>
         /// The initial dialogue database.
         /// </summary>
-        [Tooltip("This dialogue database is loaded automatically. Use an Extra Databases component to load additional databases.")]
+        [Tooltip("This dialogue m_database is loaded automatically. Use an Extra Databases component to load additional databases.")]
         public DialogueDatabase initialDatabase = null;
 
         /// <summary>
@@ -65,14 +65,14 @@ namespace PixelCrushers.DialogueSystem
         [Tooltip("Tick if your conversations reference Dialog[x].SimStatus.")]
         public bool includeSimStatus = false;
 
-        [Tooltip("Use a copy of the dialogue database at runtime instead of the asset file directly. This allows you to change the database without affecting the asset.")]
+        [Tooltip("Use a copy of the dialogue m_database at runtime instead of the asset file directly. This allows you to change the m_database without affecting the asset.")]
         public bool instantiateDatabase = true;
 
         /// <summary>
         /// If <c>true</c>, preloads the master database and dialogue UI. Otherwise they're lazy-
         /// loaded only before the first time they're needed.
         /// </summary>
-        [Tooltip("Preload the dialogue database and dialogue UI at Start. Otherwise they're loaded at first use.")]
+        [Tooltip("Preload the dialogue m_database and dialogue UI at Start. Otherwise they're loaded at first use.")]
         public bool preloadResources = true;
 
         public enum WarmUpMode { On, Extra, Off }
@@ -630,7 +630,7 @@ namespace PixelCrushers.DialogueSystem
                 m_databaseManager.Reset(DatabaseResetOptions.KeepAllLoaded);
             }
             if (initialDatabase != null) lastInitialDatabaseName = initialDatabase.name;
-            if (DialogueDebug.logWarnings && (initialDatabase == null)) Debug.LogWarning(string.Format("{0}: No dialogue database is assigned.", new System.Object[] { DialogueDebug.Prefix }));
+            if (DialogueDebug.logWarnings && (initialDatabase == null)) Debug.LogWarning(string.Format("{0}: No dialogue m_database is assigned.", new System.Object[] { DialogueDebug.Prefix }));
         }
 
         /// <summary>
@@ -691,7 +691,7 @@ namespace PixelCrushers.DialogueSystem
         public void PreloadMasterDatabase()
         {
             DialogueDatabase db = masterDatabase;
-            if (DialogueDebug.logInfo) Debug.Log(string.Format("{0}: Loaded master database '{1}'", new System.Object[] { DialogueDebug.Prefix, db.name }));
+            if (DialogueDebug.logInfo) Debug.Log(string.Format("{0}: Loaded master m_database '{1}'", new System.Object[] { DialogueDebug.Prefix, db.name }));
         }
 
         /// <summary>

@@ -38,7 +38,8 @@ namespace PixelCrushers.DialogueSystem.Wrappers
             base.Awake();
             map=FindObjectOfType<UIMapController>();
             map.MapEntered += Map_FindCharInMap;
-            GameManager.Instance.ResourceLoadDoneEvent += () =>
+            if(FindObjectOfType<GameManager>())
+            GameManager.Instance.GetResourceManager().ResourceLoadDoneEvent += () =>
             {
                 Init();
                 //StartConversation(basicConv.Title);

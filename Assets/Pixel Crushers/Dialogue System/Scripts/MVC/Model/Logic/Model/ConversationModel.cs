@@ -154,7 +154,7 @@ namespace PixelCrushers.DialogueSystem
             else
             {
                 firstState = null;
-                if (DialogueDebug.logErrors) Debug.LogWarning(string.Format("{0}: Conversation '{1}' not found in database.", new System.Object[] { DialogueDebug.Prefix, title }));
+                if (DialogueDebug.logErrors) Debug.LogWarning(string.Format("{0}: Conversation '{1}' not found in m_database.", new System.Object[] { DialogueDebug.Prefix, title }));
             }
         }
 

@@ -26,10 +26,13 @@ public class CharacterEditor : PropertyDrawer
     {
         serializedObject ??= property.serializedObject;
         serializedObject.Update();
-
-        EditorGUILayout.HelpBox("This optional component specifies which actor in your dialogue database is associated with this GameObject. You can also specify other subtitle and bark settings.", MessageType.None);
-
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("actor"), true);
+        
+        GUI.Label(position, label);
+        property.intValue = int.Parse(GUI.TextField(position, property.stringValue));
+        
+        base.OnGUI(position, property, label);
+        return;
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("fields"), true);
 
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.PropertyField(serializedObject.FindProperty("persistentDataName"), true);

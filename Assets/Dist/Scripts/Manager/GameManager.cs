@@ -127,44 +127,38 @@ namespace Garunnir
         [SerializeField]CharacterManager _charactorManager;
         [SerializeField] DialogueSystemController _dialogueSystemController;
         [SerializeField]UIManager _uiManager;
+        [SerializeField]ResourceManager _resourceManager;
         public UIManager GetUIManager() => _uiManager;
+        public ResourceManager GetResourceManager() => _resourceManager;
         #endregion
-
-        #region CacheData
-        public int GetCurLocID() => Localization.GetCurrentLanguageID(UILocalizationManager.instance.textTable);
-
-#if !UNITY_EDITOR
-        AndroidJavaClass ajc = new AndroidJavaClass("com.garunnir.File.FileController");
-#endif
-        private Dictionary<string,Texture2D> m_imgDic = new Dictionary<string, Texture2D>();
-        public Texture2D GetImg(string key) 
-        {
-            if (!m_imgDic.ContainsKey(key))
-            {
-                Debug.LogError("cantfind:" + key);
-                return null;
-            }
-            return m_imgDic[key]; 
-        }
-        public Texture2D GetBG(string key)
-        {
-            key = "Img/Background/" + key + ".png";
-            if (!m_imgDic.ContainsKey(key))
-            {
-                Debug.LogError("cantfind:" + key);
-                return null;
-            }
-            return m_imgDic[key];
-        }
-        List<string> tmpPathContainer = new List<string>();
-
         public static event UnityAction InitDone;
-      
-        #endregion
+
+
+
+        void LoadCharPicture()
+        {
+            if (_charactorManager.characters.Count == 0) return;
+            var player = _charactorManager.characters.Find(x => x.Name == "Player");
+            player.portrait = Utillity.LoadImage(GameManager.charProfleImg + player.id);
+        }
+        private void LoadChar()
+        {
+            //SaveSystem.LoadFromSlot(0);
+        }
+        private void ResourceLoad()
+        {
+            if (GetResourceManager() == null) return;
+
+            GetResourceManager().ResourceLoadDoneEvent += () => FindObjectOfType<DialogueSystemTrigger>()?.OnUse();
+            GetResourceManager().LoadAllImg();
+            //로드시 시간이 걸리는 데이터들을 미리 로드한다.
+            //만들어진 캐릭터 프로필사진들을 로드한다.
+            LoadCharPicture();
+        }
         private void Init()
         {
-            _charactorManager.Init();
-            _uiManager.Init();
+            _charactorManager?.Init();
+            _uiManager?.Init();
 
             SetDontDistroy();
             InitDone?.Invoke();
@@ -173,181 +167,21 @@ namespace Garunnir
         {
             DataConfig();
             Debug.Log("StartGameManagerInit");
-            ResourceLoadDoneEvent += ()=>FindObjectOfType<DialogueSystemTrigger>()?.OnUse();
             Init();
 #if UNITY_EDITOR
             UpdateSO();
 #endif
-            StarterInit();
             LoadChar();
             ResourceLoad();
             Debug.Log("EndGameManagerInit");
         }
+
+
         private void StarterInit()
         {
 
         }
-        private void LoadChar()
-        {
-            SaveSystem.LoadFromSlot(0);
-        }
-        public event Action ResourceLoadDoneEvent;
-        bool isResourceLoadDone = false;
-        void LoadAllImg()
-        {
-            InitCharImg(() => { LoadImgByDir(); isResourceLoadDone = true; print("Invoke"); ResourceLoadDoneEvent?.Invoke(); });
-            print(tmpPathContainer.Count);
-        }
-        void LoadImgByDir()
-        {
-            //이미지를 경로로부터 가져온다.
-            //경로를 어떻게?
-            foreach (string key in tmpPathContainer)
-            {
-                string keyname = key.Replace(Application.persistentDataPath+"/", string.Empty);
-#if !UNITY_EDITOR
-                m_imgDic.Add(keyname, NativeGallery.LoadImageAtPath(key));
-#else
-                Texture2D tex =new Texture2D(8,8);
-                if (!File.Exists(key))
-                {
-                    Debug.LogError("cantfind:" + key);
-                }
-                tex.LoadImage(File.ReadAllBytes(key));
-                m_imgDic.Add(keyname, tex);
-                Debug.LogWarning(keyname);
-#endif
-            }
-        }
-
-#if !UNITY_EDITOR
-        void InitCharImg(Action done)
-        {
-            int totalTasks = 2; // 총 작업 수
-            int completedTasks = 0; // 완료된 작업 수
-            Action action= () => { 
-                completedTasks++;
-                Debug.LogWarning("com: "+completedTasks);
-                if (completedTasks == totalTasks)
-                {
-                    Debug.Log("delete");
-                    ajc.CallStatic<bool>("deleteDirectoryIn", "DCIM", "/_.PPResource");
-                    done();
-                }
-            };
-            ImgResourceInit("m_Background", action);
-            ImgResourceInit("Character", action);
-        }
-        private void ImgResourceInit(string rpath,Action done)
-        {
-            //가지고 있던 이미지들을 전부 겔러리에 저장한다.
-            //팝업이 뜨면 실패.
-            //가지고 있는것이 있는지 먼저 판단
-            //파일명부터 가져오자 경로를 긁어오는 메서드 있는지?
-            Texture2D[] textures = Resources.LoadAll<Texture2D>("Img/" + rpath);
-            //AndroidJavaClass ajc = new AndroidJavaClass("com.garunnir.File.FileController");
-            string path = ajc.CallStatic<string>("GetFileEnvPath", "DCIM", "");
-            //Debug.LogWarning(ajc.CallStatic<bool>("IsExistFileEnv", "DCIM", "/.PPResource/Background/portal.png"));
-            print(ajc.CallStatic<bool>("CreateDirectoryIn", "DCIM", $"/.PPResource/{rpath}"));
-            int tmpDone = textures.Length;
-            bool check=false;
-            foreach (Texture2D tex in textures)
-            {
-                tmpPathContainer.Add(path + $"/.PPResource/{rpath}/" + tex.name + ".png");
-
-                if (ajc.CallStatic<bool>("IsExistFileEnv", "DCIM", $"/.PPResource/{rpath}/" + tex.name + ".png"))
-                {
-                    Debug.Log("already Exist: " + tex.name + ".png");
-                    tmpDone--;
-                    continue;
-                }
-
-                //File.WriteAllBytes(path+"/"+tex.name+ ".png", tex.GetRawTextureData());
-                //if (textures.Last() != tex)
-                //{
-
-                //}
-                //else
-                //{
-
-                //}
-                check=true;
-                NativeGallery.Permission permission =NativeGallery.SaveImageToGallery(tex, $".PPResource/{rpath}", tex.name + ".png", (x, y) =>
-                {
-                    print(y);//path
-                    if (!x)
-                    {
-                        Debug.LogError("Save Failed");
-                    }
-                    tmpDone--;
-                    ajc.CallStatic<bool>("MoveTo", "DCIM", $"/_.PPResource/{rpath}/" + tex.name + ".png", $"/.PPResource/{rpath}/" + tex.name + ".png");
-                    if (tmpDone == 0)
-                    {
-                        done();
-                    }
-                });
-                
-            }
-            //if (!File.Exists(path))
-            //{
-            //    Utillity.CheckFolderInPath(path);
-            //}
-           if (tmpDone == 0&&!check)
-           done();
-
-            print("end");
-            //파일있는지 확인하고 없으면 그 경로에 파일을 복사해넣는다.
-        }
-#else
-        async void InitCharImg(Action done)
-        {
-            List<Task> tasks = new List<Task>();
-
-            // 비동기 작업들을 tasks 리스트에 추가
-            tasks.Add(ImgResourceInit("Background"));
-            tasks.Add(ImgResourceInit("Character"));
-
-            // 모든 작업이 완료될 때까지 기다림
-            await Task.WhenAll(tasks);
-
-            done();
-            Console.WriteLine("모든 작업이 완료되었습니다.");
-        }
-        async Task ImgResourceInit(string rpath)
-        {
-            //가지고 있던 이미지들을 전부 겔러리에 저장한다.
-            //팝업이 뜨면 실패.
-            //가지고 있는것이 있는지 먼저 판단
-            //파일명부터 가져오자 경로를 긁어오는 메서드 있는지?
-            Texture2D[] textures = Resources.LoadAll<Texture2D>("Img/" + rpath);
-            string path =Utillity.CheckFolderInPath(Application.persistentDataPath + ("/Img/" + rpath));
-            print("start");
-            foreach (var item in textures)
-            {
-                await File.WriteAllBytesAsync(path +"/"+ item.name + ".png", Utillity.GetTextureBytesFromCopy(item));
-                tmpPathContainer.Add(path + "/" + item.name + ".png");
-            }
-            print("end");
-            //파일있는지 확인하고 없으면 그 경로에 파일을 복사해넣는다.
-        }
-#endif
-        private void ResourceLoad()
-        {
-            LoadAllImg();
-            //로드시 시간이 걸리는 데이터들을 미리 로드한다.
-            //만들어진 캐릭터 프로필사진들을 로드한다.
-            LoadCharPicture();
-        }
-        void LoadCharPicture()
-        {
-            if (_charactorManager.characters.Count == 0) return;
-            var player = _charactorManager.characters.Find(x => x.Name == "Player");
-            player.portrait = Utillity.LoadImage(GameManager.charProfleImg + player.id);
-        }
-        //private void Update()
-        //{
-        //    Debug.Log("!");
-        //}
+      
     }
     
     public class ConstDataTable
@@ -367,38 +201,50 @@ namespace Garunnir
         {
             public const int createStart = 10000;//start id to created charactor
             public const int PlayerID = 1;
+
+            public class Status
+            {
+                /// <summary>
+                /// 힘
+                /// </summary>
+                public const string Str = "Status.Str";
+                /// <summary>
+                /// 생명력
+                /// </summary>
+                public const string Con = "Status.Con";
+                /// <summary>
+                /// 손재주
+                /// </summary>
+                public const string Dex = "Status.Dex";
+                /// <summary>
+                /// 지력
+                /// </summary>
+                public const string Int = "Status.Int";
+                /// <summary>
+                /// 영적감수성
+                /// </summary>
+                public const string Wis = "Status.Wis";
+                /// <summary>
+                /// 카리스마
+                /// </summary>
+                public const string Cha = "Status.Cha";
+                /// <summary>
+                /// 생명력
+                /// </summary>
+                public const string Hp = "Status.Hp";
+            }
+            public class BodyData//todo 차후 보디 데이터 각 무개의 합으로 평가한다.
+            {
+                public const string Weight = "Body.Weight";
+            }
         }
-        public class ActorStatus
+        public class Equipment
         {
             /// <summary>
-            /// 힘
+            /// 무기
             /// </summary>
-            public const string Str = "Status.Str";
-            /// <summary>
-            /// 생명력
-            /// </summary>
-            public const string Con = "Status.Con";
-            /// <summary>
-            /// 손재주
-            /// </summary>
-            public const string Dex = "Status.Dex";
-            /// <summary>
-            /// 지력
-            /// </summary>
-            public const string Int = "Status.Int";
-            /// <summary>
-            /// 영적감수성
-            /// </summary>
-            public const string Wis = "Status.Wis";
-            /// <summary>
-            /// 카리스마
-            /// </summary>
-            public const string Cha = "Status.Cha";
-            /// <summary>
-            /// 생명력
-            /// </summary>
-            public const string Hp = "Status.Hp";
-
+            public const string Weapon = "Equipment.Weapon";
+            public const string Equip = "Equipment.Equip";
         }
         public class ActorHStatus
         {

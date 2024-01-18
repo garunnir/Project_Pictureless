@@ -20,7 +20,7 @@ namespace PixelCrushers.DialogueSystem
     [AddComponentMenu("")]
     public class DialogueSystemSceneEvents : MonoBehaviour
     {
-        [HelpBox("Do not remove this GameObject. It contains UnityEvents referenced by a dialogue database. This GameObject should not be a child of the Dialogue Manager or marked as Don't Destroy On Load.", HelpBoxMessageType.Info)]
+        [HelpBox("Do not remove this GameObject. It contains UnityEvents referenced by a dialogue m_database. This GameObject should not be a child of the Dialogue Manager or marked as Don't Destroy On Load.", HelpBoxMessageType.Info)]
         public List<DialogueEntrySceneEvent> dialogueEntrySceneEvents = new List<DialogueEntrySceneEvent>();
 
         private static List<DialogueSystemSceneEvents> m_sceneInstances = new List<DialogueSystemSceneEvents>();

@@ -1047,7 +1047,7 @@ namespace PixelCrushers.DialogueSystem
             LuaTableWrapper itemTable = Lua.Run("return Item").asTable;
             if (!itemTable.isValid)
             {
-                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Quest Log couldn't access Lua Item[] table. Has the Dialogue Manager loaded a database yet?", new System.Object[] { DialogueDebug.Prefix }));
+                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Quest Log couldn't access Lua Item[] table. Has the Dialogue Manager loaded a m_database yet?", new System.Object[] { DialogueDebug.Prefix }));
                 return groups.ToArray();
             }
             foreach (var itemTableValue in itemTable.values)
@@ -1147,7 +1147,7 @@ namespace PixelCrushers.DialogueSystem
             LuaTableWrapper itemTable = Lua.Run("return Item").asTable;
             if (!itemTable.isValid)
             {
-                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Quest Log couldn't access Lua Item[] table. Has the Dialogue Manager loaded a database yet?", new System.Object[] { DialogueDebug.Prefix }));
+                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Quest Log couldn't access Lua Item[] table. Has the Dialogue Manager loaded a m_database yet?", new System.Object[] { DialogueDebug.Prefix }));
                 return questNames.ToArray();
             }
             var filterGroup = (group != null);
@@ -1213,7 +1213,7 @@ namespace PixelCrushers.DialogueSystem
             LuaTableWrapper itemTable = Lua.Run("return Item").asTable;
             if (!itemTable.isValid)
             {
-                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Quest Log couldn't access Lua Item[] table. Has the Dialogue Manager loaded a database yet?", new System.Object[] { DialogueDebug.Prefix }));
+                if (DialogueDebug.logWarnings) Debug.LogWarning(string.Format("{0}: Quest Log couldn't access Lua Item[] table. Has the Dialogue Manager loaded a m_database yet?", new System.Object[] { DialogueDebug.Prefix }));
                 return list.ToArray();
             }
             foreach (var itemTableValue in itemTable.values)

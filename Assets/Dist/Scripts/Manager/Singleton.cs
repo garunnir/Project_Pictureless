@@ -10,7 +10,9 @@ public class Singleton<T> : MonoBehaviour where T : class
             T findinst = FindObjectOfType(typeof(T)) as T;
             if (findinst == null)
             {
+                Debug.Log(typeof(T).Name);
                 _instance=new GameObject(typeof(T).Name, typeof(T)).GetComponent<T>();
+                Debug.Log(_instance);
             }
             else
             {

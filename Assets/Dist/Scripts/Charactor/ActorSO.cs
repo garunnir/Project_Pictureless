@@ -1,19 +1,40 @@
+using PixelCrushers.DialogueSystem;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using System;
 using Garunnir;
 using PixelCrushers;
-using PixelCrushers.DialogueSystem;
-using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEditorInternal;
-using UnityEngine;
-using static UnityEngine.UI.CanvasScaler;
-
-public static partial class ExtendDEHooks
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+[CreateAssetMenu(fileName = "Character", menuName = "GameDataAsset/Character")]
+public class ActorSO : ScriptableObject
 {
+     public Actor actor; 
+}
+#if UNITY_EDITOR
+[CustomEditor(typeof(ActorSO))]
+public class ActorSOEditor : Editor
+{
+    private static GUIContent displayNameLabel = new GUIContent("Display Name", "The name to show in UIs.");
+    static bool m_StatusToggle = false;
+    bool m_isBaseFold=false;
+    bool m_actorTexturesFoldout = false;
+    bool m_actorSpritesFoldout=false;
+    bool m_foldLocDialogue = false;
+    Actor m_actor;
+    int m_actorID;
+    ActorSO m_target;
+    Texture2D m_cachedAlignment;
+    Texture2D m_cachedAlignmentCursor;
+    Rect m_alignRect;
+    //DialogueDatabase m_database;
+
     #region langProperties
-    static int actorID=-1;
+    static int actorID = -1;
     static Rect position;
     static bool foldLocDialogue;
     static string[] ToolbarLabels = { "Languages", "Fields" };
@@ -35,12 +56,6 @@ public static partial class ExtendDEHooks
     static SerializedProperty m_MainProp;
     #endregion
     #region Variables
-
-    public static bool isOpen { get { return instance != null; } }
-
-    public static TextTableEditorWindow instance { get { return s_instance; } }
-
-    private static TextTableEditorWindow s_instance = null;
 
     private const string WindowTitle = "Text Table";
 
@@ -99,8 +114,8 @@ public static partial class ExtendDEHooks
     //private static bool m_needToApplyBeforeUpdateSO;
     //private static bool m_isPickingOtherTextTable;
     //private static System.DateTime m_lastApply;
-    private static int m_changeBarkField=-1;
-    private static string m_changeBarkStrField="Input";
+    private static int m_changeBarkField = -1;
+    private static string m_changeBarkStrField = "Input";
 
     [System.Serializable]
     public class SearchBarSettings
@@ -120,11 +135,11 @@ public static partial class ExtendDEHooks
         m_languageListScrollPosition = Vector2.zero;
     }
 
-    private static void DrawLanguagesTab(DialogueDatabase database, Actor asset)
+    private static void DrawLanguagesTab()
     {
         if (m_languageList == null)
         {
-            m_serializedObject ??= new SerializedObject(database.CharDialogueTable);
+            m_serializedObject ??= new SerializedObject(m_textTable);
             m_languageList = new ReorderableList(m_serializedObject, m_serializedObject.FindProperty("m_languageKeys"), true, true, true, true);
             m_languageList.drawHeaderCallback = OnDrawLanguageListHeader;
             m_languageList.drawElementCallback = OnDrawLanguageListElement;
@@ -159,7 +174,7 @@ public static partial class ExtendDEHooks
         m_selectedLanguageID = 0;
     }
 
-    private static void DrawFieldsTab(DialogueDatabase database, Actor asset)
+    private static void DrawFieldsTab()
     {
         DrawGrid();
         DrawEntryBox();
@@ -188,7 +203,7 @@ public static partial class ExtendDEHooks
             this.fieldNameProperty = fieldNameProperty;
             this.fieldValueProperty = fieldValueProperty;
             //this.nameControl = "["+actorID+"].Field" + + index;
-            this.nameControl = "Field" + + index;
+            this.nameControl = "Field" + +index;
             this.valueControl = "Value" + index;
         }
     }
@@ -234,25 +249,25 @@ public static partial class ExtendDEHooks
         m_copyedMainProp = m_serializedObjectCopy.FindProperty("m_fieldValues");
         m_serializedObjectCopy.Update();
         m_MainProp = sobj.FindProperty("m_fieldValues");
-        Debug.Log("!"+m_MainProp.arraySize + "/" + m_copyedMainProp.arraySize);
+        Debug.Log("!" + m_MainProp.arraySize + "/" + m_copyedMainProp.arraySize);
         for (int index = 0; index < m_copyedMainProp.arraySize; index++)
         {
             var fieldNameProperty = m_copyedMainProp.GetArrayElementAtIndex(index).FindPropertyRelative("m_fieldName");
             Debug.Log(fieldNameProperty.stringValue + "/S");
             if (!fieldNameProperty.stringValue.Contains("[" + actorID + "]."))
             {
-                Debug.Log(fieldNameProperty.stringValue+"/D");
+                Debug.Log(fieldNameProperty.stringValue + "/D");
                 m_copyedMainProp.DeleteArrayElementAtIndex(index);
                 index--;
             }
         }
-        Debug.Log(m_MainProp.arraySize+"/"+ m_copyedMainProp.arraySize);
+        Debug.Log(m_MainProp.arraySize + "/" + m_copyedMainProp.arraySize);
         return m_copyedMainProp;
     }
     private static void Refresh()
     {
         m_serializedObject = new SerializedObject(m_textTable);
-        m_MainProp= m_serializedObject.FindProperty("m_fieldValues");
+        m_MainProp = m_serializedObject.FindProperty("m_fieldValues");
         m_needRefreshLists = true;
     }
 
@@ -264,7 +279,7 @@ public static partial class ExtendDEHooks
             var fieldNamePropertyMain = fieldValuePropertyMain.FindPropertyRelative("m_fieldName");
             string mainkey = fieldNamePropertyMain.stringValue;
             Debug.Log(mainkey);
-            for (int i = 0; i<m_copyedMainProp.arraySize; i++)
+            for (int i = 0; i < m_copyedMainProp.arraySize; i++)
             {
                 var fieldValuePropertyCopy = m_copyedMainProp.GetArrayElementAtIndex(i);
                 var fieldNamePropertyCopy = fieldValuePropertyCopy.FindPropertyRelative("m_fieldName");
@@ -364,7 +379,7 @@ public static partial class ExtendDEHooks
         {
             Update();
         }
-        GUILayout.EndHorizontal(); 
+        GUILayout.EndHorizontal();
     }
 
     private static void OnDrawFieldListElement(Rect rect, int index, bool isActive, bool isFocused)
@@ -391,23 +406,23 @@ public static partial class ExtendDEHooks
         bool fieldNameVaild = fieldnamesplit.Length > 1;
 
 
-        if (m_changeBarkField==index)
+        if (m_changeBarkField == index)
         {
             GUI.backgroundColor = Color.green;
-            m_changeBarkStrField = GUI.TextField(new Rect(rect.x, rect.y + 1, columnWidth-buttonwidth, EditorGUIUtility.singleLineHeight),m_changeBarkStrField);
+            m_changeBarkStrField = GUI.TextField(new Rect(rect.x, rect.y + 1, columnWidth - buttonwidth, EditorGUIUtility.singleLineHeight), m_changeBarkStrField);
             GUI.backgroundColor = Color.white;
         }
         else
         {
             //GUI.enabled = false;
-            fieldname = (fieldnamesplit.Length > 1) ? fieldnamesplit[1]: "missing";
+            fieldname = (fieldnamesplit.Length > 1) ? fieldnamesplit[1] : "missing";
             GUI.Label(new Rect(rect.x, rect.y + 1, columnWidth - buttonwidth, EditorGUIUtility.singleLineHeight), fieldname);
             //EditorGUI.PropertyField(new Rect(rect.x, rect.y + 1, columnWidth-buttonwidth, EditorGUIUtility.singleLineHeight), info.fieldNameProperty, GUIContent.none, false);
             //GUI.enabled = true;
         }
-        if (GUI.Button(new Rect(rect.x+ columnWidth- buttonwidth, rect.y + 1, buttonwidth, EditorGUIUtility.singleLineHeight), "C"))
+        if (GUI.Button(new Rect(rect.x + columnWidth - buttonwidth, rect.y + 1, buttonwidth, EditorGUIUtility.singleLineHeight), "C"))
         {
-            if(m_changeBarkField == -1 || index != m_changeBarkField)
+            if (m_changeBarkField == -1 || index != m_changeBarkField)
             {
                 m_changeBarkField = index;
                 m_changeBarkStrField = fieldnamesplit[1];
@@ -416,9 +431,9 @@ public static partial class ExtendDEHooks
             {
                 for (int i = 0; i < m_MainProp.arraySize; i++)
                 {
-                    if(m_MainProp.GetArrayElementAtIndex(i).FindPropertyRelative("m_fieldName").stringValue == info.fieldNameProperty.stringValue)
+                    if (m_MainProp.GetArrayElementAtIndex(i).FindPropertyRelative("m_fieldName").stringValue == info.fieldNameProperty.stringValue)
                     {
-                        m_MainProp.GetArrayElementAtIndex(i).FindPropertyRelative("m_fieldName").stringValue = fieldNameVaild ?  $"[{actorID}].{m_changeBarkStrField}": fieldnamesplit[1];
+                        m_MainProp.GetArrayElementAtIndex(i).FindPropertyRelative("m_fieldName").stringValue = fieldNameVaild ? $"[{actorID}].{m_changeBarkStrField}" : fieldnamesplit[1];
                         m_serializedObject.ApplyModifiedProperties();
                         Refresh();
                     }
@@ -445,7 +460,7 @@ public static partial class ExtendDEHooks
     private static void OnAddFieldListElement(ReorderableList list)
     {
         m_serializedObject.Update();
-        m_textTable.AddField("["+actorID+"].NewField " + m_textTable.nextFieldID);
+        m_textTable.AddField("[" + actorID + "].NewField " + m_textTable.nextFieldID);
         m_serializedObject.ApplyModifiedProperties();
 
         RebuildProperty(m_serializedObject);
@@ -460,13 +475,13 @@ public static partial class ExtendDEHooks
     /// <returns></returns>
     private static int FindSyncMain(int idx)
     {
-        string srcname=m_copyedMainProp.GetArrayElementAtIndex(idx).FindPropertyRelative("m_fieldName").stringValue;
+        string srcname = m_copyedMainProp.GetArrayElementAtIndex(idx).FindPropertyRelative("m_fieldName").stringValue;
         for (int index = 0; index < m_MainProp.arraySize; index++)
         {
             var fieldValuePropertyMain = m_MainProp.GetArrayElementAtIndex(index);
             var fieldNamePropertyMain = fieldValuePropertyMain.FindPropertyRelative("m_fieldName");
             string mainkey = fieldNamePropertyMain.stringValue;
-            if(mainkey == srcname)
+            if (mainkey == srcname)
             {
                 return index;
             }
@@ -529,7 +544,7 @@ public static partial class ExtendDEHooks
         int index = (int)data;
         m_serializedObject.ApplyModifiedProperties();
         Undo.RecordObject(m_textTable, "Insert Field");
-        m_textTable.InsertField(index, "[" + actorID+"]."+m_textTable.nextFieldID);
+        m_textTable.InsertField(index, "[" + actorID + "]." + m_textTable.nextFieldID);
         EditorUtility.SetDirty(m_textTable);
         m_serializedObject.Update();
         RebuildFieldCache();
@@ -572,7 +587,7 @@ public static partial class ExtendDEHooks
         var fieldValueProperty = fieldValuesProperty.GetArrayElementAtIndex(m_fieldList.index);
         var keysProperty = fieldValueProperty.FindPropertyRelative("m_keys");
         var valuesProperty = fieldValueProperty.FindPropertyRelative("m_values");
-        var valueIndex = -1; 
+        var valueIndex = -1;
         var fieldNameProperty = fieldValueProperty.FindPropertyRelative("m_fieldName");
         if (!fieldNameProperty.stringValue.Contains("[" + actorID + "]."))
         {
@@ -766,23 +781,114 @@ public static partial class ExtendDEHooks
 
     #endregion
 
-    static bool m_StatusToggle = false;
-
-    static void ShowDNDStatus(Actor target, bool isTargetDataChanged) 
+    public override void OnInspectorGUI()
     {
-        void SetIntField(string title,string label)
+        m_target ??= target as ActorSO;
+        Show();
+        m_isBaseFold = EditorGUILayout.Foldout(m_isBaseFold, "BaseEditor");
+        if (m_isBaseFold)
+            base.OnInspectorGUI();
+    }
+    void Show()
+    {
+        if(m_textTable == null)
+        m_textTable??=EditorGUILayout.ObjectField(m_textTable,typeof(TextTable), true) as TextTable;
+        m_actor ??= m_target.actor;
+        m_actor.id = EditorGUILayout.IntField("ID", m_actor.id);
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.EndHorizontal();
+        DrawActorPortrait(m_actor);
+        GUILayout.BeginHorizontal();
+        Actor target = m_actor;
+        bool isTargetDataChanged = m_actorID != target.id;
+        //GUILayout.BeginVertical();
+        //GUILayout.Label("MapPosID:");
+        //Field.SetValue(target.fields, ConstDataTable.Map.ID, EditorGUILayout.Popup(Field.LookupInt(target.fields, ConstDataTable.Map.ID), m_database.maps.ConvertAll(x => x.Title).ToArray(), GUILayout.Height(EditorGUIUtility.singleLineHeight)));
+        //Field.SetValue(target.fields, ConstDataTable.Map.Pos, EditorGUILayout.IntField(Field.LookupInt(target.fields, ConstDataTable.Map.Pos)));
+        //GUILayout.EndVertical();
+        //GUILayout.BeginVertical();
+        //GUILayout.Label("OwnDialogue:");
+        //target.conversationIdx = EditorGUILayout.Popup(target.conversationIdx, m_database.conversations.ConvertAll(x => x.Title).ToArray(), GUILayout.Height(EditorGUIUtility.singleLineHeight));
+        //GUILayout.EndVertical();
+        //target.conversation = database.conversations[int.Parse(str)-1];
+        GUILayout.BeginVertical();
+        GUILayout.Label("Alignment");
+        GUILayout.Box(GUIContent.none, new GUILayoutOption[] { GUILayout.Height(100), GUILayout.Width(100) });
+        GUI.DrawTexture(GUILayoutUtility.GetLastRect(), m_cachedAlignment ??= EditorGUIUtility.Load("Custom/Alignment.png") as Texture2D);
+        m_alignRect = GUILayoutUtility.GetLastRect();
+        var rect = m_alignRect;
+        if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.mousePosition.x > m_alignRect.x &&
+            Event.current.mousePosition.x < m_alignRect.x + m_alignRect.width && Event.current.mousePosition.y > m_alignRect.y && Event.current.mousePosition.y < m_alignRect.y + m_alignRect.height)
+        {
+            var calPos = Event.current.mousePosition - new Vector2(m_alignRect.x + 50, m_alignRect.y + 50);
+            calPos = -calPos / 50;
+            if (calPos.magnitude > 1)
+                calPos = calPos.normalized;
+            target.alignment = calPos;
+        }
+        GUI.DrawTexture(new Rect(m_alignRect.x - target.alignment.x * 50 + 50 - 10, m_alignRect.y - target.alignment.y * 50 + 50 - 10, 20, 20), m_cachedAlignmentCursor ??= EditorGUIUtility.Load("Dialogue System/Event.png") as Texture2D);
+        GUILayout.EndVertical();
+
+
+        GUILayout.EndHorizontal();
+        Rect windowRect = new Rect(10, 30, 200, 100);
+        m_foldLocDialogue = EditorGUILayout.Foldout(m_foldLocDialogue, new GUIContent("CharBarkDialouge", "Portrait images using texture assets."));
+        if (m_foldLocDialogue&&m_textTable)
+        {
+            var newToolbarSelection = GUILayout.Toolbar(m_toolbarSelection, ToolbarLabels);
+            if (newToolbarSelection != m_toolbarSelection)
+            {
+                m_toolbarSelection = newToolbarSelection;
+                m_needRefreshLists = true;
+                m_actorID = target.id;
+            }
+            else if (isTargetDataChanged)
+            {
+                m_toolbarSelection = 0;
+                m_needRefreshLists = true;
+                m_actorID = target.id;
+            }
+            switch (m_toolbarSelection)
+            {
+                case 0:
+                    DrawLanguagesTab();
+                    break;
+                case 1:
+                    //m_fieldListScrollPosition = GUILayout.BeginScrollView(m_fieldListScrollPosition, GUILayout.ExpandWidth(true));
+                    //GUILayout.Box(GUIContent.none, new GUILayoutOption[] { GUILayout.Height(100), GUILayout.ExpandWidth(true)});
+                    DrawFieldsTab();
+
+                    //GUILayout.EndScrollView();
+
+                    break;
+            }
+        }
+        ShowDNDStatus(target, isTargetDataChanged);
+        
+
+        ShowWeapon(target, isTargetDataChanged);
+    }
+
+    private void ShowWeapon(Actor target, bool isTargetDataChanged)
+    {
+        if (!Field.FieldExists(target.fields, ConstDataTable.Equipment.Weapon)) return;
+    }
+
+    static void ShowDNDStatus(Actor target, bool isTargetDataChanged)
+    {
+        void SetIntField(string title, string label)
         {
             Field.SetValue(target.fields, title, EditorGUILayout.IntField(label, Field.LookupInt(target.fields, title)));
         }
         //어카지
         //필드 구성요소를 가져온다
         //빈필드일때 기본 구성요소를 제공한다
-        m_StatusToggle = EditorGUILayout.Foldout(m_StatusToggle,"BasicStatus");
-        if(isTargetDataChanged)
+        m_StatusToggle = EditorGUILayout.Foldout(m_StatusToggle, "BasicStatus");
+        if (isTargetDataChanged)
         {
             StatusInitialize(target);
         }
-        if(m_StatusToggle)
+        if (m_StatusToggle)
         {
             EditorGUILayout.LabelField("캐릭터기본스텟");
             SetIntField(ConstDataTable.Actor.Status.Str, "STR");
@@ -795,9 +901,9 @@ public static partial class ExtendDEHooks
             SetIntField(ConstDataTable.Actor.Status.Hp, "HP");
         }
     }
-    static void StatusInitialize(Actor target) 
+    static void StatusInitialize(Actor target)
     {
-        void Init(string fieldname,int value=5)
+        void Init(string fieldname, int value = 5)
         {
             if (!Field.FieldExists(target.fields, fieldname))
                 Field.SetValue(target.fields, fieldname, value);
@@ -808,6 +914,276 @@ public static partial class ExtendDEHooks
         Init(ConstDataTable.Actor.Status.Int);
         Init(ConstDataTable.Actor.Status.Wis);
         Init(ConstDataTable.Actor.Status.Cha);
-        Init(ConstDataTable.Actor.Status.Hp,100);
+        Init(ConstDataTable.Actor.Status.Hp, 100);
     }
+
+
+    private void DrawRevisableTextField(GUIContent label, Asset asset, DialogueEntry entry, List<Field> fields, string fieldTitle)
+    {
+        Field field = Field.Lookup(fields, fieldTitle);
+        if (field == null)
+        {
+            field = new Field(fieldTitle, string.Empty, FieldType.Text);
+            fields.Add(field);
+        }
+        DrawRevisableTextField(label, asset, entry, field);
+    }
+    private void DrawAIReviseTextButton(Asset asset, DialogueEntry entry, Field field)
+    {
+    }
+    private void DrawRevisableTextField(GUIContent label, Asset asset, DialogueEntry entry, Field field)
+    {
+        if (field == null) return;
+        EditorGUILayout.BeginHorizontal();
+        field.value = EditorGUILayout.TextField(label, field.value);
+        DrawAIReviseTextButton(asset, entry, field);
+        EditorGUILayout.EndHorizontal();
+    }
+    private void DrawLocalizedVersions(Asset asset, List<Field> fields, string titleFormat, bool alwaysAdd, FieldType fieldType, bool useSequenceEditor = false)
+    {
+        //bool indented = false;
+        //foreach (var language in languages)
+        //{
+        //    string localizedTitle = string.Format(titleFormat, language);
+        //    Field field = Field.Lookup(fields, localizedTitle);
+        //    if ((field == null) && (alwaysAdd || (Field.FieldExists(template.dialogueEntryFields, localizedTitle))))
+        //    {
+        //        field = new Field(localizedTitle, string.Empty, fieldType);
+        //        fields.Add(field);
+        //    }
+        //    if (field != null)
+        //    {
+        //        if (!indented)
+        //        {
+        //            indented = true;
+        //            EditorWindowTools.StartIndentedSection();
+        //        }
+        //        if (useSequenceEditor)
+        //        {
+        //            EditorGUILayout.BeginHorizontal();
+        //            EditorGUILayout.LabelField(localizedTitle);
+        //            GUILayout.FlexibleSpace();
+        //            EditorGUILayout.EndHorizontal();
+        //            field.value = EditorGUILayout.TextArea(field.value);
+        //        }
+        //        else
+        //        {
+        //            //[AI] EditorGUILayout.LabelField(localizedTitle);
+        //            //field.value = EditorGUILayout.TextArea(field.value);
+        //            DrawLocalizableTextAreaField(new GUIContent(localizedTitle), asset, null, field);
+        //        }
+        //        if (alreadyDrawn != null) alreadyDrawn.Add(field);
+        //    }
+        //}
+        //if (indented) EditorWindowTools.EndIndentedSection();
+    }
+
+    private void DrawActorPortrait(Actor actor)
+    {
+        if (actor == null) return;
+
+        // Display Name:
+        var displayNameField = Field.Lookup(actor.fields, "Display Name");
+        var hasDisplayNameField = (displayNameField != null);
+        var useDisplayNameField = EditorGUILayout.Toggle(new GUIContent("Use Display Name", "Tick to use a Display Name in UIs that's different from the Name."), hasDisplayNameField);
+        if (hasDisplayNameField && !useDisplayNameField)
+        {
+            actor.fields.Remove(displayNameField);
+        }
+        else if (useDisplayNameField)
+        {
+            if (!hasDisplayNameField && string.IsNullOrEmpty(actor.LookupValue("Display Name")))
+            {
+                Field.SetValue(actor.fields, "Display Name", actor.Name);
+            }
+            DrawRevisableTextField(displayNameLabel, actor, null, actor.fields, "Display Name");
+            DrawLocalizedVersions(actor, actor.fields, "Display Name {0}", false, FieldType.Text);
+        }
+
+        // Portrait Textures:
+        m_actorTexturesFoldout = EditorGUILayout.Foldout(m_actorTexturesFoldout, new GUIContent("Portrait Textures", "Portrait images using texture assets."));
+        if (m_actorTexturesFoldout)
+        {
+
+            try
+            {
+                var newPortrait = EditorGUILayout.ObjectField(new GUIContent("Portraits", "This actor's portrait. Only necessary if your UI uses portraits."),
+                                                         actor.portrait, typeof(Texture2D), false, GUILayout.Height(64)) as Texture2D;
+                if (newPortrait != actor.portrait)
+                {
+                    var texpath = AssetDatabase.GetAssetPath(newPortrait);
+                    if (texpath.Contains("Resources/"))
+                    {
+                        texpath = texpath.Split("Resources/")[1];
+                        actor.textureName = texpath;
+                    }
+                    else
+                    {
+                        Debug.LogError("Is not Resources File");
+                    }
+                    actor.portrait = newPortrait;
+                }
+            }
+            catch (NullReferenceException)
+            {
+            }
+            int indexToDelete = -1;
+            if (actor.alternatePortraits == null) actor.alternatePortraits = new List<Texture2D>();
+            for (int i = 0; i < actor.alternatePortraits.Count; i++)
+            {
+                try
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    GUILayout.FlexibleSpace();
+
+                    try
+                    {
+                        EditorGUILayout.BeginVertical(GUILayout.Width(27));
+                        EditorGUILayout.LabelField(string.Empty, GUILayout.Width(5), GUILayout.Height(16));
+                        EditorGUILayout.LabelField(string.Format("[{0}]", i + 2), CenteredLabelStyle, GUILayout.Width(27));
+                        EditorGUILayout.BeginHorizontal();
+                        EditorGUILayout.LabelField(string.Empty, GUILayout.Width(5));
+                        if (GUILayout.Button(new GUIContent(" ", "Delete this portrait."), "OL Minus", GUILayout.Width(16), GUILayout.Height(16)))
+                        {
+                            indexToDelete = i;
+                        }
+                        EditorGUILayout.EndHorizontal();
+                    }
+                    finally
+                    {
+                        EditorGUILayout.EndVertical();
+                    }
+
+                    try
+                    {
+                        //EditorGUI.BeginChangeCheck();
+                        actor.alternatePortraits[i] = EditorGUILayout.ObjectField(actor.alternatePortraits[i], typeof(Texture2D), false, GUILayout.Width(64), GUILayout.Height(64)) as Texture2D;
+                        //if (EditorGUI.EndChangeCheck()) SetDatabaseDirty("Actor Portrait");
+                    }
+                    catch (NullReferenceException)
+                    {
+                    }
+                }
+                finally
+                {
+                    EditorGUILayout.EndHorizontal();
+                }
+            }
+            if (indexToDelete > -1)
+            {
+                actor.alternatePortraits.RemoveAt(indexToDelete);
+            }
+
+            EditorGUILayout.LabelField(string.Empty, GUILayout.Height(4));
+
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button(new GUIContent(" ", "Add new alternate portrait image."), "OL Plus", GUILayout.Height(16)))
+            {
+                actor.alternatePortraits.Add(null);
+            }
+            EditorGUILayout.LabelField(string.Empty, GUILayout.Width(12));
+            EditorGUILayout.EndHorizontal();
+        }
+
+        // Portrait Sprites:
+        EditorGUILayout.BeginHorizontal();
+        m_actorSpritesFoldout = EditorGUILayout.Foldout(m_actorSpritesFoldout, new GUIContent("Portrait Sprites", "Portrait images using sprite assets."));
+        GUILayout.FlexibleSpace();
+        EditorGUILayout.EndHorizontal();
+        if (m_actorSpritesFoldout)
+        {
+            try
+            {
+                var newPortrait = EditorGUILayout.ObjectField(new GUIContent("Portraits", "This actor's portrait. Only necessary if your UI uses portraits."),
+                                                         actor.spritePortrait, typeof(Sprite), false, GUILayout.Height(64)) as Sprite;
+                if (newPortrait != actor.spritePortrait)
+                {
+                    actor.spritePortrait = newPortrait;
+                }
+            }
+            catch (NullReferenceException)
+            {
+            }
+            int indexToDelete = -1;
+            if (actor.spritePortraits == null) actor.spritePortraits = new List<Sprite>();
+            for (int i = 0; i < actor.spritePortraits.Count; i++)
+            {
+                try
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    GUILayout.FlexibleSpace();
+
+                    try
+                    {
+                        EditorGUILayout.BeginVertical(GUILayout.Width(27));
+                        EditorGUILayout.LabelField(string.Empty, GUILayout.Width(5), GUILayout.Height(16));
+                        EditorGUILayout.LabelField(string.Format("[{0}]", i + 2), CenteredLabelStyle, GUILayout.Width(27));
+                        EditorGUILayout.BeginHorizontal();
+                        EditorGUILayout.LabelField(string.Empty, GUILayout.Width(5));
+                        if (GUILayout.Button(new GUIContent(" ", "Delete this portrait."), "OL Minus", GUILayout.Width(16), GUILayout.Height(16)))
+                        {
+                            indexToDelete = i;
+                        }
+                        EditorGUILayout.EndHorizontal();
+                    }
+                    finally
+                    {
+                        EditorGUILayout.EndVertical();
+                    }
+
+                    try
+                    {
+                        //EditorGUI.BeginChangeCheck();
+                        actor.spritePortraits[i] = EditorGUILayout.ObjectField(actor.spritePortraits[i], typeof(Sprite), false, GUILayout.Width(64), GUILayout.Height(64)) as Sprite;
+                        //if (EditorGUI.EndChangeCheck()) SetDatabaseDirty("Actor Portrait");
+                    }
+                    catch (NullReferenceException)
+                    {
+                    }
+                }
+                finally
+                {
+                    EditorGUILayout.EndHorizontal();
+                }
+            }
+            if (indexToDelete > -1)
+            {
+                actor.spritePortraits.RemoveAt(indexToDelete);
+            }
+
+            EditorGUILayout.LabelField(string.Empty, GUILayout.Height(4));
+
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button(new GUIContent(" ", "Add new alternate portrait image."), "OL Plus", GUILayout.Height(16)))
+            {
+                actor.spritePortraits.Add(null);
+            }
+            EditorGUILayout.LabelField(string.Empty, GUILayout.Width(12));
+            EditorGUILayout.EndHorizontal();
+        }
+
+        // The rest: node color, Is Player, etc.
+        //DrawActorNodeColor(actor);
+
+        //EditorGUI.BeginChangeCheck();
+        actor.IsPlayer = EditorGUILayout.Toggle(new GUIContent("Is Player", ""), actor.IsPlayer);
+        //if (EditorGUI.EndChangeCheck()) SetDatabaseDirty("IsPlayer");
+
+        //DrawActorPrimaryFields(actor);
+
+    }
+    private GUIStyle CenteredLabelStyle
+    {
+        get
+        {
+            GUIStyle centeredLabelStyle = new GUIStyle(EditorStyles.label);
+            centeredLabelStyle.alignment = TextAnchor.MiddleCenter;
+            return centeredLabelStyle;
+        }
+    }
+
 }
+
+#endif

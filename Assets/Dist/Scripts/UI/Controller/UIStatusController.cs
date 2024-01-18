@@ -13,7 +13,7 @@ public class UIStatusController : UIController
     int maxpage;
     private void Start()
     {
-        GameManager.Instance.ResourceLoadDoneEvent+=()=> ShowData(5);
+        GameManager.Instance.GetResourceManager().ResourceLoadDoneEvent+=()=> ShowData(5);
         pageList.Add(pageHandler);
         maxpage = pageHandler.GetMaxPage();
     }

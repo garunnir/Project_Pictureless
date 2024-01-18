@@ -75,7 +75,7 @@ namespace PixelCrushers.DialogueSystem
             if (string.IsNullOrEmpty(saveData))
             {
                 // If no saveData, reset the database.
-                if (DialogueDebug.logInfo) Debug.Log("Dialogue System: LevelManager: Save data is empty, so just resetting database");
+                if (DialogueDebug.logInfo) Debug.Log("Dialogue System: LevelManager: Save data is empty, so just resetting m_database");
                 DialogueManager.ResetDatabase(DatabaseResetOptions.RevertToDefault);
             }
             else

@@ -49,9 +49,9 @@ namespace Garunnir
         public static event UnityAction Act_CharLoaded;
         public void Init()
         {
-            characters = DialogueManager.databaseManager.masterDatabase.actors;
-            Garam();
-            Act_CharLoaded?.Invoke();
+            //characters = DialogueManager.databaseManager.masterDatabase.actors;
+            //Garam();
+            //Act_CharLoaded?.Invoke();
         }
         private void Start()
         {

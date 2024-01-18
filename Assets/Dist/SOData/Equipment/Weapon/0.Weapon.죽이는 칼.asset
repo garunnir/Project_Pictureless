@@ -9,17 +9,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3b9298619ae13ed41916e24fad05d58b, type: 3}
-  m_Name: Sword
+  m_Script: {fileID: 11500000, guid: 9b207a28e51ab5a409add5695527205b, type: 3}
+  m_Name: "0.Weapon.\uC8FD\uC774\uB294 \uCE7C"
   m_EditorClassIdentifier: 
-  equipName: "\uC96D\uC774\uB294 \uCE7C(\uC9C4\uC9DC\uC8FD\uC784)"
-  damage: 10
+  equipName: "\uC8FD\uC774\uB294 \uCE7C(\uC9C4\uC9DC \uC8FD\uC784)"
   str: 1
   con: 0
   dex: 0
   int: 0
   wis: 0
   cha: 0
+  weight: 1
+  damage: 10
   range:
     serializedVersion: 2
     m_Curve:

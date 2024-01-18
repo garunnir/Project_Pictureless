@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-public class UIMiniStatus : MonoBehaviour
+public class UI_VisualSumView : MonoBehaviour
 {
     [SerializeField] Image m_profile;
     [SerializeField] TextMeshProUGUI m_textMeshProUGUI;

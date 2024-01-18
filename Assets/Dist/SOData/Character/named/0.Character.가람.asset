@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 425851d04ec6f63499cea3c2b9bc9c77, type: 3}
-  m_Name: "1_\uAC00\uB78C"
+  m_Name: "0.Character.\uAC00\uB78C"
   m_EditorClassIdentifier: 
   actor:
     id: 0
@@ -19,6 +19,10 @@ MonoBehaviour:
       value: 
       type: 0
       typeString: 
+    - title: IsPlayer
+      value: False
+      type: 2
+      typeString: CustomFieldType_Boolean
     conversationIdx: -1
     alignment: {x: 0, y: 0}
     portrait: {fileID: 0}
