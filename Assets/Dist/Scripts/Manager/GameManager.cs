@@ -250,6 +250,20 @@ namespace Garunnir
         {
 
         }
+        public class AssetPath
+        {
+            public class LocalizeTable
+            {
+                /// <summary>
+                /// 반복 사용되는 캐릭터 대사가 들어있는 SO
+                /// </summary>
+                public const string ActorBark = "Assets/Dist/Scripts/CustomDS/LocalizeDialogueTable.asset";
+                /// <summary>
+                /// 로컬라이징 대응 액터이름
+                /// </summary>
+                public const string ActorName = "Assets/Dist/Scripts/CustomDS/LocalizeActorName.asset";
+            }
+        }
     }
     public class Utillity
     {
