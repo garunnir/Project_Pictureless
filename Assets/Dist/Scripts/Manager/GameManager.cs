@@ -186,6 +186,7 @@ namespace Garunnir
     
     public class ConstDataTable
     {
+        public const string DefalutLang = "ko";
         public class Map
         {
             /// <summary>

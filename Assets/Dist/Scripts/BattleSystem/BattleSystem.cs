@@ -6,9 +6,11 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-
+using UnityEngine.UI;
+using Lean.Pool;
 public class BattleSystem : MonoBehaviour
 {
+    [SerializeField] ScrollRect m_srect;
     [SerializeField] TextMeshProUGUI m_text;
     [SerializeField] List<ActorSO> m_RedCharactersInput=new List<ActorSO>();
     [SerializeField] List<ActorSO> m_BlueCharactersInput=new List<ActorSO>();
@@ -37,7 +39,7 @@ public class BattleSystem : MonoBehaviour
         }
         public float GetSpeed()
         {
-            return this.speed;
+            return 100/this.speed;
         }
     }
 
@@ -102,27 +104,67 @@ public class BattleSystem : MonoBehaviour
     }
     List<BattleActorData> FindNexts(float time, List<BattleActorData> datas,float endtime)//특정 타임에서 바로뒤에올 대상을 찾는다.
     {
-        Dictionary<float, BattleActorData> tosortDic= new Dictionary<float, BattleActorData>();
+        
+        Dictionary<float, List<BattleActorData>> tosortDic= new Dictionary<float, List<BattleActorData>>();
+        
         foreach (var data in datas)
         {
             int turn = CalTurnAtTime(time, data);
-
             for (int i=turn; data.GetSpeed()*i < endtime; i++)//딕셔너리에 시간으로 삽입한다.
             {
-                tosortDic.Add(data.GetSpeed(), data);
+                if (data.GetSpeed() * i == 0) continue;
+
+                if (!tosortDic.ContainsKey(data.GetSpeed()*i))
+                {
+                    tosortDic.Add(data.GetSpeed()*i, new List<BattleActorData>());
+                }
+                
+                tosortDic[data.GetSpeed()*i].Add(data);
             }
         }
-        var nexts= tosortDic.OrderBy(x=>x.Key).ToDictionary(x=>x.Key,y=>y.Value).Values.ToList();
-        
+        List<BattleActorData> nexts =SortingData(tosortDic);
         return nexts;
     }
+    /// <summary>
+    /// 스피드 순으로 줄세우기
+    /// </summary>
+    /// <param name="rawnexts"></param>
+    /// <returns></returns>
+    private List<BattleActorData> SortingData(Dictionary<float, List<BattleActorData>> rawnexts)
+    {
+        var rawdata = rawnexts.OrderBy(x=>x.Key).ToList();
+        List<BattleActorData> result=new List<BattleActorData>();
+        foreach (var item in rawdata)//todo 스피드가 곂칠때 분류기준이 필요.
+        {
+            foreach (var inner in item.Value)
+            {
+                result.Add(inner);
+            }
+        }
+        return result;
+    }
+
     void TestAction()
     {
         var sortedData = FindNexts(0, m_Characters, 100);
         foreach (var data in sortedData)
         {
-            Debug.LogWarning($"액션: {data.actor.Name} 속도: {data.GetSpeed()}");
+            ExecuteActor(data);
         }
+    }
+    /// <summary>
+    /// 액터의 턴행동
+    /// </summary>
+    /// <param name="data"></param>
+    private void ExecuteActor(BattleActorData data)
+    {
+        UseLogPanel($"액션: {data.actor.Name} 속도: {data.GetSpeed()}");
+    }
+
+    void UseLogPanel(string value)
+    {
+        var text=LeanPool.Spawn(m_text, m_srect.content);
+        text.text = value;
     }
     //IEnumerator Cor_ActionStart()
     //{
@@ -181,7 +223,8 @@ public class BattleSystem : MonoBehaviour
         int dexvalue=Field.LookupInt(actor.fields, ConstDataTable.Actor.Status.Dex);
         int bodyweight=Field.LookupInt(actor.fields, ConstDataTable.Actor.BodyData.Weight);
         int strvalue=Field.LookupInt(actor.fields,ConstDataTable.Actor.Status.Str);
-        float weaponWeight = GameManager.Instance.GetResourceManager().GetWeapon(actor).weight;
+        var weapon= GameManager.Instance.GetResourceManager().GetWeapon(actor);
+        float weaponWeight = weapon?weapon.weight:0;
 
         float aSpeed = dexvalue * 0.5f+bodyweight*-1+strvalue*2+weaponWeight*-1;
         

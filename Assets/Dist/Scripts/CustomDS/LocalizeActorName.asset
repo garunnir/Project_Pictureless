@@ -17,12 +17,12 @@ MonoBehaviour:
   - ko
   - eng
   m_languageValues: 000000000100000002000000
-  m_fieldKeys: 100000000f000000
+  m_fieldKeys: 100000000f00000011000000120000001300000014000000
   m_fieldValues:
   - m_fieldName: Actor.Garam
     m_keys: 000000000100000002000000
     m_values:
-    - 
+    - ddd
     - "\uAC00\uB78C"
     - 
   - m_fieldName: Actor.Maki
@@ -31,5 +31,25 @@ MonoBehaviour:
     - "\uB9C8\uD0A4"
     - 
     - 
+  - m_fieldName: Actor.Saya
+    m_keys: 0100000000000000
+    m_values:
+    - "\uC0AC\uC57C"
+    - 
+  - m_fieldName: Actor.Litz
+    m_keys: 0100000000000000
+    m_values:
+    - "\uB9AC\uCE20"
+    - 
+  - m_fieldName: Foe.Melee
+    m_keys: 0100000000000000
+    m_values:
+    - "\uADFC\uC811\uBAAC\uC2A4\uD130"
+    - 
+  - m_fieldName: Foe.LongRange
+    m_keys: 0100000000000000
+    m_values:
+    - "\uC6D0\uAC70\uB9AC\uBAAC\uC2A4\uD130"
+    - 
   m_nextLanguageID: 3
-  m_nextFieldID: 17
+  m_nextFieldID: 21

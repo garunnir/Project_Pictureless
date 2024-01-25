@@ -6,11 +6,11 @@ using System;
 using Garunnir;
 using PixelCrushers;
 using System.Text.RegularExpressions;
-using UnityEditorInternal;
-using System.Linq;
 #if UNITY_EDITOR
+using UnityEditorInternal;
 using UnityEditor;
 #endif
+using System.Linq;
 [CreateAssetMenu(fileName = "Character", menuName = "GameDataAsset/Character")]
 public class ActorSO : ScriptableObject
 {
@@ -31,11 +31,14 @@ public class ActorSOEditor : Editor
     Texture2D m_cachedAlignmentCursor;
     Rect m_alignRect;
     //DialogueDatabase m_database;
+    private int m_SelectedActoridx = -1;
+    private int m_SelectedActorFieldID = -1;
 
     private static TextTableModule m_textTable;
     private static TextTableModule m_actorNameLocTable;
     class TextTableModule
     {
+        string m_foldLabel = "TextTableModule";
         string[] ToolbarLabels = { "Languages", "Fields" };
         bool m_FilterOption = false;
         string m_filterKeyword;
@@ -90,18 +93,103 @@ public class ActorSOEditor : Editor
         #endregion
         #region Language List
 
+
+
+
         private void ResetLanguagesTab()
         {
             m_languageList = null;
             m_languageListScrollPosition = Vector2.zero;
         }
-
-
-
         private void OnDrawLanguageListHeader(Rect rect)
         {
             EditorGUI.LabelField(rect, "Languages");
         }
+        private void OnDrawLanguageListElement(Rect rect, int index, bool isActive, bool isFocused)
+        {
+            var languageKeysProperty = m_serializedObject.FindProperty("m_languageKeys");
+            var languageKeyProperty = languageKeysProperty.GetArrayElementAtIndex(index);
+            var languageValuesProperty = m_serializedObject.FindProperty("m_languageValues");
+            var languageValueProperty = languageValuesProperty.GetArrayElementAtIndex(index);
+            EditorGUI.BeginDisabledGroup(languageValueProperty.intValue == 0);
+            EditorGUI.PropertyField(new Rect(rect.x, rect.y + 1, rect.width, EditorGUIUtility.singleLineHeight), languageKeyProperty, GUIContent.none, false);
+            EditorGUI.EndDisabledGroup();
+        }
+
+        private void OnAddLanguageListElement(ReorderableList list)
+        {
+            m_serializedObject.ApplyModifiedProperties();
+            m_textTable.AddLanguage("Language " + m_textTable.nextLanguageID);
+            m_serializedObject.Update();
+            ResetFieldsTab();
+        }
+
+        private bool OnCanRemoveLanguageListElement(ReorderableList list)
+        {
+            var languageValuesProperty = m_serializedObject.FindProperty("m_languageValues");
+            var languageValueProperty = languageValuesProperty.GetArrayElementAtIndex(list.index);
+            return languageValueProperty.intValue > 0;
+        }
+
+        private void OnRemoveLanguageListElement(ReorderableList list)
+        {
+            var languageKeysProperty = m_serializedObject.FindProperty("m_languageKeys");
+            var languageKeyProperty = languageKeysProperty.GetArrayElementAtIndex(list.index);
+            var languageName = languageKeyProperty.stringValue;
+            var languageValuesProperty = m_serializedObject.FindProperty("m_languageValues");
+            var languageValueProperty = languageValuesProperty.GetArrayElementAtIndex(list.index);
+            var languageID = languageValueProperty.intValue;
+            if (!EditorUtility.DisplayDialog("Delete " + languageName, "Are you sure you want to delete the language '" + languageName +
+                "' and all field values associated with it?", "OK", "Cancel")) return;
+            m_serializedObject.ApplyModifiedProperties();
+            m_textTable.RemoveLanguage(languageID);
+            m_serializedObject.Update();
+            ResetFieldsTab();
+        }
+
+        private int m_selectedLanguageListIndex = -1;
+
+        private void OnSelectLanguageListElement(ReorderableList list)
+        {
+            m_selectedLanguageListIndex = list.index;
+        }
+
+        private void OnReorderLanguageListElement(ReorderableList list)
+        {
+            // Also reorder values:
+            var languageValuesProperty = m_serializedObject.FindProperty("m_languageValues");
+            var value = languageValuesProperty.GetArrayElementAtIndex(m_selectedLanguageListIndex).intValue;
+            languageValuesProperty.DeleteArrayElementAtIndex(m_selectedLanguageListIndex);
+            languageValuesProperty.InsertArrayElementAtIndex(list.index);
+            languageValuesProperty.GetArrayElementAtIndex(list.index).intValue = value;
+            ResetFieldsTab();
+        }
+        private void DrawLanguagesTab()
+        {
+            if (m_languageList == null)
+            {
+                m_serializedObject ??= new SerializedObject(m_textTable);
+                m_languageList = new ReorderableList(m_serializedObject, m_serializedObject.FindProperty("m_languageKeys"), true, true, true, true);
+                m_languageList.drawHeaderCallback = OnDrawLanguageListHeader;
+                m_languageList.drawElementCallback = OnDrawLanguageListElement;
+                m_languageList.onAddCallback = OnAddLanguageListElement;
+                m_languageList.onCanRemoveCallback = OnCanRemoveLanguageListElement;
+                m_languageList.onRemoveCallback = OnRemoveLanguageListElement;
+                m_languageList.onSelectCallback = OnSelectLanguageListElement;
+                m_languageList.onReorderCallback = OnReorderLanguageListElement;
+            }
+            m_languageListScrollPosition = GUILayout.BeginScrollView(m_languageListScrollPosition, false, false);
+            try
+            {
+                m_languageList.DoLayoutList();
+            }
+            finally
+            {
+                GUILayout.EndScrollView();
+            }
+        }
+
+        #endregion
         #region Field List
 
         private void ResetFieldsTab()
@@ -212,10 +300,9 @@ public class ActorSOEditor : Editor
         }
         private void RebuildFieldCache()
         {
-            if (!m_FilterOption) return;
             m_fieldCache.Clear();
 
-            var fieldValuesProperty = m_copyedMainProp;
+            var fieldValuesProperty = m_FilterOption? m_copyedMainProp:m_MainProp;
             for (int index = 0; index < fieldValuesProperty.arraySize; index++)
             {
                 var fieldValueProperty = fieldValuesProperty.GetArrayElementAtIndex(index);
@@ -225,7 +312,7 @@ public class ActorSOEditor : Editor
 
 
                 var valueIndex = -1;
-                if (!fieldNameProperty.stringValue.Contains(m_filterKeyword))
+                if (m_FilterOption&&!fieldNameProperty.stringValue.Contains(m_filterKeyword))
                 {
                     continue;
                 }
@@ -300,9 +387,9 @@ public class ActorSOEditor : Editor
             GUI.SetNextControlName(info.nameControl);
             int buttonwidth = 20;
 
+                string fieldname = info.fieldNameProperty.stringValue;
             if (m_FilterOption)
             {
-                string fieldname = info.fieldNameProperty.stringValue;
                 string[] fieldnamesplit = fieldname.Split('.');
                 bool fieldNameVaild = fieldnamesplit.Length > 1;
                 if (m_changeBarkField == index)
@@ -345,13 +432,13 @@ public class ActorSOEditor : Editor
             }
             else
             {
-                m_changeBarkStrField = GUI.TextField(new Rect(rect.x, rect.y + 1, columnWidth - buttonwidth, EditorGUIUtility.singleLineHeight), m_changeBarkStrField);
+                EditorGUI.PropertyField(new Rect(rect.x, rect.y + 1, columnWidth, EditorGUIUtility.singleLineHeight), info.fieldNameProperty, GUIContent.none,false);
             }
         
-            if (info.fieldValueProperty != null)
-            {
                 GUI.SetNextControlName(info.valueControl);
                 EditorGUI.PropertyField(new Rect(rect.x + rect.width - columnWidth, rect.y + 1, columnWidth, EditorGUIUtility.singleLineHeight), info.fieldValueProperty, GUIContent.none, false);
+            if (info.fieldValueProperty != null)
+            {
                 var focusedControl = GUI.GetNameOfFocusedControl();
                 if (string.Equals(info.nameControl, focusedControl) || string.Equals(info.valueControl, focusedControl))
                 {
@@ -491,67 +578,95 @@ public class ActorSOEditor : Editor
             return m_fieldList != null && 0 <= m_fieldList.index && m_fieldList.index < m_fieldList.serializedProperty.arraySize;
         }
 
-
-        #endregion
-        private void OnDrawLanguageListElement(Rect rect, int index, bool isActive, bool isFocused)
+        private void DrawFieldsTab()
         {
-            var languageKeysProperty = m_serializedObject.FindProperty("m_languageKeys");
-            var languageKeyProperty = languageKeysProperty.GetArrayElementAtIndex(index);
-            var languageValuesProperty = m_serializedObject.FindProperty("m_languageValues");
-            var languageValueProperty = languageValuesProperty.GetArrayElementAtIndex(index);
-            EditorGUI.BeginDisabledGroup(languageValueProperty.intValue == 0);
-            EditorGUI.PropertyField(new Rect(rect.x, rect.y + 1, rect.width, EditorGUIUtility.singleLineHeight), languageKeyProperty, GUIContent.none, false);
-            EditorGUI.EndDisabledGroup();
+            DrawGrid();
+            DrawEntryBox();
+        }
+        private void DrawGrid()
+        {
+            if (m_textTable == null) return;
+            var entryBoxHeight = IsAnyFieldSelected() ? (6 * EditorGUIUtility.singleLineHeight) : 0;
+            if (m_isSearchPanelOpen) entryBoxHeight += (4 * EditorGUIUtility.singleLineHeight);
+
+            if (m_needRefreshLists || m_fieldList == null || m_languageDropdownList == null)
+            {
+                m_needRefreshLists = false;
+                var por = m_FilterOption? RebuildProperty(m_serializedObject): m_MainProp ??= m_serializedObject.FindProperty("m_fieldValues");
+
+                m_fieldList = new ReorderableList(m_serializedObject, por, true, true, true, true);
+                m_fieldList.drawHeaderCallback = OnDrawFieldListHeader;
+                m_fieldList.drawElementCallback = OnDrawFieldListElement;
+                m_fieldList.onAddCallback = OnAddFieldListElement;
+                m_fieldList.onRemoveCallback = OnRemoveFieldListElement;
+                m_fieldList.onSelectCallback = OnSelectFieldListElement;
+                m_fieldList.onReorderCallback = OnReorderFieldListElement;
+
+                var languages = new List<string>();
+                var languageKeysProperty = m_serializedObject.FindProperty("m_languageKeys");
+                for (int i = 0; i < languageKeysProperty.arraySize; i++)
+                {
+                    languages.Add(languageKeysProperty.GetArrayElementAtIndex(i).stringValue);
+                }
+                m_languageDropdownList = languages.ToArray();
+
+                RebuildFieldCache();
+            }
+            m_fieldList.DoLayoutList();
+
+            CheckMouseEvents();
+        }
+        private void DrawEntryBox()
+        {
+            if (m_needRefreshLists || !IsAnyFieldSelected()) return;
+            //var rect = new Rect(2, position.height - 6 * EditorGUIUtility.singleLineHeight, position.width - 4, 6 * EditorGUIUtility.singleLineHeight);
+            var rect = GUILayoutUtility.GetRect(0, 100, GUILayout.ExpandWidth(true));
+
+            if (m_isSearchPanelOpen)
+            {
+                var searchPanelHeight = (4 * EditorGUIUtility.singleLineHeight);
+                rect = new Rect(rect.x, rect.y - searchPanelHeight, rect.width, rect.height);
+            }
+            var fieldValuesProperty = m_FilterOption? m_copyedMainProp: m_MainProp;
+            var fieldValueProperty = fieldValuesProperty.GetArrayElementAtIndex(m_fieldList.index);
+            var keysProperty = fieldValueProperty.FindPropertyRelative("m_keys");
+            var valuesProperty = fieldValueProperty.FindPropertyRelative("m_values");
+            var valueIndex = -1;
+            var fieldNameProperty = fieldValueProperty.FindPropertyRelative("m_fieldName");
+            if (m_FilterOption && !fieldNameProperty.stringValue.Contains(m_filterKeyword))
+            {
+                return;
+            }
+            for (int i = 0; i < keysProperty.arraySize; i++)
+            {
+                if (keysProperty.GetArrayElementAtIndex(i).intValue == m_selectedLanguageID)
+                {
+                    valueIndex = i;
+                    break;
+                }
+            }
+            if (valueIndex == -1)
+            {
+                valueIndex = keysProperty.arraySize;
+                keysProperty.arraySize++;
+                keysProperty.GetArrayElementAtIndex(valueIndex).intValue = m_selectedLanguageID;
+                valuesProperty.arraySize++;
+                valuesProperty.GetArrayElementAtIndex(valueIndex).stringValue = string.Empty;
+            }
+            else
+            {
+
+            }
+            if (textAreaStyle == null || !isTextAreaStyleInitialized)
+            {
+                isTextAreaStyleInitialized = true;
+                textAreaStyle = new GUIStyle(EditorStyles.textField);
+                textAreaStyle.wordWrap = true;
+            }
+            var valueProperty = valuesProperty.GetArrayElementAtIndex(valueIndex);
+            valueProperty.stringValue = EditorGUI.TextArea(rect, valueProperty.stringValue, textAreaStyle);
         }
 
-        private void OnAddLanguageListElement(ReorderableList list)
-        {
-            m_serializedObject.ApplyModifiedProperties();
-            m_textTable.AddLanguage("Language " + m_textTable.nextLanguageID);
-            m_serializedObject.Update();
-            ResetFieldsTab();
-        }
-
-        private bool OnCanRemoveLanguageListElement(ReorderableList list)
-        {
-            var languageValuesProperty = m_serializedObject.FindProperty("m_languageValues");
-            var languageValueProperty = languageValuesProperty.GetArrayElementAtIndex(list.index);
-            return languageValueProperty.intValue > 0;
-        }
-
-        private void OnRemoveLanguageListElement(ReorderableList list)
-        {
-            var languageKeysProperty = m_serializedObject.FindProperty("m_languageKeys");
-            var languageKeyProperty = languageKeysProperty.GetArrayElementAtIndex(list.index);
-            var languageName = languageKeyProperty.stringValue;
-            var languageValuesProperty = m_serializedObject.FindProperty("m_languageValues");
-            var languageValueProperty = languageValuesProperty.GetArrayElementAtIndex(list.index);
-            var languageID = languageValueProperty.intValue;
-            if (!EditorUtility.DisplayDialog("Delete " + languageName, "Are you sure you want to delete the language '" + languageName +
-                "' and all field values associated with it?", "OK", "Cancel")) return;
-            m_serializedObject.ApplyModifiedProperties();
-            m_textTable.RemoveLanguage(languageID);
-            m_serializedObject.Update();
-            ResetFieldsTab();
-        }
-
-        private int m_selectedLanguageListIndex = -1;
-
-        private void OnSelectLanguageListElement(ReorderableList list)
-        {
-            m_selectedLanguageListIndex = list.index;
-        }
-
-        private void OnReorderLanguageListElement(ReorderableList list)
-        {
-            // Also reorder values:
-            var languageValuesProperty = m_serializedObject.FindProperty("m_languageValues");
-            var value = languageValuesProperty.GetArrayElementAtIndex(m_selectedLanguageListIndex).intValue;
-            languageValuesProperty.DeleteArrayElementAtIndex(m_selectedLanguageListIndex);
-            languageValuesProperty.InsertArrayElementAtIndex(list.index);
-            languageValuesProperty.GetArrayElementAtIndex(list.index).intValue = value;
-            ResetFieldsTab();
-        }
 
         #endregion
         #region Search
@@ -653,18 +768,23 @@ public class ActorSOEditor : Editor
         }
 
         #endregion
-
-        public TextTableModule(TextTable table)
+        #region Constructer
+        public TextTableModule(TextTable table,string foldLabel= "TextTableModule")
         {
             m_textTable = table;
             m_FilterOption = false;
+            m_foldLabel = foldLabel;
         }
-        public TextTableModule(TextTable table, string filterKeyword)
+        public TextTableModule(TextTable table, string filterKeyword, string foldLabel = "TextTableModule")
         {
             m_textTable = table;
             m_FilterOption = true;
             m_filterKeyword=filterKeyword;
+            m_foldLabel = foldLabel;
         }
+
+        #endregion
+        #region filter
         public void SetFilter(string filterKeyword)
         {
             m_FilterOption = true;
@@ -674,11 +794,12 @@ public class ActorSOEditor : Editor
         {
             m_FilterOption = false;
         }
-        public void ShowTextTable(bool setDirty, Actor target)
+        #endregion
+        public void DrawTextTable(bool setDirty, Actor target)
         {
             if (m_textTable)
             {
-                m_foldLocDialogue = EditorGUILayout.Foldout(m_foldLocDialogue, new GUIContent("CharBarkDialouge", "Portrait images using texture assets."));
+                m_foldLocDialogue = EditorGUILayout.Foldout(m_foldLocDialogue, new GUIContent(m_foldLabel, "Portrait images using texture assets."));
                 if (m_foldLocDialogue)
                 {
                     var newToolbarSelection = GUILayout.Toolbar(m_toolbarSelection, ToolbarLabels);
@@ -706,115 +827,6 @@ public class ActorSOEditor : Editor
                 }
             }
         }
-        private void DrawLanguagesTab()
-        {
-            if (m_languageList == null)
-            {
-                m_serializedObject ??= new SerializedObject(m_textTable);
-                m_languageList = new ReorderableList(m_serializedObject, m_serializedObject.FindProperty("m_languageKeys"), true, true, true, true);
-                m_languageList.drawHeaderCallback = OnDrawLanguageListHeader;
-                m_languageList.drawElementCallback = OnDrawLanguageListElement;
-                m_languageList.onAddCallback = OnAddLanguageListElement;
-                m_languageList.onCanRemoveCallback = OnCanRemoveLanguageListElement;
-                m_languageList.onRemoveCallback = OnRemoveLanguageListElement;
-                m_languageList.onSelectCallback = OnSelectLanguageListElement;
-                m_languageList.onReorderCallback = OnReorderLanguageListElement;
-            }
-            m_languageListScrollPosition = GUILayout.BeginScrollView(m_languageListScrollPosition, false, false);
-            try
-            {
-                m_languageList.DoLayoutList();
-            }
-            finally
-            {
-                GUILayout.EndScrollView();
-            }
-        }
-
-        private void DrawFieldsTab()
-        {
-            DrawGrid();
-            DrawEntryBox();
-        }
-        private void DrawGrid()
-        {
-            if (m_textTable == null) return;
-            var entryBoxHeight = IsAnyFieldSelected() ? (6 * EditorGUIUtility.singleLineHeight) : 0;
-            if (m_isSearchPanelOpen) entryBoxHeight += (4 * EditorGUIUtility.singleLineHeight);
-
-            if (m_needRefreshLists || m_fieldList == null || m_languageDropdownList == null)
-            {
-                m_needRefreshLists = false;
-                var por = m_FilterOption? RebuildProperty(m_serializedObject): m_MainProp ??= m_serializedObject.FindProperty("m_fieldValues");
-
-                m_fieldList = new ReorderableList(m_serializedObject, por, true, true, true, true);
-                m_fieldList.drawHeaderCallback = OnDrawFieldListHeader;
-                m_fieldList.drawElementCallback = OnDrawFieldListElement;
-                m_fieldList.onAddCallback = OnAddFieldListElement;
-                m_fieldList.onRemoveCallback = OnRemoveFieldListElement;
-                m_fieldList.onSelectCallback = OnSelectFieldListElement;
-                m_fieldList.onReorderCallback = OnReorderFieldListElement;
-
-                var languages = new List<string>();
-                var languageKeysProperty = m_serializedObject.FindProperty("m_languageKeys");
-                for (int i = 0; i < languageKeysProperty.arraySize; i++)
-                {
-                    languages.Add(languageKeysProperty.GetArrayElementAtIndex(i).stringValue);
-                }
-                m_languageDropdownList = languages.ToArray();
-
-                RebuildFieldCache();
-            }
-            m_fieldList.DoLayoutList();
-
-            CheckMouseEvents();
-        }
-        private void DrawEntryBox()
-        {
-            if (m_needRefreshLists || !IsAnyFieldSelected()) return;
-            //var rect = new Rect(2, position.height - 6 * EditorGUIUtility.singleLineHeight, position.width - 4, 6 * EditorGUIUtility.singleLineHeight);
-            var rect = GUILayoutUtility.GetRect(0, 100, GUILayout.ExpandWidth(true));
-
-            if (m_isSearchPanelOpen)
-            {
-                var searchPanelHeight = (4 * EditorGUIUtility.singleLineHeight);
-                rect = new Rect(rect.x, rect.y - searchPanelHeight, rect.width, rect.height);
-            }
-            var fieldValuesProperty = m_FilterOption? m_copyedMainProp: m_MainProp;
-            var fieldValueProperty = fieldValuesProperty.GetArrayElementAtIndex(m_fieldList.index);
-            var keysProperty = fieldValueProperty.FindPropertyRelative("m_keys");
-            var valuesProperty = fieldValueProperty.FindPropertyRelative("m_values");
-            var valueIndex = -1;
-            var fieldNameProperty = fieldValueProperty.FindPropertyRelative("m_fieldName");
-            if (m_FilterOption && !fieldNameProperty.stringValue.Contains(m_filterKeyword))
-            {
-                return;
-            }
-            for (int i = 0; i < keysProperty.arraySize; i++)
-            {
-                if (keysProperty.GetArrayElementAtIndex(i).intValue == m_selectedLanguageID)
-                {
-                    valueIndex = i;
-                    break;
-                }
-            }
-            if (valueIndex == -1)
-            {
-                valueIndex = keysProperty.arraySize;
-                keysProperty.arraySize++;
-                keysProperty.GetArrayElementAtIndex(valueIndex).intValue = m_selectedLanguageID;
-                valuesProperty.arraySize++;
-                valuesProperty.GetArrayElementAtIndex(valueIndex).stringValue = string.Empty;
-            }
-            if (textAreaStyle == null || !isTextAreaStyleInitialized)
-            {
-                isTextAreaStyleInitialized = true;
-                textAreaStyle = new GUIStyle(EditorStyles.textField);
-                textAreaStyle.wordWrap = true;
-            }
-            var valueProperty = valuesProperty.GetArrayElementAtIndex(valueIndex);
-            valueProperty.stringValue = EditorGUI.TextArea(rect, valueProperty.stringValue, textAreaStyle);
-        }
 
 
     }
@@ -829,10 +841,11 @@ public class ActorSOEditor : Editor
     void Show()
     {
         Actor target = m_target.actor;
-        m_actorNameLocTable ??= new TextTableModule(AssetDatabase.LoadAssetAtPath(ConstDataTable.AssetPath.LocalizeTable.ActorName, typeof(TextTable)) as TextTable);
-        m_textTable ??= new TextTableModule(AssetDatabase.LoadAssetAtPath(ConstDataTable.AssetPath.LocalizeTable.ActorBark, typeof(TextTable)) as TextTable);
+        m_actorNameLocTable ??= new TextTableModule(AssetDatabase.LoadAssetAtPath(ConstDataTable.AssetPath.LocalizeTable.ActorName, typeof(TextTable)) as TextTable,"LocActorDisc");
+        m_textTable ??= new TextTableModule(AssetDatabase.LoadAssetAtPath(ConstDataTable.AssetPath.LocalizeTable.ActorBark, typeof(TextTable)) as TextTable,"ActorBarkDisc");
         m_textTable ??= new TextTableModule(EditorGUILayout.ObjectField(m_textTable.GetTextTable(), typeof(TextTable), true) as TextTable);
         m_actor ??= m_target.actor;
+        int langidx=m_textTable.GetTextTable().languages[ConstDataTable.DefalutLang];
         bool isTargetDataChanged = m_actorNameLocTable.actorID != target.id;
         if (isTargetDataChanged)
         {
@@ -841,10 +854,18 @@ public class ActorSOEditor : Editor
         }
         m_actor.id = EditorGUILayout.IntField("ID", m_actor.id);
         EditorGUILayout.BeginHorizontal();
-        m_actor.Name = EditorGUILayout.TextField("Name", m_actor.Name);
-        EditorGUILayout.Popup(0, m_actorNameLocTable.GetTextTable().GetFieldNames());
+        m_SelectedActorFieldID = m_actorNameLocTable.GetTextTable().GetFieldID(m_actor.Name);
+        string locName = m_actorNameLocTable.GetTextTable().GetFieldTextForLanguage(m_SelectedActorFieldID, langidx);
+        EditorGUILayout.LabelField("Name", locName, GUILayout.Width(EditorGUIUtility.labelWidth*2));
+        if (isTargetDataChanged||m_SelectedActoridx == -1) 
+        {
+            m_SelectedActoridx = m_actorNameLocTable.GetTextTable().GetFieldNames().ToList().IndexOf(m_actor.Name);
+        } 
+        m_SelectedActoridx = EditorGUILayout.Popup(m_SelectedActoridx, m_actorNameLocTable.GetTextTable().GetFieldNames());
+        if(m_SelectedActoridx!=-1)
+        m_actor.Name = m_actorNameLocTable.GetTextTable().GetFieldNames()[m_SelectedActoridx];
         EditorGUILayout.EndHorizontal();
-        m_actorNameLocTable.ShowTextTable(isTargetDataChanged, target); 
+        m_actorNameLocTable.DrawTextTable(isTargetDataChanged, target); 
         DrawActorPortrait(m_actor);
         GUILayout.BeginHorizontal();
 
@@ -880,7 +901,7 @@ public class ActorSOEditor : Editor
         GUILayout.EndHorizontal();
         Rect windowRect = new Rect(10, 30, 200, 100);
         //여기에 테이블
-        m_textTable.ShowTextTable(isTargetDataChanged, target);
+        m_textTable.DrawTextTable(isTargetDataChanged, target);
         ShowDNDStatus(target, isTargetDataChanged);
 
 
