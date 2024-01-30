@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0378145877c582d4d91b993a8608ca71, type: 3}
+  m_Name: New Localized Fonts
+  m_EditorClassIdentifier: 
+  defaultFont: {fileID: 0}
+  defaultTextMeshProFont: {fileID: 11400000, guid: 7747a49fbb2297a4999023ad4f30ce14,
+    type: 2}
+  fontsForLanguages:
+  - language: ko
+    font: {fileID: 0}
+    textMeshProFont: {fileID: 11400000, guid: 7747a49fbb2297a4999023ad4f30ce14, type: 2}
+    scaleRelativeToInitialFont: 0
