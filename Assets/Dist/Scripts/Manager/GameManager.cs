@@ -184,88 +184,6 @@ namespace Garunnir
       
     }
     
-    public class ConstDataTable
-    {
-        public const string DefalutLang = "ko";
-        public class Map
-        {
-            /// <summary>
-            /// 맵번호
-            /// </summary>
-            public const string ID = "Map.ID";
-            /// <summary>
-            /// 맵위치
-            /// </summary>
-            public const string Pos = "Map.PosID";
-        }
-        public class Actor
-        {
-            public const int createStart = 10000;//start id to created charactor
-            public const int PlayerID = 1;
-
-            public class Status
-            {
-                /// <summary>
-                /// 힘
-                /// </summary>
-                public const string Str = "Status.Str";
-                /// <summary>
-                /// 생명력
-                /// </summary>
-                public const string Con = "Status.Con";
-                /// <summary>
-                /// 손재주
-                /// </summary>
-                public const string Dex = "Status.Dex";
-                /// <summary>
-                /// 지력
-                /// </summary>
-                public const string Int = "Status.Int";
-                /// <summary>
-                /// 영적감수성
-                /// </summary>
-                public const string Wis = "Status.Wis";
-                /// <summary>
-                /// 카리스마
-                /// </summary>
-                public const string Cha = "Status.Cha";
-                /// <summary>
-                /// 생명력
-                /// </summary>
-                public const string Hp = "Status.Hp";
-            }
-            public class BodyData//todo 차후 보디 데이터 각 무개의 합으로 평가한다.
-            {
-                public const string Weight = "Body.Weight";
-            }
-        }
-        public class Equipment
-        {
-            /// <summary>
-            /// 무기
-            /// </summary>
-            public const string Weapon = "Equipment.Weapon";
-            public const string Equip = "Equipment.Equip";
-        }
-        public class ActorHStatus
-        {
-
-        }
-        public class AssetPath
-        {
-            public class LocalizeTable
-            {
-                /// <summary>
-                /// 반복 사용되는 캐릭터 대사가 들어있는 SO
-                /// </summary>
-                public const string ActorBark = "Assets/Dist/Scripts/CustomDS/LocalizeDialogueTable.asset";
-                /// <summary>
-                /// 로컬라이징 대응 액터이름
-                /// </summary>
-                public const string ActorName = "Assets/Dist/Scripts/CustomDS/LocalizeActorName.asset";
-            }
-        }
-    }
     public class Utillity
     {
         //public const string lf = "\r\n";
@@ -431,7 +349,7 @@ namespace Garunnir
             //TupleDicConv(GameManager.Instance.GetFormDic(Form0.character, Form.field), character.fields);
             Utillity.stringBuilder.Append(divider);
             Utillity.stringBuilder.Append(lf);
-            character.bodyCore.GetJsonConvert();
+            //character.bodyCore.GetJsonConvert();
             return Utillity.stringBuilder.ToString();
         }
         //static Rect CalculateAbsoluteRect(RectTransform target)

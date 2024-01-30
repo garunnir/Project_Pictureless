@@ -49,7 +49,7 @@ namespace Garunnir
         public static event UnityAction Act_CharLoaded;
         public void Init()
         {
-            //characters = DialogueManager.databaseManager.masterDatabase.actors;
+            characters = DialogueManager.databaseManager.masterDatabase.actors;
             //Garam();
             //Act_CharLoaded?.Invoke();
         }
@@ -62,14 +62,14 @@ namespace Garunnir
             Actor cha = characters.Find(x => x.id == ConstDataTable.Actor.PlayerID);
             if (cha != null) return cha;
             cha ??= new Actor();
-            cha.bodyCore ??= BodyFactory.CreateDefault();
+            //cha.bodyCore ??= BodyFactory.CreateDefault();
             return cha;
         }
         Actor Garam()
         {
             Actor cha = characters.Find(x => x.Name=="Garam");
             cha ??= new Actor();
-            cha.bodyCore ??= BodyFactory.CreateDefault();
+            //cha.bodyCore ??= BodyFactory.CreateDefault();
             //스테이터스 표시구분은 따로 결정해주는게 좋을것 같음.
             cha.fields.Add(new Field(GameManager.Instance.GetFormDic(Form0.character, Form.profile),"Garam", FieldType.Files));
             cha.fields.Add(new Field(GameManager.Instance.GetFormDic(Form0.character, Form.firstName), "오르카릇트 비돌돌 가람", FieldType.Text));

@@ -55,7 +55,7 @@ public class LuaInputManager : MonoBehaviour
     {
         RawImage img = GameManager.Instance.GetUIManager().GetBackground();
         img.texture = GameManager.Instance.GetResourceManager().GetBG(imgname);
-        UIManager.AdjustSize(GameManager.Instance.GetUIManager().GetUpperRect(), img.rectTransform, img.texture);
+        Garunnir.UIUtility.AdjustSize(GameManager.Instance.GetUIManager().GetUpperRect(), img.rectTransform, img.texture);
     }
     void OpenCustomResponse(string excute)
     {

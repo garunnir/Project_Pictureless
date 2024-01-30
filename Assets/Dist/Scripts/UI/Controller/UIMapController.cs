@@ -7,6 +7,8 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using DialogueDatabase = PixelCrushers.DialogueSystem.Wrappers.DialogueDatabase;
+using DialogueSystemController = PixelCrushers.DialogueSystem.Wrappers.DialogueSystemController;
 
 public class UIMapController : MonoBehaviour
 {
@@ -16,10 +18,58 @@ public class UIMapController : MonoBehaviour
     public MapEntry GetCurrentMapEntry()=>m_currentEntry;
     public MapContainer GetCurrentMap()=> m_currentMap;
     public event UnityAction<MapEntry> MapEntered;
+    #region map
+    public List<Actor> mapActorCache;
+    private DialogueSystemController dialogueSystemController;
+    //맵 정보에서 타겟을 찾는다
+    public List<Actor> FindActorOnMap(MapEntry entry)
+    {
+        return dialogueSystemController.masterDatabase.actors.FindAll(x => Field.LookupInt(x.fields, ConstDataTable.Map.Pos) == entry.MapID && Field.LookupInt(x.fields, ConstDataTable.Map.Pos) == entry.id);
+    }
+    public void Map_CharSelect(MapEntry entry)
+    {
+        if (mapActorCache == null || mapActorCache.Count == 0)
+            mapActorCache = FindActorOnMap(entry);
+        if (mapActorCache.Count > 0)
+        {
+            DialogueEntry dentry = dialogueSystemController.GetBasicDialogueEntry(DialogueSystemController.Execute.Conversation);
+            dentry.outgoingLinks.Clear();// 대화하기 버튼 누르면 강제로 연결함.
+            List<string> strings = mapActorCache.ConvertAll(x => x.Name);
+            dialogueSystemController.ConnectActorDialogueToResponseButton(dentry, mapActorCache);
+        }
+    }
+    public void Map_FindCharInMap(MapEntry entry)
+    {
+        if (mapActorCache == null)
+            mapActorCache = FindActorOnMap(entry);
+        bool finded = mapActorCache != null || mapActorCache.Count == 0;
+        dialogueSystemController.SelectionEnable(DialogueSystemController.Execute.Conversation, finded);
+        if (finded)
+        {
+            dialogueSystemController.conversationView.SelectedResponseHandler += dialogueSystemController.ChangeBtn;
+            Map_CharSelect(entry);
+        }
+        else
+        {
+            dialogueSystemController.conversationView.SelectedResponseHandler -= dialogueSystemController.ChangeBtn;
+        }
+        //대화 출력 구문?
+        dialogueSystemController.UpdateResponses();
+    }
+    #endregion
 
 
     private void Awake()
     {
+        dialogueSystemController = FindObjectOfType<DialogueSystemController>();
+        MapEntered += Map_FindCharInMap;
+        if (FindObjectOfType<GameManager>())
+            GameManager.Instance.GetResourceManager().ResourceLoadDoneEvent += () =>
+            {
+                dialogueSystemController.Init();
+                //StartConversation(basicConv.Title);
+                dialogueSystemController.StartConversation(dialogueSystemController.masterDatabase.GetConversation(1).Title);
+            };
         view = GetComponent<UIMapViewer>();
         m_currentMap = DialogueManager.masterDatabase.GetMapContainer(0);
         view.MoveEvent += MoveTo;
@@ -39,7 +89,7 @@ public class UIMapController : MonoBehaviour
         //원본 이미지 비율을 가져옴
         //지금 적용되어있는 랙트를 비교
         //원본이미지 폭에따라 길이를 재적용
-        UIManager.AdjustSize(GameManager.Instance.GetUIManager().GetUpperRect(), img.rectTransform, img.texture);
+        UIUtility.AdjustSize(GameManager.Instance.GetUIManager().GetUpperRect(), img.rectTransform, img.texture);
     }
     private void ShowMap(MapContainer container)
     {

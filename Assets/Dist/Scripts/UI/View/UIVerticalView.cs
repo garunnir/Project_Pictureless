@@ -47,7 +47,7 @@ public class UIVerticalView : UI
         {
             var rawimg = obj.GetComponentInChildren<RawImage>();
             rawimg.texture = tex;
-            UIManager.AdjustSize(obj.GetComponent<RectTransform>().rect, rawimg.rectTransform, tex);
+            Garunnir.UIUtility.AdjustSize(obj.GetComponent<RectTransform>().rect, rawimg.rectTransform, tex);
         }
         return obj;
     }
