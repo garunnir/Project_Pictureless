@@ -1,4 +1,5 @@
-// Recompile at 2024-01-30 오후 7:24:18
+// Recompile at 2024-01-30 오후 8:33:12
+
 // Copyright (c) Pixel Crushers. All rights reserved.
 
 using System.Collections.Generic;
@@ -202,7 +203,6 @@ namespace PixelCrushers.DialogueSystem
             Emphasis[] emphases = DialogueManager.instance.displaySettings.subtitleSettings.richTextEmphases
                 ? ReplaceEmphasisTagsWithRichText(ref text, emphasisSettings)
                 : ExtractEmphasisTags(ref text, emphasisSettings);
-            text = PixelCrushers.Wrappers.UILocalizationManager.instance.AddLoc(text);
             return new FormattedText(text, emphases, italic, position, forceMenu, forceAuto, pic, pica, picc, variableInputPrompt, subtitlePanelNumber, noSubtitle);
         }
 

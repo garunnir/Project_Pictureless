@@ -1,8 +1,6 @@
-// Copyright (c) Pixel Crushers. All rights reserved.
+﻿// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
-using UnityEngine.TextCore.Text;
-using UnityEngine.UI;
 
 namespace PixelCrushers.DialogueSystem.Wrappers
 {
@@ -15,13 +13,6 @@ namespace PixelCrushers.DialogueSystem.Wrappers
     [AddComponentMenu("Pixel Crushers/Dialogue System/UI/Standard UI/Dialogue/Standard Dialogue UI")]
     public class StandardDialogueUI : PixelCrushers.DialogueSystem.StandardDialogueUI
     {
-        //[SerializeField] private RawImage bg; 
-        public override void Awake()
-        {
-            base.Awake();
-            print("~~~");
-            Localization.language=Localization.GetLanguage(SystemLanguage.Korean);
-        }
     }
 
 }

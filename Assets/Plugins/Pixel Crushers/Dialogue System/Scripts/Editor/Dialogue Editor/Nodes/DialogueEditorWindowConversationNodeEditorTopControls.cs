@@ -16,13 +16,10 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         private string[] conversationTitles = null;
 
         [SerializeField]
-        private string[] mapsTitles = null;
         private string[] conversationTitlesForMenu = null;
 
         [SerializeField]
         private int conversationIndex = -1;
-        [SerializeField]
-        private int mapContainerIndex = -1;
 
         private DialogueEntry nodeToDrag = null;
 
@@ -36,19 +33,12 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
         [SerializeField]
         private string conversationTitleFilter = string.Empty;
-        [SerializeField]
-        private string mapTitleFilter = string.Empty;
 
         [SerializeField]
         private List<string> prevConversationStack = new List<string>();
 
         [SerializeField]
         private List<string> nextConversationStack = new List<string>();
-        [SerializeField]
-        private List<string> prevMapStack = new List<string>();
-
-        [SerializeField]
-        private List<string> nextMapStack = new List<string>();
 
         private const int MaxConversationSelectionStack = 32;
 

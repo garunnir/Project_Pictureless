@@ -13,7 +13,7 @@ namespace PixelCrushers.DialogueSystem
     public static class DialogueManager
     {
 
-        private static Wrappers.DialogueSystemController m_instance = null;
+        private static DialogueSystemController m_instance = null;
 
         /// <summary>
         /// Gets the instance of DialogueSystemController.
@@ -21,11 +21,11 @@ namespace PixelCrushers.DialogueSystem
         /// <value>
         /// The instance.
         /// </value>
-        public static Wrappers.DialogueSystemController instance
+        public static DialogueSystemController instance
         {
             get
             {
-                if (m_instance == null) m_instance = GameObjectUtility.FindFirstObjectByType<Wrappers.DialogueSystemController>();
+                if (m_instance == null) m_instance = GameObjectUtility.FindFirstObjectByType<DialogueSystemController>();
                 return m_instance;
             }
         }
@@ -587,6 +587,27 @@ namespace PixelCrushers.DialogueSystem
         {
             if (!hasInstance) return;
             instance.Bark(conversationTitle, speaker, listener, barkHistory);
+        }
+
+        /// <summary>
+        /// Causes a character to bark a line at another character. A bark is a line spoken outside
+        /// of a full conversation. It uses a simple gameplay bark UI instead of the dialogue UI.
+        /// </summary>
+        /// <param name='conversationTitle'>
+        /// Title of the conversation that contains the bark lines. In this conversation, all 
+        /// dialogue entries linked from the first entry are considered bark lines.
+        /// </param>
+        /// <param name='speaker'>
+        /// The character barking the line.
+        /// </param>
+        /// <param name='listener'>
+        /// The character being barked at.
+        /// </param>
+        /// <param name="entryID">Dialogue entry ID to bark.</param>
+        public static void Bark(string conversationTitle, Transform speaker, Transform listener, int entryID)
+        {
+            if (!hasInstance) return;
+            instance.Bark(conversationTitle, speaker, listener, entryID);
         }
 
         /// <summary>

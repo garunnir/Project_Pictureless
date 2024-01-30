@@ -1,4 +1,4 @@
-// Copyright (c) Pixel Crushers. All rights reserved.
+﻿// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using UnityEditor;
@@ -301,16 +301,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                                                              actor.portrait, typeof(Texture2D), false, GUILayout.Height(64)) as Texture2D;
                     if (newPortrait != actor.portrait)
                     {
-                        var texpath = AssetDatabase.GetAssetPath(newPortrait);
-                        if (texpath.Contains("Resources/"))
-                        {
-                            texpath=texpath.Split("Resources/")[1];
-                            actor.textureName = texpath;
-                        }
-                        else
-                        {
-                            Debug.LogError("Is not Resources File");
-                        }
                         actor.portrait = newPortrait;
                         ClearActorInfoCaches();
                         SetDatabaseDirty("Actor Portrait");

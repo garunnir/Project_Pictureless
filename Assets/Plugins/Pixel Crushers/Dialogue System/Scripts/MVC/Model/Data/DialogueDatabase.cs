@@ -14,7 +14,6 @@ namespace PixelCrushers.DialogueSystem
     /// </summary>
     public class DialogueDatabase : ScriptableObject
     {
-        public TextTable CharDialogueTable;
 
         /// <summary>
         /// The version of the database, typically only used internally by the developer.
@@ -77,7 +76,6 @@ namespace PixelCrushers.DialogueSystem
         /// The conversations in the database.
         /// </summary>
         public List<Conversation> conversations = new List<Conversation>();
-        public List<MapContainer> maps = new List<MapContainer>();
 
         [System.Serializable]
         public class SyncInfo
@@ -113,7 +111,6 @@ namespace PixelCrushers.DialogueSystem
         private Dictionary<string, Location> locationNameCache = null;
         private Dictionary<string, Variable> variableNameCache = null;
         private Dictionary<string, Conversation> conversationTitleCache = null;
-        private Dictionary<string, MapContainer> mapTitleCache = null;
 
         /// <summary>
         /// Gets the ID of the first player character in the actor list.
@@ -179,53 +176,22 @@ namespace PixelCrushers.DialogueSystem
             if (locationNameCache == null) locationNameCache = CreateCache<Location>(locations);
             if (variableNameCache == null) variableNameCache = CreateCache<Variable>(variables);
             if (conversationTitleCache == null) conversationTitleCache = CreateCache<Conversation>(conversations);
-            if (mapTitleCache == null) mapTitleCache = CreateCache<MapContainer>(maps);
         }
 
         private Dictionary<string, T> CreateCache<T>(List<T> assets) where T : Asset
         {
-            if (typeof(T) == typeof(Conversation))
+            var useTitle = typeof(T) == typeof(Conversation);
+            var cache = new Dictionary<string, T>();
+            if (Application.isPlaying) // Only build cache at runtime so Dialogue Editor doesn't have to worry about updating it.
             {
-                var cache = new Dictionary<string, T>();
-                if (Application.isPlaying) // Only build cache at runtime so Dialogue Editor doesn't have to worry about updating it.
+                for (int i = 0; i < assets.Count; i++)
                 {
-                    for (int i = 0; i < assets.Count; i++)
-                    {
-                        var asset = assets[i];
-                        var key = (asset as Conversation).Title;
-                        if (!cache.ContainsKey(key)) cache.Add(key, asset);
-                    }
+                    var asset = assets[i];
+                    var key = useTitle ? (asset as Conversation).Title : asset.Name;
+                    if (!cache.ContainsKey(key)) cache.Add(key, asset);
                 }
-                return cache;
             }
-            else if(typeof(T) == typeof(MapContainer))
-            {
-                var cache = new Dictionary<string, T>();
-                if (Application.isPlaying) // Only build cache at runtime so Dialogue Editor doesn't have to worry about updating it.
-                {
-                    for (int i = 0; i < assets.Count; i++)
-                    {
-                        var asset = assets[i];
-                        var key = (asset as MapContainer).Title;
-                        if (!cache.ContainsKey(key)) cache.Add(key, asset);
-                    }
-                }
-                return cache;
-            }
-            else
-            {
-                var cache = new Dictionary<string, T>();
-                if (Application.isPlaying) // Only build cache at runtime so Dialogue Editor doesn't have to worry about updating it.
-                {
-                    for (int i = 0; i < assets.Count; i++)
-                    {
-                        var asset = assets[i];
-                        var key = asset.Name;
-                        if (!cache.ContainsKey(key)) cache.Add(key, asset);
-                    }
-                }
-                return cache;
-            }
+            return cache;
         }
 
         /// <summary>
@@ -240,7 +206,6 @@ namespace PixelCrushers.DialogueSystem
             locationNameCache = null;
             variableNameCache = null;
             conversationTitleCache = null;
-            mapTitleCache = null;
         }
 
         #endregion
@@ -392,20 +357,7 @@ namespace PixelCrushers.DialogueSystem
             SetupCaches();
             return conversationTitleCache.ContainsKey(conversationTitle) ? conversationTitleCache[conversationTitle] : conversations.Find(c => string.Equals(c.Title, conversationTitle));
         }
-        public MapContainer GetMapContainer(string maptitle)
-        {
-            if (string.IsNullOrEmpty(maptitle)) return null;
-            SetupCaches();
-            return mapTitleCache.ContainsKey(maptitle) ? mapTitleCache[maptitle] : maps.Find(c => string.Equals(c.Title, maptitle));
-        }
-        public void AddMapContainer(MapContainer mapContainer)
-        {
-            SetupCaches();
-            var title = mapContainer.Title;
-            //--- Removed for speed: if (DialogueDebug.logInfo) Debug.Log("Dialogue System: Add Conversation: " + title);
-            if (!mapTitleCache.ContainsKey(title)) mapTitleCache.Add(title, mapContainer);
-            maps.Add(mapContainer);
-        }
+
         /// <summary>
         /// Retrieves a Conversation by its ID.
         /// </summary>
@@ -418,10 +370,6 @@ namespace PixelCrushers.DialogueSystem
         public Conversation GetConversation(int conversationID)
         {
             return conversations.Find(c => c.id == conversationID);
-        }
-        public MapContainer GetMapContainer(int conversationID)
-        {
-            return maps.Find(c => c.id == conversationID);
         }
 
         /// <summary>
@@ -453,18 +401,6 @@ namespace PixelCrushers.DialogueSystem
                 if ((conversation != null) && (conversation.dialogueEntries != null))
                 {
                     return conversation.dialogueEntries.Find(e => e.id == link.destinationDialogueID);
-                }
-            }
-            return null;
-        }
-        public MapEntry GetMapEntry(Link link)
-        {
-            if (link != null)
-            {
-                MapContainer conversation = GetMapContainer(link.destinationConversationID);
-                if ((conversation != null) && (conversation.mapEntries != null))
-                {
-                    return conversation.mapEntries.Find(e => e.id == link.destinationDialogueID);
                 }
             }
             return null;
@@ -526,52 +462,27 @@ namespace PixelCrushers.DialogueSystem
                 AddAssets<Location>(locations, database.locations, locationNameCache);
                 AddAssets<Variable>(variables, database.variables, variableNameCache);
                 AddAssets<Conversation>(conversations, database.conversations, conversationTitleCache);
-                AddAssets<MapContainer>(maps, database.maps, mapTitleCache);
             }
         }
 
         private void AddAssets<T>(List<T> myAssets, List<T> assetsToAdd, Dictionary<string, T> cache) where T : Asset
         {
-            if (typeof(T) == typeof(Conversation))
+            var useTitle = typeof(T) == typeof(Conversation);
+            for (int i = 0; i < assetsToAdd.Count; i++)
             {
-                for (int i = 0; i < assetsToAdd.Count; i++)
+                var asset = assetsToAdd[i];
+                if (asset == null) continue;
+                var key = useTitle ? (asset as Conversation).Title : asset.Name;
+                if (key == null)
                 {
-                    var asset = assetsToAdd[i];
-                    var key = (asset as Conversation).Title;
-                    if (!cache.ContainsKey(key))
-                    {
-                        cache.Add(key, asset);
-                        myAssets.Add(asset);
-                        //--- Removed for speed: if (DialogueDebug.logInfo) Debug.Log("Dialogue System: Add " + typeof(T).Name + ": " + key);
-                    }
+                    if (DialogueDebug.logWarnings) Debug.LogWarning($"Dialogue System: A {typeof(T).Name} has an invalid name.");
+                    continue;
                 }
-            }
-            else if(typeof(T) == typeof(MapContainer))
-            {
-                for (int i = 0; i < assetsToAdd.Count; i++)
+                if (!cache.ContainsKey(key))
                 {
-                    var asset = assetsToAdd[i];
-                    var key = (asset as MapContainer).Title;
-                    if (!cache.ContainsKey(key))
-                    {
-                        cache.Add(key, asset);
-                        myAssets.Add(asset);
-                        //--- Removed for speed: if (DialogueDebug.logInfo) Debug.Log("Dialogue System: Add " + typeof(T).Name + ": " + key);
-                    }
-                }
-            }
-            else
-            {
-                for (int i = 0; i < assetsToAdd.Count; i++)
-                {
-                    var asset = assetsToAdd[i];
-                    var key =  asset.Name;
-                    if (!cache.ContainsKey(key))
-                    {
-                        cache.Add(key, asset);
-                        myAssets.Add(asset);
-                        //--- Removed for speed: if (DialogueDebug.logInfo) Debug.Log("Dialogue System: Add " + typeof(T).Name + ": " + key);
-                    }
+                    cache.Add(key, asset);
+                    myAssets.Add(asset);
+                    //--- Removed for speed: if (DialogueDebug.logInfo) Debug.Log("Dialogue System: Add " + typeof(T).Name + ": " + key);
                 }
             }
         }
@@ -633,7 +544,6 @@ namespace PixelCrushers.DialogueSystem
                 RemoveAssets<Location>(locations, database.locations, locationNameCache);
                 RemoveAssets<Variable>(variables, database.variables, variableNameCache);
                 RemoveAssets<Conversation>(conversations, database.conversations, conversationTitleCache);
-                RemoveAssets<MapContainer>(maps, database.maps, mapTitleCache);
             }
         }
 
@@ -663,7 +573,6 @@ namespace PixelCrushers.DialogueSystem
                 RemoveAssets<Location>(locations, database.locations, locationNameCache, keep);
                 RemoveAssets<Variable>(variables, database.variables, variableNameCache, keep);
                 RemoveAssets<Conversation>(conversations, database.conversations, conversationTitleCache, keep);
-                RemoveAssets<MapContainer>(maps, database.maps, mapTitleCache,keep);
             }
         }
 
@@ -1039,10 +948,6 @@ namespace PixelCrushers.DialogueSystem
             else if (asset is Conversation)
             {
                 return database.conversationTitleCache.ContainsKey((asset as Conversation).Title);
-            }
-            else if (asset is MapContainer)
-            {
-                return database.mapTitleCache.ContainsKey((asset as MapContainer).Title);
             }
             else
             {

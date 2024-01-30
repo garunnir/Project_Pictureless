@@ -142,10 +142,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         private void DrawDatabasePropertiesSection()
         {
             EditorWindowTools.StartIndentedSection();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("CharLocalizeTable");
-            database.CharDialogueTable = EditorGUILayout.ObjectField(database.CharDialogueTable,typeof(TextTable), false) as TextTable;
-            GUILayout.EndHorizontal();
             EditorGUILayout.BeginVertical(GroupBoxStyle);
             database.author = EditorGUILayout.TextField("Author", database.author);
             database.version = EditorGUILayout.TextField(new GUIContent("Version", "By default, this is the version of the Chat Mapper data model, but you can use it for your own purposes"), database.version);

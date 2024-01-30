@@ -69,10 +69,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             {
                 SetCurrentEntryByID();
             }
-            else if (toolbar.Current == Toolbar.Tab.Maps && Selection.activeObject == database)
-            {
-                SetCurrentEntryByID();
-            }
             else
             {
                 currentEntry = null;

@@ -56,8 +56,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         private Field currentEntryActor = null;
         private Field currentEntryConversant = null;
         private bool entryEventFoldout = false;
-        private bool actorFoldout=false;
-        private string selectedPlusActor = "(none)";
         private bool entryFieldsFoldout = false;
         private SequenceSyntaxState sequenceSyntaxState = SequenceSyntaxState.Unchecked;
         private GUIContent[] linkToDestinations = new GUIContent[0];
@@ -316,8 +314,8 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
         private string BuildDialogueEntryText(DialogueEntry entry)
         {
-            string text = entry.currentMenuText;
-            if (string.IsNullOrEmpty(text)) text = entry.currentDialogueText;
+            string text = Field.LookupValue(entry.fields, "Menu Text");
+            if (string.IsNullOrEmpty(text)) text = Field.LookupValue(entry.fields, "Dialogue Text");
             if (string.IsNullOrEmpty(text)) text = "<" + entry.Title + ">";
             if (entry.isGroup) text = "{group} " + text;
             if (text.Contains("\n")) text = text.Replace("\n", string.Empty);

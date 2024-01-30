@@ -1,4 +1,4 @@
-// Copyright (c) Pixel Crushers. All rights reserved.
+﻿// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using UnityEditor;
@@ -57,8 +57,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             NormalizeVariables();
             NormalizeConversations();
             NormalizeDialogueEntries();
-            NormalizeMapConatiners();
-            NormalizeMapEntries();
         }
 
         private void NormalizeActors()
@@ -105,27 +103,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 }
             }
         }
-        private void NormalizeMapConatiners()
-        {
-            NormalizeAssets<MapContainer>(database.maps, template.mapFields);
-        }
-        private void NormalizeMapEntries()
-        {
-            foreach (var conversation in database.conversations)
-            {
-                foreach (var entry in conversation.dialogueEntries)
-                {
-                    AddMissingFieldsToTemplate(entry.fields, template.dialogueEntryFields);
-                }
-            }
-            foreach (var conversation in database.conversations)
-            {
-                foreach (var entry in conversation.dialogueEntries)
-                {
-                    EnforceTemplateOnFields(entry.fields, template.dialogueEntryFields);
-                }
-            }
-        }
+
         private void NormalizeAssets<T>(List<T> assets, List<Field> templateFields, bool checkIsItem = false, bool requireIsItem = false) where T : Asset
         {
             foreach (var asset in assets)
@@ -195,19 +173,11 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             UpdateTemplateFromAssets<Location>(database.locations, template.locationFields);
             UpdateTemplateFromAssets<Variable>(database.variables, template.variableFields);
             UpdateTemplateFromAssets<Conversation>(database.conversations, template.conversationFields);
-            UpdateTemplateFromAssets<MapContainer>(database.maps, template.mapFields);
             foreach (var conversation in database.conversations)
             {
                 foreach (var entry in conversation.dialogueEntries)
                 {
                     AddMissingFieldsToTemplate(entry.fields, template.dialogueEntryFields);
-                }
-            }
-            foreach (var conversation in database.maps)
-            {
-                foreach (var entry in conversation.mapEntries)
-                {
-                    AddMissingFieldsToTemplate(entry.fields, template.mapEntryFields);
                 }
             }
             SaveTemplate();
@@ -245,14 +215,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     ApplyDialogueEntryTemplate(entry.fields);
                 }
             }
-            ApplyTemplateToAssets<MapContainer>(database.maps, template.mapFields);
-            foreach (var conversation in database.maps)
-            {
-                foreach (var entry in conversation.mapEntries)
-                {
-                    ApplyMapEntryTemplate(entry.fields);
-                }
-            }
         }
 
         private void ApplyTemplateToAssets<T>(List<T> assets, List<Field> templateFields) where T : Asset
@@ -272,24 +234,14 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             RemoveEmptyFields(template.variableFields);
             RemoveEmptyFields(template.conversationFields);
             RemoveEmptyFields(template.dialogueEntryFields);
-            RemoveEmptyFields(template.mapFields);
-            RemoveEmptyFields(template.mapEntryFields);
             RemoveEmptyFieldsFromAssets<Actor>(database.actors);
             RemoveEmptyFieldsFromAssets<Item>(database.items);
             RemoveEmptyFieldsFromAssets<Location>(database.locations);
             RemoveEmptyFieldsFromAssets<Variable>(database.variables);
             RemoveEmptyFieldsFromAssets<Conversation>(database.conversations);
-            RemoveEmptyFieldsFromAssets<MapContainer>(database.maps);
             foreach (var conversation in database.conversations)
             {
                 foreach (var entry in conversation.dialogueEntries)
-                {
-                    RemoveEmptyFields(entry.fields);
-                }
-            }
-            foreach (var conversation in database.maps)
-            {
-                foreach (var entry in conversation.mapEntries)
                 {
                     RemoveEmptyFields(entry.fields);
                 }

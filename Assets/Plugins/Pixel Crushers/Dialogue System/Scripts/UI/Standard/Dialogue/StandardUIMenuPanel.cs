@@ -1,4 +1,5 @@
-// Recompile at 2024-01-30 오후 7:24:18
+// Recompile at 2024-01-30 오후 8:33:12
+
 // Copyright (c) Pixel Crushers. All rights reserved.
 
 using System.Collections;
@@ -151,6 +152,24 @@ namespace PixelCrushers.DialogueSystem
         #endregion
 
         #region Show & Hide
+
+        protected override void Update()
+        {
+            if (s_isInputDisabled)
+            {
+                if (eventSystem != null) eventSystem.SetSelectedGameObject(null);
+            }
+            else
+            {
+                base.Update();
+            }
+        }
+
+        public override void CheckFocus()
+        {
+            if (s_isInputDisabled) return;
+            base.CheckFocus();
+        }
 
         public virtual void SetPCPortrait(Sprite portraitSprite, string portraitName)
         {

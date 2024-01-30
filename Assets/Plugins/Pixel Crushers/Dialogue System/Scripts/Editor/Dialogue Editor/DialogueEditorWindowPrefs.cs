@@ -1,4 +1,4 @@
-// Copyright (c) Pixel Crushers. All rights reserved.
+﻿// Copyright (c) Pixel Crushers. All rights reserved.
 
 using System;
 using UnityEngine;
@@ -11,6 +11,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
     public class DialogueEditorPrefs
     {
         public bool preferTitlesForLinksTo = false;
+        public bool showConversationIDs = false;
         public bool showNodeIDs = false;
         public bool showTitlesInsteadOfText = false;
         public bool showAllActorNames = false;
@@ -24,7 +25,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         public bool addNewNodesToRight = false;
         public bool autoArrangeOnCreate = false;
         public float snapToGridAmount = 0;
-        public bool showConversationIDs = false;
     }
 
 }

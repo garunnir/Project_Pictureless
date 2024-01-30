@@ -1,4 +1,4 @@
-// Copyright (c) Pixel Crushers. All rights reserved.
+﻿// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using UnityEditor;
@@ -199,14 +199,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             DrawAIReviseTextButton(asset, entry, field);
             EditorGUILayout.EndHorizontal();
         }
-        private void DrawRevisableTextField(GUIContent label, Asset asset, Field field)
-        {
-            if (field == null) return;
-            EditorGUILayout.BeginHorizontal();
-            field.value = EditorGUILayout.TextField(label, field.value);
-            DrawAIReviseTextButton(asset, field);
-            EditorGUILayout.EndHorizontal();
-        }
 
         private void DrawRevisableTextAreaField(GUIContent label, Asset asset, DialogueEntry entry, List<Field> fields, string fieldTitle)
         {
@@ -219,17 +211,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             }
             DrawRevisableTextAreaField(label, asset, entry, field);
         }
-        //private void DrawRevisableTextAreaField(GUIContent label, Asset asset, List<Field> fields, string fieldTitle)
-        //{
-        //    Field field = Field.Lookup(fields, fieldTitle);
-        //    if (field == null)
-        //    {
-        //        field = new Field(fieldTitle, string.Empty, FieldType.Text);
-        //        fields.Add(field);
-        //        SetDatabaseDirty("Create Field " + fieldTitle);
-        //    }
-        //    DrawRevisableTextField(label, asset, field);
-        //}
+
         private void DrawRevisableTextAreaField(GUIContent label, Asset asset, DialogueEntry entry, Field field)
         {
             EditorGUILayout.BeginHorizontal();

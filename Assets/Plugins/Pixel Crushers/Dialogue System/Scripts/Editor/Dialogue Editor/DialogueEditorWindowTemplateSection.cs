@@ -1,4 +1,4 @@
-// Copyright (c) Pixel Crushers. All rights reserved.
+﻿// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using UnityEditor;
@@ -27,8 +27,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             public bool locations = false;
             public bool conversations = false;
             public bool dialogueEntries = false;
-            public bool mapContainers = false;
-            public bool mapEntries = false;
             public bool variables = false;
         }
 
@@ -77,8 +75,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             DrawTemplate("Variables", template.variableFields, null, ref templateFoldouts.variables);
             DrawTemplate("Conversations", template.conversationFields, template.conversationPrimaryFieldTitles, ref templateFoldouts.conversations);
             DrawTemplate("Dialogue Entries", template.dialogueEntryFields, template.dialogueEntryPrimaryFieldTitles, ref templateFoldouts.dialogueEntries);
-            DrawTemplate("MapContainers", template.mapFields, template.mapContianerPrimaryFieldTitles, ref templateFoldouts.mapContainers);
-            DrawTemplate("Map Entries", template.mapEntryFields, template.mapEntryPrimaryFieldTitles, ref templateFoldouts.mapEntries);
             DrawDialogueLineColors();
             EditorWindowTools.EndIndentedSection();
             if (EditorGUI.EndChangeCheck()) SaveTemplate();
@@ -218,7 +214,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             {
                 database.variables.ForEach(x => ScrubField(x.fields, fieldTitleToRemove));
             }
-            else if(string.Equals(currentTemplateFoldout, "Conversations")|| string.Equals(currentTemplateFoldout, "Dialogue Entries"))
+            else
             {
                 foreach (var conversation in database.conversations)
                 {
@@ -229,20 +225,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     else if (string.Equals(currentTemplateFoldout, "Dialogue Entries"))
                     {
                         conversation.dialogueEntries.ForEach(x => ScrubField(x.fields, fieldTitleToRemove));
-                    }
-                }
-            }
-            else
-            {
-                foreach (var conversation in database.maps)
-                {
-                    if (string.Equals(currentTemplateFoldout, "MapContainers"))
-                    {
-                        ScrubField(conversation.fields, fieldTitleToRemove);
-                    }
-                    else if (string.Equals(currentTemplateFoldout, "Map Entries"))
-                    {
-                        conversation.mapEntries.ForEach(x => ScrubField(x.fields, fieldTitleToRemove));
                     }
                 }
             }

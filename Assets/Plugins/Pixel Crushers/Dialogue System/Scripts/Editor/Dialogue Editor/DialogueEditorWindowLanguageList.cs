@@ -67,45 +67,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
         private void DrawLocalizedVersions(Asset asset, List<Field> fields, string titleFormat, bool alwaysAdd, FieldType fieldType, bool useSequenceEditor = false)
         {
-            DrawLocalizedVersions(asset, fields, titleFormat, alwaysAdd, fieldType, null, useSequenceEditor);
-        }
-        private void DrawLocalizedVersions(Asset asset, List<Field> fields, string titleFormat, bool alwaysAdd, FieldType fieldType, List<Field> alreadyDrawn, bool useSequenceEditor = false)
-        {
-            bool indented = false;
-            foreach (var language in languages)
-            {
-                string localizedTitle = string.Format(titleFormat, language);
-                Field field = Field.Lookup(fields, localizedTitle);
-                if ((field == null) && (alwaysAdd || (Field.FieldExists(template.dialogueEntryFields, localizedTitle))))
-                {
-                    field = new Field(localizedTitle, string.Empty, fieldType);
-                    fields.Add(field);
-                }
-                if (field != null)
-                {
-                    if (!indented)
-                    {
-                        indented = true;
-                        EditorWindowTools.StartIndentedSection();
-                    }
-                    if (useSequenceEditor)
-                    {
-                        EditorGUILayout.BeginHorizontal();
-                        EditorGUILayout.LabelField(localizedTitle);
-                        GUILayout.FlexibleSpace();
-                        EditorGUILayout.EndHorizontal();
-                        field.value = EditorGUILayout.TextArea(field.value);
-                    }
-                    else
-                    {
-                        //[AI] EditorGUILayout.LabelField(localizedTitle);
-                        //field.value = EditorGUILayout.TextArea(field.value);
-                        DrawLocalizableTextAreaField(new GUIContent(localizedTitle), asset, null, field);
-                    }
-                    if (alreadyDrawn != null) alreadyDrawn.Add(field);
-                }
-            }
-            if (indented) EditorWindowTools.EndIndentedSection();
+            DrawLocalizedVersions(asset, null, fields, titleFormat, alwaysAdd, fieldType, null, useSequenceEditor);
         }
 
         private void DrawLocalizedVersions(DialogueEntry entry, List<Field> fields, string titleFormat, bool alwaysAdd, FieldType fieldType, bool useSequenceEditor = false)

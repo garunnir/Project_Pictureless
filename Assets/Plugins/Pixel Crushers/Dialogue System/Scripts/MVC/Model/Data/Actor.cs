@@ -12,8 +12,7 @@ namespace PixelCrushers.DialogueSystem
     [System.Serializable]
     public class Actor : Asset
     {
-        public int conversationIdx=-1;
-        public Vector2 alignment;//y+good y-evil x-law x+chaos
+
         /// <summary>
         /// The actor's (optional) portrait image. Corresponds to <c>[pic=1]</c> tag.
         /// </summary>
@@ -34,6 +33,9 @@ namespace PixelCrushers.DialogueSystem
         /// </summary>
         public List<Sprite> spritePortraits = new List<Sprite>();
 
+        /// <summary>
+        /// Gets or sets a value indicating whether this actor is a player character or an NPC.
+        /// </summary>
         /// <value>
         /// <c>true</c> if this actor is a player character; otherwise, <c>false</c>.
         /// </value>

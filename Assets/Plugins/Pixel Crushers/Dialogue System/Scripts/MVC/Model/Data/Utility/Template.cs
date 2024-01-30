@@ -25,8 +25,6 @@ namespace PixelCrushers.DialogueSystem
         public List<Field> variableFields = new List<Field>();
         public List<Field> conversationFields = new List<Field>();
         public List<Field> dialogueEntryFields = new List<Field>();
-        public List<Field> mapFields = new List<Field>();
-        public List<Field> mapEntryFields = new List<Field>();
 
         public List<string> actorPrimaryFieldTitles = new List<string>();
         public List<string> itemPrimaryFieldTitles = new List<string>();
@@ -35,8 +33,6 @@ namespace PixelCrushers.DialogueSystem
         public List<string> variablePrimaryFieldTitles = new List<string>();
         public List<string> conversationPrimaryFieldTitles = new List<string>();
         public List<string> dialogueEntryPrimaryFieldTitles = new List<string>();
-        public List<string> mapContianerPrimaryFieldTitles = new List<string>();
-        public List<string> mapEntryPrimaryFieldTitles = new List<string>();
 
         public Color npcLineColor = Color.red;
         public Color pcLineColor = Color.blue;
@@ -93,18 +89,6 @@ namespace PixelCrushers.DialogueSystem
             //template.dialogueEntryFields.Add(new Field("Video File", string.Empty, FieldType.Text));
             template.dialogueEntryFields.Add(new Field("Sequence", string.Empty, FieldType.Text));
 
-            template.mapFields.Add(new Field("Title", string.Empty, FieldType.Text));
-            template.mapFields.Add(new Field("Description", string.Empty, FieldType.Text));
-            template.mapFields.Add(new Field("Actor", "0", FieldType.Actor));
-            template.mapFields.Add(new Field("Conversant", "0", FieldType.Actor));
-
-            template.mapEntryFields.Add(new Field("Title", string.Empty, FieldType.Text));
-            template.mapEntryFields.Add(new Field("Description", string.Empty, FieldType.Text));
-            template.mapEntryFields.Add(new Field("Actor", string.Empty, FieldType.Actor));
-            template.mapEntryFields.Add(new Field("Conversant", string.Empty, FieldType.Actor));
-            template.mapEntryFields.Add(new Field("Menu Text", string.Empty, FieldType.Text));
-            template.mapEntryFields.Add(new Field("Dialogue Text", string.Empty, FieldType.Text));
-            template.mapEntryFields.Add(new Field("Sequence", string.Empty, FieldType.Text));
             // Note: 2021-04-10: Removed default Chat Mapper fields from DS template. No need for them to
             // take space unless you're using Chat Mapper, in which case the ChatMapperExporter will
             // automatically re-add any missing mandatory fields.
@@ -212,15 +196,7 @@ namespace PixelCrushers.DialogueSystem
             entry.Title = title;
             return entry;
         }
-        public MapEntry CreateMapEntry(int id, int conversationID, string title)
-        {
-            MapEntry entry = new MapEntry();
-            entry.fields = CreateFields(mapEntryFields);
-            entry.id = id;
-            entry.MapID = conversationID;
-            entry.Title = title;
-            return entry;
-        }
+
         public List<Field> CreateFields(List<Field> templateFields)
         {
             List<Field> fields = new List<Field>();

@@ -19,7 +19,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
     /// <param name="database">Dialogue database.</param>
     /// <param name="entry">Dialogue entry to draw.</param>
     public delegate void DrawDialogueEntryInspectorDelegate(DialogueDatabase database, DialogueEntry entry);
-    public delegate void DrawMapEntryInspectorDelegate(DialogueDatabase database, MapEntry entry);
 
     /// <summary>
     /// Draw additional information on a dialogue entry node in the node editor.
@@ -28,7 +27,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
     /// <param name="entry">Dialogue entry to draw.</param>
     /// <param name="boxRect">Node boundaries.</param>
     public delegate void DrawDialogueEntryNodeDelegate(DialogueDatabase database, DialogueEntry entry, Rect boxRect);
-    public delegate void DrawMapEntryNodeDelegate(DialogueDatabase database, MapEntry entry, Rect boxRect);
 
     /// <summary>
     /// Add menu items to the Dialogue Editor's Conversation section Menu dropdown.
@@ -71,13 +69,11 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         /// Assign handler(s) to perform extra drawing in the dialogue entry inspector view.
         /// </summary>
         public static event DrawDialogueEntryInspectorDelegate customDrawDialogueEntryInspector = null;
-        public static event DrawMapEntryInspectorDelegate customDrawMapEntryInspector = null;
 
         /// <summary>
         /// Assign handler(s) to perform extra drawing on nodes in the node editor.
         /// </summary>
         public static event DrawDialogueEntryNodeDelegate customDrawDialogueEntryNode = null;
-        public static event DrawMapEntryNodeDelegate customDrawMapEntryNode = null;
 
         /// <summary>
         /// Assign handler(s) to add extra menu items to the node editor menu.
