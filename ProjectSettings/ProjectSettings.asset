@@ -696,8 +696,8 @@ PlayerSettings:
   webGLDecompressionFallback: 0
   webGLPowerPreference: 2
   scriptingDefineSymbols:
-    Android: TMP_PRESENT
-    Standalone: TMP_PRESENT
+    Android: TMP_PRESENT;USE_ADDRESSABLES
+    Standalone: TMP_PRESENT;USE_ADDRESSABLES
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

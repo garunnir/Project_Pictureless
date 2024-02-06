@@ -1,14 +1,22 @@
 {
     "name": "DialogueSystemEditor",
+    "rootNamespace": "",
     "references": [
         "DialogueSystem",
         "PixelCrushers",
-        "PixelCrushersEditor"
+        "PixelCrushersEditor",
+        "Unity.Addressables.Editor",
+        "Unity.Addressables"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],
     "excludePlatforms": [],
-    "allowUnsafeCode": false
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

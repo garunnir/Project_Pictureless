@@ -1,19 +1,18 @@
 namespace Garunnir.Runtime.ScriptableObject
 {
     using PixelCrushers.DialogueSystem;
-    using System.Collections;
     using System.Collections.Generic;
     using UnityEngine;
     using System;
-    using Garunnir;
     using PixelCrushers;
     using System.Text.RegularExpressions;
 #if UNITY_EDITOR
+    using PixelCrushers.CustomExtention;
     using UnityEditorInternal;
     using UnityEditor;
 #endif
     using System.Linq;
-    [CreateAssetMenu(fileName = "Character", menuName = "GameDataAsset/Character")]
+    [CreateAssetMenu(fileName = "Character", menuName = "GameDataAsset/Character"),Serializable]
     public class ActorSO : ScriptableObject
     {
         public Actor actor;
@@ -834,11 +833,19 @@ namespace Garunnir.Runtime.ScriptableObject
         }
         public override void OnInspectorGUI()
         {
-            m_target ??= target as ActorSO;
+            if (m_target == null)
+            {
+                Init();
+            }
             Show();
             m_isBaseFold = EditorGUILayout.Foldout(m_isBaseFold, "BaseEditor");
             if (m_isBaseFold)
                 base.OnInspectorGUI();
+        }
+        void Init()
+        {
+            m_target = target as ActorSO;
+            m_target.actor.fields??=new List<Field>();
         }
         void Show()
         {
@@ -853,6 +860,7 @@ namespace Garunnir.Runtime.ScriptableObject
             {
                 m_textTable.actorID = m_actorNameLocTable.actorID = target.id;
                 m_textTable.SetFilter($"[{target.id}].");
+                serializedObject.ApplyModifiedProperties();
             }
             m_actor.id = EditorGUILayout.IntField("ID", m_actor.id);
             EditorGUILayout.BeginHorizontal();
@@ -883,9 +891,9 @@ namespace Garunnir.Runtime.ScriptableObject
                 calPos = -calPos / 50;
                 if (calPos.magnitude > 1)
                     calPos = calPos.normalized;
-                target.alignment = calPos;
+                target.SetAlignment(calPos);
             }
-            GUI.DrawTexture(new Rect(m_alignRect.x - target.alignment.x * 50 + 50 - 10, m_alignRect.y - target.alignment.y * 50 + 50 - 10, 20, 20), m_cachedAlignmentCursor ??= EditorGUIUtility.Load("Dialogue System/Event.png") as Texture2D);
+            GUI.DrawTexture(new Rect(m_alignRect.x - target.GetAlignment().x * 50 + 50 - 10, m_alignRect.y - target.GetAlignment().y * 50 + 50 - 10, 20, 20), m_cachedAlignmentCursor ??= EditorGUIUtility.Load("Dialogue System/Event.png") as Texture2D);
             GUILayout.EndVertical();
 
 
@@ -927,12 +935,14 @@ namespace Garunnir.Runtime.ScriptableObject
             {
                 Field.SetValue(target.fields, title, EditorGUILayout.IntField(label, Field.LookupInt(target.fields, title)));
             }
-            //어카지
-            //필드 구성요소를 가져온다
-            //빈필드일때 기본 구성요소를 제공한다
+//계속 데이터가 없어짐.
+//저장이 안되는것 같다.
+//리소스로 사용하지 않았던 데이터
+//GC???
             m_StatusToggle = EditorGUILayout.Foldout(m_StatusToggle, "BasicStatus");
             if (isTargetDataChanged)
             {
+                Debug.LogError("INIT");
                 StatusInitialize(target);
             }
             if (m_StatusToggle)
@@ -948,6 +958,10 @@ namespace Garunnir.Runtime.ScriptableObject
                 SetIntField(ConstDataTable.Actor.Status.Hp, "HP");
             }
         }
+        /// <summary>
+        /// 새 스테이터스 데이터를 불러오고 없으면 기본내용으로 채운다,
+        /// </summary>
+        /// <param name="target"></param>
         static void StatusInitialize(Actor target)
         {
             void Init(string fieldname, int value = 5)
@@ -1215,7 +1229,7 @@ namespace Garunnir.Runtime.ScriptableObject
             //DrawActorNodeColor(actor);
 
             //EditorGUI.BeginChangeCheck();
-            actor.IsPlayer = EditorGUILayout.Toggle(new GUIContent("Is Player", ""), actor.IsPlayer);
+            //actor.IsPlayer = EditorGUILayout.Toggle(new GUIContent("Is Player", ""), actor.IsPlayer);
             //if (EditorGUI.EndChangeCheck()) SetDatabaseDirty("IsPlayer");
 
             //DrawActorPrimaryFields(actor);

@@ -36,11 +36,11 @@ public static partial class ExtendDEHooks
     #endregion
     #region Variables
 
-    public static bool isOpen { get { return instance != null; } }
+    //public static bool isOpen { get { return instance != null; } }
 
-    public static TextTableEditorWindow instance { get { return s_instance; } }
+    //public static TextTableEditorWindow instance { get { return s_instance; } }
 
-    private static TextTableEditorWindow s_instance = null;
+    //private static TextTableEditorWindow s_instance = null;
 
     private const string WindowTitle = "Text Table";
 
@@ -124,7 +124,7 @@ public static partial class ExtendDEHooks
     {
         if (m_languageList == null)
         {
-            m_serializedObject ??= new SerializedObject(database.CharDialogueTable);
+            //m_serializedObject ??= new SerializedObject(database.CharDialogueTable);
             m_languageList = new ReorderableList(m_serializedObject, m_serializedObject.FindProperty("m_languageKeys"), true, true, true, true);
             m_languageList.drawHeaderCallback = OnDrawLanguageListHeader;
             m_languageList.drawElementCallback = OnDrawLanguageListElement;

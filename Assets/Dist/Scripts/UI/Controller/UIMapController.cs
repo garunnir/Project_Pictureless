@@ -20,7 +20,7 @@ public class UIMapController : MonoBehaviour
     public event UnityAction<MapEntry> MapEntered;
     #region map
     public List<Actor> mapActorCache;
-    private DialogueSystemController dialogueSystemController;
+    private CustomDialogueSystemController dialogueSystemController;
     //맵 정보에서 타겟을 찾는다
     public List<Actor> FindActorOnMap(MapEntry entry)
     {
@@ -32,7 +32,7 @@ public class UIMapController : MonoBehaviour
             mapActorCache = FindActorOnMap(entry);
         if (mapActorCache.Count > 0)
         {
-            DialogueEntry dentry = dialogueSystemController.GetBasicDialogueEntry(DialogueSystemController.Execute.Conversation);
+            DialogueEntry dentry = dialogueSystemController.GetBasicDialogueEntry(CustomDialogueSystemController.Execute.Conversation);
             dentry.outgoingLinks.Clear();// 대화하기 버튼 누르면 강제로 연결함.
             List<string> strings = mapActorCache.ConvertAll(x => x.Name);
             dialogueSystemController.ConnectActorDialogueToResponseButton(dentry, mapActorCache);
@@ -43,7 +43,7 @@ public class UIMapController : MonoBehaviour
         if (mapActorCache == null)
             mapActorCache = FindActorOnMap(entry);
         bool finded = mapActorCache != null || mapActorCache.Count == 0;
-        dialogueSystemController.SelectionEnable(DialogueSystemController.Execute.Conversation, finded);
+        dialogueSystemController.SelectionEnable(CustomDialogueSystemController.Execute.Conversation, finded);
         if (finded)
         {
             dialogueSystemController.conversationView.SelectedResponseHandler += dialogueSystemController.ChangeBtn;
@@ -61,7 +61,7 @@ public class UIMapController : MonoBehaviour
 
     private void Awake()
     {
-        dialogueSystemController = FindObjectOfType<DialogueSystemController>();
+        dialogueSystemController = FindObjectOfType<CustomDialogueSystemController>();
         MapEntered += Map_FindCharInMap;
         if (FindObjectOfType<GameManager>())
             GameManager.Instance.GetResourceManager().ResourceLoadDoneEvent += () =>
@@ -71,7 +71,7 @@ public class UIMapController : MonoBehaviour
                 dialogueSystemController.StartConversation(dialogueSystemController.masterDatabase.GetConversation(1).Title);
             };
         view = GetComponent<UIMapViewer>();
-        m_currentMap = DialogueManager.masterDatabase.GetMapContainer(0);
+        m_currentMap = GameManager.Instance.GetResourceManager().GetMap(0);
         view.MoveEvent += MoveTo;
         view.CreatedEvent += CreateOther;
         MapEntered += ShowBG;
@@ -93,7 +93,7 @@ public class UIMapController : MonoBehaviour
     }
     private void ShowMap(MapContainer container)
     {
-        if (DialogueManager.masterDatabase.maps.Count == 0|| container==null)
+        if (GameManager.Instance.GetResourceManager().MapIsExist()|| container==null)
         {
             return;
         }

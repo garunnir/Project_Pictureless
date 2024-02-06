@@ -979,15 +979,27 @@ MonoBehaviour:
   m_srect: {fileID: 1120483285}
   m_text: {fileID: 4676485954510384213, guid: 14ec3e134e50c01499f9707f64c521e0, type: 3}
   m_RedCharactersInput:
+  - m_AssetGUID: 9f6dbfabfef3b6143b69c526ffc5a359
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  - m_AssetGUID: 9f6dbfabfef3b6143b69c526ffc5a359
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  - m_AssetGUID: 9f6dbfabfef3b6143b69c526ffc5a359
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  - m_AssetGUID: af339c2ebb67ab149a5625fdfec2dee4
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  m_BlueCharactersInput:
   - {fileID: 11400000, guid: 832e0114ac605f74e9b40e98276a6507, type: 2}
   - {fileID: 11400000, guid: 54f6663c62b7dfd439228c334ec4ae5c, type: 2}
   - {fileID: 11400000, guid: 6aa2b96f357b328498f228c48d8c22e4, type: 2}
   - {fileID: 11400000, guid: 950a2f53577fd8945acfab02ce6256c9, type: 2}
-  m_BlueCharactersInput:
-  - {fileID: 11400000, guid: 9f6dbfabfef3b6143b69c526ffc5a359, type: 2}
-  - {fileID: 11400000, guid: 9f6dbfabfef3b6143b69c526ffc5a359, type: 2}
-  - {fileID: 11400000, guid: af339c2ebb67ab149a5625fdfec2dee4, type: 2}
-  - {fileID: 11400000, guid: af339c2ebb67ab149a5625fdfec2dee4, type: 2}
 --- !u!1 &330456827
 GameObject:
   m_ObjectHideFlags: 0

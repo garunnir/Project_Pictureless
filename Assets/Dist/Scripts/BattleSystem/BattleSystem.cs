@@ -9,12 +9,14 @@ using UnityEngine;
 using UnityEngine.UI;
 using Lean.Pool;
 using Garunnir.Runtime.ScriptableObject;
+using UnityEngine.AddressableAssets;
+
 public class BattleSystem : MonoBehaviour
 {
     #region variables
     [SerializeField] ScrollRect m_srect;
     [SerializeField] TextMeshProUGUI m_text;
-    [SerializeField] List<ActorSO> m_RedCharactersInput=new List<ActorSO>();
+    [SerializeField] List<AssetReferenceT<ActorSO>> m_RedCharactersInput = new List<AssetReferenceT<ActorSO>>();
     [SerializeField] List<ActorSO> m_BlueCharactersInput=new List<ActorSO>();
     EquipmentCollectionSO m_Equipment;
     const int m_MaxCount = 6;
@@ -22,6 +24,9 @@ public class BattleSystem : MonoBehaviour
     //공방 시스템을 만들어보자
     //적.(같은 액터로 사용)
     //투입은 엑터
+    /// <summary>
+    /// 배틀 시스템에 사용할 단위
+    /// </summary>
     List<BattleActorData> m_Characters = new List<BattleActorData>();
     //어떤 공격방식을 차용할것인가
     //반자동전투.
@@ -62,21 +67,43 @@ public class BattleSystem : MonoBehaviour
         m_Equipment = GameManager.Instance.GetResourceManager().GetEquipData();
         //엑터를 사용하게 변환
         ConvertSOtoActor();
-        TestAction();
+
+        //TestAction();
     }
     #endregion
     #region 순서 세팅 관련
+    IEnumerator Cor_InitSrc()
+    {
+        var count = 0;
+        foreach (var asset in m_RedCharactersInput)
+        {
+            if (count == m_MaxCount) break;
+            ActorSO actor;
+            asset.LoadAssetAsync().Completed += (x) =>
+            {
+                print("complet");
+            };
+            count++;
+            yield return new WaitForEndOfFrame();
+        }
+    }
+    
     void ConvertSOtoActor()
     {
         var count=0;
-        foreach (var actor in m_RedCharactersInput) {
+        foreach (var asset in m_RedCharactersInput) {
             if (count == m_MaxCount) break;
+            ActorSO actor;
+            asset.LoadAssetAsync().Completed+=(x)=> 
+            { 
+                actor = x.Result;
+                var chara = new BattleActorData();
+                chara.teamID = 0;
+                chara.actor = actor.actor;
+                chara.SetSpeed(GetCalSpeed(actor.actor));
+                m_Characters.Add(chara);
+            };
             count++;
-            var chara = new BattleActorData();
-            chara.teamID = 0;
-            chara.actor = actor.actor;
-            chara.SetSpeed(GetCalSpeed(actor.actor));
-            m_Characters.Add(chara);
         }
         count = 0;
         foreach (var actor in m_BlueCharactersInput)

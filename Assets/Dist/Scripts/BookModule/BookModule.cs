@@ -203,7 +203,7 @@ public class BookModule : MonoBehaviour,ILuaUIAcitate
             {
                 keywordsSlot[i].GetMother().gameObject.SetActive(true);
                 keywordsSlot[i].SetDescription(keywords[i + slotcount * page]);
-                keywordsSlot[i].SetAskTo(DialogueManager.instance.AskToChar);
+                keywordsSlot[i].SetAskTo(CustomDialogueSystemController.instance.AskToChar);
             }
             else
             {

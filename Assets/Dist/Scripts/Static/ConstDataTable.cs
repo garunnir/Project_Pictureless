@@ -7,6 +7,7 @@ public class ConstDataTable
     public const string DefalutLang = "ko";
     public class Map
     {
+        public const string designation = "Map";
         /// <summary>
         /// 맵번호
         /// </summary>
@@ -23,6 +24,10 @@ public class ConstDataTable
 
         public class Status
         {
+            /// <summary>
+            /// 성향
+            /// </summary>
+            public const string Alignment = "Status.Alignment";
             /// <summary>
             /// 힘
             /// </summary>
@@ -54,7 +59,11 @@ public class ConstDataTable
         }
         public class BodyData//todo 차후 보디 데이터 각 무개의 합으로 평가한다.
         {
-            public const string Weight = "Body.Weight";
+            public const string Weight = "Body.Personalized";
+        }
+        public class Conversation
+        {
+            public const string Personalized = "Conv.PersonalizedConversation";
         }
     }
     public class Equipment

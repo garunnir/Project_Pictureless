@@ -14,6 +14,7 @@ public class ResourceManager : MonoBehaviour
     List<string> tmpPathContainer = new List<string>();
     public event Action ResourceLoadDoneEvent;
     bool isResourceLoadDone = false;
+    [SerializeField] List<MapContainer> mapContainer;
 
     #region CacheData
     public int GetCurLocID() => Localization.GetCurrentLanguageID(UILocalizationManager.instance.textTable);
@@ -200,6 +201,14 @@ public class ResourceManager : MonoBehaviour
     {
         var actorid= Field.LookupInt(actor.fields, ConstDataTable.Equipment.Weapon);
         return (actorid!=-1)?equipmentCollection.equipment_weapon[actorid]:null;
+    }
+    public MapContainer GetMap(int idx)
+    {
+        return mapContainer[idx];
+    }
+    public bool MapIsExist()
+    {
+        return mapContainer!=null&&mapContainer.Count != 0;
     }
     #endregion
 }

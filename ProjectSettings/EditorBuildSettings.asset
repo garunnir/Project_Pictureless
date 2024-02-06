@@ -17,4 +17,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Dist/Scenes/TestConversation.unity
     guid: c62cd5ca4d4dc65488f8145e626c02cd
-  m_configObjects: {}
+  m_configObjects:
+    com.unity.addressableassets: {fileID: 11400000, guid: 9f47a00f473b14546b77f61d3b63026b,
+      type: 2}

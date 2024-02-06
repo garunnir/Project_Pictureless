@@ -1,12 +1,19 @@
 {
     "name": "PixelCrushersEditor",
+    "rootNamespace": "",
     "references": [
-        "PixelCrushers"
+        "PixelCrushers",
+        "Unity.Addressables.Editor"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],
     "excludePlatforms": [],
-    "allowUnsafeCode": false
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

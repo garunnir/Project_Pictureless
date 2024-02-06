@@ -5,13 +5,14 @@
         "GUID:6a874b40b4ccc4245a515b1a3b07794a",
         "GUID:6055be8ebefd69e48b49212b09b47b2f",
         "GUID:6e5063adab271564ba0098a06a8cebda",
+        "GUID:174bc9f391f1b7f4292b3824c5019a21",
+        "GUID:25bb11dd35c063e4aa2c7cccc0212586",
         "GUID:cd0624525ae0db442b9d3d7f27953406",
-        "GUID:174bc9f391f1b7f4292b3824c5019a21"
+        "GUID:9e24947de15b9834991c9d8411ea37cf",
+        "GUID:84651a3751eca9349aac36a66bba901b"
     ],
     "includePlatforms": [],
-    "excludePlatforms": [
-        "Editor"
-    ],
+    "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],

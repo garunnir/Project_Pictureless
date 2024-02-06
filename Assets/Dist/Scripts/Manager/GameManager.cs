@@ -167,7 +167,7 @@ namespace Garunnir
         {
             DataConfig();
             Debug.Log("StartGameManagerInit");
-            Init();
+            //Init();
 #if UNITY_EDITOR
             UpdateSO();
 #endif

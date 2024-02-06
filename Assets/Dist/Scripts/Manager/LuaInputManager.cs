@@ -48,7 +48,7 @@ public class LuaInputManager : MonoBehaviour
     }
     string FindDescription(string locTablekey)
     {
-        PixelCrushers.Wrappers.UILocalizationManager instance = PixelCrushers.Wrappers.UILocalizationManager.instance;
+        var instance = CustomUILocalizationManager.instance;
         return instance.GetLocText(locTablekey, instance.KeywordTable);
     }
     private void BGChange(string imgname)
