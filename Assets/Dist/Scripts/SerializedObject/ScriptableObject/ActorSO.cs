@@ -11,32 +11,71 @@ namespace Garunnir.Runtime.ScriptableObject
     using UnityEditorInternal;
     using UnityEditor;
 #endif
+    using Object = UnityEngine.Object;
     using System.Linq;
+    using System.Collections;
+
     [CreateAssetMenu(fileName = "Character", menuName = "GameDataAsset/Character"),Serializable]
     public class ActorSO : ScriptableObject
     {
         public Actor actor;
+        #region field to skill Converter
+        public static ActiveSkill[] GetASkillAll(Actor actor)
+        {
+            return new[] { GetASkill(actor, 0), GetASkill(actor, 1), GetASkill(actor, 2) };
+        }
+        public static ActiveSkill GetASkill(Actor actor,int idx)
+        {
+            int value = Field.LookupInt(actor.fields, ConstDataTable.Actor.Skill.Active + idx);
+            if (value <0)
+            {
+                return null;
+            }
+            else
+            {
+                return GameManager.Instance.GetResourceManager().GetSkillData().skill_Active[value];
+            }
+        }
+        public static PassiveSkill GetPSkill(Actor actor,int idx)
+        {
+            int value = Field.LookupInt(actor.fields, ConstDataTable.Actor.Skill.Passive + idx);
+            if (value < 0)
+            {
+                return null;
+            }
+            else
+            {
+                return GameManager.Instance.GetResourceManager().GetSkillData().skill_Passive[value];
+            }
+        }
+        #endregion
     }
 #if UNITY_EDITOR
     [CustomEditor(typeof(ActorSO))]
     public class ActorSOEditor : Editor
     {
+        private static SerializedObject current;
         private static GUIContent displayNameLabel = new GUIContent("Display Name", "The name to show in UIs.");
         static bool m_StatusToggle = false;
         bool m_isBaseFold = false;
         bool m_actorTexturesFoldout = false;
         bool m_actorSpritesFoldout = false;
+        //DialogueDatabase m_database;
+        private int m_SelectedActoridx = -1;
+        private int m_SelectedActorFieldID = -1;
+
+        #region Cache
         Actor m_actor;
         ActorSO m_target;
         Texture2D m_cachedAlignment;
         Texture2D m_cachedAlignmentCursor;
         Rect m_alignRect;
-        //DialogueDatabase m_database;
-        private int m_SelectedActoridx = -1;
-        private int m_SelectedActorFieldID = -1;
 
         private static TextTableModule m_textTable;
         private static TextTableModule m_actorNameLocTable;
+        private ReorderbleModule m_activeSkillList;
+        private ReorderbleModule m_passiveSkillList;
+        #endregion
         class TextTableModule
         {
             string m_foldLabel = "TextTableModule";
@@ -796,6 +835,13 @@ namespace Garunnir.Runtime.ScriptableObject
                 m_FilterOption = false;
             }
             #endregion
+            void DrawGoToTableAsset()
+            {
+                if (GUILayout.Button("GoToAsset"))
+                {
+                    AssetDatabase.OpenAsset(m_textTable);
+                }
+            }
             public void DrawTextTable(bool setDirty, Actor target)
             {
                 if (m_textTable)
@@ -825,6 +871,7 @@ namespace Garunnir.Runtime.ScriptableObject
                                 DrawFieldsTab();
                                 break;
                         }
+                        DrawGoToTableAsset();
                     }
                 }
             }
@@ -847,6 +894,15 @@ namespace Garunnir.Runtime.ScriptableObject
             m_target = target as ActorSO;
             m_target.actor.fields??=new List<Field>();
         }
+        private void OnEnable()
+        {
+            serializedObject.Update();
+        }
+        private void OnDisable()
+        {
+            //serializedObject.ApplyModifiedProperties();
+            AssetDatabase.SaveAssetIfDirty(target);
+        }
         void Show()
         {
             Actor target = m_target.actor;
@@ -855,9 +911,11 @@ namespace Garunnir.Runtime.ScriptableObject
             m_textTable ??= new TextTableModule(EditorGUILayout.ObjectField(m_textTable.GetTextTable(), typeof(TextTable), true) as TextTable);
             m_actor ??= m_target.actor;
             int langidx = m_textTable.GetTextTable().languages[ConstDataTable.DefalutLang];
-            bool isTargetDataChanged = m_actorNameLocTable.actorID != target.id;
+            bool isTargetDataChanged = current != serializedObject;
+            current = serializedObject;
             if (isTargetDataChanged)
             {
+                EditorUtility.SetDirty(this.target);
                 m_textTable.actorID = m_actorNameLocTable.actorID = target.id;
                 m_textTable.SetFilter($"[{target.id}].");
                 serializedObject.ApplyModifiedProperties();
@@ -905,23 +963,49 @@ namespace Garunnir.Runtime.ScriptableObject
             DrawDNDStatus(target, isTargetDataChanged);
 
             DrawWeapon(target, isTargetDataChanged);
+
+            DrawSkill(target);
         }
+
         #region Skill
-        private void DrawSkill()
+
+        private void DrawSkill(Actor target)
         {
             //스킬을 표시한다.
             //액티브 패시브.
-            DrawActive();
-            DrawPassive();
+            DrawSkill(target,m_activeSkillList, GameManager.Instance.GetResourceManager().GetSkillData().skill_Active, ConstDataTable.Actor.Skill.Active);
+            DrawSkill(target,m_passiveSkillList, GameManager.Instance.GetResourceManager().GetSkillData().skill_Passive, ConstDataTable.Actor.Skill.Passive);
         }
-        private void DrawActive()
+        private void DrawSkill<T>(Actor target, ReorderbleModule cache_reorderbleModule, T[] skillSOs,string keytmp) where T: SkillSO
         {
+            
+            List<T> askill = new List<T>();
+            List<string> keys = new List<string>();
+            for (int i = 0; i < 3; i++)
+            {
+                string key = keytmp + i;
+                keys.Add(key);
+                if (!Field.FieldExists(target.fields, key)) break;
+                int idx = Field.LookupInt(target.fields, key);
+                if (idx < 0) askill.Add(null);
+                else askill.Add(skillSOs[idx] as T);
+            }
             //리오더블리스트로 보여주는게 좋을것 같음.
+            cache_reorderbleModule ??= new ReorderbleModule(typeof(T).Name, askill, typeof(T), (x) => ConvertToParameter<T>(x, target.fields, keys, keytmp));
+            cache_reorderbleModule.DrawReorderble();
         }
-        private void DrawPassive()
-        {
 
+        private void ConvertToParameter<T>(IList list,List<Field> fields, List<string> keys,string keyTemplete) where T : SkillSO
+        {
+            
+            for (int i = 0; i < list.Count; i++)
+            {
+                int idx =Array.FindIndex(GameManager.Instance.GetResourceManager().GetSkillData().skill_Active,(x)=> x == (T)list[i]);
+                if (keys.Count < list.Count) keys.Add(keyTemplete + i);
+                Field.SetValue(fields, keys[i],idx);
+            }
         }
+  
         #endregion
         private void DrawWeapon(Actor target, bool isTargetDataChanged)
         {
@@ -942,7 +1026,6 @@ namespace Garunnir.Runtime.ScriptableObject
             m_StatusToggle = EditorGUILayout.Foldout(m_StatusToggle, "BasicStatus");
             if (isTargetDataChanged)
             {
-                Debug.LogError("INIT");
                 StatusInitialize(target);
             }
             if (m_StatusToggle)
@@ -1247,5 +1330,54 @@ namespace Garunnir.Runtime.ScriptableObject
 
     }
 
+    public class ReorderbleModule
+    {
+        SerializedObject serializedObject;
+        SerializedProperty serializedProperty;
+        ReorderableList reorderableList;
+        IList ilist;
+        Action<IList> action;
+        public ReorderbleModule(SerializedObject sobj, SerializedProperty prop) 
+        { 
+            serializedObject = sobj;
+            serializedProperty = prop;
+            reorderableList = new ReorderableList(sobj, serializedProperty);
+            reorderableList.drawElementCallback = (rect, index, isActive, isFocused) => {
+                var element = serializedProperty.GetArrayElementAtIndex(index);
+                rect.height -= EditorGUIUtility.singleLineHeight;
+                rect.y += 2;
+                EditorGUI.PropertyField(rect, element);
+            };
+
+        }
+        public ReorderbleModule(string label,IList list, Type type,Action<IList> actionIn)
+        {
+            this.action=actionIn;
+            ilist = list;
+            reorderableList = new ReorderableList(ilist, type);
+            reorderableList.drawHeaderCallback = (rect) => { EditorGUI.LabelField(rect, label); };
+            reorderableList.drawElementCallback = (rect, index, isActive, isFocused) => {
+                var element = ilist[index] as Object;
+                rect.height -= 4;
+                rect.y += 2;
+                var value = EditorGUI.ObjectField(rect, ilist[index] != null?"true":"false", element,type,false);
+                if (value != element)
+                {
+                    ilist[index] = value;
+                    //필드내 변경시 저장
+                    action.Invoke(ilist);
+                }
+
+            };
+            reorderableList.onAddCallback = (rlist) => { rlist.list.Add(null); };
+            //리오더블 변동시 저장
+            reorderableList.onChangedCallback = (list) => { action.Invoke(ilist); };
+        }
+
+        public void DrawReorderble()
+        {
+            reorderableList.DoLayoutList();
+        }
+    }
 #endif
 }

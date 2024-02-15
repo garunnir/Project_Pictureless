@@ -17,8 +17,8 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 8e565fa14d503174faed48022ccbcd83
   m_SerializeEntries:
-  - m_GUID: 9c59b9b54b788ab459d9274f84a5d3cc
-    m_Address: Assets/Dist/SOData/Character
+  - m_GUID: 805b89987e685644c998b0f18d651b6f
+    m_Address: Assets/Dist/SOData
     m_ReadOnly: 0
     m_SerializedLabels: []
   m_ReadOnly: 0

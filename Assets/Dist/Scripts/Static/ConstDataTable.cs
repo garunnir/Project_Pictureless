@@ -21,7 +21,11 @@ public class ConstDataTable
     {
         public const int createStart = 10000;//start id to created charactor
         public const int PlayerID = 1;
-
+        public class Skill
+        {
+            public const string Active = "Skill.Active"; 
+            public const string Passive = "Skill.Passive";
+        }
         public class Status
         {
             /// <summary>

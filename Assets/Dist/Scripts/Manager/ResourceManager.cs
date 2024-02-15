@@ -1,4 +1,5 @@
 using Garunnir;
+using Garunnir.Runtime.ScriptableObject;
 using PixelCrushers;
 using PixelCrushers.DialogueSystem;
 using System;
@@ -187,7 +188,9 @@ public class ResourceManager : MonoBehaviour
     #region PreData
     [Header("PreData")]
     [SerializeField] EquipmentCollectionSO equipmentCollection;
+    [SerializeField] SkillCollectionSO skillCollection;
     public EquipmentCollectionSO GetEquipData() => equipmentCollection;
+    public SkillCollectionSO GetSkillData() => skillCollection;
     #endregion
 
     #region Utility

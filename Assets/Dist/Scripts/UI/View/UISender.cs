@@ -1,3 +1,5 @@
+
+//사용되는 부분: 사용자 정보 입력 UI
 using Garunnir;
 using PixelCrushers;
 using PixelCrushers.DialogueSystem;

@@ -5,9 +5,11 @@ using UnityEngine;
 using PixelCrushers.DialogueSystem;
 using System.ComponentModel;
 using Garunnir;
+using UnityEngine.UI;
+
 namespace PixelCrushers.CustomExtention
 {
-    public static class ActorExtention
+    public static class Extention
     {
         public static Vector2 GetAlignment(this Actor actor)
         {
@@ -45,5 +47,6 @@ namespace PixelCrushers.CustomExtention
         //    return GameManager.Instance.GetResourceManager().GetMap();
         //}
     }
+
 }
 #endif

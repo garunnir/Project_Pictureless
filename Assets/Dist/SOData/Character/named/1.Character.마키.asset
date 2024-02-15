@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: "1.Character.\uB9C8\uD0A4"
   m_EditorClassIdentifier: 
   actor:
-    id: 0
+    id: 3
     fields:
     - title: 
       value: 
@@ -23,8 +23,54 @@ MonoBehaviour:
       value: False
       type: 2
       typeString: CustomFieldType_Boolean
-    conversationIdx: -1
-    alignment: {x: 0, y: 0}
+    - title: Status.Alignment
+      value: 0/0
+      type: 0
+      typeString: 
+    - title: Status.Str
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Con
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Dex
+      value: 8
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Int
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Wis
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Cha
+      value: 5
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Status.Hp
+      value: 100
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Name
+      value: Actor.Maki
+      type: 0
+      typeString: 
+    - title: Skill.Active0
+      value: 1
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Skill.Active1
+      value: -1
+      type: 1
+      typeString: CustomFieldType_Number
+    - title: Skill.Active2
+      value: 0
+      type: 1
+      typeString: CustomFieldType_Number
     portrait: {fileID: 0}
     spritePortrait: {fileID: 0}
     alternatePortraits: []

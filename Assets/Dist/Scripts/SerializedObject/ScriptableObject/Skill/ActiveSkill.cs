@@ -3,6 +3,7 @@ namespace Garunnir.Runtime.ScriptableObject
     using System.Collections;
     using System.Collections.Generic;
     using UnityEngine;
+    [CreateAssetMenu(fileName = "ActiveSkill", menuName = "GameDataAsset/Character/DrawSkill")]
     public class ActiveSkill : SkillSO
     {
         //ActorSO에 장착되어 활용될 스킬.
@@ -13,6 +14,8 @@ namespace Garunnir.Runtime.ScriptableObject
         {
             base.Excute();
         }
+        //스킬 실구현부에선 어떻게 할 것인가...
+        //에셋 참조하는 주소를 직접적으로 저장한다면?
     }
 
 }
