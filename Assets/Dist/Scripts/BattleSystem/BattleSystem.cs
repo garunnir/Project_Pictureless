@@ -35,6 +35,8 @@ public class BattleSystem : MonoBehaviour
     //반자동전투.
     //스피드를 기준으로 공격한다.
     //무기에 따라 최종이 변한다.
+    [Header("vfx module")]
+    [SerializeField] TargetIndicateHandeler trailHandler;
     #endregion
     #region 컨테이너
     /// <summary>
@@ -44,6 +46,7 @@ public class BattleSystem : MonoBehaviour
     {
         public int teamID;
         public Actor actor;
+        public Transform ObjTransform;
         float speed;
 
         public void SetSpeed(float speed)
@@ -78,7 +81,7 @@ public class BattleSystem : MonoBehaviour
         foreach (var data in datas)
         {
             ExecuteActor(data);
-            PopSelections(ActorSO.GetASkillAll(data.actor));
+            PopSelections(data.actor);
             yield return new WaitUntil(() => {return readyNext; });//선택지 조작이 있을때까지 대기
             readyNext = false;
         }
@@ -95,7 +98,6 @@ public class BattleSystem : MonoBehaviour
         //스킬 발동기준.
         //수동일 때
         //선택 UI를 표시한다. 이 UI는 엑티브 스킬들을 포함한다.
-        //PopSelections(ActorSO.GetASkillAll(data.actor));
         //자동일 때
         //이전에 선택됐던 그대로 발동한다. 없을시 첫번째 스킬을 대상으로 한다. 여기서 저장된것은 세이브데이터에 포함되어야 함.
         //자동 모드전환
@@ -116,21 +118,43 @@ public class BattleSystem : MonoBehaviour
 
         UseLogPanel($"액션: {data.actor.Name} 속도: {data.GetSpeed()}");
     }
-    public delegate UnityAction ButtonAction(ActiveSkill skill);
+    public delegate UnityAction ButtonAction(Actor actor,ActiveSkill skill);
     ButtonAction obj;
     /// <summary>
     /// 스킬 선택지창. 팝업
     /// </summary>
-    private void PopSelections(params ActiveSkill[] skills)
-    {
-        selectionPop.ClearAll();
-        obj = delegate (ActiveSkill activeSkill)
-        {
-            UseLogPanel(activeSkill.displayName);
-            readyNext = true;
-            activeSkill.Excute();
-            m_srect.normalizedPosition = Vector2.zero;
+    //private void PopSelections(params ActiveSkill[] skills)
+    //{
+    //    selectionPop.ClearAll();
+    //    obj = delegate (ActiveSkill activeSkill)
+    //    {
+    //        UseLogPanel(activeSkill.displayName);
+    //        readyNext = true;
+    //        activeSkill.Excute();
+    //        m_srect.normalizedPosition = Vector2.zero;
 
+    //        return null;
+    //    };
+    //    foreach (var item in skills)
+    //    {
+    //        if (item == null) continue;
+    //        Button button = selectionPop.CreateBtns(item.displayName);
+    //        button.onClick.RemoveAllListeners();
+    //        button.onClick.AddListener(() => { obj(item);});
+    //    }
+    //}
+    private void PopSelections(Actor actor)
+    {
+        ActiveSkill[] skills = ActorSO.GetASkillAll(actor);
+        selectionPop.ClearAll();
+        obj = delegate (Actor actor, ActiveSkill activeSkill)
+        {
+            //여기에선 선택 화살표가 등장해야 한다.
+            
+            //trailHandler.DrawIndicate()
+            UseLogPanel(activeSkill.Excute(actor).ToString());
+            readyNext = true;
+            m_srect.normalizedPosition = Vector2.zero;
             return null;
         };
         foreach (var item in skills)
@@ -138,14 +162,28 @@ public class BattleSystem : MonoBehaviour
             if (item == null) continue;
             Button button = selectionPop.CreateBtns(item.displayName);
             button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => { obj(item);});
+            button.onClick.AddListener(() => { obj(actor,item); });
+        }
+
+
+    }
+    Coroutine inputcor;
+    void SelectionStart(BattleActorData actorData) => inputcor = StartCoroutine(Cor_SelectionStart(actorData));
+    IEnumerator Cor_SelectionStart(BattleActorData actorData)
+    {
+        while (true)
+        {
+            InfiniteLoopDetector.Run();
+            //선택 활성화한다.
+            trailHandler.DrawIndicate(actorData.ObjTransform.position,InputManager.RayCast().transform.position,10);//선택 화살표 활성화
+            yield return new WaitUntil(InputManager.click);
         }
     }
-    //private bool CheckBtnSelected(Button[] watchers)
-    //{
-    //    bool check = false;
-    //}
-    private void BtnAction(ActiveSkill skill)
+        //private bool CheckBtnSelected(Button[] watchers)
+        //{
+        //    bool check = false;
+        //}
+        private void BtnAction(ActiveSkill skill)
     {
 
     }

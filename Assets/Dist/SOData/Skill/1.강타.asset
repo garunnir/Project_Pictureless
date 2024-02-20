@@ -9,7 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b27fe91b3dceea4881becdbd14138e0, type: 3}
+  m_Script: {fileID: 11500000, guid: 94b35d15078b2c24e98a4269c3b4d962, type: 3}
   m_Name: "1.\uAC15\uD0C0"
   m_EditorClassIdentifier: 
-  displayName: "\uAC15\uD0C0"
+  displayName: 
+  attackrate: 0

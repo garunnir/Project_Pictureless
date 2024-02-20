@@ -128,8 +128,10 @@ namespace Garunnir
         [SerializeField] DialogueSystemController _dialogueSystemController;
         [SerializeField]UIManager _uiManager;
         [SerializeField]ResourceManager _resourceManager;
+        [SerializeField] InputManager _inputManager;
         public UIManager GetUIManager() => _uiManager;
         public ResourceManager GetResourceManager() => _resourceManager;
+        public InputManager GetInputManager() => _inputManager;
         #endregion
         public static event UnityAction InitDone;
 
@@ -423,6 +425,8 @@ namespace Garunnir
                 UnityEngine.Object.DestroyImmediate(sourceTexReadable);
             }
         }
+
+
     }
     static class Extentions
     {

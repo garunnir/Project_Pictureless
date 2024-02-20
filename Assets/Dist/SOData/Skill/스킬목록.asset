@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: "\uC2A4\uD0AC\uBAA9\uB85D"
   m_EditorClassIdentifier: 
   skill_Active:
-  - {fileID: 11400000, guid: dfbf3dd69b8922b498f55d23a11dee4c, type: 2}
+  - {fileID: 11400000, guid: 33c8164dfe077e54a95f713bab9b515a, type: 2}
   - {fileID: 11400000, guid: 4928924062e15ac4686addd90c4cd033, type: 2}
   skill_Passive: []

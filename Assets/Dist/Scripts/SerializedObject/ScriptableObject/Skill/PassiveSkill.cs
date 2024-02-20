@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Garunnir.Runtime.ScriptableObject
 {
-    public class PassiveSkill : SkillSO
+    public abstract class PassiveSkill : SkillSO
     {
 
     }
