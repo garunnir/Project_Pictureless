@@ -25,10 +25,10 @@ public class WeaponSO : EquipAsset
             Keyframe keyframe = range.keys[i];
             keyframe.value = Mathf.Clamp(keyframe.value, 0, 1);
             keyframe.time = Mathf.Clamp(keyframe.time, 0, 1);
-            Debug.Log("/"+ keyframe.value);
+            //Debug.Log("/"+ keyframe.value);
             range.RemoveKey(i);
             range.AddKey(keyframe);
-            Debug.Log(range.keys[i].value);
+            //Debug.Log(range.keys[i].value);
         }
     }
 }

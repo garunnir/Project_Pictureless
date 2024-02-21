@@ -143,6 +143,10 @@ public class BattleSystem : MonoBehaviour
     //        button.onClick.AddListener(() => { obj(item);});
     //    }
     //}
+
+    /// <summary>
+    /// 선택지 창을 띄운다.
+    /// </summary>
     private void PopSelections(Actor actor)
     {
         ActiveSkill[] skills = ActorSO.GetASkillAll(actor);
@@ -167,6 +171,7 @@ public class BattleSystem : MonoBehaviour
 
 
     }
+
     Coroutine inputcor;
     void SelectionStart(BattleActorData actorData) => inputcor = StartCoroutine(Cor_SelectionStart(actorData));
     IEnumerator Cor_SelectionStart(BattleActorData actorData)
@@ -177,6 +182,7 @@ public class BattleSystem : MonoBehaviour
             //선택 활성화한다.
             trailHandler.DrawIndicate(actorData.ObjTransform.position,InputManager.RayCast().transform.position,10);//선택 화살표 활성화
             yield return new WaitUntil(InputManager.click);
+            trailHandler.DrawIndicate(actorData.ObjTransform.position, InputManager.RayCast().transform.position, 10,true);
         }
     }
         //private bool CheckBtnSelected(Button[] watchers)

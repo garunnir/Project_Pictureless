@@ -53,5 +53,13 @@ public class UISelectBtnsPopup : MonoBehaviour
             LeanPool.Despawn(item);
         }
     }
+    private void OnDisable()
+    {
+        
+    }
+    private void OnEnable()
+    {
+        
+    }
 
 }
