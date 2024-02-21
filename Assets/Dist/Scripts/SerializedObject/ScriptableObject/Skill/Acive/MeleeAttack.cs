@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace Garunnir.Runtime.ScriptableObject
 {
-    [CreateAssetMenu(fileName = "MeleeAttack", menuName = "GameDataAsset/Character/DrawSkill")]
+    [CreateAssetMenu(fileName = "MeleeAttack", menuName = "GameDataAsset/Character/MeleeAttack")]
     public class MeleeAttack : ActiveSkill
     {
         [Header("공격횟수"),Range(0,3),SerializeField]

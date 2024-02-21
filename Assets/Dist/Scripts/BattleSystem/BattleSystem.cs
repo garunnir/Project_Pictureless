@@ -150,12 +150,14 @@ public class BattleSystem : MonoBehaviour
     private void PopSelections(Actor actor)
     {
         ActiveSkill[] skills = ActorSO.GetASkillAll(actor);
+        selectionPop.FadeIn();
         selectionPop.ClearAll();
         obj = delegate (Actor actor, ActiveSkill activeSkill)
         {
             //여기에선 선택 화살표가 등장해야 한다.
-            
+
             //trailHandler.DrawIndicate()
+            selectionPop.FadeOut();
             UseLogPanel(activeSkill.Excute(actor).ToString());
             readyNext = true;
             m_srect.normalizedPosition = Vector2.zero;

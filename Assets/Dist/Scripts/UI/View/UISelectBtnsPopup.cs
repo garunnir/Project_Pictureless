@@ -1,3 +1,4 @@
+using DG.Tweening;
 using Lean.Pool;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(ContentSizeFitter))]
-public class UISelectBtnsPopup : MonoBehaviour
+public class UISelectBtnsPopup : UI
 {
     //선택지 팝업한다.
     //버튼 크기에 따라 플랙시블하게 
@@ -53,13 +54,16 @@ public class UISelectBtnsPopup : MonoBehaviour
             LeanPool.Despawn(item);
         }
     }
-    private void OnDisable()
+
+    public override IEnumerator AddHideAct()
     {
-        
+        throw new System.NotImplementedException();
     }
-    private void OnEnable()
+
+    public override IEnumerator AddShowAct()
     {
-        
+        throw new System.NotImplementedException();
     }
+
 
 }

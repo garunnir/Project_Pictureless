@@ -11,6 +11,7 @@ namespace Garunnir.Runtime.ScriptableObject
 #endif
     public abstract class SkillSO : ScriptableObject
     {
+        [Naming]
         public string displayName;
         protected StringBuilder log=new StringBuilder();
 #if UNITY_EDITOR
@@ -42,4 +43,31 @@ namespace Garunnir.Runtime.ScriptableObject
             log.AppendLine(value);
         }
     }
+
+#if UNITY_EDITOR
+    public class NamingAttribute : PropertyAttribute
+    {
+        public NamingAttribute() { }
+    }
+    [CustomPropertyDrawer(typeof(NamingAttribute))]
+    public class DrawButton : PropertyDrawer
+    {
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return base.GetPropertyHeight(property, label);
+        }
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            if (property.stringValue.Length == 0)
+            {
+                string[] str=property.serializedObject.targetObject.name.Split('.');
+                property.stringValue = str.Length > 1 ? str[1] : str[0];
+            }
+            GUI.Label(position,"Name");
+            position.x += position.width / 2;
+            position.width -= position.width / 2;
+            property.stringValue=GUI.TextField(position,property.stringValue);
+        }
+    }
+#endif
 }

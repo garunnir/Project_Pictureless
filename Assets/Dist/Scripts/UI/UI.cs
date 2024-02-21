@@ -1,3 +1,4 @@
+using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -25,6 +26,7 @@ public abstract class UI : MonoBehaviour
     public bool isEnable;
     public bool complete;
     Coroutine coroutine;
+    CanvasGroup canvasGroup;
     public virtual void Hide()
     {
         coroutine ??= StartCoroutine(Cor_HideAct());
@@ -75,5 +77,28 @@ public abstract class UI : MonoBehaviour
     }
     public abstract IEnumerator AddHideAct();
     public abstract IEnumerator AddShowAct();
+    public void FadeOut()
+    {
+        Init();
+        canvasGroup.DOFade(0,1).onComplete=()=> canvasGroup.blocksRaycasts=false;
+    }
+    public void FadeIn()
+    {
+        Init();
+        canvasGroup.DOFade(1, 1).onComplete = () => canvasGroup.blocksRaycasts = false;
+    }
+    public void FadeOut(CanvasGroup group)
+    {
+        group.DOFade(0, 1).onComplete = () => group.blocksRaycasts = false;
+    }
+    public void FadeIn(CanvasGroup group)
+    {
+        group.DOFade(1, 1).onComplete = () => group.blocksRaycasts = false;
+    }
+    public void Init()
+    {
+        CanvasGroup group;
+        canvasGroup ??= gameObject.TryGetComponent(out group) ? group : gameObject.AddComponent<CanvasGroup>();
+    }
 }
 
