@@ -9,12 +9,13 @@ using UnityEngine.Networking;
 namespace PixelCrushers.DialogueSystem.ArcweaveSupport
 {
 
-#region Prefs
+    #region Prefs
 
     [Serializable]
     public class ArcweaveImporterWindowPrefs : AbstractConverterWindowPrefs
     {
         public string arcweaveProjectPath;
+        public string templatePath;
 
         public List<string> questBoardGuids = new List<string>();
 
@@ -29,7 +30,9 @@ namespace PixelCrushers.DialogueSystem.ArcweaveSupport
         public bool componentsFoldout = true;
 
         public bool importPortraits = true;
+        public bool importDialogueEntryAttributes = false;
         public bool importGuids = false;
+        public DialogueEntrySortMethod dialogueEntrySortMethod = DialogueEntrySortMethod.No;
         public int numPlayers = 1;
         public string globalVariables = "day, time";
 
@@ -39,18 +42,19 @@ namespace PixelCrushers.DialogueSystem.ArcweaveSupport
         public string projectHash;
     }
 
-#endregion
+    #endregion
 
     public class ArcweaveImporterWindow : AbstractConverterWindow<ArcweaveImporterWindowPrefs>
     {
 
-#region Variables
+        #region Variables
 
         public static bool isOpen;
 
         public override string prefsKey { get { return "DialogueSystem.ArcweavePrefs"; } }
 
         protected static GUIContent ProjectPathLabel = new GUIContent("Project Folder", "Folder containing Arcweave JSON and assets. Should be inside your Unity project.");
+        protected static GUIContent TemplatePathLabel = new GUIContent("Template (Optional)", "Database template XML file.");
         protected static GUIContent APIKeyLabel = new GUIContent("API Key (Team Only)", "API key for downloading Arcweave JSON from Arcweave web API. Only applies to Arcweave Team plans.");
         protected static GUIContent ProjectHashLabel = new GUIContent("Project Hash (Team Only)", "Project hash for downloading Arcweave JSON from Arcweave web API. Only applies to Arcweave Team plans. Find hash in URL of project in Arcweave web app.");
         protected static GUIContent DownloadJsonLabel = new GUIContent("Download JSON", "Download Arcweave project info using web API key above.");
@@ -59,7 +63,9 @@ namespace PixelCrushers.DialogueSystem.ArcweaveSupport
         protected static GUIContent LoadPrefsLabel = new GUIContent("Load Prefs...", "Load import settings from JSON file.");
         protected static GUIContent ClearPrefsLabel = new GUIContent("Clear Prefs...", "Clear import settings.");
         protected static GUIContent ImportPortraitsLabel = new GUIContent("Import Portraits", "Import portrait images from image files in Arcweave project folder.");
+        protected static GUIContent ImportDialogueEntryAttributesLabel = new GUIContent("Import Dialogue Attributes", "Import dialogue element attributes as custom fields in dialogue entries.");
         protected static GUIContent ImportGuidsLabel = new GUIContent("Import Guids As Fields", "Add Guid field containing GUID for each object (element, component, etc.) imported from Arcweave project.");
+        protected static GUIContent DialogueEntrySortMethodLabel = new GUIContent("Sort Dialogue Entries?", "Sort dialogue entry IDs. Puts them in more readable order for translation spreadsheets.");
         protected static GUIContent NumPlayersLabel = new GUIContent("# Player Actors", "Set to 1 for single player games. Increase for local multiplayer games. Will create player-specific versions of variables.");
         protected static GUIContent GlobalVariablesLabel = new GUIContent("Global Variables", "Comma-separated list of global variables. Arcscript/Lua code referencing global variables that aren't player-specific. Importer won't prepend 'Player#_' to front of variable name.");
 
@@ -67,15 +73,15 @@ namespace PixelCrushers.DialogueSystem.ArcweaveSupport
 
         protected ArcweaveImporter arcweaveImporter = new ArcweaveImporter();
 
-#endregion
+        #endregion
 
-#region GUI
+        #region GUI
 
         [MenuItem("Tools/Pixel Crushers/Dialogue System/Import/Arcweave...", false, 1)]
         public static ArcweaveImporterWindow Init()
         {
             var window = EditorWindow.GetWindow<ArcweaveImporterWindow>(false, "Arcweave Import");
-            window.minSize = new Vector2(840f, 300f);
+            window.minSize = new Vector2(416f, 300f);
             return window;
         }
 
@@ -98,6 +104,7 @@ namespace PixelCrushers.DialogueSystem.ArcweaveSupport
             DrawComponentTypeSection();
             DrawBoardTypeSection();
             DrawImportPortraitsSection();
+            DrawImportAttributesSection();
             DrawImportGuidSection();
             DrawNumPlayersSection();
             DrawDestinationSection();
@@ -236,6 +243,17 @@ namespace PixelCrushers.DialogueSystem.ArcweaveSupport
             prefs.importPortraits = EditorGUILayout.Toggle(ImportPortraitsLabel, prefs.importPortraits);
         }
 
+        protected virtual void DrawImportAttributesSection()
+        {
+            if (!arcweaveImporter.IsJsonLoaded()) return;
+            prefs.importDialogueEntryAttributes = EditorGUILayout.Toggle(ImportDialogueEntryAttributesLabel, prefs.importDialogueEntryAttributes);
+            // [TODO] Support breadth-first, too: prefs.dialogueEntrySortMethod = (DialogueEntrySortMethod)EditorGUILayout.EnumPopup(DialogueEntrySortMethodLabel, prefs.dialogueEntrySortMethod);
+            var sort = prefs.dialogueEntrySortMethod == DialogueEntrySortMethod.DepthFirst;
+            prefs.dialogueEntrySortMethod = EditorGUILayout.Toggle(DialogueEntrySortMethodLabel, sort) 
+                ? DialogueEntrySortMethod.DepthFirst : DialogueEntrySortMethod.No;
+            
+        }
+
         protected virtual void DrawImportGuidSection()
         {
             if (!arcweaveImporter.IsJsonLoaded()) return;
@@ -257,12 +275,39 @@ namespace PixelCrushers.DialogueSystem.ArcweaveSupport
             }
         }
 
+        protected override void DrawDatabaseFilename()
+        {
+            EditorGUILayout.BeginHorizontal();
+            prefs.templatePath = EditorGUILayout.TextField(TemplatePathLabel, prefs.templatePath);
+            if (GUILayout.Button("...", EditorStyles.miniButtonRight, GUILayout.Width(22)))
+            {
+                prefs.templatePath = EditorUtility.OpenFilePanel("Database Template XML", prefs.templatePath, "xml");
+                prefs.templatePath = "Assets" + prefs.templatePath.Replace(Application.dataPath, string.Empty);
+                GUIUtility.keyboardControl = 0;
+            }
+            EditorGUILayout.EndHorizontal();
+
+            base.DrawDatabaseFilename();
+        }
+
         protected override void DrawConversionButtons()
         {
             EditorGUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
+            //GUILayout.FlexibleSpace(); //--- Removed; causes width issues in narrow windows.
             DrawLoadJsonButtons();
+            if (position.width < 628)
+            {
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.BeginHorizontal();
+                //GUILayout.FlexibleSpace();
+            }
             DrawSaveLoadPrefsButtons();
+            if (position.width < 416)
+            {
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.BeginHorizontal();
+                //GUILayout.FlexibleSpace();
+            }
             DrawClearButton();
             DrawConvertButton();
             EditorGUILayout.EndHorizontal();
@@ -332,9 +377,9 @@ namespace PixelCrushers.DialogueSystem.ArcweaveSupport
             }
         }
 
-#endregion
+        #endregion
 
-#region Convert
+        #region Convert
 
         protected virtual void SetupArcweaveImporter()
         {
@@ -349,11 +394,30 @@ namespace PixelCrushers.DialogueSystem.ArcweaveSupport
                 prefs.boardsFoldout,
                 prefs.componentsFoldout,
                 prefs.importPortraits,
+                prefs.importDialogueEntryAttributes,
                 prefs.importGuids,
                 prefs.numPlayers,
                 prefs.globalVariables,
                 prefs.merge,
-                template ?? TemplateTools.LoadFromEditorPrefs());
+                GetTemplateToUse());
+        }
+
+        protected virtual Template GetTemplateToUse()
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(prefs.templatePath) && System.IO.File.Exists(prefs.templatePath))
+                {
+                    var xml = System.IO.File.ReadAllText(prefs.templatePath);
+                    var xmlTemplate = TemplateTools.FromXml(xml);
+                    if (xmlTemplate != null) return xmlTemplate;
+                }
+                return template ?? TemplateTools.LoadFromEditorPrefs();
+            }
+            catch
+            {
+                return TemplateTools.LoadFromEditorPrefs();
+            }
         }
 
         protected virtual bool DownloadJson()
@@ -432,9 +496,20 @@ namespace PixelCrushers.DialogueSystem.ArcweaveSupport
         {
             base.TouchUpDialogueDatabase(database);
             arcweaveImporter.TouchUpDialogueDatabase(database);
+            SortDialogueEntries(database);
         }
 
-#endregion
+        protected void SortDialogueEntries(DialogueDatabase database)
+        {
+            switch (prefs.dialogueEntrySortMethod)
+            {
+                case DialogueEntrySortMethod.DepthFirst:
+                    DialogueDatabaseEditorTools.ReorderIDsInConversationsDepthFirst(database);
+                    break;
+            }
+        }
+
+        #endregion
 
     }
 }

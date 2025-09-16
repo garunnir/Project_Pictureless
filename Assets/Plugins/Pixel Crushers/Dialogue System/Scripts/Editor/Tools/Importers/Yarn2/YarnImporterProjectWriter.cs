@@ -19,6 +19,7 @@ namespace PixelCrushers.DialogueSystem.Yarn
     // +---------------------------------------------------------------------------------------------------------------
     public class YarnImporterProjectWriter
     {
+
         public static class EntryTitle
         {
             // Block entries
@@ -132,6 +133,8 @@ $@"local {RunCommandRuntimeArgumentList} = {Lua.EvaluateYarnExpression}({{1}})
         // public const string ClearAndAddStringFormatArgumentLuaName = "clr_add_str_fmt_arg";
         // public const string AddStringFormatArgumentLuaName = "add_str_fmt_arg";
 
+        public const string EntryMetadata = "Metadata";
+
         public const string SequenceAttributeName = "seq";
         // Rather than trying to create one all-encompassing unreadable regex,
         // Cycling through these four (in the specified order specified where they're used) should get us what we need.
@@ -175,6 +178,8 @@ $@"local {RunCommandRuntimeArgumentList} = {Lua.EvaluateYarnExpression}({{1}})
 
             var sortedConvoNodes = _yarnProject.Nodes.Values.OrderBy(x => x.Name).ToList();
             foreach (var convoNode in sortedConvoNodes) CreateAndAddDialogueEntries(convoNode);
+
+            _dialogueDb.actors.ForEach(a => FindPortraitImage(a));
         }
 
         private Actor GetOrCreateActor(string name, bool isPlayer = false, int id = -1)
@@ -223,6 +228,34 @@ $@"local {RunCommandRuntimeArgumentList} = {Lua.EvaluateYarnExpression}({{1}})
             entry.ActorID = _playerActor.id;
             entry.ConversantID = _defaultNpcActor.id;
         }
+
+        #region Portrait Images
+
+        public void FindPortraitImage(Actor actor)
+        {
+            if (actor == null || actor.portrait != null) return;
+            actor.spritePortrait = TryLoadSprite(_prefs.portraitFolder, actor.Name);
+        }
+
+        private static string[] imageExtensions = new string[] { ".png", ".jpg", ".tga", ".bmp" };
+
+        private static Sprite TryLoadSprite(string portraitFolder, string actorName)
+        {
+#if !UNITY_EDITOR
+            return null;
+#else
+            string filename = System.IO.Path.GetFileName(actorName).Replace('\\', '/');
+            string assetPath = string.Format("{0}/{1}", portraitFolder, filename);
+            foreach (var extension in imageExtensions)
+            {
+                Sprite sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath + extension);
+                if (sprite != null) return sprite;
+            }
+            return null;
+#endif
+        }
+
+        #endregion
 
         // private void CreateLuaGlobalVariables()
         // {
@@ -468,8 +501,19 @@ $@"local {RunCommandRuntimeArgumentList} = {Lua.EvaluateYarnExpression}({{1}})
             CreateLink(previousEntry, jumpEntry);
 
             var dstConvo = _dialogueDb.GetConversation(stmt.Destination);
-            var jumpLink = CreateLink(jumpEntry, dstConvo.dialogueEntries[0]);
-            jumpLink.isConnector = true;
+            if (dstConvo == null)
+            {
+                Debug.LogWarning($"Dialogue System: Yarn import error: Conversation '{stmt.Destination}' doesn't exist in database.");
+            }
+            else if (dstConvo.dialogueEntries.Count == 0)
+            {
+                Debug.LogWarning($"Dialogue System: Yarn import error: Conversation '{stmt.Destination}' doesn't have a <START> entry to create a jump link to.");
+            }
+            else
+            {
+                var jumpLink = CreateLink(jumpEntry, dstConvo.dialogueEntries[0]);
+                jumpLink.isConnector = true;
+            }
 
             // It is perfectly legal to put unreachable statements in a Yarn node right after a <<jump DestinationConversation>> statement.
             // To make sure those statements are represented in the Dialogue Database, an unreachable parent node is used.
@@ -504,6 +548,15 @@ $@"local {RunCommandRuntimeArgumentList} = {Lua.EvaluateYarnExpression}({{1}})
                 return seqEntry;
             }
 
+            // Special case for the append command. Grab the previous line entry and append the sequence.
+            if (IsAppendSequence(stmt.Name))
+            {
+                var previousSequence = previousEntry.Sequence;
+                var appendedSequence = previousSequence.Trim() == string.Empty ? GenerateSequence(stmt) : previousSequence + "; " + GenerateSequence(stmt);
+                previousEntry.Sequence = appendedSequence;
+                return previousEntry;
+            }
+
             // Special case for the wait command.
             if (stmt.CommandType.IsWait())
             {
@@ -517,9 +570,9 @@ $@"local {RunCommandRuntimeArgumentList} = {Lua.EvaluateYarnExpression}({{1}})
                 }
                 else
                 {
-                    // var delayAmount = stmt.StringTokens[0].Value;
+                    delayAmount = stmt.StringTokens[0].Value;
                     Assert.IsTrue(stmt.StringTokens.Count >= 1, "Must have at least a single command statement argument for <<wait>>");
-                    seq = $"Delay({stmt.StringTokens[0].Value})";
+                    seq = $"Delay({delayAmount})";
                 }
 
                 var waitEntry = CreateDialogueEntry(
@@ -541,6 +594,8 @@ $@"local {RunCommandRuntimeArgumentList} = {Lua.EvaluateYarnExpression}({{1}})
 
             return cmdEntry;
         }
+
+        private bool IsAppendSequence(string name) => name == "appSeq" || name == "appendSequence";
 
         private DialogueEntry CreateAndAddDialogueEntries(LineStatement stmt, DialogueEntry previousEntry)
         {
@@ -570,6 +625,7 @@ $@"local {RunCommandRuntimeArgumentList} = {Lua.EvaluateYarnExpression}({{1}})
             var title = YarnImporterProjectWriter.EntryTitle.Line;
             var desc = string.Format(YarnImporterProjectWriter.EntryDescription.Line, stmt.LineId);
             var lineEntry = CreateDialogueEntry(_currentConversation, title, desc);
+            AddHashtagFields(lineEntry, stmt.Hashtags);
             SetDialogueEntryActors(lineEntry, stmt.LineId);
             SetDialogueEntryText(lineEntry, _currentConversation.Title, stmt.LineId);
             if (_prefs.debug) Debug.Log($"YarnProjectWriter::CreateAndAddDialogueEntry(LineStatement) - line id: {stmt.LineId}, text: {lineEntry.DialogueText}");
@@ -627,6 +683,7 @@ $@"local {RunCommandRuntimeArgumentList} = {Lua.EvaluateYarnExpression}({{1}})
                 var line = option.Line;
                 if (!line.HasConditions) areAllOptionsConditional = false;
                 var optEndEntry = CreateAndAddDialogueEntries(option, optListStartEntry);
+                AddHashtagFields(optEndEntry, line.Hashtags);
                 CreateLink(optEndEntry, optListEndEntry);
             }
 
@@ -804,6 +861,20 @@ $@"local {RunCommandRuntimeArgumentList} = {Lua.EvaluateYarnExpression}({{1}})
             return link;
         }
 
+        private void AddHashtagFields(DialogueEntry entry, IReadOnlyDictionary<string, string> hashtags)
+        {
+            if (entry == null || hashtags == null || hashtags.Count == 0) return;
+            string value = string.Empty;
+            foreach (var hashtag in hashtags)
+            {
+                if (!string.IsNullOrEmpty(value)) value += ";";
+                value += hashtag.Key;
+
+                if (!string.IsNullOrEmpty(hashtag.Value)) value += ':' + hashtag.Value;
+            }
+            Field.SetValue(entry.fields, YarnImporterProjectWriter.EntryMetadata, value, FieldType.Text);
+        }
+
         // NOTE: This method's name probably isn't the best.
         //       It does set the dialogue entry text, but also performs much more than that:
         //          1. It sets the dialogue entry text from the Node's string table (using the default locale)
@@ -890,6 +961,8 @@ $@"local {RunCommandRuntimeArgumentList} = {Lua.EvaluateYarnExpression}({{1}})
 
         private DialogueEntry CreateDialogueEntry(Conversation conversation, string title = null, string description = null)
         {
+            Debug.Log($"<color=cyan>CreateDialogueEntry {title}/{description}</color>");
+
             var dialogueEntry = _template.CreateDialogueEntry(_template.GetNextDialogueEntryID(conversation), conversation.id, title);
 
             // We will always default to Dialogue Entries being spoken by the default NPC (i.e. not spoken by the Player)

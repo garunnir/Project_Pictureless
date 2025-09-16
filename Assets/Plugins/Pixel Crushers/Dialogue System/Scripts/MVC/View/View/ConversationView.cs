@@ -151,7 +151,7 @@ namespace PixelCrushers.DialogueSystem
         public void StartSubtitle(Subtitle subtitle, bool isPCResponseMenuNext, bool isPCAutoResponseNext)
         {
             notifyOnFinishSubtitle = true;
-            if (subtitle != null)
+            if (subtitle != null && !IsBlankStartNode(subtitle))
             {
                 if (DialogueDebug.logInfo) Debug.Log(string.Format("{0}: {1} says '{2}'", new System.Object[] { DialogueDebug.Prefix, Tools.GetGameObjectName(subtitle.speakerInfo.transform), subtitle.formattedText.text }));
 
@@ -212,6 +212,13 @@ namespace PixelCrushers.DialogueSystem
         private bool _isPCResponseMenuNext = false;
         private bool _isPCAutoResponseNext = false;
         private bool _lastModeWasResponseMenu = false;
+
+        private bool IsBlankStartNode(Subtitle subtitle)
+        { 
+            if (subtitle == null || subtitle.dialogueEntry == null) return false;
+            return subtitle.dialogueEntry.id == 0 &&
+                (subtitle.sequence == "None()" || subtitle.sequence == "Continue()");
+        }
 
         /// <summary>
         /// Determines whether the continue button should be shown, and shows or hides it.
@@ -361,8 +368,11 @@ namespace PixelCrushers.DialogueSystem
             if ((subtitle != null) && (settings != null) && (settings.subtitleSettings != null))
             {
                 if (subtitle.formattedText.noSubtitle || 
-                    string.Equals(subtitle.sequence, "None()") || string.Equals(subtitle.sequence, "None();") ||
-                    string.Equals(subtitle.sequence, "Continue()") || string.Equals(subtitle.sequence, "Continue();"))
+                    string.Equals(subtitle.sequence, "None()") || 
+                    string.Equals(subtitle.sequence, "None();") ||
+                    (!settings.cameraSettings.showSubtitleOnEmptyContinue && 
+                        (string.Equals(subtitle.sequence, "Continue()") || 
+                        string.Equals(subtitle.sequence, "Continue();"))))
                 {
                     return false;
                 }
@@ -401,7 +411,11 @@ namespace PixelCrushers.DialogueSystem
         public void HandleContinueButtonClick()
         {
             // If we just started and another conversation just ended, ignore the continue:
-            if (Time.frameCount == initialFrameCount && initialFrameCount == ConversationController.frameLastConversationEnded) return;
+            if (Time.frameCount == initialFrameCount && initialFrameCount == ConversationController.frameLastConversationEnded)
+            {
+                if (DialogueDebug.logInfo) Debug.Log($"Dialogue System: At frame {Time.frameCount}, just started a conversation but another just ended, so ignoring continue button.");
+                return;
+            }
             waitForContinue = false;
             FinishSubtitle();
         }
@@ -430,7 +444,7 @@ namespace PixelCrushers.DialogueSystem
                 if (notifyOnFinishSubtitle)
                 {
                     notifyOnFinishSubtitle = false;
-                    if (_subtitle != null) NotifyParticipantsOnConversationLineEnd(lastSubtitle);
+                    if (lastSubtitle != null) NotifyParticipantsOnConversationLineEnd(lastSubtitle);
                     if (FinishedSubtitleHandler != null) FinishedSubtitleHandler(this, EventArgs.Empty);
                 }
             }
@@ -485,8 +499,8 @@ namespace PixelCrushers.DialogueSystem
             if (isPlayingResponseMenuSequence)
             {
                 isPlayingResponseMenuSequence = false;
-                m_sequencer.Stop();
                 m_sequencer.StopAllCoroutines();
+                m_sequencer.Stop(); // This starts a cleanup coroutine.
                 m_sequencer.FinishedSequenceHandler += OnFinishedSubtitle;
             }
         }
@@ -599,6 +613,7 @@ namespace PixelCrushers.DialogueSystem
 
         private void NotifyParticipantsOnConversationLine(Subtitle subtitle)
         {
+            NotifyParticipants(DialogueSystemMessages.OnConversationLineEarly, subtitle);
             NotifyParticipants(DialogueSystemMessages.OnConversationLine, subtitle);
         }
 

@@ -14,6 +14,13 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
     public delegate void DrawAssetInspectorDelegate(DialogueDatabase database, Asset asset);
 
     /// <summary>
+    /// Draw additional information in conversation inspector.
+    /// </summary>
+    /// <param name="database">Dialogue database.</param>
+    /// <param name="conversation">Conversation to draw.</param>
+    public delegate void DrawConversationInspectorDelegate(DialogueDatabase database, Conversation conversation);
+
+    /// <summary>
     /// Draw additional information in dialogue entry inspector.
     /// </summary>
     /// <param name="database">Dialogue database.</param>
@@ -34,6 +41,14 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
     /// <param name="database">Dialogue database.</param>
     /// <param name="menu">Menu to add items to.</param>
     public delegate void SetupGenericDialogueEditorMenuDelegate(DialogueDatabase database, GenericMenu menu);
+
+    /// <summary>
+    /// Add menu items to the context menu that appears when you right-click on a dialogue entry node.
+    /// </summary>
+    /// <param name="database">Dialogue database.</param>
+    /// <param name="entry">Dialogue entry that was right-clicked.</param>
+    /// <param name="menu">Menu to add items to.</param>
+    public delegate void SetupDialogueEntryNodeContextMenuDelegate(DialogueDatabase database, DialogueEntry entry, GenericMenu menu);
 
     /// <summary>
     /// Perform additional global search.
@@ -66,6 +81,11 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         public static event DrawAssetInspectorDelegate customDrawAssetInspector = null;
 
         /// <summary>
+        /// Assign handler(s) to perform extra drawing in the conversation inspector view.
+        /// </summary>
+        public static event DrawConversationInspectorDelegate customDrawConversationInspector = null;
+
+        /// <summary>
         /// Assign handler(s) to perform extra drawing in the dialogue entry inspector view.
         /// </summary>
         public static event DrawDialogueEntryInspectorDelegate customDrawDialogueEntryInspector = null;
@@ -79,6 +99,8 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         /// Assign handler(s) to add extra menu items to the node editor menu.
         /// </summary>
         public static event SetupGenericDialogueEditorMenuDelegate customNodeMenuSetup = null;
+
+        public static event SetupDialogueEntryNodeContextMenuDelegate customNodeContextMenuSetup = null;
 
         /// <summary>
         /// Assign handler(s) to perform extra global search.

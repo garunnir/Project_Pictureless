@@ -43,7 +43,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
             
             if (DialogueDebug.logInfo)
             {
-                Debug.LogFormat("{0}: Sequencer: AudioWaitOnce({1})", DialogueDebug.Prefix, GetParameters());
+                Debug.LogFormat("{0}: Sequencer: AudioWaitOnce({1}) on {2}", DialogueDebug.Prefix, GetParameters(), subject);
             }
 
             if (this.hasPlayedAlready(audioClipName))
@@ -98,6 +98,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                         (asset) =>
                         {
                             isLoadingAudio = false;
+                            markAsPlayedAlready(audioClipName);
                             var audioClip = asset as AudioClip;
                             if (audioClip == null)
                             {
@@ -117,7 +118,7 @@ namespace PixelCrushers.DialogueSystem.SequencerCommands
                                     _audioSource.clip = audioClip;
                                     _audioSource.Play();
                                 }
-                                _stopTime = DialogueTime.time + audioClip.length;
+                                _stopTime = DialogueTime.time + SequencerCommandAudioWait.GetAudioClipLength(_audioSource, audioClip);
                             }
                         });
                 }

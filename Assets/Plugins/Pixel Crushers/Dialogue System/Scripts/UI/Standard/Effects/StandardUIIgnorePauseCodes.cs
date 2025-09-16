@@ -1,6 +1,4 @@
-// Recompile at 2024-01-30 오후 8:33:12
-
-// Copyright (c) Pixel Crushers. All rights reserved.
+﻿// Copyright (c) Pixel Crushers. All rights reserved.
 
 using UnityEngine;
 using System.Collections;

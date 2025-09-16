@@ -16,6 +16,8 @@ namespace PixelCrushers.DialogueSystem
 
         private const string ShowOnStartEditorPrefsKey = "PixelCrushers.DialogueSystem.WelcomeWindow.ShowOnStart";
 
+        private Vector2 scrollPosition = Vector2.zero;
+
         private GUIStyle m_quickButtonGuiStyle = null;
         private GUIStyle quickButtonGuiStyle
         {
@@ -41,9 +43,9 @@ namespace PixelCrushers.DialogueSystem
         {
             var window = GetWindow<WelcomeWindow>(false, "Welcome");
 #if EVALUATION_VERSION || ACADEMIC
-            window.minSize = new Vector2(370, 680);
+            window.minSize = new Vector2(370, 290);
 #else
-            window.minSize = new Vector2(370, 650);
+            window.minSize = new Vector2(370, 290);
 #endif
             window.showOnStart = true; // Can't check EditorPrefs when constructing window: showOnStartPrefs;
             return window;
@@ -81,8 +83,17 @@ namespace PixelCrushers.DialogueSystem
         private void OnGUI()
         {
             DrawBanner();
-            DrawButtons();
-            DrawDefines();
+            GUILayout.Space(40);
+            try
+            {
+                scrollPosition = GUILayout.BeginScrollView(scrollPosition);
+                DrawButtons();
+                DrawDefines();
+            }
+            finally
+            {
+                GUILayout.EndScrollView();
+            }
             DrawFooter();
         }
 
@@ -110,7 +121,7 @@ namespace PixelCrushers.DialogueSystem
 
         private void DrawButtons()
         {
-            GUILayout.BeginArea(new Rect(5, 40, position.width - 10, position.height - 40));
+            //GUILayout.BeginArea(new Rect(5, 40, position.width - 10, position.height - 40));
             try
             {
                 EditorWindowTools.DrawHorizontalLine();
@@ -138,7 +149,7 @@ namespace PixelCrushers.DialogueSystem
                     }
                     if (GUILayout.Button(new GUIContent("Forum", "Go to the Pixel Crushers forum"), quickButtonGuiStyle, GUILayout.Width(ButtonWidth), GUILayout.Height(3 * EditorGUIUtility.singleLineHeight)))
                     {
-                        Application.OpenURL("http://www.pixelcrushers.com/phpbb");
+                        Application.OpenURL("http://www.pixelcrushers.com/forum");
                     }
                 }
                 finally
@@ -179,13 +190,13 @@ namespace PixelCrushers.DialogueSystem
             }
             finally
             {
-                GUILayout.EndArea();
+                //GUILayout.EndArea();
             }
         }
 
         private void DrawDefines()
         {
-            GUILayout.BeginArea(new Rect(5, 256, position.width - 10, position.height - 256));
+            //GUILayout.BeginArea(new Rect(5, 256, position.width - 10, position.height - 256));
             EditorGUILayout.LabelField("Current Build Target: " + ObjectNames.NicifyVariableName(EditorUserBuildSettings.activeBuildTarget.ToString()), EditorStyles.boldLabel);
 
             var define_USE_PHYSICS2D = false;
@@ -193,6 +204,7 @@ namespace PixelCrushers.DialogueSystem
             var define_USE_ADDRESSABLES = false;
             var define_USE_TIMELINE = false;
             var define_USE_CINEMACHINE = false;
+            var define_USE_CINEMACHINE3 = false;
             var define_USE_ARCWEAVE = false;
             var define_USE_ARTICY = false;
             var define_USE_AURORA = false;
@@ -212,6 +224,7 @@ namespace PixelCrushers.DialogueSystem
                 if (string.Equals(ScriptingSymbolNames.USE_ADDRESSABLES, defines[i].Trim())) define_USE_ADDRESSABLES = true;
                 if (string.Equals(ScriptingSymbolNames.USE_TIMELINE, defines[i].Trim())) define_USE_TIMELINE = true;
                 if (string.Equals(ScriptingSymbolNames.USE_CINEMACHINE, defines[i].Trim())) define_USE_CINEMACHINE = true;
+                if (string.Equals(ScriptingSymbolNames.USE_CINEMACHINE3, defines[i].Trim())) define_USE_CINEMACHINE3 = true;
                 if (string.Equals(ScriptingSymbolNames.USE_ARCWEAVE, defines[i].Trim())) define_USE_ARCWEAVE = true;
                 if (string.Equals(ScriptingSymbolNames.USE_ARTICY, defines[i].Trim())) define_USE_ARTICY = true;
                 if (string.Equals(ScriptingSymbolNames.USE_AURORA, defines[i].Trim())) define_USE_AURORA = true;
@@ -225,10 +238,10 @@ namespace PixelCrushers.DialogueSystem
                 if (string.Equals(ScriptingSymbolNames.USE_NAVMESH, defines[i].Trim())) define_USE_NAVMESH = true;
             }
 #if EVALUATION_VERSION || ACADEMIC
-            //define_USE_PHYSICS2D = true;
+            define_USE_PHYSICS2D = true;
             define_USE_NEW_INPUT = false;
             define_USE_ADDRESSABLES = false;
-            //define_TMP_PRESENT = true;
+            define_TMP_PRESENT = true;
             define_USE_STM = false;
             define_USE_NAVMESH = true;
             define_USE_ARCWEAVE = false;
@@ -253,6 +266,7 @@ namespace PixelCrushers.DialogueSystem
             EditorGUI.EndDisabledGroup();
             //var new_USE_PHYSICS2D = define_USE_PHYSICS2D;
             var new_USE_CINEMACHINE = define_USE_CINEMACHINE;
+            var new_USE_CINEMACHINE3 = define_USE_CINEMACHINE3;
             var new_USE_NEW_INPUT = define_USE_NEW_INPUT;
             var new_USE_ADDRESSABLES = define_USE_ADDRESSABLES;
 #else
@@ -260,7 +274,8 @@ namespace PixelCrushers.DialogueSystem
             var new_USE_PHYSICS2D = EditorGUILayout.ToggleLeft(define_USE_PHYSICS2D ? "2D Physics (USE_PHYSICS2D)" : "2D Physics (USE_PHYSICS2D) <- MAKING A 2D GAME?", define_USE_PHYSICS2D);
             var new_USE_NAVMESH = EditorGUILayout.ToggleLeft(new GUIContent(define_USE_NAVMESH ? "Navigation (USE_NAVMESH)" : "Navigation (USE_NAVMESH) <- USING NAVIGATION?", "Enable Dialogue System support for Unity's NavMesh Navigation system."), define_USE_NAVMESH);
             var new_USE_ADDRESSABLES = EditorGUILayout.ToggleLeft("Addressables (USE_ADDRESSABLES)", define_USE_ADDRESSABLES);
-            var new_USE_CINEMACHINE = EditorGUILayout.ToggleLeft(new GUIContent("Cinemachine (USE_CINEMACHINE)", "Enable Dialogue System support for Cinemachine. You must still enable Cinemachine in Package Manager."), define_USE_CINEMACHINE);
+            var new_USE_CINEMACHINE = EditorGUILayout.ToggleLeft(new GUIContent("Cinemachine 2 (USE_CINEMACHINE)", "Enable Dialogue System support for Cinemachine 2. You must still enable Cinemachine 2 in Package Manager."), define_USE_CINEMACHINE);
+            var new_USE_CINEMACHINE3 = EditorGUILayout.ToggleLeft(new GUIContent("Cinemachine 3 (USE_CINEMACHINE_3)", "Enable Dialogue System support for Cinemachine 3. You must still enable Cinemachine 3 in Package Manager."), define_USE_CINEMACHINE3);
             var new_USE_NEW_INPUT = EditorGUILayout.ToggleLeft("New Input System (USE_NEW_INPUT)", define_USE_NEW_INPUT);
 #endif
 
@@ -357,7 +372,7 @@ namespace PixelCrushers.DialogueSystem
             {
                 if (new_USE_CINEMACHINE)
                 {
-                    if (EditorUtility.DisplayDialog("Enable Cinemachine Support", "This will enable support for Cinemachine. You MUST have installed the Cinemachine package via the Package Manager window first.", "OK", "Cancel"))
+                    if (EditorUtility.DisplayDialog("Enable Cinemachine 2 Support", "This will enable support for Cinemachine 2. You MUST have installed the Cinemachine 2 package via the Package Manager window first.", "OK", "Cancel"))
                     {
                         MoreEditorUtility.ToggleScriptingDefineSymbol(ScriptingSymbolNames.USE_CINEMACHINE, new_USE_CINEMACHINE);
                     }
@@ -369,6 +384,24 @@ namespace PixelCrushers.DialogueSystem
                 else
                 {
                     MoreEditorUtility.ToggleScriptingDefineSymbol(ScriptingSymbolNames.USE_CINEMACHINE, new_USE_CINEMACHINE);
+                }
+            }
+            if (new_USE_CINEMACHINE3 != define_USE_CINEMACHINE3)
+            {
+                if (new_USE_CINEMACHINE3)
+                {
+                    if (EditorUtility.DisplayDialog("Enable Cinemachine 3 Support", "This will enable support for Cinemachine 3. You MUST have installed the Cinemachine 3 package via the Package Manager window first.", "OK", "Cancel"))
+                    {
+                        MoreEditorUtility.ToggleScriptingDefineSymbol(ScriptingSymbolNames.USE_CINEMACHINE3, new_USE_CINEMACHINE3);
+                    }
+                    else
+                    {
+                        changed = false;
+                    }
+                }
+                else
+                {
+                    MoreEditorUtility.ToggleScriptingDefineSymbol(ScriptingSymbolNames.USE_CINEMACHINE3, new_USE_CINEMACHINE3);
                 }
             }
             if (new_USE_STM != define_USE_STM)
@@ -482,34 +515,43 @@ namespace PixelCrushers.DialogueSystem
             }
 
             EditorWindowTools.DrawHorizontalLine();
-            GUILayout.EndArea();
+            //GUILayout.EndArea();
 
             if (changed) EditorTools.ReimportScripts();
         }
 
         private void DrawFooter()
         {
-            if (GUI.Button(new Rect(position.width - 200, position.height - 8 - 2 * EditorGUIUtility.singleLineHeight, 190, EditorGUIUtility.singleLineHeight), new GUIContent("Learn About OpenAI Addon", "Visit the Asset Store page for the Addon for OpenAI")))
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button(new GUIContent("Learn About OpenAI Addon", "Visit the Asset Store page for the Addon for OpenAI"),
+                GUILayout.Width(190)))
             {
                 Application.OpenURL("https://assetstore.unity.com/packages/tools/ai/dialogue-system-addon-for-openai-249287");
             }
+            GUILayout.EndHorizontal();
 
-            var newShowOnStart = EditorGUI.ToggleLeft(new Rect(5, position.height - 5 - EditorGUIUtility.singleLineHeight, position.width - (70 + 150), EditorGUIUtility.singleLineHeight), "Show at start", showOnStart);
+            GUILayout.BeginHorizontal();
+            var newShowOnStart = EditorGUILayout.ToggleLeft("Show at start", showOnStart, GUILayout.Width(100));
             if (newShowOnStart != showOnStart)
             {
                 showOnStart = newShowOnStart;
                 showOnStartPrefs = newShowOnStart;
             }
-            if (GUI.Button(new Rect(position.width - 80, position.height - 5 - EditorGUIUtility.singleLineHeight, 70, EditorGUIUtility.singleLineHeight), new GUIContent("Support", "Contact the developer for support")))
-            {
-                Application.OpenURL("http://www.pixelcrushers.com/support-form/");
-            }
-#if EVALUATION_VERSION || ACADEMIC
-            if (GUI.Button(new Rect(position.width - 154, position.height - 5 - EditorGUIUtility.singleLineHeight, 70, EditorGUIUtility.singleLineHeight), new GUIContent("Buy", "Buy a license")))
+            GUILayout.FlexibleSpace();
+
+            //#if EVALUATION_VERSION || ACADEMIC
+            if (GUILayout.Button(new GUIContent("Buy", "Buy a license"), GUILayout.Width(70)))
             {
                 Application.OpenURL("https://assetstore.unity.com/packages/tools/ai/dialogue-system-for-unity-11672");
             }
-#endif
+            //#endif
+
+            if (GUILayout.Button(new GUIContent("Support", "Contact the developer for support"), GUILayout.Width(70)))
+            {
+                Application.OpenURL("http://www.pixelcrushers.com/support-form/");
+            }
+            EditorGUILayout.EndHorizontal();
         }
 
     }

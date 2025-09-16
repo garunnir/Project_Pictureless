@@ -22,8 +22,6 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
         #region Database Tab > Localization Foldout Variables
 
-        private enum EntrySortMethod { No, DepthFirst, BreadthFirst }
-
         [Serializable]
         private class LocalizationLanguages
         {
@@ -60,7 +58,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
         private string localizationKeyField = "Articy Id";
 
         [SerializeField]
-        private EntrySortMethod localizationEntrySortMethod = EntrySortMethod.No;
+        private DialogueEntrySortMethod localizationEntrySortMethod = DialogueEntrySortMethod.No;
 
         private GUIContent exportLocalizationConversationTitleLabel = new GUIContent("Export Conversation Title Instead Of ID", "Export conversation title instead of ID. Titles should be unique.");
         private GUIContent exportLocalizationKeyFieldLabel = new GUIContent("Use Key Field", "Tie each dialogue entry row to a key field (e.g., 'Articy Id' or 'Celtx ID') instead of conversation & entry IDs.");
@@ -150,7 +148,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(exportLocalizationSortModeLabel, GUILayout.Width(80));
-            localizationEntrySortMethod = (EntrySortMethod)EditorGUILayout.EnumPopup(GUIContent.none, localizationEntrySortMethod, GUILayout.Width(100));
+            localizationEntrySortMethod = (DialogueEntrySortMethod)EditorGUILayout.EnumPopup(GUIContent.none, localizationEntrySortMethod, GUILayout.Width(100));
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
@@ -172,9 +170,9 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             if (EditorGUILayout.DropdownButton(new GUIContent("Send Localization Request", "Request a quote for localization services from one of our partners."), FocusType.Keyboard, GUILayout.Width(180)))
             {
                 GenericMenu dropdownMenu = new GenericMenu();
-                dropdownMenu.AddItem(new GUIContent("Get Localized by Alocai..."), false, () =>
+                dropdownMenu.AddItem(new GUIContent("Get Localized by Altagram..."), false, () =>
                 {
-                    LocalizationByAlocai();
+                    LocalizationByAltagram();
                 });
                 dropdownMenu.DropDown(localizationButtonPosition);
             }
@@ -267,6 +265,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             try
             {
                 database.conversations.ForEach(conversation => conversation.dialogueEntries.ForEach(entry => FindLanguagesInFields(entry.fields, false)));
+                if (template != null) FindLanguagesInFields(template.dialogueEntryFields, false);
             }
             finally
             {
@@ -395,13 +394,13 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                             switch (localizationEntrySortMethod)
                             {
                                 default:
-                                case EntrySortMethod.No:
+                                case DialogueEntrySortMethod.No:
                                     sortedEntries.AddRange(c.dialogueEntries);
                                     break;
-                                case EntrySortMethod.DepthFirst:
+                                case DialogueEntrySortMethod.DepthFirst:
                                     sortedEntries = DepthFirstSortEntries(c.dialogueEntries);
                                     break;
-                                case EntrySortMethod.BreadthFirst:
+                                case DialogueEntrySortMethod.BreadthFirst:
                                     sortedEntries = BreadthFirstSortEntries(c.dialogueEntries);
                                     break;
                             }
@@ -741,7 +740,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                                 Debug.LogError(filename + ": No actor in database is named '" + actorName + "'.");
                                 continue;
                             }
-                            Field.SetValue(actor.fields, "Display Name " + language, translatedName);
+                            Field.SetValue(actor.fields, "Display Name " + language, translatedName, FieldType.Localization);
                             if (alsoImportMainText && !string.IsNullOrEmpty(actorDisplayName))
                             {
                                 Field.SetValue(actor.fields, "Display Name", actorDisplayName);
@@ -841,7 +840,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                                         continue;
                                     }
 
-                                    Field.SetValue(entry.fields, field + " " + language, columns[columnIndex]);
+                                    Field.SetValue(entry.fields, field + " " + language, columns[columnIndex], FieldType.Localization);
 
                                     if (alsoImportMainText)
                                     {
@@ -990,7 +989,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                                             continue;
                                         }
 
-                                        Field.SetValue(item.fields, field + " " + language, columns[columnIndex]);
+                                        Field.SetValue(item.fields, field + " " + language, columns[columnIndex], FieldType.Localization);
 
                                         if (alsoImportMainText)
                                         {
@@ -1008,6 +1007,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 EditorUtility.ClearProgressBar();
             }
             EditorUtility.DisplayDialog("Imported Localization CSV", "The CSV files have been imported back into your dialogue database.", "OK");
+            Reset();
         }
 
         private List<string> GetCSVColumnsFromLine(string line)
@@ -1088,15 +1088,15 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
         #endregion
 
-        #region Alocai
+        #region Altagram (Alocai)
 
-        private void LocalizationByAlocai()
+        private void LocalizationByAltagram()
         {
             // Show an explanation and confirmation dialog:
-            if (!EditorUtility.DisplayDialog("Request Quote From Alocai",
+            if (!EditorUtility.DisplayDialog("Request Quote From Altagram",
                 "Pixel Crushers is partnering with localization services to provide additional localization options for your Dialogue System projects.\n\n" +
-                "Click Continue to request a quote from game localization platform Alocai to translate your dialogue database content. " +
-                "The Dialogue Editor will ask you to select a folder to export your database content, which will then be sent to Alocai so they can prepare a quote.",
+                "Click Continue to request a quote from game localization platform Altagram (Alocai) to translate your dialogue database content. " +
+                "The Dialogue Editor will ask you to select a folder to export your database content, which will then be sent to Altagram so they can prepare a quote.",
                 "Continue", "Cancel"))
             {
                 return;
@@ -1116,13 +1116,13 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             {
                 if (ExportLocalizationFilesToFolder(newOutputFolder))
                 {
-                    // send the files to Alocai
-                    SendRequestToAlocai();
+                    // send the files to Altagram
+                    SendRequestToAltagram();
                 }
             }
         }
 
-        private void SendRequestToAlocai()
+        private void SendRequestToAltagram()
         {
             string server = "https://quote-requester-api.alocai.com";
             string apiKey = "539568b8-3589-4ccc-ace5-4439e315bd4f";
@@ -1157,7 +1157,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
                 while (!www.isDone)
                 {
-                    if (EditorUtility.DisplayCancelableProgressBar("Uploading Localization files", "Uploading localization files to Alocai", www.uploadProgress))
+                    if (EditorUtility.DisplayCancelableProgressBar("Uploading Localization files", "Uploading localization files to Altagram", www.uploadProgress))
                     {
                         www.Abort();
                         return;
@@ -1177,23 +1177,23 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                     string text = www.downloadHandler.text;
                     Debug.Log(text);
 
-                    var response = JsonUtility.FromJson<AlocaiResponse>(text);
+                    var response = JsonUtility.FromJson<AltagramResponse>(text);
                     string responseUrl = response.quote_requester_client_url;
                     Application.OpenURL(responseUrl);
 
                     // Show reminder to add the languages to the list on the web form
-                    //EditorUtility.DisplayDialog("Localization by Alocai", "Be sure to select all the desired languages on the web form.", "OK");
+                    //EditorUtility.DisplayDialog("Localization by Altagram", "Be sure to select all the desired languages on the web form.", "OK");
 
-                    Debug.Log("Request sent to Alocai quote request server.");
+                    Debug.Log("Request sent to Altagram quote request server.");
                 }
                 else
                 {
                     // error
-                    Debug.LogError("Error connecting to Alocai's request server: " + www.error);
+                    Debug.LogError("Error connecting to Altagram's request server: " + www.error);
                     Debug.Log("Error details text: " + www.downloadHandler.text);
 
-                    EditorUtility.DisplayDialog("Localization by Alocai",
-                        "There was an error connecting to Alocai's request server:\n\n" + www.error +
+                    EditorUtility.DisplayDialog("Localization by Altagram",
+                        "There was an error connecting to Altagram's request server:\n\n" + www.error +
                         "\n\nPlease contact Pixel Crushers for support, and provide the error message.", "OK");
                 }
             }
@@ -1203,7 +1203,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
             }
         }
 
-        public class AlocaiResponse
+        public class AltagramResponse
         {
             public string quote_requester_client_url;
         }

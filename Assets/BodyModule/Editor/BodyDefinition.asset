@@ -1,0 +1,622 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-9210464965988754910
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: LThumb
+  m_EditorClassIdentifier: 
+  partName: LThumb
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -851749404808799319}
+--- !u!114 &-9134997926749427711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: RLeg
+  m_EditorClassIdentifier: 
+  partName: RLeg
+  maxHp: 10
+  vital: 0
+  children:
+  - {fileID: -5041830132641323383}
+  parent:
+  - {fileID: -5376918254608987755}
+--- !u!114 &-8667524092460053792
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: R2Toe
+  m_EditorClassIdentifier: 
+  partName: R2Toe
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -5041830132641323383}
+--- !u!114 &-6877629525432978869
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: LFoot
+  m_EditorClassIdentifier: 
+  partName: LFoot
+  maxHp: 10
+  vital: 0
+  children:
+  - {fileID: 4225730812039841504}
+  - {fileID: -1323854366633060679}
+  - {fileID: 5683907816663983834}
+  - {fileID: -3020986653730424187}
+  - {fileID: -5742131382720322636}
+  parent:
+  - {fileID: 5037086270839132907}
+--- !u!114 &-6299194342829819221
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: RLittleF
+  m_EditorClassIdentifier: 
+  partName: RLittleF
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: 2513953339708769827}
+--- !u!114 &-5742131382720322636
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: L2Toe
+  m_EditorClassIdentifier: 
+  partName: L2Toe
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -6877629525432978869}
+--- !u!114 &-5414938666553077438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: Torso
+  m_EditorClassIdentifier: 
+  partName: Torso
+  maxHp: 10
+  vital: 1
+  children:
+  - {fileID: -2640239226732832663}
+  - {fileID: -4097393359425847421}
+  - {fileID: -322147394771575764}
+  parent:
+  - {fileID: 2448369644411479637}
+--- !u!114 &-5376918254608987755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: Pelvis
+  m_EditorClassIdentifier: 
+  partName: Pelvis
+  maxHp: 10
+  vital: 0
+  children:
+  - {fileID: -9134997926749427711}
+  - {fileID: 5037086270839132907}
+  parent:
+  - {fileID: -2640239226732832663}
+--- !u!114 &-5041830132641323383
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: RFoot
+  m_EditorClassIdentifier: 
+  partName: RFoot
+  maxHp: 10
+  vital: 0
+  children:
+  - {fileID: 8801726797845774701}
+  - {fileID: 1769121415834241999}
+  - {fileID: 7030732526954466480}
+  - {fileID: 6272005094640160822}
+  - {fileID: -8667524092460053792}
+  parent:
+  - {fileID: -9134997926749427711}
+--- !u!114 &-4895374034252829004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: RIndexF
+  m_EditorClassIdentifier: 
+  partName: RIndexF
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: 2513953339708769827}
+--- !u!114 &-4097393359425847421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: LArm
+  m_EditorClassIdentifier: 
+  partName: LArm
+  maxHp: 10
+  vital: 0
+  children:
+  - {fileID: -851749404808799319}
+  parent:
+  - {fileID: -5414938666553077438}
+--- !u!114 &-3020986653730424187
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: L3Toe
+  m_EditorClassIdentifier: 
+  partName: L3Toe
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -6877629525432978869}
+--- !u!114 &-2934773164341212207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: RThumb
+  m_EditorClassIdentifier: 
+  partName: RThumb
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: 2513953339708769827}
+--- !u!114 &-2640239226732832663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: Waist
+  m_EditorClassIdentifier: 
+  partName: Waist
+  maxHp: 10
+  vital: 0
+  children:
+  - {fileID: -5376918254608987755}
+  parent:
+  - {fileID: -5414938666553077438}
+--- !u!114 &-1679148129575916730
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: LIndexF
+  m_EditorClassIdentifier: 
+  partName: LIndexF
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -851749404808799319}
+--- !u!114 &-1323854366633060679
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: L5Toe
+  m_EditorClassIdentifier: 
+  partName: L5Toe
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -6877629525432978869}
+--- !u!114 &-851749404808799319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: LHand
+  m_EditorClassIdentifier: 
+  partName: LHand
+  maxHp: 10
+  vital: 0
+  children:
+  - {fileID: -9210464965988754910}
+  - {fileID: -1679148129575916730}
+  - {fileID: 765478569198267044}
+  - {fileID: 5100133783671881656}
+  - {fileID: 405730089499959942}
+  parent:
+  - {fileID: -4097393359425847421}
+--- !u!114 &-322147394771575764
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: RArm
+  m_EditorClassIdentifier: 
+  partName: RArm
+  maxHp: 10
+  vital: 0
+  children:
+  - {fileID: 2513953339708769827}
+  parent:
+  - {fileID: -5414938666553077438}
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9480bdcb240744d4cb98e03341d1d41e, type: 3}
+  m_Name: BodyDefinition
+  m_EditorClassIdentifier: Assembly-CSharp-Editor::BodyDefinitionSO
+  roots:
+  - {fileID: 2448369644411479637}
+--- !u!114 &405730089499959942
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: LlittleF
+  m_EditorClassIdentifier: 
+  partName: LlittleF
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -851749404808799319}
+--- !u!114 &765478569198267044
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: LMiddleF
+  m_EditorClassIdentifier: 
+  partName: LMiddleF
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -851749404808799319}
+--- !u!114 &1769121415834241999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: RBigToe
+  m_EditorClassIdentifier: 
+  partName: RBigToe
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -5041830132641323383}
+--- !u!114 &2448369644411479637
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: Head
+  m_EditorClassIdentifier: 
+  partName: Head
+  maxHp: 10
+  vital: 1
+  children:
+  - {fileID: -5414938666553077438}
+  parent: []
+--- !u!114 &2513953339708769827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: RHand
+  m_EditorClassIdentifier: 
+  partName: RHand
+  maxHp: 10
+  vital: 0
+  children:
+  - {fileID: -2934773164341212207}
+  - {fileID: -4895374034252829004}
+  - {fileID: 6284647579592738059}
+  - {fileID: 5878313827349247398}
+  - {fileID: -6299194342829819221}
+  parent:
+  - {fileID: -322147394771575764}
+--- !u!114 &4225730812039841504
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: LBigToe
+  m_EditorClassIdentifier: 
+  partName: LBigToe
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -6877629525432978869}
+--- !u!114 &5037086270839132907
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: LLeg
+  m_EditorClassIdentifier: 
+  partName: LLeg
+  maxHp: 10
+  vital: 0
+  children:
+  - {fileID: -6877629525432978869}
+  parent:
+  - {fileID: -5376918254608987755}
+--- !u!114 &5100133783671881656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: LRingF
+  m_EditorClassIdentifier: 
+  partName: LRingF
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -851749404808799319}
+--- !u!114 &5683907816663983834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: L4Toe
+  m_EditorClassIdentifier: 
+  partName: L4Toe
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -6877629525432978869}
+--- !u!114 &5878313827349247398
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: RRingF
+  m_EditorClassIdentifier: 
+  partName: RRingF
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: 2513953339708769827}
+--- !u!114 &6272005094640160822
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: R3Toe
+  m_EditorClassIdentifier: 
+  partName: R3Toe
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -5041830132641323383}
+--- !u!114 &6284647579592738059
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: RMiddleF
+  m_EditorClassIdentifier: 
+  partName: RMiddleF
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: 2513953339708769827}
+--- !u!114 &7030732526954466480
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: R4Toe
+  m_EditorClassIdentifier: 
+  partName: R4Toe
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -5041830132641323383}
+--- !u!114 &8801726797845774701
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 521bc7b2959b7654e9bfa31b7e27f5cd, type: 3}
+  m_Name: R5Toe
+  m_EditorClassIdentifier: 
+  partName: R5Toe
+  maxHp: 10
+  vital: 0
+  children: []
+  parent:
+  - {fileID: -5041830132641323383}
