@@ -1,15 +1,11 @@
 using PixelCrushers;
 using System;
-using System.Collections;
+
 using System.Collections.Generic;
-using UnityEngine;
-using Garunnir;
+
 using Garunnir.CharacterAppend.BodySystem;
-using Garunnir.CharacterAppend.BodySystem.Inner.Organs;
-using System.Reflection;
-using System.Linq;
-using System.Text;
-using Language.Lua;
+
+
 
 namespace Garunnir
 {

@@ -1,15 +1,8 @@
-using Garunnir.CharacterAppend.BodySystem;
 using PixelCrushers.DialogueSystem;
-using PixelCrushers.Wrappers;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Profiling;
-using UnityEngine.TextCore.Text;
 
 namespace Garunnir
 {
@@ -82,10 +75,14 @@ namespace Garunnir
 }
 namespace Garunnir.CharacterAppend.BodySystem
 {
-    public class BodyFactory
+    public abstract class BodyFactory
     {
         //public abstract void build();
-        public static Core CreateDefault()
+        public abstract Core CreateDefault();
+    }
+    public class DefaultBodyFactory : BodyFactory
+    {
+        public override Core CreateDefault()
         {
             HumanoidBody body = new HumanoidBody("head",null);
             BodyParts upperbody = body.SetNext("neck").SetNext<HumanoidBody>("upperBody", new Inner.Organs.Breast("1"));
