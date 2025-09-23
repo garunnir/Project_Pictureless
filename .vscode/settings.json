@@ -60,22 +60,18 @@
         "*.asset": "yaml",
         "*.meta": "yaml",
         "*.prefab": "yaml",
-        "*.unity": "yaml",
+        "*.unity": "yaml"
     },
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
-        "*.sln": "*.csproj",
+        "*.sln": "*.csproj"
     },
     "dotnet.defaultSolution": "Project_Pictureless.sln",
-      // 내 PC에 이미 설치된 dotnet 경로를 통일 사용
-  "dotnetAcquisitionExtension.sharedExistingDotnetPath": "C:\\Program Files\\dotnet\\dotnet.exe",
-
-  // 개별 확장에도 명시(안정적)
-  "dotnetAcquisitionExtension.existingDotnetPath": [
-    { "extensionId": "ms-dotnettools.csharp",   "path": "C:\\Program Files\\dotnet\\dotnet.exe" },
-    { "extensionId": "ms-dotnettools.csdevkit", "path": "C:\\Program Files\\dotnet\\dotnet.exe" }
-  ],
-    "dotnet.server.useOmnisharp": false,    // OmniSharp 끔
-  "dotnet.automaticallyBuildOnSave": false, // 저장할 때 자동 빌드 차단
-  "dotnet.defaultSolution": ""            // 자동 솔루션 로딩 막기
+    "dotnetAcquisitionExtension.sharedExistingDotnetPath": "C:\\Program Files\\dotnet\\dotnet.exe",
+    "dotnetAcquisitionExtension.existingDotnetPath": [
+        {"extensionId":"ms-dotnettools.csharp","path":"C:\\Program Files\\dotnet\\dotnet.exe"},
+        {"extensionId":"ms-dotnettools.csdevkit","path":"C:\\Program Files\\dotnet\\dotnet.exe"}
+    ],
+    "dotnet.server.useOmnisharp": false,
+    "dotnet.automaticallyBuildOnSave": false,
 }
