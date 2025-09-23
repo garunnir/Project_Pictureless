@@ -11,7 +11,6 @@ using Lean.Pool;
 using Garunnir.Runtime.ScriptableObject;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
-using UnityEngine.EventSystems;
 
 public class BattleSystem : MonoBehaviour
 {

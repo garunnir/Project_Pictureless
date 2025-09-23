@@ -74,5 +74,8 @@
   "dotnetAcquisitionExtension.existingDotnetPath": [
     { "extensionId": "ms-dotnettools.csharp",   "path": "C:\\Program Files\\dotnet\\dotnet.exe" },
     { "extensionId": "ms-dotnettools.csdevkit", "path": "C:\\Program Files\\dotnet\\dotnet.exe" }
-  ]
+  ],
+    "dotnet.server.useOmnisharp": false,    // OmniSharp 끔
+  "dotnet.automaticallyBuildOnSave": false, // 저장할 때 자동 빌드 차단
+  "dotnet.defaultSolution": ""            // 자동 솔루션 로딩 막기
 }
