@@ -9,6 +9,12 @@
       },
       "hash": "6e72b333092ec099e1712784d2289547cc6db1a1"
     },
+    "com.unity.2d.sprite": {
+      "version": "1.0.0",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {}
+    },
     "com.unity.2d.tilemap": {
       "version": "1.0.0",
       "depth": 0,

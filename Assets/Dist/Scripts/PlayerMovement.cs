@@ -13,8 +13,8 @@ public class PlayerMovement : MonoBehaviour
 	void Update()
 	{
 		float moveX = Input.GetAxisRaw("Horizontal");
-		float moveZ = Input.GetAxisRaw("Vertical");
-		Vector3 moveInput = new Vector3(moveX, 0, moveZ).normalized;
+		float moveY = Input.GetAxisRaw("Vertical");
+		Vector3 moveInput = new Vector3(moveX, moveY, 0).normalized;
 
 		float speed = moveSpeed;
 		if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
@@ -31,6 +31,6 @@ public class PlayerMovement : MonoBehaviour
 			currentVelocity *= inertia;
 		}
 
-		transform.position += currentVelocity * Time.deltaTime;
+	transform.position += transform.TransformDirection(currentVelocity) * Time.deltaTime;
 	}
 }
