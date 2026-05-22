@@ -108,6 +108,7 @@ namespace IsoTilemap
 
         private readonly Dictionary<Vector3Int, List<TileData>> _tiles;
         private readonly IReadOnlyDictionary<WallEdgeKey, TileData> _edges;
+        private readonly FloorMapIndex _floorIndex;
         public OcclusionMaskOptions MaskOptions { get; set; } = OcclusionMaskOptions.Default;
 
         /// <param name="edges"><see cref="TileEdgeBinder"/> 등 면 벽 레지스트리 인덱스(셀 리스트와 분리).</param>
@@ -115,15 +116,19 @@ namespace IsoTilemap
         {
             _tiles = tiles;
             _edges = edges ?? EmptyEdges;
+            _floorIndex = new FloorMapIndex(_tiles, _edges);
         }
 
         public List<TileData> Find(Vector3Int playerCellPos) =>
-            FindOcclusion(playerCellPos).Occluding;
+            FindOcclusion(playerCellPos, null).Occluding;
 
         /// <summary>
         /// Flood-fill 진행 중 +X/-Z 방향에서 막힌 셀 벽과 엣지 벽을 숨김 후보로 반환합니다.
         /// </summary>
-        public OcclusionSelection FindOcclusion(Vector3Int playerCellPos)
+        /// <param name="precomputedVisited">공유 <see cref="FloorRoomCache"/>의 방 집합(있으면 BFS 생략).</param>
+        public OcclusionSelection FindOcclusion(
+            Vector3Int playerCellPos,
+            HashSet<(int x, int z)> precomputedVisited)
         {
             Vector3Int start = playerCellPos;
             var belowCellSet = new HashSet<TileData>();
@@ -172,69 +177,44 @@ namespace IsoTilemap
                 }
             }
 
-            var visited = new HashSet<Vector3Int>();
-            var q = new Queue<Vector3Int>();
-            var floorChecked = new HashSet<Vector3Int>();
+            int band = playerCellPos.y;
+            HashSet<(int x, int z)> xzVisited = precomputedVisited ??
+                FloorRoomFloodFill.Run(_floorIndex, band, start.x, start.z, collectEmptyNeighbors: false).Visited;
+            var visited = FloorRoomFloodFill.ToVector3IntSet(xzVisited, band);
+            var floorChecked = visited;
             var wallCellChecked = new HashSet<Vector3Int>();
-            visited.Add(start);
-            q.Enqueue(start);
-            floorChecked.Add(start);
 
-            int safetyLimit = 200000;
-            int steps = 0;
-            while (q.Count > 0)
+            foreach (var cur in visited)
             {
-                if (++steps > safetyLimit) break;
-                var cur = q.Dequeue();
-
                 foreach (var d in CardinalNeighbors)
                 {
-                    var nx = new Vector3Int(cur.x + d.x, playerCellPos.y, cur.z + d.z);
+                    var nx = new Vector3Int(cur.x + d.x, band, cur.z + d.z);
                     bool isBottomDir = IsBottomOcclusionDirection(d);
 
                     if (WallEdgeKey.TryBetween(cur, nx, out var edgeKey) && _edges.TryGetValue(edgeKey, out TileData edgeWall))
                     {
                         AddByDirection(edgeWall, isBottomDir, belowEdgeSet, topEdgeSet);
-                        // Edge walls block this step only. The cell beyond may still be reachable from another route.
                         continue;
                     }
 
-                    if (visited.Contains(nx)) continue;
+                    if (visited.Contains(nx))
+                        continue;
 
-                    bool isFloor = false;
-                    if (_tiles.TryGetValue(nx, out var list))
+                    if (!_tiles.TryGetValue(nx, out var list))
+                        continue;
+
+                    bool hasSolidWall = false;
+                    foreach (var t in list)
                     {
-                        bool hasSolidWall = false;
-                        foreach (var t in list)
+                        if (IsSolidCellWall((TileView.TileType)t.identity.tileType))
                         {
-                            if (IsSolidCellWall((TileView.TileType)t.identity.tileType))
-                            {
-                                AddByDirection(t, isBottomDir, belowCellSet, topCellSet);
-                                hasSolidWall = true;
-                                continue;
-                            }
-                            else if ((TileView.TileType)t.identity.tileType == TileView.TileType.Floor)
-                            {
-                                isFloor = true;
-                            }
-                        }
-                        if (hasSolidWall)
-                        {
-                            wallCellChecked.Add(nx);
-                            isFloor = false;
-                        }
-                        if (isFloor)
-                        {
-                            visited.Add(nx);
-                            q.Enqueue(nx);
-                            floorChecked.Add(nx);
+                            AddByDirection(t, isBottomDir, belowCellSet, topCellSet);
+                            hasSolidWall = true;
                         }
                     }
-                    // else
-                    // {
-                    //     if (Config.DebugMode.FloorAlgorithm)
-                    //         Debug.Log("빈셀발견 확장" + nx);
-                    // }
+
+                    if (hasSolidWall)
+                        wallCellChecked.Add(nx);
                 }
             }
 

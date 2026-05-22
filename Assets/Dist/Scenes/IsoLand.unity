@@ -8012,6 +8012,7 @@ GameObject:
   - component: {fileID: 299715453}
   - component: {fileID: 299715456}
   - component: {fileID: 299715457}
+  - component: {fileID: 299715458}
   m_Layer: 0
   m_Name: MapManager
   m_TagString: Untagged
@@ -8053,6 +8054,7 @@ MonoBehaviour:
   _prefabDB: {fileID: 11400000, guid: bac39387799230e429ed65b8619ca694, type: 2}
   _gridCellSize: 1
   _chunkStreamer: {fileID: 299715457}
+  _floorVisibilityDriver: {fileID: 299715458}
   _enableTilePooling: 1
   _maxPooledInstances: 2000
   _maxPoolMemoryMb: 20000
@@ -8078,6 +8080,20 @@ MonoBehaviour:
   _unloadHysteresisSeconds: 0.35
   _gameCamera: {fileID: 210656668}
   _cinemachineCamera: {fileID: 209990004}
+--- !u!114 &299715458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 299715452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e7a9c1b3d5f708192a4b6c8d0e2f4a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::PlayerFloorVisibilityDriver
+  _playerState: {fileID: 1383865919}
+  _heightOffsetWorld: 0
 --- !u!1 &301129908
 GameObject:
   m_ObjectHideFlags: 0
@@ -39157,7 +39173,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1827188271
 Transform:
   m_ObjectHideFlags: 0

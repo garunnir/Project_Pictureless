@@ -13,6 +13,7 @@ namespace IsoTilemap
 
         public Dictionary<Vector3Int, List<TileData>> tiles = new Dictionary<Vector3Int, List<TileData>>();
 
+        private readonly Dictionary<Guid, TileData> _tilesById = new Dictionary<Guid, TileData>();
         private readonly TileEdgeBinder _edgeBinder = new TileEdgeBinder();
 
         private List<TileData> _cachedList = new List<TileData>();
@@ -22,11 +23,16 @@ namespace IsoTilemap
         private readonly Dictionary<Guid, TileData> _hiddenWallTileCache = new Dictionary<Guid, TileData>();
         private readonly List<TileData> _occlusionApplyBuffer = new List<TileData>();
         private readonly Dictionary<Guid, float> _lastAppliedOcclusion = new Dictionary<Guid, float>();
+        private readonly List<OcclusionWallEntry> _occlusionWallEntries = new List<OcclusionWallEntry>();
+        private readonly HashSet<Vector3Int> _changedCellsBuffer = new HashSet<Vector3Int>();
 
         private bool _hasLastOcclusionPlayerCell;
         private Vector3Int _lastOcclusionPlayerCell;
+        private FloorRoomCache _floorRoomCache;
 
         public ITileEdgeBinderReadOnly EdgeBinder => _edgeBinder;
+
+        public void SetFloorRoomCache(FloorRoomCache cache) => _floorRoomCache = cache;
 
         public void GatherRenderableTiles(Vector3Int cellPos, List<TileData> buffer)
         {
@@ -75,6 +81,7 @@ namespace IsoTilemap
                 SetCellTile(tileData);
 
             InvalidateOcclusionPlayerTracking();
+            InvalidateFloorRoomGeometry();
         }
 
         public void RemoveTile(TileData tileData)
@@ -118,8 +125,10 @@ namespace IsoTilemap
             if (!removed)
                 return;
 
+            _tilesById.Remove(tileData.tileDefId);
             _isDirty = true;
             InvalidateOcclusionPlayerTracking();
+            InvalidateFloorRoomGeometry();
             OnRuntimeTileRemoved?.Invoke(tileData);
 
             foreach (var cell in changedCells)
@@ -132,9 +141,13 @@ namespace IsoTilemap
         {
             var key = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
             if (_edgeBinder.TryGetTile(key, out var previous))
+            {
                 OnRuntimeTileRemoved?.Invoke(previous);
+                _tilesById.Remove(previous.tileDefId);
+            }
 
             _edgeBinder.Register(tileData);
+            IndexTile(tileData);
             _isDirty = true;
             OnRuntimeTileAdded?.Invoke(tileData);
 
@@ -148,6 +161,7 @@ namespace IsoTilemap
             if (!tiles.TryGetValue(pos, out var list))
             {
                 tiles[pos] = new List<TileData> { tileData };
+                IndexTile(tileData);
                 _isDirty = true;
                 OnRuntimeTileAdded?.Invoke(tileData);
                 NotifyCell(pos);
@@ -160,12 +174,14 @@ namespace IsoTilemap
                     continue;
 
                 list[i] = tileData;
+                IndexTile(tileData);
                 _isDirty = true;
                 NotifyCell(pos);
                 return;
             }
 
             list.Add(tileData);
+            IndexTile(tileData);
             _isDirty = true;
             OnRuntimeTileAdded?.Invoke(tileData);
             NotifyCell(pos);
@@ -175,17 +191,22 @@ namespace IsoTilemap
         {
             tiles.Clear();
             _edgeBinder.Clear();
+            _tilesById.Clear();
 
             foreach (var kv in prepared.TilesData)
             {
                 if ((TileView.TileType)kv.identity.tileType == TileView.TileType.EdgeWall)
+                {
                     _edgeBinder.Register(kv);
+                    IndexTile(kv);
+                }
                 else
                 {
                     if (!tiles.ContainsKey(kv.identity.GridPos))
                         tiles[kv.identity.GridPos] = new List<TileData>();
 
                     tiles[kv.identity.GridPos].Add(kv);
+                    IndexTile(kv);
                 }
             }
 
@@ -193,8 +214,10 @@ namespace IsoTilemap
             _occlusionFinder = new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex);
             _hiddenWallTileIds.Clear();
             _hiddenWallTileCache.Clear();
+            _occlusionWallEntries.Clear();
             _lastAppliedOcclusion.Clear();
             _hasLastOcclusionPlayerCell = false;
+            InvalidateFloorRoomGeometry();
         }
 
         public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos)
@@ -259,16 +282,25 @@ namespace IsoTilemap
                 s.ApplyEpsilon = 0f;
         }
 
-        private void InvalidateOcclusionPlayerTracking()
-        {
+        private void InvalidateOcclusionPlayerTracking() =>
             _hasLastOcclusionPlayerCell = false;
-        }
+
+        private void InvalidateFloorRoomGeometry() =>
+            _floorRoomCache?.InvalidateAll();
 
         private void RebuildOcclusionMembership(Vector3Int playerCellPos, Vector3 playerWorld,
             OcclusionProximitySettings settings)
         {
+            HashSet<(int x, int z)> roomVisited = null;
+            if (_floorRoomCache != null)
+            {
+                roomVisited = _floorRoomCache.GetOrComputeVisited(
+                    playerCellPos.y, playerCellPos.x, playerCellPos.z,
+                    FloorRoomBfsProfile.Occlusion);
+            }
+
             _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex);
-            OcclusionSelection batch = _occlusionFinder.FindOcclusion(playerCellPos);
+            OcclusionSelection batch = _occlusionFinder.FindOcclusion(playerCellPos, roomVisited);
             var currentHiddenIds = new HashSet<Guid>();
             _occlusionApplyBuffer.Clear();
 
@@ -296,7 +328,7 @@ namespace IsoTilemap
                     continue;
 
                 if (!_hiddenWallTileCache.TryGetValue(hiddenId, out var hiddenTile) &&
-                    !TryFindTileById(hiddenId, out hiddenTile))
+                    !_tilesById.TryGetValue(hiddenId, out hiddenTile))
                 {
                     continue;
                 }
@@ -317,27 +349,52 @@ namespace IsoTilemap
             foreach (Guid id in currentHiddenIds)
                 _hiddenWallTileIds.Add(id);
 
+            RebuildOcclusionWallEntries(cs);
+
             if (_occlusionApplyBuffer.Count > 0)
                 ApplyTiles(_occlusionApplyBuffer);
         }
 
+        private void RebuildOcclusionWallEntries(float cellSize)
+        {
+            _occlusionWallEntries.Clear();
+            cellSize = Mathf.Max(1e-4f, cellSize);
+
+            foreach (Guid id in _hiddenWallTileIds)
+            {
+                if (!_hiddenWallTileCache.TryGetValue(id, out TileData wall) &&
+                    !_tilesById.TryGetValue(id, out wall))
+                    continue;
+
+                Vector3 wallPoint = OcclusionWallWorldPoint(wall.identity, cellSize);
+                _occlusionWallEntries.Add(new OcclusionWallEntry(id, wallPoint.x, wallPoint.z));
+            }
+        }
+
         private void RefreshOcclusionProximity(Vector3 playerWorld, OcclusionProximitySettings settings)
         {
-            if (_hiddenWallTileIds.Count == 0)
+            if (_occlusionWallEntries.Count == 0)
                 return;
 
             float cs = Mathf.Max(1e-4f, settings.CellSize);
             float eps = settings.ApplyEpsilon;
             _occlusionApplyBuffer.Clear();
 
-            foreach (Guid id in _hiddenWallTileIds)
+            for (int i = 0; i < _occlusionWallEntries.Count; i++)
             {
-                if (!_hiddenWallTileCache.TryGetValue(id, out var wall) &&
-                    !TryFindTileById(id, out wall))
-                    continue;
+                OcclusionWallEntry entry = _occlusionWallEntries[i];
+                Guid id = entry.TileId;
 
-                TileIdentity wi = wall.identity;
-                float occ = ComputeOcclusionStrength(playerWorld, wi, cs, settings);
+                if (!_hiddenWallTileCache.TryGetValue(id, out TileData wall))
+                {
+                    if (!_tilesById.TryGetValue(id, out wall))
+                        continue;
+
+                    _hiddenWallTileCache[id] = wall;
+                }
+
+                float d = Mathf.Sqrt(OcclusionDistSqXZ(playerWorld, entry.WallWorldX, entry.WallWorldZ));
+                float occ = OcclusionCurve(d, settings);
 
                 if (_lastAppliedOcclusion.TryGetValue(id, out float prev) &&
                     Mathf.Abs(occ - prev) <= eps)
@@ -373,6 +430,13 @@ namespace IsoTilemap
             return dx * dx + dz * dz;
         }
 
+        private static float OcclusionDistSqXZ(Vector3 a, float wallX, float wallZ)
+        {
+            float dx = a.x - wallX;
+            float dz = a.z - wallZ;
+            return dx * dx + dz * dz;
+        }
+
         private static Vector3 OcclusionWallWorldPoint(TileIdentity identity, float cellSize)
         {
             var type = (TileView.TileType)identity.tileType;
@@ -399,36 +463,17 @@ namespace IsoTilemap
                 clamped);
         }
 
-        private bool TryFindTileById(Guid tileId, out TileData tileData)
-        {
-            foreach (var cellTiles in tiles.Values)
-            {
-                for (int i = 0; i < cellTiles.Count; i++)
-                {
-                    if (cellTiles[i].tileDefId == tileId)
-                    {
-                        tileData = cellTiles[i];
-                        return true;
-                    }
-                }
-            }
+        private bool TryFindTileById(Guid tileId, out TileData tileData) =>
+            _tilesById.TryGetValue(tileId, out tileData);
 
-            foreach (var edgeTile in _edgeBinder.EnumerateTiles())
-            {
-                if (edgeTile.tileDefId == tileId)
-                {
-                    tileData = edgeTile;
-                    return true;
-                }
-            }
+        private static void IndexTile(in TileData tile, Dictionary<Guid, TileData> index) =>
+            index[tile.tileDefId] = tile;
 
-            tileData = default;
-            return false;
-        }
+        private void IndexTile(in TileData tile) => IndexTile(tile, _tilesById);
 
         public void ApplyTiles(IReadOnlyList<TileData> tileList)
         {
-            HashSet<Vector3Int> changedCells = new HashSet<Vector3Int>();
+            _changedCellsBuffer.Clear();
 
             foreach (var tile in tileList)
             {
@@ -437,9 +482,10 @@ namespace IsoTilemap
                     if (!_edgeBinder.TryReplaceTileData(tile))
                         continue;
 
+                    IndexTile(tile);
                     var key = WallEdgeKey.FromEdgeTileIdentity(tile.identity);
-                    changedCells.Add(key.Anchor);
-                    changedCells.Add(key.NeighborCell());
+                    _changedCellsBuffer.Add(key.Anchor);
+                    _changedCellsBuffer.Add(key.NeighborCell());
                     continue;
                 }
 
@@ -454,16 +500,31 @@ namespace IsoTilemap
                         continue;
 
                     existingList[i] = tile;
+                    IndexTile(tile);
                     break;
                 }
 
-                changedCells.Add(pos);
+                _changedCellsBuffer.Add(pos);
             }
 
             _isDirty = true;
 
-            if (changedCells.Count > 0)
-                OnRuntimeBatchChanged?.Invoke(changedCells);
+            if (_changedCellsBuffer.Count > 0)
+                OnRuntimeBatchChanged?.Invoke(_changedCellsBuffer);
+        }
+
+        private readonly struct OcclusionWallEntry
+        {
+            public readonly Guid TileId;
+            public readonly float WallWorldX;
+            public readonly float WallWorldZ;
+
+            public OcclusionWallEntry(Guid tileId, float wallWorldX, float wallWorldZ)
+            {
+                TileId = tileId;
+                WallWorldX = wallWorldX;
+                WallWorldZ = wallWorldZ;
+            }
         }
     }
 }

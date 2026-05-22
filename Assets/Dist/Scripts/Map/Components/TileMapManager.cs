@@ -26,6 +26,9 @@ public class TileMapManager : MonoBehaviour
     [Tooltip("연결 시 청크 스트리밍 경로를 사용합니다. 청크·카메라 설정은 TileMapChunkStreamer에 있습니다.")]
     [SerializeField] private TileMapChunkStreamer _chunkStreamer;
 
+    [Header("Floor Visibility (chunk streaming)")]
+    [SerializeField] private PlayerFloorVisibilityDriver _floorVisibilityDriver;
+
     [Header("Tile Pooling (chunk streaming only)")]
     [SerializeField] private bool _enableTilePooling = true;
     [SerializeField, Min(0)] private int _maxPooledInstances = 2000;
@@ -38,6 +41,10 @@ public class TileMapManager : MonoBehaviour
     [SerializeField, Min(0)] private int _streamingPeakOverride;
 
     private readonly IsoWorldGrid _worldGrid = new();
+
+    private TileMapStreamingVisualizer _streamingVisualizer;
+    private PlayerFloorVisibilityPolicy _floorPolicy;
+    private FloorRoomCache _floorRoomCache;
 
     public IMapModel Model { get; private set; }
     public TilePrefabDB PrefabDB => _prefabDB;
@@ -60,8 +67,20 @@ public class TileMapManager : MonoBehaviour
         IMapViewBuilder viewBuilder = CreateViewBuilder(factory, UseChunkStreaming);
 
         _controller.Init(Model, viewBuilder);
+
+        if (UseChunkStreaming && _floorVisibilityDriver != null && _floorPolicy != null && _streamingVisualizer != null)
+        {
+            _floorVisibilityDriver.Init(_floorPolicy, _streamingVisualizer);
+            _floorVisibilityDriver.ApplyNow();
+        }
+
         _chunkStreamer?.SyncNow();
         _saver.Init(Model, _worldGrid);
+    }
+
+    private void OnDestroy()
+    {
+        _floorVisibilityDriver?.Shutdown();
     }
 
     private void BindWorldGridToCharacters()
@@ -106,12 +125,36 @@ public class TileMapManager : MonoBehaviour
     private IMapViewBuilder CreateViewBuilder(TileObjFactory factory, bool chunkStreaming)
     {
         if (!chunkStreaming)
+        {
+            _streamingVisualizer = null;
+            _floorPolicy = null;
+            _floorRoomCache = null;
             return new TileMapVisualizer(factory, _worldGrid);
+        }
 
-        var streamingVisualizer = new TileMapStreamingVisualizer(
+        if (Model is TileMapModel tileModel)
+        {
+            var floorIndex = FloorMapIndex.FromModel(tileModel);
+            _floorRoomCache = new FloorRoomCache(floorIndex);
+            tileModel.SetFloorRoomCache(_floorRoomCache);
+
+            _floorPolicy = PlayerFloorVisibilityPolicy.Build(
+                Model.TilesSnapshot,
+                _floorRoomCache,
+                _gridCellSize,
+                bandEpsilonWorld: 0f);
+        }
+        else
+        {
+            Debug.LogWarning("[TileMapManager] TileMapModel이 아니어서 층 컬링을 비활성화합니다.");
+            _floorPolicy = null;
+        }
+
+        _streamingVisualizer = new TileMapStreamingVisualizer(
             factory, _worldGrid, _chunkStreamer.ChunkSize);
-        _chunkStreamer.Attach(streamingVisualizer, _worldGrid);
-        return streamingVisualizer;
+        _streamingVisualizer.SetFloorVisibilityPolicy(_floorPolicy);
+        _chunkStreamer.Attach(_streamingVisualizer, _worldGrid);
+        return _streamingVisualizer;
     }
 
     public void Load() => _loader.Load();

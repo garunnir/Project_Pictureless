@@ -19,13 +19,15 @@ namespace IsoTilemap
         private readonly Dictionary<Guid, HashSet<Vector2Int>> _tileChunkRefs = new();
 
         private readonly List<TileData> _gatherBuffer = new();
-        private readonly HashSet<Guid> _unloadGuidSet = new();
         private readonly List<Vector2Int> _chunkIteration = new();
         private readonly HashSet<Guid> _orphanCheckIds = new();
         private readonly List<Guid> _pruneGuids = new();
 
         private TileMapChunkIndex _chunkIndex;
         private IMapModelReadOnly _boundRuntime;
+        private PlayerFloorVisibilityPolicy _floorPolicy;
+        private FloorVisibilityContext _floorContext;
+        private bool _hasFloorContext;
 
         public TileMapStreamingVisualizer(
             TileObjFactory tileFactory,
@@ -45,6 +47,26 @@ namespace IsoTilemap
         public TileMapChunkIndex ChunkIndex => _chunkIndex;
 
         public IReadOnlyCollection<Vector2Int> LoadedChunks => _loadedChunks;
+
+        public void SetFloorVisibilityPolicy(PlayerFloorVisibilityPolicy policy) => _floorPolicy = policy;
+
+        public void SyncFloorVisibility(in FloorVisibilityContext ctx)
+        {
+            _floorContext = ctx;
+            _hasFloorContext = _floorPolicy != null;
+
+            if (_chunkIndex == null || _loadedChunks.Count == 0)
+                return;
+
+            _chunkIteration.Clear();
+            _chunkIteration.AddRange(_loadedChunks);
+            for (int c = 0; c < _chunkIteration.Count; c++)
+            {
+                IReadOnlyList<Vector3Int> cells = _chunkIndex.GetCellsInChunk(_chunkIteration[c]);
+                for (int i = 0; i < cells.Count; i++)
+                    RefreshCellAtLoadedChunk(cells[i]);
+            }
+        }
 
         public void Build(IMapModelReadOnly model)
         {
@@ -107,13 +129,28 @@ namespace IsoTilemap
 
             if (_boundRuntime != null)
             {
-                _boundRuntime.GatherRenderableTiles(cellPos, _gatherBuffer);
-                PruneOrphanViewsAtCell(cellPos, _gatherBuffer);
-                RenderTiles(_gatherBuffer);
+                RefreshCellAtLoadedChunk(cellPos);
                 return;
             }
 
             RenderTiles(tiles);
+        }
+
+        private void RefreshCellAtLoadedChunk(Vector3Int cellPos)
+        {
+            if (_boundRuntime == null || !IsCellInLoadedChunk(cellPos))
+                return;
+
+            GatherAndFilter(cellPos, _gatherBuffer);
+            PruneOrphanViewsAtCell(cellPos, _gatherBuffer);
+            RenderTiles(_gatherBuffer);
+        }
+
+        private void GatherAndFilter(Vector3Int cellPos, List<TileData> buffer)
+        {
+            _boundRuntime.GatherRenderableTiles(cellPos, buffer);
+            if (_hasFloorContext && _floorPolicy != null)
+                _floorPolicy.FilterTiles(buffer, _floorContext);
         }
 
         public void Dispose()
@@ -153,10 +190,16 @@ namespace IsoTilemap
 
             foreach (var cellPos in changedCells)
             {
-                _boundRuntime.GatherRenderableTiles(cellPos, _gatherBuffer);
+                if (!IsCellInLoadedChunk(cellPos))
+                    continue;
+
+                GatherAndFilter(cellPos, _gatherBuffer);
                 if (_gatherBuffer.Count > 0)
-                    RefreshCell(cellPos, _gatherBuffer);
-                else if (IsCellInLoadedChunk(cellPos))
+                {
+                    PruneOrphanViewsAtCell(cellPos, _gatherBuffer);
+                    RenderTiles(_gatherBuffer);
+                }
+                else
                     PruneOrphanViewsAtCell(cellPos, _gatherBuffer);
             }
         }
@@ -172,7 +215,7 @@ namespace IsoTilemap
                 if (_boundRuntime == null)
                     continue;
 
-                _boundRuntime.GatherRenderableTiles(cells[i], _gatherBuffer);
+                GatherAndFilter(cells[i], _gatherBuffer);
                 for (int t = 0; t < _gatherBuffer.Count; t++)
                     AcquireTileInChunk(_gatherBuffer[t], chunk);
             }
@@ -183,21 +226,15 @@ namespace IsoTilemap
             if (!_loadedChunks.Remove(chunk))
                 return;
 
-            IReadOnlyList<Vector3Int> cells = _chunkIndex.GetCellsInChunk(chunk);
-            _unloadGuidSet.Clear();
-
-            for (int i = 0; i < cells.Count; i++)
+            _pruneGuids.Clear();
+            foreach (var kv in _tileChunkRefs)
             {
-                if (_boundRuntime == null)
-                    continue;
-
-                _boundRuntime.GatherRenderableTiles(cells[i], _gatherBuffer);
-                for (int t = 0; t < _gatherBuffer.Count; t++)
-                    _unloadGuidSet.Add(_gatherBuffer[t].tileDefId);
+                if (kv.Value.Contains(chunk))
+                    _pruneGuids.Add(kv.Key);
             }
 
-            foreach (Guid tileId in _unloadGuidSet)
-                ReleaseTileFromChunk(tileId, chunk);
+            for (int i = 0; i < _pruneGuids.Count; i++)
+                ReleaseTileFromChunk(_pruneGuids[i], chunk);
         }
 
         private void AcquireTileInChunk(TileData tileData, Vector2Int chunk)
@@ -267,22 +304,29 @@ namespace IsoTilemap
             _pruneGuids.Clear();
             foreach (var kv in _tileViews)
             {
-                Guid id = kv.Key;
-                if (_orphanCheckIds.Contains(id))
+                if (_orphanCheckIds.Contains(kv.Key))
                     continue;
 
-                if (_boundRuntime == null || !_boundRuntime.TryGetTileById(id, out TileData tileData))
-                {
-                    _pruneGuids.Add(id);
-                    continue;
-                }
-
-                if (GetRepresentativeCell(tileData) == cell)
-                    _pruneGuids.Add(id);
+                if (ViewTouchesCell(kv.Value, cell))
+                    _pruneGuids.Add(kv.Key);
             }
 
             for (int i = 0; i < _pruneGuids.Count; i++)
                 DespawnViewCompletely(_pruneGuids[i]);
+        }
+
+        private static bool ViewTouchesCell(TileView view, Vector3Int cell)
+        {
+            if (view == null)
+                return false;
+
+            if (view.tileType == TileView.TileType.EdgeWall)
+            {
+                var key = new WallEdgeKey(view.gridPos, (WallFace)view.wallEdgeFace);
+                return key.Anchor == cell || key.NeighborCell() == cell;
+            }
+
+            return view.gridPos == cell;
         }
 
         private void DespawnViewCompletely(Guid tileId)
