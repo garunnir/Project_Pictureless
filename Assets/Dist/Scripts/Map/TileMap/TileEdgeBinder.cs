@@ -52,6 +52,13 @@ namespace IsoTilemap
 
         public bool TryReplaceTileData(in TileData tile)
         {
+            var key = WallEdgeKey.FromEdgeTileIdentity(tile.identity);
+            if (_edges.TryGetValue(key, out var existing) && existing.tileDefId == tile.tileDefId)
+            {
+                _edges[key] = tile;
+                return true;
+            }
+
             WallEdgeKey? found = null;
             foreach (var kv in _edges)
             {

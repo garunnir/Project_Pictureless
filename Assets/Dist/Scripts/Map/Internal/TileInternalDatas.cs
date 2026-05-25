@@ -29,6 +29,12 @@ using UnityEngine;namespace IsoTilemap
         public Vector3Int sizeUnit{init; get;}
         public byte tileType{init; get;}
         public byte edgeFace{init; get;}
+
+        /// <summary>0=미할당. 야외 여부는 Hub <c>IsOutdoorEvaluation</c>으로만 판정(buildingId==0 추론 금지).</summary>
+        public int buildingId { init; get; }
+
+        /// <summary>0=room 미할당; 같은 buildingId·band 내 방 번호.</summary>
+        public int roomId { init; get; }
     }
 
     /// <summary>플레이어 월드와 벽 간 거리에 따른 <see cref="TileState.characterOcclusion"/> 매핑.</summary>

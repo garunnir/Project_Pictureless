@@ -108,15 +108,19 @@ namespace IsoTilemap
 
         private readonly Dictionary<Vector3Int, List<TileData>> _tiles;
         private readonly IReadOnlyDictionary<WallEdgeKey, TileData> _edges;
-        private readonly FloorMapIndex _floorIndex;
+        private readonly TopologyLayer _topology;
         public OcclusionMaskOptions MaskOptions { get; set; } = OcclusionMaskOptions.Default;
 
         /// <param name="edges"><see cref="TileEdgeBinder"/> 등 면 벽 레지스트리 인덱스(셀 리스트와 분리).</param>
-        public WallOcclusionFinder(Dictionary<Vector3Int, List<TileData>> tiles, IReadOnlyDictionary<WallEdgeKey, TileData> edges)
+        /// <param name="topology">공유 <see cref="TileMapCacheHub.Topology"/> (null이면 내부 인덱스 생성).</param>
+        public WallOcclusionFinder(
+            Dictionary<Vector3Int, List<TileData>> tiles,
+            IReadOnlyDictionary<WallEdgeKey, TileData> edges,
+            TopologyLayer topology = null)
         {
             _tiles = tiles;
             _edges = edges ?? EmptyEdges;
-            _floorIndex = new FloorMapIndex(_tiles, _edges);
+            _topology = topology ?? new TopologyLayer(new FloorMapIndex(_tiles, _edges));
         }
 
         public List<TileData> Find(Vector3Int playerCellPos) =>
@@ -125,7 +129,7 @@ namespace IsoTilemap
         /// <summary>
         /// Flood-fill 진행 중 +X/-Z 방향에서 막힌 셀 벽과 엣지 벽을 숨김 후보로 반환합니다.
         /// </summary>
-        /// <param name="precomputedVisited">공유 <see cref="FloorRoomCache"/>의 방 집합(있으면 BFS 생략).</param>
+        /// <param name="precomputedVisited">공유 <see cref="TileMapCacheHub"/>의 방 집합(있으면 BFS 생략).</param>
         public OcclusionSelection FindOcclusion(
             Vector3Int playerCellPos,
             HashSet<(int x, int z)> precomputedVisited)
@@ -178,8 +182,9 @@ namespace IsoTilemap
             }
 
             int band = playerCellPos.y;
+            start = _topology.ResolveFloorBfsStart(band, start.x, start.z);
             HashSet<(int x, int z)> xzVisited = precomputedVisited ??
-                FloorRoomFloodFill.Run(_floorIndex, band, start.x, start.z, collectEmptyNeighbors: false).Visited;
+                FloorRoomFloodFill.Run(_topology.Index, band, start.x, start.z, collectEmptyNeighbors: false).Visited;
             var visited = FloorRoomFloodFill.ToVector3IntSet(xzVisited, band);
             var floorChecked = visited;
             var wallCellChecked = new HashSet<Vector3Int>();
@@ -245,7 +250,7 @@ namespace IsoTilemap
                 var startSnapshot = start;
                 var belowEdgesSnapshot = belowEdges;
                 var cornerExtrasSnapshot = cornerExtras;
-                Action action = () => 
+                Action action = () =>
                 {
                     var finalOcclusionCells = finalOccluding
                         .Select(t => t.identity.GridPos)
@@ -253,13 +258,17 @@ namespace IsoTilemap
                     var extraByPlayerCells = extraOccludingByPlayer
                         .Select(t => t.identity.GridPos)
                         .ToHashSet();
-                    DebugGizmos(floorChecked, 0, Color.green);
-                    DebugGizmos(wallCheckedSnapshot, 0.05f, Color.red);
-                    DebugGizmos(new HashSet<Vector3Int> { startSnapshot }, 0.01f, Color.cyan);
-                    DebugGizmos(finalOcclusionCells, 0.02f, Color.yellow);
-                    DebugEdgeGizmos(belowEdgesSnapshot, 0.02f, Color.yellow);
-                    DebugGizmos(cornerExtrasSnapshot.Select(t => t.identity.GridPos).ToHashSet(), 0.02f, Color.blue);
-                    DebugGizmos(extraByPlayerCells, 0.03f, Color.magenta);
+
+                    TileMapBfsDebugOverlay.Clear();
+                    TileMapBfsDebugOverlay.AddCellLayer("초록 — BFS 방문 바닥", Color.green, floorChecked);
+                    TileMapBfsDebugOverlay.AddCellLayer("빨강 — 인접 벽 검사 셀", Color.red, wallCheckedSnapshot, 0.05f);
+                    TileMapBfsDebugOverlay.AddCellLayer("청록 — BFS 시작 셀", Color.cyan, new HashSet<Vector3Int> { startSnapshot }, 0.01f);
+                    TileMapBfsDebugOverlay.AddCellLayer("노랑 — 최종 오클루전 셀", Color.yellow, finalOcclusionCells, 0.02f);
+                    TileMapBfsDebugOverlay.AddEdgeLayer("노랑 — 아래방향 EdgeWall", Color.yellow, belowEdgesSnapshot, 0.02f);
+                    TileMapBfsDebugOverlay.AddCellLayer("파랑 — 코너 추가 벽", Color.blue,
+                        cornerExtrasSnapshot.Select(t => t.identity.GridPos).ToHashSet(), 0.02f);
+                    TileMapBfsDebugOverlay.AddCellLayer("자홍 — 플레이어 마스크 추가", Color.magenta, extraByPlayerCells, 0.03f);
+                    TileMapBfsDebugOverlay.EnsureSubscribed();
                 };
                 StateRunner.Instance.ChangeState(new DebugTileRunner(action));
             }
@@ -561,56 +570,5 @@ namespace IsoTilemap
         private static bool IsSolidCellWall(TileView.TileType type) =>
             type == TileView.TileType.Wall || type == TileView.TileType.Obstacle;
 
-#if UNITY_EDITOR
-        private void DebugGizmos(HashSet<Vector3Int> occupiedCells, float offset = 0f, Color color = default)
-        {
-            var occupiedCellList = occupiedCells.ToList();
-            foreach (var cell in occupiedCellList)
-            {
-                foreach (var direction in CardinalNeighbors)
-                {
-                    var adjacentCell = new Vector3Int(cell.x + direction.x, cell.y, cell.z + direction.z);
-                    if (!occupiedCells.Contains(adjacentCell))
-                    {
-                        Vector3 cellToAdjacentDir = adjacentCell - cell;
-                        Vector3 perpendicularDir = new Vector3(-cellToAdjacentDir.z, 0, cellToAdjacentDir.x).normalized;
-                        Vector3 edgeCenter = new Vector3(
-                            (cell.x + adjacentCell.x) * 0.5f,
-                            cell.y,
-                            (cell.z + adjacentCell.z) * 0.5f);
-
-                        Vector3 edgeLineStart = TileHelper.ConvertGridToWorldPos(
-                            edgeCenter - perpendicularDir * 0.5f + cellToAdjacentDir * offset, 1f);
-                        Vector3 edgeLineEnd = TileHelper.ConvertGridToWorldPos(
-                            edgeCenter + perpendicularDir * 0.5f + cellToAdjacentDir * offset, 1f);
-
-                        Debug.DrawLine(edgeLineStart, edgeLineEnd, color);
-                    }
-                }
-            }
-        }
-
-        private void DebugEdgeGizmos(List<TileData> edgeTiles, float offset = 0f, Color color = default)
-        {
-            for (int i = 0; i < edgeTiles.Count; i++)
-            {
-                var key = WallEdgeKey.FromEdgeTileIdentity(edgeTiles[i].identity);
-                Vector3Int neighbor = key.CellB;
-                Vector3 cellToNeighbor = neighbor - key.CellA;
-                Vector3 perpendicularDir = new Vector3(-cellToNeighbor.z, 0, cellToNeighbor.x).normalized;
-                Vector3 edgeCenter = new Vector3(
-                    (key.CellA.x + neighbor.x) * 0.5f,
-                    key.CellA.y,
-                    (key.CellA.z + neighbor.z) * 0.5f);
-
-                Vector3 edgeLineStart = TileHelper.ConvertGridToWorldPos(
-                    edgeCenter - perpendicularDir * 0.5f + cellToNeighbor * offset, 1f);
-                Vector3 edgeLineEnd = TileHelper.ConvertGridToWorldPos(
-                    edgeCenter + perpendicularDir * 0.5f + cellToNeighbor * offset, 1f);
-
-                Debug.DrawLine(edgeLineStart, edgeLineEnd, color);
-            }
-        }
-#endif
     }
 }

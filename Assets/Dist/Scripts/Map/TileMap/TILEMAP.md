@@ -88,7 +88,30 @@ graph TD
 ### Model
 - **TileMapModel.cs** — `Dictionary<Vector3Int, List<TileData>>`, 이벤트, BFS 오클루전
 - **TileMapModelBuilder.cs** — `MapModelDTO → new TileMapModel().Initialize()`
-- **CachedTileMapRuntime.cs** — Decorator, `GetOccludingWalls()` 결과 캐시
+- **CachedTileMapRuntime.cs** — Decorator, 청크 인덱스 래퍼 (topology cache와 별도)
+
+### Cache (`TileMap/Cache/`)
+- **TileMapCacheHub.cs** — topology·building·band·room geometry 통합 조회·무효화 진입점
+- **FloorMapIndex.cs** — 셀·엣지·점유 (x,z,band) 인덱스
+- **BuildingGroupRegistry.cs** — buildingId·outdoor·room edge 역인덱스
+- **RoomKey.cs** — (buildingId, band, roomId) 캐시 키
+- **FloorRoomFloodFill.cs** — 방 BFS 계산 (결과는 Hub가 캐시)
+
+소비자(`BuildingGroupBuilder`, `PlayerFloorVisibilityPolicy`, `WallOcclusionFinder`)는 `TileMap/` 루트에 두고 Hub만 참조.
+
+### 맵 의미 bake / 런타임 읽기
+
+| 경로 | 위치 | 규칙 |
+|------|------|------|
+| **쓰기** | `BuildingGroupBuilder` (`AssignAll`, slice rebuild) | outdoor·buildingId·room·BFS geometry bake |
+| **저장** | `TileMapModel` floor ids, `BuildingGroupRegistry`, `Hub.Rooms`/`Bands` | 역할별 분리(효율) |
+| **읽기** | `TileMapCacheHub` / `BuildingLayer` | `IsOutdoorEvaluation`, `TryGetFloorBuildingRoom` — **buildingId==0 야외 추론 금지** |
+
+### 층 가시성 (`TileMap/TileVisibility/`, `PlayerFloorVisibilityPolicy`)
+
+- `IsPlayerOutdoor` ← `Hub.IsOutdoorEvaluation` (광장 XZ \| `OpenOutdoorRooms`)
+- **실내**: 동일 building `tileBand > FloorBand` Hide, scope, 아래층 peek
+- **야외**: `BuildingPlayerOcclusionResolver` — 카메라 지면↔플레이어 선분 그리드 샘플, 차단 타일의 building 통째 Hide
 
 ### Serialization
 - **TilemapSerializer.cs** — `JsonUtility` 기반 파일 읽기/쓰기

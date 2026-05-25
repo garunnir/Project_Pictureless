@@ -44,7 +44,8 @@ public class TileMapManager : MonoBehaviour
 
     private TileMapStreamingVisualizer _streamingVisualizer;
     private PlayerFloorVisibilityPolicy _floorPolicy;
-    private FloorRoomCache _floorRoomCache;
+    private TileMapCacheHub _mapCacheHub;
+    private BuildingGroupBuilder _buildingGroupBuilder;
 
     public IMapModel Model { get; private set; }
     public TilePrefabDB PrefabDB => _prefabDB;
@@ -81,6 +82,14 @@ public class TileMapManager : MonoBehaviour
     private void OnDestroy()
     {
         _floorVisibilityDriver?.Shutdown();
+    }
+
+    private Camera ResolveFloorVisibilityCamera()
+    {
+        if (_chunkStreamer != null)
+            return _chunkStreamer.ResolveStreamingCamera();
+
+        return Camera.main;
     }
 
     private void BindWorldGridToCharacters()
@@ -128,26 +137,32 @@ public class TileMapManager : MonoBehaviour
         {
             _streamingVisualizer = null;
             _floorPolicy = null;
-            _floorRoomCache = null;
+            _mapCacheHub = null;
             return new TileMapVisualizer(factory, _worldGrid);
         }
 
         if (Model is TileMapModel tileModel)
         {
-            var floorIndex = FloorMapIndex.FromModel(tileModel);
-            _floorRoomCache = new FloorRoomCache(floorIndex);
-            tileModel.SetFloorRoomCache(_floorRoomCache);
+            var registry = new BuildingGroupRegistry();
+            _mapCacheHub = TileMapCacheHub.Create(tileModel, registry);
+            _buildingGroupBuilder = new BuildingGroupBuilder(tileModel, _mapCacheHub);
+            tileModel.SetMapCacheHub(_mapCacheHub);
+            tileModel.SetBuildingGroupBuilder(_buildingGroupBuilder);
+            _buildingGroupBuilder.AssignAll();
 
             _floorPolicy = PlayerFloorVisibilityPolicy.Build(
                 Model.TilesSnapshot,
-                _floorRoomCache,
+                _mapCacheHub,
                 _gridCellSize,
+                ResolveFloorVisibilityCamera,
                 bandEpsilonWorld: 0f);
         }
         else
         {
             Debug.LogWarning("[TileMapManager] TileMapModel이 아니어서 층 컬링을 비활성화합니다.");
             _floorPolicy = null;
+            _mapCacheHub = null;
+            _buildingGroupBuilder = null;
         }
 
         _streamingVisualizer = new TileMapStreamingVisualizer(

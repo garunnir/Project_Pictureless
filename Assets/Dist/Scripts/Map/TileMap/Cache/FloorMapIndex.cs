@@ -43,6 +43,49 @@ namespace IsoTilemap
 
         public bool HasAnyTile(int x, int z, int band) => _anyTileAt.Contains((x, z, band));
 
+        public IEnumerable<(int x, int z, int band)> EnumerateOccupiedCells() => _anyTileAt;
+
+        /// <summary>런타임 topology 변경 후 (x,z,band) 점유 집합을 <see cref="_tiles"/>와 맞춥니다.</summary>
+        public void SyncOccupancyForCell(int x, int z, int band)
+        {
+            var key = (x, z, band);
+            if (CellHasTilesAt(x, z, band))
+                _anyTileAt.Add(key);
+            else
+                _anyTileAt.Remove(key);
+        }
+
+        public void SyncOccupancyFromChangedCells(IEnumerable<Vector3Int> changedCells)
+        {
+            if (changedCells == null)
+                return;
+
+            foreach (var cell in changedCells)
+                SyncOccupancyForCell(cell.x, cell.z, cell.y);
+        }
+
+        public void RebuildOccupancy()
+        {
+            _anyTileAt.Clear();
+
+            foreach (var kv in _tiles)
+            {
+                var pos = kv.Key;
+                if (kv.Value != null && kv.Value.Count > 0)
+                    _anyTileAt.Add((pos.x, pos.z, pos.y));
+            }
+
+            foreach (var kv in _edges)
+            {
+                var edgeKey = kv.Key;
+                _anyTileAt.Add((edgeKey.CellA.x, edgeKey.CellA.z, edgeKey.CellA.y));
+                _anyTileAt.Add((edgeKey.CellB.x, edgeKey.CellB.z, edgeKey.CellB.y));
+            }
+        }
+
+        bool CellHasTilesAt(int x, int z, int band) =>
+            _tiles.TryGetValue(new Vector3Int(x, band, z), out var list) && list != null && list.Count > 0;
+
         public bool TryGetCellTiles(int x, int z, int band, out List<TileData> list) =>
             _tiles.TryGetValue(new Vector3Int(x, band, z), out list);
 

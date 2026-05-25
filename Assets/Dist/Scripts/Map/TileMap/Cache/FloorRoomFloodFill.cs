@@ -32,7 +32,9 @@ namespace IsoTilemap
             int band,
             int startX,
             int startZ,
-            bool collectEmptyNeighbors)
+            bool collectEmptyNeighbors,
+            int restrictBuildingId = -1,
+            HashSet<(int x, int z)> excludeCells = null)
         {
             Vector3Int start = index.ResolveFloorBfsStart(band, startX, startZ);
             var visited = new HashSet<(int x, int z)>();
@@ -41,7 +43,8 @@ namespace IsoTilemap
                 : null;
 
             if (!index.TryGetCellTiles(start.x, start.z, band, out var startList) ||
-                startList == null || startList.Count == 0)
+                startList == null || startList.Count == 0 ||
+                (restrictBuildingId >= 0 && !CellFloorMatchesBuilding(startList, restrictBuildingId)))
             {
                 if (Config.DebugMode.FloorAlgorithm)
                     Debug.LogWarning($"FloorRoomFloodFill: empty start cell {start}");
@@ -89,6 +92,13 @@ namespace IsoTilemap
                     if (!isFloor)
                         continue;
 
+                    if (excludeCells != null && excludeCells.Contains((nx, nz)))
+                        continue;
+
+                    if (restrictBuildingId >= 0 &&
+                        !CellFloorMatchesBuilding(list, restrictBuildingId))
+                        continue;
+
                     visitedCells.Add(neighbor);
                     visited.Add((nx, nz));
                     q.Enqueue(neighbor);
@@ -99,6 +109,23 @@ namespace IsoTilemap
                 Debug.Log($"FloorRoomFloodFill band={band} visited={visited.Count} empty={emptyDiscovered?.Count ?? 0}");
 
             return new FloorBfsResult(visited, emptyDiscovered ?? new HashSet<(int x, int z)>());
+        }
+
+        public static bool CellFloorMatchesBuilding(IReadOnlyList<TileData> list, int buildingId)
+        {
+            if (list == null)
+                return false;
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                if ((TileView.TileType)list[i].identity.tileType != TileView.TileType.Floor)
+                    continue;
+
+                if (list[i].identity.buildingId == buildingId)
+                    return true;
+            }
+
+            return false;
         }
 
         public static HashSet<Vector3Int> ToVector3IntSet(HashSet<(int x, int z)> xzSet, int band)

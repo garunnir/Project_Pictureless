@@ -17,10 +17,8 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
 
     private PlayerFloorVisibilityPolicy _policy;
     private TileMapStreamingVisualizer _visualizer;
-    private int _lastFloorBand = int.MinValue;
-    private int _lastGridX = int.MinValue;
-    private int _lastGridZ = int.MinValue;
-    private bool _hasLast;
+    private FloorVisibilityContext _lastCtx;
+    private bool _hasLastCtx;
 
     public void Init(PlayerFloorVisibilityPolicy policy, TileMapStreamingVisualizer visualizer)
     {
@@ -40,7 +38,7 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
 
         _policy = null;
         _visualizer = null;
-        _hasLast = false;
+        _hasLastCtx = false;
     }
 
     public void ApplyNow()
@@ -48,21 +46,26 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
         if (_policy == null || _visualizer == null || _playerState == null)
             return;
 
-        float playerHeight = _playerState.BodyWorldPoint.y + _heightOffsetWorld;
-        Vector3Int gridPos = _playerState.GridPos;
-        FloorVisibilityContext ctx = _policy.ResolveContext(playerHeight, gridPos.x, gridPos.z);
+        Vector3 bodyWorld = _playerState.BodyWorldPoint;
+        bodyWorld.y += _heightOffsetWorld;
 
-        if (!_hasLast ||
-            ctx.FloorBand != _lastFloorBand ||
-            gridPos.x != _lastGridX ||
-            gridPos.z != _lastGridZ)
+        float playerHeight = bodyWorld.y;
+        Vector3Int gridPos = _playerState.GridPos;
+        FloorVisibilityContext ctx = _policy.ResolveContext(
+            playerHeight, gridPos.x, gridPos.z, bodyWorld);
+
+        if (!_hasLastCtx || !ctx.Equals(_lastCtx))
         {
             _visualizer.SyncFloorVisibility(ctx);
-            _lastFloorBand = ctx.FloorBand;
-            _lastGridX = gridPos.x;
-            _lastGridZ = gridPos.z;
-            _hasLast = true;
+            _lastCtx = ctx;
+            _hasLastCtx = true;
         }
+    }
+
+    private void LateUpdate()
+    {
+        if (_policy != null && _playerState != null)
+            ApplyNow();
     }
 
     private void OnWorldPoseChanged(Vector3 _) => ApplyNow();

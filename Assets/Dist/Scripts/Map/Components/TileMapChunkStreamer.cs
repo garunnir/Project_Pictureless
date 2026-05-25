@@ -296,6 +296,9 @@ public class TileMapChunkStreamer : MonoBehaviour
 
 
 
+    /// <summary>층 가시성·청크 스트리밍과 동일한 카메라 해석.</summary>
+    public Camera ResolveStreamingCamera() => ResolveCamera();
+
     private Camera ResolveCamera()
 
     {

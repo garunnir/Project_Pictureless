@@ -28,11 +28,25 @@ namespace IsoTilemap
 
         private bool _hasLastOcclusionPlayerCell;
         private Vector3Int _lastOcclusionPlayerCell;
-        private FloorRoomCache _floorRoomCache;
+        private TileMapCacheHub _mapCacheHub;
+        private BuildingGroupBuilder _buildingGroupBuilder;
 
         public ITileEdgeBinderReadOnly EdgeBinder => _edgeBinder;
 
-        public void SetFloorRoomCache(FloorRoomCache cache) => _floorRoomCache = cache;
+        public void SetMapCacheHub(TileMapCacheHub hub) => _mapCacheHub = hub;
+
+        public void SetBuildingGroupBuilder(BuildingGroupBuilder builder) => _buildingGroupBuilder = builder;
+
+        public bool TryGetEdgeWallIdsForRoom(RoomKey roomKey, out IReadOnlyCollection<Guid> edgeIds)
+        {
+            if (_mapCacheHub != null)
+                return _mapCacheHub.Buildings.TryGetEdgeWalls(roomKey, out edgeIds);
+
+            edgeIds = Array.Empty<Guid>();
+            return false;
+        }
+
+        internal void MarkTilesDirty() => _isDirty = true;
 
         public void GatherRenderableTiles(Vector3Int cellPos, List<TileData> buffer)
         {
@@ -75,13 +89,23 @@ namespace IsoTilemap
 
         public void SetTile(TileData tileData)
         {
+            var changedCells = new HashSet<Vector3Int>();
+
             if ((TileView.TileType)tileData.identity.tileType == TileView.TileType.EdgeWall)
+            {
                 SetEdgeTile(tileData);
+                var key = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
+                changedCells.Add(key.Anchor);
+                changedCells.Add(key.NeighborCell());
+            }
             else
+            {
                 SetCellTile(tileData);
+                changedCells.Add(tileData.identity.GridPos);
+            }
 
             InvalidateOcclusionPlayerTracking();
-            InvalidateFloorRoomGeometry();
+            NotifyBuildingTopologyChanged(changedCells);
         }
 
         public void RemoveTile(TileData tileData)
@@ -128,7 +152,7 @@ namespace IsoTilemap
             _tilesById.Remove(tileData.tileDefId);
             _isDirty = true;
             InvalidateOcclusionPlayerTracking();
-            InvalidateFloorRoomGeometry();
+            NotifyBuildingTopologyChanged(changedCells, isRemoval: true, removedTile: tileData);
             OnRuntimeTileRemoved?.Invoke(tileData);
 
             foreach (var cell in changedCells)
@@ -211,18 +235,20 @@ namespace IsoTilemap
             }
 
             _isDirty = true;
-            _occlusionFinder = new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex);
+            _mapCacheHub?.Topology.RebuildOccupancy();
+            _occlusionFinder = new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex, _mapCacheHub?.Topology);
             _hiddenWallTileIds.Clear();
             _hiddenWallTileCache.Clear();
             _occlusionWallEntries.Clear();
             _lastAppliedOcclusion.Clear();
             _hasLastOcclusionPlayerCell = false;
-            InvalidateFloorRoomGeometry();
+            if (_buildingGroupBuilder == null)
+                _mapCacheHub?.InvalidateAll();
         }
 
         public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {
-            _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex);
+            _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex, _mapCacheHub?.Topology);
             return _occlusionFinder.Find(playerCellPos);
         }
 
@@ -285,21 +311,39 @@ namespace IsoTilemap
         private void InvalidateOcclusionPlayerTracking() =>
             _hasLastOcclusionPlayerCell = false;
 
-        private void InvalidateFloorRoomGeometry() =>
-            _floorRoomCache?.InvalidateAll();
+        private void NotifyBuildingTopologyChanged(
+            HashSet<Vector3Int> changedCells,
+            bool isRemoval = false,
+            TileData removedTile = default)
+        {
+            if (_mapCacheHub != null)
+            {
+                _mapCacheHub.NotifyTopologyChanged(
+                    changedCells, _buildingGroupBuilder, isRemoval, removedTile);
+                return;
+            }
+
+            if (_buildingGroupBuilder != null)
+            {
+                if (isRemoval)
+                    _buildingGroupBuilder.HandleRemoveTile(removedTile, changedCells);
+                else
+                    _buildingGroupBuilder.HandleSetOrApply(changedCells);
+            }
+        }
 
         private void RebuildOcclusionMembership(Vector3Int playerCellPos, Vector3 playerWorld,
             OcclusionProximitySettings settings)
         {
             HashSet<(int x, int z)> roomVisited = null;
-            if (_floorRoomCache != null)
+            if (_mapCacheHub != null)
             {
-                roomVisited = _floorRoomCache.GetOrComputeVisited(
+                roomVisited = _mapCacheHub.GetVisitedForCell(
                     playerCellPos.y, playerCellPos.x, playerCellPos.z,
                     FloorRoomBfsProfile.Occlusion);
             }
 
-            _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex);
+            _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex, _mapCacheHub?.Topology);
             OcclusionSelection batch = _occlusionFinder.FindOcclusion(playerCellPos, roomVisited);
             var currentHiddenIds = new HashSet<Guid>();
             _occlusionApplyBuffer.Clear();
@@ -510,7 +554,10 @@ namespace IsoTilemap
             _isDirty = true;
 
             if (_changedCellsBuffer.Count > 0)
+            {
+                NotifyBuildingTopologyChanged(_changedCellsBuffer);
                 OnRuntimeBatchChanged?.Invoke(_changedCellsBuffer);
+            }
         }
 
         private readonly struct OcclusionWallEntry
