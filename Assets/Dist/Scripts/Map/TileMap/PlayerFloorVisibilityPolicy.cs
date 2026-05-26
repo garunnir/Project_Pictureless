@@ -11,6 +11,7 @@ namespace IsoTilemap
     {
         public bool IsPlayerOutdoor { get; }
         public int FloorBand { get; }
+        public int MinBand { get; }
         public int PlayerBuildingId { get; }
         public HashSet<int> PlayerBlockingBuildingIds { get; }
         public HashSet<(int x, int z, int band)> VisibleBelowCells { get; }
@@ -18,12 +19,14 @@ namespace IsoTilemap
         public FloorVisibilityContext(
             bool isPlayerOutdoor,
             int floorBand,
+            int minBand,
             int playerBuildingId,
             HashSet<int> playerBlockingBuildingIds,
             HashSet<(int x, int z, int band)> visibleBelowCells)
         {
             IsPlayerOutdoor = isPlayerOutdoor;
             FloorBand = floorBand;
+            MinBand = minBand;
             PlayerBuildingId = playerBuildingId;
             PlayerBlockingBuildingIds = playerBlockingBuildingIds ?? new HashSet<int>();
             VisibleBelowCells = visibleBelowCells ?? new HashSet<(int x, int z, int band)>();
@@ -32,6 +35,7 @@ namespace IsoTilemap
         public bool Equals(FloorVisibilityContext other) =>
             IsPlayerOutdoor == other.IsPlayerOutdoor &&
             FloorBand == other.FloorBand &&
+            MinBand == other.MinBand &&
             PlayerBuildingId == other.PlayerBuildingId &&
             SetEquals(PlayerBlockingBuildingIds, other.PlayerBlockingBuildingIds) &&
             SetEquals(VisibleBelowCells, other.VisibleBelowCells);
@@ -40,7 +44,7 @@ namespace IsoTilemap
 
         public override int GetHashCode()
         {
-            int hash = HashCode.Combine(IsPlayerOutdoor, FloorBand, PlayerBuildingId);
+            int hash = HashCode.Combine(IsPlayerOutdoor, FloorBand, MinBand, PlayerBuildingId);
             hash = HashCombineSet(hash, PlayerBlockingBuildingIds);
             return HashCombineBelowCells(hash, VisibleBelowCells);
         }
@@ -210,13 +214,19 @@ namespace IsoTilemap
             }
 
             return new FloorVisibilityContext(
-                isOutdoor, floorBand, playerBuildingId, blocking, visibleBelow);
+                isOutdoor, floorBand, _minBand, playerBuildingId, blocking, visibleBelow);
         }
 
-        public bool IsTileVisible(TileData tile, in FloorVisibilityContext ctx) =>
-            ctx.IsPlayerOutdoor
-                ? _outdoor.IsVisible(tile, ctx)
-                : _indoor.IsVisible(tile, ctx);
+        public bool IsTileVisible(TileData tile, in FloorVisibilityContext ctx)
+        {
+            if (ctx.IsPlayerOutdoor)
+                return _outdoor.IsVisible(tile, ctx);
+
+            if (ctx.PlayerBuildingId <= 0 || tile.identity.buildingId != ctx.PlayerBuildingId)
+                return true;
+
+            return _indoor.IsVisible(tile, ctx);
+        }
 
         public void FilterTiles(List<TileData> buffer, in FloorVisibilityContext ctx)
         {

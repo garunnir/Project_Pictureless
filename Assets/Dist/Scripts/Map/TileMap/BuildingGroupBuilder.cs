@@ -50,9 +50,9 @@ namespace IsoTilemap
 
         public void RecomputeOutdoorFromMin()
         {
-            var oldOutdoor = new HashSet<(int x, int z)>(_registry.OutdoorXZ);
+            var oldOutdoor = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
             var newOutdoor = ComputeOutdoorXZ();
-            _registry.SetOutdoorXZ(newOutdoor);
+            _registry.SetPlazaOutdoor(_minBand, newOutdoor);
 
             foreach (var (x, z) in newOutdoor)
                 SetFloorBuildingRoom(x, _minBand, z, 0, 0);
@@ -171,13 +171,13 @@ namespace IsoTilemap
 
         void RecomputeOutdoorFromMinAndRebuildLost(IReadOnlyCollection<Vector3Int> changedCells)
         {
-            var oldOutdoor = new HashSet<(int x, int z)>(_registry.OutdoorXZ);
+            var oldOutdoor = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
             RecomputeOutdoorFromMin();
 
             var lost = new HashSet<(int x, int z)>();
             foreach (var (x, z) in oldOutdoor)
             {
-                if (!_registry.IsOutdoor(x, z))
+                if (!_registry.IsPlazaXZ(x, z))
                     lost.Add((x, z));
             }
 
@@ -292,7 +292,7 @@ namespace IsoTilemap
                 if (band != _minBand)
                     continue;
 
-                if (_registry.IsOutdoor(x, z))
+                if (_registry.IsPlazaXZ(x, z))
                     continue;
 
                 if (!_topology.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
@@ -312,7 +312,7 @@ namespace IsoTilemap
             if (seeds == null)
                 return;
 
-            var outdoor = new HashSet<(int x, int z)>(_registry.OutdoorXZ);
+            var outdoor = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
 
             foreach (var (seedX, seedZ) in seeds)
             {
@@ -410,7 +410,7 @@ namespace IsoTilemap
                 if (GetFloorBuildingId(seedX, seedBand, seedZ) != 0)
                     continue;
 
-                var outdoor = new HashSet<(int x, int z)>(_registry.OutdoorXZ);
+                var outdoor = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
                 var footprint = FloorRoomFloodFill.Run(
                     _topology.Index, seedBand, seedX, seedZ,
                     collectEmptyNeighbors: false,
@@ -435,7 +435,7 @@ namespace IsoTilemap
                 if (band != _minBand)
                     continue;
 
-                if (_registry.IsOutdoor(x, z))
+                if (_registry.IsPlazaXZ(x, z))
                     continue;
 
                 if (GetFloorBuildingId(x, band, z) != 0)
@@ -555,9 +555,6 @@ namespace IsoTilemap
                 _hub.Bands.RegisterFootprint(band, FloorRoomBfsProfile.Occlusion, occlusion);
                 _hub.Rooms.Store(key, FloorRoomBfsProfile.Visibility, visibility);
                 _hub.Bands.RegisterFootprint(band, FloorRoomBfsProfile.Visibility, visibility);
-
-                if (visibility.EmptyDiscovered != null && visibility.EmptyDiscovered.Count > 0)
-                    _registry.RegisterOpenOutdoorRoom(key);
             }
 
             foreach (var (x, z, b) in _topology.EnumerateOccupiedCells())

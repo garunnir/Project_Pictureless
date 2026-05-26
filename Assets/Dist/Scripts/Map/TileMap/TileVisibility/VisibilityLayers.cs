@@ -56,10 +56,15 @@ namespace IsoTilemap
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
             int buildingId = tile.identity.buildingId;
-            if (buildingId > 0 && ctx.PlayerBlockingBuildingIds.Contains(buildingId))
-                return TileVisibilityVerdict.Hide;
+            if (buildingId <= 0 || !ctx.PlayerBlockingBuildingIds.Contains(buildingId))
+                return TileVisibilityVerdict.Continue;
 
-            return TileVisibilityVerdict.Continue;
+            int tileBand = tile.identity.GridPos.y;
+            if (tileBand == ctx.MinBand &&
+                (TileView.TileType)tile.identity.tileType == TileView.TileType.Floor)
+                return TileVisibilityVerdict.Continue;
+
+            return TileVisibilityVerdict.Hide;
         }
     }
 

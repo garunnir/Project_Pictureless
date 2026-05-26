@@ -7,7 +7,7 @@ namespace IsoTilemap
     /// <summary>
     /// 청크 단위 타일 스트리밍 뷰. 모델은 전체 유지, GameObject는 desired 청크만 스폰.
     /// </summary>
-    public sealed class TileMapStreamingVisualizer : IMapViewBuilder, IDisposable
+    public sealed class TileMapStreamingVisualizer : IMapViewBuilder, ITileViewRegistry, IDisposable
     {
         private readonly TileObjFactory _tileFactory;
         private readonly IWorldGrid _worldGrid;
@@ -28,6 +28,7 @@ namespace IsoTilemap
         private PlayerFloorVisibilityPolicy _floorPolicy;
         private FloorVisibilityContext _floorContext;
         private bool _hasFloorContext;
+        private TileViewPresentationApplier _presentationApplier;
 
         public TileMapStreamingVisualizer(
             TileObjFactory tileFactory,
@@ -49,6 +50,10 @@ namespace IsoTilemap
         public IReadOnlyCollection<Vector2Int> LoadedChunks => _loadedChunks;
 
         public void SetFloorVisibilityPolicy(PlayerFloorVisibilityPolicy policy) => _floorPolicy = policy;
+
+        public void SetPresentationApplier(TileViewPresentationApplier applier) => _presentationApplier = applier;
+
+        public bool TryGetView(Guid tileId, out TileView view) => _tileViews.TryGetValue(tileId, out view);
 
         public void SyncFloorVisibility(in FloorVisibilityContext ctx)
         {
@@ -260,10 +265,12 @@ namespace IsoTilemap
                 }
 
                 _tileViews[id] = view;
+                _presentationApplier?.SyncPresentationForTile(id);
                 return;
             }
 
             view.UpdateTile(tileData, CellSize);
+            _presentationApplier?.SyncPresentationForTile(id);
         }
 
         private void ReleaseTileFromChunk(Guid tileId, Vector2Int chunk)
@@ -291,7 +298,10 @@ namespace IsoTilemap
                 if (_tileViews.TryGetValue(tileData.tileDefId, out TileView tileView))
                     tileView.UpdateTile(tileData, CellSize);
                 else if (IsTileInLoadedChunk(tileData))
+                {
                     AcquireTileInChunk(tileData, TileChunkCoord.FromCell(GetRepresentativeCell(tileData), _chunkSize));
+                    _presentationApplier?.SyncPresentationForTile(tileData.tileDefId);
+                }
             }
         }
 

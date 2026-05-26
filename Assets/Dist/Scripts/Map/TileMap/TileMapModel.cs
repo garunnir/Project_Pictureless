@@ -10,6 +10,7 @@ namespace IsoTilemap
         public event Action<IReadOnlyCollection<Vector3Int>> OnRuntimeBatchChanged;
         public event Action<TileData> OnRuntimeTileAdded;
         public event Action<TileData> OnRuntimeTileRemoved;
+        public event Action<TileOcclusionPresentationDelta> OnTileOcclusionPresentationDelta;
 
         public Dictionary<Vector3Int, List<TileData>> tiles = new Dictionary<Vector3Int, List<TileData>>();
 
@@ -21,8 +22,9 @@ namespace IsoTilemap
         private WallOcclusionFinder _occlusionFinder;
         private readonly HashSet<Guid> _hiddenWallTileIds = new HashSet<Guid>();
         private readonly Dictionary<Guid, TileData> _hiddenWallTileCache = new Dictionary<Guid, TileData>();
-        private readonly List<TileData> _occlusionApplyBuffer = new List<TileData>();
         private readonly Dictionary<Guid, float> _lastAppliedOcclusion = new Dictionary<Guid, float>();
+        private readonly List<(Guid tileId, float occlusion01)> _occlusionDeltaApply = new List<(Guid, float)>();
+        private readonly List<Guid> _occlusionDeltaClear = new List<Guid>();
         private readonly List<OcclusionWallEntry> _occlusionWallEntries = new List<OcclusionWallEntry>();
         private readonly HashSet<Vector3Int> _changedCellsBuffer = new HashSet<Vector3Int>();
 
@@ -89,6 +91,10 @@ namespace IsoTilemap
 
         public void SetTile(TileData tileData)
         {
+            if (TryFindTileById(tileData.tileDefId, out var existing) &&
+                IdentityEquals(existing.identity, tileData.identity))
+                return;
+
             var changedCells = new HashSet<Vector3Int>();
 
             if ((TileView.TileType)tileData.identity.tileType == TileView.TileType.EdgeWall)
@@ -246,6 +252,10 @@ namespace IsoTilemap
                 _mapCacheHub?.InvalidateAll();
         }
 
+        /// <summary>청크 sync용. 런타임 <see cref="TileState"/>가 아닌 오클루전 캐시를 반환합니다.</summary>
+        public bool TryGetTileOcclusionPresentation(Guid tileId, out float occlusion01) =>
+            _lastAppliedOcclusion.TryGetValue(tileId, out occlusion01);
+
         public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {
             _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex, _mapCacheHub?.Topology);
@@ -346,7 +356,8 @@ namespace IsoTilemap
             _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex, _mapCacheHub?.Topology);
             OcclusionSelection batch = _occlusionFinder.FindOcclusion(playerCellPos, roomVisited);
             var currentHiddenIds = new HashSet<Guid>();
-            _occlusionApplyBuffer.Clear();
+            _occlusionDeltaApply.Clear();
+            _occlusionDeltaClear.Clear();
 
             var list = batch.FinalOccluding;
             float cs = Mathf.Max(1e-4f, settings.CellSize);
@@ -356,12 +367,8 @@ namespace IsoTilemap
                 TileData wall = list[i];
                 currentHiddenIds.Add(wall.tileDefId);
 
-                TileIdentity wi = wall.identity;
-                float occ = ComputeOcclusionStrength(playerWorld, wi, cs, settings);
-                TileState state = wall.state;
-                state.characterOcclusion = occ;
-                wall.state = state;
-                _occlusionApplyBuffer.Add(wall);
+                float occ = ComputeOcclusionStrength(playerWorld, wall.identity, cs, settings);
+                _occlusionDeltaApply.Add((wall.tileDefId, occ));
                 _hiddenWallTileCache[wall.tileDefId] = wall;
                 _lastAppliedOcclusion[wall.tileDefId] = occ;
             }
@@ -371,20 +378,7 @@ namespace IsoTilemap
                 if (currentHiddenIds.Contains(hiddenId))
                     continue;
 
-                if (!_hiddenWallTileCache.TryGetValue(hiddenId, out var hiddenTile) &&
-                    !_tilesById.TryGetValue(hiddenId, out hiddenTile))
-                {
-                    continue;
-                }
-
-                TileState state = hiddenTile.state;
-                if (state.characterOcclusion > 0f)
-                {
-                    state.characterOcclusion = 0f;
-                    hiddenTile.state = state;
-                    _occlusionApplyBuffer.Add(hiddenTile);
-                }
-
+                _occlusionDeltaClear.Add(hiddenId);
                 _hiddenWallTileCache.Remove(hiddenId);
                 _lastAppliedOcclusion.Remove(hiddenId);
             }
@@ -394,9 +388,7 @@ namespace IsoTilemap
                 _hiddenWallTileIds.Add(id);
 
             RebuildOcclusionWallEntries(cs);
-
-            if (_occlusionApplyBuffer.Count > 0)
-                ApplyTiles(_occlusionApplyBuffer);
+            RaiseOcclusionPresentationDelta();
         }
 
         private void RebuildOcclusionWallEntries(float cellSize)
@@ -422,7 +414,8 @@ namespace IsoTilemap
 
             float cs = Mathf.Max(1e-4f, settings.CellSize);
             float eps = settings.ApplyEpsilon;
-            _occlusionApplyBuffer.Clear();
+            _occlusionDeltaApply.Clear();
+            _occlusionDeltaClear.Clear();
 
             for (int i = 0; i < _occlusionWallEntries.Count; i++)
             {
@@ -444,16 +437,20 @@ namespace IsoTilemap
                     Mathf.Abs(occ - prev) <= eps)
                     continue;
 
-                TileState state = wall.state;
-                state.characterOcclusion = occ;
-                wall.state = state;
-                _occlusionApplyBuffer.Add(wall);
-                _hiddenWallTileCache[id] = wall;
+                _occlusionDeltaApply.Add((id, occ));
                 _lastAppliedOcclusion[id] = occ;
             }
 
-            if (_occlusionApplyBuffer.Count > 0)
-                ApplyTiles(_occlusionApplyBuffer);
+            RaiseOcclusionPresentationDelta();
+        }
+
+        private void RaiseOcclusionPresentationDelta()
+        {
+            if (_occlusionDeltaApply.Count == 0 && _occlusionDeltaClear.Count == 0)
+                return;
+
+            var delta = new TileOcclusionPresentationDelta(_occlusionDeltaApply, _occlusionDeltaClear);
+            OnTileOcclusionPresentationDelta?.Invoke(delta);
         }
 
         private static float ComputeOcclusionStrength(
@@ -515,12 +512,35 @@ namespace IsoTilemap
 
         private void IndexTile(in TileData tile) => IndexTile(tile, _tilesById);
 
+        /// <inheritdoc cref="IMapModel.ApplyTileStates"/>
+        /// <remarks>프레젠테이션(오클루전·고스트·선택)은 <see cref="TileViewPresentationApplier"/> 경로만 사용합니다.</remarks>
+        public void ApplyTileStates(IReadOnlyList<TileData> tileList)
+        {
+        }
+
+        /// <inheritdoc cref="IMapModel.ApplyTiles"/>
         public void ApplyTiles(IReadOnlyList<TileData> tileList)
         {
-            _changedCellsBuffer.Clear();
+            if (tileList == null || tileList.Count == 0)
+                return;
 
-            foreach (var tile in tileList)
+            if (!MergeTilesIntoRuntime(tileList, _changedCellsBuffer))
+                return;
+
+            _isDirty = true;
+            NotifyBuildingTopologyChanged(_changedCellsBuffer);
+            OnRuntimeBatchChanged?.Invoke(_changedCellsBuffer);
+        }
+
+        /// <summary>런타임 딕셔너리에 타일을 반영하고 변경된 셀을 수집합니다.</summary>
+        private bool MergeTilesIntoRuntime(IReadOnlyList<TileData> tileList, HashSet<Vector3Int> changedCells)
+        {
+            changedCells.Clear();
+
+            for (int t = 0; t < tileList.Count; t++)
             {
+                TileData tile = tileList[t];
+
                 if ((TileView.TileType)tile.identity.tileType == TileView.TileType.EdgeWall)
                 {
                     if (!_edgeBinder.TryReplaceTileData(tile))
@@ -528,12 +548,12 @@ namespace IsoTilemap
 
                     IndexTile(tile);
                     var key = WallEdgeKey.FromEdgeTileIdentity(tile.identity);
-                    _changedCellsBuffer.Add(key.Anchor);
-                    _changedCellsBuffer.Add(key.NeighborCell());
+                    changedCells.Add(key.Anchor);
+                    changedCells.Add(key.NeighborCell());
                     continue;
                 }
 
-                var pos = tile.identity.GridPos;
+                Vector3Int pos = tile.identity.GridPos;
 
                 if (!tiles.TryGetValue(pos, out var existingList))
                     continue;
@@ -548,17 +568,20 @@ namespace IsoTilemap
                     break;
                 }
 
-                _changedCellsBuffer.Add(pos);
+                changedCells.Add(pos);
             }
 
-            _isDirty = true;
-
-            if (_changedCellsBuffer.Count > 0)
-            {
-                NotifyBuildingTopologyChanged(_changedCellsBuffer);
-                OnRuntimeBatchChanged?.Invoke(_changedCellsBuffer);
-            }
+            return changedCells.Count > 0;
         }
+
+        private static bool IdentityEquals(in TileIdentity a, in TileIdentity b) =>
+            a.PrefabId == b.PrefabId &&
+            a.GridPos == b.GridPos &&
+            a.sizeUnit == b.sizeUnit &&
+            a.tileType == b.tileType &&
+            a.edgeFace == b.edgeFace &&
+            a.buildingId == b.buildingId &&
+            a.roomId == b.roomId;
 
         private readonly struct OcclusionWallEntry
         {

@@ -1,5 +1,5 @@
 // ============================================================
-// BuildingGroupRegistry — buildingId 역인덱스·야외 집합·room별 EdgeWall
+// BuildingGroupRegistry — buildingId 역인덱스·광장 바닥 집합·room별 EdgeWall
 // ============================================================
 using System;
 using System.Collections.Generic;
@@ -12,61 +12,41 @@ namespace IsoTilemap
 
         readonly Dictionary<int, HashSet<Guid>> _tilesByBuildingId = new();
         readonly Dictionary<RoomKey, HashSet<Guid>> _edgeIdsByRoom = new();
-        readonly HashSet<(int x, int z)> _outdoorXZ = new();
-        readonly HashSet<RoomKey> _openOutdoorRooms = new();
+        readonly HashSet<(int x, int z)> _plazaFloorXZ = new();
+        int _plazaBand = int.MinValue;
 
         public int NextBuildingId { get; private set; } = 1;
 
-        public IReadOnlyCollection<RoomKey> OpenOutdoorRooms => _openOutdoorRooms;
-
         public IReadOnlyDictionary<int, HashSet<Guid>> TilesByBuildingId => _tilesByBuildingId;
 
-        public IReadOnlyCollection<(int x, int z)> OutdoorXZ => _outdoorXZ;
+        public int PlazaBand => _plazaBand;
+
+        public IReadOnlyCollection<(int x, int z)> PlazaFloorXZ => _plazaFloorXZ;
 
         public void Clear()
         {
             _tilesByBuildingId.Clear();
             _edgeIdsByRoom.Clear();
-            _outdoorXZ.Clear();
-            _openOutdoorRooms.Clear();
+            _plazaFloorXZ.Clear();
+            _plazaBand = int.MinValue;
             NextBuildingId = 1;
         }
 
-        public void SetOutdoorXZ(HashSet<(int x, int z)> outdoor)
+        public void SetPlazaOutdoor(int plazaBand, HashSet<(int x, int z)> plazaFloor)
         {
-            _outdoorXZ.Clear();
-            if (outdoor == null)
+            _plazaBand = plazaBand;
+            _plazaFloorXZ.Clear();
+            if (plazaFloor == null)
                 return;
 
-            foreach (var cell in outdoor)
-                _outdoorXZ.Add(cell);
+            foreach (var cell in plazaFloor)
+                _plazaFloorXZ.Add(cell);
         }
 
-        public bool IsOutdoor(int x, int z) => _outdoorXZ.Contains((x, z));
+        public bool IsPlazaFloor(int band, int x, int z) =>
+            band == _plazaBand && _plazaFloorXZ.Contains((x, z));
 
-        public bool IsOpenOutdoorRoom(RoomKey roomKey) => _openOutdoorRooms.Contains(roomKey);
-
-        public void RegisterOpenOutdoorRoom(RoomKey roomKey)
-        {
-            if (roomKey.BuildingId > 0 && roomKey.RoomId > 0)
-                _openOutdoorRooms.Add(roomKey);
-        }
-
-        public void ClearOpenOutdoorRoomsForSlice(int buildingId, int band)
-        {
-            if (buildingId <= 0)
-                return;
-
-            var toRemove = new List<RoomKey>();
-            foreach (var key in _openOutdoorRooms)
-            {
-                if (key.BuildingId == buildingId && key.Band == band)
-                    toRemove.Add(key);
-            }
-
-            for (int i = 0; i < toRemove.Count; i++)
-                _openOutdoorRooms.Remove(toRemove[i]);
-        }
+        public bool IsPlazaXZ(int x, int z) => _plazaFloorXZ.Contains((x, z));
 
         public int AllocateBuildingId() => NextBuildingId++;
 
@@ -125,8 +105,6 @@ namespace IsoTilemap
 
             for (int i = 0; i < toRemove.Count; i++)
                 _edgeIdsByRoom.Remove(toRemove[i]);
-
-            ClearOpenOutdoorRoomsForSlice(buildingId, band);
         }
 
         public bool TryGetEdgeWallIds(RoomKey roomKey, out IReadOnlyCollection<Guid> edgeIds)

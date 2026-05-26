@@ -125,6 +125,9 @@ namespace IsoTilemap
             _runtimeData.ApplyTiles(tiles);
         }
 
+        public void ApplyTileStates(IReadOnlyList<TileData> tiles) =>
+            _runtimeData.ApplyTileStates(tiles);
+
         public void HideOcclusionTileWall(Vector3Int playerCellPos)
         {
             ClearCache();

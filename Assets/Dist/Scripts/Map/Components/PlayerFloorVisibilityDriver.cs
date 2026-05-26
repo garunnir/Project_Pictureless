@@ -19,6 +19,7 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
     private TileMapStreamingVisualizer _visualizer;
     private FloorVisibilityContext _lastCtx;
     private bool _hasLastCtx;
+    private bool _isActive;
 
     public void Init(PlayerFloorVisibilityPolicy policy, TileMapStreamingVisualizer visualizer)
     {
@@ -26,19 +27,16 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
 
         _policy = policy;
         _visualizer = visualizer;
-
-        if (_playerState != null)
-            _playerState.WorldPoseChanged += OnWorldPoseChanged;
+        _isActive = true;
+        ApplyNow(); // 최초 1회 동기화 
     }
 
     public void Shutdown()
     {
-        if (_playerState != null)
-            _playerState.WorldPoseChanged -= OnWorldPoseChanged;
-
         _policy = null;
         _visualizer = null;
         _hasLastCtx = false;
+        _isActive = false;
     }
 
     public void ApplyNow()
@@ -64,11 +62,9 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (_policy != null && _playerState != null)
-            ApplyNow();
+        if (!_isActive) return;
+        ApplyNow();
     }
-
-    private void OnWorldPoseChanged(Vector3 _) => ApplyNow();
 
     private void OnDestroy() => Shutdown();
 }

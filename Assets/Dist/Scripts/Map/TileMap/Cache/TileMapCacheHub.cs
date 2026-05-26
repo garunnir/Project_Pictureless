@@ -2,7 +2,8 @@
 // TileMapCacheHub — 맵 topology·건물·band·room geometry 통합 조회·무효화
 // ============================================================
 // 계약:
-// - 캐시 히트 = FloorRoomFloodFill 재실행만 생략. 오클루전/ApplyTiles 전체 스킵 금지.
+// - 캐시 히트 = FloorRoomFloodFill 재실행만 생략. 오클루전 delta·TileViewPresentationApplier 반영은 매번 수행.
+// - 프레젠테이션(오클루전·고스트·선택)은 모델 TileState에 미기록. ApplyTiles/SetTile/RemoveTile = 구조·토폴로지.
 // - InvalidateAll = topology 변경 시. 플레이어 셀 이동만으로는 무효화하지 않음.
 using System;
 using System.Collections.Generic;
@@ -72,9 +73,7 @@ namespace IsoTilemap
 
         public BuildingGroupRegistry Registry => _registry;
 
-        public bool IsOutdoor(int x, int z) => _registry.IsOutdoor(x, z);
-
-        public bool IsOpenOutdoorRoom(RoomKey roomKey) => _registry.IsOpenOutdoorRoom(roomKey);
+        public bool IsPlazaFloor(int band, int x, int z) => _registry.IsPlazaFloor(band, x, z);
 
         public bool TryGetEdgeWalls(RoomKey roomKey, out IReadOnlyCollection<Guid> edgeIds) =>
             _registry.TryGetEdgeWallIds(roomKey, out edgeIds);
@@ -287,11 +286,17 @@ namespace IsoTilemap
         /// <summary>야외 분기 판정 단일 API. buildingId==0으로 야외 추론하지 않습니다.</summary>
         public bool IsOutdoorEvaluation(int band, int x, int z)
         {
-            if (Buildings.IsOutdoor(x, z))
+            if (Buildings.IsPlazaFloor(band, x, z))
                 return true;
 
-            return Bands.TryResolveRoomKey(band, x, z, out var roomKey) &&
-                   Buildings.IsOpenOutdoorRoom(roomKey);
+            if (!Bands.TryResolveRoomKey(band, x, z, out var roomKey))
+                return false;
+
+            if (!Rooms.TryGet(roomKey, FloorRoomBfsProfile.Visibility, out var visibility))
+                return false;
+
+            return visibility.EmptyDiscovered != null && visibility.EmptyDiscovered.Count > 0
+                && visibility.Visited != null && visibility.Visited.Contains((x, z));
         }
 
         public bool TryGetFloorBuildingRoom(int band, int x, int z, out int buildingId, out int roomId) =>

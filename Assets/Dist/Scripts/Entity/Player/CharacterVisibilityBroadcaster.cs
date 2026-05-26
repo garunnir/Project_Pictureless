@@ -11,6 +11,9 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
     [SerializeField] private OcclusionProximitySettings _occlusionSettings =
         OcclusionProximitySettings.DefaultUnity;
 
+    private Vector3 _lastOcclusionWorld = new Vector3(float.NaN, float.NaN, float.NaN);
+    private bool _hasLastOcclusionWorld;
+
     private void Awake()
     {
         _characterState = GetComponent<CharacterState>();
@@ -22,19 +25,13 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
     {
         if (_characterState != null)
         {
-            _characterState.WorldPoseChanged += OnWorldPoseChanged;
-            _characterState.AimWorldPointChanged += OnAimWorldPointChanged;
             SyncSettingsCellFromMapGrid();
         }
     }
 
     private void OnDisable()
     {
-        if (_characterState != null)
-        {
-            _characterState.WorldPoseChanged -= OnWorldPoseChanged;
-            _characterState.AimWorldPointChanged -= OnAimWorldPointChanged;
-        }
+        _hasLastOcclusionWorld = false;
     }
 
 #if UNITY_EDITOR
@@ -56,9 +53,21 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
         _occlusionSettings = settings;
     }
 
-    private void OnWorldPoseChanged(Vector3 _) => BroadcastOcclusion();
+    private void LateUpdate()
+    {
+        if (_characterState == null) return;
 
-    private void OnAimWorldPointChanged(Vector3 _) => BroadcastOcclusion();
+        Vector3 occlusionWorld = _characterState.IsAiming
+            ? _characterState.AimWorldPoint
+            : _characterState.BodyWorldPoint;
+
+        if (_hasLastOcclusionWorld && (occlusionWorld - _lastOcclusionWorld).sqrMagnitude <= 1e-8f)
+            return;
+
+        _lastOcclusionWorld = occlusionWorld;
+        _hasLastOcclusionWorld = true;
+        BroadcastOcclusion();
+    }
 
     /// <summary>조준 중에는 <see cref="CharacterState.AimWorldPoint"/>, 아니면 <see cref="CharacterState.BodyWorldPoint"/>로 BFS·거리 오클루전 갱신.</summary>
     private void BroadcastOcclusion()
@@ -75,11 +84,7 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
         NormalizeSettings(ref settings);
         _occlusionSettings = settings;
 
-        Vector3 occlusionWorld = _characterState.IsAiming
-            ? _characterState.AimWorldPoint
-            : _characterState.BodyWorldPoint;
-
-        _tileMapManager.Model?.UpdateOcclusionFromPlayerWorld(occlusionWorld, settings);
+        _tileMapManager.Model?.UpdateOcclusionFromPlayerWorld(_lastOcclusionWorld, settings);
     }
 
     private static void NormalizeSettings(ref OcclusionProximitySettings s)

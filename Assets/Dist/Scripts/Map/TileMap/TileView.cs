@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
+// ============================================================
+// TileView — 씬 타일 오브젝트의 identity·pose·프레젠테이션 뷰
+// ============================================================
 // 씬에 실제로 붙어있는 타일 오브젝트용 View.
 // Anchor + Size + PrefabId 기반 메타데이터를 유지하고,
 // 런타임 데이터 변경을 시각 상태(셰이더 컨트롤)까지 반영합니다.
@@ -58,6 +61,7 @@ namespace IsoTilemap
 
         private TileBaseVisualState _currentBaseState = TileBaseVisualState.Visible;
         private float _characterOcclusion;
+        private bool _isGhosted;
         private bool _currentSelected;
         private bool _baseStateInitialized;
         private bool _selectedInitialized;
@@ -170,15 +174,32 @@ namespace IsoTilemap
                     : (byte)Mathf.Clamp(ef, 0, 1);
             }
 
-            _characterOcclusion = tileData.state.characterOcclusion;
-            TileBaseVisualState resolved = ResolveBaseState(tileData.state);
+        }
 
-            if (!_baseStateInitialized || _currentBaseState != resolved)
-                ForceApplyBaseState(resolved);
+        /// <summary>캐릭터 오클루전(0~1)과 shadow·추가광·blocked trace 파생 표현.</summary>
+        public void SetCharacterOcclusion(float occlusion01)
+        {
+            _characterOcclusion = Mathf.Clamp01(occlusion01);
+            RefreshBaseVisualState();
+        }
 
-            ApplyCharacterOcclusionPresentation(resolved);
+        public void SetGhosted(bool ghosted)
+        {
+            _isGhosted = ghosted;
+            RefreshBaseVisualState();
+        }
 
-            ApplySelectedOverlay(tileData.state.isSelected);
+        public void SetSelected(bool selected) => ForceApplySelectedOverlay(selected);
+
+        private void RefreshBaseVisualState()
+        {
+            TileBaseVisualState next = ResolveBaseState(_characterOcclusion, _isGhosted);
+
+            if (!_baseStateInitialized || _currentBaseState != next)
+                ForceApplyBaseState(next);
+
+            if (next == TileBaseVisualState.HiddenByCharacter)
+                ApplyCharacterOcclusionDerived();
         }
 
         private void ApplyWorldPose(in TileData tileData, float cellSize)
@@ -199,10 +220,10 @@ namespace IsoTilemap
         }
 
         // 기본축 상태 결정: 우선순위 Hidden > Ghosted > Visible.
-        private static TileBaseVisualState ResolveBaseState(TileState state)
+        private static TileBaseVisualState ResolveBaseState(float characterOcclusion, bool isGhosted)
         {
-            if (state.characterOcclusion > OcclusionEpsilon) return TileBaseVisualState.HiddenByCharacter;
-            if (state.isGhosted) return TileBaseVisualState.Ghosted;
+            if (characterOcclusion > OcclusionEpsilon) return TileBaseVisualState.HiddenByCharacter;
+            if (isGhosted) return TileBaseVisualState.Ghosted;
             return TileBaseVisualState.Visible;
         }
 
@@ -246,12 +267,6 @@ namespace IsoTilemap
             _baseStateInitialized = true;
         }
 
-        private void ApplySelectedOverlay(bool next)
-        {
-            if (_selectedInitialized && _currentSelected == next) return;
-            ForceApplySelectedOverlay(next);
-        }
-
         private void ForceApplySelectedOverlay(bool next)
         {
             Renderer renderer = _shadeController?.CachedRenderer;
@@ -267,11 +282,8 @@ namespace IsoTilemap
             _selectedInitialized = true;
         }
 
-        private void ApplyCharacterOcclusionPresentation(TileBaseVisualState visualState)
+        private void ApplyCharacterOcclusionDerived()
         {
-            if (visualState != TileBaseVisualState.HiddenByCharacter)
-                return;
-
             Renderer renderer = _shadeController?.CachedRenderer;
             _shadeController?.SetCharacterOcclusion(_characterOcclusion);
 
@@ -300,6 +312,7 @@ namespace IsoTilemap
         {
             CacheControllers();
             _characterOcclusion = 0f;
+            _isGhosted = false;
             ForceApplyBaseState(TileBaseVisualState.Visible);
             ForceApplySelectedOverlay(false);
             SetBlockedTraceVisible(false);

@@ -59,7 +59,10 @@ namespace IsoTilemap
     {
         void SetTile(TileData tileDatas);
         void RemoveTile(TileData tileData);
+        /// <summary><see cref="TileIdentity"/>·배치가 바뀔 때. 토폴로지(방/건물) 갱신 포함.</summary>
         void ApplyTiles(IReadOnlyList<TileData> tiles);
+        /// <summary>레거시 API. 프레젠테이션은 <see cref="TileViewPresentationApplier"/> 사용.</summary>
+        void ApplyTileStates(IReadOnlyList<TileData> tiles);
         void HideOcclusionTileWall(Vector3Int playerCellPos);
 
         /// <summary>플레이어 월드 위치로 오클루전(셀 변경 시 BFS + 거리 occlusion) 갱신.</summary>

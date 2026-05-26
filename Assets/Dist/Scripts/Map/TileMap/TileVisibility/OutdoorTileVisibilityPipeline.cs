@@ -1,5 +1,5 @@
 // ============================================================
-// OutdoorTileVisibilityPipeline — 야외: 가림 건물 통째 Hide, 나머지 Show
+// OutdoorTileVisibilityPipeline — 야외: 가림 건물은 1층 바닥 제외 Hide, 나머지 Show
 // ============================================================
 namespace IsoTilemap
 {

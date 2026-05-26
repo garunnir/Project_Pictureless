@@ -10,13 +10,14 @@ namespace IsoTilemap
     /// 타일맵 시각화 담당 클래스
     /// 모델 이벤트를 받아 게임 월드 렌더 상태를 동기화합니다.
     /// </summary>
-    public class TileMapVisualizer : IMapViewBuilder, IDisposable
+    public class TileMapVisualizer : IMapViewBuilder, ITileViewRegistry, IDisposable
     {
         private Dictionary<Guid, TileView> _tileViews = new Dictionary<Guid, TileView>();
 
         private readonly TileObjFactory _tileFactory;
         private readonly IWorldGrid _worldGrid;
         private IMapModelReadOnly _boundRuntime;
+        private TileViewPresentationApplier _presentationApplier;
 
         public TileMapVisualizer(TileObjFactory tileFactory, IWorldGrid worldGrid)
         {
@@ -51,13 +52,12 @@ namespace IsoTilemap
             _tileViews.Clear();
         }
 
-        /// <summary>
-        /// ID로 타일 인스턴스를 조회합니다.
-        /// </summary>
-        public bool TryGetTile(Guid tileId, out TileView tileView)
-        {
-            return _tileViews.TryGetValue(tileId, out tileView);
-        }
+        public void SetPresentationApplier(TileViewPresentationApplier applier) => _presentationApplier = applier;
+
+        /// <summary>ID로 타일 인스턴스를 조회합니다.</summary>
+        public bool TryGetTile(Guid tileId, out TileView tileView) => TryGetView(tileId, out tileView);
+
+        public bool TryGetView(Guid tileId, out TileView view) => _tileViews.TryGetValue(tileId, out view);
 
         public void Bind(IMapModelReadOnly runtime)
         {
@@ -105,6 +105,11 @@ namespace IsoTilemap
 
             ClearTiles();
             _tileViews = _tileFactory.SpawnTiles(tiles, CellSize);
+            if (_presentationApplier != null)
+            {
+                foreach (var kv in _tileViews)
+                    _presentationApplier.SyncPresentationForTile(kv.Key);
+            }
         }
 
         private void RenderCell(Vector3Int cellPos, IReadOnlyList<TileData> tiles)
@@ -118,7 +123,10 @@ namespace IsoTilemap
                 {
                     var newView = _tileFactory.SpawnTile(tileData, CellSize);
                     if (newView != null)
+                    {
                         _tileViews[tileData.tileDefId] = newView;
+                        _presentationApplier?.SyncPresentationForTile(tileData.tileDefId);
+                    }
                 }
             }
         }

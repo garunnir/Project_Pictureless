@@ -10,9 +10,11 @@ using UnityEngine;namespace IsoTilemap
     }
     public struct TileState
     {
-        /// <summary>캐릭터 오클루전에 의한 표시 차단 강도(0 표시 유지 ~ 1 완전 가림).</summary>
+        /// <summary>DTO·기본값 호환. 런타임 맵·뷰 동기화는 <see cref="TileViewPresentationApplier"/>.</summary>
         public float characterOcclusion;
+        /// <summary>DTO·기본값 호환. 런타임 표현은 applier <c>SetGhosted</c>.</summary>
         public bool isGhosted;
+        /// <summary>DTO·기본값 호환. 런타임 표현은 applier <c>SetSelected</c>.</summary>
         public bool isSelected;
     }
     public readonly struct TileIdentity
@@ -37,7 +39,7 @@ using UnityEngine;namespace IsoTilemap
         public int roomId { init; get; }
     }
 
-    /// <summary>플레이어 월드와 벽 간 거리에 따른 <see cref="TileState.characterOcclusion"/> 매핑.</summary>
+    /// <summary>플레이어 월드와 벽 간 거리에 따른 오클루전 강도(0~1) 매핑.</summary>
     [Serializable]
     public struct OcclusionProximitySettings
     {

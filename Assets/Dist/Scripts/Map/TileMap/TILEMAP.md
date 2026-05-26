@@ -93,7 +93,7 @@ graph TD
 ### Cache (`TileMap/Cache/`)
 - **TileMapCacheHub.cs** — topology·building·band·room geometry 통합 조회·무효화 진입점
 - **FloorMapIndex.cs** — 셀·엣지·점유 (x,z,band) 인덱스
-- **BuildingGroupRegistry.cs** — buildingId·outdoor·room edge 역인덱스
+- **BuildingGroupRegistry.cs** — buildingId·광장(minBand) 바닥 XZ·room edge 역인덱스
 - **RoomKey.cs** — (buildingId, band, roomId) 캐시 키
 - **FloorRoomFloodFill.cs** — 방 BFS 계산 (결과는 Hub가 캐시)
 
@@ -109,9 +109,10 @@ graph TD
 
 ### 층 가시성 (`TileMap/TileVisibility/`, `PlayerFloorVisibilityPolicy`)
 
-- `IsPlayerOutdoor` ← `Hub.IsOutdoorEvaluation` (광장 XZ \| `OpenOutdoorRooms`)
-- **실내**: 동일 building `tileBand > FloorBand` Hide, scope, 아래층 peek
-- **야외**: `BuildingPlayerOcclusionResolver` — 카메라 지면↔플레이어 선분 그리드 샘플, 차단 타일의 building 통째 Hide
+- **플레이어 분기**: `IsPlayerOutdoor` ← `Hub.IsOutdoorEvaluation(band,x,z)` — minBand 광장 바닥 \| visibility bake(`EmptyDiscovered>0` ∧ `Visited`에 포함). buildingId==0으로 야외 추론 금지.
+- **타일 분기** (`IsTileVisible`): 플레이어 야외 → Outdoor 파이프라인. 플레이어 실내 → `tile.buildingId == PlayerBuildingId` 타일만 Indoor 3레이어; 그 외(광장·타 building) Show.
+- **실내(해당 building만)**: `tileBand > FloorBand` Hide, scope, 아래층 peek
+- **야외 플레이어**: `BuildingPlayerOcclusionResolver` — 차단 building은 MinBand 바닥(Floor) 제외 Hide
 
 ### Serialization
 - **TilemapSerializer.cs** — `JsonUtility` 기반 파일 읽기/쓰기

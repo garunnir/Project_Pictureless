@@ -43,11 +43,14 @@ public class TileMapManager : MonoBehaviour
     private readonly IsoWorldGrid _worldGrid = new();
 
     private TileMapStreamingVisualizer _streamingVisualizer;
+    private TileMapVisualizer _nonStreamingVisualizer;
+    private TileViewPresentationApplier _presentationApplier;
     private PlayerFloorVisibilityPolicy _floorPolicy;
     private TileMapCacheHub _mapCacheHub;
     private BuildingGroupBuilder _buildingGroupBuilder;
 
     public IMapModel Model { get; private set; }
+    public TileViewPresentationApplier PresentationApplier => _presentationApplier;
     public TilePrefabDB PrefabDB => _prefabDB;
     public IWorldGrid WorldGrid => _worldGrid;
 
@@ -66,6 +69,7 @@ public class TileMapManager : MonoBehaviour
 
         var factory = CreateTileFactory(tileContainer, UseChunkStreaming);
         IMapViewBuilder viewBuilder = CreateViewBuilder(factory, UseChunkStreaming);
+        WireTilePresentationApplier();
 
         _controller.Init(Model, viewBuilder);
 
@@ -81,7 +85,38 @@ public class TileMapManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        UnwireTilePresentationApplier();
         _floorVisibilityDriver?.Shutdown();
+    }
+
+    private void WireTilePresentationApplier()
+    {
+        UnwireTilePresentationApplier();
+
+        if (Model is not TileMapModel tileModel)
+            return;
+
+        ITileViewRegistry registry = UseChunkStreaming
+            ? _streamingVisualizer
+            : _nonStreamingVisualizer;
+
+        if (registry == null)
+            return;
+
+        _presentationApplier = new TileViewPresentationApplier(registry, tileModel);
+        tileModel.OnTileOcclusionPresentationDelta += _presentationApplier.ApplyOcclusionDelta;
+        _streamingVisualizer?.SetPresentationApplier(_presentationApplier);
+        _nonStreamingVisualizer?.SetPresentationApplier(_presentationApplier);
+    }
+
+    private void UnwireTilePresentationApplier()
+    {
+        if (Model is TileMapModel tileModel && _presentationApplier != null)
+            tileModel.OnTileOcclusionPresentationDelta -= _presentationApplier.ApplyOcclusionDelta;
+
+        _presentationApplier = null;
+        _streamingVisualizer?.SetPresentationApplier(null);
+        _nonStreamingVisualizer?.SetPresentationApplier(null);
     }
 
     private Camera ResolveFloorVisibilityCamera()
@@ -138,8 +173,11 @@ public class TileMapManager : MonoBehaviour
             _streamingVisualizer = null;
             _floorPolicy = null;
             _mapCacheHub = null;
-            return new TileMapVisualizer(factory, _worldGrid);
+            _nonStreamingVisualizer = new TileMapVisualizer(factory, _worldGrid);
+            return _nonStreamingVisualizer;
         }
+
+        _nonStreamingVisualizer = null;
 
         if (Model is TileMapModel tileModel)
         {
@@ -201,6 +239,7 @@ public class TileMapManager : MonoBehaviour
 
         var factory = CreateTileFactory(tileContainer, chunkStreaming: false);
         IMapViewBuilder viewBuilder = CreateViewBuilder(factory, chunkStreaming: false);
+        WireTilePresentationApplier();
         _controller.Init(Model, viewBuilder);
 
         Debug.Log("[TileMapManager] LoadEditor 완료.");
