@@ -127,7 +127,15 @@ namespace IsoTilemap
         readonly BuildingPlayerOcclusionResolver _occlusionResolver;
 
         readonly HashSet<int> _blockingResult = new();
+        readonly HashSet<int> _blockingPending = new();
+        readonly HashSet<int> _blockingStable = new();
+        int _blockingStableFrames;
+        const int BlockingStableFramesRequired = 3;
+
         readonly HashSet<(int x, int z, int band)> _visibleBelowScratch = new();
+
+        /// <summary>야외 시선상 가림 건물 전층 Hide. false면 차단 집합을 비웁니다.</summary>
+        public bool OutdoorSightLineBuildingHideEnabled { get; set; } = true;
 
         private PlayerFloorVisibilityPolicy(
             float cellSize,
@@ -201,11 +209,17 @@ namespace IsoTilemap
             if (isOutdoor)
             {
                 visibleBelow = new HashSet<(int x, int z, int band)>();
-                _blockingResult.Clear();
-                foreach (int id in _occlusionResolver.ResolveBlockingBuildingIds(
-                             floorBand, playerWorld, gridX, gridZ))
-                    _blockingResult.Add(id);
-                blocking = _blockingResult;
+                int rawBlockingCount = 0;
+                if (OutdoorSightLineBuildingHideEnabled)
+                {
+                    _blockingResult.Clear();
+                    foreach (int id in _occlusionResolver.ResolveBlockingBuildingIds(
+                                 floorBand, playerWorld, gridX, gridZ))
+                        _blockingResult.Add(id);
+                    rawBlockingCount = _blockingResult.Count;
+                }
+
+                blocking = StabilizeOutdoorBlocking(_blockingResult, rawBlockingCount);
             }
             else
             {
@@ -238,6 +252,50 @@ namespace IsoTilemap
                 if (!IsTileVisible(buffer[i], ctx))
                     buffer.RemoveAt(i);
             }
+        }
+
+        HashSet<int> StabilizeOutdoorBlocking(HashSet<int> raw, int rawCount)
+        {
+            if (!OutdoorSightLineBuildingHideEnabled || rawCount == 0)
+            {
+                _blockingPending.Clear();
+                _blockingStable.Clear();
+                _blockingStableFrames = 0;
+                return new HashSet<int>();
+            }
+
+            if (!SetEqualsBlocking(raw, _blockingPending))
+            {
+                _blockingPending.Clear();
+                foreach (int id in raw)
+                    _blockingPending.Add(id);
+                _blockingStableFrames = 1;
+            }
+            else
+            {
+                _blockingStableFrames++;
+            }
+
+            if (_blockingStableFrames >= BlockingStableFramesRequired)
+            {
+                _blockingStable.Clear();
+                foreach (int id in _blockingPending)
+                    _blockingStable.Add(id);
+            }
+
+            return new HashSet<int>(_blockingStable);
+        }
+
+        static bool SetEqualsBlocking(HashSet<int> a, HashSet<int> b)
+        {
+            if (a.Count != b.Count)
+                return false;
+            foreach (int id in a)
+            {
+                if (!b.Contains(id))
+                    return false;
+            }
+            return true;
         }
 
         private int ResolveFloorBand(float playerHeightWorldY)

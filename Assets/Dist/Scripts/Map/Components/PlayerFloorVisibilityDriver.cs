@@ -15,6 +15,9 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
     [Tooltip("BodyWorldPoint.y에 더할 오프셋(발끝·캡슐 보정).")]
     [SerializeField] private float _heightOffsetWorld;
 
+    [Tooltip("Play 전 Inspector. 끄면 야외 시선상 가림 건물 숨김(벽 despawn)을 하지 않습니다.")]
+    [SerializeField] private bool _outdoorSightLineBuildingHideEnabled = true;
+
     private PlayerFloorVisibilityPolicy _policy;
     private TileMapStreamingVisualizer _visualizer;
     private FloorVisibilityContext _lastCtx;
@@ -26,6 +29,7 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
         Shutdown();
 
         _policy = policy;
+        _policy.OutdoorSightLineBuildingHideEnabled = _outdoorSightLineBuildingHideEnabled;
         _visualizer = visualizer;
         _isActive = true;
         ApplyNow(); // 최초 1회 동기화 
@@ -43,6 +47,8 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
     {
         if (_policy == null || _visualizer == null || _playerState == null)
             return;
+
+        _policy.OutdoorSightLineBuildingHideEnabled = _outdoorSightLineBuildingHideEnabled;
 
         Vector3 bodyWorld = _playerState.BodyWorldPoint;
         bodyWorld.y += _heightOffsetWorld;

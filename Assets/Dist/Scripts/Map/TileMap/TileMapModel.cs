@@ -282,6 +282,26 @@ namespace IsoTilemap
             UpdateOcclusionFromPlayerWorld(world, settings);
         }
 
+        /// <summary>적용 중인 벽 캐릭터 오클루전을 모두 해제하고 뷰에 반영합니다.</summary>
+        public void ClearWallCharacterOcclusion()
+        {
+            if (_hiddenWallTileIds.Count == 0 && _lastAppliedOcclusion.Count == 0)
+                return;
+
+            _occlusionDeltaApply.Clear();
+            _occlusionDeltaClear.Clear();
+
+            foreach (Guid hiddenId in _hiddenWallTileIds)
+                _occlusionDeltaClear.Add(hiddenId);
+
+            _hiddenWallTileIds.Clear();
+            _hiddenWallTileCache.Clear();
+            _occlusionWallEntries.Clear();
+            _lastAppliedOcclusion.Clear();
+            _hasLastOcclusionPlayerCell = false;
+            RaiseOcclusionPresentationDelta();
+        }
+
         /// <summary>플레이어 월드 위치만으로 셀 전이 시 BFS + 매 호출마다 숨김 집합에 대한 거리 occlusion 갱신.</summary>
         public void UpdateOcclusionFromPlayerWorld(Vector3 playerWorld, OcclusionProximitySettings settings)
         {
@@ -290,6 +310,14 @@ namespace IsoTilemap
             NormalizeProximity(ref settings);
 
             Vector3Int cell = TileHelper.ConvertWorldToGrid(playerWorld, cs);
+
+            if (_mapCacheHub != null && _mapCacheHub.IsOutdoorEvaluation(cell.y, cell.x, cell.z))
+            {
+                if (_hiddenWallTileIds.Count > 0 || _lastAppliedOcclusion.Count > 0)
+                    ClearWallCharacterOcclusion();
+                _hasLastOcclusionPlayerCell = false;
+                return;
+            }
 
             bool needRebuild = !_hasLastOcclusionPlayerCell || cell != _lastOcclusionPlayerCell;
             if (needRebuild)
@@ -354,6 +382,7 @@ namespace IsoTilemap
             }
 
             _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex, _mapCacheHub?.Topology);
+            _occlusionFinder.MaskOptions = _occlusionFinder.MaskOptions.WithEnabled(settings.PlayerProximityMaskEnabled);
             OcclusionSelection batch = _occlusionFinder.FindOcclusion(playerCellPos, roomVisited);
             var currentHiddenIds = new HashSet<Guid>();
             _occlusionDeltaApply.Clear();

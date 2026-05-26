@@ -1,3 +1,6 @@
+// ============================================================
+// CharacterVisibilityBroadcaster — 플레이어 위치 기준 벽 캐릭터 오클루전 갱신
+// ============================================================
 using IsoTilemap;
 using UnityEngine;
 
@@ -7,6 +10,9 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
     private CharacterState _characterState;
 
     [SerializeField] private TileMapManager _tileMapManager;
+
+    [Tooltip("Play 전 Inspector. 끄면 플레이어 주변 마스크 추가 숨김만 비활성(BFS·거리 오클루전은 유지).")]
+    [SerializeField] private bool _playerProximityMaskEnabled = true;
 
     [SerializeField] private OcclusionProximitySettings _occlusionSettings =
         OcclusionProximitySettings.DefaultUnity;
@@ -24,9 +30,7 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
     private void OnEnable()
     {
         if (_characterState != null)
-        {
             SyncSettingsCellFromMapGrid();
-        }
     }
 
     private void OnDisable()
@@ -55,7 +59,8 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (_characterState == null) return;
+        if (_characterState == null)
+            return;
 
         Vector3 occlusionWorld = _characterState.IsAiming
             ? _characterState.AimWorldPoint
@@ -81,6 +86,7 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
         if (_tileMapManager?.WorldGrid != null)
             settings.CellSize = Mathf.Max(1e-4f, _tileMapManager.WorldGrid.CellSize);
 
+        settings.PlayerProximityMaskEnabled = _playerProximityMaskEnabled;
         NormalizeSettings(ref settings);
         _occlusionSettings = settings;
 

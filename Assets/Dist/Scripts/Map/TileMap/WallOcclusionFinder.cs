@@ -60,6 +60,20 @@ namespace IsoTilemap
             releaseMarginTiles: 0,
             downAxis: new Vector3Int(1, 0, -1),  // +x, -z
             rightAxis: new Vector3Int(1, 0, 1)); // +x, +z
+
+        public OcclusionMaskOptions WithEnabled(bool enabled) =>
+            new OcclusionMaskOptions(
+                enabled,
+                MinStartDepthTiles,
+                StartLeftTiles,
+                StartRightTiles,
+                SideExpandStepTiles,
+                LeftTiles,
+                RightTiles,
+                DownTiles,
+                ReleaseMarginTiles,
+                DownAxis,
+                RightAxis);
     } 
 
     public sealed class OcclusionSelection

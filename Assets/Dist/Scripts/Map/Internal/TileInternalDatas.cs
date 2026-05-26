@@ -55,12 +55,16 @@ using UnityEngine;namespace IsoTilemap
         [Tooltip("근접도 재계산 시 이전 값과 차이가 이 미만이면 배치 적용 스킵")]
         public float ApplyEpsilon;
 
+        [Tooltip("플레이어 주변 삼각 마스크로 추가 숨김 벽을 포함합니다. 끄면 BFS·거리 오클루전만 적용됩니다.")]
+        public bool PlayerProximityMaskEnabled;
+
         public static OcclusionProximitySettings DefaultUnity => new OcclusionProximitySettings
         {
             CellSize = 1f,
             OcclusionFullWithinDistance = 0.75f,
             OcclusionNoneBeyondDistance = 8f,
             ApplyEpsilon = 0.015f,
+            PlayerProximityMaskEnabled = true,
         };
     }
 
