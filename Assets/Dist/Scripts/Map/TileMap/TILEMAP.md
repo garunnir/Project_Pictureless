@@ -107,12 +107,10 @@ graph TD
 | **저장** | `TileMapModel` floor ids, `BuildingGroupRegistry`, `Hub.Rooms`/`Bands` | 역할별 분리(효율) |
 | **읽기** | `TileMapCacheHub` / `BuildingLayer` | `IsOutdoorEvaluation`, `TryGetFloorBuildingRoom` — **buildingId==0 야외 추론 금지** |
 
-### 층 가시성 (`TileMap/TileVisibility/`, `PlayerFloorVisibilityPolicy`)
+### 층 가시성·가려짐
 
-- **플레이어 분기**: `IsPlayerOutdoor` ← `Hub.IsOutdoorEvaluation(band,x,z)` — minBand 광장 바닥 \| visibility bake(`EmptyDiscovered>0` ∧ `Visited`에 포함). buildingId==0으로 야외 추론 금지.
-- **타일 분기** (`IsTileVisible`): 플레이어 야외 → Outdoor 파이프라인. 플레이어 실내 → `tile.buildingId == PlayerBuildingId` 타일만 Indoor 3레이어; 그 외(광장·타 building) Show.
-- **실내(해당 building만)**: `tileBand > FloorBand` Hide, scope, 아래층 peek
-- **야외 플레이어**: `BuildingPlayerOcclusionResolver` — 차단 building은 MinBand 바닥(Floor) 제외 Hide
+→ **상세 조건·표·흐름도**: [TILEMAP_VISIBILITY.md](TILEMAP_VISIBILITY.md)  
+(층 스트리밍 despawn, 벽 BFS 오클루전, 야외 시선 차단 흔적 — 3시스템 분리 정리)
 
 ### Serialization
 - **TilemapSerializer.cs** — `JsonUtility` 기반 파일 읽기/쓰기
@@ -153,13 +151,7 @@ graph TD
 
 ---
 
-## BFS 오클루전 알고리즘 (TileMapModel.GetOccludingWalls)
+## BFS 벽 오클루전
 
-```
-입력: playerPos (Vector3Int)
-1. playerPos 기준 XZ 평면 BFS 플러드 필
-2. 접근 가능한 빈 셀 수집 (최대 200,000회 안전 제한)
-3. 빈 셀 인접 Wall 타일 선별
-4. 전방/좌측에 Floor가 있는 벽만 반환 ("숨길 수 있는" 벽)
-출력: 숨김 처리할 TileData 목록
-```
+현재 구현은 `WallOcclusionFinder`(방 BFS + +X/-Z 방향 벽 + 거리 곡선)입니다.  
+레거시 `GetOccludingWalls` 요약은 [TILEMAP_VISIBILITY.md §3](TILEMAP_VISIBILITY.md)를 참고하세요.

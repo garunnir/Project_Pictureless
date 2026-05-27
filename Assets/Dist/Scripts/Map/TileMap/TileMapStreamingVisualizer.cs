@@ -22,8 +22,13 @@ namespace IsoTilemap
         private readonly List<Vector2Int> _chunkIteration = new();
         private readonly HashSet<Guid> _orphanCheckIds = new();
         private readonly List<Guid> _pruneGuids = new();
+        private readonly HashSet<int> _appliedBlockingBuildingIds = new();
+        private readonly List<int> _blockingAddedScratch = new();
+        private readonly List<int> _blockingRemovedScratch = new();
+        private readonly HashSet<int> _buildingsToDespawnScratch = new();
 
         private TileMapChunkIndex _chunkIndex;
+        private BuildingGroupRegistry _buildingRegistry;
         private IMapModelReadOnly _boundRuntime;
         private PlayerFloorVisibilityPolicy _floorPolicy;
         private FloorVisibilityContext _floorContext;
@@ -53,12 +58,17 @@ namespace IsoTilemap
 
         public void SetPresentationApplier(TileViewPresentationApplier applier) => _presentationApplier = applier;
 
+        public void SetBuildingRegistry(BuildingGroupRegistry buildingRegistry) =>
+            _buildingRegistry = buildingRegistry;
+
         public bool TryGetView(Guid tileId, out TileView view) => _tileViews.TryGetValue(tileId, out view);
 
         public void SyncFloorVisibility(in FloorVisibilityContext ctx)
         {
             _floorContext = ctx;
             _hasFloorContext = _floorPolicy != null;
+
+            ApplyBlockingBuildingDelta(in ctx);
 
             if (_chunkIndex == null || _loadedChunks.Count == 0)
                 return;
@@ -312,18 +322,129 @@ namespace IsoTilemap
                 _orphanCheckIds.Add(currentTiles[i].tileDefId);
 
             _pruneGuids.Clear();
+            _buildingsToDespawnScratch.Clear();
             foreach (var kv in _tileViews)
             {
                 if (_orphanCheckIds.Contains(kv.Key))
                     continue;
 
-                if (ViewTouchesCell(kv.Value, cell))
-                    _pruneGuids.Add(kv.Key);
+                if (!ViewTouchesCell(kv.Value, cell))
+                    continue;
+
+                if (TryGetBlockingBuildingIdForView(kv.Key, out int buildingId))
+                {
+                    _buildingsToDespawnScratch.Add(buildingId);
+                    continue;
+                }
+
+                _pruneGuids.Add(kv.Key);
             }
+
+            foreach (int buildingId in _buildingsToDespawnScratch)
+                DespawnAllLoadedViewsForBuilding(buildingId, in _floorContext);
 
             for (int i = 0; i < _pruneGuids.Count; i++)
                 DespawnViewCompletely(_pruneGuids[i]);
         }
+
+        void ApplyBlockingBuildingDelta(in FloorVisibilityContext ctx)
+        {
+            HashSet<int> newBlocking = ctx.PlayerBlockingBuildingIds;
+            if (newBlocking == null)
+                newBlocking = new HashSet<int>();
+
+            _blockingAddedScratch.Clear();
+            foreach (int id in newBlocking)
+            {
+                if (!_appliedBlockingBuildingIds.Contains(id))
+                    _blockingAddedScratch.Add(id);
+            }
+
+            _blockingRemovedScratch.Clear();
+            foreach (int id in _appliedBlockingBuildingIds)
+            {
+                if (!newBlocking.Contains(id))
+                    _blockingRemovedScratch.Add(id);
+            }
+
+            for (int i = 0; i < _blockingAddedScratch.Count; i++)
+                DespawnAllLoadedViewsForBuilding(_blockingAddedScratch[i], in ctx);
+
+            for (int i = 0; i < _blockingRemovedScratch.Count; i++)
+                RespawnVisibleBuildingTiles(_blockingRemovedScratch[i], in ctx);
+
+            _appliedBlockingBuildingIds.Clear();
+            foreach (int id in newBlocking)
+                _appliedBlockingBuildingIds.Add(id);
+
+            if (_presentationApplier != null && (_blockingAddedScratch.Count > 0 || _blockingRemovedScratch.Count > 0))
+            {
+                var delta = new BuildingSightLinePresentationDelta(
+                    _blockingAddedScratch, _blockingRemovedScratch);
+                _presentationApplier.ApplySightLineBlockingDelta(in delta);
+            }
+        }
+
+        void DespawnAllLoadedViewsForBuilding(int buildingId, in FloorVisibilityContext ctx)
+        {
+            if (_buildingRegistry == null || buildingId <= 0)
+                return;
+
+            foreach (Guid tileId in _buildingRegistry.GetTilesForBuilding(buildingId))
+            {
+                if (!_tileViews.ContainsKey(tileId))
+                    continue;
+
+                if (_boundRuntime != null &&
+                    _boundRuntime.TryGetTileById(tileId, out TileData tile) &&
+                    IsMinBandFloorTile(tile, ctx.MinBand))
+                    continue;
+
+                DespawnViewCompletely(tileId);
+            }
+        }
+
+        void RespawnVisibleBuildingTiles(int buildingId, in FloorVisibilityContext ctx)
+        {
+            if (_buildingRegistry == null || buildingId <= 0 || _boundRuntime == null || _floorPolicy == null)
+                return;
+
+            foreach (Guid tileId in _buildingRegistry.GetTilesForBuilding(buildingId))
+            {
+                if (!_boundRuntime.TryGetTileById(tileId, out TileData tile))
+                    continue;
+
+                if (!_floorPolicy.IsTileVisible(tile, in ctx))
+                    continue;
+
+                if (!IsTileInLoadedChunk(tile))
+                    continue;
+
+                Vector2Int chunk = _chunkIndex != null &&
+                                   _chunkIndex.TryGetChunkForTile(tileId, out Vector2Int c)
+                    ? c
+                    : TileChunkCoord.FromCell(GetRepresentativeCell(tile), _chunkSize);
+
+                AcquireTileInChunk(tile, chunk);
+            }
+        }
+
+        bool TryGetBlockingBuildingIdForView(Guid tileId, out int buildingId)
+        {
+            buildingId = 0;
+            if (_appliedBlockingBuildingIds.Count == 0)
+                return false;
+
+            if (_boundRuntime == null || !_boundRuntime.TryGetTileById(tileId, out TileData tile))
+                return false;
+
+            buildingId = tile.identity.buildingId;
+            return buildingId > 0 && _appliedBlockingBuildingIds.Contains(buildingId);
+        }
+
+        static bool IsMinBandFloorTile(TileData tile, int minBand) =>
+            tile.identity.GridPos.y == minBand &&
+            (TileView.TileType)tile.identity.tileType == TileView.TileType.Floor;
 
         private static bool ViewTouchesCell(TileView view, Vector3Int cell)
         {
@@ -379,6 +500,7 @@ namespace IsoTilemap
 
             _tileViews.Clear();
             _tileChunkRefs.Clear();
+            _appliedBlockingBuildingIds.Clear();
         }
     }
 }

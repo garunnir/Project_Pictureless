@@ -26,6 +26,14 @@ namespace IsoTilemap
             public List<TileData> Edges;
         }
 
+        struct TileLabelLayer
+        {
+            public string Label;
+            public Color Color;
+            public float Offset;
+            public List<TileData> Tiles;
+        }
+
         static readonly Vector3Int[] CardinalNeighbors =
         {
             Vector3Int.right, Vector3Int.back, Vector3Int.left, Vector3Int.forward
@@ -33,6 +41,7 @@ namespace IsoTilemap
 
         static readonly List<CellLayer> CellLayers = new();
         static readonly List<EdgeLayer> EdgeLayers = new();
+        static readonly List<TileLabelLayer> TileLabelLayers = new();
         static bool _subscribed;
 
         static GUIStyle _legendTitleStyle;
@@ -42,6 +51,7 @@ namespace IsoTilemap
         {
             CellLayers.Clear();
             EdgeLayers.Clear();
+            TileLabelLayers.Clear();
         }
 
         public static void AddCellLayer(string label, Color color, HashSet<Vector3Int> cells, float offset = 0f)
@@ -72,6 +82,20 @@ namespace IsoTilemap
             });
         }
 
+        public static void AddTileBuildingIdLabelLayer(string label, Color color, List<TileData> tiles, float offset = 0f)
+        {
+            if (tiles == null || tiles.Count == 0)
+                return;
+
+            TileLabelLayers.Add(new TileLabelLayer
+            {
+                Label = label,
+                Color = color,
+                Offset = offset,
+                Tiles = tiles
+            });
+        }
+
         public static void EnsureSubscribed()
         {
             if (_subscribed)
@@ -83,7 +107,7 @@ namespace IsoTilemap
 
         static void OnSceneGui(SceneView view)
         {
-            if (CellLayers.Count == 0 && EdgeLayers.Count == 0)
+            if (CellLayers.Count == 0 && EdgeLayers.Count == 0 && TileLabelLayers.Count == 0)
                 return;
 
             DrawLegend();
@@ -100,6 +124,12 @@ namespace IsoTilemap
                 DrawEdgeOutline(layer.Edges, layer.Offset, layer.Color);
                 DrawWorldLabel(layer.Label, layer.Color, ComputeEdgeCentroid(layer.Edges, layer.Offset));
             }
+
+            for (int i = 0; i < TileLabelLayers.Count; i++)
+            {
+                var layer = TileLabelLayers[i];
+                DrawTileBuildingIdLabels(layer.Tiles, layer.Offset, layer.Color);
+            }
         }
 
         static void DrawLegend()
@@ -107,7 +137,7 @@ namespace IsoTilemap
             EnsureLegendStyles();
             const float width = 300f;
             const float rowHeight = 18f;
-            int rowCount = CellLayers.Count + EdgeLayers.Count;
+            int rowCount = CellLayers.Count + EdgeLayers.Count + TileLabelLayers.Count;
             float height = 28f + rowCount * rowHeight;
             var area = new Rect(10f, 10f, width, height);
 
@@ -119,6 +149,8 @@ namespace IsoTilemap
                 DrawLegendRow(CellLayers[i].Color, CellLayers[i].Label);
             for (int i = 0; i < EdgeLayers.Count; i++)
                 DrawLegendRow(EdgeLayers[i].Color, EdgeLayers[i].Label);
+            for (int i = 0; i < TileLabelLayers.Count; i++)
+                DrawLegendRow(TileLabelLayers[i].Color, TileLabelLayers[i].Label);
             GUILayout.EndArea();
             Handles.EndGUI();
         }
@@ -233,6 +265,30 @@ namespace IsoTilemap
                     edgeCenter + perpendicularDir * 0.5f + cellToNeighbor * offset, 1f);
 
                 Handles.DrawLine(edgeLineStart, edgeLineEnd);
+            }
+        }
+
+        static void DrawTileBuildingIdLabels(List<TileData> tiles, float offset, Color color)
+        {
+            if (tiles == null || tiles.Count == 0)
+                return;
+
+            var seen = new HashSet<System.Guid>();
+            var style = new GUIStyle(EditorStyles.miniBoldLabel)
+            {
+                normal = { textColor = color },
+                fontSize = 10
+            };
+
+            for (int i = 0; i < tiles.Count; i++)
+            {
+                TileData tile = tiles[i];
+                if (!seen.Add(tile.tileDefId))
+                    continue;
+
+                Vector3 worldPos = TileHelper.ConvertGridToWorldPos(tile.identity.GridPos, 1f);
+                worldPos.y += 0.25f + offset;
+                Handles.Label(worldPos, $"B:{tile.identity.buildingId}", style);
             }
         }
     }

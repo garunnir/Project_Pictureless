@@ -45,6 +45,7 @@ namespace IsoTilemap
             AssignOrphanFloorBuildings();
             BakeAllRooms();
             _registry.RebuildFromTiles(_model.TilesSnapshot);
+            _registry.RebuildMinBandFloorIndex(_model.TilesSnapshot, _minBand);
             _model.MarkTilesDirty();
         }
 
@@ -127,6 +128,7 @@ namespace IsoTilemap
             TagPerimeterForSlices(slices);
             IndexEdgeWallsForSlices(slices);
             _registry.RebuildFromTiles(_model.TilesSnapshot);
+            _registry.RebuildMinBandFloorIndex(_model.TilesSnapshot, _minBand);
             _model.MarkTilesDirty();
         }
 

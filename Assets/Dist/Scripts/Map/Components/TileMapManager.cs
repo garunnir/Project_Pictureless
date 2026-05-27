@@ -104,8 +104,16 @@ public class TileMapManager : MonoBehaviour
             return;
 
         _presentationApplier = new TileViewPresentationApplier(registry, tileModel);
+        if (_floorPolicy != null && _mapCacheHub != null)
+        {
+            _presentationApplier.ConfigureSightLinePresentation(
+                _mapCacheHub.Buildings.Registry,
+                _floorPolicy.MinBand);
+        }
+
         tileModel.OnTileOcclusionPresentationDelta += _presentationApplier.ApplyOcclusionDelta;
         _streamingVisualizer?.SetPresentationApplier(_presentationApplier);
+        _streamingVisualizer?.SetBuildingRegistry(_mapCacheHub?.Buildings.Registry);
         _nonStreamingVisualizer?.SetPresentationApplier(_presentationApplier);
     }
 

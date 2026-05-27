@@ -8,6 +8,7 @@ using UnityEngine;
 /// 플레이어 월드 높이·그리드 XZ → <see cref="PlayerFloorVisibilityPolicy"/> →
 /// <see cref="TileMapStreamingVisualizer.SyncFloorVisibility"/>.
 /// </summary>
+[DefaultExecutionOrder(-100)]
 [DisallowMultipleComponent]
 public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
 {

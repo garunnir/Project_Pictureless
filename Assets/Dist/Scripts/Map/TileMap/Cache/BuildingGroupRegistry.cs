@@ -11,6 +11,7 @@ namespace IsoTilemap
         static readonly Guid[] EmptyEdgeGuids = Array.Empty<Guid>();
 
         readonly Dictionary<int, HashSet<Guid>> _tilesByBuildingId = new();
+        readonly Dictionary<int, HashSet<Guid>> _minBandFloorTilesByBuildingId = new();
         readonly Dictionary<RoomKey, HashSet<Guid>> _edgeIdsByRoom = new();
         readonly HashSet<(int x, int z)> _plazaFloorXZ = new();
         int _plazaBand = int.MinValue;
@@ -26,6 +27,7 @@ namespace IsoTilemap
         public void Clear()
         {
             _tilesByBuildingId.Clear();
+            _minBandFloorTilesByBuildingId.Clear();
             _edgeIdsByRoom.Clear();
             _plazaFloorXZ.Clear();
             _plazaBand = int.MinValue;
@@ -140,6 +142,52 @@ namespace IsoTilemap
                 return new HashSet<Guid>();
 
             return new HashSet<Guid>(set);
+        }
+
+        /// <summary>맵 bake 후 MinBand Floor 타일 guid 집합을 타일 스냅샷에서 재구성합니다.</summary>
+        public void RebuildMinBandFloorIndex(IEnumerable<TileData> tiles, int minBand)
+        {
+            _minBandFloorTilesByBuildingId.Clear();
+            if (tiles == null)
+                return;
+
+            foreach (var tile in tiles)
+            {
+                int buildingId = tile.identity.buildingId;
+                if (buildingId <= 0)
+                    continue;
+
+                if (tile.identity.GridPos.y != minBand)
+                    continue;
+
+                if ((TileView.TileType)tile.identity.tileType != TileView.TileType.Floor)
+                    continue;
+
+                RegisterMinBandFloorTile(buildingId, tile.tileDefId);
+            }
+        }
+
+        public void RegisterMinBandFloorTile(int buildingId, Guid tileId)
+        {
+            if (buildingId <= 0)
+                return;
+
+            if (!_minBandFloorTilesByBuildingId.TryGetValue(buildingId, out var set))
+            {
+                set = new HashSet<Guid>();
+                _minBandFloorTilesByBuildingId[buildingId] = set;
+            }
+
+            set.Add(tileId);
+        }
+
+        public IReadOnlyCollection<Guid> GetMinBandFloorTilesForBuilding(int buildingId)
+        {
+            if (buildingId <= 0 ||
+                !_minBandFloorTilesByBuildingId.TryGetValue(buildingId, out var set))
+                return Array.Empty<Guid>();
+
+            return set;
         }
     }
 }

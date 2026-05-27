@@ -7,12 +7,14 @@ public class ShadeObjectController : ShaderController
 {
     private int _additionalLightEnabledId;
     private int _ghostAmountId;
+    private int _sightLineBuildingHiddenId;
     private int _characterOcclusionId;
 
     protected override void CachePropertyIDs()
     {
         _additionalLightEnabledId = Shader.PropertyToID("_AdditionalLightEnabled");
         _ghostAmountId = Shader.PropertyToID("_GhostAmount");
+        _sightLineBuildingHiddenId = Shader.PropertyToID("_SightLineBuildingHidden");
         _characterOcclusionId = Shader.PropertyToID("_CharacterOcclusion");
     }
 
@@ -39,6 +41,15 @@ public class ShadeObjectController : ShaderController
             return;
         }
         Mat.SetFloat(_ghostAmountId, Mathf.Clamp01(amount));
+    }
+
+    /// <summary>야외 시선 차단 building의 MinBand Floor를 어둡게 표시합니다.</summary>
+    public void SetSightLineBuildingHidden(bool hidden)
+    {
+        if (Mat == null)
+            return;
+
+        Mat.SetFloat(_sightLineBuildingHiddenId, hidden ? 1f : 0f);
     }
 
     /// <summary>캐릭터에 가려질 때 알파 페이드(0 불투명 ~ 1 완전 투명).</summary>

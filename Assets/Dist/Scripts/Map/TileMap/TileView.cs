@@ -62,6 +62,7 @@ namespace IsoTilemap
         private TileBaseVisualState _currentBaseState = TileBaseVisualState.Visible;
         private float _characterOcclusion;
         private bool _isGhosted;
+        private bool _sightLineBuildingHidden;
         private bool _currentSelected;
         private bool _baseStateInitialized;
         private bool _selectedInitialized;
@@ -191,6 +192,13 @@ namespace IsoTilemap
 
         public void SetSelected(bool selected) => ForceApplySelectedOverlay(selected);
 
+        /// <summary>야외 시선 차단 building MinBand Floor 어둡게 표시.</summary>
+        public void SetSightLineBuildingHidden(bool hidden)
+        {
+            _sightLineBuildingHidden = hidden;
+            ApplySightLineBuildingOverlay();
+        }
+
         private void RefreshBaseVisualState()
         {
             TileBaseVisualState next = ResolveBaseState(_characterOcclusion, _isGhosted);
@@ -200,6 +208,8 @@ namespace IsoTilemap
 
             if (next == TileBaseVisualState.HiddenByCharacter)
                 ApplyCharacterOcclusionDerived();
+
+            ApplySightLineBuildingOverlay();
         }
 
         private void ApplyWorldPose(in TileData tileData, float cellSize)
@@ -265,7 +275,11 @@ namespace IsoTilemap
 
             _currentBaseState = next;
             _baseStateInitialized = true;
+            ApplySightLineBuildingOverlay();
         }
+
+        private void ApplySightLineBuildingOverlay() =>
+            _shadeController?.SetSightLineBuildingHidden(_sightLineBuildingHidden);
 
         private void ForceApplySelectedOverlay(bool next)
         {
@@ -313,6 +327,7 @@ namespace IsoTilemap
             CacheControllers();
             _characterOcclusion = 0f;
             _isGhosted = false;
+            _sightLineBuildingHidden = false;
             ForceApplyBaseState(TileBaseVisualState.Visible);
             ForceApplySelectedOverlay(false);
             SetBlockedTraceVisible(false);

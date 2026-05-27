@@ -258,38 +258,84 @@ namespace IsoTilemap
             var finalOccluding = UnionByTileId(merged, extraOccludingByPlayer);
 
 #if UNITY_EDITOR
-            if (Config.DebugMode.FloorAlgorithm)
-            {
-                var wallCheckedSnapshot = wallCellChecked;
-                var startSnapshot = start;
-                var belowEdgesSnapshot = belowEdges;
-                var cornerExtrasSnapshot = cornerExtras;
-                Action action = () =>
-                {
-                    var finalOcclusionCells = finalOccluding
-                        .Select(t => t.identity.GridPos)
-                        .ToHashSet();
-                    var extraByPlayerCells = extraOccludingByPlayer
-                        .Select(t => t.identity.GridPos)
-                        .ToHashSet();
-
-                    TileMapBfsDebugOverlay.Clear();
-                    TileMapBfsDebugOverlay.AddCellLayer("초록 — BFS 방문 바닥", Color.green, floorChecked);
-                    TileMapBfsDebugOverlay.AddCellLayer("빨강 — 인접 벽 검사 셀", Color.red, wallCheckedSnapshot, 0.05f);
-                    TileMapBfsDebugOverlay.AddCellLayer("청록 — BFS 시작 셀", Color.cyan, new HashSet<Vector3Int> { startSnapshot }, 0.01f);
-                    TileMapBfsDebugOverlay.AddCellLayer("노랑 — 최종 오클루전 셀", Color.yellow, finalOcclusionCells, 0.02f);
-                    TileMapBfsDebugOverlay.AddEdgeLayer("노랑 — 아래방향 EdgeWall", Color.yellow, belowEdgesSnapshot, 0.02f);
-                    TileMapBfsDebugOverlay.AddCellLayer("파랑 — 코너 추가 벽", Color.blue,
-                        cornerExtrasSnapshot.Select(t => t.identity.GridPos).ToHashSet(), 0.02f);
-                    TileMapBfsDebugOverlay.AddCellLayer("자홍 — 플레이어 마스크 추가", Color.magenta, extraByPlayerCells, 0.03f);
-                    TileMapBfsDebugOverlay.EnsureSubscribed();
-                };
-                StateRunner.Instance.ChangeState(new DebugTileRunner(action));
-            }
+            PublishTileSceneDebugOverlay(
+                start,
+                floorChecked,
+                wallCellChecked,
+                belowEdges,
+                cornerExtras,
+                finalOccluding,
+                extraOccludingByPlayer,
+                CollectStructuralTilesForDebugLabels());
 #endif
 
             return new OcclusionSelection(merged, extraOccludingByPlayer, finalOccluding);
         }
+
+#if UNITY_EDITOR
+        private static void PublishTileSceneDebugOverlay(
+            Vector3Int startCell,
+            HashSet<Vector3Int> floorChecked,
+            HashSet<Vector3Int> wallChecked,
+            List<TileData> belowEdges,
+            List<TileData> cornerExtras,
+            List<TileData> finalOccluding,
+            List<TileData> extraOccludingByPlayer,
+            List<TileData> structuralTiles)
+        {
+            bool showBfsOverlay = Config.DebugMode.TileBfsSceneOverlay;
+            bool showBuildingIdLabels = Config.DebugMode.TileBuildingIdLabels;
+            if (!showBfsOverlay && !showBuildingIdLabels)
+            {
+                TileMapBfsDebugOverlay.Clear();
+                return;
+            }
+
+            var finalOcclusionCells = finalOccluding
+                .Select(t => t.identity.GridPos)
+                .ToHashSet();
+            var cornerExtraCells = cornerExtras
+                .Select(t => t.identity.GridPos)
+                .ToHashSet();
+            var extraByPlayerCells = extraOccludingByPlayer
+                .Select(t => t.identity.GridPos)
+                .ToHashSet();
+            var startSnapshot = new HashSet<Vector3Int> { startCell };
+
+            Action action = () =>
+            {
+                TileMapBfsDebugOverlay.Clear();
+                if (showBfsOverlay)
+                {
+                    TileMapBfsDebugOverlay.AddCellLayer("초록 — BFS 방문 바닥", Color.green, floorChecked);
+                    TileMapBfsDebugOverlay.AddCellLayer("빨강 — 인접 벽 검사 셀", Color.red, wallChecked, 0.05f);
+                    TileMapBfsDebugOverlay.AddCellLayer("청록 — BFS 시작 셀", Color.cyan, startSnapshot, 0.01f);
+                    TileMapBfsDebugOverlay.AddCellLayer("노랑 — 최종 오클루전 셀", Color.yellow, finalOcclusionCells, 0.02f);
+                    TileMapBfsDebugOverlay.AddEdgeLayer("노랑 — 아래방향 EdgeWall", Color.yellow, belowEdges, 0.02f);
+                    TileMapBfsDebugOverlay.AddCellLayer("파랑 — 코너 추가 벽", Color.blue, cornerExtraCells, 0.02f);
+                    TileMapBfsDebugOverlay.AddCellLayer("자홍 — 플레이어 마스크 추가", Color.magenta, extraByPlayerCells, 0.03f);
+                }
+
+                if (showBuildingIdLabels)
+                    TryAddBuildingIdLabelLayer(structuralTiles);
+
+                TileMapBfsDebugOverlay.EnsureSubscribed();
+            };
+
+            StateRunner.Instance.ChangeState(new DebugTileRunner(action));
+        }
+
+        private static void TryAddBuildingIdLabelLayer(List<TileData> structuralTiles)
+        {
+            var method = typeof(TileMapBfsDebugOverlay).GetMethod(
+                "AddTileBuildingIdLabelLayer",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            if (method == null)
+                return;
+
+            method.Invoke(null, new object[] { "하양 — 구조 타일 buildingId", Color.white, structuralTiles, 0.08f });
+        }
+#endif
 
         private static MaskApplicationResult CollectAdditionalPlayerOccluding(
             List<TileData> source,
@@ -583,6 +629,32 @@ namespace IsoTilemap
 
         private static bool IsSolidCellWall(TileView.TileType type) =>
             type == TileView.TileType.Wall || type == TileView.TileType.Obstacle;
+
+        private List<TileData> CollectStructuralTilesForDebugLabels()
+        {
+            var result = new List<TileData>();
+
+            foreach (var cellTiles in _tiles.Values)
+            {
+                for (int i = 0; i < cellTiles.Count; i++)
+                {
+                    TileData tile = cellTiles[i];
+                    if (IsStructuralTile((TileView.TileType)tile.identity.tileType))
+                        result.Add(tile);
+                }
+            }
+
+            foreach (var edgeTile in _edges.Values)
+            {
+                if ((TileView.TileType)edgeTile.identity.tileType == TileView.TileType.EdgeWall)
+                    result.Add(edgeTile);
+            }
+
+            return result;
+        }
+
+        private static bool IsStructuralTile(TileView.TileType type) =>
+            type == TileView.TileType.Floor || type == TileView.TileType.Wall || type == TileView.TileType.Obstacle;
 
     }
 }

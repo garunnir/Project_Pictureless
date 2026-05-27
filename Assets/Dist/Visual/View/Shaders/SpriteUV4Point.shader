@@ -8,6 +8,7 @@ Shader "Custom/SpriteUV4Point"
         _AmbientLight ("최소 밝기", Range(0, 1)) = 0.15
         _AdditionalLightEnabled ("추가 라이트 사용", Range(0, 1)) = 1
         _GhostAmount ("고스트 블렌드", Range(0, 1)) = 0
+        _SightLineBuildingHidden ("야외 시선 차단 building 바닥", Range(0, 1)) = 0
         _CharacterOcclusion ("캐릭터 가림 투명도 (0불투명 ~ 1완전투명)", Range(0, 1)) = 0
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
         [Toggle(_ALPHATEST_ON)] _AlphaClip ("Alpha Clipping", Float) = 0
@@ -86,6 +87,7 @@ Shader "Custom/SpriteUV4Point"
                 float  _AmbientLight;
                 float  _AdditionalLightEnabled;
                 float  _GhostAmount;
+                float  _SightLineBuildingHidden;
                 float  _CharacterOcclusion;
                 float  _Cutoff;
                 float4 _UV00;
@@ -175,6 +177,9 @@ Shader "Custom/SpriteUV4Point"
 
                 half ghostAmt = saturate((half)_GhostAmount);
                 finalColor.rgb *= lerp(1.0h, 0.74h, ghostAmt);
+
+                half sightHidden = saturate((half)_SightLineBuildingHidden);
+                finalColor.rgb = lerp(finalColor.rgb, half3(0.02h, 0.02h, 0.02h), sightHidden);
 
                 half fade = saturate((half)_CharacterOcclusion);
                 finalColor.a = baseAlpha * (1.0h - fade);
