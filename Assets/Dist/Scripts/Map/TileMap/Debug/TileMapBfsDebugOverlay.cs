@@ -72,14 +72,12 @@ namespace IsoTilemap
 
             var outdoor = new HashSet<Vector3Int>();
             var indoor = new HashSet<Vector3Int>();
-            var topology = hub.Topology;
-
-            foreach (var (x, z, b) in topology.EnumerateOccupiedCells())
+            foreach (var (x, z, b) in hub.Topology.EnumerateOccupiedCells())
             {
                 if (b != band)
                     continue;
 
-                if (!topology.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
+                if (!hub.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
                     continue;
 
                 var cell = new Vector3Int(x, band, z);

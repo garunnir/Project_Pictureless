@@ -18,5 +18,8 @@ namespace IsoTilemap
 
         [VerticalGroup("Row/Info"), LabelWidth(70)]
         public string category;
+
+        [VerticalGroup("Row/Info"), LabelWidth(70)]
+        public Vector3Int size = Vector3Int.one;
     }
 }

@@ -42,6 +42,51 @@ namespace IsoTilemap
             }
             return null;
         }
+
+        public bool TryGetDefinitionSize(string id, out Vector3Int size)
+        {
+            size = Vector3Int.one;
+            if (string.IsNullOrEmpty(id))
+                return false;
+
+            for (int i = 0; i < entries.Count; i++)
+            {
+                var e = entries[i];
+                if (e == null)
+                    continue;
+
+                if (!string.Equals(e.prefabId, id, StringComparison.Ordinal))
+                    continue;
+
+                size = new Vector3Int(
+                    Mathf.Max(1, e.size.x),
+                    Mathf.Max(1, e.size.y),
+                    Mathf.Max(1, e.size.z));
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool TryResolveDefinitionSize(string id, out Vector3Int size)
+        {
+            size = Vector3Int.one;
+            if (string.IsNullOrEmpty(id))
+                return false;
+
+            var dbs = Resources.FindObjectsOfTypeAll<TilePrefabDB>();
+            for (int i = 0; i < dbs.Length; i++)
+            {
+                var db = dbs[i];
+                if (db == null)
+                    continue;
+
+                if (db.TryGetDefinitionSize(id, out size))
+                    return true;
+            }
+
+            return false;
+        }
         //public GameObject GetPrefab(int id)
         //{
         //    return entries[id].prefab;

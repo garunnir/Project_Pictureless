@@ -53,12 +53,20 @@ namespace IsoTilemap
         public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos);
         public IReadOnlyList<TileData> TilesSnapshot { get; }
         public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList);
+        /// <summary>점유·앵커 기준 셀 타일. hub가 있으면 topology, 없으면 <see cref="TryGetTiles"/> 폴백.</summary>
+        bool TryGetCellTiles(int x, int z, int band, out IReadOnlyList<TileData> tileList);
+        /// <summary>점유된 (x,z,band) 셀. hub가 있으면 topology, 없으면 앵커 dict 키 기준 폴백.</summary>
+        IEnumerable<(int x, int z, int band)> EnumerateOccupiedCells();
         bool TryGetTileById(Guid tileId, out TileData tileData);
+        /// <summary>셀 타일 + 엣지 벽을 순회합니다(읽기 전용).</summary>
+        void ForEachRuntimeTile(Action<TileData> visit);
     }
     public interface IMapModel : IMapModelReadOnly
     {
         void SetTile(TileData tileDatas);
         void RemoveTile(TileData tileData);
+        /// <summary>bake용 buildingId·roomId만 갱신하고 ID 인덱스를 동기화합니다.</summary>
+        void PatchTileIdentity(Guid tileDefId, int buildingId, int roomId);
         /// <summary><see cref="TileIdentity"/>·배치가 바뀔 때. 토폴로지(방/건물) 갱신 포함.</summary>
         void ApplyTiles(IReadOnlyList<TileData> tiles);
         /// <summary>레거시 API. 프레젠테이션은 <see cref="TileViewPresentationApplier"/> 사용.</summary>

@@ -1,5 +1,5 @@
 // ============================================================
-// BuildingVerticalLink — band 간 floor footprint XZ 겹침으로 상향 연결 판정
+// BuildingVerticalLink — 동일 (x,z) 열 + band+1 구조물로 상향 연결 판정
 // ============================================================
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,110 +8,86 @@ namespace IsoTilemap
 {
     public static class BuildingVerticalLink
     {
-        public static HashSet<int> CollectConnectedBands(
-            TopologyLayer topology,
-            HashSet<(int x, int z)> seedFootprint,
-            int startBand,
-            int maxBand)
+        public static bool CellHasStructural(
+            IMapModelReadOnly map,
+            int x,
+            int z,
+            int band,
+            bool includeIncidentEdgeWalls = false)
         {
-            var bands = new HashSet<int> { startBand };
-            if (seedFootprint == null || seedFootprint.Count == 0)
-                return bands;
-
-            var occupied = CollectOccupiedXZ(topology, seedFootprint, startBand);
-            int band = startBand;
-
-            while (band < maxBand)
+            using var tiles = new CellTileQueryBuffer(map, x, z, band, includeIncidentEdgeWalls);
+            var list = tiles.Tiles;
+            for (int i = 0; i < list.Count; i++)
             {
-                int above = band + 1;
-                var aboveOccupied = CollectBandFloorOccupiedXZ(topology, above);
-                if (!OccupiedXZOverlaps(occupied, aboveOccupied))
-                    break;
-
-                bands.Add(above);
-                foreach (var cell in aboveOccupied)
-                    occupied.Add(cell);
-
-                band = above;
-            }
-
-            return bands;
-        }
-
-        public static HashSet<(int x, int z)> CollectOccupiedXZ(
-            TopologyLayer topology,
-            HashSet<(int x, int z)> anchors,
-            int band)
-        {
-            var occupied = new HashSet<(int x, int z)>();
-            if (anchors == null)
-                return occupied;
-
-            foreach (var (ax, az) in anchors)
-                AddFloorTileFootprint(topology, ax, az, band, occupied);
-
-            return occupied;
-        }
-
-        public static HashSet<(int x, int z)> CollectBandFloorOccupiedXZ(TopologyLayer topology, int band)
-        {
-            var occupied = new HashSet<(int x, int z)>();
-            foreach (var (x, z, b) in topology.EnumerateOccupiedCells())
-            {
-                if (b != band)
-                    continue;
-
-                if (!topology.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
-                    continue;
-
-                AddFloorTileFootprint(topology, x, z, band, occupied);
-            }
-
-            return occupied;
-        }
-
-        public static bool OccupiedXZOverlaps(
-            HashSet<(int x, int z)> a,
-            HashSet<(int x, int z)> b)
-        {
-            if (a == null || b == null || a.Count == 0 || b.Count == 0)
-                return false;
-
-            foreach (var cell in a)
-            {
-                if (b.Contains(cell))
+                if (IsStructuralType((TileView.TileType)list[i].identity.tileType))
                     return true;
             }
 
             return false;
         }
 
-        static void AddFloorTileFootprint(
-            TopologyLayer topology,
-            int anchorX,
-            int anchorZ,
+        public static bool CellHasVerticalSource(
+            IMapModelReadOnly map,
+            int x,
+            int z,
             int band,
-            HashSet<(int x, int z)> occupied)
+            int buildingId,
+            bool includeIncidentEdgeWalls = false)
         {
-            if (!topology.TryGetCellTiles(anchorX, anchorZ, band, out var list))
-                return;
-
+            using var tiles = new CellTileQueryBuffer(map, x, z, band, includeIncidentEdgeWalls);
+            var list = tiles.Tiles;
             for (int i = 0; i < list.Count; i++)
             {
                 var tile = list[i];
-                if ((TileView.TileType)tile.identity.tileType != TileView.TileType.Floor)
+                var type = (TileView.TileType)tile.identity.tileType;
+                if (!IsVerticalSourceType(type))
                     continue;
 
-                var pos = tile.identity.GridPos;
-                var size = tile.identity.sizeUnit;
-                if (size.x < 1) size.x = 1;
-                if (size.z < 1) size.z = 1;
+                if (tile.identity.buildingId == buildingId)
+                    return true;
+            }
 
-                for (int dx = 0; dx < size.x; dx++)
-                {
-                    for (int dz = 0; dz < size.z; dz++)
-                        occupied.Add((pos.x + dx, pos.z + dz));
-                }
+            return false;
+        }
+
+        static bool IsStructuralType(TileView.TileType type) =>
+            type is TileView.TileType.Floor
+                or TileView.TileType.Wall
+                or TileView.TileType.EdgeWall
+                or TileView.TileType.Obstacle;
+
+        static bool IsVerticalSourceType(TileView.TileType type) =>
+            type is TileView.TileType.Floor
+                or TileView.TileType.Wall
+                or TileView.TileType.EdgeWall;
+
+        /// <summary>
+        /// 셀 타일 조회 기본값은 기존 동작(incident edge 제외)을 유지합니다.
+        /// 필요 시 includeIncidentEdgeWalls=true로 인접 EdgeWall을 함께 조회합니다.
+        /// </summary>
+        sealed class CellTileQueryBuffer : System.IDisposable
+        {
+            readonly List<TileData> _scratch = new();
+            public IReadOnlyList<TileData> Tiles => _scratch;
+
+            public CellTileQueryBuffer(
+                IMapModelReadOnly map,
+                int x,
+                int z,
+                int band,
+                bool includeIncidentEdgeWalls)
+            {
+                if (map.TryGetCellTiles(x, z, band, out var baseList))
+                    _scratch.AddRange(baseList);
+
+                if (!includeIncidentEdgeWalls)
+                    return;
+
+                map.EdgeBinder.AppendIncidentEdges(new Vector3Int(x, band, z), _scratch);
+            }
+
+            public void Dispose()
+            {
             }
         }
     }

@@ -96,8 +96,20 @@ namespace IsoTilemap
         public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList) =>
             _runtimeData.TryGetTiles(pos, out tileList);
 
+        public bool TryGetCellTiles(int x, int z, int band, out IReadOnlyList<TileData> tileList) =>
+            _runtimeData.TryGetCellTiles(x, z, band, out tileList);
+
+        public IEnumerable<(int x, int z, int band)> EnumerateOccupiedCells() =>
+            _runtimeData.EnumerateOccupiedCells();
+
         public bool TryGetTileById(Guid tileId, out TileData tileData) =>
             _runtimeData.TryGetTileById(tileId, out tileData);
+
+        public void ForEachRuntimeTile(Action<TileData> visit) =>
+            _runtimeData.ForEachRuntimeTile(visit);
+
+        public void PatchTileIdentity(Guid tileDefId, int buildingId, int roomId) =>
+            _runtimeData.PatchTileIdentity(tileDefId, buildingId, roomId);
 
         public void Initialize(MapModelDTO prepared)
         {

@@ -56535,6 +56535,7 @@ MonoBehaviour:
   floorAlgorithm: 1
   tileBfsSceneOverlay: 0
   tileBuildingIdLabels: 1
+  tileIndoorOutdoorOverlay: 1
   player: 1
   playerInteraction: 1
   playerMovement: 1

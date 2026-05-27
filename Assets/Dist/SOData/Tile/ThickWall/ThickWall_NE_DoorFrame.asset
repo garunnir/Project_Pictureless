@@ -16,3 +16,4 @@ MonoBehaviour:
   prefabId: ThickWall/Wall_NE_DoorFrame
   prefab: {fileID: 3204928609027114191, guid: d7d1fe6fd5da5074d947e01087f96417, type: 3}
   category: 
+  size: {x: 1, y: 1, z: 1}

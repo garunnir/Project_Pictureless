@@ -16,3 +16,4 @@ MonoBehaviour:
   prefabId: SlimWall/Wall_NE
   prefab: {fileID: 4564056231589408435, guid: 2af71c1ba948a20449d4dfc5f05fbaa1, type: 3}
   category: 
+  size: {x: 1, y: 2, z: 1}

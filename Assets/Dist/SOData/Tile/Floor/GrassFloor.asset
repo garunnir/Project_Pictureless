@@ -15,3 +15,5 @@ MonoBehaviour:
   thumbnail: {fileID: 21300000, guid: c08a95def94989249a06a5613232c01e, type: 3}
   prefabId: Floor/GrassFloor
   prefab: {fileID: 3604406109386049671, guid: 1a5cedd84fe866d46885007563312eff, type: 3}
+  category: 
+  size: {x: 1, y: 1, z: 1}

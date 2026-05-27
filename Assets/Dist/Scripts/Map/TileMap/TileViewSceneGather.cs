@@ -21,13 +21,12 @@ namespace IsoTilemap
 
                 byte t = (byte)v.tileType;
                 byte ef = TileIdentity.EdgeFaceNone;
-                Vector3Int size = v.size;
+                Vector3Int size = ResolveSizeFromDefinition(v.prefabId, v.tileType);
                 Vector3Int grid = v.gridPos;
 
                 if (v.tileType == TileView.TileType.EdgeWall)
                 {
                     ef = (byte)Mathf.Clamp(v.wallEdgeFace, 0, 1);
-                    size = Vector3Int.one;
                 }
 
                 list.Add(new TileData
@@ -46,6 +45,18 @@ namespace IsoTilemap
             }
 
             return list;
+        }
+
+        static Vector3Int ResolveSizeFromDefinition(string prefabId, TileView.TileType tileType)
+        {
+            if (TilePrefabDB.TryResolveDefinitionSize(prefabId, out var size))
+                return size;
+
+            // 정의가 없으면 기존 기본값을 유지합니다.
+            if (tileType == TileView.TileType.EdgeWall)
+                return Vector3Int.one;
+
+            return Vector3Int.one;
         }
     }
 }

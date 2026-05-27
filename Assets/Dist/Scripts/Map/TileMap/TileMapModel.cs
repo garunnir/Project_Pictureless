@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace IsoTilemap
 {
+    // ============================================================
+    // TileMapModel — 런타임 타일 저장·조회·오클루전의 단일 창구
+    // ============================================================
     public class TileMapModel : IMapModel
     {
         public event Action<Vector3Int, IReadOnlyList<TileData>> OnRuntimeDataChanged;
@@ -12,8 +15,9 @@ namespace IsoTilemap
         public event Action<TileData> OnRuntimeTileRemoved;
         public event Action<TileOcclusionPresentationDelta> OnTileOcclusionPresentationDelta;
 
-        public Dictionary<Vector3Int, List<TileData>> tiles = new Dictionary<Vector3Int, List<TileData>>();
+        internal Dictionary<Vector3Int, List<TileData>> tiles = new Dictionary<Vector3Int, List<TileData>>();
 
+        /// <summary>파생 인덱스: <see cref="tiles"/>·edgeBinder와 동기화된 Guid 조회용.</summary>
         private readonly Dictionary<Guid, TileData> _tilesById = new Dictionary<Guid, TileData>();
         private readonly TileEdgeBinder _edgeBinder = new TileEdgeBinder();
 
@@ -27,6 +31,7 @@ namespace IsoTilemap
         private readonly List<Guid> _occlusionDeltaClear = new List<Guid>();
         private readonly List<OcclusionWallEntry> _occlusionWallEntries = new List<OcclusionWallEntry>();
         private readonly HashSet<Vector3Int> _changedCellsBuffer = new HashSet<Vector3Int>();
+        private readonly List<TileData> _edgeVisitBuffer = new List<TileData>();
 
         private bool _hasLastOcclusionPlayerCell;
         private Vector3Int _lastOcclusionPlayerCell;
@@ -167,6 +172,105 @@ namespace IsoTilemap
 
         public bool TryGetTileById(Guid tileId, out TileData tileData) => TryFindTileById(tileId, out tileData);
 
+        public bool TryGetCellTiles(int x, int z, int band, out IReadOnlyList<TileData> tileList)
+        {
+            if (_mapCacheHub != null &&
+                _mapCacheHub.TryGetCellTiles(x, z, band, out var hubList))
+            {
+                tileList = hubList;
+                return true;
+            }
+
+            return TryGetTiles(new Vector3Int(x, band, z), out tileList);
+        }
+
+        public IEnumerable<(int x, int z, int band)> EnumerateOccupiedCells()
+        {
+            if (_mapCacheHub != null)
+                return _mapCacheHub.Topology.EnumerateOccupiedCells();
+
+            return EnumerateOccupiedCellsFromAnchorDict();
+        }
+
+        IEnumerable<(int x, int z, int band)> EnumerateOccupiedCellsFromAnchorDict()
+        {
+            foreach (var pos in tiles.Keys)
+                yield return (pos.x, pos.z, pos.y);
+        }
+
+        public void ForEachRuntimeTile(Action<TileData> visit)
+        {
+            if (visit == null)
+                return;
+
+            foreach (var list in tiles.Values)
+            {
+                for (int i = 0; i < list.Count; i++)
+                    visit(list[i]);
+            }
+
+            // PatchTileIdentity 등이 _edges를 갱신할 수 있어 순회 중 수정을 피합니다.
+            _edgeVisitBuffer.Clear();
+            foreach (var edgeTile in _edgeBinder.EnumerateTiles())
+                _edgeVisitBuffer.Add(edgeTile);
+
+            for (int i = 0; i < _edgeVisitBuffer.Count; i++)
+                visit(_edgeVisitBuffer[i]);
+        }
+
+        public void PatchTileIdentity(Guid tileDefId, int buildingId, int roomId)
+        {
+            if (!TryFindTileById(tileDefId, out var tile))
+                return;
+
+            var updated = new TileData
+            {
+                tileDefId = tile.tileDefId,
+                state = tile.state,
+                identity = CopyIdentity(tile.identity, buildingId, roomId),
+            };
+
+            if ((TileView.TileType)tile.identity.tileType == TileView.TileType.EdgeWall)
+            {
+                if (_edgeBinder.TryReplaceTileData(updated))
+                    IndexTile(updated);
+                return;
+            }
+
+            Vector3Int pos = tile.identity.GridPos;
+            if (!tiles.TryGetValue(pos, out var list))
+                return;
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].tileDefId != tileDefId)
+                    continue;
+
+                list[i] = updated;
+                IndexTile(updated);
+                return;
+            }
+        }
+
+        /// <summary>런타임 원본(tiles·edge)에서 ID 인덱스를 전부 다시 채웁니다.</summary>
+        internal void ReindexTilesByIdFromRuntime()
+        {
+            _tilesById.Clear();
+            ForEachRuntimeTile(t => IndexTile(t));
+        }
+
+        private static TileIdentity CopyIdentity(in TileIdentity id, int buildingId, int roomId) =>
+            new TileIdentity
+            {
+                PrefabId = id.PrefabId,
+                GridPos = id.GridPos,
+                sizeUnit = id.sizeUnit,
+                tileType = id.tileType,
+                edgeFace = id.edgeFace,
+                buildingId = buildingId,
+                roomId = roomId,
+            };
+
         private void SetEdgeTile(TileData tileData)
         {
             var key = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
@@ -242,7 +346,7 @@ namespace IsoTilemap
 
             _isDirty = true;
             _mapCacheHub?.Topology.RebuildOccupancy();
-            _occlusionFinder = new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex, _mapCacheHub?.Topology);
+            _occlusionFinder = new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex, _mapCacheHub?.Topology, this);
             _hiddenWallTileIds.Clear();
             _hiddenWallTileCache.Clear();
             _occlusionWallEntries.Clear();
@@ -258,7 +362,7 @@ namespace IsoTilemap
 
         public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {
-            _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex, _mapCacheHub?.Topology);
+            _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex, _mapCacheHub?.Topology, this);
             return _occlusionFinder.Find(playerCellPos);
         }
 
@@ -381,7 +485,7 @@ namespace IsoTilemap
                     FloorRoomBfsProfile.Occlusion);
             }
 
-            _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex, _mapCacheHub?.Topology);
+            _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex, _mapCacheHub?.Topology, this);
             _occlusionFinder.MaskOptions = _occlusionFinder.MaskOptions.WithEnabled(settings.PlayerProximityMaskEnabled);
             OcclusionSelection batch = _occlusionFinder.FindOcclusion(playerCellPos, roomVisited);
             var currentHiddenIds = new HashSet<Guid>();

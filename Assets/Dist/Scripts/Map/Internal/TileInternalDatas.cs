@@ -32,8 +32,14 @@ using UnityEngine;namespace IsoTilemap
         public byte tileType{init; get;}
         public byte edgeFace{init; get;}
 
-        /// <summary>0=미할당. 야외 여부는 Hub <c>IsOutdoorEvaluation</c>으로만 판정(buildingId==0 추론 금지).</summary>
+        /// <summary>bake: <see cref="BuildingIdUnassigned"/> 미할당, <see cref="BuildingIdOutdoor"/> 광장 Floor, &gt;0 건물. 런타임 야외 분기는 <c>IsOutdoorEvaluation</c>.</summary>
         public int buildingId { init; get; }
+
+        /// <summary>bake 초기·건물 BFS 대기 Floor.</summary>
+        public const int BuildingIdUnassigned = 0;
+
+        /// <summary>MinBand 광장 Floor (야외 BFS 확정 후).</summary>
+        public const int BuildingIdOutdoor = -1;
 
         /// <summary>0=room 미할당; 같은 buildingId·band 내 방 번호.</summary>
         public int roomId { init; get; }

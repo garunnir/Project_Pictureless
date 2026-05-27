@@ -30,7 +30,10 @@ namespace IsoTilemap
                         PrefabId = td.prefabId,
                         tileType = td.tileType,
                         GridPos = new Vector3Int(td.x, td.y, td.z),
-                        sizeUnit = new Vector3Int(td.sizeX, td.sizeY, td.sizeZ),
+                        sizeUnit = ResolveSizeFromDefinition(
+                            td.prefabId,
+                            (TileView.TileType)td.tileType,
+                            new Vector3Int(td.sizeX, td.sizeY, td.sizeZ)),
                         edgeFace = edgeFace,
                     }
                 });
@@ -49,7 +52,10 @@ namespace IsoTilemap
                         {
                             PrefabId = we.prefabId,
                             GridPos = new Vector3Int(we.x, we.y, we.z),
-                            sizeUnit = Vector3Int.one,
+                            sizeUnit = ResolveSizeFromDefinition(
+                                we.prefabId,
+                                TileView.TileType.EdgeWall,
+                                Vector3Int.one),
                             tileType = (byte)TileView.TileType.EdgeWall,
                             edgeFace = faceClamped,
                         }
@@ -95,6 +101,20 @@ namespace IsoTilemap
             }
 
             return tile;
+        }
+
+        static Vector3Int ResolveSizeFromDefinition(string prefabId, TileView.TileType tileType, Vector3Int fallback)
+        {
+            if (TilePrefabDB.TryResolveDefinitionSize(prefabId, out var size))
+                return size;
+
+            if (tileType == TileView.TileType.EdgeWall)
+                return Vector3Int.one;
+
+            return new Vector3Int(
+                Mathf.Max(1, fallback.x),
+                Mathf.Max(1, fallback.y),
+                Mathf.Max(1, fallback.z));
         }
     }
 }

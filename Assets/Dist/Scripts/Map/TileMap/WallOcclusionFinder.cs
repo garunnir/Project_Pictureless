@@ -123,17 +123,21 @@ namespace IsoTilemap
         private readonly Dictionary<Vector3Int, List<TileData>> _tiles;
         private readonly IReadOnlyDictionary<WallEdgeKey, TileData> _edges;
         private readonly TopologyLayer _topology;
+        private readonly IMapModelReadOnly _cellQuery;
         public OcclusionMaskOptions MaskOptions { get; set; } = OcclusionMaskOptions.Default;
 
         /// <param name="edges"><see cref="TileEdgeBinder"/> 등 면 벽 레지스트리 인덱스(셀 리스트와 분리).</param>
         /// <param name="topology">공유 <see cref="TileMapCacheHub.Topology"/> (null이면 내부 인덱스 생성).</param>
+        /// <param name="cellQuery">셀 조회 창구. 있으면 <see cref="IMapModelReadOnly.TryGetCellTiles"/>·<see cref="IMapModelReadOnly.EnumerateOccupiedCells"/> 사용.</param>
         public WallOcclusionFinder(
             Dictionary<Vector3Int, List<TileData>> tiles,
             IReadOnlyDictionary<WallEdgeKey, TileData> edges,
-            TopologyLayer topology = null)
+            TopologyLayer topology = null,
+            IMapModelReadOnly cellQuery = null)
         {
             _tiles = tiles;
             _edges = edges ?? EmptyEdges;
+            _cellQuery = cellQuery;
             _topology = topology ?? new TopologyLayer(new FloorMapIndex(_tiles, _edges));
         }
 
@@ -155,7 +159,7 @@ namespace IsoTilemap
             // Top edges are classified for diagnostics and symmetry, but are not hidden.
             var topEdgeSet = new HashSet<TileData>();
 
-            if (_tiles.TryGetValue(start, out var startList))
+            if (TryGetCellTilesAt(start, out var startList))
             {
                 bool hasBlocking = startList.Any(t => IsSolidCellWall((TileView.TileType)t.identity.tileType));
 
@@ -165,7 +169,7 @@ namespace IsoTilemap
                     foreach (var d in CardinalNeighbors)
                     {
                         var n = new Vector3Int(start.x + d.x, start.y, start.z + d.z);
-                        if (_tiles.TryGetValue(n, out var nList) &&
+                        if (TryGetCellTilesAt(n, out var nList) &&
                             !nList.Any(x => IsSolidCellWall((TileView.TileType)x.identity.tileType)))
                         {
                             start = n;
@@ -186,7 +190,7 @@ namespace IsoTilemap
                 }
             }
 
-            if (_tiles.TryGetValue(start, out var stlist))
+            if (TryGetCellTilesAt(start, out var stlist))
             {
                 if (stlist == null || stlist.Count == 0)
                 {
@@ -219,7 +223,7 @@ namespace IsoTilemap
                     if (visited.Contains(nx))
                         continue;
 
-                    if (!_tiles.TryGetValue(nx, out var list))
+                    if (!TryGetCellTilesAt(nx, out var list))
                         continue;
 
                     bool hasSolidWall = false;
@@ -406,20 +410,14 @@ namespace IsoTilemap
         {
             var result = new List<TileData>();
 
-            foreach (var cellTiles in _tiles.Values)
+            ForEachOccupiedCellTileDistinct(tile =>
             {
-                for (int i = 0; i < cellTiles.Count; i++)
-                {
-                    TileData tile = cellTiles[i];
-                    if (IsSolidCellWall((TileView.TileType)tile.identity.tileType))
-                        result.Add(tile);
-                }
-            }
+                if (IsSolidCellWall((TileView.TileType)tile.identity.tileType))
+                    result.Add(tile);
+            });
 
             foreach (var edgeTile in _edges.Values)
-            {
                 result.Add(edgeTile);
-            }
 
             return result;
         }
@@ -525,7 +523,7 @@ namespace IsoTilemap
             var result = new List<TileData>();
             foreach (var d in BottomOcclusionDirections)
             {
-                if (_tiles.TryGetValue(center + d, out var list))
+                if (TryGetCellTilesAt(center + d, out var list))
                 {
                     foreach (var t in list)
                     {
@@ -572,7 +570,7 @@ namespace IsoTilemap
             {
                 if (kv.Value < 2)
                     continue;
-                if (!_tiles.TryGetValue(kv.Key, out var list))
+                if (!TryGetCellTilesAt(kv.Key, out var list))
                     continue;
                 foreach (var t in list)
                 {
@@ -604,15 +602,30 @@ namespace IsoTilemap
 
         private bool CellHasOccludableWall(Vector3Int cell)
         {
-            if (_tiles.TryGetValue(cell, out var list))
+            if (!TryGetCellTilesAt(cell, out var list))
+                return false;
+
+            foreach (var t in list)
             {
-                foreach (var t in list)
-                {
-                    if (IsSolidCellWall((TileView.TileType)t.identity.tileType))
-                        return true;
-                }
+                if (IsSolidCellWall((TileView.TileType)t.identity.tileType))
+                    return true;
             }
 
+            return false;
+        }
+
+        private bool TryGetCellTilesAt(Vector3Int cell, out IReadOnlyList<TileData> list)
+        {
+            if (_cellQuery != null)
+                return _cellQuery.TryGetCellTiles(cell.x, cell.z, cell.y, out list);
+
+            if (_topology.TryGetCellTiles(cell.x, cell.z, cell.y, out var hubList))
+            {
+                list = hubList;
+                return true;
+            }
+
+            list = null;
             return false;
         }
 
@@ -622,24 +635,57 @@ namespace IsoTilemap
         private List<TileData> CollectStructuralTilesForDebugLabels()
         {
             var result = new List<TileData>();
+            var seen = new HashSet<Guid>();
 
-            foreach (var cellTiles in _tiles.Values)
+            ForEachOccupiedCellTileDistinct(tile =>
             {
-                for (int i = 0; i < cellTiles.Count; i++)
-                {
-                    TileData tile = cellTiles[i];
-                    if (IsStructuralTile((TileView.TileType)tile.identity.tileType))
-                        result.Add(tile);
-                }
-            }
+                if (!IsStructuralTile((TileView.TileType)tile.identity.tileType))
+                    return;
+
+                if (!seen.Add(tile.tileDefId))
+                    return;
+
+                result.Add(tile);
+            });
 
             foreach (var edgeTile in _edges.Values)
             {
-                if ((TileView.TileType)edgeTile.identity.tileType == TileView.TileType.EdgeWall)
-                    result.Add(edgeTile);
+                if ((TileView.TileType)edgeTile.identity.tileType != TileView.TileType.EdgeWall)
+                    continue;
+
+                if (!seen.Add(edgeTile.tileDefId))
+                    continue;
+
+                result.Add(edgeTile);
             }
 
             return result;
+        }
+
+        void ForEachOccupiedCellTileDistinct(Action<TileData> visit)
+        {
+            if (visit == null)
+                return;
+
+            var seen = new HashSet<Guid>();
+            IEnumerable<(int x, int z, int band)> occupiedCells = _cellQuery != null
+                ? _cellQuery.EnumerateOccupiedCells()
+                : _topology.EnumerateOccupiedCells();
+
+            foreach (var (x, z, band) in occupiedCells)
+            {
+                if (!TryGetCellTilesAt(new Vector3Int(x, band, z), out var list))
+                    continue;
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    TileData tile = list[i];
+                    if (!seen.Add(tile.tileDefId))
+                        continue;
+
+                    visit(tile);
+                }
+            }
         }
 
         private static bool IsStructuralTile(TileView.TileType type) =>

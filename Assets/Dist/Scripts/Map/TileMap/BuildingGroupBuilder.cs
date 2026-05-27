@@ -44,6 +44,7 @@ namespace IsoTilemap
             AssignBuildingsFromSeeds(CollectY0BuildingSeeds());
             AssignOrphanFloorBuildings();
             BakeAllRooms();
+            _model.ReindexTilesByIdFromRuntime();
             _registry.RebuildFromTiles(_model.TilesSnapshot);
             _registry.RebuildMinBandFloorIndex(_model.TilesSnapshot, _minBand);
             _model.MarkTilesDirty();
@@ -56,15 +57,15 @@ namespace IsoTilemap
             _registry.SetPlazaOutdoor(_minBand, newOutdoor);
 
             foreach (var (x, z) in newOutdoor)
-                SetFloorBuildingRoom(x, _minBand, z, 0, 0);
+                SetFloorBuildingRoom(x, _minBand, z, TileIdentity.BuildingIdOutdoor, 0);
 
             foreach (var (x, z) in oldOutdoor)
             {
                 if (newOutdoor.Contains((x, z)))
                     continue;
 
-                if (_topology.TryGetCellTiles(x, z, _minBand, out _))
-                    SetFloorBuildingRoom(x, _minBand, z, 0, 0);
+                if (_model.TryGetCellTiles(x, z, _minBand, out _))
+                    SetFloorBuildingRoom(x, _minBand, z, TileIdentity.BuildingIdUnassigned, 0);
             }
         }
 
@@ -127,6 +128,7 @@ namespace IsoTilemap
 
             TagPerimeterForSlices(slices);
             IndexEdgeWallsForSlices(slices);
+            _model.ReindexTilesByIdFromRuntime();
             _registry.RebuildFromTiles(_model.TilesSnapshot);
             _registry.RebuildMinBandFloorIndex(_model.TilesSnapshot, _minBand);
             _model.MarkTilesDirty();
@@ -137,7 +139,9 @@ namespace IsoTilemap
             int buildingId = removed.identity.buildingId;
             int band = removed.identity.GridPos.y;
 
-            if (buildingId == 0 && IsFloorTile(removed))
+            if (IsFloorTile(removed) &&
+                (buildingId == TileIdentity.BuildingIdOutdoor ||
+                 buildingId == TileIdentity.BuildingIdUnassigned))
                 RecomputeOutdoorFromMinAndRebuildLost(changedCells);
             else if (buildingId > 0)
                 RebuildRooms(CollectAffectedRoomKeys(removed, changedCells));
@@ -205,7 +209,7 @@ namespace IsoTilemap
             _minBand = int.MaxValue;
             _maxBand = int.MinValue;
 
-            foreach (var (x, z, band) in _topology.EnumerateOccupiedCells())
+            foreach (var (x, z, band) in _model.EnumerateOccupiedCells())
             {
                 if (band < _minBand) _minBand = band;
                 if (band > _maxBand) _maxBand = band;
@@ -220,27 +224,13 @@ namespace IsoTilemap
 
         void ResetStructuralIds()
         {
-            foreach (var list in _model.tiles.Values)
+            _model.ForEachRuntimeTile(tile =>
             {
-                for (int i = 0; i < list.Count; i++)
-                {
-                    if (!IsStructural(list[i]))
-                        continue;
+                if (!IsStructural(tile))
+                    return;
 
-                    ReplaceTileBuildingRoom(list, i, 0, 0);
-                }
-            }
-
-            foreach (var tile in SnapshotEdgeTiles())
-                ReplaceTileBuildingRoom(tile.tileDefId, 0, 0);
-        }
-
-        List<TileData> SnapshotEdgeTiles()
-        {
-            var snapshot = new List<TileData>();
-            foreach (var tile in _edgeBinder.EnumerateTiles())
-                snapshot.Add(tile);
-            return snapshot;
+                _model.PatchTileIdentity(tile.tileDefId, TileIdentity.BuildingIdUnassigned, 0);
+            });
         }
 
         HashSet<(int x, int z)> ComputeOutdoorXZ()
@@ -260,12 +250,12 @@ namespace IsoTilemap
             seedZ = int.MaxValue;
             bool found = false;
 
-            foreach (var (x, z, band) in _topology.EnumerateOccupiedCells())
+            foreach (var (x, z, band) in _model.EnumerateOccupiedCells())
             {
                 if (band != _minBand)
                     continue;
 
-                if (!_topology.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
+                if (!_model.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
                     continue;
 
                 if (x < seedX || (x == seedX && z < seedZ))
@@ -289,7 +279,7 @@ namespace IsoTilemap
         {
             var seeds = new HashSet<(int x, int z)>();
 
-            foreach (var (x, z, band) in _topology.EnumerateOccupiedCells())
+            foreach (var (x, z, band) in _model.EnumerateOccupiedCells())
             {
                 if (band != _minBand)
                     continue;
@@ -297,10 +287,10 @@ namespace IsoTilemap
                 if (_registry.IsPlazaXZ(x, z))
                     continue;
 
-                if (!_topology.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
+                if (!_model.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
                     continue;
 
-                if (GetFloorBuildingId(x, band, z) != 0)
+                if (!IsFloorBuildingUnassigned(x, band, z))
                     continue;
 
                 seeds.Add((x, z));
@@ -318,7 +308,7 @@ namespace IsoTilemap
 
             foreach (var (seedX, seedZ) in seeds)
             {
-                if (GetFloorBuildingId(seedX, _minBand, seedZ) != 0)
+                if (!IsFloorBuildingUnassigned(seedX, _minBand, seedZ))
                     continue;
 
                 if (outdoor.Contains((seedX, seedZ)))
@@ -343,65 +333,146 @@ namespace IsoTilemap
             int seedBand,
             HashSet<(int x, int z)> outdoorExclude)
         {
-            var bands = new List<int>(
-                BuildingVerticalLink.CollectConnectedBands(
-                    _topology, seedFootprint, seedBand, _maxBand));
-            bands.Sort();
+            var columns = new HashSet<(int x, int z)>(seedFootprint);
 
-            var linkOccupied = BuildingVerticalLink.CollectOccupiedXZ(
-                _topology, seedFootprint, seedBand);
-
-            foreach (int band in bands)
+            for (int band = seedBand; band <= _maxBand; band++)
             {
-                HashSet<(int x, int z)> assignCells = band == seedBand
-                    ? seedFootprint
-                    : IntersectXZ(
-                        BuildingVerticalLink.CollectBandFloorOccupiedXZ(_topology, band),
-                        linkOccupied);
+                var bandFloors = AssignBandFloors(buildingId, band, seedBand, seedFootprint, columns, outdoorExclude);
 
-                foreach (var (x, z) in assignCells)
+                var structuralCells = new HashSet<(int x, int z)>(columns);
+                foreach (var cell in bandFloors)
+                    structuralCells.Add(cell);
+
+                SetStructuralBuildingId(structuralCells, band, buildingId);
+
+                var probeXZ = CollectVerticalProbeXZ(band, buildingId);
+                if (band >= _maxBand)
+                    break;
+
+                var nextColumns = new HashSet<(int x, int z)>();
+                foreach (var (x, z) in probeXZ)
+                {
+                    if (BuildingVerticalLink.CellHasStructural(
+                            _model, x, z, band + 1,
+                            includeIncidentEdgeWalls: true))
+                        nextColumns.Add((x, z));
+                }
+
+                if (nextColumns.Count == 0)
+                    break;
+
+                columns = nextColumns;
+            }
+        }
+
+        HashSet<(int x, int z)> AssignBandFloors(
+            int buildingId,
+            int band,
+            int seedBand,
+            HashSet<(int x, int z)> seedFootprint,
+            HashSet<(int x, int z)> columns,
+            HashSet<(int x, int z)> outdoorExclude)
+        {
+            var bandFloors = new HashSet<(int x, int z)>();
+
+            if (band == seedBand)
+            {
+                foreach (var (x, z) in seedFootprint)
                 {
                     if (outdoorExclude != null && band == _minBand && outdoorExclude.Contains((x, z)))
                         continue;
 
-                    if (GetFloorBuildingId(x, band, z) != 0)
+                    if (!IsFloorBuildingUnassigned(x, band, z))
                         continue;
 
                     SetFloorBuildingRoom(x, band, z, buildingId, 0);
+                    bandFloors.Add((x, z));
                 }
 
-                foreach (var cell in BuildingVerticalLink.CollectOccupiedXZ(_topology, assignCells, band))
-                    linkOccupied.Add(cell);
+                return bandFloors;
             }
+
+            foreach (var (x, z) in columns)
+            {
+                if (!_model.TryGetCellTiles(x, z, band, out var list) ||
+                    !FloorMapIndex.CellHasFloor(list))
+                    continue;
+
+                if (!IsFloorBuildingUnassigned(x, band, z))
+                {
+                    if (GetFloorBuildingId(x, band, z) == buildingId)
+                        bandFloors.Add((x, z));
+                    continue;
+                }
+
+                var footprint = FloorRoomFloodFill.Run(
+                    _topology.Index, band, x, z,
+                    collectEmptyNeighbors: false,
+                    excludeCells: band == _minBand ? outdoorExclude : null).Visited;
+
+                foreach (var (fx, fz) in footprint)
+                {
+                    if (!IsFloorBuildingUnassigned(fx, band, fz))
+                        continue;
+
+                    SetFloorBuildingRoom(fx, band, fz, buildingId, 0);
+                    bandFloors.Add((fx, fz));
+                }
+            }
+
+            return bandFloors;
         }
 
-        static HashSet<(int x, int z)> IntersectXZ(
-            HashSet<(int x, int z)> a,
-            HashSet<(int x, int z)> b)
+        HashSet<(int x, int z)> CollectVerticalProbeXZ(int band, int buildingId)
         {
-            var result = new HashSet<(int x, int z)>();
-            if (a == null || b == null)
-                return result;
+            var probe = new HashSet<(int x, int z)>();
 
-            foreach (var cell in a)
+            foreach (var (x, z, b) in _model.EnumerateOccupiedCells())
             {
-                if (b.Contains(cell))
-                    result.Add(cell);
+                if (b != band)
+                    continue;
+
+                if (BuildingVerticalLink.CellHasVerticalSource(
+                        _model, x, z, band, buildingId,
+                        includeIncidentEdgeWalls: true))
+                    probe.Add((x, z));
             }
 
-            return result;
+            return probe;
+        }
+
+        void SetStructuralBuildingId(IEnumerable<(int x, int z)> cells, int band, int buildingId)
+        {
+            foreach (var (x, z) in cells)
+            {
+                if (!_model.TryGetCellTiles(x, z, band, out var list))
+                    continue;
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    var tile = list[i];
+                    var type = (TileView.TileType)tile.identity.tileType;
+                    if (type != TileView.TileType.Wall && type != TileView.TileType.EdgeWall)
+                        continue;
+
+                    if (tile.identity.buildingId != TileIdentity.BuildingIdUnassigned)
+                        continue;
+
+                    _model.PatchTileIdentity(tile.tileDefId, buildingId, 0);
+                }
+            }
         }
 
         void AssignOrphanFloorBuildings()
         {
             var seeds = new HashSet<(int x, int z, int band)>();
 
-            foreach (var (x, z, band) in _topology.EnumerateOccupiedCells())
+            foreach (var (x, z, band) in _model.EnumerateOccupiedCells())
             {
-                if (!_topology.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
+                if (!_model.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
                     continue;
 
-                if (GetFloorBuildingId(x, band, z) != 0)
+                if (!IsFloorBuildingUnassigned(x, band, z))
                     continue;
 
                 seeds.Add((x, z, band));
@@ -409,7 +480,7 @@ namespace IsoTilemap
 
             foreach (var (seedX, seedZ, seedBand) in seeds)
             {
-                if (GetFloorBuildingId(seedX, seedBand, seedZ) != 0)
+                if (!IsFloorBuildingUnassigned(seedX, seedBand, seedZ))
                     continue;
 
                 var outdoor = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
@@ -422,7 +493,8 @@ namespace IsoTilemap
                     continue;
 
                 int buildingId = _registry.AllocateBuildingId();
-                AssignBuildingToFootprint(buildingId, footprint, seedBand, outdoorExclude: null);
+                HashSet<(int x, int z)> outdoorExclude = seedBand == _minBand ? outdoor : null;
+                AssignBuildingToFootprint(buildingId, footprint, seedBand, outdoorExclude);
             }
         }
 
@@ -440,10 +512,10 @@ namespace IsoTilemap
                 if (_registry.IsPlazaXZ(x, z))
                     continue;
 
-                if (GetFloorBuildingId(x, band, z) != 0)
+                if (!IsFloorBuildingUnassigned(x, band, z))
                     continue;
 
-                if (_topology.TryGetCellTiles(x, z, band, out var list) && FloorMapIndex.CellHasFloor(list))
+                if (_model.TryGetCellTiles(x, z, band, out var list) && FloorMapIndex.CellHasFloor(list))
                     seeds.Add((x, z));
             }
 
@@ -529,7 +601,7 @@ namespace IsoTilemap
                 if (GetFloorBuildingId(x, band, z) != buildingId)
                     return;
 
-                if (!_topology.TryGetCellTiles(x, z, band, out var list) ||
+                if (!_model.TryGetCellTiles(x, z, band, out var list) ||
                     !FloorMapIndex.CellHasFloor(list))
                     return;
 
@@ -559,7 +631,7 @@ namespace IsoTilemap
                 _hub.Bands.RegisterFootprint(band, FloorRoomBfsProfile.Visibility, visibility);
             }
 
-            foreach (var (x, z, b) in _topology.EnumerateOccupiedCells())
+            foreach (var (x, z, b) in _model.EnumerateOccupiedCells())
             {
                 if (b != band)
                     continue;
@@ -581,20 +653,17 @@ namespace IsoTilemap
 
         void ClearRoomIdsOnSlice(int buildingId, int band)
         {
-            foreach (var list in _model.tiles.Values)
+            _model.ForEachRuntimeTile(tile =>
             {
-                for (int i = 0; i < list.Count; i++)
-                {
-                    if (!IsFloorTile(list[i]))
-                        continue;
+                if (!IsFloorTile(tile))
+                    return;
 
-                    var pos = list[i].identity.GridPos;
-                    if (pos.y != band || list[i].identity.buildingId != buildingId)
-                        continue;
+                var pos = tile.identity.GridPos;
+                if (pos.y != band || tile.identity.buildingId != buildingId)
+                    return;
 
-                    ReplaceTileBuildingRoom(list, i, buildingId, 0);
-                }
-            }
+                _model.PatchTileIdentity(tile.tileDefId, buildingId, 0);
+            });
         }
 
         void TagPerimeterForSlices(HashSet<(int buildingId, int band)> slices)
@@ -605,44 +674,26 @@ namespace IsoTilemap
 
         void TagPerimeterForSlice(int buildingId, int band)
         {
-            foreach (var list in _model.tiles.Values)
+            _model.ForEachRuntimeTile(tile =>
             {
-                for (int i = 0; i < list.Count; i++)
-                {
-                    var type = (TileView.TileType)list[i].identity.tileType;
-                    if (type != TileView.TileType.Wall &&
-                        type != TileView.TileType.EdgeWall &&
-                        type != TileView.TileType.Obstacle)
-                        continue;
+                var type = (TileView.TileType)tile.identity.tileType;
+                if (type != TileView.TileType.Wall &&
+                    type != TileView.TileType.EdgeWall &&
+                    type != TileView.TileType.Obstacle)
+                    return;
 
-                    var pos = list[i].identity.GridPos;
-                    if (pos.y != band)
-                        continue;
-
-                    if (!TryGetAdjacentFloorRoom(pos, out int adjBuilding, out int adjRoom))
-                        continue;
-
-                    if (adjBuilding != buildingId)
-                        continue;
-
-                    ReplaceTileBuildingRoom(list, i, buildingId, adjRoom);
-                }
-            }
-
-            foreach (var tile in SnapshotEdgeTiles())
-            {
                 var pos = tile.identity.GridPos;
                 if (pos.y != band)
-                    continue;
+                    return;
 
                 if (!TryGetAdjacentFloorRoom(pos, out int adjBuilding, out int adjRoom))
-                    continue;
+                    return;
 
                 if (adjBuilding != buildingId)
-                    continue;
+                    return;
 
-                ReplaceTileBuildingRoom(tile.tileDefId, buildingId, adjRoom);
-            }
+                _model.PatchTileIdentity(tile.tileDefId, buildingId, adjRoom);
+            });
         }
 
         bool TryGetAdjacentFloorRoom(Vector3Int cell, out int buildingId, out int roomId)
@@ -656,7 +707,7 @@ namespace IsoTilemap
                 int nz = cell.z + d.z;
                 int band = cell.y;
 
-                if (!_topology.TryGetCellTiles(nx, nz, band, out var list) || !FloorMapIndex.CellHasFloor(list))
+                if (!_model.TryGetCellTiles(nx, nz, band, out var list) || !FloorMapIndex.CellHasFloor(list))
                     continue;
 
                 int r = GetFloorRoomId(nx, band, nz);
@@ -728,10 +779,13 @@ namespace IsoTilemap
             return false;
         }
 
+        bool IsFloorBuildingUnassigned(int x, int band, int z) =>
+            GetFloorBuildingId(x, band, z) == TileIdentity.BuildingIdUnassigned;
+
         int GetFloorBuildingId(int x, int band, int z)
         {
-            if (!_topology.TryGetCellTiles(x, z, band, out var list))
-                return 0;
+            if (!_model.TryGetCellTiles(x, z, band, out var list))
+                return TileIdentity.BuildingIdUnassigned;
 
             for (int i = 0; i < list.Count; i++)
             {
@@ -741,12 +795,12 @@ namespace IsoTilemap
                 return list[i].identity.buildingId;
             }
 
-            return 0;
+            return TileIdentity.BuildingIdUnassigned;
         }
 
         int GetFloorRoomId(int x, int band, int z)
         {
-            if (!_topology.TryGetCellTiles(x, z, band, out var list))
+            if (!_model.TryGetCellTiles(x, z, band, out var list))
                 return 0;
 
             for (int i = 0; i < list.Count; i++)
@@ -762,7 +816,7 @@ namespace IsoTilemap
 
         void SetFloorBuildingRoom(int x, int band, int z, int buildingId, int roomId)
         {
-            if (!_model.tiles.TryGetValue(new Vector3Int(x, band, z), out var list))
+            if (!_model.TryGetCellTiles(x, z, band, out var list))
                 return;
 
             for (int i = 0; i < list.Count; i++)
@@ -770,64 +824,9 @@ namespace IsoTilemap
                 if ((TileView.TileType)list[i].identity.tileType != TileView.TileType.Floor)
                     continue;
 
-                ReplaceTileBuildingRoom(list, i, buildingId, roomId);
+                _model.PatchTileIdentity(list[i].tileDefId, buildingId, roomId);
             }
         }
-
-        void ReplaceTileBuildingRoom(List<TileData> list, int index, int buildingId, int roomId)
-        {
-            var tile = list[index];
-            list[index] = new TileData
-            {
-                tileDefId = tile.tileDefId,
-                state = tile.state,
-                identity = CopyIdentity(tile.identity, buildingId, roomId),
-            };
-        }
-
-        void ReplaceTileBuildingRoom(Guid tileDefId, int buildingId, int roomId)
-        {
-            if (!_model.TryGetTileById(tileDefId, out var tile))
-                return;
-
-            var updated = new TileData
-            {
-                tileDefId = tile.tileDefId,
-                state = tile.state,
-                identity = CopyIdentity(tile.identity, buildingId, roomId),
-            };
-
-            if ((TileView.TileType)tile.identity.tileType == TileView.TileType.EdgeWall)
-            {
-                _edgeBinder.TryReplaceTileData(updated);
-                return;
-            }
-
-            var pos = tile.identity.GridPos;
-            if (!_model.tiles.TryGetValue(pos, out var list))
-                return;
-
-            for (int i = 0; i < list.Count; i++)
-            {
-                if (list[i].tileDefId != tileDefId)
-                    continue;
-
-                list[i] = updated;
-                return;
-            }
-        }
-
-        static TileIdentity CopyIdentity(in TileIdentity id, int buildingId, int roomId) =>
-            new TileIdentity
-            {
-                PrefabId = id.PrefabId,
-                GridPos = id.GridPos,
-                sizeUnit = id.sizeUnit,
-                tileType = id.tileType,
-                edgeFace = id.edgeFace,
-                buildingId = buildingId,
-                roomId = roomId,
-            };
 
         static bool IsStructural(TileData tile)
         {
