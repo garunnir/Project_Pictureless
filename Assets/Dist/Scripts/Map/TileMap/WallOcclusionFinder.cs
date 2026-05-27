@@ -287,7 +287,7 @@ namespace IsoTilemap
             bool showBuildingIdLabels = Config.DebugMode.TileBuildingIdLabels;
             if (!showBfsOverlay && !showBuildingIdLabels)
             {
-                TileMapBfsDebugOverlay.Clear();
+                TileMapBfsDebugOverlay.ClearBfsLayers();
                 return;
             }
 
@@ -304,7 +304,7 @@ namespace IsoTilemap
 
             Action action = () =>
             {
-                TileMapBfsDebugOverlay.Clear();
+                TileMapBfsDebugOverlay.ClearBfsLayers();
                 if (showBfsOverlay)
                 {
                     TileMapBfsDebugOverlay.AddCellLayer("초록 — BFS 방문 바닥", Color.green, floorChecked);
@@ -317,23 +317,12 @@ namespace IsoTilemap
                 }
 
                 if (showBuildingIdLabels)
-                    TryAddBuildingIdLabelLayer(structuralTiles);
+                    TileMapBfsDebugOverlay.AddTileBuildingIdLabelLayer("하양 — 구조 타일 buildingId", Color.white, structuralTiles, 0.08f);
 
                 TileMapBfsDebugOverlay.EnsureSubscribed();
             };
 
             StateRunner.Instance.ChangeState(new DebugTileRunner(action));
-        }
-
-        private static void TryAddBuildingIdLabelLayer(List<TileData> structuralTiles)
-        {
-            var method = typeof(TileMapBfsDebugOverlay).GetMethod(
-                "AddTileBuildingIdLabelLayer",
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-            if (method == null)
-                return;
-
-            method.Invoke(null, new object[] { "하양 — 구조 타일 buildingId", Color.white, structuralTiles, 0.08f });
         }
 #endif
 

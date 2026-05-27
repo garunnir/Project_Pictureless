@@ -15,5 +15,6 @@ public static class Config
         public static bool FloorAlgorithm = true;   // Algorithm logs/diagnostics
         public static bool TileBfsSceneOverlay = true; // SceneView BFS/occlusion lines/legend
         public static bool TileBuildingIdLabels = false; // SceneView per-structural-tile buildingId labels
+        public static bool TileIndoorOutdoorOverlay = false; // SceneView floor indoor/outdoor evaluation
     }
 }

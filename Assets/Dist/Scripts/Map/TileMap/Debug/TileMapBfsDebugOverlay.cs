@@ -1,5 +1,5 @@
 // ============================================================
-// TileMapBfsDebugOverlay — BFS/오클루전 디버그 선·범례·3D 라벨 (에디터 Scene 뷰)
+// TileMapBfsDebugOverlay — BFS/오클루전·buildingId·실내야외 판정 디버그 (에디터 Scene 뷰)
 // ============================================================
 #if UNITY_EDITOR
 using System.Collections.Generic;
@@ -42,6 +42,7 @@ namespace IsoTilemap
         static readonly List<CellLayer> CellLayers = new();
         static readonly List<EdgeLayer> EdgeLayers = new();
         static readonly List<TileLabelLayer> TileLabelLayers = new();
+        static readonly List<CellLayer> IndoorOutdoorCellLayers = new();
         static bool _subscribed;
 
         static GUIStyle _legendTitleStyle;
@@ -49,9 +50,62 @@ namespace IsoTilemap
 
         public static void Clear()
         {
+            ClearBfsLayers();
+            ClearIndoorOutdoorLayers();
+        }
+
+        public static void ClearBfsLayers()
+        {
             CellLayers.Clear();
             EdgeLayers.Clear();
             TileLabelLayers.Clear();
+        }
+
+        public static void ClearIndoorOutdoorLayers() => IndoorOutdoorCellLayers.Clear();
+
+        /// <summary>플레이어 층 바닥 셀의 <see cref="TileMapCacheHub.IsOutdoorEvaluation"/> 결과를 표시합니다.</summary>
+        public static void PublishIndoorOutdoorEvaluation(TileMapCacheHub hub, int band)
+        {
+            ClearIndoorOutdoorLayers();
+            if (hub == null)
+                return;
+
+            var outdoor = new HashSet<Vector3Int>();
+            var indoor = new HashSet<Vector3Int>();
+            var topology = hub.Topology;
+
+            foreach (var (x, z, b) in topology.EnumerateOccupiedCells())
+            {
+                if (b != band)
+                    continue;
+
+                if (!topology.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
+                    continue;
+
+                var cell = new Vector3Int(x, band, z);
+                if (hub.IsOutdoorEvaluation(band, x, z))
+                    outdoor.Add(cell);
+                else
+                    indoor.Add(cell);
+            }
+
+            AddIndoorOutdoorCellLayer("청록 — 야외 판정 바닥", new Color(0.2f, 0.85f, 0.95f), outdoor, 0.04f);
+            AddIndoorOutdoorCellLayer("주황 — 실내 판정 바닥", new Color(1f, 0.55f, 0.15f), indoor, 0.06f);
+            EnsureSubscribed();
+        }
+
+        static void AddIndoorOutdoorCellLayer(string label, Color color, HashSet<Vector3Int> cells, float offset)
+        {
+            if (cells == null || cells.Count == 0)
+                return;
+
+            IndoorOutdoorCellLayers.Add(new CellLayer
+            {
+                Label = label,
+                Color = color,
+                Offset = offset,
+                Cells = cells
+            });
         }
 
         public static void AddCellLayer(string label, Color color, HashSet<Vector3Int> cells, float offset = 0f)
@@ -107,7 +161,8 @@ namespace IsoTilemap
 
         static void OnSceneGui(SceneView view)
         {
-            if (CellLayers.Count == 0 && EdgeLayers.Count == 0 && TileLabelLayers.Count == 0)
+            if (CellLayers.Count == 0 && EdgeLayers.Count == 0 && TileLabelLayers.Count == 0 &&
+                IndoorOutdoorCellLayers.Count == 0)
                 return;
 
             DrawLegend();
@@ -130,6 +185,12 @@ namespace IsoTilemap
                 var layer = TileLabelLayers[i];
                 DrawTileBuildingIdLabels(layer.Tiles, layer.Offset, layer.Color);
             }
+
+            for (int i = 0; i < IndoorOutdoorCellLayers.Count; i++)
+            {
+                var layer = IndoorOutdoorCellLayers[i];
+                DrawCellOutline(layer.Cells, layer.Offset, layer.Color);
+            }
         }
 
         static void DrawLegend()
@@ -137,20 +198,22 @@ namespace IsoTilemap
             EnsureLegendStyles();
             const float width = 300f;
             const float rowHeight = 18f;
-            int rowCount = CellLayers.Count + EdgeLayers.Count + TileLabelLayers.Count;
+            int rowCount = CellLayers.Count + EdgeLayers.Count + TileLabelLayers.Count + IndoorOutdoorCellLayers.Count;
             float height = 28f + rowCount * rowHeight;
             var area = new Rect(10f, 10f, width, height);
 
             Handles.BeginGUI();
             GUI.Box(area, GUIContent.none);
             GUILayout.BeginArea(area);
-            GUILayout.Label("BFS / 오클루전 디버그", _legendTitleStyle);
+            GUILayout.Label("타일맵 디버그", _legendTitleStyle);
             for (int i = 0; i < CellLayers.Count; i++)
                 DrawLegendRow(CellLayers[i].Color, CellLayers[i].Label);
             for (int i = 0; i < EdgeLayers.Count; i++)
                 DrawLegendRow(EdgeLayers[i].Color, EdgeLayers[i].Label);
             for (int i = 0; i < TileLabelLayers.Count; i++)
                 DrawLegendRow(TileLabelLayers[i].Color, TileLabelLayers[i].Label);
+            for (int i = 0; i < IndoorOutdoorCellLayers.Count; i++)
+                DrawLegendRow(IndoorOutdoorCellLayers[i].Color, IndoorOutdoorCellLayers[i].Label);
             GUILayout.EndArea();
             Handles.EndGUI();
         }
@@ -286,10 +349,22 @@ namespace IsoTilemap
                 if (!seen.Add(tile.tileDefId))
                     continue;
 
-                Vector3 worldPos = TileHelper.ConvertGridToWorldPos(tile.identity.GridPos, 1f);
+                Vector3 worldPos = ResolveBuildingIdLabelWorldPos(tile);
                 worldPos.y += 0.25f + offset;
                 Handles.Label(worldPos, $"B:{tile.identity.buildingId}", style);
             }
+        }
+
+        static Vector3 ResolveBuildingIdLabelWorldPos(TileData tile)
+        {
+            if ((TileView.TileType)tile.identity.tileType == TileView.TileType.EdgeWall)
+            {
+                var key = WallEdgeKey.FromEdgeTileIdentity(tile.identity);
+                WallEdgeKey.GetWorldPose(key, 1f, out Vector3 edgePos, out _);
+                return edgePos;
+            }
+
+            return TileHelper.ConvertGridToWorldPos(tile.identity.GridPos, 1f);
         }
     }
 }

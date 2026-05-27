@@ -15709,7 +15709,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::PlayerFloorVisibilityDriver
   _playerState: {fileID: 1383865919}
   _heightOffsetWorld: 0
-  _outdoorSightLineBuildingHideEnabled: 0
+  _outdoorSightLineBuildingHideEnabled: 1
 --- !u!1001 &300644938
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -56533,6 +56533,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::DebugLogController
   isDebugMode: 1
   floorAlgorithm: 1
+  tileBfsSceneOverlay: 0
+  tileBuildingIdLabels: 1
   player: 1
   playerInteraction: 1
   playerMovement: 1

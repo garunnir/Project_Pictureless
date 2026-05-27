@@ -38,6 +38,9 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
 
     public void Shutdown()
     {
+#if UNITY_EDITOR
+        TileMapBfsDebugOverlay.ClearIndoorOutdoorLayers();
+#endif
         _policy = null;
         _visualizer = null;
         _hasLastCtx = false;
@@ -65,7 +68,27 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
             _lastCtx = ctx;
             _hasLastCtx = true;
         }
+
+#if UNITY_EDITOR
+        RefreshIndoorOutdoorOverlay(ctx);
+#endif
     }
+
+#if UNITY_EDITOR
+    void RefreshIndoorOutdoorOverlay(FloorVisibilityContext ctx)
+    {
+        if (!Config.DebugMode.TileIndoorOutdoorOverlay)
+        {
+            TileMapBfsDebugOverlay.ClearIndoorOutdoorLayers();
+            return;
+        }
+
+        if (_policy?.MapCache == null)
+            return;
+
+        TileMapBfsDebugOverlay.PublishIndoorOutdoorEvaluation(_policy.MapCache, ctx.FloorBand);
+    }
+#endif
 
     private void LateUpdate()
     {

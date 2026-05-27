@@ -186,6 +186,8 @@ flowchart TD
 |--------|------|
 | `Config.DebugMode.FloorAlgorithm` | BFS 로그 |
 | `Config.DebugMode.TileBfsSceneOverlay` | 씬 오버레이: 방문 바닥(초록), 벽 검사 셀(빨강), 최종 오클루전(노랑), 플레이어 마스크(자홍) 등 — `TileMapBfsDebugOverlay` |
+| `Config.DebugMode.TileBuildingIdLabels` | 구조 타일별 `buildingId` 라벨 |
+| `Config.DebugMode.TileIndoorOutdoorOverlay` | 플레이어 층 바닥의 야외(청록)/실내(주황) 판정 셀 외곽선 — `PlayerFloorVisibilityDriver` 갱신 |
 
 ---
 
