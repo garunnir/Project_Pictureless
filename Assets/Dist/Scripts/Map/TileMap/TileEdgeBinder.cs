@@ -29,7 +29,7 @@ namespace IsoTilemap
                 RemoveInternal(key);
 
             _edges[key] = tile;
-            AddIncident(key);
+            AddIncident(key, tile);
         }
 
         public bool TryGetTile(in WallEdgeKey key, out TileData tile) => _edges.TryGetValue(key, out tile);
@@ -94,10 +94,15 @@ namespace IsoTilemap
                 yield return kv.Value;
         }
 
-        private void AddIncident(in WallEdgeKey key)
+        private void AddIncident(in WallEdgeKey key, in TileData tile)
         {
-            TouchCell(key.Anchor, key);
-            TouchCell(key.NeighborCell(), key);
+            int sy = Mathf.Max(1, tile.identity.sizeUnit.y);
+            for (int dy = 0; dy < sy; dy++)
+            {
+                var yOffset = new Vector3Int(0, dy, 0);
+                TouchCell(key.Anchor + yOffset, key);
+                TouchCell(key.NeighborCell() + yOffset, key);
+            }
         }
 
         private void TouchCell(Vector3Int cell, in WallEdgeKey key)
@@ -114,8 +119,17 @@ namespace IsoTilemap
 
         private void RemoveInternal(in WallEdgeKey key)
         {
-            DetachCell(key.Anchor, key);
-            DetachCell(key.NeighborCell(), key);
+            if (!_edges.TryGetValue(key, out var tile))
+                return;
+
+            int sy = Mathf.Max(1, tile.identity.sizeUnit.y);
+            for (int dy = 0; dy < sy; dy++)
+            {
+                var yOffset = new Vector3Int(0, dy, 0);
+                DetachCell(key.Anchor + yOffset, key);
+                DetachCell(key.NeighborCell() + yOffset, key);
+            }
+
             _edges.Remove(key);
         }
 

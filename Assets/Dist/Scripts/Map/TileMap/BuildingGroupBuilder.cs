@@ -335,26 +335,25 @@ namespace IsoTilemap
         {
             var columns = new HashSet<(int x, int z)>(seedFootprint);
 
-            for (int band = seedBand; band <= _maxBand; band++)
+            for (int gridY = seedBand; gridY <= _maxBand; gridY++)
             {
-                var bandFloors = AssignBandFloors(buildingId, band, seedBand, seedFootprint, columns, outdoorExclude);
+                var bandFloors = AssignBandFloors(buildingId, gridY, seedBand, seedFootprint, columns, outdoorExclude);
 
                 var structuralCells = new HashSet<(int x, int z)>(columns);
                 foreach (var cell in bandFloors)
                     structuralCells.Add(cell);
 
-                SetStructuralBuildingId(structuralCells, band, buildingId);
+                SetStructuralBuildingId(structuralCells, gridY, buildingId);
 
-                var probeXZ = CollectVerticalProbeXZ(band, buildingId);
-                if (band >= _maxBand)
+                var probeXZ = CollectVerticalProbeXZ(gridY, buildingId);
+                int aboveGridY = gridY + 1;
+                if (aboveGridY > _maxBand)
                     break;
 
                 var nextColumns = new HashSet<(int x, int z)>();
                 foreach (var (x, z) in probeXZ)
                 {
-                    if (BuildingVerticalLink.CellHasStructural(
-                            _model, x, z, band + 1,
-                            includeIncidentEdgeWalls: true))
+                    if (BuildingVerticalLink.CellHasStructuralAbove(_model, x, z, gridY))
                         nextColumns.Add((x, z));
                 }
 
@@ -432,9 +431,7 @@ namespace IsoTilemap
                 if (b != band)
                     continue;
 
-                if (BuildingVerticalLink.CellHasVerticalSource(
-                        _model, x, z, band, buildingId,
-                        includeIncidentEdgeWalls: true))
+                if (BuildingVerticalLink.CellHasVerticalSource(_model, x, z, band, buildingId))
                     probe.Add((x, z));
             }
 
@@ -443,22 +440,42 @@ namespace IsoTilemap
 
         void SetStructuralBuildingId(IEnumerable<(int x, int z)> cells, int band, int buildingId)
         {
+            var patchedEdges = new HashSet<Guid>();
+            var edgeScratch = new List<TileData>();
+
             foreach (var (x, z) in cells)
             {
-                if (!_model.TryGetCellTiles(x, z, band, out var list))
-                    continue;
-
-                for (int i = 0; i < list.Count; i++)
+                if (_model.TryGetCellTiles(x, z, band, out var list))
                 {
-                    var tile = list[i];
-                    var type = (TileView.TileType)tile.identity.tileType;
-                    if (type != TileView.TileType.Wall && type != TileView.TileType.EdgeWall)
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        var tile = list[i];
+                        var type = (TileView.TileType)tile.identity.tileType;
+                        if (type != TileView.TileType.Wall && type != TileView.TileType.EdgeWall)
+                            continue;
+
+                        if (tile.identity.buildingId != TileIdentity.BuildingIdUnassigned)
+                            continue;
+
+                        _model.PatchTileIdentity(tile.tileDefId, buildingId, 0);
+                    }
+                }
+
+                edgeScratch.Clear();
+                _model.EdgeBinder.AppendIncidentEdges(new Vector3Int(x, band, z), edgeScratch);
+                for (int i = 0; i < edgeScratch.Count; i++)
+                {
+                    var edge = edgeScratch[i];
+                    if ((TileView.TileType)edge.identity.tileType != TileView.TileType.EdgeWall)
                         continue;
 
-                    if (tile.identity.buildingId != TileIdentity.BuildingIdUnassigned)
+                    if (edge.identity.buildingId != TileIdentity.BuildingIdUnassigned)
                         continue;
 
-                    _model.PatchTileIdentity(tile.tileDefId, buildingId, 0);
+                    if (!patchedEdges.Add(edge.tileDefId))
+                        continue;
+
+                    _model.PatchTileIdentity(edge.tileDefId, buildingId, 0);
                 }
             }
         }

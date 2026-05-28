@@ -130,12 +130,21 @@ namespace IsoTilemap
             }
 
             // edge는 TryGetEdgeBetween으로만 막히므로, 점유 셀 lookup에는 포함하지 않지만
-            // EnumerateOccupiedCells/HasAnyTile 기준에는 기존처럼 endpoint를 포함합니다.
+            // EnumerateOccupiedCells/HasAnyTile에는 sizeUnit.y만큼 양 끝 Y 슬라이스를 포함합니다.
             foreach (var kv in _edges)
             {
                 var edgeKey = kv.Key;
-                _anyTileAt.Add((edgeKey.CellA.x, edgeKey.CellA.z, edgeKey.CellA.y));
-                _anyTileAt.Add((edgeKey.CellB.x, edgeKey.CellB.z, edgeKey.CellB.y));
+                int sy = kv.Value.identity.sizeUnit.y;
+                if (sy < 1) sy = 1;
+
+                for (int dy = 0; dy < sy; dy++)
+                {
+                    var yOffset = new Vector3Int(0, dy, 0);
+                    var cellA = edgeKey.CellA + yOffset;
+                    var cellB = edgeKey.CellB + yOffset;
+                    _anyTileAt.Add((cellA.x, cellA.z, cellA.y));
+                    _anyTileAt.Add((cellB.x, cellB.z, cellB.y));
+                }
             }
         }
 
