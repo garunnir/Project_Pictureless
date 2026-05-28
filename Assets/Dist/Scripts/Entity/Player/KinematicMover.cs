@@ -15,6 +15,9 @@ public class KinematicMover
     public Vector3 LastSlide { get; private set; }
     public int LastNearestIndex { get; private set; } = -1;
     public Vector3 WorldMoveDir => _moveDir;
+    public bool IsSprinting => _isSprinting;
+    public float CurrentSpeed => _currentVelocity.magnitude;
+    public bool IsInertiaActive { get; private set; }
 
     Vector3 _moveDir;
     Vector3 _currentVelocity;
@@ -26,15 +29,83 @@ public class KinematicMover
     }
 
     public void SetSprinting(bool value) => _isSprinting = value;
+    public void ApplySpeedBoost(float boostAmount, float maxSpeed)
+    {
+        float boost = Mathf.Max(0f, boostAmount);
+        if (boost <= Mathf.Epsilon) return;
+
+        float speedCap = Mathf.Max(0f, maxSpeed);
+        Vector3 direction = _currentVelocity.sqrMagnitude > Mathf.Epsilon
+            ? _currentVelocity.normalized
+            : (_moveDir.sqrMagnitude > Mathf.Epsilon ? _moveDir.normalized : Vector3.zero);
+        if (direction == Vector3.zero) return;
+
+        float boostedSpeed = Mathf.Min(_currentVelocity.magnitude + boost, speedCap);
+        _currentVelocity = direction * boostedSpeed;
+    }
+
+    public void SetInitialVelocity(float initialSpeed)
+    {
+        float clampedSpeed = Mathf.Max(0f, initialSpeed);
+        if (_moveDir.sqrMagnitude <= Mathf.Epsilon || clampedSpeed <= Mathf.Epsilon)
+        {
+            _currentVelocity = Vector3.zero;
+            return;
+        }
+
+        _currentVelocity = _moveDir.normalized * clampedSpeed;
+    }
 
     // 반환값: 이번 FixedUpdate에서 이동할 Vector3 (Time.fixedDeltaTime 이미 반영)
-    public Vector3 CalcDesiredMove(float baseSpeed, float sprintMultiplier, float dt)
+    public Vector3 CalcDesiredMove(
+        float baseSpeed,
+        float sprintMultiplier,
+        float dt,
+        float customBaseSpeed,
+        float inertiaEnableThreshold,
+        float runMaxSpeed)
     {
-        float speed = baseSpeed * (_isSprinting ? sprintMultiplier : 1f);
-        Vector3 targetVel = _moveDir * speed;
-        _currentVelocity = Vector3.MoveTowards(_currentVelocity, targetVel, Acceleration * dt);
-        if (_moveDir.sqrMagnitude <= Mathf.Epsilon)
-            _currentVelocity *= Inertia;
+        float baseThresholdSpeed = Mathf.Max(baseSpeed + 0.01f, customBaseSpeed);
+        float thresholdSpeed = Mathf.Max(inertiaEnableThreshold, baseThresholdSpeed + 0.01f);
+        float clampedRunMaxSpeed = Mathf.Max(runMaxSpeed, thresholdSpeed);
+
+        float walkSpeed = baseSpeed;
+        float sprintTopSpeed = baseSpeed * sprintMultiplier;
+        bool hasInput = _moveDir.sqrMagnitude > Mathf.Epsilon;
+        float currentSpeed = _currentVelocity.magnitude;
+
+        if (!hasInput)
+        {
+            // 입력이 없을 때는 현재 속도 기준으로 관성 유지/해제
+            IsInertiaActive = currentSpeed > baseThresholdSpeed;
+            _currentVelocity = IsInertiaActive ? _currentVelocity * Inertia : Vector3.zero;
+            return _currentVelocity * dt;
+        }
+
+        Vector3 direction = _moveDir.normalized;
+        float desiredSpeed;
+        if (_isSprinting)
+        {
+            // 달리기는 "현재속도 + 가속분"을 우선하고 상한(runMaxSpeed)만 적용
+            float acceleratedSpeed = currentSpeed + (Acceleration * dt);
+            desiredSpeed = Mathf.Clamp(acceleratedSpeed, walkSpeed, clampedRunMaxSpeed);
+        }
+        else
+        {
+            desiredSpeed = walkSpeed;
+        }
+
+        // 관성 진입은 임계 초과, 해제는 기준속도 구간 복귀 시점으로 분리
+        if (currentSpeed >= thresholdSpeed)
+            IsInertiaActive = true;
+        else if (currentSpeed <= baseThresholdSpeed)
+            IsInertiaActive = false;
+
+        Vector3 targetVelocity = direction * desiredSpeed;
+        _currentVelocity = IsInertiaActive
+            ? Vector3.MoveTowards(_currentVelocity, targetVelocity, Acceleration * dt)
+            : targetVelocity;
+
         return _currentVelocity * dt;
     }
 

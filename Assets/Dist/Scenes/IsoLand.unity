@@ -60155,23 +60155,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61be8fe37b26d634992d4f94106a786f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::PlayerMovement
-  _moveSpeed: 5
+  _moveSpeed: 3
   _sprintMultiplier: 2
-  _acceleration: 5
-  _refCam: {fileID: 64710673}
-  _inertia: 0.277
+  _acceleration: 10
+  _initialVelocity: -1
+  _refCam: {fileID: 0}
+  _inertia: 0.9
+  _customBaseSpeed: 6
+  _inertiaEnableThreshold: 8
+  _runMaxSpeed: 12
+  _runEnterBoost: 1.5
   _climbAllowance: 0.3
   _baseSkin: 0.02
   _collisionMask:
     serializedVersion: 2
     m_Bits: 55
   _triggerInteraction: 1
-  _drawGizmos: 1
-  _gizmoCapsuleColor: {r: 0, g: 0.6, b: 1, a: 0.25}
-  _gizmoCastColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  _gizmoHitColor: {r: 1, g: 0, b: 0, a: 1}
-  _gizmoSlideColor: {r: 0, g: 1, b: 0, a: 1}
   _moveDir: {x: 0, y: 0}
+  _debugControllerBehaviour: {fileID: 0}
 --- !u!136 &1383865914
 CapsuleCollider:
   m_ObjectHideFlags: 0

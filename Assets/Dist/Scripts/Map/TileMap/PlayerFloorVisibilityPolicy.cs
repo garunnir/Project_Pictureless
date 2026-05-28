@@ -214,7 +214,7 @@ namespace IsoTilemap
                 {
                     _blockingResult.Clear();
                     foreach (int id in _occlusionResolver.ResolveBlockingBuildingIds(
-                                 floorBand, playerWorld, gridX, gridZ))
+                                 playerWorld, gridX, gridZ))
                         _blockingResult.Add(id);
                     rawBlockingCount = _blockingResult.Count;
                 }

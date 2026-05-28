@@ -272,6 +272,9 @@ namespace IsoTilemap
         public bool TryGetEdgeBetween(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall) =>
             Topology.TryGetEdgeBetween(cellA, cellB, out edgeWall);
 
+        public IEnumerable<(int x, int z, int band)> EnumerateOccupiedCells() =>
+            Topology.EnumerateOccupiedCells();
+
         public GeometryQuery GetRoomGeometryForCell(int band, int x, int z, FloorRoomBfsProfile profile)
         {
             RoomKey? roomKey = Bands.TryResolveRoomKey(band, x, z, out var key) ? key : (RoomKey?)null;

@@ -12,11 +12,6 @@ namespace IsoTilemap
     /// </summary>
     public sealed class BuildingPlayerOcclusionResolver
     {
-        static readonly Vector3Int[] CardinalDirs =
-        {
-            Vector3Int.right, Vector3Int.back, Vector3Int.left, Vector3Int.forward
-        };
-
         readonly TileMapCacheHub _hub;
         readonly float _cellSize;
         readonly float _groundPlaneY;
@@ -39,7 +34,6 @@ namespace IsoTilemap
         }
 
         public HashSet<int> ResolveBlockingBuildingIds(
-            int floorBand,
             Vector3 playerWorld,
             int playerGridX,
             int playerGridZ)
@@ -52,17 +46,18 @@ namespace IsoTilemap
 
             Vector3 cameraGround = ResolveCameraGroundPoint(cam);
             CollectCellsOnViewSegment(cameraGround, playerWorld);
-            CollectBlockingFromSegment(floorBand, playerGridX, playerGridZ);
+            CollectBuildingIdsFromSampledCells(playerGridX, playerGridZ);
             return _blockingScratch;
         }
 
         Vector3 ResolveCameraGroundPoint(Camera camera)
         {
             Vector3 origin = camera.transform.position;
-            var ray = new Ray(origin, camera.transform.forward);
-            if (new Plane(Vector3.up, new Vector3(0f, _groundPlaneY, 0f)).Raycast(ray, out float dist))
-                return ray.GetPoint(dist);
-
+            // NOTE:
+            // forward-레이의 지면 교차점은 카메라 시선 중심점(look-at)에 가까워
+            // 실제 "관측자 위치"보다 앞쪽 셀을 기준으로 삼게 됩니다.
+            // 그 결과 앞/뒤 판정이 뒤집히는 케이스가 발생하므로
+            // 카메라 월드 위치를 지면(Y)으로 투영한 점을 기준으로 사용합니다.
             return new Vector3(origin.x, _groundPlaneY, origin.z);
         }
 
@@ -85,86 +80,34 @@ namespace IsoTilemap
             }
         }
 
-        void CollectBlockingFromSegment(int floorBand, int playerGridX, int playerGridZ)
+        void CollectBuildingIdsFromSampledCells(int playerGridX, int playerGridZ)
         {
-            (int x, int z) prev = default;
-            bool hasPrev = false;
-
             foreach (var (x, z) in _cellsOnSegment)
             {
                 if (x == playerGridX && z == playerGridZ)
-                {
-                    hasPrev = false;
                     continue;
-                }
 
-                TryAddBlockingAtCell(floorBand, x, z);
-
-                if (hasPrev)
-                    TryAddBlockingOnEdge(floorBand, prev.x, prev.z, x, z);
-
-                prev = (x, z);
-                hasPrev = true;
+                AddBuildingIdsAtCell(x, z);
             }
         }
 
-        void TryAddBlockingAtCell(int band, int x, int z)
+        void AddBuildingIdsAtCell(int x, int z)
         {
-            if (!_hub.TryGetCellTiles(x, z, band, out var list))
-                return;
-
-            for (int i = 0; i < list.Count; i++)
+            foreach (var occupied in _hub.EnumerateOccupiedCells())
             {
-                if (!IsBlockingType((TileView.TileType)list[i].identity.tileType))
+                if (occupied.x != x || occupied.z != z)
                     continue;
 
-                int id = ResolveBuildingIdForBlocking(band, x, z, list[i]);
-                if (id > 0)
-                    _blockingScratch.Add(id);
-            }
-        }
-
-        void TryAddBlockingOnEdge(int band, int ax, int az, int bx, int bz)
-        {
-            var cellA = new Vector3Int(ax, band, az);
-            var cellB = new Vector3Int(bx, band, bz);
-
-            if (_hub.TryGetEdgeBetween(cellA, cellB, out var edge) &&
-                IsBlockingType((TileView.TileType)edge.identity.tileType))
-            {
-                int id = edge.identity.buildingId;
-                if (id <= 0)
-                    _hub.TryGetFloorBuildingRoom(band, ax, az, out id, out _);
-                if (id > 0)
-                    _blockingScratch.Add(id);
-            }
-
-            foreach (var d in CardinalDirs)
-            {
-                var n = new Vector3Int(ax, band, az) + d;
-                if (n.x == bx && n.z == bz)
+                if (!_hub.TryGetCellTiles(x, z, occupied.band, out var tiles))
                     continue;
 
-                if (_hub.TryGetEdgeBetween(new Vector3Int(ax, band, az), n, out edge) &&
-                    IsBlockingType((TileView.TileType)edge.identity.tileType))
+                for (int i = 0; i < tiles.Count; i++)
                 {
-                    int id = ResolveBuildingIdForBlocking(band, ax, az, edge);
-                    if (id > 0)
-                        _blockingScratch.Add(id);
+                    int buildingId = tiles[i].identity.buildingId;
+                    if (buildingId > 0)
+                        _blockingScratch.Add(buildingId);
                 }
             }
-        }
-
-        static bool IsBlockingType(TileView.TileType type) =>
-            type is TileView.TileType.Wall or TileView.TileType.EdgeWall or TileView.TileType.Obstacle;
-
-        int ResolveBuildingIdForBlocking(int band, int x, int z, TileData blockingTile)
-        {
-            int id = blockingTile.identity.buildingId;
-            if (id > 0)
-                return id;
-
-            return _hub.TryGetFloorBuildingRoom(band, x, z, out id, out _) ? id : 0;
         }
     }
 }

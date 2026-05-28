@@ -1,3 +1,6 @@
+// ============================================================
+// DebugLogController — Config 디버그 플래그를 적용하고 에디터 디버그 로그를 중계하는 컴포넌트
+// ============================================================
 using UnityEngine;
 
 public class DebugLogController : MonoBehaviour
@@ -37,5 +40,23 @@ public class DebugLogController : MonoBehaviour
         Config.DebugMode.PlayerMovement = playerEnabled && playerMovement;
         Config.DebugMode.PlayerPosUpdate = playerEnabled && playerPosUpdate;
         Config.DebugMode.PlayerSight = playerEnabled && playerSight;
+    }
+
+    public static void LogPlayerRun(bool isRun)
+    {
+        if (!Config.DebugMode.PlayerMovement) return;
+        Debug.Log("PlayerMovement: isRun = " + isRun);
+    }
+
+    public static void LogPlayerStuck()
+    {
+        if (!Config.DebugMode.PlayerMovement) return;
+        Debug.LogError("PlayerMovement: Stuck!");
+    }
+
+    public static void LogPlayerSliding(float lastSlideSqrMagnitude)
+    {
+        if (!Config.DebugMode.PlayerMovement || lastSlideSqrMagnitude <= 0f) return;
+        Debug.Log("PlayerMovement: Sliding");
     }
 }

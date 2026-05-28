@@ -211,7 +211,7 @@ namespace UnityEngine.InputSystem
                     ""name"": """",
                     ""id"": ""156ce75f-d498-4c51-b12b-ceded5b2b90e"",
                     ""path"": ""<Keyboard>/leftShift"",
-                    ""interactions"": ""Hold"",
+                    ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Run"",
