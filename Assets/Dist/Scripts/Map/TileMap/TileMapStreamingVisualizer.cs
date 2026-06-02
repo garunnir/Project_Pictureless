@@ -22,10 +22,8 @@ namespace IsoTilemap
         private readonly List<Vector2Int> _chunkIteration = new();
         private readonly HashSet<Guid> _orphanCheckIds = new();
         private readonly List<Guid> _pruneGuids = new();
-        private readonly HashSet<int> _appliedBlockingBuildingIds = new();
-        private readonly List<int> _blockingAddedScratch = new();
-        private readonly List<int> _blockingRemovedScratch = new();
         private readonly HashSet<int> _buildingsToDespawnScratch = new();
+        private readonly OcclusionModeController _buildingOcclusionController = new();
 
         private TileMapChunkIndex _chunkIndex;
         private BuildingGroupRegistry _buildingRegistry;
@@ -67,6 +65,7 @@ namespace IsoTilemap
         {
             _floorContext = ctx;
             _hasFloorContext = _floorPolicy != null;
+            _presentationApplier?.SetOcclusionMode(ctx.OcclusionMode);
 
             ApplyBlockingBuildingDelta(in ctx);
 
@@ -276,11 +275,13 @@ namespace IsoTilemap
 
                 _tileViews[id] = view;
                 _presentationApplier?.SyncPresentationForTile(id);
+                ApplyBlockingModeForView(tileData, view);
                 return;
             }
 
             view.UpdateTile(tileData, CellSize);
             _presentationApplier?.SyncPresentationForTile(id);
+            ApplyBlockingModeForView(tileData, view);
         }
 
         private void ReleaseTileFromChunk(Guid tileId, Vector2Int chunk)
@@ -306,7 +307,10 @@ namespace IsoTilemap
             {
                 TileData tileData = tiles[i];
                 if (_tileViews.TryGetValue(tileData.tileDefId, out TileView tileView))
+                {
                     tileView.UpdateTile(tileData, CellSize);
+                    ApplyBlockingModeForView(tileData, tileView);
+                }
                 else if (IsTileInLoadedChunk(tileData))
                 {
                     AcquireTileInChunk(tileData, TileChunkCoord.FromCell(GetRepresentativeCell(tileData), _chunkSize));
@@ -350,38 +354,48 @@ namespace IsoTilemap
         void ApplyBlockingBuildingDelta(in FloorVisibilityContext ctx)
         {
             HashSet<int> newBlocking = ctx.PlayerBlockingBuildingIds;
-            if (newBlocking == null)
-                newBlocking = new HashSet<int>();
+            _buildingOcclusionController.ApplyDelta(
+                newBlocking,
+                ctx.OcclusionMode,
+                ctx,
+                OnBlockingAdded,
+                OnBlockingRemoved);
 
-            _blockingAddedScratch.Clear();
-            foreach (int id in newBlocking)
-            {
-                if (!_appliedBlockingBuildingIds.Contains(id))
-                    _blockingAddedScratch.Add(id);
-            }
-
-            _blockingRemovedScratch.Clear();
-            foreach (int id in _appliedBlockingBuildingIds)
-            {
-                if (!newBlocking.Contains(id))
-                    _blockingRemovedScratch.Add(id);
-            }
-
-            for (int i = 0; i < _blockingAddedScratch.Count; i++)
-                DespawnAllLoadedViewsForBuilding(_blockingAddedScratch[i], in ctx);
-
-            for (int i = 0; i < _blockingRemovedScratch.Count; i++)
-                RespawnVisibleBuildingTiles(_blockingRemovedScratch[i], in ctx);
-
-            _appliedBlockingBuildingIds.Clear();
-            foreach (int id in newBlocking)
-                _appliedBlockingBuildingIds.Add(id);
-
-            if (_presentationApplier != null && (_blockingAddedScratch.Count > 0 || _blockingRemovedScratch.Count > 0))
+            if (_presentationApplier != null &&
+                (_buildingOcclusionController.LastAdded.Count > 0 || _buildingOcclusionController.LastRemoved.Count > 0))
             {
                 var delta = new BuildingSightLinePresentationDelta(
-                    _blockingAddedScratch, _blockingRemovedScratch);
+                    _buildingOcclusionController.LastAdded,
+                    _buildingOcclusionController.LastRemoved);
                 _presentationApplier.ApplySightLineBlockingDelta(in delta);
+            }
+        }
+
+        void OnBlockingAdded(int buildingId, OcclusionMode mode, FloorVisibilityContext ctx)
+        {
+            switch (ResolveBuildingApplyMode(mode))
+            {
+                case BuildingApplyMode.FullDespawn:
+                    DespawnAllLoadedViewsForBuilding(buildingId, in ctx);
+                    break;
+                case BuildingApplyMode.RenderOnly:
+                case BuildingApplyMode.ColliderOnly:
+                    SetBuildingViewsOccluded(buildingId, true, mode);
+                    break;
+            }
+        }
+
+        void OnBlockingRemoved(int buildingId, OcclusionMode mode, FloorVisibilityContext ctx)
+        {
+            switch (ResolveBuildingApplyMode(mode))
+            {
+                case BuildingApplyMode.FullDespawn:
+                    RespawnVisibleBuildingTiles(buildingId, in ctx);
+                    break;
+                case BuildingApplyMode.RenderOnly:
+                case BuildingApplyMode.ColliderOnly:
+                    SetBuildingViewsOccluded(buildingId, false, mode);
+                    break;
             }
         }
 
@@ -429,17 +443,29 @@ namespace IsoTilemap
             }
         }
 
+        void SetBuildingViewsOccluded(int buildingId, bool hidden, OcclusionMode mode)
+        {
+            if (_buildingRegistry == null || buildingId <= 0)
+                return;
+
+            foreach (Guid tileId in _buildingRegistry.GetTilesForBuilding(buildingId))
+            {
+                if (_tileViews.TryGetValue(tileId, out TileView view))
+                    SetViewOcclusionState(view, hidden, mode);
+            }
+        }
+
         bool TryGetBlockingBuildingIdForView(Guid tileId, out int buildingId)
         {
             buildingId = 0;
-            if (_appliedBlockingBuildingIds.Count == 0)
+            if (!_buildingOcclusionController.HasAnyBlocked)
                 return false;
 
             if (_boundRuntime == null || !_boundRuntime.TryGetTileById(tileId, out TileData tile))
                 return false;
 
             buildingId = tile.identity.buildingId;
-            return buildingId > 0 && _appliedBlockingBuildingIds.Contains(buildingId);
+            return buildingId > 0 && _buildingOcclusionController.IsBlocked(buildingId);
         }
 
         static bool IsMinBandFloorTile(TileData tile, int minBand) =>
@@ -500,7 +526,58 @@ namespace IsoTilemap
 
             _tileViews.Clear();
             _tileChunkRefs.Clear();
-            _appliedBlockingBuildingIds.Clear();
+            _buildingOcclusionController.Reset();
+        }
+
+        void ApplyBlockingModeForView(in TileData tile, TileView view)
+        {
+            if (view == null || tile.identity.buildingId <= 0)
+                return;
+
+            if (!_buildingOcclusionController.IsBlocked(tile.identity.buildingId))
+            {
+                SetViewOcclusionState(view, false, _buildingOcclusionController.CurrentMode);
+                return;
+            }
+
+            if (ResolveBuildingApplyMode(_buildingOcclusionController.CurrentMode) == BuildingApplyMode.FullDespawn)
+                return;
+
+            SetViewOcclusionState(view, true, _buildingOcclusionController.CurrentMode);
+        }
+
+        static void SetViewOcclusionState(TileView view, bool hidden, OcclusionMode mode)
+        {
+            if (view == null)
+                return;
+
+            var renderers = view.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+                renderers[i].enabled = !hidden;
+
+            if (mode != OcclusionMode.ColliderOnly)
+                return;
+
+            var colliders = view.GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < colliders.Length; i++)
+                colliders[i].enabled = true;
+        }
+
+        static BuildingApplyMode ResolveBuildingApplyMode(OcclusionMode mode) =>
+            mode switch
+            {
+                OcclusionMode.RenderOnly => BuildingApplyMode.RenderOnly,
+                OcclusionMode.ColliderOnly => BuildingApplyMode.ColliderOnly,
+                // AlphaBlendPreserve는 벽의 알파 기반 표현을 보존하면서 건물은 despawn하지 않도록 render-only 경로를 사용합니다.
+                OcclusionMode.AlphaBlendPreserve => BuildingApplyMode.RenderOnly,
+                _ => BuildingApplyMode.FullDespawn
+            };
+
+        enum BuildingApplyMode
+        {
+            FullDespawn = 0,
+            RenderOnly = 1,
+            ColliderOnly = 2
         }
     }
 }

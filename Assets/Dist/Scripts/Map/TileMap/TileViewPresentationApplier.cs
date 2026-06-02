@@ -13,6 +13,7 @@ namespace IsoTilemap
         private readonly TilePresentationStore _store = new TilePresentationStore();
         private BuildingGroupRegistry _buildingRegistry;
         private int _mapMinBand;
+        private OcclusionMode _occlusionMode = OcclusionMode.LegacyCompatible;
 
         public TileViewPresentationApplier(ITileViewRegistry registry, TileMapModel model)
         {
@@ -25,6 +26,8 @@ namespace IsoTilemap
             _buildingRegistry = buildingRegistry;
             _mapMinBand = mapMinBand;
         }
+
+        public void SetOcclusionMode(OcclusionMode mode) => _occlusionMode = mode;
 
         public void ApplySightLineBlockingDelta(in BuildingSightLinePresentationDelta delta)
         {
@@ -58,7 +61,7 @@ namespace IsoTilemap
             {
                 (Guid tileId, float occlusion01) entry = apply[i];
                 if (_registry.TryGetView(entry.tileId, out TileView view))
-                    view.SetCharacterOcclusion(entry.occlusion01);
+                    ApplyWallOcclusionByMode(view, entry.occlusion01);
             }
 
             IReadOnlyList<Guid> clear = delta.ClearIds;
@@ -66,7 +69,7 @@ namespace IsoTilemap
             {
                 Guid tileId = clear[i];
                 if (_registry.TryGetView(tileId, out TileView view))
-                    view.SetCharacterOcclusion(0f);
+                    ApplyWallOcclusionByMode(view, 0f);
             }
         }
 
@@ -94,9 +97,17 @@ namespace IsoTilemap
             if (_model.TryGetTileOcclusionPresentation(tileId, out float cached))
                 occ = cached;
             view.SetGhosted(_store.IsGhosted(tileId));
-            view.SetCharacterOcclusion(occ);
+            ApplyWallOcclusionByMode(view, occ);
             view.SetSelected(_store.IsSelected(tileId));
             view.SetSightLineBuildingHidden(ResolveSightLineHiddenForTile(tileId));
+        }
+
+        void ApplyWallOcclusionByMode(TileView view, float occlusion01)
+        {
+            if (view == null)
+                return;
+
+            view.ApplyWallOcclusionMode(occlusion01, _occlusionMode);
         }
 
         bool ResolveSightLineHiddenForTile(Guid tileId)

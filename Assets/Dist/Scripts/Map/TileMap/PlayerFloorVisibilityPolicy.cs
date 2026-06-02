@@ -7,6 +7,15 @@ using UnityEngine;
 
 namespace IsoTilemap
 {
+    public enum OcclusionMode
+    {
+        LegacyCompatible = 0,
+        FullDespawn = 1,
+        RenderOnly = 2,
+        ColliderOnly = 3,
+        AlphaBlendPreserve = 4
+    }
+
     public readonly struct FloorVisibilityContext : IEquatable<FloorVisibilityContext>
     {
         public bool IsPlayerOutdoor { get; }
@@ -14,6 +23,7 @@ namespace IsoTilemap
         public int MinBand { get; }
         public int PlayerBuildingId { get; }
         public HashSet<int> PlayerBlockingBuildingIds { get; }
+        public OcclusionMode OcclusionMode { get; }
         public HashSet<(int x, int z, int band)> VisibleBelowCells { get; }
 
         public FloorVisibilityContext(
@@ -22,6 +32,7 @@ namespace IsoTilemap
             int minBand,
             int playerBuildingId,
             HashSet<int> playerBlockingBuildingIds,
+            OcclusionMode occlusionMode,
             HashSet<(int x, int z, int band)> visibleBelowCells)
         {
             IsPlayerOutdoor = isPlayerOutdoor;
@@ -29,6 +40,7 @@ namespace IsoTilemap
             MinBand = minBand;
             PlayerBuildingId = playerBuildingId;
             PlayerBlockingBuildingIds = playerBlockingBuildingIds ?? new HashSet<int>();
+            OcclusionMode = occlusionMode;
             VisibleBelowCells = visibleBelowCells ?? new HashSet<(int x, int z, int band)>();
         }
 
@@ -37,6 +49,7 @@ namespace IsoTilemap
             FloorBand == other.FloorBand &&
             MinBand == other.MinBand &&
             PlayerBuildingId == other.PlayerBuildingId &&
+            OcclusionMode == other.OcclusionMode &&
             SetEquals(PlayerBlockingBuildingIds, other.PlayerBlockingBuildingIds) &&
             SetEquals(VisibleBelowCells, other.VisibleBelowCells);
 
@@ -44,7 +57,7 @@ namespace IsoTilemap
 
         public override int GetHashCode()
         {
-            int hash = HashCode.Combine(IsPlayerOutdoor, FloorBand, MinBand, PlayerBuildingId);
+            int hash = HashCode.Combine(IsPlayerOutdoor, FloorBand, MinBand, PlayerBuildingId, OcclusionMode);
             hash = HashCombineSet(hash, PlayerBlockingBuildingIds);
             return HashCombineBelowCells(hash, VisibleBelowCells);
         }
@@ -136,6 +149,7 @@ namespace IsoTilemap
 
         /// <summary>야외 시선상 가림 건물 전층 Hide. false면 차단 집합을 비웁니다.</summary>
         public bool OutdoorSightLineBuildingHideEnabled { get; set; } = true;
+        public OcclusionMode OutdoorOcclusionMode { get; set; } = OcclusionMode.LegacyCompatible;
 
         private PlayerFloorVisibilityPolicy(
             float cellSize,
@@ -228,7 +242,7 @@ namespace IsoTilemap
             }
 
             return new FloorVisibilityContext(
-                isOutdoor, floorBand, _minBand, playerBuildingId, blocking, visibleBelow);
+                isOutdoor, floorBand, _minBand, playerBuildingId, blocking, OutdoorOcclusionMode, visibleBelow);
         }
 
         public bool IsTileVisible(TileData tile, in FloorVisibilityContext ctx)

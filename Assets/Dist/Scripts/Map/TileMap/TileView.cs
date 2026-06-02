@@ -199,6 +199,24 @@ namespace IsoTilemap
             ApplySightLineBuildingOverlay();
         }
 
+        public void ApplyWallOcclusionMode(float occlusion01, OcclusionMode mode)
+        {
+            switch (mode)
+            {
+                case OcclusionMode.LegacyCompatible:
+                case OcclusionMode.AlphaBlendPreserve:
+                case OcclusionMode.FullDespawn:
+                    SetCharacterOcclusion(occlusion01);
+                    break;
+                case OcclusionMode.RenderOnly:
+                    ApplyRenderOnlyWallOcclusion(occlusion01);
+                    break;
+                case OcclusionMode.ColliderOnly:
+                    ApplyColliderOnlyWallOcclusion(occlusion01);
+                    break;
+            }
+        }
+
         private void RefreshBaseVisualState()
         {
             TileBaseVisualState next = ResolveBaseState(_characterOcclusion, _isGhosted);
@@ -312,6 +330,27 @@ namespace IsoTilemap
                 _characterOcclusion < AdditionalLightCutoffOcclusionThreshold);
 
             SetBlockedTraceVisible(_characterOcclusion >= BlockedTraceOcclusionThreshold);
+        }
+
+        void ApplyRenderOnlyWallOcclusion(float occlusion01)
+        {
+            bool hidden = occlusion01 > OcclusionEpsilon;
+            Renderer renderer = _shadeController?.CachedRenderer;
+            if (renderer != null)
+                renderer.enabled = !hidden;
+
+            // RenderOnly/ColliderOnly에서는 기존 캐릭터 오클루전 파생 표현을 제거합니다.
+            _shadeController?.SetCharacterOcclusion(0f);
+            _shadeController?.SetAdditionalLightEnabled(true);
+            SetBlockedTraceVisible(false);
+        }
+
+        void ApplyColliderOnlyWallOcclusion(float occlusion01)
+        {
+            ApplyRenderOnlyWallOcclusion(occlusion01);
+            var colliders = GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < colliders.Length; i++)
+                colliders[i].enabled = true;
         }
 
         private void SetBlockedTraceVisible(bool visible)

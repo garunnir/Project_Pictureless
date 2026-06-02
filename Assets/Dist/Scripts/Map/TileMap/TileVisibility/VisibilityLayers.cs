@@ -55,6 +55,9 @@ namespace IsoTilemap
     {
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
+            if (ctx.OcclusionMode is not OcclusionMode.LegacyCompatible and not OcclusionMode.FullDespawn)
+                return TileVisibilityVerdict.Continue;
+
             int buildingId = tile.identity.buildingId;
             if (buildingId <= 0 || !ctx.PlayerBlockingBuildingIds.Contains(buildingId))
                 return TileVisibilityVerdict.Continue;
