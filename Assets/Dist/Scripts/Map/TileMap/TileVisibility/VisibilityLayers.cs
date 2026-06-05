@@ -40,7 +40,7 @@ namespace IsoTilemap
                 return TileVisibilityVerdict.Continue;
 
             var type = (TileView.TileType)tile.identity.tileType;
-            if (type is TileView.TileType.Wall or TileView.TileType.EdgeWall or TileView.TileType.Obstacle)
+            if (type is TileView.TileType.Wall or TileView.TileType.EdgeWall)
                 return TileVisibilityVerdict.Show;
 
             var gridPos = tile.identity.GridPos;

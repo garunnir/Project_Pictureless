@@ -33,4 +33,4 @@ classDiagram
 | `characterOcclusion` | BFS 후보 여부 안에서 플레이어와 거리 등으로 표시 차단 정도 결정 (`0`=해제) |
 | `PrefabId` | `TilePrefabDB` 딕셔너리 키 |
 | `sizeUnit` | 점유 그리드 크기 (예: `2,1,1`) |
-| `tileType` | `1`=Floor, `2`=Wall, `3`=Obstacle |
+| `tileType` | `1`=Floor, `2`=Wall (`3`=legacy, 로드 시 `2`로 정규화), `4`=EdgeWall(JSON wallEdges) |

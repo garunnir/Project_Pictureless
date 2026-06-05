@@ -48,6 +48,7 @@ public class TileMapManager : MonoBehaviour
     private PlayerFloorVisibilityPolicy _floorPolicy;
     private TileMapCacheHub _mapCacheHub;
     private BuildingGroupBuilder _buildingGroupBuilder;
+    private MapCollisionServices _mapCollisionServices;
 
     public IMapModel Model { get; private set; }
     public TileViewPresentationApplier PresentationApplier => _presentationApplier;
@@ -81,6 +82,7 @@ public class TileMapManager : MonoBehaviour
 
         _chunkStreamer?.SyncNow();
         _saver.Init(Model, _worldGrid);
+        BindMapCollisionToPlayers();
     }
 
     private void OnDestroy()
@@ -143,6 +145,63 @@ public class TileMapManager : MonoBehaviour
 
         for (int i = 0; i < states.Length; i++)
             states[i].BindWorldGrid(_worldGrid);
+    }
+
+    void EnsureMapCacheHub(TileMapModel tileModel)
+    {
+        if (_mapCacheHub != null)
+            return;
+
+        var registry = new BuildingGroupRegistry();
+        _mapCacheHub = TileMapCacheHub.Create(tileModel, registry);
+        tileModel.SetMapCacheHub(_mapCacheHub);
+
+        _buildingGroupBuilder ??= new BuildingGroupBuilder(tileModel, _mapCacheHub);
+        _buildingGroupBuilder.AssignAll();
+    }
+
+    void BindMapCollisionToPlayers()
+    {
+        if (Model is not TileMapModel tileModel)
+            return;
+
+        EnsureMapCacheHub(tileModel);
+        if (_mapCacheHub == null)
+            return;
+
+        var bandResolver = FloorBandResolver.FromTiles(Model.TilesSnapshot, _gridCellSize);
+        _mapCollisionServices = new MapCollisionServices(_mapCacheHub, _gridCellSize, bandResolver);
+
+        var movements = FindObjectsByType<PlayerMovement>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+        for (int i = 0; i < movements.Length; i++)
+            movements[i].BindMapCollision(_mapCollisionServices);
+
+        var aimControllers = FindObjectsByType<PlayerAimController>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+        for (int i = 0; i < aimControllers.Length; i++)
+        {
+            aimControllers[i].BindMapCollision(
+                _mapCollisionServices.LineCast,
+                _mapCollisionServices.BandResolver);
+        }
+
+        var raycasters = FindObjectsByType<DirectionalRaycaster>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+        for (int i = 0; i < raycasters.Length; i++)
+        {
+            var state = raycasters[i].GetComponent<CharacterState>();
+            if (state == null)
+                continue;
+
+            raycasters[i].BindMapCollision(
+                _mapCollisionServices.LineCast,
+                _mapCollisionServices.BandResolver,
+                state);
+        }
     }
 
     private TileObjFactory CreateTileFactory(Transform tileContainer, bool chunkStreaming)
@@ -249,6 +308,8 @@ public class TileMapManager : MonoBehaviour
         IMapViewBuilder viewBuilder = CreateViewBuilder(factory, chunkStreaming: false);
         WireTilePresentationApplier();
         _controller.Init(Model, viewBuilder);
+
+        BindMapCollisionToPlayers();
 
         Debug.Log("[TileMapManager] LoadEditor 완료.");
     }

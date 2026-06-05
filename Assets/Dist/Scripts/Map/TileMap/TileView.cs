@@ -16,7 +16,8 @@ namespace IsoTilemap
             none = 0,
             Floor = 1,
             Wall = 2,
-            Obstacle = 3,
+            // 3 = legacy Obstacle (JSON 로드 시 Wall로 정규화)
+            Slope = 5,
             /// <summary>JSON wallEdges 승격. GridPos=앵커 셀, TileIdentity.edgeFace=면.</summary>
             EdgeWall = 4
         }
@@ -175,6 +176,7 @@ namespace IsoTilemap
                     : (byte)Mathf.Clamp(ef, 0, 1);
             }
 
+            TileCollisionPolicy.Apply(this);
         }
 
         /// <summary>캐릭터 오클루전(0~1)과 shadow·추가광·blocked trace 파생 표현.</summary>
@@ -211,6 +213,7 @@ namespace IsoTilemap
                 case OcclusionMode.RenderOnly:
                     ApplyRenderOnlyWallOcclusion(occlusion01);
                     break;
+                // ColliderOnly: LogicalOnly 타일은 런타임 collider가 비활성이라 레거시 호환만 유지.
                 case OcclusionMode.ColliderOnly:
                     ApplyColliderOnlyWallOcclusion(occlusion01);
                     break;

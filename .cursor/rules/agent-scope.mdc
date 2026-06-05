@@ -1,11 +1,46 @@
 ---
-description: 대규모 작업·추측 방지·검증 기준(에이전트 거버넌스)
+description: 프로젝트 범위 제한·대규모 작업·추측 방지·검증 기준(에이전트 거버넌스)
 alwaysApply: true
 ---
 
 # 에이전트 작업 범위와 절차
 
 사용자가 이번 턴에서 정한 **범위·완료 조건·하지 말 것**이 있으면 그것이 최우선이다. 아래는 기본 안전장치다.
+
+## 프로젝트 범위 (필수)
+
+**프로젝트 루트**: `Z:/Work/Project/Project_Pictureless`
+
+파일 읽기·검색·탐색·터미널 명령은 **반드시 이 프로젝트 안에서만** 수행한다. 프로젝트 밖으로 벗어나는 행위는 **금지**한다.
+
+### 금지
+
+- `C:\Users\lutep` 등 **사용자 홈 전체** 검색
+- `AppData`, `Downloads`, `Documents`, `source` 등 **프로젝트 외부 경로** 탐색
+- 경로 미지정 `glob`/`grep`/`rg`로 워크스페이스 루트 전체 뒤지기
+- Cursor 히스토리·에이전트 트랜스크립트 등 **프로젝트 코드가 아닌 곳**에서 코드 찾기
+
+### 검색 우선순위
+
+1. **열린 파일** 또는 사용자가 지정한 경로
+2. `Assets/Dist/Scripts` (기본 스크립트 작업 영역)
+3. 프로젝트 루트 `Z:/Work/Project/Project_Pictureless` (필요 시에만 확장)
+
+### 도구 사용 규칙
+
+- `Grep`/`Glob`: `path` 또는 `target_directory`에 **프로젝트 내 경로**를 명시
+- `Shell`: 작업 전 `cd Z:/Work/Project/Project_Pictureless` 또는 해당 하위 폴더로 이동
+- 프로젝트 경로를 모를 때: **추측 검색하지 말고** 사용자에게 경로 확인
+
+### 예시
+
+```text
+# BAD — 홈 디렉터리 전체 검색
+rg gravity
+
+# GOOD — 프로젝트 스크립트만 검색
+rg gravity Assets/Dist/Scripts
+```
 
 ## 규모가 크면 먼저 계획만
 

@@ -17,14 +17,26 @@ namespace IsoTilemap
             var list = new List<TileData>();
             foreach (var v in views)
             {
-                if (v == null || v.tileType == TileView.TileType.none) continue;
+                if (v == null) continue;
 
-                byte t = (byte)v.tileType;
+                // Slope prefabs는 과거에 tileType이 none으로 저장된 경우가 있어,
+                // export 시 prefabId로 다시 승격해서 저장되도록 방어합니다.
+                var tileType = v.tileType;
+                if (tileType == TileView.TileType.none &&
+                    !string.IsNullOrEmpty(v.prefabId) &&
+                    v.prefabId.StartsWith("Slope/", StringComparison.Ordinal))
+                {
+                    tileType = TileView.TileType.Slope;
+                }
+
+                if (tileType == TileView.TileType.none) continue;
+
+                byte t = (byte)tileType;
                 byte ef = TileIdentity.EdgeFaceNone;
-                Vector3Int size = ResolveSizeFromDefinition(v.prefabId, v.tileType);
+                Vector3Int size = ResolveSizeFromDefinition(v.prefabId, tileType);
                 Vector3Int grid = v.gridPos;
 
-                if (v.tileType == TileView.TileType.EdgeWall)
+                if (tileType == TileView.TileType.EdgeWall)
                 {
                     ef = (byte)Mathf.Clamp(v.wallEdgeFace, 0, 1);
                 }

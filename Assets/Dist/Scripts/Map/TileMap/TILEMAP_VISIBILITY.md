@@ -77,7 +77,7 @@ flowchart TD
 **차단 buildingId 수집** (`BuildingPlayerOcclusionResolver`, 야외 전용):
 
 - 카메라 지면 교차점 ↔ 플레이어 월드 선분을 그리드로 샘플
-- 선분 상(플레이어 셀 제외) 셀·엣지에 `Wall` / `EdgeWall` / `Obstacle` 이 있으면 해당 `buildingId` 추가
+- 선분 상(플레이어 셀 제외) 셀·엣지에 `Wall` / `EdgeWall` 이 있으면 해당 `buildingId` 추가
 - `buildingId`가 타일에 없으면 `TryGetFloorBuildingRoom`으로 바닥에서 해석
 
 **안정화**: 동일 차단 집합이 **연속 3프레임** 유지될 때만 `_blockingStable` 반영 (`BlockingStableFramesRequired`).  
@@ -97,7 +97,7 @@ flowchart TD
 |--------|-----------|-----------|
 | `SameBuildingUpperFloorHideLayer` | 같은 building **이고** `tileBand > FloorBand` | — |
 | `BuildingScopeLayer` | `tileBand >= FloorBand` 이고 `buildingId != PlayerBuildingId` | 같은 building |
-| `BelowFloorPeekLayer` | `tileBand < FloorBand` 이고 아래 조건 불만족 | `Wall`/`EdgeWall`/`Obstacle` **또는** `VisibleBelowCells`에 `(x,z,band)` 포함 |
+| `BelowFloorPeekLayer` | `tileBand < FloorBand` 이고 아래 조건 불만족 | `Wall`/`EdgeWall` **또는** `VisibleBelowCells`에 `(x,z,band)` 포함 |
 
 **아래층 peek** (`VisibleBelowCells`):
 
@@ -114,7 +114,7 @@ flowchart TD
 ### 3.1 숨김 후보 집합 (`WallOcclusionFinder`)
 
 1. **시작 셀**
-   - 플레이어 셀에 solid wall(`Wall`/`Obstacle`)만 있으면 → 인접 빈 셀로 이동, 없으면 **+X/-Z 인접 벽·엣지만** 반환 후 종료
+   - 플레이어 셀에 solid wall(`Wall`)만 있으면 → 인접 빈 셀로 이동, 없으면 **+X/-Z 인접 벽·엣지만** 반환 후 종료
    - `Topology.ResolveFloorBfsStart`로 BFS 시작점 보정
 
 2. **방 BFS** (`FloorRoomFloodFill`, `collectEmptyNeighbors: false`)
@@ -123,7 +123,7 @@ flowchart TD
 3. **방문 바닥 셀의 4방 이웃 검사**
    - 이웃이 방문 집합 안이면 스킵
    - `EdgeWall`이면 방향별 below/top 분류 (**top 엣지는 최종 숨김에 미포함**)
-   - 셀 벽: `Wall`/`Obstacle`만 solid
+   - 셀 벽: `Wall`만 solid
    - **아래 방향** (`+X`, `-Z` = `BottomOcclusionDirections`) 벽·엣지만 최종 후보
 
 4. **코너 보강**

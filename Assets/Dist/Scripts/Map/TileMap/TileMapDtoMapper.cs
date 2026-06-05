@@ -17,8 +17,9 @@ namespace IsoTilemap
             List<TileData> prepareData = new List<TileData>();
             foreach (var td in tileMapData.tiles)
             {
+                byte tileType = NormalizeTileType(td.tileType);
                 byte edgeFace = TileIdentity.EdgeFaceNone;
-                if (td.tileType == (byte)TileView.TileType.EdgeWall)
+                if (tileType == (byte)TileView.TileType.EdgeWall)
                     edgeFace = (byte)Mathf.Clamp((int)td.face, 0, 1);
 
                 prepareData.Add(new TileData
@@ -28,11 +29,11 @@ namespace IsoTilemap
                     identity = new TileIdentity
                     {
                         PrefabId = td.prefabId,
-                        tileType = td.tileType,
+                        tileType = tileType,
                         GridPos = new Vector3Int(td.x, td.y, td.z),
                         sizeUnit = ResolveSizeFromDefinition(
                             td.prefabId,
-                            (TileView.TileType)td.tileType,
+                            (TileView.TileType)tileType,
                             new Vector3Int(td.sizeX, td.sizeY, td.sizeZ)),
                         edgeFace = edgeFace,
                     }
@@ -101,6 +102,14 @@ namespace IsoTilemap
             }
 
             return tile;
+        }
+
+        static byte NormalizeTileType(byte raw)
+        {
+            // legacy Obstacle(3) → Wall(2)
+            if (raw == 3)
+                return (byte)TileView.TileType.Wall;
+            return raw;
         }
 
         static Vector3Int ResolveSizeFromDefinition(string prefabId, TileView.TileType tileType, Vector3Int fallback)

@@ -1,6 +1,7 @@
 // ============================================================
 // PlayerAimController — 마우스 기준 조준 SphereCast로 시야·상호작용 방향을 CharacterState에 전달
 // ============================================================
+using IsoTilemap;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -18,6 +19,8 @@ public class PlayerAimController : MonoBehaviour
     [SerializeField] private LayerMask _aimObstructionMask = ~0;
 
     private CharacterState _characterState;
+    private MapTopologyLineCast _topologyLineCast;
+    private FloorBandResolver _bandResolver;
     private bool _isAiming;
 
     public float CastOriginYOffset => _castOriginYOffset;
@@ -27,6 +30,12 @@ public class PlayerAimController : MonoBehaviour
     void Awake()
     {
         _characterState = GetComponent<CharacterState>();
+    }
+
+    public void BindMapCollision(MapTopologyLineCast lineCast, FloorBandResolver bandResolver)
+    {
+        _topologyLineCast = lineCast;
+        _bandResolver = bandResolver;
     }
 
     public void SetEnabled(bool enabled)
@@ -77,6 +86,13 @@ public class PlayerAimController : MonoBehaviour
         float maxDist = Mathf.Min(toTarget.magnitude, _maxAimDistance);
         if (maxDist < 1e-4f) return;
         Vector3 dir = toTarget.normalized;
+
+        if (_topologyLineCast != null && _bandResolver != null)
+        {
+            int band = _bandResolver.Resolve(_characterState.BodyWorldPoint.y);
+            if (_topologyLineCast.TryGetBlockingDistance(origin, dir, maxDist, band, out float blockDist))
+                maxDist = Mathf.Min(maxDist, blockDist);
+        }
 
         RaycastHit hit = default;
         bool hasHit = Physics.SphereCast(origin, _sphereRadius, dir, out hit, maxDist,

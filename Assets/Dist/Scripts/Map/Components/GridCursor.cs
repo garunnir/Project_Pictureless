@@ -155,6 +155,8 @@ public class GridCursor : MonoBehaviour
             return (byte)TileView.TileType.Floor;
         if (prefabId.StartsWith("ThickWall/", StringComparison.Ordinal))
             return (byte)TileView.TileType.Wall;
+        if (prefabId.StartsWith("Slope/", StringComparison.Ordinal))
+            return (byte)TileView.TileType.Slope;
         return 0;
     }
 

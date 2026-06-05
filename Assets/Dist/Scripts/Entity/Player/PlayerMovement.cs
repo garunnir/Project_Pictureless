@@ -1,6 +1,7 @@
 // ============================================================
 // PlayerMovement — KinematicMover를 이용한 캡슐 기반 플레이어 이동 (MonoBehaviour 래퍼)
 // ============================================================
+using IsoTilemap;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -37,8 +38,11 @@ public class PlayerMovement : MonoBehaviour, IMovable
     [Header("Collision")]
     [SerializeField] private float _climbAllowance = 0.3f;
     [SerializeField] private float _baseSkin = 0.02f;
+    [Tooltip("WalkableOnly 소품·경사 등 Physics 충돌 레이어")]
     [SerializeField] private LayerMask _collisionMask = ~0;
     [SerializeField] private QueryTriggerInteraction _triggerInteraction = QueryTriggerInteraction.Ignore;
+    [Tooltip("논리 낙하 중력 (useGravity 대신 사용)")]
+    [SerializeField] private float _logicalGravity = -9.81f;
 
     [SerializeField,ReadOnly] private Vector2 _moveDir;
     Rigidbody _rb;
@@ -48,6 +52,8 @@ public class PlayerMovement : MonoBehaviour, IMovable
     bool _pendingInitialVelocity;
     [SerializeField] private MonoBehaviour _debugControllerBehaviour;
     IPlayerMovementDebug _debugController;
+    MapCollisionServices _mapCollision;
+    float _verticalVelocity;
 
     RaycastHit[] _hits = new RaycastHit[8];
 
@@ -72,6 +78,8 @@ public class PlayerMovement : MonoBehaviour, IMovable
         set => _initialVelocity = Mathf.Max(-1f, value);
     }
 
+    public void BindMapCollision(MapCollisionServices services) => _mapCollision = services;
+
     public void SetControllEnabled(bool enabled)
     {
         if (enabled)
@@ -95,6 +103,7 @@ public class PlayerMovement : MonoBehaviour, IMovable
         if (_debugControllerBehaviour == null) TryGetComponent(out _debugControllerBehaviour);
         _debugController = _debugControllerBehaviour as IPlayerMovementDebug;
         _rb.freezeRotation = true;
+        _rb.useGravity = false;
 
         _mover = new KinematicMover
         {
@@ -171,53 +180,97 @@ public class PlayerMovement : MonoBehaviour, IMovable
             _runMaxSpeed);
         _lastDesiredMove = desiredMove;
 
-        if (desiredMove.sqrMagnitude <= Mathf.Epsilon)
+        Vector3 horizontalDelta = Vector3.zero;
+        int hitCount = 0;
+
+        if (desiredMove.sqrMagnitude > Mathf.Epsilon)
         {
-            _lastHitCount = 0;
-            _characterState.UpdateGridPos(transform.position);
-            return;
-        }
+            Vector3 worldCenter = transform.TransformPoint(_capsule.center);
+            Vector3 up          = transform.up;
+            float halfHeight    = Mathf.Max(0f, (_capsule.height * 0.5f) - _capsule.radius);
+            Vector3 p1 = worldCenter + up * halfHeight;
+            Vector3 p2 = worldCenter - up * (halfHeight - _climbAllowance);
+            float radius = _capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
 
-        Vector3 worldCenter = transform.TransformPoint(_capsule.center);
-        Vector3 up          = transform.up;
-        float halfHeight    = Mathf.Max(0f, (_capsule.height * 0.5f) - _capsule.radius);
-        Vector3 p1 = worldCenter + up * halfHeight;
-        Vector3 p2 = worldCenter - up * (halfHeight - _climbAllowance);
-        float radius = _capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
+            float distance = desiredMove.magnitude;
+            hitCount = Physics.CapsuleCastNonAlloc(
+                p1, p2, radius, desiredMove.normalized,
+                _hits, distance + _baseSkin, _collisionMask, _triggerInteraction);
 
-        float distance = desiredMove.magnitude;
-        int hitCount = Physics.CapsuleCastNonAlloc(
-            p1, p2, radius, desiredMove.normalized,
-            _hits, distance + _baseSkin, _collisionMask, _triggerInteraction);
+            _lastP1       = p1;
+            _lastHitCount = hitCount;
 
-        _lastP1          = p1;
-        _lastHitCount    = hitCount;
-
-        if (hitCount == 0)
-            _rb.MovePosition(_rb.position + desiredMove);
-        else
-        {
-            Vector3 delta = _mover.ResolveMove(desiredMove, p1, p2, radius, _hits, hitCount, _capsule);
-
-            if (delta.sqrMagnitude <= Mathf.Epsilon)
+            if (hitCount == 0)
             {
-                _rb.MovePosition(_rb.position);
-                _debugController?.LogPlayerStuck();
+                horizontalDelta = desiredMove;
             }
             else
             {
-                if (_mover.LastSlide.sqrMagnitude > 0f)
+                horizontalDelta = _mover.ResolveMove(desiredMove, p1, p2, radius, _hits, hitCount, _capsule);
+
+                if (horizontalDelta.sqrMagnitude <= Mathf.Epsilon)
                 {
-                    _debugController?.LogPlayerSliding(_mover.LastSlide.sqrMagnitude);
+                    ApplyVerticalOnly();
+                    _debugController?.LogPlayerStuck();
+                    _characterState.UpdateGridPos(transform.position);
+                    return;
                 }
 
-                _rb.MovePosition(_rb.position + delta);
-                _moveDir = delta.normalized;
+                if (_mover.LastSlide.sqrMagnitude > 0f)
+                    _debugController?.LogPlayerSliding(_mover.LastSlide.sqrMagnitude);
+
+                _moveDir = horizontalDelta.normalized;
             }
         }
+        else
+        {
+            _lastHitCount = 0;
+        }
 
-        // 이동이 없던 프레임과 관계 없이 피직스 적용 후 항상 갱신(오클루전 거리 블렌드 끊김 방지)
+        Vector3 newPos = _rb.position + horizontalDelta;
+
+        if (_mapCollision != null && horizontalDelta.sqrMagnitude > Mathf.Epsilon)
+        {
+            int band = _mapCollision.BandResolver.Resolve(newPos.y);
+            Vector3 topologyDelta = _mapCollision.CollisionResolver.ClampHorizontal(_rb.position, horizontalDelta, band);
+            newPos = _rb.position + topologyDelta;
+        }
+
+        ApplyLogicalVertical(ref newPos);
+
+        _rb.MovePosition(newPos);
+        _rb.linearVelocity = Vector3.zero;
+
         _characterState.UpdateGridPos(transform.position);
+    }
+
+    void ApplyVerticalOnly()
+    {
+        Vector3 pos = _rb.position;
+        ApplyLogicalVertical(ref pos);
+        _rb.MovePosition(pos);
+        _rb.linearVelocity = Vector3.zero;
+    }
+
+    void ApplyLogicalVertical(ref Vector3 worldPos)
+    {
+        if (_mapCollision == null)
+            return;
+
+        _mapCollision.FloorSupport.ApplyVertical(
+            ref worldPos,
+            ref _verticalVelocity,
+            Time.fixedDeltaTime,
+            GetFeetOffset(),
+            _logicalGravity);
+    }
+
+    float GetFeetOffset()
+    {
+        float halfHeight = Mathf.Max(0f, (_capsule.height * 0.5f) - _capsule.radius);
+        Vector3 worldCenter = transform.TransformPoint(_capsule.center);
+        float feetY = worldCenter.y - halfHeight;
+        return transform.position.y - feetY;
     }
 
     private float GetEffectiveInitialVelocity()

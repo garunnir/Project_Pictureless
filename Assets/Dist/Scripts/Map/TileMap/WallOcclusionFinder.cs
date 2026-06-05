@@ -630,7 +630,7 @@ namespace IsoTilemap
         }
 
         private static bool IsSolidCellWall(TileView.TileType type) =>
-            type == TileView.TileType.Wall || type == TileView.TileType.Obstacle;
+            type == TileView.TileType.Wall;
 
         private List<TileData> CollectStructuralTilesForDebugLabels()
         {
@@ -689,7 +689,7 @@ namespace IsoTilemap
         }
 
         private static bool IsStructuralTile(TileView.TileType type) =>
-            type == TileView.TileType.Floor || type == TileView.TileType.Wall || type == TileView.TileType.Obstacle;
+            type == TileView.TileType.Floor || type == TileView.TileType.Wall;
 
     }
 }

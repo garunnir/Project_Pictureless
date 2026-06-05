@@ -63,12 +63,6 @@ graph TD
         IsoTileMap[IsoTileMap ⚠️ 레거시]
     end
 
-    subgraph EditorOnly["Editor Only"]
-        Baker[RhombusChunkBaker]
-        Marker[RhombusTileMarker]
-        Baker --> Marker
-    end
-
     TileModel -- "OnRuntimeDataChanged" --> Visualizer
     Factory --> TileHelper
 ```
@@ -109,7 +103,7 @@ graph TD
 
 1. **seed band** — `FloorRoomFloodFill`로 수평 room footprint → 미할당 floor에 `buildingId`.
 2. **같은 band** — footprint·상향 진입 열의 Wall/EdgeWall에 동일 `buildingId` (`roomId=0`).
-3. **상향** — `(x,z,band)`에 `buildingId`가 붙은 Floor/Wall/EdgeWall이 있고 `(x,z,band+1)`에 구조물(Floor/Wall/EdgeWall/Obstacle)이 있으면 위 band로 진입 → room BFS·floor ID·벽 ID 반복.
+3. **상향** — `(x,z,band)`에 `buildingId`가 붙은 Floor/Wall/EdgeWall이 있고 `(x,z,band+1)`에 구조물(Floor/Wall/EdgeWall)이 있으면 위 band로 진입 → room BFS·floor ID·벽 ID 반복.
 4. **roomId** — room bake·perimeter는 기존과 동일 (`TagPerimeterForSlice`가 벽 `roomId` 보정).
 
 점유 조회는 `EnumerateOccupiedCells` + `TryGetCellTiles`만 사용. 점유 인덱스는 타일 `sizeUnit(x,y,z)`를 반영해 확장되며, 빌딩 상향 판정은 `(x,z,band+1)` 셀 조회 결과를 그대로 사용한다. EdgeWall 인접셀 병합은 기본 OFF이며, 상향 연결 경로에서만 옵션으로 ON 한다. XZ footprint 겹침·4방 인접·`sizeUnit` 수동 확장은 사용하지 않음.
@@ -138,10 +132,6 @@ graph TD
 ### Util
 - **TileMapData.cs** (클래스: TileHelper) — `WorldToGrid` / `GridToWorld` 변환
 - **IsoTileMap.cs** — ⚠️ 레거시, 현재 미사용
-
-### Editor Only
-- **RhombusChunkBaker.cs** — 자식 타일 → 단일 MeshCollider 베이킹. Largest-Rect-First 알고리즘으로 인접 타일을 최대 직사각형으로 병합해 정점 수 최소화. → 상세: [CHUNK_BAKER.md](CHUNK_BAKER.md)
-- **RhombusTileMarker.cs** — 베이킹 대상 마커 (빈 MB)
 
 ### Debug
 - **Debug/DebugTileRunner.cs** — BFS 기즈모 콜백 홀더 (`IFrameState`)

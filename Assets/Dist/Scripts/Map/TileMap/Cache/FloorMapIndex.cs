@@ -199,7 +199,7 @@ namespace IsoTilemap
             for (int i = 0; i < list.Count; i++)
             {
                 var type = (TileView.TileType)list[i].identity.tileType;
-                if (type == TileView.TileType.Wall || type == TileView.TileType.Obstacle)
+                if (type == TileView.TileType.Wall)
                     return true;
             }
 

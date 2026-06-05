@@ -695,8 +695,7 @@ namespace IsoTilemap
             {
                 var type = (TileView.TileType)tile.identity.tileType;
                 if (type != TileView.TileType.Wall &&
-                    type != TileView.TileType.EdgeWall &&
-                    type != TileView.TileType.Obstacle)
+                    type != TileView.TileType.EdgeWall)
                     return;
 
                 var pos = tile.identity.GridPos;
@@ -850,8 +849,7 @@ namespace IsoTilemap
             var type = (TileView.TileType)tile.identity.tileType;
             return type is TileView.TileType.Floor
                 or TileView.TileType.Wall
-                or TileView.TileType.EdgeWall
-                or TileView.TileType.Obstacle;
+                or TileView.TileType.EdgeWall;
         }
 
         static bool IsFloorTile(TileData tile) =>
@@ -861,8 +859,7 @@ namespace IsoTilemap
         {
             var type = (TileView.TileType)tile.identity.tileType;
             return type is TileView.TileType.Wall
-                or TileView.TileType.EdgeWall
-                or TileView.TileType.Obstacle;
+                or TileView.TileType.EdgeWall;
         }
     }
 }
