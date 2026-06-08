@@ -66,7 +66,7 @@
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj"
     },
-    "dotnet.defaultSolution": "Project_Pictureless.slnx",
+    "dotnet.defaultSolution": "Project_Pictureless.sln",
     "dotnetAcquisitionExtension.sharedExistingDotnetPath": "C:\\Program Files\\dotnet\\dotnet.exe",
     "dotnetAcquisitionExtension.existingDotnetPath": [
         {"extensionId":"ms-dotnettools.csharp","path":"C:\\Program Files\\dotnet\\dotnet.exe"},
