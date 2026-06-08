@@ -6,12 +6,14 @@ namespace IsoTilemap
         public MapTopologyCollisionResolver CollisionResolver { get; }
         public MapLogicalFloorSupport FloorSupport { get; }
         public MapTopologyLineCast LineCast { get; }
+        public MapTopologyDepenetration Depenetration { get; }
 
         public MapCollisionServices(TileMapCacheHub hub, float cellSize)
         {
             Query = new MapTopologyQuery(hub, cellSize);
             CollisionResolver = new MapTopologyCollisionResolver(Query);
-            FloorSupport = new MapLogicalFloorSupport(Query);
+            Depenetration = new MapTopologyDepenetration(Query, CollisionResolver);
+            FloorSupport = new MapLogicalFloorSupport(Query, Depenetration);
             LineCast = new MapTopologyLineCast(Query);
         }
 

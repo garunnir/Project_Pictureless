@@ -6,10 +6,13 @@ public static class CharacterFeetPose
     public static Vector3 GetFeetWorld(Transform transform)
     {
         if (TryGetFeetOffset(transform, out float feetOffset))
-            return transform.position - Vector3.up * feetOffset;
+            return GetFeetWorld(transform.position, feetOffset);
 
         return transform.position;
     }
+
+    public static Vector3 GetFeetWorld(Vector3 bodyWorld, float feetOffset) =>
+        bodyWorld - Vector3.up * feetOffset;
 
     public static float GetFeetOffset(Transform transform)
     {

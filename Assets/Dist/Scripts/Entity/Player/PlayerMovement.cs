@@ -43,6 +43,10 @@ public class PlayerMovement : MonoBehaviour, IMovable
     [SerializeField] private QueryTriggerInteraction _triggerInteraction = QueryTriggerInteraction.Ignore;
     [Tooltip("논리 낙하 중력 (useGravity 대신 사용)")]
     [SerializeField] private float _logicalGravity = -9.81f;
+    [Tooltip("topology 벽 셀 끼임 탈출 push 속도")]
+    [SerializeField] private float _topologyPushSpeed = 4f;
+    [Tooltip("같은 FixedUpdate 내 topology 탈출 push 최대 반복")]
+    [SerializeField] private int _topologyPushMaxIter = 4;
 
     [SerializeField,ReadOnly] private Vector2 _moveDir;
     Rigidbody _rb;
@@ -53,6 +57,7 @@ public class PlayerMovement : MonoBehaviour, IMovable
     [SerializeField] private MonoBehaviour _debugControllerBehaviour;
     IPlayerMovementDebug _debugController;
     MapCollisionServices _mapCollision;
+    MapTopologyDepenetration.Tracker _gridStuckTracker;
     float _verticalVelocity;
 
     RaycastHit[] _hits = new RaycastHit[8];
@@ -171,88 +176,122 @@ public class PlayerMovement : MonoBehaviour, IMovable
 
     void FixedUpdate()
     {
+        float dt = Time.fixedDeltaTime;
+        Vector3 oldPos = _rb.position;
+        float feetOffset = CharacterFeetPose.GetFeetOffset(transform);
+
+        Vector3 desiredMove = CalcDesiredMove(dt);
+        bool physicsStuck = ResolvePhysicsHorizontal(desiredMove, out Vector3 horizontalDelta);
+
+        Vector3 newPos = ApplyTopologyHorizontal(oldPos, feetOffset, horizontalDelta);
+        ApplyLogicalVertical(ref newPos, feetOffset, dt);
+
+        MapTopologyDepenetration.PushOutResult topologyPush =
+            ResolveGridStuck(ref newPos, feetOffset, dt);
+
+        LogStuckIfNeeded(physicsStuck, topologyPush);
+
+        _rb.MovePosition(newPos);
+        _rb.linearVelocity = Vector3.zero;
+        _characterState.UpdateGridPos(transform.position);
+    }
+
+    Vector3 CalcDesiredMove(float dt)
+    {
         Vector3 desiredMove = _mover.CalcDesiredMove(
             _moveSpeed,
             _sprintMultiplier,
-            Time.fixedDeltaTime,
+            dt,
             _customBaseSpeed,
             _inertiaEnableThreshold,
             _runMaxSpeed);
         _lastDesiredMove = desiredMove;
+        return desiredMove;
+    }
 
-        Vector3 horizontalDelta = Vector3.zero;
-        int hitCount = 0;
-
-        if (desiredMove.sqrMagnitude > Mathf.Epsilon)
-        {
-            Vector3 worldCenter = transform.TransformPoint(_capsule.center);
-            Vector3 up          = transform.up;
-            float halfHeight    = Mathf.Max(0f, (_capsule.height * 0.5f) - _capsule.radius);
-            Vector3 p1 = worldCenter + up * halfHeight;
-            Vector3 p2 = worldCenter - up * (halfHeight - _climbAllowance);
-            float radius = _capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
-
-            float distance = desiredMove.magnitude;
-            hitCount = Physics.CapsuleCastNonAlloc(
-                p1, p2, radius, desiredMove.normalized,
-                _hits, distance + _baseSkin, _collisionMask, _triggerInteraction);
-
-            _lastP1       = p1;
-            _lastHitCount = hitCount;
-
-            if (hitCount == 0)
-            {
-                horizontalDelta = desiredMove;
-            }
-            else
-            {
-                horizontalDelta = _mover.ResolveMove(desiredMove, p1, p2, radius, _hits, hitCount, _capsule);
-
-                if (horizontalDelta.sqrMagnitude <= Mathf.Epsilon)
-                {
-                    ApplyVerticalOnly();
-                    _debugController?.LogPlayerStuck();
-                    _characterState.UpdateGridPos(transform.position);
-                    return;
-                }
-
-                if (_mover.LastSlide.sqrMagnitude > 0f)
-                    _debugController?.LogPlayerSliding(_mover.LastSlide.sqrMagnitude);
-
-                _moveDir = horizontalDelta.normalized;
-            }
-        }
-        else
+    /// <returns>physics stuck 여부</returns>
+    bool ResolvePhysicsHorizontal(Vector3 desiredMove, out Vector3 horizontalDelta)
+    {
+        horizontalDelta = Vector3.zero;
+        if (desiredMove.sqrMagnitude <= Mathf.Epsilon)
         {
             _lastHitCount = 0;
+            return false;
         }
 
-        Vector3 newPos = _rb.position + horizontalDelta;
+        Vector3 worldCenter = transform.TransformPoint(_capsule.center);
+        Vector3 up = transform.up;
+        float halfHeight = Mathf.Max(0f, (_capsule.height * 0.5f) - _capsule.radius);
+        Vector3 p1 = worldCenter + up * halfHeight;
+        Vector3 p2 = worldCenter - up * (halfHeight - _climbAllowance);
+        float radius = _capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
 
-        if (_mapCollision != null && horizontalDelta.sqrMagnitude > Mathf.Epsilon)
+        int hitCount = Physics.CapsuleCastNonAlloc(
+            p1, p2, radius, desiredMove.normalized,
+            _hits, desiredMove.magnitude + _baseSkin, _collisionMask, _triggerInteraction);
+
+        _lastP1 = p1;
+        _lastHitCount = hitCount;
+
+        if (hitCount == 0)
         {
-            Vector3 feetWorld = CharacterFeetPose.GetFeetWorld(transform);
-            Vector3 topologyDelta = _mapCollision.CollisionResolver.ClampHorizontal(feetWorld, horizontalDelta);
-            newPos = _rb.position + topologyDelta;
+            horizontalDelta = desiredMove;
+            return false;
         }
 
-        ApplyLogicalVertical(ref newPos);
+        horizontalDelta = _mover.ResolveMove(desiredMove, p1, p2, radius, _hits, hitCount, _capsule);
+        if (horizontalDelta.sqrMagnitude <= Mathf.Epsilon)
+            return true;
 
-        _rb.MovePosition(newPos);
-        _rb.linearVelocity = Vector3.zero;
+        if (_mover.LastSlide.sqrMagnitude > 0f)
+            _debugController?.LogPlayerSliding(_mover.LastSlide.sqrMagnitude);
 
-        _characterState.UpdateGridPos(transform.position);
+        _moveDir = horizontalDelta.normalized;
+        return false;
     }
 
-    void ApplyVerticalOnly()
+    Vector3 ApplyTopologyHorizontal(Vector3 oldPos, float feetOffset, Vector3 horizontalDelta)
     {
-        Vector3 pos = _rb.position;
-        ApplyLogicalVertical(ref pos);
-        _rb.MovePosition(pos);
-        _rb.linearVelocity = Vector3.zero;
+        if (_mapCollision == null || horizontalDelta.sqrMagnitude <= Mathf.Epsilon)
+            return oldPos + horizontalDelta;
+
+        Vector3 feetWorld = CharacterFeetPose.GetFeetWorld(oldPos, feetOffset);
+        Vector3 topologyDelta = _mapCollision.CollisionResolver.ClampHorizontal(feetWorld, horizontalDelta);
+        return oldPos + topologyDelta;
     }
 
-    void ApplyLogicalVertical(ref Vector3 worldPos)
+    MapTopologyDepenetration.PushOutResult ResolveGridStuck(
+        ref Vector3 bodyPos,
+        float feetOffset,
+        float dt)
+    {
+        if (_mapCollision == null)
+            return MapTopologyDepenetration.PushOutResult.None;
+
+        return _mapCollision.Depenetration.TryResolveGridStuck(
+            ref bodyPos,
+            feetOffset,
+            ref _gridStuckTracker,
+            _topologyPushSpeed,
+            _topologyPushMaxIter,
+            dt);
+    }
+
+    void LogStuckIfNeeded(bool physicsStuck, MapTopologyDepenetration.PushOutResult topologyPush)
+    {
+        // Physics: 소품·경사 등 CapsuleCast 완전 막힘
+        if (physicsStuck)
+        {
+            _debugController?.LogPlayerStuck();
+            return;
+        }
+
+        // Topology: 통행 불가 그리드 탈출 push 후에도 blocked 그리드에 남음
+        if (topologyPush.WasBlocking && topologyPush.StillBlocking)
+            _debugController?.LogPlayerStuck();
+    }
+
+    void ApplyLogicalVertical(ref Vector3 worldPos, float feetOffset, float deltaTime)
     {
         if (_mapCollision == null)
             return;
@@ -260,8 +299,9 @@ public class PlayerMovement : MonoBehaviour, IMovable
         _mapCollision.FloorSupport.ApplyVertical(
             ref worldPos,
             ref _verticalVelocity,
-            Time.fixedDeltaTime,
-            CharacterFeetPose.GetFeetOffset(transform),
+            deltaTime,
+            feetOffset,
+            ref _gridStuckTracker,
             _logicalGravity);
     }
 
