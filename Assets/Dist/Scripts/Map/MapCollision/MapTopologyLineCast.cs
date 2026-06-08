@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace IsoTilemap
 {
-    /// <summary>선분 topology 막힘 거리. band 고정·<see cref="TileMapCacheHub.EnumerateOccupiedCells"/> 미사용.</summary>
+    /// <summary>선분 topology 막힘 거리. origin gridY 슬라이스 고정·<see cref="TileMapCacheHub.EnumerateOccupiedCells"/> 미사용.</summary>
     public sealed class MapTopologyLineCast
     {
         readonly IMapTopologyQuery _query;
@@ -18,7 +18,6 @@ namespace IsoTilemap
             Vector3 origin,
             Vector3 direction,
             float maxDistance,
-            int band,
             out float hitDistance)
         {
             hitDistance = maxDistance;
@@ -31,16 +30,15 @@ namespace IsoTilemap
             int steps = Mathf.Max(1, Mathf.CeilToInt(maxDistance / step));
 
             Vector3Int prevCell = TileHelper.ConvertWorldToGrid(origin, _cellSize);
-            prevCell.y = band;
+            int gridY = prevCell.y;
 
             for (int i = 1; i <= steps; i++)
             {
                 float travelled = (i / (float)steps) * maxDistance;
                 Vector3 sample = origin + direction * travelled;
                 Vector3Int cell = TileHelper.ConvertWorldToGrid(sample, _cellSize);
-                cell.y = band;
 
-                if (_query.CellHasSolidWall(cell.x, cell.z, band))
+                if (_query.CellHasSolidWall(cell.x, cell.z, gridY))
                 {
                     hitDistance = Mathf.Max(0f, travelled - step * 0.5f);
                     return true;
@@ -48,7 +46,9 @@ namespace IsoTilemap
 
                 if (cell.x != prevCell.x || cell.z != prevCell.z)
                 {
-                    if (_query.TryGetEdgeBetween(prevCell, cell, out _))
+                    var prev = new Vector3Int(prevCell.x, gridY, prevCell.z);
+                    var current = new Vector3Int(cell.x, gridY, cell.z);
+                    if (_query.TryGetEdgeBetween(prev, current, out _))
                     {
                         hitDistance = Mathf.Max(0f, travelled - step * 0.5f);
                         return true;

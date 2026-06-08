@@ -6,7 +6,6 @@ public class DirectionalRaycaster : MonoBehaviour
     [SerializeField] private LayerMask _interactableMask = ~0;
 
     MapTopologyLineCast _topologyLineCast;
-    FloorBandResolver _bandResolver;
     CharacterState _characterState;
 
     private Vector3 _lastOrigin;
@@ -14,10 +13,9 @@ public class DirectionalRaycaster : MonoBehaviour
     private float _lastRadius;
     private float _lastDistance;
 
-    public void BindMapCollision(MapTopologyLineCast lineCast, FloorBandResolver bandResolver, CharacterState characterState)
+    public void BindMapCollision(MapTopologyLineCast lineCast, CharacterState characterState)
     {
         _topologyLineCast = lineCast;
-        _bandResolver = bandResolver;
         _characterState = characterState;
     }
 
@@ -40,10 +38,10 @@ public class DirectionalRaycaster : MonoBehaviour
         _lastDistance = maxDistance;
 
         float clippedDistance = maxDistance;
-        if (_topologyLineCast != null && _bandResolver != null && _characterState != null)
+        if (_topologyLineCast != null && _characterState != null)
         {
-            int band = _bandResolver.Resolve(_characterState.BodyWorldPoint.y);
-            if (_topologyLineCast.TryGetBlockingDistance(origin, direction, maxDistance, band, out float blockDist))
+            Vector3 feetWorld = CharacterFeetPose.GetFeetWorld(_characterState.transform);
+            if (_topologyLineCast.TryGetBlockingDistance(feetWorld, direction, maxDistance, out float blockDist))
                 clippedDistance = Mathf.Min(maxDistance, blockDist);
         }
 

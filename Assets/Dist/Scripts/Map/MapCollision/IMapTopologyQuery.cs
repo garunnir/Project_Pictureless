@@ -7,11 +7,11 @@ namespace IsoTilemap
     {
         float CellSize { get; }
 
-        bool TryGetCellTiles(int x, int z, int band, out IReadOnlyList<TileData> list);
+        bool TryGetCellTiles(int x, int z, int gridY, out IReadOnlyList<TileData> list);
 
-        bool CellHasSolidWall(int x, int z, int band);
+        bool CellHasSolidWall(int x, int z, int gridY);
 
-        bool CellHasFloor(int x, int z, int band);
+        bool CellHasFloor(int x, int z, int gridY);
 
         bool TryGetEdgeBetween(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall);
     }

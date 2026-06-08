@@ -3,18 +3,19 @@ namespace IsoTilemap
     public sealed class MapCollisionServices
     {
         public MapTopologyQuery Query { get; }
-        public FloorBandResolver BandResolver { get; }
         public MapTopologyCollisionResolver CollisionResolver { get; }
         public MapLogicalFloorSupport FloorSupport { get; }
         public MapTopologyLineCast LineCast { get; }
 
-        public MapCollisionServices(TileMapCacheHub hub, float cellSize, FloorBandResolver bandResolver)
+        public MapCollisionServices(TileMapCacheHub hub, float cellSize)
         {
             Query = new MapTopologyQuery(hub, cellSize);
-            BandResolver = bandResolver;
             CollisionResolver = new MapTopologyCollisionResolver(Query);
-            FloorSupport = new MapLogicalFloorSupport(Query, bandResolver);
+            FloorSupport = new MapLogicalFloorSupport(Query);
             LineCast = new MapTopologyLineCast(Query);
         }
+
+        public static MapCollisionServices Create(TileMapCacheHub hub, float cellSize) =>
+            new MapCollisionServices(hub, cellSize);
     }
 }

@@ -17,9 +17,9 @@ namespace IsoTilemap
 
         public float CellSize => _cellSize;
 
-        public bool TryGetCellTiles(int x, int z, int band, out IReadOnlyList<TileData> list)
+        public bool TryGetCellTiles(int x, int z, int gridY, out IReadOnlyList<TileData> list)
         {
-            if (_hub.TryGetCellTiles(x, z, band, out var hubList))
+            if (_hub.TryGetCellTiles(x, z, gridY, out var hubList))
             {
                 list = hubList;
                 return true;
@@ -29,17 +29,17 @@ namespace IsoTilemap
             return false;
         }
 
-        public bool CellHasSolidWall(int x, int z, int band)
+        public bool CellHasSolidWall(int x, int z, int gridY)
         {
-            if (!TryGetCellTiles(x, z, band, out var list))
+            if (!TryGetCellTiles(x, z, gridY, out var list))
                 return false;
 
             return FloorMapIndex.CellHasSolidWall(list);
         }
 
-        public bool CellHasFloor(int x, int z, int band)
+        public bool CellHasFloor(int x, int z, int gridY)
         {
-            if (!TryGetCellTiles(x, z, band, out var list))
+            if (!TryGetCellTiles(x, z, gridY, out var list))
                 return false;
 
             return FloorMapIndex.CellHasFloor(list);

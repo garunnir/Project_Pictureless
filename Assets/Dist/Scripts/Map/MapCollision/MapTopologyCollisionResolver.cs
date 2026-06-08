@@ -15,41 +15,44 @@ namespace IsoTilemap
             _cellSize = query.CellSize > 0f ? query.CellSize : 1f;
         }
 
-        public Vector3 ClampHorizontal(Vector3 worldFrom, Vector3 delta, int band)
+        /// <param name="feetWorld">발 월드 위치. gridY 슬라이스는 여기서 결정됩니다.</param>
+        public Vector3 ClampHorizontal(Vector3 feetWorld, Vector3 delta)
         {
             Vector3 flatDelta = new Vector3(delta.x, 0f, delta.z);
             if (flatDelta.sqrMagnitude <= 1e-8f)
                 return delta;
 
-            if (!SegmentCrossesBlocking(worldFrom, worldFrom + flatDelta, band))
+            int gridY = MapCollisionGrid.WorldToGridY(feetWorld, _cellSize);
+
+            if (!SegmentCrossesBlocking(feetWorld, feetWorld + flatDelta, gridY))
                 return delta;
 
-            Vector3 target = worldFrom + flatDelta;
+            Vector3 target = feetWorld + flatDelta;
 
-            Vector3 xSlide = new Vector3(target.x, worldFrom.y, worldFrom.z);
-            if (!SegmentCrossesBlocking(worldFrom, xSlide, band))
-                return new Vector3(xSlide.x - worldFrom.x, delta.y, 0f);
+            Vector3 xSlide = new Vector3(target.x, feetWorld.y, feetWorld.z);
+            if (!SegmentCrossesBlocking(feetWorld, xSlide, gridY))
+                return new Vector3(xSlide.x - feetWorld.x, delta.y, 0f);
 
-            Vector3 zSlide = new Vector3(worldFrom.x, worldFrom.y, target.z);
-            if (!SegmentCrossesBlocking(worldFrom, zSlide, band))
-                return new Vector3(0f, delta.y, zSlide.z - worldFrom.z);
+            Vector3 zSlide = new Vector3(feetWorld.x, feetWorld.y, target.z);
+            if (!SegmentCrossesBlocking(feetWorld, zSlide, gridY))
+                return new Vector3(0f, delta.y, zSlide.z - feetWorld.z);
 
             return Vector3.zero;
         }
 
-        bool SegmentCrossesBlocking(Vector3 from, Vector3 to, int band)
+        bool SegmentCrossesBlocking(Vector3 from, Vector3 to, int gridY)
         {
             var toCell = WorldToCell(to);
-            if (_query.CellHasSolidWall(toCell.x, toCell.z, band))
+            if (_query.CellHasSolidWall(toCell.x, toCell.z, gridY))
                 return true;
 
             var fromCell = WorldToCell(from);
-            if (fromCell == toCell)
+            if (fromCell.x == toCell.x && fromCell.z == toCell.z)
                 return false;
 
-            foreach (var step in TraverseCells(fromCell, toCell))
+            foreach (var step in TraverseCells(fromCell, toCell, gridY))
             {
-                if (_query.CellHasSolidWall(step.current.x, step.current.z, band))
+                if (_query.CellHasSolidWall(step.current.x, step.current.z, gridY))
                     return true;
 
                 if (_query.TryGetEdgeBetween(step.prev, step.current, out _))
@@ -71,13 +74,12 @@ namespace IsoTilemap
             }
         }
 
-        IEnumerable<GridStep> TraverseCells(Vector3Int fromCell, Vector3Int toCell)
+        IEnumerable<GridStep> TraverseCells(Vector3Int fromCell, Vector3Int toCell, int gridY)
         {
             int x0 = fromCell.x;
             int z0 = fromCell.z;
             int x1 = toCell.x;
             int z1 = toCell.z;
-            int band = fromCell.y;
 
             int dx = Mathf.Abs(x1 - x0);
             int dz = Mathf.Abs(z1 - z0);
@@ -87,7 +89,7 @@ namespace IsoTilemap
 
             int x = x0;
             int z = z0;
-            var prev = new Vector3Int(x, band, z);
+            var prev = new Vector3Int(x, gridY, z);
 
             while (x != x1 || z != z1)
             {
@@ -104,7 +106,7 @@ namespace IsoTilemap
                     z += sz;
                 }
 
-                var current = new Vector3Int(x, band, z);
+                var current = new Vector3Int(x, gridY, z);
                 yield return new GridStep(prev, current);
                 prev = current;
             }

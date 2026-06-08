@@ -20,7 +20,6 @@ public class PlayerAimController : MonoBehaviour
 
     private CharacterState _characterState;
     private MapTopologyLineCast _topologyLineCast;
-    private FloorBandResolver _bandResolver;
     private bool _isAiming;
 
     public float CastOriginYOffset => _castOriginYOffset;
@@ -32,11 +31,7 @@ public class PlayerAimController : MonoBehaviour
         _characterState = GetComponent<CharacterState>();
     }
 
-    public void BindMapCollision(MapTopologyLineCast lineCast, FloorBandResolver bandResolver)
-    {
-        _topologyLineCast = lineCast;
-        _bandResolver = bandResolver;
-    }
+    public void BindMapCollision(MapTopologyLineCast lineCast) => _topologyLineCast = lineCast;
 
     public void SetEnabled(bool enabled)
     {
@@ -87,10 +82,10 @@ public class PlayerAimController : MonoBehaviour
         if (maxDist < 1e-4f) return;
         Vector3 dir = toTarget.normalized;
 
-        if (_topologyLineCast != null && _bandResolver != null)
+        if (_topologyLineCast != null)
         {
-            int band = _bandResolver.Resolve(_characterState.BodyWorldPoint.y);
-            if (_topologyLineCast.TryGetBlockingDistance(origin, dir, maxDist, band, out float blockDist))
+            Vector3 feetWorld = CharacterFeetPose.GetFeetWorld(transform);
+            if (_topologyLineCast.TryGetBlockingDistance(feetWorld, dir, maxDist, out float blockDist))
                 maxDist = Mathf.Min(maxDist, blockDist);
         }
 

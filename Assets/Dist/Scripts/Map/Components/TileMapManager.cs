@@ -169,8 +169,7 @@ public class TileMapManager : MonoBehaviour
         if (_mapCacheHub == null)
             return;
 
-        var bandResolver = FloorBandResolver.FromTiles(Model.TilesSnapshot, _gridCellSize);
-        _mapCollisionServices = new MapCollisionServices(_mapCacheHub, _gridCellSize, bandResolver);
+        _mapCollisionServices = MapCollisionServices.Create(_mapCacheHub, _gridCellSize);
 
         var movements = FindObjectsByType<PlayerMovement>(
             FindObjectsInactive.Include,
@@ -183,9 +182,7 @@ public class TileMapManager : MonoBehaviour
             FindObjectsSortMode.None);
         for (int i = 0; i < aimControllers.Length; i++)
         {
-            aimControllers[i].BindMapCollision(
-                _mapCollisionServices.LineCast,
-                _mapCollisionServices.BandResolver);
+            aimControllers[i].BindMapCollision(_mapCollisionServices.LineCast);
         }
 
         var raycasters = FindObjectsByType<DirectionalRaycaster>(
@@ -197,10 +194,7 @@ public class TileMapManager : MonoBehaviour
             if (state == null)
                 continue;
 
-            raycasters[i].BindMapCollision(
-                _mapCollisionServices.LineCast,
-                _mapCollisionServices.BandResolver,
-                state);
+            raycasters[i].BindMapCollision(_mapCollisionServices.LineCast, state);
         }
     }
 

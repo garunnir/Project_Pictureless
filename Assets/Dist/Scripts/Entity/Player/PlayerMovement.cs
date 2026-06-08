@@ -231,8 +231,8 @@ public class PlayerMovement : MonoBehaviour, IMovable
 
         if (_mapCollision != null && horizontalDelta.sqrMagnitude > Mathf.Epsilon)
         {
-            int band = _mapCollision.BandResolver.Resolve(newPos.y);
-            Vector3 topologyDelta = _mapCollision.CollisionResolver.ClampHorizontal(_rb.position, horizontalDelta, band);
+            Vector3 feetWorld = CharacterFeetPose.GetFeetWorld(transform);
+            Vector3 topologyDelta = _mapCollision.CollisionResolver.ClampHorizontal(feetWorld, horizontalDelta);
             newPos = _rb.position + topologyDelta;
         }
 
@@ -261,16 +261,8 @@ public class PlayerMovement : MonoBehaviour, IMovable
             ref worldPos,
             ref _verticalVelocity,
             Time.fixedDeltaTime,
-            GetFeetOffset(),
+            CharacterFeetPose.GetFeetOffset(transform),
             _logicalGravity);
-    }
-
-    float GetFeetOffset()
-    {
-        float halfHeight = Mathf.Max(0f, (_capsule.height * 0.5f) - _capsule.radius);
-        Vector3 worldCenter = transform.TransformPoint(_capsule.center);
-        float feetY = worldCenter.y - halfHeight;
-        return transform.position.y - feetY;
     }
 
     private float GetEffectiveInitialVelocity()
