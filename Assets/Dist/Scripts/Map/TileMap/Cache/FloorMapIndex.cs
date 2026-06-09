@@ -177,33 +177,26 @@ namespace IsoTilemap
                    _edges.TryGetValue(edgeKey, out edgeWall);
         }
 
-        public static bool CellHasFloor(IReadOnlyList<TileData> list)
+        public static bool CellHasFloor(IReadOnlyList<TileData> list) =>
+            TileCollisionFlagsUtil.CellProvidesLogicalFloor(list);
+
+        public static bool CellHasSolidWall(IReadOnlyList<TileData> list) =>
+            TileCollisionFlagsUtil.CellBlocksOccupied(list);
+
+        public bool EdgeBlocksPassage(Vector3Int cellA, Vector3Int cellB)
         {
-            if (list == null)
+            if (!TryGetEdgeBetween(cellA, cellB, out var edge))
                 return false;
 
-            for (int i = 0; i < list.Count; i++)
-            {
-                if ((TileView.TileType)list[i].identity.tileType == TileView.TileType.Floor)
-                    return true;
-            }
-
-            return false;
+            return TileCollisionFlagsUtil.EdgeBlocksPassage(edge);
         }
 
-        public static bool CellHasSolidWall(IReadOnlyList<TileData> list)
+        public bool EdgeSeparatesRoom(Vector3Int cellA, Vector3Int cellB)
         {
-            if (list == null)
+            if (!TryGetEdgeBetween(cellA, cellB, out var edge))
                 return false;
 
-            for (int i = 0; i < list.Count; i++)
-            {
-                var type = (TileView.TileType)list[i].identity.tileType;
-                if (type == TileView.TileType.Wall)
-                    return true;
-            }
-
-            return false;
+            return TileCollisionFlagsUtil.EdgeSeparatesRoom(edge);
         }
 
         public Vector3Int ResolveFloorBfsStart(int band, int startX, int startZ)

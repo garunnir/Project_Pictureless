@@ -83,9 +83,16 @@ flowchart TD
 **안정화**: 동일 차단 집합이 **연속 3프레임** 유지될 때만 `_blockingStable` 반영 (`BlockingStableFramesRequired`).  
 **토글**: `PlayerFloorVisibilityDriver._outdoorSightLineBuildingHideEnabled` / `OutdoorSightLineBuildingHideEnabled == false` → 차단 집합 비움.
 
-**적용 방식**:
+**적용 방식** (`OcclusionMode` — 야외 건물·실내 벽 **공유 enum**, 소비 switch는 분리):
 
-- 차단 building 추가: 해당 building 타일 **전체 despawn** (단, MinBand Floor는 despawn 제외)
+| 모드 | 야외 차단 building | 실내 벽 |
+|------|-------------------|---------|
+| `FullDespawn` / `LegacyCompatible` | building 전체 despawn (MinBand Floor 제외) | `_CharacterOcclusion` + shadow/trace/추가광 파생 |
+| `RenderOnly` | Renderer off | Renderer off |
+| `ColliderOnly` | Renderer off, Collider on | 동일 |
+| `AlphaBlendPreserve` | despawn·Renderer off **없음** — Wall/EdgeWall에 알파 1.0 | Renderer on + `_CharacterOcclusion`만 (파생 효과 없음) |
+
+- 차단 building 추가: 모드별 위 표 적용 (MinBand Floor는 despawn 제외·흔적 유지)
 - 차단 building 제거: 가시성 통과 타일만 respawn
 - 셀 `Prune` 시 차단 building 소속 뷰는 **building 단위 despawn**으로 승격
 
@@ -111,10 +118,24 @@ flowchart TD
 진입: `TileMapModel.UpdateOcclusionFromPlayerWorld`  
 야외(`IsOutdoorEvaluation`)이면 **멤버십·강도 모두 즉시 클리어** — BFS 벽 숨김 없음.
 
+### 3.0 후보 선정 vs 표현 vs 강도 (3단 분리)
+
+| 단계 | 역할 | 담당 |
+|------|------|------|
+| **후보 선정** | 플레이어를 가릴 수 있는 타일인지 | `TileDefinition` → bake `occludesOccupiedCells` / `occludesEdge` → `WallOcclusionFinder` BFS |
+| **강도** | 후보 타일의 occlusion01 (0~1) | `TileMapModel.UpdateOcclusionFromPlayerWorld` + `OcclusionProximitySettings` 거리 커브 |
+| **표현** | occlusion01 → 시각 효과 | `OcclusionMode` → `TileView.ApplyWallOcclusionMode` |
+
+| `OcclusionMode` | 표현 (실내 벽) |
+|---------------|----------------|
+| `LegacyCompatible` / `FullDespawn` | `_CharacterOcclusion` + ShadowsOnly(≥0.99) + 추가광 off + Blocked trace |
+| `AlphaBlendPreserve` | Renderer on, `_CharacterOcclusion`만 — shadow/trace/추가광 **미적용** |
+| `RenderOnly` / `ColliderOnly` | Renderer off (ColliderOnly는 collider 유지) |
+
 ### 3.1 숨김 후보 집합 (`WallOcclusionFinder`)
 
 1. **시작 셀**
-   - 플레이어 셀에 solid wall(`Wall`)만 있으면 → 인접 빈 셀로 이동, 없으면 **+X/-Z 인접 벽·엣지만** 반환 후 종료
+   - 플레이어 셀에 `OccludesOccupiedCells` 타일만 있으면 → 인접 빈 셀로 이동, 없으면 **+X/-Z 인접 벽·엣지만** 반환 후 종료
    - `Topology.ResolveFloorBfsStart`로 BFS 시작점 보정
 
 2. **방 BFS** (`FloorRoomFloodFill`, `collectEmptyNeighbors: false`)
@@ -122,15 +143,15 @@ flowchart TD
 
 3. **방문 바닥 셀의 4방 이웃 검사**
    - 이웃이 방문 집합 안이면 스킵
-   - `EdgeWall`이면 방향별 below/top 분류 (**top 엣지는 최종 숨김에 미포함**)
-   - 셀 벽: `Wall`만 solid
+   - `EdgeWall`이면 `OccludesEdge`일 때만 방향별 below/top 분류 (**top 엣지는 최종 숨김에 미포함**)
+   - 셀 벽: `OccludesOccupiedCells` 플래그
    - **아래 방향** (`+X`, `-Z` = `BottomOcclusionDirections`) 벽·엣지만 최종 후보
 
 4. **코너 보강**
    - top 분류 벽 주변에서 “빨간 벽 셀”과 2방향 이상 맞닿는 비-검사 벽 셀 추가
 
 5. **플레이어 근접 마스크** (`OcclusionMaskOptions`, `PlayerProximityMaskEnabled`)
-   - 전역 Wall/EdgeWall 후보 중 플레이어 기준 **+X/-Z 하단 밴드** 안
+   - 전역 `OccludesOccupiedCells` / `OccludesEdge` 후보 중 플레이어 기준 **+X/-Z 하단 밴드** 안
    - **삼각형 마스크** (깊이마다 좌우 허용 1타일 확장) 안이면 `FinalOccluding`에 **추가**
    - 기본 축: `DownAxis (+1,0,-1)`, `RightAxis (+1,0,+1)`
 
@@ -145,13 +166,15 @@ flowchart TD
 | `ApplyEpsilon` | 0.015 | 변화 미만이면 이벤트 스킵 |
 | `PlayerProximityMaskEnabled` | true | 근접 삼각 마스크 on/off |
 
-`TileView` 파생 표현 (occlusion > ε):
+`TileView` 파생 표현 (`LegacyCompatible` / `FullDespawn`, occlusion > ε):
 
 | 임계값 | 효과 |
 |--------|------|
 | ≥ 0.4 | Blocked trace 오브젝트 표시 |
 | ≥ 0.55 | 추가광 off |
 | ≥ 0.99 | ShadowCastingMode ShadowsOnly |
+
+`AlphaBlendPreserve`는 위 파생 효과를 **적용하지 않음** (알파만).
 
 기본 상태 우선순위: **HiddenByCharacter > Ghosted > Visible**.
 

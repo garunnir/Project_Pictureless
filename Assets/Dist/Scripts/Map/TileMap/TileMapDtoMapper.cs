@@ -22,6 +22,9 @@ namespace IsoTilemap
                 if (tileType == (byte)TileView.TileType.EdgeWall)
                     edgeFace = (byte)Mathf.Clamp((int)td.face, 0, 1);
 
+                if (!TryBakeFromDefinition(td.prefabId, tileType, out var sizeUnit, out byte collisionFlags))
+                    continue;
+
                 prepareData.Add(new TileData
                 {
                     tileDefId = Guid.NewGuid(),
@@ -31,11 +34,9 @@ namespace IsoTilemap
                         PrefabId = td.prefabId,
                         tileType = tileType,
                         GridPos = new Vector3Int(td.x, td.y, td.z),
-                        sizeUnit = ResolveSizeFromDefinition(
-                            td.prefabId,
-                            (TileView.TileType)tileType,
-                            new Vector3Int(td.sizeX, td.sizeY, td.sizeZ)),
+                        sizeUnit = sizeUnit,
                         edgeFace = edgeFace,
+                        collisionFlags = collisionFlags,
                     }
                 });
             }
@@ -44,6 +45,13 @@ namespace IsoTilemap
             {
                 foreach (var we in tileMapData.wallEdges)
                 {
+                    if (!TryBakeFromDefinition(
+                            we.prefabId,
+                            (byte)TileView.TileType.EdgeWall,
+                            out var sizeUnit,
+                            out byte collisionFlags))
+                        continue;
+
                     byte faceClamped = (byte)Mathf.Clamp((int)we.face, 0, 1);
                     prepareData.Add(new TileData
                     {
@@ -53,12 +61,10 @@ namespace IsoTilemap
                         {
                             PrefabId = we.prefabId,
                             GridPos = new Vector3Int(we.x, we.y, we.z),
-                            sizeUnit = ResolveSizeFromDefinition(
-                                we.prefabId,
-                                TileView.TileType.EdgeWall,
-                                Vector3Int.one),
+                            sizeUnit = sizeUnit,
                             tileType = (byte)TileView.TileType.EdgeWall,
                             edgeFace = faceClamped,
+                            collisionFlags = collisionFlags,
                         }
                     });
                 }
@@ -112,18 +118,35 @@ namespace IsoTilemap
             return raw;
         }
 
-        static Vector3Int ResolveSizeFromDefinition(string prefabId, TileView.TileType tileType, Vector3Int fallback)
+        static bool TryBakeFromDefinition(
+            string prefabId,
+            byte tileType,
+            out Vector3Int sizeUnit,
+            out byte collisionFlags)
         {
-            if (TilePrefabDB.TryResolveDefinitionSize(prefabId, out var size))
-                return size;
+            sizeUnit = Vector3Int.one;
+            collisionFlags = 0;
 
-            if (tileType == TileView.TileType.EdgeWall)
-                return Vector3Int.one;
+            if (!TilePrefabDB.TryResolveDefinition(prefabId, out var def) || def == null)
+            {
+                Debug.LogError($"[TileMapDtoMapper] Definition not found for prefabId='{prefabId}'. Tile skipped.");
+                return false;
+            }
 
-            return new Vector3Int(
-                Mathf.Max(1, fallback.x),
-                Mathf.Max(1, fallback.y),
-                Mathf.Max(1, fallback.z));
+            sizeUnit = new Vector3Int(
+                Mathf.Max(1, def.size.x),
+                Mathf.Max(1, def.size.y),
+                Mathf.Max(1, def.size.z));
+            collisionFlags = TileCollisionProfile.FromDefinitionForTileType(tileType, def);
+
+            if (tileType == (byte)TileView.TileType.EdgeWall &&
+                !TileCollisionFlagsUtil.Has(collisionFlags, TileCollisionFlags.OccludesEdge))
+            {
+                Debug.LogWarning(
+                    $"[TileMapDtoMapper] EdgeWall '{prefabId}' has no OccludesEdge flag. BFS character occlusion will skip this edge.");
+            }
+
+            return true;
         }
     }
 }

@@ -269,6 +269,7 @@ namespace IsoTilemap
                 edgeFace = id.edgeFace,
                 buildingId = buildingId,
                 roomId = roomId,
+                collisionFlags = id.collisionFlags,
             };
 
         private void SetEdgeTile(TileData tileData)
@@ -714,7 +715,8 @@ namespace IsoTilemap
             a.tileType == b.tileType &&
             a.edgeFace == b.edgeFace &&
             a.buildingId == b.buildingId &&
-            a.roomId == b.roomId;
+            a.roomId == b.roomId &&
+            a.collisionFlags == b.collisionFlags;
 
         private readonly struct OcclusionWallEntry
         {

@@ -382,6 +382,9 @@ namespace IsoTilemap
                 case BuildingApplyMode.ColliderOnly:
                     SetBuildingViewsOccluded(buildingId, true, mode);
                     break;
+                case BuildingApplyMode.AlphaBlend:
+                    SetBuildingViewsAlphaBlend(buildingId, true);
+                    break;
             }
         }
 
@@ -395,6 +398,9 @@ namespace IsoTilemap
                 case BuildingApplyMode.RenderOnly:
                 case BuildingApplyMode.ColliderOnly:
                     SetBuildingViewsOccluded(buildingId, false, mode);
+                    break;
+                case BuildingApplyMode.AlphaBlend:
+                    SetBuildingViewsAlphaBlend(buildingId, false);
                     break;
             }
         }
@@ -453,6 +459,35 @@ namespace IsoTilemap
                 if (_tileViews.TryGetValue(tileId, out TileView view))
                     SetViewOcclusionState(view, hidden, mode);
             }
+        }
+
+        void SetBuildingViewsAlphaBlend(int buildingId, bool hidden)
+        {
+            if (_buildingRegistry == null || buildingId <= 0)
+                return;
+
+            foreach (Guid tileId in _buildingRegistry.GetTilesForBuilding(buildingId))
+            {
+                if (!_tileViews.TryGetValue(tileId, out TileView view))
+                    continue;
+
+                if (!IsStructuralWallView(view))
+                    continue;
+
+                if (hidden)
+                    view.ApplyWallOcclusionMode(1f, OcclusionMode.AlphaBlendPreserve);
+                else
+                    view.ApplyWallOcclusionMode(0f, OcclusionMode.AlphaBlendPreserve);
+            }
+        }
+
+        static bool IsStructuralWallView(TileView view)
+        {
+            if (view == null)
+                return false;
+
+            var type = view.tileType;
+            return type == TileView.TileType.Wall || type == TileView.TileType.EdgeWall;
         }
 
         bool TryGetBlockingBuildingIdForView(Guid tileId, out int buildingId)
@@ -543,7 +578,11 @@ namespace IsoTilemap
             if (ResolveBuildingApplyMode(_buildingOcclusionController.CurrentMode) == BuildingApplyMode.FullDespawn)
                 return;
 
-            SetViewOcclusionState(view, true, _buildingOcclusionController.CurrentMode);
+            var applyMode = ResolveBuildingApplyMode(_buildingOcclusionController.CurrentMode);
+            if (applyMode == BuildingApplyMode.AlphaBlend)
+                SetBuildingViewsAlphaBlend(tile.identity.buildingId, true);
+            else
+                SetViewOcclusionState(view, true, _buildingOcclusionController.CurrentMode);
         }
 
         static void SetViewOcclusionState(TileView view, bool hidden, OcclusionMode mode)
@@ -568,8 +607,7 @@ namespace IsoTilemap
             {
                 OcclusionMode.RenderOnly => BuildingApplyMode.RenderOnly,
                 OcclusionMode.ColliderOnly => BuildingApplyMode.ColliderOnly,
-                // AlphaBlendPreserve는 벽의 알파 기반 표현을 보존하면서 건물은 despawn하지 않도록 render-only 경로를 사용합니다.
-                OcclusionMode.AlphaBlendPreserve => BuildingApplyMode.RenderOnly,
+                OcclusionMode.AlphaBlendPreserve => BuildingApplyMode.AlphaBlend,
                 _ => BuildingApplyMode.FullDespawn
             };
 
@@ -577,7 +615,8 @@ namespace IsoTilemap
         {
             FullDespawn = 0,
             RenderOnly = 1,
-            ColliderOnly = 2
+            ColliderOnly = 2,
+            AlphaBlend = 3,
         }
     }
 }

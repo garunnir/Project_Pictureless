@@ -62,6 +62,7 @@ namespace IsoTilemap
 
         private TileBaseVisualState _currentBaseState = TileBaseVisualState.Visible;
         private float _characterOcclusion;
+        private OcclusionMode _wallOcclusionMode = OcclusionMode.LegacyCompatible;
         private bool _isGhosted;
         private bool _sightLineBuildingHidden;
         private bool _currentSelected;
@@ -176,7 +177,7 @@ namespace IsoTilemap
                     : (byte)Mathf.Clamp(ef, 0, 1);
             }
 
-            TileCollisionPolicy.Apply(this);
+            TileCollisionPolicy.Apply(this, tileData.identity.collisionFlags);
         }
 
         /// <summary>캐릭터 오클루전(0~1)과 shadow·추가광·blocked trace 파생 표현.</summary>
@@ -203,12 +204,15 @@ namespace IsoTilemap
 
         public void ApplyWallOcclusionMode(float occlusion01, OcclusionMode mode)
         {
+            _wallOcclusionMode = mode;
             switch (mode)
             {
                 case OcclusionMode.LegacyCompatible:
-                case OcclusionMode.AlphaBlendPreserve:
                 case OcclusionMode.FullDespawn:
                     SetCharacterOcclusion(occlusion01);
+                    break;
+                case OcclusionMode.AlphaBlendPreserve:
+                    ApplyAlphaBlendWallOcclusion(occlusion01);
                     break;
                 case OcclusionMode.RenderOnly:
                     ApplyRenderOnlyWallOcclusion(occlusion01);
@@ -228,7 +232,12 @@ namespace IsoTilemap
                 ForceApplyBaseState(next);
 
             if (next == TileBaseVisualState.HiddenByCharacter)
-                ApplyCharacterOcclusionDerived();
+            {
+                if (_wallOcclusionMode == OcclusionMode.AlphaBlendPreserve)
+                    ApplyAlphaBlendWallOcclusion(_characterOcclusion);
+                else
+                    ApplyCharacterOcclusionDerived();
+            }
 
             ApplySightLineBuildingOverlay();
         }
@@ -335,6 +344,28 @@ namespace IsoTilemap
             SetBlockedTraceVisible(_characterOcclusion >= BlockedTraceOcclusionThreshold);
         }
 
+        void ApplyAlphaBlendWallOcclusion(float occlusion01)
+        {
+            _characterOcclusion = Mathf.Clamp01(occlusion01);
+            Renderer renderer = _shadeController?.CachedRenderer;
+            if (renderer != null)
+                renderer.enabled = true;
+
+            _shadeController?.SetGhost(false);
+            _shadeController?.SetCharacterOcclusion(_characterOcclusion);
+            SetBlockedTraceVisible(false);
+
+            if (_characterOcclusion <= OcclusionEpsilon)
+                ForceApplyBaseState(TileBaseVisualState.Visible);
+            else
+            {
+                _currentBaseState = TileBaseVisualState.HiddenByCharacter;
+                _baseStateInitialized = true;
+            }
+
+            ApplySightLineBuildingOverlay();
+        }
+
         void ApplyRenderOnlyWallOcclusion(float occlusion01)
         {
             bool hidden = occlusion01 > OcclusionEpsilon;
@@ -370,6 +401,7 @@ namespace IsoTilemap
             _characterOcclusion = 0f;
             _isGhosted = false;
             _sightLineBuildingHidden = false;
+            _wallOcclusionMode = OcclusionMode.LegacyCompatible;
             ForceApplyBaseState(TileBaseVisualState.Visible);
             ForceApplySelectedOverlay(false);
             SetBlockedTraceVisible(false);

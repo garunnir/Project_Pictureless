@@ -27,13 +27,12 @@ namespace IsoTilemap
             ref float verticalVelocity,
             float deltaTime,
             float feetOffset,
+            ref MapCollisionGrid.FeetCell feet,
             ref MapTopologyDepenetration.Tracker gridTracker,
             float gravity = -9.81f)
         {
             if (deltaTime <= 0f)
                 return;
-
-            var feet = MapCollisionGrid.ResolveFeetCell(worldPos, feetOffset, _cellSize);
 
             verticalVelocity += gravity * deltaTime;
             float predictedFeetY = feet.FeetY + verticalVelocity * deltaTime;
@@ -50,10 +49,12 @@ namespace IsoTilemap
             {
                 verticalVelocity = 0f;
                 worldPos.y = landingSurfaceY + feetOffset;
+                feet = MapCollisionGrid.WithFeetY(feet, landingSurfaceY, _cellSize);
                 return;
             }
 
             worldPos.y = predictedFeetY + feetOffset;
+            feet = MapCollisionGrid.WithFeetY(feet, predictedFeetY, _cellSize);
         }
 
         bool TryBlockFallIntoWall(
@@ -65,9 +66,9 @@ namespace IsoTilemap
             if (_depenetration == null || verticalVelocity >= 0f)
                 return false;
 
-            var currentGrid = new Vector3Int(feet.X, feet.GridY, feet.Z);
-            var predictedFeetWorld = new Vector3(feet.FeetWorld.x, predictedFeetY, feet.FeetWorld.z);
-            var predictedGrid = TileHelper.ConvertWorldToGrid(predictedFeetWorld, _cellSize);
+            var currentGrid = MapCollisionGrid.ToGrid(feet);
+            var predictedGrid = MapCollisionGrid.ToGrid(
+                MapCollisionGrid.WithFeetY(feet, predictedFeetY, _cellSize));
 
             if (!_depenetration.IsGridBlocked(predictedGrid))
                 return false;

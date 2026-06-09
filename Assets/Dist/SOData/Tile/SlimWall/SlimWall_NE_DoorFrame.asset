@@ -17,3 +17,16 @@ MonoBehaviour:
   prefab: {fileID: 7038651174855103407, guid: 5366fe130c027a54f8a566d682a522a4, type: 3}
   category: 
   size: {x: 1, y: 2, z: 1}
+  occupied:
+    providesLogicalFloor: 0
+    blocksPassageAndOcclusion: 0
+    usePhysicsCollider: 0
+    splitPassageAndOcclusion: 0
+    blocksOccupiedCells: 0
+    occludesOccupiedCells: 0
+  edge:
+    blocksPassageAndOcclusion: 0
+    splitPassageAndOcclusion: 1
+    blocksEdge: 0
+    separatesRoom: 1
+    occludesEdge: 1

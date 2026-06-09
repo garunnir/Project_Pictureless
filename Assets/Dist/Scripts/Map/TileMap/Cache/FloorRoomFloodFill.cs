@@ -70,7 +70,7 @@ namespace IsoTilemap
                     int nz = cur.z + d.z;
                     var neighbor = new Vector3Int(nx, band, nz);
 
-                    if (index.TryGetEdgeBetween(cur, neighbor, out _))
+                    if (index.EdgeSeparatesRoom(cur, neighbor))
                         continue;
 
                     if (visitedCells.Contains(neighbor))

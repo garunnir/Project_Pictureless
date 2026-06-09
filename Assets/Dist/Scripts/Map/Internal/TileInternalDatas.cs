@@ -43,6 +43,9 @@ using UnityEngine;namespace IsoTilemap
 
         /// <summary>0=room 미할당; 같은 buildingId·band 내 방 번호.</summary>
         public int roomId { init; get; }
+
+        /// <summary><see cref="TileDefinition"/> 충돌·오클루전 bake. <see cref="TileCollisionProfile.FromDefinition"/>.</summary>
+        public byte collisionFlags { init; get; }
     }
 
     /// <summary>플레이어 월드와 벽 간 거리에 따른 오클루전 강도(0~1) 매핑.</summary>

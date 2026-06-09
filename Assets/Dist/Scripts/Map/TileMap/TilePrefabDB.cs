@@ -43,9 +43,9 @@ namespace IsoTilemap
             return null;
         }
 
-        public bool TryGetDefinitionSize(string id, out Vector3Int size)
+        public bool TryGetDefinition(string id, out TileDefinition def)
         {
-            size = Vector3Int.one;
+            def = null;
             if (string.IsNullOrEmpty(id))
                 return false;
 
@@ -58,19 +58,38 @@ namespace IsoTilemap
                 if (!string.Equals(e.prefabId, id, StringComparison.Ordinal))
                     continue;
 
-                size = new Vector3Int(
-                    Mathf.Max(1, e.size.x),
-                    Mathf.Max(1, e.size.y),
-                    Mathf.Max(1, e.size.z));
+                def = e;
                 return true;
             }
 
             return false;
         }
 
-        public static bool TryResolveDefinitionSize(string id, out Vector3Int size)
+        public TileDefinition GetDefinitionOrLogError(string prefabId)
+        {
+            if (TryGetDefinition(prefabId, out var def))
+                return def;
+
+            Debug.LogError($"[TilePrefabDB] Definition not found for prefabId='{prefabId}'. All tiles must be registered in TilePrefabDB.");
+            return null;
+        }
+
+        public bool TryGetDefinitionSize(string id, out Vector3Int size)
         {
             size = Vector3Int.one;
+            if (!TryGetDefinition(id, out var def) || def == null)
+                return false;
+
+            size = new Vector3Int(
+                Mathf.Max(1, def.size.x),
+                Mathf.Max(1, def.size.y),
+                Mathf.Max(1, def.size.z));
+            return true;
+        }
+
+        public static bool TryResolveDefinition(string id, out TileDefinition def)
+        {
+            def = null;
             if (string.IsNullOrEmpty(id))
                 return false;
 
@@ -81,11 +100,24 @@ namespace IsoTilemap
                 if (db == null)
                     continue;
 
-                if (db.TryGetDefinitionSize(id, out size))
+                if (db.TryGetDefinition(id, out def))
                     return true;
             }
 
             return false;
+        }
+
+        public static bool TryResolveDefinitionSize(string id, out Vector3Int size)
+        {
+            size = Vector3Int.one;
+            if (!TryResolveDefinition(id, out var def) || def == null)
+                return false;
+
+            size = new Vector3Int(
+                Mathf.Max(1, def.size.x),
+                Mathf.Max(1, def.size.y),
+                Mathf.Max(1, def.size.z));
+            return true;
         }
         //public GameObject GetPrefab(int id)
         //{

@@ -110,6 +110,10 @@ public class GridCursor : MonoBehaviour
 
         var def = _placementState.Selected;
         byte placedType = InferTileTypeFromPrefabId(def.prefabId);
+        var sizeUnit = new Vector3Int(
+            Mathf.Max(1, def.size.x),
+            Mathf.Max(1, def.size.y),
+            Mathf.Max(1, def.size.z));
         var tileData = new TileData
         {
             tileDefId = Guid.NewGuid(),
@@ -118,9 +122,10 @@ public class GridCursor : MonoBehaviour
             {
                 PrefabId  = def.prefabId,
                 GridPos   = _cursorGridPos,
-                sizeUnit  = Vector3Int.one,
+                sizeUnit  = sizeUnit,
                 tileType  = placedType,
                 edgeFace  = placedType == (byte)TileView.TileType.EdgeWall ? (byte)0 : TileIdentity.EdgeFaceNone,
+                collisionFlags = TileCollisionProfile.FromDefinitionForTileType(placedType, def),
             }
         };
         _controller.AddAndFlush(tileData);

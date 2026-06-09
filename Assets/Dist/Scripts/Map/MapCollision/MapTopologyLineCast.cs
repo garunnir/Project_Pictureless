@@ -48,7 +48,7 @@ namespace IsoTilemap
                 {
                     var prev = new Vector3Int(prevCell.x, gridY, prevCell.z);
                     var current = new Vector3Int(cell.x, gridY, cell.z);
-                    if (_query.TryGetEdgeBetween(prev, current, out _))
+                    if (MapTopologyGridSegment.CrossesBlockingBetween(_query, prev, current))
                     {
                         hitDistance = Mathf.Max(0f, travelled - step * 0.5f);
                         return true;

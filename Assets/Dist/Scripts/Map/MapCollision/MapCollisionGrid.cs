@@ -3,7 +3,7 @@ using UnityEngine;
 namespace IsoTilemap
 {
     /// <summary>topology 충돌·지지에서 쓰는 월드↔그리드 변환. 타일 <see cref="TileHelper.ConvertWorldToGrid"/>와 동일 규칙.</summary>
-    static class MapCollisionGrid
+    public static class MapCollisionGrid
     {
         public readonly struct FeetCell
         {
@@ -35,6 +35,20 @@ namespace IsoTilemap
             var feetWorld = new Vector3(bodyWorld.x, feetY, bodyWorld.z);
             var cell = TileHelper.ConvertWorldToGrid(feetWorld, cellSize);
             return new FeetCell(feetWorld, cell.x, cell.z, cell.y);
+        }
+
+        public static Vector3Int ToGrid(FeetCell feet) =>
+            new Vector3Int(feet.X, feet.GridY, feet.Z);
+
+        /// <summary>수직 이동만 있을 때 X/Z 그리드는 유지하고 Y만 갱신합니다.</summary>
+        public static FeetCell WithFeetY(FeetCell feet, float feetY, float cellSize)
+        {
+            if (cellSize <= 0f)
+                cellSize = 1f;
+
+            var feetWorld = new Vector3(feet.FeetWorld.x, feetY, feet.FeetWorld.z);
+            int gridY = Mathf.RoundToInt(feetY / cellSize);
+            return new FeetCell(feetWorld, feet.X, feet.Z, gridY);
         }
     }
 }

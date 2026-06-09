@@ -31,9 +31,11 @@ namespace IsoTilemap
 
                 if (tileType == TileView.TileType.none) continue;
 
+                if (!TryBakeFromDefinition(v.prefabId, (byte)tileType, out var size, out byte collisionFlags))
+                    continue;
+
                 byte t = (byte)tileType;
                 byte ef = TileIdentity.EdgeFaceNone;
-                Vector3Int size = ResolveSizeFromDefinition(v.prefabId, tileType);
                 Vector3Int grid = v.gridPos;
 
                 if (tileType == TileView.TileType.EdgeWall)
@@ -51,7 +53,8 @@ namespace IsoTilemap
                         GridPos = grid,
                         sizeUnit = size,
                         tileType = t,
-                        edgeFace = ef
+                        edgeFace = ef,
+                        collisionFlags = collisionFlags,
                     }
                 });
             }
@@ -59,16 +62,27 @@ namespace IsoTilemap
             return list;
         }
 
-        static Vector3Int ResolveSizeFromDefinition(string prefabId, TileView.TileType tileType)
+        static bool TryBakeFromDefinition(
+            string prefabId,
+            byte tileType,
+            out Vector3Int sizeUnit,
+            out byte collisionFlags)
         {
-            if (TilePrefabDB.TryResolveDefinitionSize(prefabId, out var size))
-                return size;
+            sizeUnit = Vector3Int.one;
+            collisionFlags = 0;
 
-            // 정의가 없으면 기존 기본값을 유지합니다.
-            if (tileType == TileView.TileType.EdgeWall)
-                return Vector3Int.one;
+            if (!TilePrefabDB.TryResolveDefinition(prefabId, out var def) || def == null)
+            {
+                Debug.LogError($"[TileViewSceneGather] Definition not found for prefabId='{prefabId}'. Tile skipped.");
+                return false;
+            }
 
-            return Vector3Int.one;
+            sizeUnit = new Vector3Int(
+                Mathf.Max(1, def.size.x),
+                Mathf.Max(1, def.size.y),
+                Mathf.Max(1, def.size.z));
+            collisionFlags = TileCollisionProfile.FromDefinitionForTileType(tileType, def);
+            return true;
         }
     }
 }

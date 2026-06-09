@@ -74,13 +74,13 @@ namespace IsoTilemap
         public PushOutResult TryResolveGridStuck(
             ref Vector3 bodyWorld,
             float feetOffset,
+            ref MapCollisionGrid.FeetCell feet,
             ref Tracker tracker,
             float pushSpeed,
             int maxIterations,
             float deltaTime)
         {
-            Vector3 feetWorld = CharacterFeetPose.GetFeetWorld(bodyWorld, feetOffset);
-            Vector3Int currentGrid = TileHelper.ConvertWorldToGrid(feetWorld, _cellSize);
+            Vector3Int currentGrid = MapCollisionGrid.ToGrid(feet);
             bool wasBlocking = IsGridBlocked(currentGrid);
 
             if (!wasBlocking)
@@ -96,11 +96,10 @@ namespace IsoTilemap
             float minStep = _cellSize * 0.55f;
             float stepCap = Mathf.Max(pushSpeed * deltaTime, minStep);
             int iterations = Mathf.Max(1, maxIterations);
+            bool stillBlocking = true;
 
             for (int i = 0; i < iterations; i++)
             {
-                feetWorld = CharacterFeetPose.GetFeetWorld(bodyWorld, feetOffset);
-                currentGrid = TileHelper.ConvertWorldToGrid(feetWorld, _cellSize);
                 if (!IsGridBlocked(currentGrid))
                 {
                     tracker.HasEscapeDir = false;
@@ -110,7 +109,7 @@ namespace IsoTilemap
                 }
 
                 if (!TryComputePush(
-                        feetWorld,
+                        feet.FeetWorld,
                         currentGrid,
                         tracker,
                         stepCap,
@@ -118,11 +117,10 @@ namespace IsoTilemap
                     break;
 
                 bodyWorld += push;
+                feet = MapCollisionGrid.ResolveFeetCell(bodyWorld, feetOffset, _cellSize);
+                currentGrid = MapCollisionGrid.ToGrid(feet);
+                stillBlocking = IsGridBlocked(currentGrid);
             }
-
-            feetWorld = CharacterFeetPose.GetFeetWorld(bodyWorld, feetOffset);
-            currentGrid = TileHelper.ConvertWorldToGrid(feetWorld, _cellSize);
-            bool stillBlocking = IsGridBlocked(currentGrid);
 
             tracker.LastFeetGrid = currentGrid;
             tracker.HasLastFeetGrid = true;

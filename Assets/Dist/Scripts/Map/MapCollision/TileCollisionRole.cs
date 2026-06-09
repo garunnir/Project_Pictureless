@@ -10,24 +10,17 @@ namespace IsoTilemap
 
     public static class TileCollisionPolicy
     {
-        public static TileCollisionRole Resolve(TileView.TileType type, string prefabId)
-        {
-            if (type is TileView.TileType.Floor or TileView.TileType.Wall or TileView.TileType.EdgeWall)
-                return TileCollisionRole.LogicalOnly;
+        public static TileCollisionRole Resolve(byte collisionFlags) =>
+            TileCollisionFlagsUtil.Has(collisionFlags, TileCollisionFlags.UsePhysicsCollider)
+                ? TileCollisionRole.WalkableOnly
+                : TileCollisionRole.LogicalOnly;
 
-            if (!string.IsNullOrEmpty(prefabId) &&
-                prefabId.StartsWith("Furniture/Box", System.StringComparison.Ordinal))
-                return TileCollisionRole.WalkableOnly;
-
-            return TileCollisionRole.WalkableOnly;
-        }
-
-        public static void Apply(TileView view)
+        public static void Apply(TileView view, byte collisionFlags)
         {
             if (view == null)
                 return;
 
-            var role = Resolve(view.tileType, view.prefabId);
+            var role = Resolve(collisionFlags);
 
             var colliders = view.GetComponentsInChildren<Collider>(true);
             for (int i = 0; i < colliders.Length; i++)

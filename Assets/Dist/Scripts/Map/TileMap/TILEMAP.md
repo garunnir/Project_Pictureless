@@ -126,8 +126,35 @@ graph TD
 ### View
 - **TileMapVisualizer.cs** — `Dictionary<Guid, TileView>` 추적, Bind/Build/RefreshCell. Model이 이벤트로 보낸 `TileData.tileDefId`로 대응하는 TileView를 조회해 업데이트
 - **TileObjFactory.cs** — PrefabDB 조회 → Instantiate → TileView 초기화
-- **TilePrefabDB.cs** — ScriptableObject, `string → GameObject` 캐시
+- **TilePrefabDB.cs** — ScriptableObject, `string → GameObject`·`TileDefinition` 캐시
+- **TileDefinition.cs** — 타일 SO: prefabId, size, **충돌·오클루전** (`TileOccupiedCellCollision` / `TileEdgeCollision`)
 - **TileView.cs** — 타일 MB, `UpdateTile()`, 씬뷰 기즈모
+
+### TileDefinition — 충돌·오클루전 bake
+
+```mermaid
+flowchart LR
+    Def[TileDefinition SO]
+    Bake[TileCollisionProfile.FromDefinition]
+    Identity[TileIdentity.collisionFlags]
+    GridCursor[GridCursor.TryPlace]
+    DtoMapper[TileMapDtoMapper]
+    SceneGather[TileViewSceneGather]
+
+    Def --> Bake
+    GridCursor --> Bake
+    DtoMapper --> Bake
+    SceneGather --> Bake
+    Bake --> Identity
+    Identity --> FloorMapIndex
+    Identity --> TileCollisionPolicy
+    Identity --> WallOcclusionFinder
+```
+
+- **점유 셀** (`occupied`): 논리 바닥, Physics Collider, 통행·오클루전 연동 토글 (`blocksPassageAndOcclusion`). `splitPassageAndOcclusion=true`이면 통행(`blocksOccupiedCells`)·오클루전(`occludesOccupiedCells`) 개별 제어.
+- **엣지** (`edge`): 동일 패턴 — `blocksPassageAndOcclusion` / `splitPassageAndOcclusion` → `BlocksEdge` / `OccludesEdge`.
+- **소비**: `FloorMapIndex.CellHasFloor` / `CellHasSolidWall`, `MapTopologyGridSegment`, `TileCollisionPolicy`, `WallOcclusionFinder`는 **`tileType`이 아닌 `collisionFlags`** 사용.
+- **에디터 마이그레이션**: `Tools/Map/Apply collision presets to TileDefinitions`
 
 ### Util
 - **TileMapData.cs** (클래스: TileHelper) — `WorldToGrid` / `GridToWorld` 변환

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace IsoTilemap
@@ -50,66 +49,13 @@ namespace IsoTilemap
             if (fromCell.x == toCell.x && fromCell.z == toCell.z)
                 return false;
 
-            foreach (var step in TraverseCells(fromCell, toCell, gridY))
-            {
-                if (_query.CellHasSolidWall(step.current.x, step.current.z, gridY))
-                    return true;
-
-                if (_query.TryGetEdgeBetween(step.prev, step.current, out _))
-                    return true;
-            }
-
-            return false;
-        }
-
-        readonly struct GridStep
-        {
-            public readonly Vector3Int prev;
-            public readonly Vector3Int current;
-
-            public GridStep(Vector3Int prev, Vector3Int current)
-            {
-                this.prev = prev;
-                this.current = current;
-            }
-        }
-
-        IEnumerable<GridStep> TraverseCells(Vector3Int fromCell, Vector3Int toCell, int gridY)
-        {
-            int x0 = fromCell.x;
-            int z0 = fromCell.z;
-            int x1 = toCell.x;
-            int z1 = toCell.z;
-
-            int dx = Mathf.Abs(x1 - x0);
-            int dz = Mathf.Abs(z1 - z0);
-            int sx = x0 < x1 ? 1 : -1;
-            int sz = z0 < z1 ? 1 : -1;
-            int err = dx - dz;
-
-            int x = x0;
-            int z = z0;
-            var prev = new Vector3Int(x, gridY, z);
-
-            while (x != x1 || z != z1)
-            {
-                int e2 = 2 * err;
-                if (e2 > -dz)
-                {
-                    err -= dz;
-                    x += sx;
-                }
-
-                if (e2 < dx)
-                {
-                    err += dx;
-                    z += sz;
-                }
-
-                var current = new Vector3Int(x, gridY, z);
-                yield return new GridStep(prev, current);
-                prev = current;
-            }
+            return MapTopologyGridSegment.CrossesBlockingSegment(
+                _query,
+                fromCell.x,
+                fromCell.z,
+                toCell.x,
+                toCell.z,
+                gridY);
         }
 
         Vector3Int WorldToCell(Vector3 world) =>

@@ -184,10 +184,13 @@ public class PlayerMovement : MonoBehaviour, IMovable
         bool physicsStuck = ResolvePhysicsHorizontal(desiredMove, out Vector3 horizontalDelta);
 
         Vector3 newPos = ApplyTopologyHorizontal(oldPos, feetOffset, horizontalDelta);
-        ApplyLogicalVertical(ref newPos, feetOffset, dt);
+
+        float cellSize = _mapCollision != null ? _mapCollision.Query.CellSize : 1f;
+        MapCollisionGrid.FeetCell feetCell = MapCollisionGrid.ResolveFeetCell(newPos, feetOffset, cellSize);
+        ApplyLogicalVertical(ref newPos, feetOffset, dt, ref feetCell);
 
         MapTopologyDepenetration.PushOutResult topologyPush =
-            ResolveGridStuck(ref newPos, feetOffset, dt);
+            ResolveGridStuck(ref newPos, feetOffset, ref feetCell, dt);
 
         LogStuckIfNeeded(physicsStuck, topologyPush);
 
@@ -263,6 +266,7 @@ public class PlayerMovement : MonoBehaviour, IMovable
     MapTopologyDepenetration.PushOutResult ResolveGridStuck(
         ref Vector3 bodyPos,
         float feetOffset,
+        ref MapCollisionGrid.FeetCell feetCell,
         float dt)
     {
         if (_mapCollision == null)
@@ -271,6 +275,7 @@ public class PlayerMovement : MonoBehaviour, IMovable
         return _mapCollision.Depenetration.TryResolveGridStuck(
             ref bodyPos,
             feetOffset,
+            ref feetCell,
             ref _gridStuckTracker,
             _topologyPushSpeed,
             _topologyPushMaxIter,
@@ -291,7 +296,11 @@ public class PlayerMovement : MonoBehaviour, IMovable
             _debugController?.LogPlayerStuck();
     }
 
-    void ApplyLogicalVertical(ref Vector3 worldPos, float feetOffset, float deltaTime)
+    void ApplyLogicalVertical(
+        ref Vector3 worldPos,
+        float feetOffset,
+        float deltaTime,
+        ref MapCollisionGrid.FeetCell feetCell)
     {
         if (_mapCollision == null)
             return;
@@ -301,6 +310,7 @@ public class PlayerMovement : MonoBehaviour, IMovable
             ref _verticalVelocity,
             deltaTime,
             feetOffset,
+            ref feetCell,
             ref _gridStuckTracker,
             _logicalGravity);
     }

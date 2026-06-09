@@ -161,7 +161,7 @@ namespace IsoTilemap
 
             if (TryGetCellTilesAt(start, out var startList))
             {
-                bool hasBlocking = startList.Any(t => IsSolidCellWall((TileView.TileType)t.identity.tileType));
+                bool hasBlocking = startList.Any(t => TileCollisionFlagsUtil.TileOccludesOccupiedCells(t));
 
                 if (hasBlocking)
                 {
@@ -170,7 +170,7 @@ namespace IsoTilemap
                     {
                         var n = new Vector3Int(start.x + d.x, start.y, start.z + d.z);
                         if (TryGetCellTilesAt(n, out var nList) &&
-                            !nList.Any(x => IsSolidCellWall((TileView.TileType)x.identity.tileType)))
+                            !nList.Any(x => TileCollisionFlagsUtil.TileOccludesOccupiedCells(x)))
                         {
                             start = n;
                             found = true;
@@ -216,8 +216,10 @@ namespace IsoTilemap
 
                     if (WallEdgeKey.TryBetween(cur, nx, out var edgeKey) && _edges.TryGetValue(edgeKey, out TileData edgeWall))
                     {
-                        AddByDirection(edgeWall, isBottomDir, belowEdgeSet, topEdgeSet);
-                        continue;
+                        if (TileCollisionFlagsUtil.TileOccludesEdge(edgeWall))
+                            AddByDirection(edgeWall, isBottomDir, belowEdgeSet, topEdgeSet);
+                        if (TileCollisionFlagsUtil.EdgeSeparatesRoom(edgeWall))
+                            continue;
                     }
 
                     if (visited.Contains(nx))
@@ -229,7 +231,7 @@ namespace IsoTilemap
                     bool hasSolidWall = false;
                     foreach (var t in list)
                     {
-                        if (IsSolidCellWall((TileView.TileType)t.identity.tileType))
+                        if (TileCollisionFlagsUtil.TileOccludesOccupiedCells(t))
                         {
                             AddByDirection(t, isBottomDir, belowCellSet, topCellSet);
                             hasSolidWall = true;
@@ -252,7 +254,9 @@ namespace IsoTilemap
             tileResult.AddRange(belowCellSet);
             tileResult.AddRange(cornerExtras);
 
-            var belowEdges = belowEdgeSet.ToList();
+            var occludingEdges = new HashSet<TileData>(belowEdgeSet);
+            occludingEdges.UnionWith(topEdgeSet);
+            var belowEdges = new List<TileData>(occludingEdges);
             var merged = new List<TileData>(tileResult.Count + belowEdges.Count);
             merged.AddRange(tileResult);
             merged.AddRange(belowEdges);
@@ -315,7 +319,7 @@ namespace IsoTilemap
                     TileMapBfsDebugOverlay.AddCellLayer("빨강 — 인접 벽 검사 셀", Color.red, wallChecked, 0.05f);
                     TileMapBfsDebugOverlay.AddCellLayer("청록 — BFS 시작 셀", Color.cyan, startSnapshot, 0.01f);
                     TileMapBfsDebugOverlay.AddCellLayer("노랑 — 최종 오클루전 셀", Color.yellow, finalOcclusionCells, 0.02f);
-                    TileMapBfsDebugOverlay.AddEdgeLayer("노랑 — 아래방향 EdgeWall", Color.yellow, belowEdges, 0.02f);
+                    TileMapBfsDebugOverlay.AddEdgeLayer("노랑 — 오클루전 EdgeWall", Color.yellow, belowEdges, 0.02f);
                     TileMapBfsDebugOverlay.AddCellLayer("파랑 — 코너 추가 벽", Color.blue, cornerExtraCells, 0.02f);
                     TileMapBfsDebugOverlay.AddCellLayer("자홍 — 플레이어 마스크 추가", Color.magenta, extraByPlayerCells, 0.03f);
                 }
@@ -412,12 +416,16 @@ namespace IsoTilemap
 
             ForEachOccupiedCellTileDistinct(tile =>
             {
-                if (IsSolidCellWall((TileView.TileType)tile.identity.tileType))
+                if (TileCollisionFlagsUtil.TileOccludesOccupiedCells(tile))
                     result.Add(tile);
             });
 
             foreach (var edgeTile in _edges.Values)
+            {
+                if (!TileCollisionFlagsUtil.TileOccludesEdge(edgeTile))
+                    continue;
                 result.Add(edgeTile);
+            }
 
             return result;
         }
@@ -512,7 +520,8 @@ namespace IsoTilemap
             foreach (var d in BottomOcclusionDirections)
             {
                 var n = center + d;
-                if (WallEdgeKey.TryBetween(center, n, out var key) && _edges.TryGetValue(key, out TileData e))
+                if (WallEdgeKey.TryBetween(center, n, out var key) && _edges.TryGetValue(key, out TileData e) &&
+                    TileCollisionFlagsUtil.TileOccludesEdge(e))
                     result.Add(e);
             }
             return result;
@@ -527,7 +536,7 @@ namespace IsoTilemap
                 {
                     foreach (var t in list)
                     {
-                        if (IsSolidCellWall((TileView.TileType)t.identity.tileType))
+                        if (TileCollisionFlagsUtil.TileOccludesOccupiedCells(t))
                             result.Add(t);
                     }
                 }
@@ -574,7 +583,7 @@ namespace IsoTilemap
                     continue;
                 foreach (var t in list)
                 {
-                    if (IsSolidCellWall((TileView.TileType)t.identity.tileType))
+                    if (TileCollisionFlagsUtil.TileOccludesOccupiedCells(t))
                     {
                         extra.Add(t);
                         break;
@@ -607,7 +616,7 @@ namespace IsoTilemap
 
             foreach (var t in list)
             {
-                if (IsSolidCellWall((TileView.TileType)t.identity.tileType))
+                if (TileCollisionFlagsUtil.TileOccludesOccupiedCells(t))
                     return true;
             }
 
@@ -628,9 +637,6 @@ namespace IsoTilemap
             list = null;
             return false;
         }
-
-        private static bool IsSolidCellWall(TileView.TileType type) =>
-            type == TileView.TileType.Wall;
 
         private List<TileData> CollectStructuralTilesForDebugLabels()
         {

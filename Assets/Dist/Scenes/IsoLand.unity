@@ -59885,8 +59885,9 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 55
   _triggerInteraction: 1
-  _slopeFloorSnapCutoff: 0.85
   _logicalGravity: -9.81
+  _topologyPushSpeed: 4
+  _topologyPushMaxIter: 4
   _moveDir: {x: 0, y: 0}
   _debugControllerBehaviour: {fileID: 0}
 --- !u!136 &1383865914
