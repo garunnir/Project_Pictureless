@@ -22,14 +22,37 @@ namespace IsoTilemap
         [VerticalGroup("Row/Info"), LabelWidth(70)]
         public Vector3Int size = Vector3Int.one;
 
+#if UNITY_EDITOR
         [FoldoutGroup("충돌·오클루전", expanded: true)]
+        [PropertyOrder(-10)]
+        [OnInspectorGUI]
+        void DrawUnsavedChangesBanner()
+        {
+            if (!HasUnsavedChanges)
+                return;
+
+            UnityEditor.EditorGUILayout.HelpBox(
+                "저장되지 않은 변경사항이 있습니다.",
+                UnityEditor.MessageType.Warning);
+        }
+
+        [FoldoutGroup("충돌·오클루전")]
+        [PropertyOrder(-9)]
+        [Button("저장"), HorizontalGroup("충돌·오클루전/SaveBar", Width = 72)]
+        [EnableIf(nameof(HasUnsavedChanges))]
+        void SaveCollisionSettings() => SaveAssetToDisk();
+#endif
+
+        [FoldoutGroup("충돌·오클루전")]
+        [PropertyOrder(0)]
         [InlineProperty, HideLabel]
-        [OnValueChanged(nameof(PersistEditorChanges))]
+        [OnValueChanged(nameof(MarkDirty))]
         public TileOccupiedCellCollision occupied;
 
         [FoldoutGroup("충돌·오클루전")]
+        [PropertyOrder(1)]
         [InlineProperty, HideLabel]
-        [OnValueChanged(nameof(PersistEditorChanges))]
+        [OnValueChanged(nameof(MarkDirty))]
         public TileEdgeCollision edge;
 
         [FoldoutGroup("충돌·오클루전")]
@@ -64,26 +87,39 @@ namespace IsoTilemap
         {
             this.occupied = occupied;
             this.edge = edge;
-            PersistEditorChanges();
+            MarkDirty();
+        }
+
+        void MarkDirty()
+        {
+#if UNITY_EDITOR
+            if (this == null)
+                return;
+
+            UnityEditor.Undo.RecordObject(this, "TileDefinition 변경");
+            UnityEditor.EditorUtility.SetDirty(this);
+            RequestInspectorRepaint();
+#endif
         }
 
 #if UNITY_EDITOR
-        void OnValidate()
-        {
-            if (UnityEditor.BuildPipeline.isBuildingPlayer ||
-                UnityEditor.EditorApplication.isUpdating)
-                return;
+        bool HasUnsavedChanges => UnityEditor.EditorUtility.IsDirty(this);
 
-            PersistEditorChanges();
+        static void RequestInspectorRepaint()
+        {
+            UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
+            Sirenix.Utilities.Editor.GUIHelper.RequestRepaint();
         }
 
-        void PersistEditorChanges()
+        void SaveAssetToDisk()
         {
             if (this == null)
                 return;
 
+            UnityEditor.Undo.FlushUndoRecordObjects();
             UnityEditor.EditorUtility.SetDirty(this);
             UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
+            RequestInspectorRepaint();
         }
 #endif
     }

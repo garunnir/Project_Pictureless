@@ -254,9 +254,8 @@ namespace IsoTilemap
             tileResult.AddRange(belowCellSet);
             tileResult.AddRange(cornerExtras);
 
-            var occludingEdges = new HashSet<TileData>(belowEdgeSet);
-            occludingEdges.UnionWith(topEdgeSet);
-            var belowEdges = new List<TileData>(occludingEdges);
+            // top 엣지(-X/+Z 방향)는 코너 시드·디버그용만 사용. 최종 숨김은 +X/-Z(below)만.
+            var belowEdges = new List<TileData>(belowEdgeSet);
             var merged = new List<TileData>(tileResult.Count + belowEdges.Count);
             merged.AddRange(tileResult);
             merged.AddRange(belowEdges);
