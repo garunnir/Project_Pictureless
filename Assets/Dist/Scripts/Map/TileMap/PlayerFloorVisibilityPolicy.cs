@@ -19,35 +19,35 @@ namespace IsoTilemap
     public readonly struct FloorVisibilityContext : IEquatable<FloorVisibilityContext>
     {
         public bool IsPlayerOutdoor { get; }
-        public int FloorBand { get; }
-        public int MinBand { get; }
+        public int PlayerFloorCellY { get; }
+        public int MinCellY { get; }
         public int PlayerBuildingId { get; }
         public HashSet<int> PlayerBlockingBuildingIds { get; }
         public OcclusionMode OcclusionMode { get; }
-        public HashSet<(int x, int z, int band)> VisibleBelowCells { get; }
+        public HashSet<(int x, int z, int y)> VisibleBelowCells { get; }
 
         public FloorVisibilityContext(
             bool isPlayerOutdoor,
-            int floorBand,
-            int minBand,
+            int playerFloorCellY,
+            int minCellY,
             int playerBuildingId,
             HashSet<int> playerBlockingBuildingIds,
             OcclusionMode occlusionMode,
-            HashSet<(int x, int z, int band)> visibleBelowCells)
+            HashSet<(int x, int z, int y)> visibleBelowCells)
         {
             IsPlayerOutdoor = isPlayerOutdoor;
-            FloorBand = floorBand;
-            MinBand = minBand;
+            PlayerFloorCellY = playerFloorCellY;
+            MinCellY = minCellY;
             PlayerBuildingId = playerBuildingId;
             PlayerBlockingBuildingIds = playerBlockingBuildingIds ?? new HashSet<int>();
             OcclusionMode = occlusionMode;
-            VisibleBelowCells = visibleBelowCells ?? new HashSet<(int x, int z, int band)>();
+            VisibleBelowCells = visibleBelowCells ?? new HashSet<(int x, int z, int y)>();
         }
 
         public bool Equals(FloorVisibilityContext other) =>
             IsPlayerOutdoor == other.IsPlayerOutdoor &&
-            FloorBand == other.FloorBand &&
-            MinBand == other.MinBand &&
+            PlayerFloorCellY == other.PlayerFloorCellY &&
+            MinCellY == other.MinCellY &&
             PlayerBuildingId == other.PlayerBuildingId &&
             OcclusionMode == other.OcclusionMode &&
             SetEquals(PlayerBlockingBuildingIds, other.PlayerBlockingBuildingIds) &&
@@ -57,7 +57,7 @@ namespace IsoTilemap
 
         public override int GetHashCode()
         {
-            int hash = HashCode.Combine(IsPlayerOutdoor, FloorBand, MinBand, PlayerBuildingId, OcclusionMode);
+            int hash = HashCode.Combine(IsPlayerOutdoor, PlayerFloorCellY, MinCellY, PlayerBuildingId, OcclusionMode);
             hash = HashCombineSet(hash, PlayerBlockingBuildingIds);
             return HashCombineBelowCells(hash, VisibleBelowCells);
         }
@@ -85,8 +85,8 @@ namespace IsoTilemap
         }
 
         static bool SetEquals(
-            HashSet<(int x, int z, int band)> a,
-            HashSet<(int x, int z, int band)> b)
+            HashSet<(int x, int z, int y)> a,
+            HashSet<(int x, int z, int y)> b)
         {
             if (ReferenceEquals(a, b))
                 return true;
@@ -113,13 +113,13 @@ namespace IsoTilemap
             return hash;
         }
 
-        static int HashCombineBelowCells(int hash, HashSet<(int x, int z, int band)> set)
+        static int HashCombineBelowCells(int hash, HashSet<(int x, int z, int y)> set)
         {
             if (set == null)
                 return hash;
 
-            foreach (var (x, z, band) in set)
-                hash = HashCode.Combine(hash, x, z, band);
+            foreach (var (x, z, y) in set)
+                hash = HashCode.Combine(hash, x, z, y);
 
             return hash;
         }
@@ -131,9 +131,9 @@ namespace IsoTilemap
         static readonly HashSet<int> EmptyBlocking = new();
 
         readonly float _cellSize;
-        readonly float _bandEpsilonWorld;
-        readonly int _minBand;
-        readonly int[] _distinctFloorBands;
+        readonly float _cellEpsilonWorld;
+        readonly int _minCellY;
+        readonly int[] _distinctOccupiedCellYs;
         readonly TileMapCacheHub _hub;
         readonly IndoorTileVisibilityPipeline _indoor = new();
         readonly OutdoorTileVisibilityPipeline _outdoor = new();
@@ -145,7 +145,7 @@ namespace IsoTilemap
         int _blockingStableFrames;
         const int BlockingStableFramesRequired = 3;
 
-        readonly HashSet<(int x, int z, int band)> _visibleBelowScratch = new();
+        readonly HashSet<(int x, int z, int y)> _visibleBelowScratch = new();
 
         /// <summary>야외 시선상 가림 건물 전층 Hide. false면 차단 집합을 비웁니다.</summary>
         public bool OutdoorSightLineBuildingHideEnabled { get; set; } = true;
@@ -153,21 +153,21 @@ namespace IsoTilemap
 
         private PlayerFloorVisibilityPolicy(
             float cellSize,
-            float bandEpsilonWorld,
-            int minBand,
-            int[] distinctFloorBands,
+            float cellEpsilonWorld,
+            int minCellY,
+            int[] distinctOccupiedCellYs,
             TileMapCacheHub hub,
             BuildingPlayerOcclusionResolver occlusionResolver)
         {
             _cellSize = cellSize;
-            _bandEpsilonWorld = bandEpsilonWorld;
-            _minBand = minBand;
-            _distinctFloorBands = distinctFloorBands;
+            _cellEpsilonWorld = cellEpsilonWorld;
+            _minCellY = minCellY;
+            _distinctOccupiedCellYs = distinctOccupiedCellYs;
             _hub = hub;
             _occlusionResolver = occlusionResolver;
         }
 
-        public int MinBand => _minBand;
+        public int MinCellY => _minCellY;
 
         public TileMapCacheHub MapCache => _hub;
 
@@ -176,7 +176,7 @@ namespace IsoTilemap
             TileMapCacheHub hub,
             float cellSize,
             Func<Camera> resolveCamera,
-            float bandEpsilonWorld = 0f,
+            float cellEpsilonWorld = 0f,
             float groundPlaneY = 0f)
         {
             if (cellSize <= 0f)
@@ -200,7 +200,7 @@ namespace IsoTilemap
 
             return new PlayerFloorVisibilityPolicy(
                 cellSize,
-                bandEpsilonWorld,
+                cellEpsilonWorld,
                 distinctBands[0],
                 distinctBands,
                 hub,
@@ -209,26 +209,25 @@ namespace IsoTilemap
 
         public FloorVisibilityContext ResolveContext(
             float playerHeightWorldY,
-            int gridX,
-            int gridZ,
+            Vector3Int playerCell,
             Vector3 playerWorld)
         {
-            int floorBand = ResolveFloorBand(playerHeightWorldY);
-            bool isOutdoor = _hub.IsOutdoorEvaluation(floorBand, gridX, gridZ);
-            _hub.TryGetFloorBuildingRoom(floorBand, gridX, gridZ, out int playerBuildingId, out _);
+            int playerFloorCellY = ResolvePlayerFloorCellY(playerHeightWorldY);
+            bool isOutdoor = _hub.IsOutdoorEvaluation(playerFloorCellY, playerCell.x, playerCell.z);
+            _hub.TryGetFloorBuildingRoom(playerFloorCellY, playerCell.x, playerCell.z, out int playerBuildingId, out _);
 
-            HashSet<(int x, int z, int band)> visibleBelow;
+            HashSet<(int x, int z, int y)> visibleBelow;
             HashSet<int> blocking;
 
             if (isOutdoor)
             {
-                visibleBelow = new HashSet<(int x, int z, int band)>();
+                visibleBelow = new HashSet<(int x, int z, int y)>();
                 int rawBlockingCount = 0;
                 if (OutdoorSightLineBuildingHideEnabled)
                 {
                     _blockingResult.Clear();
                     foreach (int id in _occlusionResolver.ResolveBlockingBuildingIds(
-                                 playerWorld, gridX, gridZ))
+                                 playerWorld, playerCell))
                         _blockingResult.Add(id);
                     rawBlockingCount = _blockingResult.Count;
                 }
@@ -237,12 +236,12 @@ namespace IsoTilemap
             }
             else
             {
-                visibleBelow = BuildVisibleBelowCells(floorBand, gridX, gridZ);
+                visibleBelow = BuildVisibleBelowCells(playerFloorCellY, playerCell.x, playerCell.z);
                 blocking = EmptyBlocking;
             }
 
             return new FloorVisibilityContext(
-                isOutdoor, floorBand, _minBand, playerBuildingId, blocking, OutdoorOcclusionMode, visibleBelow);
+                isOutdoor, playerFloorCellY, _minCellY, playerBuildingId, blocking, OutdoorOcclusionMode, visibleBelow);
         }
 
         public bool IsTileVisible(TileData tile, in FloorVisibilityContext ctx)
@@ -312,38 +311,38 @@ namespace IsoTilemap
             return true;
         }
 
-        private int ResolveFloorBand(float playerHeightWorldY)
+        private int ResolvePlayerFloorCellY(float playerHeightWorldY)
         {
-            int floorBand = _minBand;
-            float ceiling = playerHeightWorldY + _bandEpsilonWorld;
+            int playerFloorCellY = _minCellY;
+            float ceiling = playerHeightWorldY + _cellEpsilonWorld;
 
-            for (int i = 0; i < _distinctFloorBands.Length; i++)
+            for (int i = 0; i < _distinctOccupiedCellYs.Length; i++)
             {
-                int band = _distinctFloorBands[i];
-                if (band * _cellSize <= ceiling)
-                    floorBand = band;
+                int occupiedCellY = _distinctOccupiedCellYs[i];
+                if (occupiedCellY * _cellSize <= ceiling)
+                    playerFloorCellY = occupiedCellY;
             }
 
-            return floorBand;
+            return playerFloorCellY;
         }
 
-        private HashSet<(int x, int z, int band)> BuildVisibleBelowCells(int floorBand, int gridX, int gridZ)
+        private HashSet<(int x, int z, int y)> BuildVisibleBelowCells(int playerFloorCellY, int gridX, int gridZ)
         {
             _visibleBelowScratch.Clear();
-            if (floorBand <= _minBand)
-                return new HashSet<(int x, int z, int band)>(_visibleBelowScratch);
+            if (playerFloorCellY <= _minCellY)
+                return new HashSet<(int x, int z, int y)>(_visibleBelowScratch);
 
             FloorBfsResult top = _hub.GetRoomGeometryForCell(
-                floorBand, gridX, gridZ, FloorRoomBfsProfile.Visibility).Result;
+                playerFloorCellY, gridX, gridZ, FloorRoomBfsProfile.Visibility).Result;
             foreach (var (holeX, holeZ) in top.EmptyDiscovered)
-                AddVisibleThroughHole(holeX, holeZ, floorBand);
+                AddVisibleThroughHole(holeX, holeZ, playerFloorCellY);
 
-            return new HashSet<(int x, int z, int band)>(_visibleBelowScratch);
+            return new HashSet<(int x, int z, int y)>(_visibleBelowScratch);
         }
 
-        private void AddVisibleThroughHole(int holeX, int holeZ, int floorBand)
+        private void AddVisibleThroughHole(int holeX, int holeZ, int playerFloorCellY)
         {
-            for (int k = floorBand - 1; k >= _minBand; k--)
+            for (int k = playerFloorCellY - 1; k >= _minCellY; k--)
             {
                 if (!_hub.CellHasOccupancy(holeX, holeZ, k))
                     continue;

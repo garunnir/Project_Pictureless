@@ -11,32 +11,32 @@ namespace IsoTilemap
         static readonly Guid[] EmptyEdgeGuids = Array.Empty<Guid>();
 
         readonly Dictionary<int, HashSet<Guid>> _tilesByBuildingId = new();
-        readonly Dictionary<int, HashSet<Guid>> _minBandFloorTilesByBuildingId = new();
+        readonly Dictionary<int, HashSet<Guid>> _minCellYFloorTilesByBuildingId = new();
         readonly Dictionary<RoomKey, HashSet<Guid>> _edgeIdsByRoom = new();
         readonly HashSet<(int x, int z)> _plazaFloorXZ = new();
-        int _plazaBand = int.MinValue;
+        int _plazaCellY = int.MinValue;
 
         public int NextBuildingId { get; private set; } = 1;
 
         public IReadOnlyDictionary<int, HashSet<Guid>> TilesByBuildingId => _tilesByBuildingId;
 
-        public int PlazaBand => _plazaBand;
+        public int PlazaCellY => _plazaCellY;
 
         public IReadOnlyCollection<(int x, int z)> PlazaFloorXZ => _plazaFloorXZ;
 
         public void Clear()
         {
             _tilesByBuildingId.Clear();
-            _minBandFloorTilesByBuildingId.Clear();
+            _minCellYFloorTilesByBuildingId.Clear();
             _edgeIdsByRoom.Clear();
             _plazaFloorXZ.Clear();
-            _plazaBand = int.MinValue;
+            _plazaCellY = int.MinValue;
             NextBuildingId = 1;
         }
 
-        public void SetPlazaOutdoor(int plazaBand, HashSet<(int x, int z)> plazaFloor)
+        public void SetPlazaOutdoor(int plazaCellY, HashSet<(int x, int z)> plazaFloor)
         {
-            _plazaBand = plazaBand;
+            _plazaCellY = plazaCellY;
             _plazaFloorXZ.Clear();
             if (plazaFloor == null)
                 return;
@@ -45,8 +45,8 @@ namespace IsoTilemap
                 _plazaFloorXZ.Add(cell);
         }
 
-        public bool IsPlazaFloor(int band, int x, int z) =>
-            band == _plazaBand && _plazaFloorXZ.Contains((x, z));
+        public bool IsPlazaFloor(int cellY, int x, int z) =>
+            cellY == _plazaCellY && _plazaFloorXZ.Contains((x, z));
 
         public bool IsPlazaXZ(int x, int z) => _plazaFloorXZ.Contains((x, z));
 
@@ -93,7 +93,7 @@ namespace IsoTilemap
             set.Add(edgeTileId);
         }
 
-        public void ClearEdgeIndexForSlice(int buildingId, int band)
+        public void ClearEdgeIndexForSlice(int buildingId, int cellY)
         {
             if (buildingId <= 0)
                 return;
@@ -101,7 +101,7 @@ namespace IsoTilemap
             var toRemove = new List<RoomKey>();
             foreach (var kv in _edgeIdsByRoom)
             {
-                if (kv.Key.BuildingId == buildingId && kv.Key.Band == band)
+                if (kv.Key.BuildingId == buildingId && kv.Key.CellY == cellY)
                     toRemove.Add(kv.Key);
             }
 
@@ -144,10 +144,10 @@ namespace IsoTilemap
             return new HashSet<Guid>(set);
         }
 
-        /// <summary>맵 bake 후 MinBand Floor 타일 guid 집합을 타일 스냅샷에서 재구성합니다.</summary>
-        public void RebuildMinBandFloorIndex(IEnumerable<TileData> tiles, int minBand)
+        /// <summary>맵 bake 후 MinCellY Floor 타일 guid 집합을 타일 스냅샷에서 재구성합니다.</summary>
+        public void RebuildMinCellYFloorIndex(IEnumerable<TileData> tiles, int MinCellY)
         {
-            _minBandFloorTilesByBuildingId.Clear();
+            _minCellYFloorTilesByBuildingId.Clear();
             if (tiles == null)
                 return;
 
@@ -157,34 +157,34 @@ namespace IsoTilemap
                 if (buildingId <= 0)
                     continue;
 
-                if (tile.identity.GridPos.y != minBand)
+                if (tile.identity.GridPos.y != MinCellY)
                     continue;
 
                 if ((TileView.TileType)tile.identity.tileType != TileView.TileType.Floor)
                     continue;
 
-                RegisterMinBandFloorTile(buildingId, tile.tileDefId);
+                RegisterMinCellYFloorTile(buildingId, tile.tileDefId);
             }
         }
 
-        public void RegisterMinBandFloorTile(int buildingId, Guid tileId)
+        public void RegisterMinCellYFloorTile(int buildingId, Guid tileId)
         {
             if (buildingId <= 0)
                 return;
 
-            if (!_minBandFloorTilesByBuildingId.TryGetValue(buildingId, out var set))
+            if (!_minCellYFloorTilesByBuildingId.TryGetValue(buildingId, out var set))
             {
                 set = new HashSet<Guid>();
-                _minBandFloorTilesByBuildingId[buildingId] = set;
+                _minCellYFloorTilesByBuildingId[buildingId] = set;
             }
 
             set.Add(tileId);
         }
 
-        public IReadOnlyCollection<Guid> GetMinBandFloorTilesForBuilding(int buildingId)
+        public IReadOnlyCollection<Guid> GetMinCellYFloorTilesForBuilding(int buildingId)
         {
             if (buildingId <= 0 ||
-                !_minBandFloorTilesByBuildingId.TryGetValue(buildingId, out var set))
+                !_minCellYFloorTilesByBuildingId.TryGetValue(buildingId, out var set))
                 return Array.Empty<Guid>();
 
             return set;

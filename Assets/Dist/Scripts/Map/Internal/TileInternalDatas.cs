@@ -38,10 +38,10 @@ using UnityEngine;namespace IsoTilemap
         /// <summary>bake 초기·건물 BFS 대기 Floor.</summary>
         public const int BuildingIdUnassigned = 0;
 
-        /// <summary>MinBand 광장 Floor (야외 BFS 확정 후).</summary>
+        /// <summary>MinCellY 광장 Floor (야외 BFS 확정 후).</summary>
         public const int BuildingIdOutdoor = -1;
 
-        /// <summary>0=room 미할당; 같은 buildingId·band 내 방 번호.</summary>
+        /// <summary>0=room 미할당; 같은 buildingId·cellY 내 방 번호.</summary>
         public int roomId { init; get; }
 
         /// <summary><see cref="TileDefinition"/> 충돌·오클루전 bake. <see cref="TileCollisionProfile.FromDefinition"/>.</summary>

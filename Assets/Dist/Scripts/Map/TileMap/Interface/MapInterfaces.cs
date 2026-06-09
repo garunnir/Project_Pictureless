@@ -54,9 +54,9 @@ namespace IsoTilemap
         public IReadOnlyList<TileData> TilesSnapshot { get; }
         public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList);
         /// <summary>점유·앵커 기준 셀 타일. hub가 있으면 topology, 없으면 <see cref="TryGetTiles"/> 폴백.</summary>
-        bool TryGetCellTiles(int x, int z, int band, out IReadOnlyList<TileData> tileList);
-        /// <summary>점유된 (x,z,band) 셀. hub가 있으면 topology, 없으면 앵커 dict 키 기준 폴백.</summary>
-        IEnumerable<(int x, int z, int band)> EnumerateOccupiedCells();
+        bool TryGetCellTiles(int x, int z, int cellY, out IReadOnlyList<TileData> tileList);
+        /// <summary>점유된 (x,z,y) 셀. hub가 있으면 topology, 없으면 앵커 dict 키 기준 폴백.</summary>
+        IEnumerable<(int x, int z, int y)> EnumerateOccupiedCells();
         bool TryGetTileById(Guid tileId, out TileData tileData);
         /// <summary>셀 타일 + 엣지 벽을 순회합니다(읽기 전용).</summary>
         void ForEachRuntimeTile(Action<TileData> visit);

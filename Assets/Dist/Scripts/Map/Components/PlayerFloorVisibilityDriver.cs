@@ -64,7 +64,7 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
         float playerHeight = bodyWorld.y;
         Vector3Int gridPos = _playerState.GridPos;
         FloorVisibilityContext ctx = _policy.ResolveContext(
-            playerHeight, gridPos.x, gridPos.z, bodyWorld);
+            playerHeight, gridPos, bodyWorld);
 
         if (!_hasLastCtx || !ctx.Equals(_lastCtx))
         {
@@ -90,7 +90,7 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
         if (_policy?.MapCache == null)
             return;
 
-        TileMapBfsDebugOverlay.PublishIndoorOutdoorEvaluation(_policy.MapCache, ctx.FloorBand);
+        TileMapBfsDebugOverlay.PublishIndoorOutdoorEvaluation(_policy.MapCache, ctx.PlayerFloorCellY);
     }
 #endif
 

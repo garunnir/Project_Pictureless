@@ -2,11 +2,13 @@
 
 타일맵에서 “안 보이게” 만드는 경로는 **서로 독립된 3개 시스템**이다. 혼동을 막기 위해 먼저 구분하고, 각각의 판정 조건을 아래에 정리한다.
 
-| 시스템 | 목적 | 적용 단위 | 결과 |
-|--------|------|-----------|------|
-| **층 가시성** | 실내 층·야외 시선 차단 건물 | 스트리밍 spawn/despawn | GameObject 미생성 또는 제거 |
-| **벽 캐릭터 오클루전** | 플레이어 앞 벽이 시야를 가림 | 이미 스폰된 Wall/EdgeWall | 셰이더 `_CharacterOcclusion` (0~1) |
-| **시선 차단 건물 흔적** | 야외에서 가린 건물 1층 바닥 윤곽 | MinBand Floor (스폰 유지) | `_SightLineBuildingHidden` 어둡게 |
+| 시스템 | 목적 | 적용 단위 | 결과 | TileDefinition |
+|--------|------|-----------|------|----------------|
+| **층 가시성 — 야외 시선 차단** | 카메라↔플레이어 사이 건물 숨김 | **buildingId** (건물 전체) | despawn (MinCellY Floor 제외) | (없음 — `buildingId`로 판정) |
+| **벽 캐릭터 오클루전** | 플레이어 앞 벽이 시야를 가림 (블렌드) | 개별 Wall/EdgeWall 타일 | 셰이더 `_CharacterOcclusion` (0~1) | `occludesOccupiedCells` / `occludesEdge` |
+| **시선 차단 건물 흔적** | 야외에서 가린 건물 1층 바닥 윤곽 | MinCellY Floor (스폰 유지) | `_SightLineBuildingHidden` 어둡게 | — |
+
+**혼동 주의**: “플레이어를 가리는 타일 블렌드”는 **벽 캐릭터 오클루전**(§3, 실내). 야외 **건물 despawn**(§2.2)은 타일 블렌드가 아니라 buildingId 단위 스트리밍 숨김이다.
 
 추가로 **Ghost**(`SetGhosted`)는 별도 표현 플래그이며, 층 가시성·BFS 오클루전과 자동 연동되지 않는다.
 
@@ -26,7 +28,7 @@ flowchart TD
     OutdoorPipe --> Stream[TileMapStreamingVisualizer FilterTiles / Despawn]
     IndoorPipe --> Stream
     Policy --> SightLine[차단 buildingId 집합]
-    SightLine --> MinFloor[MinBand Floor: despawn 제외 + 셰이더 흔적]
+    SightLine --> MinFloor[MinCellY Floor: despawn 제외 + 셰이더 흔적]
 
     Player --> Model[TileMapModel.UpdateOcclusionFromPlayerWorld]
     Model --> OutdoorCheck{야외?}
@@ -41,15 +43,15 @@ flowchart TD
 
 ## 1. 플레이어 실내/야외 판정
 
-단일 API: `TileMapCacheHub.IsOutdoorEvaluation(band, x, z)`  
+단일 API: `TileMapCacheHub.IsOutdoorEvaluation(cellY, x, z)`  
 **`buildingId == 0`만으로 야외를 추론하지 않는다.**
 
 | 조건 | 야외(true) |
 |------|------------|
-| MinBand 광장 바닥 | `BuildingGroupRegistry.IsPlazaFloor(band, x, z)` |
+| MinCellY 광장 바닥 | `BuildingGroupRegistry.IsPlazaFloor(cellY, x, z)` |
 | visibility bake | 해당 셀의 `FloorRoomBfsProfile.Visibility` 결과에서 `EmptyDiscovered.Count > 0` **이고** `Visited`에 `(x,z)` 포함 |
 
-플레이어 **층(band)** 은 월드 높이 `playerHeightWorldY + bandEpsilon` 기준으로, 맵에 존재하는 band 중 `band * cellSize <= ceiling` 을 만족하는 최대 band (`PlayerFloorVisibilityPolicy.ResolveFloorBand`).
+플레이어 **층(cellY)** 은 월드 높이 `playerHeightWorldY + cellEpsilon` 기준으로, 맵에 존재하는 cellY 중 `cellY * cellSize <= ceiling` 을 만족하는 최대 cellY (`PlayerFloorVisibilityPolicy.ResolvePlayerFloorCellY`).
 
 ---
 
@@ -71,14 +73,15 @@ flowchart TD
 
 1. **`BlockingBuildingFullHideLayer`**
    - `buildingId`가 `ctx.PlayerBlockingBuildingIds`에 있으면 → **Hide**
-   - **예외**: `tileBand == MinBand` 이고 타입이 `Floor` → Continue (다음 레이어로)
+   - **예외**: `tileCellY == MinCellY` 이고 타입이 `Floor` → Continue (다음 레이어로)
 2. **`ShowAllLayer`** → **Show**
 
 **차단 buildingId 수집** (`BuildingPlayerOcclusionResolver`, 야외 전용):
 
-- 카메라 지면 교차점 ↔ 플레이어 월드 선분을 그리드로 샘플
-- 선분 상(플레이어 셀 제외) 셀·엣지에 `Wall` / `EdgeWall` 이 있으면 해당 `buildingId` 추가
-- `buildingId`가 타일에 없으면 `TryGetFloorBuildingRoom`으로 바닥에서 해석
+- 카메라 월드 위치 ↔ 플레이어 월드 **3D** 선분을 샘플
+- 각 샘플 → `ConvertWorldToGrid` → 그리드 셀 `(x, y, z)` (x·y·z 동일한 셀 좌표)
+- **플레이어 셀 `(x,y,z)` 전체 제외**, 경로상 셀 타일의 `buildingId > 0` 수집
+- 수집된 `buildingId`마다 건물 **전체**가 §2.2 Hide 대상 (MinCellY Floor만 예외)
 
 **안정화**: 동일 차단 집합이 **연속 3프레임** 유지될 때만 `_blockingStable` 반영 (`BlockingStableFramesRequired`).  
 **토글**: `PlayerFloorVisibilityDriver._outdoorSightLineBuildingHideEnabled` / `OutdoorSightLineBuildingHideEnabled == false` → 차단 집합 비움.
@@ -87,12 +90,12 @@ flowchart TD
 
 | 모드 | 야외 차단 building | 실내 벽 |
 |------|-------------------|---------|
-| `FullDespawn` / `LegacyCompatible` | building 전체 despawn (MinBand Floor 제외) | `_CharacterOcclusion` + shadow/trace/추가광 파생 |
+| `FullDespawn` / `LegacyCompatible` | building 전체 despawn (MinCellY Floor 제외) | `_CharacterOcclusion` + shadow/trace/추가광 파생 |
 | `RenderOnly` | Renderer off | Renderer off |
 | `ColliderOnly` | Renderer off, Collider on | 동일 |
 | `AlphaBlendPreserve` | despawn·Renderer off **없음** — Wall/EdgeWall에 알파 1.0 | Renderer on + `_CharacterOcclusion`만 (파생 효과 없음) |
 
-- 차단 building 추가: 모드별 위 표 적용 (MinBand Floor는 despawn 제외·흔적 유지)
+- 차단 building 추가: 모드별 위 표 적용 (MinCellY Floor는 despawn 제외·흔적 유지)
 - 차단 building 제거: 가시성 통과 타일만 respawn
 - 셀 `Prune` 시 차단 building 소속 뷰는 **building 단위 despawn**으로 승격
 
@@ -102,21 +105,22 @@ flowchart TD
 
 | 레이어 | Hide 조건 | Show 조건 |
 |--------|-----------|-----------|
-| `SameBuildingUpperFloorHideLayer` | 같은 building **이고** `tileBand > FloorBand` | — |
-| `BuildingScopeLayer` | `tileBand >= FloorBand` 이고 `buildingId != PlayerBuildingId` | 같은 building |
-| `BelowFloorPeekLayer` | `tileBand < FloorBand` 이고 아래 조건 불만족 | `Wall`/`EdgeWall` **또는** `VisibleBelowCells`에 `(x,z,band)` 포함 |
+| `SameBuildingUpperFloorHideLayer` | 같은 building **이고** `tileCellY > PlayerFloorCellY` | — |
+| `BuildingScopeLayer` | `tileCellY >= PlayerFloorCellY` 이고 `buildingId != PlayerBuildingId` | 같은 building |
+| `BelowFloorPeekLayer` | `tileCellY < PlayerFloorCellY` 이고 아래 조건 불만족 | `Wall`/`EdgeWall` **또는** `VisibleBelowCells`에 `(x,z,y)` 포함 |
 
 **아래층 peek** (`VisibleBelowCells`):
 
-- 플레이어 층 visibility BFS의 `EmptyDiscovered`(구멍)에서 아래 band로 내려가 첫 점유 층의 visibility `Visited` 셀을 수집
-- `floorBand <= MinBand` 이면 빈 집합
+- 플레이어 층 visibility BFS의 `EmptyDiscovered`(구멍)에서 아래 cellY로 내려가 첫 점유 층의 visibility `Visited` 셀을 수집
+- `PlayerFloorCellY <= MinCellY` 이면 빈 집합
 
 ---
 
-## 3. 벽 캐릭터 오클루전 (실내 전용)
+## 3. 벽 캐릭터 오클루전 (실내 전용 — 플레이어 가림 타일 블렌드)
 
 진입: `TileMapModel.UpdateOcclusionFromPlayerWorld`  
-야외(`IsOutdoorEvaluation`)이면 **멤버십·강도 모두 즉시 클리어** — BFS 벽 숨김 없음.
+야외(`IsOutdoorEvaluation`)이면 **멤버십·강도 모두 즉시 클리어** — BFS 벽 숨김 없음.  
+§2.2 야외 건물 despawn과 별개이며, `occludesOccupiedCells` / `occludesEdge`만 후보 선정에 사용한다.
 
 ### 3.0 후보 선정 vs 표현 vs 강도 (3단 분리)
 
@@ -182,9 +186,9 @@ flowchart TD
 
 ## 4. 시선 차단 건물 흔적 (야외)
 
-차단 building의 **MinBand Floor** 타일은 despawn하지 않고 스폰 유지.
+차단 building의 **MinCellY Floor** 타일은 despawn하지 않고 스폰 유지.
 
-- `BuildingGroupRegistry.RebuildMinBandFloorIndex` — bake 시 building별 MinBand Floor guid 집합
+- `BuildingGroupRegistry.RebuildMinCellYFloorIndex` — bake 시 building별 MinCellY Floor guid 집합
 - `TileViewPresentationApplier.ApplySightLineBlockingDelta` → `SetSightLineBuildingHidden`
 - 셰이더: `SpriteUV4Point._SightLineBuildingHidden` (`ShadeObjectController`)
 
@@ -241,5 +245,5 @@ flowchart TD
 ├─ 오브젝트는 있는데 벽이 투명/윤곽만
 │  └─ §3 characterOcclusion > 0 (실내, 플레이어 근처 BFS 벽)
 └─ 1층 바닥만 어둡다 (야외)
-   └─ §4 sight-line building hidden (차단 building MinBand Floor)
+   └─ §4 sight-line building hidden (차단 building MinCellY Floor)
 ```

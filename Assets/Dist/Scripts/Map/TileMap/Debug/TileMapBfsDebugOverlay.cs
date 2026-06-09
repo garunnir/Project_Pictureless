@@ -64,7 +64,7 @@ namespace IsoTilemap
         public static void ClearIndoorOutdoorLayers() => IndoorOutdoorCellLayers.Clear();
 
         /// <summary>플레이어 층 바닥 셀의 <see cref="TileMapCacheHub.IsOutdoorEvaluation"/> 결과를 표시합니다.</summary>
-        public static void PublishIndoorOutdoorEvaluation(TileMapCacheHub hub, int band)
+        public static void PublishIndoorOutdoorEvaluation(TileMapCacheHub hub, int cellY)
         {
             ClearIndoorOutdoorLayers();
             if (hub == null)
@@ -74,14 +74,14 @@ namespace IsoTilemap
             var indoor = new HashSet<Vector3Int>();
             foreach (var (x, z, b) in hub.Topology.EnumerateOccupiedCells())
             {
-                if (b != band)
+                if (b != cellY)
                     continue;
 
-                if (!hub.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
+                if (!hub.TryGetCellTiles(x, z, cellY, out var list) || !FloorMapIndex.CellHasFloor(list))
                     continue;
 
-                var cell = new Vector3Int(x, band, z);
-                if (hub.IsOutdoorEvaluation(band, x, z))
+                var cell = new Vector3Int(x, cellY, z);
+                if (hub.IsOutdoorEvaluation(cellY, x, z))
                     outdoor.Add(cell);
                 else
                     indoor.Add(cell);

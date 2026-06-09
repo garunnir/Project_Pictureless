@@ -20,8 +20,8 @@ namespace IsoTilemap
         readonly BuildingGroupRegistry _registry;
         readonly TileEdgeBinder _edgeBinder;
 
-        int _minBand;
-        int _maxBand;
+        int _minCellY;
+        int _maxCellY;
 
         public BuildingGroupBuilder(TileMapModel model, TileMapCacheHub hub)
         {
@@ -38,7 +38,7 @@ namespace IsoTilemap
         {
             _hub.InvalidateAll();
             _registry.Clear();
-            ComputeBandRange();
+            ComputeCellYRange();
             ResetStructuralIds();
             RecomputeOutdoorFromMin();
             AssignBuildingsFromSeeds(CollectY0BuildingSeeds());
@@ -46,7 +46,7 @@ namespace IsoTilemap
             BakeAllRooms();
             _model.ReindexTilesByIdFromRuntime();
             _registry.RebuildFromTiles(_model.TilesSnapshot);
-            _registry.RebuildMinBandFloorIndex(_model.TilesSnapshot, _minBand);
+            _registry.RebuildMinCellYFloorIndex(_model.TilesSnapshot, _minCellY);
             _model.MarkTilesDirty();
         }
 
@@ -54,18 +54,18 @@ namespace IsoTilemap
         {
             var oldOutdoor = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
             var newOutdoor = ComputeOutdoorXZ();
-            _registry.SetPlazaOutdoor(_minBand, newOutdoor);
+            _registry.SetPlazaOutdoor(_minCellY, newOutdoor);
 
             foreach (var (x, z) in newOutdoor)
-                SetFloorBuildingRoom(x, _minBand, z, TileIdentity.BuildingIdOutdoor, 0);
+                SetFloorBuildingRoom(x, _minCellY, z, TileIdentity.BuildingIdOutdoor, 0);
 
             foreach (var (x, z) in oldOutdoor)
             {
                 if (newOutdoor.Contains((x, z)))
                     continue;
 
-                if (_model.TryGetCellTiles(x, z, _minBand, out _))
-                    SetFloorBuildingRoom(x, _minBand, z, TileIdentity.BuildingIdUnassigned, 0);
+                if (_model.TryGetCellTiles(x, z, _minCellY, out _))
+                    SetFloorBuildingRoom(x, _minCellY, z, TileIdentity.BuildingIdUnassigned, 0);
             }
         }
 
@@ -85,7 +85,7 @@ namespace IsoTilemap
             return keys;
         }
 
-        public void RebuildRooms(HashSet<RoomKey> affectedKeys, HashSet<(int x, int z, int band)> extraSeeds = null)
+        public void RebuildRooms(HashSet<RoomKey> affectedKeys, HashSet<(int x, int z, int y)> extraSeeds = null)
         {
             if (affectedKeys == null || affectedKeys.Count == 0)
             {
@@ -95,7 +95,7 @@ namespace IsoTilemap
 
             _hub.InvalidateRooms(affectedKeys);
 
-            var slices = new HashSet<(int buildingId, int band)>();
+            var slices = new HashSet<(int buildingId, int cellY)>();
             if (affectedKeys != null)
             {
                 foreach (var key in affectedKeys)
@@ -103,41 +103,41 @@ namespace IsoTilemap
                     if (key.BuildingId <= 0)
                         continue;
 
-                    ClearRoomIdsOnSlice(key.BuildingId, key.Band);
-                    slices.Add((key.BuildingId, key.Band));
+                    ClearRoomIdsOnSlice(key.BuildingId, key.CellY);
+                    slices.Add((key.BuildingId, key.CellY));
                 }
             }
 
             if (extraSeeds != null)
             {
-                foreach (var (x, z, band) in extraSeeds)
+                foreach (var (x, z, y) in extraSeeds)
                 {
-                    int buildingId = GetFloorBuildingId(x, band, z);
+                    int buildingId = GetFloorBuildingId(x, y, z);
                     if (buildingId <= 0)
                         continue;
 
-                    slices.Add((buildingId, band));
+                    slices.Add((buildingId, y));
                 }
             }
 
-            foreach (var (buildingId, band) in slices)
+            foreach (var (buildingId, cellY) in slices)
             {
-                _registry.ClearEdgeIndexForSlice(buildingId, band);
-                BakeRoomsForSlice(buildingId, band, extraSeeds);
+                _registry.ClearEdgeIndexForSlice(buildingId, cellY);
+                BakeRoomsForSlice(buildingId, cellY, extraSeeds);
             }
 
             TagPerimeterForSlices(slices);
             IndexEdgeWallsForSlices(slices);
             _model.ReindexTilesByIdFromRuntime();
             _registry.RebuildFromTiles(_model.TilesSnapshot);
-            _registry.RebuildMinBandFloorIndex(_model.TilesSnapshot, _minBand);
+            _registry.RebuildMinCellYFloorIndex(_model.TilesSnapshot, _minCellY);
             _model.MarkTilesDirty();
         }
 
         public void HandleRemoveTile(TileData removed, HashSet<Vector3Int> changedCells)
         {
             int buildingId = removed.identity.buildingId;
-            int band = removed.identity.GridPos.y;
+            int cellY = removed.identity.GridPos.y;
 
             if (IsFloorTile(removed) &&
                 (buildingId == TileIdentity.BuildingIdOutdoor ||
@@ -158,7 +158,7 @@ namespace IsoTilemap
                 RecomputeOutdoorFromMinAndRebuildLost(changedCells);
 
             var keys = new HashSet<RoomKey>();
-            var extraSeeds = new HashSet<(int x, int z, int band)>();
+            var extraSeeds = new HashSet<(int x, int z, int y)>();
 
             foreach (var cell in changedCells)
             {
@@ -197,28 +197,28 @@ namespace IsoTilemap
                     CollectRoomKeysNearCell(cell, keys);
             }
 
-            var extraSeeds = new HashSet<(int x, int z, int band)>();
+            var extraSeeds = new HashSet<(int x, int z, int y)>();
             foreach (var (x, z) in lost)
-                extraSeeds.Add((x, z, _minBand));
+                extraSeeds.Add((x, z, _minCellY));
 
             RebuildRooms(keys, extraSeeds);
         }
 
-        void ComputeBandRange()
+        void ComputeCellYRange()
         {
-            _minBand = int.MaxValue;
-            _maxBand = int.MinValue;
+            _minCellY = int.MaxValue;
+            _maxCellY = int.MinValue;
 
-            foreach (var (x, z, band) in _model.EnumerateOccupiedCells())
+            foreach (var (x, z, y) in _model.EnumerateOccupiedCells())
             {
-                if (band < _minBand) _minBand = band;
-                if (band > _maxBand) _maxBand = band;
+                if (y < _minCellY) _minCellY = y;
+                if (y > _maxCellY) _maxCellY = y;
             }
 
-            if (_minBand == int.MaxValue)
+            if (_minCellY == int.MaxValue)
             {
-                _minBand = 0;
-                _maxBand = 0;
+                _minCellY = 0;
+                _maxCellY = 0;
             }
         }
 
@@ -239,7 +239,7 @@ namespace IsoTilemap
                 return new HashSet<(int x, int z)>();
 
             var outdoor = FloorRoomFloodFill.Run(
-                _topology.Index, _minBand, seedX, seedZ, collectEmptyNeighbors: false).Visited;
+                _topology.Index, _minCellY, seedX, seedZ, collectEmptyNeighbors: false).Visited;
 
             return outdoor;
         }
@@ -250,12 +250,12 @@ namespace IsoTilemap
             seedZ = int.MaxValue;
             bool found = false;
 
-            foreach (var (x, z, band) in _model.EnumerateOccupiedCells())
+            foreach (var (x, z, y) in _model.EnumerateOccupiedCells())
             {
-                if (band != _minBand)
+                if (y != _minCellY)
                     continue;
 
-                if (!_model.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
+                if (!_model.TryGetCellTiles(x, z, y, out var list) || !FloorMapIndex.CellHasFloor(list))
                     continue;
 
                 if (x < seedX || (x == seedX && z < seedZ))
@@ -279,18 +279,18 @@ namespace IsoTilemap
         {
             var seeds = new HashSet<(int x, int z)>();
 
-            foreach (var (x, z, band) in _model.EnumerateOccupiedCells())
+            foreach (var (x, z, y) in _model.EnumerateOccupiedCells())
             {
-                if (band != _minBand)
+                if (y != _minCellY)
                     continue;
 
                 if (_registry.IsPlazaXZ(x, z))
                     continue;
 
-                if (!_model.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
+                if (!_model.TryGetCellTiles(x, z, y, out var list) || !FloorMapIndex.CellHasFloor(list))
                     continue;
 
-                if (!IsFloorBuildingUnassigned(x, band, z))
+                if (!IsFloorBuildingUnassigned(x, y, z))
                     continue;
 
                 seeds.Add((x, z));
@@ -308,14 +308,14 @@ namespace IsoTilemap
 
             foreach (var (seedX, seedZ) in seeds)
             {
-                if (!IsFloorBuildingUnassigned(seedX, _minBand, seedZ))
+                if (!IsFloorBuildingUnassigned(seedX, _minCellY, seedZ))
                     continue;
 
                 if (outdoor.Contains((seedX, seedZ)))
                     continue;
 
                 var footprint = FloorRoomFloodFill.Run(
-                    _topology.Index, _minBand, seedX, seedZ,
+                    _topology.Index, _minCellY, seedX, seedZ,
                     collectEmptyNeighbors: false,
                     excludeCells: outdoor).Visited;
 
@@ -323,31 +323,31 @@ namespace IsoTilemap
                     continue;
 
                 int buildingId = _registry.AllocateBuildingId();
-                AssignBuildingToFootprint(buildingId, footprint, _minBand, outdoor);
+                AssignBuildingToFootprint(buildingId, footprint, _minCellY, outdoor);
             }
         }
 
         void AssignBuildingToFootprint(
             int buildingId,
             HashSet<(int x, int z)> seedFootprint,
-            int seedBand,
+            int seedCellY,
             HashSet<(int x, int z)> outdoorExclude)
         {
             var columns = new HashSet<(int x, int z)>(seedFootprint);
 
-            for (int gridY = seedBand; gridY <= _maxBand; gridY++)
+            for (int gridY = seedCellY; gridY <= _maxCellY; gridY++)
             {
-                var bandFloors = AssignBandFloors(buildingId, gridY, seedBand, seedFootprint, columns, outdoorExclude);
+                var cellYFloors = AssignCellYFloors(buildingId, gridY, seedCellY, seedFootprint, columns, outdoorExclude);
 
                 var structuralCells = new HashSet<(int x, int z)>(columns);
-                foreach (var cell in bandFloors)
+                foreach (var cell in cellYFloors)
                     structuralCells.Add(cell);
 
                 SetStructuralBuildingId(structuralCells, gridY, buildingId);
 
                 var probeXZ = CollectVerticalProbeXZ(gridY, buildingId);
                 int aboveGridY = gridY + 1;
-                if (aboveGridY > _maxBand)
+                if (aboveGridY > _maxCellY)
                     break;
 
                 var nextColumns = new HashSet<(int x, int z)>();
@@ -364,88 +364,88 @@ namespace IsoTilemap
             }
         }
 
-        HashSet<(int x, int z)> AssignBandFloors(
+        HashSet<(int x, int z)> AssignCellYFloors(
             int buildingId,
-            int band,
-            int seedBand,
+            int cellY,
+            int seedCellY,
             HashSet<(int x, int z)> seedFootprint,
             HashSet<(int x, int z)> columns,
             HashSet<(int x, int z)> outdoorExclude)
         {
-            var bandFloors = new HashSet<(int x, int z)>();
+            var cellYFloors = new HashSet<(int x, int z)>();
 
-            if (band == seedBand)
+            if (cellY == seedCellY)
             {
                 foreach (var (x, z) in seedFootprint)
                 {
-                    if (outdoorExclude != null && band == _minBand && outdoorExclude.Contains((x, z)))
+                    if (outdoorExclude != null && cellY == _minCellY && outdoorExclude.Contains((x, z)))
                         continue;
 
-                    if (!IsFloorBuildingUnassigned(x, band, z))
+                    if (!IsFloorBuildingUnassigned(x, cellY, z))
                         continue;
 
-                    SetFloorBuildingRoom(x, band, z, buildingId, 0);
-                    bandFloors.Add((x, z));
+                    SetFloorBuildingRoom(x, cellY, z, buildingId, 0);
+                    cellYFloors.Add((x, z));
                 }
 
-                return bandFloors;
+                return cellYFloors;
             }
 
             foreach (var (x, z) in columns)
             {
-                if (!_model.TryGetCellTiles(x, z, band, out var list) ||
+                if (!_model.TryGetCellTiles(x, z, cellY, out var list) ||
                     !FloorMapIndex.CellHasFloor(list))
                     continue;
 
-                if (!IsFloorBuildingUnassigned(x, band, z))
+                if (!IsFloorBuildingUnassigned(x, cellY, z))
                 {
-                    if (GetFloorBuildingId(x, band, z) == buildingId)
-                        bandFloors.Add((x, z));
+                    if (GetFloorBuildingId(x, cellY, z) == buildingId)
+                        cellYFloors.Add((x, z));
                     continue;
                 }
 
                 var footprint = FloorRoomFloodFill.Run(
-                    _topology.Index, band, x, z,
+                    _topology.Index, cellY, x, z,
                     collectEmptyNeighbors: false,
-                    excludeCells: band == _minBand ? outdoorExclude : null).Visited;
+                    excludeCells: cellY == _minCellY ? outdoorExclude : null).Visited;
 
                 foreach (var (fx, fz) in footprint)
                 {
-                    if (!IsFloorBuildingUnassigned(fx, band, fz))
+                    if (!IsFloorBuildingUnassigned(fx, cellY, fz))
                         continue;
 
-                    SetFloorBuildingRoom(fx, band, fz, buildingId, 0);
-                    bandFloors.Add((fx, fz));
+                    SetFloorBuildingRoom(fx, cellY, fz, buildingId, 0);
+                    cellYFloors.Add((fx, fz));
                 }
             }
 
-            return bandFloors;
+            return cellYFloors;
         }
 
-        HashSet<(int x, int z)> CollectVerticalProbeXZ(int band, int buildingId)
+        HashSet<(int x, int z)> CollectVerticalProbeXZ(int cellY, int buildingId)
         {
             var probe = new HashSet<(int x, int z)>();
 
             foreach (var (x, z, b) in _model.EnumerateOccupiedCells())
             {
-                if (b != band)
+                if (b != cellY)
                     continue;
 
-                if (BuildingVerticalLink.CellHasVerticalSource(_model, x, z, band, buildingId))
+                if (BuildingVerticalLink.CellHasVerticalSource(_model, x, z, cellY, buildingId))
                     probe.Add((x, z));
             }
 
             return probe;
         }
 
-        void SetStructuralBuildingId(IEnumerable<(int x, int z)> cells, int band, int buildingId)
+        void SetStructuralBuildingId(IEnumerable<(int x, int z)> cells, int cellY, int buildingId)
         {
             var patchedEdges = new HashSet<Guid>();
             var edgeScratch = new List<TileData>();
 
             foreach (var (x, z) in cells)
             {
-                if (_model.TryGetCellTiles(x, z, band, out var list))
+                if (_model.TryGetCellTiles(x, z, cellY, out var list))
                 {
                     for (int i = 0; i < list.Count; i++)
                     {
@@ -462,7 +462,7 @@ namespace IsoTilemap
                 }
 
                 edgeScratch.Clear();
-                _model.EdgeBinder.AppendIncidentEdges(new Vector3Int(x, band, z), edgeScratch);
+                _model.EdgeBinder.AppendIncidentEdges(new Vector3Int(x, cellY, z), edgeScratch);
                 for (int i = 0; i < edgeScratch.Count; i++)
                 {
                     var edge = edgeScratch[i];
@@ -482,57 +482,57 @@ namespace IsoTilemap
 
         void AssignOrphanFloorBuildings()
         {
-            var seeds = new HashSet<(int x, int z, int band)>();
+            var seeds = new HashSet<(int x, int z, int y)>();
 
-            foreach (var (x, z, band) in _model.EnumerateOccupiedCells())
+            foreach (var (x, z, y) in _model.EnumerateOccupiedCells())
             {
-                if (!_model.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
+                if (!_model.TryGetCellTiles(x, z, y, out var list) || !FloorMapIndex.CellHasFloor(list))
                     continue;
 
-                if (!IsFloorBuildingUnassigned(x, band, z))
+                if (!IsFloorBuildingUnassigned(x, y, z))
                     continue;
 
-                seeds.Add((x, z, band));
+                seeds.Add((x, z, y));
             }
 
-            foreach (var (seedX, seedZ, seedBand) in seeds)
+            foreach (var (seedX, seedZ, seedCellY) in seeds)
             {
-                if (!IsFloorBuildingUnassigned(seedX, seedBand, seedZ))
+                if (!IsFloorBuildingUnassigned(seedX, seedCellY, seedZ))
                     continue;
 
                 var outdoor = new HashSet<(int x, int z)>(_registry.PlazaFloorXZ);
                 var footprint = FloorRoomFloodFill.Run(
-                    _topology.Index, seedBand, seedX, seedZ,
+                    _topology.Index, seedCellY, seedX, seedZ,
                     collectEmptyNeighbors: false,
-                    excludeCells: seedBand == _minBand ? outdoor : null).Visited;
+                    excludeCells: seedCellY == _minCellY ? outdoor : null).Visited;
 
                 if (footprint.Count == 0)
                     continue;
 
                 int buildingId = _registry.AllocateBuildingId();
-                HashSet<(int x, int z)> outdoorExclude = seedBand == _minBand ? outdoor : null;
-                AssignBuildingToFootprint(buildingId, footprint, seedBand, outdoorExclude);
+                HashSet<(int x, int z)> outdoorExclude = seedCellY == _minCellY ? outdoor : null;
+                AssignBuildingToFootprint(buildingId, footprint, seedCellY, outdoorExclude);
             }
         }
 
-        void TryAssignLocalBuildingSeeds(HashSet<(int x, int z, int band)> cells)
+        void TryAssignLocalBuildingSeeds(HashSet<(int x, int z, int y)> cells)
         {
             if (cells == null || cells.Count == 0)
                 return;
 
             var seeds = new HashSet<(int x, int z)>();
-            foreach (var (x, z, band) in cells)
+            foreach (var (x, z, y) in cells)
             {
-                if (band != _minBand)
+                if (y != _minCellY)
                     continue;
 
                 if (_registry.IsPlazaXZ(x, z))
                     continue;
 
-                if (!IsFloorBuildingUnassigned(x, band, z))
+                if (!IsFloorBuildingUnassigned(x, y, z))
                     continue;
 
-                if (_model.TryGetCellTiles(x, z, band, out var list) && FloorMapIndex.CellHasFloor(list))
+                if (_model.TryGetCellTiles(x, z, y, out var list) && FloorMapIndex.CellHasFloor(list))
                     seeds.Add((x, z));
             }
 
@@ -542,7 +542,7 @@ namespace IsoTilemap
 
         void BakeAllRooms()
         {
-            var slices = new HashSet<(int buildingId, int band)>();
+            var slices = new HashSet<(int buildingId, int cellY)>();
 
             foreach (var tile in _model.TilesSnapshot)
             {
@@ -556,30 +556,30 @@ namespace IsoTilemap
                 slices.Add((buildingId, tile.identity.GridPos.y));
             }
 
-            foreach (var (buildingId, band) in slices)
-                BakeRoomsForSlice(buildingId, band, null);
+            foreach (var (buildingId, cellY) in slices)
+                BakeRoomsForSlice(buildingId, cellY, null);
 
             TagPerimeterForSlices(slices);
             IndexEdgeWallsForSlices(slices);
         }
 
-        void IndexEdgeWallsForSlices(HashSet<(int buildingId, int band)> slices)
+        void IndexEdgeWallsForSlices(HashSet<(int buildingId, int cellY)> slices)
         {
-            foreach (var (buildingId, band) in slices)
-                IndexEdgeWallsForSlice(buildingId, band);
+            foreach (var (buildingId, cellY) in slices)
+                IndexEdgeWallsForSlice(buildingId, cellY);
         }
 
-        void IndexEdgeWallsForSlice(int buildingId, int band)
+        void IndexEdgeWallsForSlice(int buildingId, int cellY)
         {
             foreach (var edge in _edgeBinder.EnumerateTiles())
             {
                 var edgeKey = WallEdgeKey.FromEdgeTileIdentity(edge.identity);
-                if (edgeKey.Anchor.y != band)
+                if (edgeKey.Anchor.y != cellY)
                     continue;
 
                 var roomKeys = new HashSet<RoomKey>();
-                TryAddRoomKeyAtFloorCell(edgeKey.CellA, band, roomKeys);
-                TryAddRoomKeyAtFloorCell(edgeKey.CellB, band, roomKeys);
+                TryAddRoomKeyAtFloorCell(edgeKey.CellA, cellY, roomKeys);
+                TryAddRoomKeyAtFloorCell(edgeKey.CellB, cellY, roomKeys);
 
                 foreach (var roomKey in roomKeys)
                 {
@@ -591,21 +591,21 @@ namespace IsoTilemap
             }
         }
 
-        void TryAddRoomKeyAtFloorCell(Vector3Int cell, int band, HashSet<RoomKey> roomKeys)
+        void TryAddRoomKeyAtFloorCell(Vector3Int cell, int cellY, HashSet<RoomKey> roomKeys)
         {
-            if (cell.y != band)
+            if (cell.y != cellY)
                 return;
 
-            int b = GetFloorBuildingId(cell.x, band, cell.z);
-            int r = GetFloorRoomId(cell.x, band, cell.z);
+            int b = GetFloorBuildingId(cell.x, cellY, cell.z);
+            int r = GetFloorRoomId(cell.x, cellY, cell.z);
             if (b > 0 && r > 0)
-                roomKeys.Add(new RoomKey(b, band, r));
+                roomKeys.Add(new RoomKey(b, cellY, r));
         }
 
         void BakeRoomsForSlice(
             int buildingId,
-            int band,
-            HashSet<(int x, int z, int band)> extraSeeds)
+            int cellY,
+            HashSet<(int x, int z, int y)> extraSeeds)
         {
             var visitedAnchors = new HashSet<(int x, int z)>();
             int nextRoomId = 1;
@@ -615,42 +615,42 @@ namespace IsoTilemap
                 if (visitedAnchors.Contains((x, z)))
                     return;
 
-                if (GetFloorBuildingId(x, band, z) != buildingId)
+                if (GetFloorBuildingId(x, cellY, z) != buildingId)
                     return;
 
-                if (!_model.TryGetCellTiles(x, z, band, out var list) ||
+                if (!_model.TryGetCellTiles(x, z, cellY, out var list) ||
                     !FloorMapIndex.CellHasFloor(list))
                     return;
 
-                if (GetFloorRoomId(x, band, z) != 0)
+                if (GetFloorRoomId(x, cellY, z) != 0)
                     return;
 
                 var occlusion = FloorRoomFloodFill.Run(
-                    _topology.Index, band, x, z, collectEmptyNeighbors: false, buildingId);
+                    _topology.Index, cellY, x, z, collectEmptyNeighbors: false, buildingId);
                 var visibility = FloorRoomFloodFill.Run(
-                    _topology.Index, band, x, z, collectEmptyNeighbors: true, buildingId);
+                    _topology.Index, cellY, x, z, collectEmptyNeighbors: true, buildingId);
 
                 if (occlusion.Visited.Count == 0)
                     return;
 
                 int roomId = nextRoomId++;
-                var key = new RoomKey(buildingId, band, roomId);
+                var key = new RoomKey(buildingId, cellY, roomId);
 
                 foreach (var (vx, vz) in occlusion.Visited)
                 {
                     visitedAnchors.Add((vx, vz));
-                    SetFloorBuildingRoom(vx, band, vz, buildingId, roomId);
+                    SetFloorBuildingRoom(vx, cellY, vz, buildingId, roomId);
                 }
 
                 _hub.Rooms.Store(key, FloorRoomBfsProfile.Occlusion, occlusion);
-                _hub.Bands.RegisterFootprint(band, FloorRoomBfsProfile.Occlusion, occlusion);
+                _hub.CellYGeometry.RegisterFootprint(cellY, FloorRoomBfsProfile.Occlusion, occlusion);
                 _hub.Rooms.Store(key, FloorRoomBfsProfile.Visibility, visibility);
-                _hub.Bands.RegisterFootprint(band, FloorRoomBfsProfile.Visibility, visibility);
+                _hub.CellYGeometry.RegisterFootprint(cellY, FloorRoomBfsProfile.Visibility, visibility);
             }
 
             foreach (var (x, z, b) in _model.EnumerateOccupiedCells())
             {
-                if (b != band)
+                if (b != cellY)
                     continue;
 
                 TrySeed(x, z);
@@ -660,7 +660,7 @@ namespace IsoTilemap
             {
                 foreach (var (x, z, b) in extraSeeds)
                 {
-                    if (b != band)
+                    if (b != cellY)
                         continue;
 
                     TrySeed(x, z);
@@ -668,7 +668,7 @@ namespace IsoTilemap
             }
         }
 
-        void ClearRoomIdsOnSlice(int buildingId, int band)
+        void ClearRoomIdsOnSlice(int buildingId, int cellY)
         {
             _model.ForEachRuntimeTile(tile =>
             {
@@ -676,20 +676,20 @@ namespace IsoTilemap
                     return;
 
                 var pos = tile.identity.GridPos;
-                if (pos.y != band || tile.identity.buildingId != buildingId)
+                if (pos.y != cellY || tile.identity.buildingId != buildingId)
                     return;
 
                 _model.PatchTileIdentity(tile.tileDefId, buildingId, 0);
             });
         }
 
-        void TagPerimeterForSlices(HashSet<(int buildingId, int band)> slices)
+        void TagPerimeterForSlices(HashSet<(int buildingId, int cellY)> slices)
         {
-            foreach (var (buildingId, band) in slices)
-                TagPerimeterForSlice(buildingId, band);
+            foreach (var (buildingId, cellY) in slices)
+                TagPerimeterForSlice(buildingId, cellY);
         }
 
-        void TagPerimeterForSlice(int buildingId, int band)
+        void TagPerimeterForSlice(int buildingId, int cellY)
         {
             _model.ForEachRuntimeTile(tile =>
             {
@@ -699,7 +699,7 @@ namespace IsoTilemap
                     return;
 
                 var pos = tile.identity.GridPos;
-                if (pos.y != band)
+                if (pos.y != cellY)
                     return;
 
                 if (!TryGetAdjacentFloorRoom(pos, out int adjBuilding, out int adjRoom))
@@ -721,13 +721,13 @@ namespace IsoTilemap
             {
                 int nx = cell.x + d.x;
                 int nz = cell.z + d.z;
-                int band = cell.y;
+                int cellY = cell.y;
 
-                if (!_model.TryGetCellTiles(nx, nz, band, out var list) || !FloorMapIndex.CellHasFloor(list))
+                if (!_model.TryGetCellTiles(nx, nz, cellY, out var list) || !FloorMapIndex.CellHasFloor(list))
                     continue;
 
-                int r = GetFloorRoomId(nx, band, nz);
-                int b = GetFloorBuildingId(nx, band, nz);
+                int r = GetFloorRoomId(nx, cellY, nz);
+                int b = GetFloorBuildingId(nx, cellY, nz);
                 if (b > 0 && r > 0)
                 {
                     buildingId = b;
@@ -751,18 +751,18 @@ namespace IsoTilemap
 
             int below = cell.y - 1;
             int above = cell.y + 1;
-            if (below >= _minBand)
+            if (below >= _minCellY)
                 CollectRoomKeysAt(cell.x, below, cell.z, keys);
-            if (above <= _maxBand)
+            if (above <= _maxCellY)
                 CollectRoomKeysAt(cell.x, above, cell.z, keys);
         }
 
-        void CollectRoomKeysAt(int x, int band, int z, HashSet<RoomKey> keys)
+        void CollectRoomKeysAt(int x, int cellY, int z, HashSet<RoomKey> keys)
         {
-            int buildingId = GetFloorBuildingId(x, band, z);
-            int roomId = GetFloorRoomId(x, band, z);
+            int buildingId = GetFloorBuildingId(x, cellY, z);
+            int roomId = GetFloorRoomId(x, cellY, z);
             if (buildingId > 0 && roomId > 0)
-                keys.Add(new RoomKey(buildingId, band, roomId));
+                keys.Add(new RoomKey(buildingId, cellY, roomId));
         }
 
         void TryAddRoomKeyFromTile(TileData tile, HashSet<RoomKey> keys)
@@ -788,19 +788,19 @@ namespace IsoTilemap
 
             foreach (var c in cells)
             {
-                if (c.y == _minBand)
+                if (c.y == _minCellY)
                     return true;
             }
 
             return false;
         }
 
-        bool IsFloorBuildingUnassigned(int x, int band, int z) =>
-            GetFloorBuildingId(x, band, z) == TileIdentity.BuildingIdUnassigned;
+        bool IsFloorBuildingUnassigned(int x, int cellY, int z) =>
+            GetFloorBuildingId(x, cellY, z) == TileIdentity.BuildingIdUnassigned;
 
-        int GetFloorBuildingId(int x, int band, int z)
+        int GetFloorBuildingId(int x, int cellY, int z)
         {
-            if (!_model.TryGetCellTiles(x, z, band, out var list))
+            if (!_model.TryGetCellTiles(x, z, cellY, out var list))
                 return TileIdentity.BuildingIdUnassigned;
 
             for (int i = 0; i < list.Count; i++)
@@ -814,9 +814,9 @@ namespace IsoTilemap
             return TileIdentity.BuildingIdUnassigned;
         }
 
-        int GetFloorRoomId(int x, int band, int z)
+        int GetFloorRoomId(int x, int cellY, int z)
         {
-            if (!_model.TryGetCellTiles(x, z, band, out var list))
+            if (!_model.TryGetCellTiles(x, z, cellY, out var list))
                 return 0;
 
             for (int i = 0; i < list.Count; i++)
@@ -830,9 +830,9 @@ namespace IsoTilemap
             return 0;
         }
 
-        void SetFloorBuildingRoom(int x, int band, int z, int buildingId, int roomId)
+        void SetFloorBuildingRoom(int x, int cellY, int z, int buildingId, int roomId)
         {
-            if (!_model.TryGetCellTiles(x, z, band, out var list))
+            if (!_model.TryGetCellTiles(x, z, cellY, out var list))
                 return;
 
             for (int i = 0; i < list.Count; i++)

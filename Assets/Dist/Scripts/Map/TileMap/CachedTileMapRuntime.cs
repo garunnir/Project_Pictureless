@@ -96,10 +96,10 @@ namespace IsoTilemap
         public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList) =>
             _runtimeData.TryGetTiles(pos, out tileList);
 
-        public bool TryGetCellTiles(int x, int z, int band, out IReadOnlyList<TileData> tileList) =>
-            _runtimeData.TryGetCellTiles(x, z, band, out tileList);
+        public bool TryGetCellTiles(int x, int z, int cellY, out IReadOnlyList<TileData> tileList) =>
+            _runtimeData.TryGetCellTiles(x, z, cellY, out tileList);
 
-        public IEnumerable<(int x, int z, int band)> EnumerateOccupiedCells() =>
+        public IEnumerable<(int x, int z, int y)> EnumerateOccupiedCells() =>
             _runtimeData.EnumerateOccupiedCells();
 
         public bool TryGetTileById(Guid tileId, out TileData tileData) =>

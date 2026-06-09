@@ -110,7 +110,7 @@ public class TileMapManager : MonoBehaviour
         {
             _presentationApplier.ConfigureSightLinePresentation(
                 _mapCacheHub.Buildings.Registry,
-                _floorPolicy.MinBand);
+                _floorPolicy.MinCellY);
         }
 
         tileModel.OnTileOcclusionPresentationDelta += _presentationApplier.ApplyOcclusionDelta;
@@ -254,7 +254,7 @@ public class TileMapManager : MonoBehaviour
                 _mapCacheHub,
                 _gridCellSize,
                 ResolveFloorVisibilityCamera,
-                bandEpsilonWorld: 0f);
+                cellEpsilonWorld: 0f);
         }
         else
         {

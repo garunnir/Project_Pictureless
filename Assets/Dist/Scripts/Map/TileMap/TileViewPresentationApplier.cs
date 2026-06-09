@@ -12,7 +12,7 @@ namespace IsoTilemap
         private readonly TileMapModel _model;
         private readonly TilePresentationStore _store = new TilePresentationStore();
         private BuildingGroupRegistry _buildingRegistry;
-        private int _mapMinBand;
+        private int _mapMinCellY;
         private OcclusionMode _occlusionMode = OcclusionMode.LegacyCompatible;
 
         public TileViewPresentationApplier(ITileViewRegistry registry, TileMapModel model)
@@ -21,10 +21,10 @@ namespace IsoTilemap
             _model = model ?? throw new ArgumentNullException(nameof(model));
         }
 
-        public void ConfigureSightLinePresentation(BuildingGroupRegistry buildingRegistry, int mapMinBand)
+        public void ConfigureSightLinePresentation(BuildingGroupRegistry buildingRegistry, int mapMinCellY)
         {
             _buildingRegistry = buildingRegistry;
-            _mapMinBand = mapMinBand;
+            _mapMinCellY = mapMinCellY;
         }
 
         public void SetOcclusionMode(OcclusionMode mode) => _occlusionMode = mode;
@@ -119,7 +119,7 @@ namespace IsoTilemap
             if ((TileView.TileType)tile.identity.tileType != TileView.TileType.Floor)
                 return false;
 
-            if (tile.identity.GridPos.y != _mapMinBand)
+            if (tile.identity.GridPos.y != _mapMinCellY)
                 return false;
 
             return _store.IsSightLineHiddenBuilding(tile.identity.buildingId);
@@ -130,7 +130,7 @@ namespace IsoTilemap
             if (_buildingRegistry == null)
                 return;
 
-            IReadOnlyCollection<Guid> floorIds = _buildingRegistry.GetMinBandFloorTilesForBuilding(buildingId);
+            IReadOnlyCollection<Guid> floorIds = _buildingRegistry.GetMinCellYFloorTilesForBuilding(buildingId);
             foreach (Guid tileId in floorIds)
             {
                 if (_registry.TryGetView(tileId, out TileView view))

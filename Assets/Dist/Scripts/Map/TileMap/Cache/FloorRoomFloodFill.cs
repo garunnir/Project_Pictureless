@@ -1,5 +1,5 @@
 // ============================================================
-// FloorRoomFloodFill — 층(band)별 (x,z) 방 BFS (오클루전·컬링 공용)
+// FloorRoomFloodFill — 셀 Y별 (x,z) 방 BFS (오클루전·컬링 공용)
 // ============================================================
 using System.Collections.Generic;
 using UnityEngine;
@@ -29,20 +29,20 @@ namespace IsoTilemap
 
         public static FloorBfsResult Run(
             FloorMapIndex index,
-            int band,
+            int cellY,
             int startX,
             int startZ,
             bool collectEmptyNeighbors,
             int restrictBuildingId = -1,
             HashSet<(int x, int z)> excludeCells = null)
         {
-            Vector3Int start = index.ResolveFloorBfsStart(band, startX, startZ);
+            Vector3Int start = index.ResolveFloorBfsStart(cellY, startX, startZ);
             var visited = new HashSet<(int x, int z)>();
             var emptyDiscovered = collectEmptyNeighbors
                 ? new HashSet<(int x, int z)>()
                 : null;
 
-            if (!index.TryGetCellTiles(start.x, start.z, band, out var startList) ||
+            if (!index.TryGetCellTiles(start.x, start.z, cellY, out var startList) ||
                 startList == null || startList.Count == 0 ||
                 (restrictBuildingId >= 0 && !CellFloorMatchesBuilding(startList, restrictBuildingId)))
             {
@@ -68,7 +68,7 @@ namespace IsoTilemap
                 {
                     int nx = cur.x + d.x;
                     int nz = cur.z + d.z;
-                    var neighbor = new Vector3Int(nx, band, nz);
+                    var neighbor = new Vector3Int(nx, cellY, nz);
 
                     if (index.EdgeSeparatesRoom(cur, neighbor))
                         continue;
@@ -76,7 +76,7 @@ namespace IsoTilemap
                     if (visitedCells.Contains(neighbor))
                         continue;
 
-                    if (!index.TryGetCellTiles(nx, nz, band, out var list))
+                    if (!index.TryGetCellTiles(nx, nz, cellY, out var list))
                     {
                         if (collectEmptyNeighbors)
                             emptyDiscovered.Add((nx, nz));
@@ -106,7 +106,7 @@ namespace IsoTilemap
             }
 
             if (Config.DebugMode.FloorAlgorithm)
-                Debug.Log($"FloorRoomFloodFill band={band} visited={visited.Count} empty={emptyDiscovered?.Count ?? 0}");
+                Debug.Log($"FloorRoomFloodFill cellY={cellY} visited={visited.Count} empty={emptyDiscovered?.Count ?? 0}");
 
             return new FloorBfsResult(visited, emptyDiscovered ?? new HashSet<(int x, int z)>());
         }
@@ -128,11 +128,11 @@ namespace IsoTilemap
             return false;
         }
 
-        public static HashSet<Vector3Int> ToVector3IntSet(HashSet<(int x, int z)> xzSet, int band)
+        public static HashSet<Vector3Int> ToVector3IntSet(HashSet<(int x, int z)> xzSet, int cellY)
         {
             var result = new HashSet<Vector3Int>(xzSet.Count);
             foreach (var (x, z) in xzSet)
-                result.Add(new Vector3Int(x, band, z));
+                result.Add(new Vector3Int(x, cellY, z));
             return result;
         }
     }

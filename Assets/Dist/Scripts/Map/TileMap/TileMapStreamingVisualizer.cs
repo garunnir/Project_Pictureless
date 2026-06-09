@@ -417,7 +417,7 @@ namespace IsoTilemap
 
                 if (_boundRuntime != null &&
                     _boundRuntime.TryGetTileById(tileId, out TileData tile) &&
-                    IsMinBandFloorTile(tile, ctx.MinBand))
+                    IsMinCellYFloorTile(tile, ctx.MinCellY))
                     continue;
 
                 DespawnViewCompletely(tileId);
@@ -503,8 +503,8 @@ namespace IsoTilemap
             return buildingId > 0 && _buildingOcclusionController.IsBlocked(buildingId);
         }
 
-        static bool IsMinBandFloorTile(TileData tile, int minBand) =>
-            tile.identity.GridPos.y == minBand &&
+        static bool IsMinCellYFloorTile(TileData tile, int minCellY) =>
+            tile.identity.GridPos.y == minCellY &&
             (TileView.TileType)tile.identity.tileType == TileView.TileType.Floor;
 
         private static bool ViewTouchesCell(TileView view, Vector3Int cell)

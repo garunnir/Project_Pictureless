@@ -37,7 +37,7 @@ classDiagram
 | `tileType` | `1`=Floor, `2`=Wall (`3`=legacy, 로드 시 `2`로 정규화), `4`=EdgeWall(JSON wallEdges). **building bake·구조 분류·visibility 레이어**용 |
 | `collisionFlags` | `TileDefinition`에서 bake된 6비트 플래그. **이동 topology·physics collider·벽 오클루전** 판정 (`TileCollisionFlags`) |
 | `buildingId` | bake: `0` 미할당, `-1` 광장 Floor, `>0` 건물 |
-| `roomId` | 같은 buildingId·band 내 방 번호 |
+| `roomId` | 같은 buildingId·cellY 내 방 번호 |
 
 ### tileType vs collisionFlags
 

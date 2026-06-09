@@ -1,5 +1,5 @@
 // ============================================================
-// FloorMapIndex — 층(band)별 타일·바닥·벽·엣지 조회 스냅샷
+// FloorMapIndex — 셀 Y별 타일·바닥·벽·엣지 조회 스냅샷
 // ============================================================
 using System.Collections.Generic;
 using UnityEngine;
@@ -25,7 +25,7 @@ namespace IsoTilemap
         /// </summary>
         Dictionary<Vector3Int, OccupiedCellEntry> _occupiedEntries = new();
 
-        readonly HashSet<(int x, int z, int band)> _anyTileAt = new();
+        readonly HashSet<(int x, int z, int y)> _anyTileAt = new();
 
         readonly struct TileRef
         {
@@ -57,12 +57,12 @@ namespace IsoTilemap
         public static FloorMapIndex FromModel(TileMapModel model) =>
             new FloorMapIndex(model.tiles, model.EdgeBinder.EdgeIndex);
 
-        public bool HasAnyTile(int x, int z, int band) => _anyTileAt.Contains((x, z, band));
+        public bool HasAnyTile(int x, int z, int y) => _anyTileAt.Contains((x, z, y));
 
-        public IEnumerable<(int x, int z, int band)> EnumerateOccupiedCells() => _anyTileAt;
+        public IEnumerable<(int x, int z, int y)> EnumerateOccupiedCells() => _anyTileAt;
 
-        /// <summary>런타임 topology 변경 후 (x,z,band) 점유 집합을 <see cref="_tiles"/>와 맞춥니다.</summary>
-        public void SyncOccupancyForCell(int x, int z, int band)
+        /// <summary>런타임 topology 변경 후 (x,z,y) 점유 집합을 <see cref="_tiles"/>와 맞춥니다.</summary>
+        public void SyncOccupancyForCell(int x, int z, int y)
         {
             // 멀티 점유(sizeUnit) 타일이 있을 수 있어, 단일 셀 증분 sync가 안전하지 않습니다.
             // topology 변경 빈도가 낮다는 전제 하에 전체 rebuild로 정합성을 우선합니다.
@@ -148,8 +148,8 @@ namespace IsoTilemap
             }
         }
 
-        public bool TryGetCellTiles(int x, int z, int band, out List<TileData> list) =>
-            TryGetCellTiles(new Vector3Int(x, band, z), out list);
+        public bool TryGetCellTiles(int x, int z, int cellY, out List<TileData> list) =>
+            TryGetCellTiles(new Vector3Int(x, cellY, z), out list);
 
         bool TryGetCellTiles(Vector3Int cellPos, out List<TileData> list)
         {
@@ -199,10 +199,10 @@ namespace IsoTilemap
             return TileCollisionFlagsUtil.EdgeSeparatesRoom(edge);
         }
 
-        public Vector3Int ResolveFloorBfsStart(int band, int startX, int startZ)
+        public Vector3Int ResolveFloorBfsStart(int cellY, int startX, int startZ)
         {
-            var start = new Vector3Int(startX, band, startZ);
-            if (!TryGetCellTiles(startX, startZ, band, out var startList) ||
+            var start = new Vector3Int(startX, cellY, startZ);
+            if (!TryGetCellTiles(startX, startZ, cellY, out var startList) ||
                 !CellHasSolidWall(startList))
                 return start;
 
@@ -210,11 +210,11 @@ namespace IsoTilemap
             {
                 int nx = startX + d.x;
                 int nz = startZ + d.z;
-                if (!TryGetCellTiles(nx, nz, band, out var nList))
+                if (!TryGetCellTiles(nx, nz, cellY, out var nList))
                     continue;
 
                 if (!CellHasSolidWall(nList))
-                    return new Vector3Int(nx, band, nz);
+                    return new Vector3Int(nx, cellY, nz);
             }
 
             return start;

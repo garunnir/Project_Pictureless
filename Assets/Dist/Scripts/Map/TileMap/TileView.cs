@@ -195,7 +195,7 @@ namespace IsoTilemap
 
         public void SetSelected(bool selected) => ForceApplySelectedOverlay(selected);
 
-        /// <summary>야외 시선 차단 building MinBand Floor 어둡게 표시.</summary>
+        /// <summary>야외 시선 차단 building MinCellY Floor 어둡게 표시.</summary>
         public void SetSightLineBuildingHidden(bool hidden)
         {
             _sightLineBuildingHidden = hidden;

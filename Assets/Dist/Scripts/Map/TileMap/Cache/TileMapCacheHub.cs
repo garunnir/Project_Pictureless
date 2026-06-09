@@ -1,5 +1,5 @@
 // ============================================================
-// TileMapCacheHub — 맵 topology·건물·band·room geometry 통합 조회·무효화
+// TileMapCacheHub — 맵 topology·건물·cellY·room geometry 통합 조회·무효화
 // ============================================================
 // 계약:
 // - 캐시 히트 = FloorRoomFloodFill 재실행만 생략. 오클루전 delta·TileViewPresentationApplier 반영은 매번 수행.
@@ -35,7 +35,7 @@ namespace IsoTilemap
         public HashSet<(int x, int z)> Visited => Result.Visited;
     }
 
-    /// <summary>셀·엣지 topology 조회 및 점유 (x,z,band) 동기화.</summary>
+    /// <summary>셀·엣지 topology 조회 및 점유 (x,z,y) 동기화.</summary>
     public sealed class TopologyLayer
     {
         readonly FloorMapIndex _index;
@@ -44,19 +44,19 @@ namespace IsoTilemap
 
         public FloorMapIndex Index => _index;
 
-        public bool HasOccupancy(int x, int z, int band) => _index.HasAnyTile(x, z, band);
+        public bool HasOccupancy(int x, int z, int y) => _index.HasAnyTile(x, z, y);
 
-        public IEnumerable<(int x, int z, int band)> EnumerateOccupiedCells() =>
+        public IEnumerable<(int x, int z, int y)> EnumerateOccupiedCells() =>
             _index.EnumerateOccupiedCells();
 
-        public bool TryGetCellTiles(int x, int z, int band, out List<TileData> list) =>
-            _index.TryGetCellTiles(x, z, band, out list);
+        public bool TryGetCellTiles(int x, int z, int cellY, out List<TileData> list) =>
+            _index.TryGetCellTiles(x, z, cellY, out list);
 
         public bool TryGetEdgeBetween(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall) =>
             _index.TryGetEdgeBetween(cellA, cellB, out edgeWall);
 
-        public Vector3Int ResolveFloorBfsStart(int band, int startX, int startZ) =>
-            _index.ResolveFloorBfsStart(band, startX, startZ);
+        public Vector3Int ResolveFloorBfsStart(int cellY, int startX, int startZ) =>
+            _index.ResolveFloorBfsStart(cellY, startX, startZ);
 
         public void SyncOccupancyFromChangedCells(IEnumerable<Vector3Int> changedCells) =>
             _index.SyncOccupancyFromChangedCells(changedCells);
@@ -73,17 +73,17 @@ namespace IsoTilemap
 
         public BuildingGroupRegistry Registry => _registry;
 
-        public bool IsPlazaFloor(int band, int x, int z) => _registry.IsPlazaFloor(band, x, z);
+        public bool IsPlazaFloor(int cellY, int x, int z) => _registry.IsPlazaFloor(cellY, x, z);
 
         public bool TryGetEdgeWalls(RoomKey roomKey, out IReadOnlyCollection<Guid> edgeIds) =>
             _registry.TryGetEdgeWallIds(roomKey, out edgeIds);
 
-        public bool TryGetFloorBuildingRoom(int band, int x, int z, TopologyLayer topology, out int buildingId, out int roomId)
+        public bool TryGetFloorBuildingRoom(int cellY, int x, int z, TopologyLayer topology, out int buildingId, out int roomId)
         {
             buildingId = 0;
             roomId = 0;
 
-            if (!topology.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
+            if (!topology.TryGetCellTiles(x, z, cellY, out var list) || !FloorMapIndex.CellHasFloor(list))
                 return false;
 
             for (int i = 0; i < list.Count; i++)
@@ -99,8 +99,8 @@ namespace IsoTilemap
             return false;
         }
 
-        public int TryGetBuildingIdAtCell(int band, int x, int z, TopologyLayer topology) =>
-            TryGetFloorBuildingRoom(band, x, z, topology, out int buildingId, out _) ? buildingId : 0;
+        public int TryGetBuildingIdAtCell(int cellY, int x, int z, TopologyLayer topology) =>
+            TryGetFloorBuildingRoom(cellY, x, z, topology, out int buildingId, out _) ? buildingId : 0;
     }
 
     /// <summary>RoomKey + profile 단위 bake된 BFS geometry.</summary>
@@ -110,7 +110,7 @@ namespace IsoTilemap
 
         public void InvalidateAll() => _byRoomProfile.Clear();
 
-        public void InvalidateRooms(IEnumerable<RoomKey> keys, BandGeometryLayer bands)
+        public void InvalidateRooms(IEnumerable<RoomKey> keys, CellYGeometryLayer cellYGeometry)
         {
             if (keys == null)
                 return;
@@ -118,9 +118,9 @@ namespace IsoTilemap
             foreach (var key in keys)
             {
                 if (TryGet(key, FloorRoomBfsProfile.Occlusion, out var occ))
-                    bands.UnregisterFootprint(key.Band, FloorRoomBfsProfile.Occlusion, occ);
+                    cellYGeometry.UnregisterFootprint(key.CellY, FloorRoomBfsProfile.Occlusion, occ);
                 if (TryGet(key, FloorRoomBfsProfile.Visibility, out var vis))
-                    bands.UnregisterFootprint(key.Band, FloorRoomBfsProfile.Visibility, vis);
+                    cellYGeometry.UnregisterFootprint(key.CellY, FloorRoomBfsProfile.Visibility, vis);
 
                 _byRoomProfile.Remove((key, FloorRoomBfsProfile.Occlusion));
                 _byRoomProfile.Remove((key, FloorRoomBfsProfile.Visibility));
@@ -134,16 +134,16 @@ namespace IsoTilemap
             _byRoomProfile.TryGetValue((key, profile), out result);
     }
 
-    /// <summary>(band, profile)별 (x,z) → BFS 결과 역인덱스. lazy 선형 탐색 대체.</summary>
-    public sealed class BandGeometryLayer
+    /// <summary>(cellY, profile)별 (x,z) → BFS 결과 역인덱스. lazy 선형 탐색 대체.</summary>
+    public sealed class CellYGeometryLayer
     {
         readonly TopologyLayer _topology;
         readonly RoomGeometryLayer _rooms;
 
-        readonly Dictionary<(int band, FloorRoomBfsProfile profile), Dictionary<(int x, int z), FloorBfsResult>>
+        readonly Dictionary<(int cellY, FloorRoomBfsProfile profile), Dictionary<(int x, int z), FloorBfsResult>>
             _cellToResult = new();
 
-        internal BandGeometryLayer(TopologyLayer topology, RoomGeometryLayer rooms)
+        internal CellYGeometryLayer(TopologyLayer topology, RoomGeometryLayer rooms)
         {
             _topology = topology;
             _rooms = rooms;
@@ -151,22 +151,22 @@ namespace IsoTilemap
 
         public void InvalidateAll() => _cellToResult.Clear();
 
-        public void RegisterFootprint(int band, FloorRoomBfsProfile profile, FloorBfsResult result)
+        public void RegisterFootprint(int cellY, FloorRoomBfsProfile profile, FloorBfsResult result)
         {
             if (result.Visited == null || result.Visited.Count == 0)
                 return;
 
-            var dict = GetOrCreateCellMap(band, profile);
+            var dict = GetOrCreateCellMap(cellY, profile);
             foreach (var (x, z) in result.Visited)
                 dict[(x, z)] = result;
         }
 
-        public void UnregisterFootprint(int band, FloorRoomBfsProfile profile, FloorBfsResult result)
+        public void UnregisterFootprint(int cellY, FloorRoomBfsProfile profile, FloorBfsResult result)
         {
             if (result.Visited == null)
                 return;
 
-            var key = (band, profile);
+            var key = (cellY, profile);
             if (!_cellToResult.TryGetValue(key, out var dict))
                 return;
 
@@ -177,28 +177,28 @@ namespace IsoTilemap
                 _cellToResult.Remove(key);
         }
 
-        public FloorBfsResult GetForCell(int band, int x, int z, FloorRoomBfsProfile profile)
+        public FloorBfsResult GetForCell(int cellY, int x, int z, FloorRoomBfsProfile profile)
         {
-            if (TryResolveRoomKey(band, x, z, out var roomKey) &&
+            if (TryResolveRoomKey(cellY, x, z, out var roomKey) &&
                 _rooms.TryGet(roomKey, profile, out var baked))
                 return baked;
 
-            var bandKey = (band, profile);
-            if (_cellToResult.TryGetValue(bandKey, out var dict) &&
+            var cellYKey = (cellY, profile);
+            if (_cellToResult.TryGetValue(cellYKey, out var dict) &&
                 dict.TryGetValue((x, z), out var cached))
                 return cached;
 
             bool collectEmpty = profile == FloorRoomBfsProfile.Visibility;
-            FloorBfsResult result = FloorRoomFloodFill.Run(_topology.Index, band, x, z, collectEmpty);
-            RegisterFootprint(band, profile, result);
+            FloorBfsResult result = FloorRoomFloodFill.Run(_topology.Index, cellY, x, z, collectEmpty);
+            RegisterFootprint(cellY, profile, result);
             return result;
         }
 
-        public bool TryResolveRoomKey(int band, int x, int z, out RoomKey key)
+        public bool TryResolveRoomKey(int cellY, int x, int z, out RoomKey key)
         {
             key = default;
 
-            if (!_topology.TryGetCellTiles(x, z, band, out var list) || !FloorMapIndex.CellHasFloor(list))
+            if (!_topology.TryGetCellTiles(x, z, cellY, out var list) || !FloorMapIndex.CellHasFloor(list))
                 return false;
 
             for (int i = 0; i < list.Count; i++)
@@ -211,7 +211,7 @@ namespace IsoTilemap
                 int roomId = tile.identity.roomId;
                 if (buildingId > 0 && roomId > 0)
                 {
-                    key = new RoomKey(buildingId, band, roomId);
+                    key = new RoomKey(buildingId, cellY, roomId);
                     return true;
                 }
 
@@ -221,9 +221,9 @@ namespace IsoTilemap
             return false;
         }
 
-        Dictionary<(int x, int z), FloorBfsResult> GetOrCreateCellMap(int band, FloorRoomBfsProfile profile)
+        Dictionary<(int x, int z), FloorBfsResult> GetOrCreateCellMap(int cellY, FloorRoomBfsProfile profile)
         {
-            var key = (band, profile);
+            var key = (cellY, profile);
             if (!_cellToResult.TryGetValue(key, out var dict))
             {
                 dict = new Dictionary<(int x, int z), FloorBfsResult>();
@@ -240,18 +240,18 @@ namespace IsoTilemap
         public TopologyLayer Topology { get; }
         public BuildingLayer Buildings { get; }
         public RoomGeometryLayer Rooms { get; }
-        public BandGeometryLayer Bands { get; }
+        public CellYGeometryLayer CellYGeometry { get; }
 
         TileMapCacheHub(
             TopologyLayer topology,
             BuildingLayer buildings,
             RoomGeometryLayer rooms,
-            BandGeometryLayer bands)
+            CellYGeometryLayer cellYGeometry)
         {
             Topology = topology;
             Buildings = buildings;
             Rooms = rooms;
-            Bands = bands;
+            CellYGeometry = cellYGeometry;
         }
 
         public static TileMapCacheHub Create(TileMapModel model, BuildingGroupRegistry registry)
@@ -260,39 +260,39 @@ namespace IsoTilemap
             var topology = new TopologyLayer(index);
             var buildings = new BuildingLayer(registry);
             var rooms = new RoomGeometryLayer();
-            var bands = new BandGeometryLayer(topology, rooms);
-            return new TileMapCacheHub(topology, buildings, rooms, bands);
+            var cellYGeometry = new CellYGeometryLayer(topology, rooms);
+            return new TileMapCacheHub(topology, buildings, rooms, cellYGeometry);
         }
 
-        public bool CellHasOccupancy(int x, int z, int band) => Topology.HasOccupancy(x, z, band);
+        public bool CellHasOccupancy(int x, int z, int y) => Topology.HasOccupancy(x, z, y);
 
-        public bool TryGetCellTiles(int x, int z, int band, out List<TileData> list) =>
-            Topology.TryGetCellTiles(x, z, band, out list);
+        public bool TryGetCellTiles(int x, int z, int cellY, out List<TileData> list) =>
+            Topology.TryGetCellTiles(x, z, cellY, out list);
 
         public bool TryGetEdgeBetween(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall) =>
             Topology.TryGetEdgeBetween(cellA, cellB, out edgeWall);
 
-        public IEnumerable<(int x, int z, int band)> EnumerateOccupiedCells() =>
+        public IEnumerable<(int x, int z, int y)> EnumerateOccupiedCells() =>
             Topology.EnumerateOccupiedCells();
 
-        public GeometryQuery GetRoomGeometryForCell(int band, int x, int z, FloorRoomBfsProfile profile)
+        public GeometryQuery GetRoomGeometryForCell(int cellY, int x, int z, FloorRoomBfsProfile profile)
         {
-            RoomKey? roomKey = Bands.TryResolveRoomKey(band, x, z, out var key) ? key : (RoomKey?)null;
-            var result = Bands.GetForCell(band, x, z, profile);
+            RoomKey? roomKey = CellYGeometry.TryResolveRoomKey(cellY, x, z, out var key) ? key : (RoomKey?)null;
+            var result = CellYGeometry.GetForCell(cellY, x, z, profile);
             return new GeometryQuery(result, roomKey);
         }
 
         public HashSet<(int x, int z)> GetVisitedForCell(
-            int band, int x, int z, FloorRoomBfsProfile profile) =>
-            Bands.GetForCell(band, x, z, profile).Visited;
+            int cellY, int x, int z, FloorRoomBfsProfile profile) =>
+            CellYGeometry.GetForCell(cellY, x, z, profile).Visited;
 
         /// <summary>야외 분기 판정 단일 API. buildingId==0으로 야외 추론하지 않습니다.</summary>
-        public bool IsOutdoorEvaluation(int band, int x, int z)
+        public bool IsOutdoorEvaluation(int cellY, int x, int z)
         {
-            if (Buildings.IsPlazaFloor(band, x, z))
+            if (Buildings.IsPlazaFloor(cellY, x, z))
                 return true;
 
-            if (!Bands.TryResolveRoomKey(band, x, z, out var roomKey))
+            if (!CellYGeometry.TryResolveRoomKey(cellY, x, z, out var roomKey))
                 return false;
 
             if (!Rooms.TryGet(roomKey, FloorRoomBfsProfile.Visibility, out var visibility))
@@ -302,17 +302,17 @@ namespace IsoTilemap
                 && visibility.Visited != null && visibility.Visited.Contains((x, z));
         }
 
-        public bool TryGetFloorBuildingRoom(int band, int x, int z, out int buildingId, out int roomId) =>
-            Buildings.TryGetFloorBuildingRoom(band, x, z, Topology, out buildingId, out roomId);
+        public bool TryGetFloorBuildingRoom(int cellY, int x, int z, out int buildingId, out int roomId) =>
+            Buildings.TryGetFloorBuildingRoom(cellY, x, z, Topology, out buildingId, out roomId);
 
         public void InvalidateAll()
         {
             Rooms.InvalidateAll();
-            Bands.InvalidateAll();
+            CellYGeometry.InvalidateAll();
         }
 
         public void InvalidateRooms(IEnumerable<RoomKey> keys) =>
-            Rooms.InvalidateRooms(keys, Bands);
+            Rooms.InvalidateRooms(keys, CellYGeometry);
 
         public void NotifyTopologyChanged(
             IReadOnlyCollection<Vector3Int> changedCells,

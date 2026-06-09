@@ -199,11 +199,11 @@ namespace IsoTilemap
                 }
             }
 
-            int band = playerCellPos.y;
-            start = _topology.ResolveFloorBfsStart(band, start.x, start.z);
+            int cellY = playerCellPos.y;
+            start = _topology.ResolveFloorBfsStart(cellY, start.x, start.z);
             HashSet<(int x, int z)> xzVisited = precomputedVisited ??
-                FloorRoomFloodFill.Run(_topology.Index, band, start.x, start.z, collectEmptyNeighbors: false).Visited;
-            var visited = FloorRoomFloodFill.ToVector3IntSet(xzVisited, band);
+                FloorRoomFloodFill.Run(_topology.Index, cellY, start.x, start.z, collectEmptyNeighbors: false).Visited;
+            var visited = FloorRoomFloodFill.ToVector3IntSet(xzVisited, cellY);
             var floorChecked = visited;
             var wallCellChecked = new HashSet<Vector3Int>();
 
@@ -211,7 +211,7 @@ namespace IsoTilemap
             {
                 foreach (var d in CardinalNeighbors)
                 {
-                    var nx = new Vector3Int(cur.x + d.x, band, cur.z + d.z);
+                    var nx = new Vector3Int(cur.x + d.x, cellY, cur.z + d.z);
                     bool isBottomDir = IsBottomOcclusionDirection(d);
 
                     if (WallEdgeKey.TryBetween(cur, nx, out var edgeKey) && _edges.TryGetValue(edgeKey, out TileData edgeWall))
@@ -673,13 +673,13 @@ namespace IsoTilemap
                 return;
 
             var seen = new HashSet<Guid>();
-            IEnumerable<(int x, int z, int band)> occupiedCells = _cellQuery != null
+            IEnumerable<(int x, int z, int y)> occupiedCells = _cellQuery != null
                 ? _cellQuery.EnumerateOccupiedCells()
                 : _topology.EnumerateOccupiedCells();
 
-            foreach (var (x, z, band) in occupiedCells)
+            foreach (var (x, z, y) in occupiedCells)
             {
-                if (!TryGetCellTilesAt(new Vector3Int(x, band, z), out var list))
+                if (!TryGetCellTilesAt(new Vector3Int(x, y, z), out var list))
                     continue;
 
                 for (int i = 0; i < list.Count; i++)

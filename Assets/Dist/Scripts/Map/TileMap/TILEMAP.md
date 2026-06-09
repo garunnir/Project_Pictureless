@@ -85,10 +85,10 @@ graph TD
 - **CachedTileMapRuntime.cs** — Decorator, 청크 인덱스 래퍼 (topology cache와 별도)
 
 ### Cache (`TileMap/Cache/`)
-- **TileMapCacheHub.cs** — topology·building·band·room geometry 통합 조회·무효화 진입점
-- **FloorMapIndex.cs** — 셀·엣지·점유 (x,z,band) 인덱스
-- **BuildingGroupRegistry.cs** — buildingId·광장(minBand) 바닥 XZ·room edge 역인덱스
-- **RoomKey.cs** — (buildingId, band, roomId) 캐시 키
+- **TileMapCacheHub.cs** — topology·building·cellY·room geometry 통합 조회·무효화 진입점
+- **FloorMapIndex.cs** — 셀·엣지·점유 (x, y, z) 인덱스
+- **BuildingGroupRegistry.cs** — buildingId·광장(MinCellY) 바닥 XZ·room edge 역인덱스
+- **RoomKey.cs** — (buildingId, cellY, roomId) 캐시 키
 - **FloorRoomFloodFill.cs** — 방 BFS 계산 (결과는 Hub가 캐시)
 
 소비자(`BuildingGroupBuilder`, `PlayerFloorVisibilityPolicy`, `WallOcclusionFinder`)는 `TileMap/` 루트에 두고 Hub만 참조.
@@ -101,13 +101,13 @@ graph TD
 
 **buildingId bake (열 상향)**
 
-1. **seed band** — `FloorRoomFloodFill`로 수평 room footprint → 미할당 floor에 `buildingId`.
-2. **같은 band** — footprint·상향 진입 열의 Wall/EdgeWall에 동일 `buildingId` (`roomId=0`).
-3. **상향** — `(x,z,band)`에 `buildingId`가 붙은 Floor/Wall/EdgeWall이 있고 `(x,z,band+1)`에 구조물(Floor/Wall/EdgeWall)이 있으면 위 band로 진입 → room BFS·floor ID·벽 ID 반복.
+1. **seed cellY** — `FloorRoomFloodFill`로 수평 room footprint → 미할당 floor에 `buildingId`.
+2. **같은 cellY** — footprint·상향 진입 열의 Wall/EdgeWall에 동일 `buildingId` (`roomId=0`).
+3. **상향** — `(x,y,z)`에 `buildingId`가 붙은 Floor/Wall/EdgeWall이 있고 `(x,y+1,z)`에 구조물(Floor/Wall/EdgeWall)이 있으면 위 셀 y로 진입 → room BFS·floor ID·벽 ID 반복.
 4. **roomId** — room bake·perimeter는 기존과 동일 (`TagPerimeterForSlice`가 벽 `roomId` 보정).
 
-점유 조회는 `EnumerateOccupiedCells` + `TryGetCellTiles`만 사용. 점유 인덱스는 타일 `sizeUnit(x,y,z)`를 반영해 확장되며, 빌딩 상향 판정은 `(x,z,band+1)` 셀 조회 결과를 그대로 사용한다. EdgeWall 인접셀 병합은 기본 OFF이며, 상향 연결 경로에서만 옵션으로 ON 한다. XZ footprint 겹침·4방 인접·`sizeUnit` 수동 확장은 사용하지 않음.
-| **저장** | `TileMapModel` floor ids, `BuildingGroupRegistry`, `Hub.Rooms`/`Bands` | 역할별 분리(효율) |
+점유 조회는 `EnumerateOccupiedCells` + `TryGetCellTiles`만 사용. 점유 인덱스는 타일 `sizeUnit(x,y,z)`를 반영해 확장되며, 빌딩 상향 판정은 `(x,y+1,z)` 셀 조회 결과를 그대로 사용한다. EdgeWall 인접셀 병합은 기본 OFF이며, 상향 연결 경로에서만 옵션으로 ON 한다. XZ footprint 겹침·4방 인접·`sizeUnit` 수동 확장은 사용하지 않음.
+| **저장** | `TileMapModel` floor ids, `BuildingGroupRegistry`, `Hub.Rooms`/`CellYGeometry` | 역할별 분리(효율) |
 | **읽기** | `TileMapCacheHub` / `BuildingLayer` | `IsOutdoorEvaluation`, `TryGetFloorBuildingRoom` — **buildingId로 야외 추론 금지** (bake: `0` 미할당, `-1` 광장 Floor, `>0` 건물) |
 
 ### 층 가시성·가려짐

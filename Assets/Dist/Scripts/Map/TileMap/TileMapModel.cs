@@ -172,19 +172,19 @@ namespace IsoTilemap
 
         public bool TryGetTileById(Guid tileId, out TileData tileData) => TryFindTileById(tileId, out tileData);
 
-        public bool TryGetCellTiles(int x, int z, int band, out IReadOnlyList<TileData> tileList)
+        public bool TryGetCellTiles(int x, int z, int cellY, out IReadOnlyList<TileData> tileList)
         {
             if (_mapCacheHub != null &&
-                _mapCacheHub.TryGetCellTiles(x, z, band, out var hubList))
+                _mapCacheHub.TryGetCellTiles(x, z, cellY, out var hubList))
             {
                 tileList = hubList;
                 return true;
             }
 
-            return TryGetTiles(new Vector3Int(x, band, z), out tileList);
+            return TryGetTiles(new Vector3Int(x, cellY, z), out tileList);
         }
 
-        public IEnumerable<(int x, int z, int band)> EnumerateOccupiedCells()
+        public IEnumerable<(int x, int z, int y)> EnumerateOccupiedCells()
         {
             if (_mapCacheHub != null)
                 return _mapCacheHub.Topology.EnumerateOccupiedCells();
@@ -192,7 +192,7 @@ namespace IsoTilemap
             return EnumerateOccupiedCellsFromAnchorDict();
         }
 
-        IEnumerable<(int x, int z, int band)> EnumerateOccupiedCellsFromAnchorDict()
+        IEnumerable<(int x, int z, int y)> EnumerateOccupiedCellsFromAnchorDict()
         {
             foreach (var pos in tiles.Keys)
                 yield return (pos.x, pos.z, pos.y);

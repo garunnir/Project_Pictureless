@@ -43,7 +43,7 @@ public class ShadeObjectController : ShaderController
         Mat.SetFloat(_ghostAmountId, Mathf.Clamp01(amount));
     }
 
-    /// <summary>야외 시선 차단 building의 MinBand Floor를 어둡게 표시합니다.</summary>
+    /// <summary>야외 시선 차단 building의 MinCellY Floor를 어둡게 표시합니다.</summary>
     public void SetSightLineBuildingHidden(bool hidden)
     {
         if (Mat == null)

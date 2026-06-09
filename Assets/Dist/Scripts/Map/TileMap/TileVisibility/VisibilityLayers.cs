@@ -9,8 +9,8 @@ namespace IsoTilemap
     {
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
-            int tileBand = tile.identity.GridPos.y;
-            if (tileBand > ctx.FloorBand && tile.identity.buildingId == ctx.PlayerBuildingId)
+            int tileCellY = tile.identity.GridPos.y;
+            if (tileCellY > ctx.PlayerFloorCellY && tile.identity.buildingId == ctx.PlayerBuildingId)
                 return TileVisibilityVerdict.Hide;
 
             return TileVisibilityVerdict.Continue;
@@ -21,8 +21,8 @@ namespace IsoTilemap
     {
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
-            int tileBand = tile.identity.GridPos.y;
-            if (tileBand < ctx.FloorBand)
+            int tileCellY = tile.identity.GridPos.y;
+            if (tileCellY < ctx.PlayerFloorCellY)
                 return TileVisibilityVerdict.Continue;
 
             return tile.identity.buildingId == ctx.PlayerBuildingId
@@ -35,8 +35,8 @@ namespace IsoTilemap
     {
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
-            int tileBand = tile.identity.GridPos.y;
-            if (tileBand >= ctx.FloorBand)
+            int tileCellY = tile.identity.GridPos.y;
+            if (tileCellY >= ctx.PlayerFloorCellY)
                 return TileVisibilityVerdict.Continue;
 
             var type = (TileView.TileType)tile.identity.tileType;
@@ -44,7 +44,7 @@ namespace IsoTilemap
                 return TileVisibilityVerdict.Show;
 
             var gridPos = tile.identity.GridPos;
-            if (ctx.VisibleBelowCells.Contains((gridPos.x, gridPos.z, tileBand)))
+            if (ctx.VisibleBelowCells.Contains((gridPos.x, gridPos.z, tileCellY)))
                 return TileVisibilityVerdict.Show;
 
             return TileVisibilityVerdict.Hide;
@@ -62,8 +62,8 @@ namespace IsoTilemap
             if (buildingId <= 0 || !ctx.PlayerBlockingBuildingIds.Contains(buildingId))
                 return TileVisibilityVerdict.Continue;
 
-            int tileBand = tile.identity.GridPos.y;
-            if (tileBand == ctx.MinBand &&
+            int tileCellY = tile.identity.GridPos.y;
+            if (tileCellY == ctx.MinCellY &&
                 (TileView.TileType)tile.identity.tileType == TileView.TileType.Floor)
                 return TileVisibilityVerdict.Continue;
 
