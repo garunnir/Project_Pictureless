@@ -286,19 +286,9 @@ namespace IsoTilemap
             int cellY, int x, int z, FloorRoomBfsProfile profile) =>
             CellYGeometry.GetForCell(cellY, x, z, profile).Visited;
 
-        /// <summary>room 베이크 조회용: <paramref name="worldRef"/> XZ에서 논리 바닥 (x,z)를 찾습니다.</summary>
-        public bool TryResolveFloorAnchorXZ(
-            int floorCellY,
-            Vector3 worldRef,
-            float cellSize,
-            out int floorX,
-            out int floorZ) =>
-            FloorRoomQueryResolver.TryResolveFloorAnchorXZ(
-                Topology, floorCellY, worldRef, cellSize, out floorX, out floorZ);
-
         /// <summary>
-        /// 의도된 월드 기준점·층 Y로 room <see cref="FloorBfsResult.Visited"/>를 읽습니다.
-        /// XZ가 벽/EdgeWall 근처여도 베이크 fast path를 우선합니다.
+        /// 월드 XZ 스냅 셀의 roomId로 bake된 <see cref="FloorBfsResult.Visited"/>를 읽습니다.
+        /// 스냅 셀에 바닥·roomId가 없으면 null (lazy BFS·이웃 탐색 없음).
         /// </summary>
         public HashSet<(int x, int z)> GetVisitedForWorld(
             int floorCellY,
@@ -306,11 +296,14 @@ namespace IsoTilemap
             float cellSize,
             FloorRoomBfsProfile profile)
         {
-            if (TryResolveFloorAnchorXZ(floorCellY, worldRef, cellSize, out int floorX, out int floorZ))
-                return CellYGeometry.GetForCell(floorCellY, floorX, floorZ, profile).Visited;
-
             Vector3Int snap = TileHelper.ConvertWorldToGrid(worldRef, Mathf.Max(1e-4f, cellSize));
-            return CellYGeometry.GetForCell(floorCellY, snap.x, snap.z, profile).Visited;
+            if (!CellYGeometry.TryResolveRoomKey(floorCellY, snap.x, snap.z, out var roomKey))
+                return null;
+
+            if (!Rooms.TryGet(roomKey, profile, out var baked))
+                return null;
+
+            return baked.Visited;
         }
 
         /// <summary>야외 분기 판정 단일 API. buildingId==0으로 야외 추론하지 않습니다.</summary>

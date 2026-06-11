@@ -430,15 +430,7 @@ namespace IsoTilemap
 
             if (_mapCacheHub != null)
             {
-                int evalX = snapCell.x;
-                int evalZ = snapCell.z;
-                if (_mapCacheHub.TryResolveFloorAnchorXZ(playerFloorCellY, playerWorld, cs, out int floorX, out int floorZ))
-                {
-                    evalX = floorX;
-                    evalZ = floorZ;
-                }
-
-                if (_mapCacheHub.IsOutdoorEvaluation(playerFloorCellY, evalX, evalZ))
+                if (_mapCacheHub.IsOutdoorEvaluation(playerFloorCellY, snapCell.x, snapCell.z))
                 {
                     if (_hiddenWallTileIds.Count > 0 || _lastAppliedOcclusion.Count > 0)
                         ClearWallCharacterOcclusion();
