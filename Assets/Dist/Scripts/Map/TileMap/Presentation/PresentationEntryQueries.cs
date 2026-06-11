@@ -78,5 +78,17 @@ namespace IsoTilemap
 
             return entry.Scalar01 > OcclusionEpsilon;
         }
+
+        public static bool ResolveFloorVisibilityHidden(System.Guid tileId, TilePresentationEntryStore store)
+        {
+            if (!store.TryGetEngagedEntry(
+                    tileId,
+                    PresentationConcern.FloorVisibilityHidden,
+                    PresentationSource.FloorVisibilityPolicy,
+                    out TilePresentationEntry entry))
+                return false;
+
+            return entry.Scalar01 > OcclusionEpsilon;
+        }
     }
 }

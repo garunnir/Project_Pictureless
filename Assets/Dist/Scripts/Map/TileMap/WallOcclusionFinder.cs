@@ -141,7 +141,8 @@ namespace IsoTilemap
             _tiles = tiles;
             _edges = edges ?? EmptyEdges;
             _cellQuery = cellQuery;
-            _topology = topology ?? new TopologyLayer(new FloorMapIndex(_tiles, _edges));
+            _topology = topology ?? new TopologyLayer(
+                new FloorMapIndex(_tiles, _edges, new Dictionary<FloorFaceKey, TileData>()));
         }
 
         public List<TileData> Find(Vector3Int playerCellPos) =>

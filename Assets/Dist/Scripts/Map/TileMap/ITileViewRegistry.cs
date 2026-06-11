@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace IsoTilemap
 {
@@ -6,5 +7,7 @@ namespace IsoTilemap
     public interface ITileViewRegistry
     {
         bool TryGetView(Guid tileId, out TileView view);
+
+        void CollectSpawnedTileIds(List<Guid> into);
     }
 }

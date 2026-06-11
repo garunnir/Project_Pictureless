@@ -59,6 +59,13 @@ namespace IsoTilemap
 
         public bool TryGetView(Guid tileId, out TileView view) => _tileViews.TryGetValue(tileId, out view);
 
+        public void CollectSpawnedTileIds(List<Guid> into)
+        {
+            into.Clear();
+            foreach (var kv in _tileViews)
+                into.Add(kv.Key);
+        }
+
         public void Bind(IMapModelReadOnly runtime)
         {
             if (_boundRuntime != null)

@@ -38,6 +38,16 @@ namespace IsoTilemap
                 return;
             }
 
+            if (type == TileView.TileType.Floor)
+            {
+                FloorFaceKey key = FloorFaceKey.FromFloorTileIdentity(tile.identity);
+                Vector2Int belowChunk = TileChunkCoord.FromCell(key.CellBelow, chunkSize);
+                _primaryChunkByTile[tile.tileDefId] = belowChunk;
+                AddCell(belowChunk, key.CellBelow);
+                AddCell(TileChunkCoord.FromCell(key.CellAbove, chunkSize), key.CellAbove);
+                return;
+            }
+
             Vector3Int cell = tile.identity.GridPos;
             Vector2Int chunk = TileChunkCoord.FromCell(cell, chunkSize);
             _primaryChunkByTile[tile.tileDefId] = chunk;
@@ -56,6 +66,14 @@ namespace IsoTilemap
                 WallEdgeKey key = WallEdgeKey.FromEdgeTileIdentity(tile.identity);
                 RemoveCell(TileChunkCoord.FromCell(key.Anchor, chunkSize), key.Anchor);
                 RemoveCell(TileChunkCoord.FromCell(key.NeighborCell(), chunkSize), key.NeighborCell());
+                return;
+            }
+
+            if (type == TileView.TileType.Floor)
+            {
+                FloorFaceKey key = FloorFaceKey.FromFloorTileIdentity(tile.identity);
+                RemoveCell(TileChunkCoord.FromCell(key.CellBelow, chunkSize), key.CellBelow);
+                RemoveCell(TileChunkCoord.FromCell(key.CellAbove, chunkSize), key.CellAbove);
                 return;
             }
 

@@ -18,6 +18,7 @@ namespace IsoTilemap
         readonly HashSet<Vector3Int> _bandCells = new();
         readonly List<TileData> _cellTilesScratch = new();
         readonly List<TileData> _edgeTilesScratch = new();
+        readonly List<TileData> _faceTilesScratch = new();
         readonly Dictionary<Guid, float> _scratch = new();
         readonly List<(Guid tileId, float occlusion01)> _applyScratch = new();
         readonly List<Guid> _clearScratch = new();
@@ -54,6 +55,7 @@ namespace IsoTilemap
 
                 _cellTilesScratch.Clear();
                 _edgeTilesScratch.Clear();
+                _faceTilesScratch.Clear();
 
                 if (_hub.TryGetCellTiles(cell.x, cell.z, cell.y, out var tiles))
                 {
@@ -62,8 +64,11 @@ namespace IsoTilemap
                 }
 
                 AppendIncidentEdges(cell, _edgeTilesScratch);
+                AppendIncidentFaces(cell, _faceTilesScratch);
 
-                if (_cellTilesScratch.Count == 0 && _edgeTilesScratch.Count == 0)
+                if (_cellTilesScratch.Count == 0 &&
+                    _edgeTilesScratch.Count == 0 &&
+                    _faceTilesScratch.Count == 0)
                     continue;
 
                 for (int i = 0; i < _cellTilesScratch.Count; i++)
@@ -77,6 +82,13 @@ namespace IsoTilemap
                 {
                     AccumulateOcclusion(
                         _edgeTilesScratch[i], cell, cameraWorld, playerWorld,
+                        playerCell, playerFloorCellY, isPlayerOutdoor, cellSize, settings, eps);
+                }
+
+                for (int i = 0; i < _faceTilesScratch.Count; i++)
+                {
+                    AccumulateOcclusion(
+                        _faceTilesScratch[i], cell, cameraWorld, playerWorld,
                         playerCell, playerFloorCellY, isPlayerOutdoor, cellSize, settings, eps);
                 }
             }
@@ -115,6 +127,15 @@ namespace IsoTilemap
 
                 appendTo.Add(edge);
             }
+        }
+
+        void AppendIncidentFaces(Vector3Int cell, List<TileData> appendTo)
+        {
+            if (_hub.TryGetHorizontalFaceBetween(cell + Vector3Int.down, cell, out TileData belowFace))
+                appendTo.Add(belowFace);
+
+            if (_hub.TryGetHorizontalFaceBetween(cell, cell + Vector3Int.up, out TileData aboveFace))
+                appendTo.Add(aboveFace);
         }
 
         void AccumulateOcclusion(

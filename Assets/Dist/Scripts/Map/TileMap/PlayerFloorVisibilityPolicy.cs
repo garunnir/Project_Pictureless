@@ -134,12 +134,13 @@ namespace IsoTilemap
         HashSet<int> _blockingForContext = new();
         HashSet<(int x, int z, int y)> _visibleBelowForContext = new();
 
-        Vector3 _cachedPlayerWorld;
-        float _cachedPlayerHeight;
-        Vector3 _cachedCameraWorld;
+        Vector3Int _cachedPlayerGridCell;
+        int _cachedPlayerFloorCellY;
         bool _cachedHideEnabled;
-        bool _hasCachedContext;
-        FloorVisibilityContext _cachedContext;
+        bool _hasStableIdentity;
+        bool _cachedIsOutdoor;
+        int _cachedPlayerBuildingId;
+        HashSet<(int x, int z, int y)> _cachedVisibleBelow = new();
 
         /// <summary>시선상 가림 건물 전층 Hide(실내·야외 공통). false면 차단 집합을 비웁니다.</summary>
         public bool OutdoorSightLineBuildingHideEnabled { get; set; } = true;
@@ -183,7 +184,7 @@ namespace IsoTilemap
             if (tiles != null)
             {
                 for (int i = 0; i < tiles.Count; i++)
-                    bandSet.Add(tiles[i].identity.GridPos.y);
+                    bandSet.Add(TileVisibilityCellUtil.GetCellY(tiles[i]));
             }
 
             if (bandSet.Count == 0)
@@ -209,38 +210,61 @@ namespace IsoTilemap
             float playerHeightWorldY,
             Vector3 playerWorld)
         {
-            _occlusionResolver.TryGetCameraWorld(out Vector3 cameraWorld);
-            if (_hasCachedContext &&
-                playerWorld == _cachedPlayerWorld &&
-                playerHeightWorldY == _cachedPlayerHeight &&
-                cameraWorld == _cachedCameraWorld &&
-                OutdoorSightLineBuildingHideEnabled == _cachedHideEnabled)
-            {
-                return _cachedContext;
-            }
-
             Vector3Int sightPlayerCell = TileHelper.ConvertWorldToGrid(playerWorld, _cellSize);
             int playerFloorCellY = ResolvePlayerFloorCellY(playerHeightWorldY);
-            bool isOutdoor = _hub.IsOutdoorEvaluation(playerFloorCellY, sightPlayerCell.x, sightPlayerCell.z);
-            _hub.TryGetFloorBuildingRoom(
-                playerFloorCellY, sightPlayerCell.x, sightPlayerCell.z, out int playerBuildingId, out _);
 
-            HashSet<(int x, int z, int y)> visibleBelow = isOutdoor
-                ? EmptyVisibleBelow
-                : ResolveVisibleBelowForContext(playerFloorCellY, sightPlayerCell.x, sightPlayerCell.z);
+            bool reuseIdentity = _hasStableIdentity &&
+                sightPlayerCell == _cachedPlayerGridCell &&
+                playerFloorCellY == _cachedPlayerFloorCellY &&
+                OutdoorSightLineBuildingHideEnabled == _cachedHideEnabled;
+
+            bool isOutdoor;
+            int playerBuildingId;
+            HashSet<(int x, int z, int y)> visibleBelow;
+
+            if (reuseIdentity)
+            {
+                isOutdoor = _cachedIsOutdoor;
+                playerBuildingId = _cachedPlayerBuildingId;
+                visibleBelow = _cachedVisibleBelow.Count == 0 ? EmptyVisibleBelow : _cachedVisibleBelow;
+            }
+            else
+            {
+                isOutdoor = _hub.IsOutdoorEvaluation(playerFloorCellY, sightPlayerCell.x, sightPlayerCell.z);
+                _hub.TryGetFloorBuildingRoom(
+                    playerFloorCellY, sightPlayerCell.x, sightPlayerCell.z, out playerBuildingId, out _);
+
+                visibleBelow = isOutdoor
+                    ? EmptyVisibleBelow
+                    : ResolveVisibleBelowForContext(playerFloorCellY, sightPlayerCell.x, sightPlayerCell.z);
+
+                _cachedIsOutdoor = isOutdoor;
+                _cachedPlayerBuildingId = playerBuildingId;
+                CopyVisibleBelow(visibleBelow, _cachedVisibleBelow);
+                _cachedPlayerGridCell = sightPlayerCell;
+                _cachedPlayerFloorCellY = playerFloorCellY;
+                _cachedHideEnabled = OutdoorSightLineBuildingHideEnabled;
+                _hasStableIdentity = true;
+            }
 
             HashSet<int> blocking = OutdoorSightLineBuildingHideEnabled
                 ? ResolveBlockingForContext(playerWorld, sightPlayerCell, playerBuildingId)
                 : EmptyBlocking;
 
-            _cachedContext = new FloorVisibilityContext(
+            return new FloorVisibilityContext(
                 isOutdoor, playerFloorCellY, _minCellY, playerBuildingId, blocking, visibleBelow);
-            _cachedPlayerWorld = playerWorld;
-            _cachedPlayerHeight = playerHeightWorldY;
-            _cachedCameraWorld = cameraWorld;
-            _cachedHideEnabled = OutdoorSightLineBuildingHideEnabled;
-            _hasCachedContext = true;
-            return _cachedContext;
+        }
+
+        static void CopyVisibleBelow(
+            HashSet<(int x, int z, int y)> source,
+            HashSet<(int x, int z, int y)> dest)
+        {
+            dest.Clear();
+            if (source == null || source.Count == 0)
+                return;
+
+            foreach (var cell in source)
+                dest.Add(cell);
         }
 
         HashSet<int> ResolveBlockingForContext(

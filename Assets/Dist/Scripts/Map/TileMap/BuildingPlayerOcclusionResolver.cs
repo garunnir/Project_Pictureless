@@ -96,6 +96,11 @@ namespace IsoTilemap
 
 
 
+        static readonly Vector3Int[] CardinalNeighbors =
+        {
+            Vector3Int.right, Vector3Int.back, Vector3Int.left, Vector3Int.forward
+        };
+
         readonly HashSet<Vector3Int> _cellsOnSegment = new();
 
         readonly HashSet<Vector3Int> _blockingCellsScratch = new();
@@ -257,47 +262,38 @@ namespace IsoTilemap
 
 
         bool AddBuildingIdsAtCell(Vector3Int cell, HashSet<int> output, int excludeBuildingId)
-
         {
-
-            if (!_hub.TryGetCellTiles(cell.x, cell.z, cell.y, out var tiles))
-
-                return false;
-
-
-
             bool contributed = false;
 
-            for (int i = 0; i < tiles.Count; i++)
-
+            if (_hub.TryGetCellTiles(cell.x, cell.z, cell.y, out var tiles))
             {
-
-                TileData tile = tiles[i];
-
-                if (!TileOccludesSight(tile))
-
-                    continue;
-
-
-
-                int buildingId = tile.identity.buildingId;
-
-                if (buildingId <= 0 || buildingId == excludeBuildingId)
-
-                    continue;
-
-
-
-                output.Add(buildingId);
-
-                contributed = true;
-
+                for (int i = 0; i < tiles.Count; i++)
+                    contributed |= TryAddBlockingBuildingId(tiles[i], output, excludeBuildingId);
             }
 
+            for (int i = 0; i < CardinalNeighbors.Length; i++)
+            {
+                Vector3Int neighbor = cell + CardinalNeighbors[i];
+                if (!_hub.TryGetEdgeBetween(cell, neighbor, out TileData edge))
+                    continue;
 
+                contributed |= TryAddBlockingBuildingId(edge, output, excludeBuildingId);
+            }
 
             return contributed;
+        }
 
+        bool TryAddBlockingBuildingId(in TileData tile, HashSet<int> output, int excludeBuildingId)
+        {
+            if (!TileOccludesSight(tile))
+                return false;
+
+            int buildingId = tile.identity.buildingId;
+            if (buildingId <= 0 || buildingId == excludeBuildingId)
+                return false;
+
+            output.Add(buildingId);
+            return true;
         }
 
 

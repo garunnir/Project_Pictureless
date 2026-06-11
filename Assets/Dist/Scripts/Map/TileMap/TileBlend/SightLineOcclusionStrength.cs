@@ -139,34 +139,24 @@ namespace IsoTilemap
         public static bool ShouldSkipProximityForIndoorStructural(bool isPlayerOutdoor, in TileData tile) =>
             !isPlayerOutdoor && IsStructuralOcclusionTile(tile);
 
-        /// <summary>플레이어 XZ 기둥 발밑·이하 Floor는 가리지 않음.</summary>
-
+        /// <summary>
+        /// walkable 층(CellAbove)이 플레이어 층 이하인 Floor face는 §3 면제.
+        /// 윗층 천장 face(walkable y &gt; playerFloor)만 근접 블렌드 대상.
+        /// </summary>
         public static bool ShouldExemptFloor(
-
             in TileData tile,
-
             Vector3Int occupiedCell,
-
             Vector3Int playerCell,
-
             int playerFloorCellY)
-
         {
-
             if ((TileView.TileType)tile.identity.tileType != TileView.TileType.Floor)
-
                 return false;
 
+            Vector3Int walkable = FloorFaceKey.IsAnchorFormat(tile.identity.floorFace)
+                ? FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove
+                : occupiedCell;
 
-
-            if (occupiedCell.x != playerCell.x || occupiedCell.z != playerCell.z)
-
-                return false;
-
-
-
-            return occupiedCell.y <= playerFloorCellY;
-
+            return walkable.y <= playerFloorCellY;
         }
 
     }

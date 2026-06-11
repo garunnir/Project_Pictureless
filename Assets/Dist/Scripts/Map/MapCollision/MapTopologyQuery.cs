@@ -37,13 +37,8 @@ namespace IsoTilemap
             return FloorMapIndex.CellHasSolidWall(list);
         }
 
-        public bool CellHasFloor(int x, int z, int gridY)
-        {
-            if (!TryGetCellTiles(x, z, gridY, out var list))
-                return false;
-
-            return FloorMapIndex.CellHasFloor(list);
-        }
+        public bool CellHasFloor(int x, int z, int gridY) =>
+            _hub.Topology.CellHasFloor(x, gridY, z);
 
         public bool TryGetEdgeBetween(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall) =>
             _hub.TryGetEdgeBetween(cellA, cellB, out edgeWall);

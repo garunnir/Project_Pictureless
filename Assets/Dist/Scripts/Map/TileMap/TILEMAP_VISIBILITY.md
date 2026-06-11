@@ -4,7 +4,7 @@
 
 | 시스템 | 목적 | 적용 단위 | 결과 | TileDefinition |
 |--------|------|-----------|------|----------------|
-| **층 가시성 — 야외 시선 차단** | 카메라↔플레이어 사이 건물 숨김 | **buildingId** (건물 전체) | despawn (MinCellY Floor 제외) | (없음 — `buildingId`로 판정) |
+| **층 가시성 — 야외 시선 차단** | 카메라↔플레이어 사이 건물 숨김 | **buildingId** (건물 전체) | `FloorVisibilityHidden` (MinCellY Floor는 흔적 셰이더) | (없음 — `buildingId`로 판정) |
 | **근접 시선 블렌드** | 카메라↔플레이어 시선에 가리는 타일 블렌드 | 시선 밴드 내 **모든 타일** | 셰이더 `_CharacterOcclusion` (0~1) | — |
 | **시선 차단 건물 흔적** | 야외에서 가린 건물 1층 바닥 윤곽 | MinCellY Floor (스폰 유지) | `_SightLineBuildingHidden` 어둡게 | — |
 
@@ -25,7 +25,7 @@ flowchart TD
     Outdoor -->|아니오| IndoorBranch{tile.buildingId == PlayerBuildingId?}
     IndoorBranch -->|아니오| ShowOther[Show — 광장·타 건물]
     IndoorBranch -->|예| IndoorPipe[IndoorTileVisibilityPipeline]
-    OutdoorPipe --> Stream[TileMapStreamingVisualizer FilterTiles / Despawn]
+    OutdoorPipe --> ApplierFloor[TileViewPresentationApplier.SyncFloorVisibility]
     IndoorPipe --> Stream
     Policy --> SightLine[차단 buildingId 집합]
     SightLine --> MinFloor[MinCellY Floor: despawn 제외 + 셰이더 흔적]
@@ -49,13 +49,13 @@ flowchart TD
 | MinCellY 광장 바닥 | `BuildingGroupRegistry.IsPlazaFloor(cellY, x, z)` |
 | visibility bake | 해당 셀의 `FloorRoomBfsProfile.Visibility` 결과에서 `EmptyDiscovered.Count > 0` **이고** `Visited`에 `(x,z)` 포함 |
 
-플레이어 **층(cellY)** 은 월드 높이 `playerHeightWorldY + cellEpsilon` 기준으로, 맵에 존재하는 cellY 중 `cellY * cellSize <= ceiling` 을 만족하는 최대 cellY (`PlayerFloorVisibilityPolicy.ResolvePlayerFloorCellY`).
+플레이어 **층(cellY)** 은 월드 높이 `playerHeightWorldY + cellEpsilon` 기준으로, 맵 타일의 대표 cellY(`TileVisibilityCellUtil.GetCellY` — Floor는 `CellAbove.y`) 중 `cellY * cellSize <= ceiling` 을 만족하는 최대 cellY (`PlayerFloorVisibilityPolicy.ResolvePlayerFloorCellY`).
 
 ---
 
 ## 2. 층 가시성 (스트리밍)
 
-진입: `PlayerFloorVisibilityPolicy.IsTileVisible` → `TileMapStreamingVisualizer`의 `GatherAndFilter` / `ApplyBlockingBuildingDelta`.
+진입: `PlayerFloorVisibilityPolicy.IsTileVisible` → `TileViewPresentationApplier.SyncFloorVisibility` (스트리밍 despawn 없음).
 
 ### 2.1 분기 요약
 
@@ -71,13 +71,13 @@ flowchart TD
 `IsTileVisible`에서 **`BlockingBuildingFullHideLayer`를 실내·야외 공통 선적용**합니다.
 
 - `buildingId`가 `ctx.PlayerBlockingBuildingIds`에 있으면 → **Hide**
-- **예외**: `tileCellY == MinCellY` 이고 타입이 `Floor` (§4 흔적 유지)
+- **예외**: 타입이 `Floor`이고 walkable 셀 `CellAbove.y == MinCellY` (§4 흔적 유지)
 - 야외 분기(`OutdoorTileVisibilityPipeline`)는 차단 통과 타일에 **`ShowAllLayer`** 만 적용
 
 **차단 buildingId 수집** (`BuildingPlayerOcclusionResolver` — 실내·야외 공통):
 
 - 카메라↔플레이어 월드 **3D** 선분 샘플 (플레이어 셀 포함) → `ConvertWorldToGrid` → `(x, y, z)`
-- 경로상 타일 중 collision bake 플래그 `occludesOccupiedCells` / `occludesEdge`가 있는 것만 `buildingId > 0` 수집 (Floor는 일반적으로 제외 — [TILEMAP.md](TILEMAP.md) §TileDefinition)
+- 경로상 **점유 셀 타일** + 카드널 이웃 **EdgeWall**(`TryGetEdgeBetween`) 중 `occludesOccupiedCells` / `occludesEdge`가 있는 것만 `buildingId > 0` 수집 (Floor face는 일반적으로 제외 — [TILEMAP.md](TILEMAP.md) §TileDefinition)
 - **`PlayerBuildingId` 제외** — 플레이어 소속 building은 차단 목록에 넣지 않음
 - resolver 산출 집합을 **즉시** context에 반영 (`BuildingBlockingController` 델타)
 
@@ -116,7 +116,7 @@ flowchart TD
 
 1. 카메라↔플레이어 3D 세그먼트 샘플 (`BuildingPlayerOcclusionResolver`와 **동일 step·3D 셀**; 플레이어 셀 **포함**)
 2. 각 샘플의 `(x, y, z)`에서 Y를 바꾸지 않고 `BandRadiusCells` Chebyshev XZ 확장 (플레이어 셀도 동일)
-3. 확장 셀 좌표로 Hub 조회 — 점유 셀 타일 + 카드널 이웃 `TryGetEdgeBetween` **EdgeWall** (`Floor` 면제는 §3.2). 가림 포인트는 점유 셀 중심(EdgeWall은 변 중점).
+3. 확장 셀 좌표로 Hub 조회 — 점유 셀 타일 + 카드널 이웃 `TryGetEdgeBetween` **EdgeWall** + Y 인접 `TryGetHorizontalFaceBetween` **Floor face** (§3.2 면제 적용). 가림 포인트는 점유 셀 중심(EdgeWall·Floor face는 면 중점).
 4. **사분면 필터**: 점유 셀이 플레이어 XZ 기준 **+X·-Z** 사분면(`dx≥0`, `dz≤0`)에 있을 때만 후보.
 5. **실내 구조벽 제외**: 플레이어가 실내이면 `Wall`·`EdgeWall`은 후보에서 제외 — BFS(`WallOcclusionFinder`) 전담. (윗층·비-BFS -XZ 벽에 근접 시선이 겹치지 않음)
 
@@ -138,7 +138,7 @@ flowchart TD
 | `SegmentTEpsilon` | 0.15 | 플레이어 뒤쪽 여유(셀 단위) |
 | `ApplyEpsilon` | 0.015 | target 변화 미만이면 store delta 스킵 |
 
-**Floor 오탐 방지**: `Floor`이고 `(x,z)`가 플레이어와 같고 `y <= PlayerFloorCellY` → occlusion 0 (발밑 기둥).
+**Floor 오탐 방지 (face 기준)**: `Floor` face의 walkable `CellAbove.y <= PlayerFloorCellY` → occlusion 0 (발밑·같은 층·이하 면 전부 면제). `CellAbove.y > PlayerFloorCellY`인 윗층 face만 근접 블렌드 대상.
 
 ### 3.3 표현·entry store·합성
 

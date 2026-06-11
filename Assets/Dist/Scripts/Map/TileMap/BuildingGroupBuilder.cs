@@ -43,7 +43,7 @@ namespace IsoTilemap
             if (buildingId <= 0)
                 return false;
 
-            if (!_model.TryGetCellTiles(x, z, cellY, out var list) || !FloorMapIndex.CellHasFloor(list))
+            if (!_topology.Index.CellHasFloor(x, cellY, z))
                 return false;
 
             if (GetFloorRoomId(x, cellY, z) > 0)
@@ -64,6 +64,7 @@ namespace IsoTilemap
         {
             _hub.InvalidateAll();
             _registry.Clear();
+            _topology.RebuildOccupancy();
             ComputeCellYRange();
             ResetStructuralIds();
             RecomputeOutdoorFromMin();
@@ -74,6 +75,7 @@ namespace IsoTilemap
             _registry.RebuildFromTiles(_model.TilesSnapshot);
             _registry.RebuildMinCellYFloorIndex(_model.TilesSnapshot, _minCellY);
             _model.MarkTilesDirty();
+            LogBakeSummaryIfDebug();
         }
 
         public void RecomputeOutdoorFromMin()
@@ -90,7 +92,7 @@ namespace IsoTilemap
                 if (newOutdoor.Contains((x, z)))
                     continue;
 
-                if (_model.TryGetCellTiles(x, z, _minCellY, out _))
+                if (_topology.Index.CellHasFloor(x, _minCellY, z))
                     SetFloorBuildingRoom(x, _minCellY, z, TileIdentity.BuildingIdUnassigned, 0);
             }
         }
@@ -163,7 +165,9 @@ namespace IsoTilemap
         public void HandleRemoveTile(TileData removed, HashSet<Vector3Int> changedCells)
         {
             int buildingId = removed.identity.buildingId;
-            int cellY = removed.identity.GridPos.y;
+            int cellY = IsFloorTile(removed)
+                ? FloorFaceKey.FromFloorTileIdentity(removed.identity).CellAbove.y
+                : removed.identity.GridPos.y;
 
             if (IsFloorTile(removed) &&
                 (buildingId == TileIdentity.BuildingIdOutdoor ||
@@ -235,11 +239,18 @@ namespace IsoTilemap
             _minCellY = int.MaxValue;
             _maxCellY = int.MinValue;
 
-            foreach (var (x, z, y) in _model.EnumerateOccupiedCells())
+            _model.ForEachRuntimeTile(tile =>
             {
+                if (!IsStructural(tile))
+                    return;
+
+                int y = IsFloorTile(tile)
+                    ? FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove.y
+                    : tile.identity.GridPos.y;
+
                 if (y < _minCellY) _minCellY = y;
                 if (y > _maxCellY) _maxCellY = y;
-            }
+            });
 
             if (_minCellY == int.MaxValue)
             {
@@ -276,12 +287,9 @@ namespace IsoTilemap
             seedZ = int.MaxValue;
             bool found = false;
 
-            foreach (var (x, z, y) in _model.EnumerateOccupiedCells())
+            foreach (var (x, cellY, z) in _topology.Index.EnumerateWalkableFloorCells())
             {
-                if (y != _minCellY)
-                    continue;
-
-                if (!_model.TryGetCellTiles(x, z, y, out var list) || !FloorMapIndex.CellHasFloor(list))
+                if (cellY != _minCellY)
                     continue;
 
                 if (x < seedX || (x == seedX && z < seedZ))
@@ -305,18 +313,15 @@ namespace IsoTilemap
         {
             var seeds = new HashSet<(int x, int z)>();
 
-            foreach (var (x, z, y) in _model.EnumerateOccupiedCells())
+            foreach (var (x, cellY, z) in _topology.Index.EnumerateWalkableFloorCells())
             {
-                if (y != _minCellY)
+                if (cellY != _minCellY)
                     continue;
 
                 if (_registry.IsPlazaXZ(x, z))
                     continue;
 
-                if (!_model.TryGetCellTiles(x, z, y, out var list) || !FloorMapIndex.CellHasFloor(list))
-                    continue;
-
-                if (!IsFloorBuildingUnassigned(x, y, z))
+                if (!IsFloorBuildingUnassigned(x, cellY, z))
                     continue;
 
                 seeds.Add((x, z));
@@ -419,8 +424,7 @@ namespace IsoTilemap
 
             foreach (var (x, z) in columns)
             {
-                if (!_model.TryGetCellTiles(x, z, cellY, out var list) ||
-                    !FloorMapIndex.CellHasFloor(list))
+                if (!_topology.Index.CellHasFloor(x, cellY, z))
                     continue;
 
                 if (!IsFloorBuildingUnassigned(x, cellY, z))
@@ -459,6 +463,18 @@ namespace IsoTilemap
 
                 if (BuildingVerticalLink.CellHasVerticalSource(_model, x, z, cellY, buildingId))
                     probe.Add((x, z));
+            }
+
+            // Floor face는 점유 셀에 없으므로 walkable 바닥 열도 상향 프로브에 포함합니다.
+            foreach (var (x, floorCellY, z) in _topology.Index.EnumerateWalkableFloorCells())
+            {
+                if (floorCellY != cellY)
+                    continue;
+
+                if (GetFloorBuildingId(x, cellY, z) != buildingId)
+                    continue;
+
+                probe.Add((x, z));
             }
 
             return probe;
@@ -510,15 +526,12 @@ namespace IsoTilemap
         {
             var seeds = new HashSet<(int x, int z, int y)>();
 
-            foreach (var (x, z, y) in _model.EnumerateOccupiedCells())
+            foreach (var (x, cellY, z) in _topology.Index.EnumerateWalkableFloorCells())
             {
-                if (!_model.TryGetCellTiles(x, z, y, out var list) || !FloorMapIndex.CellHasFloor(list))
+                if (!IsFloorBuildingUnassigned(x, cellY, z))
                     continue;
 
-                if (!IsFloorBuildingUnassigned(x, y, z))
-                    continue;
-
-                seeds.Add((x, z, y));
+                seeds.Add((x, cellY, z));
             }
 
             foreach (var (seedX, seedZ, seedCellY) in seeds)
@@ -558,7 +571,7 @@ namespace IsoTilemap
                 if (!IsFloorBuildingUnassigned(x, y, z))
                     continue;
 
-                if (_model.TryGetCellTiles(x, z, y, out var list) && FloorMapIndex.CellHasFloor(list))
+                if (_topology.Index.CellHasFloor(x, y, z))
                     seeds.Add((x, z));
             }
 
@@ -579,7 +592,7 @@ namespace IsoTilemap
                 if (buildingId <= 0)
                     continue;
 
-                slices.Add((buildingId, tile.identity.GridPos.y));
+                slices.Add((buildingId, FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove.y));
             }
 
             foreach (var (buildingId, cellY) in slices)
@@ -644,8 +657,7 @@ namespace IsoTilemap
                 if (GetFloorBuildingId(x, cellY, z) != buildingId)
                     return;
 
-                if (!_model.TryGetCellTiles(x, z, cellY, out var list) ||
-                    !FloorMapIndex.CellHasFloor(list))
+                if (!_topology.Index.CellHasFloor(x, cellY, z))
                     return;
 
                 if (GetFloorRoomId(x, cellY, z) != 0)
@@ -695,8 +707,8 @@ namespace IsoTilemap
                 if (!IsFloorTile(tile))
                     return;
 
-                var pos = tile.identity.GridPos;
-                if (pos.y != cellY || tile.identity.buildingId != buildingId)
+                var key = FloorFaceKey.FromFloorTileIdentity(tile.identity);
+                if (key.CellAbove.y != cellY || tile.identity.buildingId != buildingId)
                     return;
 
                 _model.PatchTileIdentity(tile.tileDefId, buildingId, 0);
@@ -743,7 +755,7 @@ namespace IsoTilemap
                 int nz = cell.z + d.z;
                 int cellY = cell.y;
 
-                if (!_model.TryGetCellTiles(nx, nz, cellY, out var list) || !FloorMapIndex.CellHasFloor(list))
+                if (!_topology.Index.CellHasFloor(nx, cellY, nz))
                     continue;
 
                 int r = GetFloorRoomId(nx, cellY, nz);
@@ -789,8 +801,8 @@ namespace IsoTilemap
         {
             if (IsFloorTile(tile) && tile.identity.buildingId > 0 && tile.identity.roomId > 0)
             {
-                var pos = tile.identity.GridPos;
-                keys.Add(new RoomKey(tile.identity.buildingId, pos.y, tile.identity.roomId));
+                var key = FloorFaceKey.FromFloorTileIdentity(tile.identity);
+                keys.Add(new RoomKey(tile.identity.buildingId, key.CellAbove.y, tile.identity.roomId));
                 return;
             }
 
@@ -820,48 +832,26 @@ namespace IsoTilemap
 
         int GetFloorBuildingId(int x, int cellY, int z)
         {
-            if (!_model.TryGetCellTiles(x, z, cellY, out var list))
+            if (!_topology.Index.TryGetFloorFaceForWalkableCell(x, cellY, z, out var face))
                 return TileIdentity.BuildingIdUnassigned;
 
-            for (int i = 0; i < list.Count; i++)
-            {
-                if ((TileView.TileType)list[i].identity.tileType != TileView.TileType.Floor)
-                    continue;
-
-                return list[i].identity.buildingId;
-            }
-
-            return TileIdentity.BuildingIdUnassigned;
+            return face.identity.buildingId;
         }
 
         int GetFloorRoomId(int x, int cellY, int z)
         {
-            if (!_model.TryGetCellTiles(x, z, cellY, out var list))
+            if (!_topology.Index.TryGetFloorFaceForWalkableCell(x, cellY, z, out var face))
                 return 0;
 
-            for (int i = 0; i < list.Count; i++)
-            {
-                if ((TileView.TileType)list[i].identity.tileType != TileView.TileType.Floor)
-                    continue;
-
-                return list[i].identity.roomId;
-            }
-
-            return 0;
+            return face.identity.roomId;
         }
 
         void SetFloorBuildingRoom(int x, int cellY, int z, int buildingId, int roomId)
         {
-            if (!_model.TryGetCellTiles(x, z, cellY, out var list))
+            if (!_topology.Index.TryGetFloorFaceForWalkableCell(x, cellY, z, out var face))
                 return;
 
-            for (int i = 0; i < list.Count; i++)
-            {
-                if ((TileView.TileType)list[i].identity.tileType != TileView.TileType.Floor)
-                    continue;
-
-                _model.PatchTileIdentity(list[i].tileDefId, buildingId, roomId);
-            }
+            _model.PatchTileIdentity(face.tileDefId, buildingId, roomId);
         }
 
         bool TryBakeRoomFromSeed(int buildingId, int cellY, int seedX, int seedZ)
@@ -935,8 +925,8 @@ namespace IsoTilemap
                 if (!IsFloorTile(tile))
                     continue;
 
-                var pos = tile.identity.GridPos;
-                if (pos.y != cellY || tile.identity.buildingId != buildingId)
+                var key = FloorFaceKey.FromFloorTileIdentity(tile.identity);
+                if (key.CellAbove.y != cellY || tile.identity.buildingId != buildingId)
                     continue;
 
                 max = Math.Max(max, tile.identity.roomId);
@@ -961,6 +951,33 @@ namespace IsoTilemap
             var type = (TileView.TileType)tile.identity.tileType;
             return type is TileView.TileType.Wall
                 or TileView.TileType.EdgeWall;
+        }
+
+        void LogBakeSummaryIfDebug()
+        {
+            if (!Config.DebugMode.FloorAlgorithm)
+                return;
+
+            int faceCount = 0;
+            int bakedAboveMin = 0;
+            int outdoorMin = 0;
+            foreach (var tile in _model.TilesSnapshot)
+            {
+                if (!IsFloorTile(tile))
+                    continue;
+
+                faceCount++;
+                int walkY = FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove.y;
+                int bid = tile.identity.buildingId;
+                if (walkY == _minCellY && bid == TileIdentity.BuildingIdOutdoor)
+                    outdoorMin++;
+                else if (walkY > _minCellY && bid > 0)
+                    bakedAboveMin++;
+            }
+
+            Debug.Log(
+                $"[BuildingGroupBuilder] bake: minCellY={_minCellY}, floorFaces={faceCount}, " +
+                $"outdoor@min={outdoorMin}, upperWithBuildingId={bakedAboveMin}, buildings={_registry.TilesByBuildingId.Count}");
         }
     }
 }

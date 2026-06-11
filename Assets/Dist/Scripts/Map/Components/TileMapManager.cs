@@ -55,6 +55,7 @@ public class TileMapManager : MonoBehaviour
     private TileMapCacheHub _mapCacheHub;
     private BuildingGroupBuilder _buildingGroupBuilder;
     private MapCollisionServices _mapCollisionServices;
+    private TileMapModel _boundTileModel;
 
     public IMapModel Model { get; private set; }
     public TileViewPresentationApplier PresentationApplier => _presentationApplier;
@@ -64,9 +65,6 @@ public class TileMapManager : MonoBehaviour
     /// <summary>층 가시성과 동일한 playerFloorCellY (몸 높이 기준).</summary>
     public int ResolvePlayerFloorCellY(float playerHeightWorldY)
     {
-        if (Model is TileMapModel tileModel)
-            SetupMapRuntimeCache(tileModel);
-
         if (_floorPolicy != null)
             return _floorPolicy.ResolvePlayerFloorCellY(playerHeightWorldY);
 
@@ -82,6 +80,9 @@ public class TileMapManager : MonoBehaviour
 
         _worldGrid.ApplyFromMap(_loader.LastLoadedDto, _gridCellSize);
         BindWorldGridToCharacters();
+
+        if (Model is TileMapModel runtimeTileModel)
+            SetupMapRuntimeCache(runtimeTileModel);
 
         Transform tileContainer = new GameObject("TileContainer").transform;
         tileContainer.SetParent(_tileContainer);
@@ -121,7 +122,7 @@ public class TileMapManager : MonoBehaviour
 
         _chunkStreamer?.SyncNow();
         _saver.Init(Model, _worldGrid);
-        BindMapCollisionToPlayers();
+        BindMapCollisionServicesOnly();
     }
 
     private void OnDestroy()
@@ -153,10 +154,10 @@ public class TileMapManager : MonoBehaviour
             _presentationApplier.ConfigureSightLinePresentation(
                 _mapCacheHub.Buildings.Registry,
                 _floorPolicy.MinCellY);
+            _presentationApplier.ConfigureFloorVisibility(_floorPolicy);
         }
 
         _streamingVisualizer?.SetPresentationApplier(_presentationApplier);
-        _streamingVisualizer?.SetBuildingRegistry(_mapCacheHub?.Buildings.Registry);
         _nonStreamingVisualizer?.SetPresentationApplier(_presentationApplier);
     }
 
@@ -198,11 +199,16 @@ public class TileMapManager : MonoBehaviour
             _floorPolicy = null;
             _mapCacheHub = null;
             _buildingGroupBuilder = null;
+            _boundTileModel = null;
             return;
         }
 
-        if (_mapCacheHub == null)
+        bool hubCreated = _mapCacheHub == null || !ReferenceEquals(_boundTileModel, tileModel);
+        if (hubCreated)
         {
+            _boundTileModel = tileModel;
+            _floorPolicy = null;
+
             var registry = new BuildingGroupRegistry();
             _mapCacheHub = TileMapCacheHub.Create(tileModel, registry);
             tileModel.SetMapCacheHub(_mapCacheHub);
@@ -220,15 +226,17 @@ public class TileMapManager : MonoBehaviour
                 _gridCellSize,
                 ResolveFloorVisibilityCamera,
                 cellEpsilonWorld: 0f);
+            _presentationApplier?.ConfigureFloorVisibility(_floorPolicy);
         }
     }
 
-    void BindMapCollisionToPlayers()
+    void BindMapCollisionServicesOnly()
     {
         if (Model is not TileMapModel tileModel)
             return;
 
-        SetupMapRuntimeCache(tileModel);
+        if (_mapCacheHub == null)
+            SetupMapRuntimeCache(tileModel);
         if (_mapCacheHub == null)
             return;
 
@@ -295,28 +303,14 @@ public class TileMapManager : MonoBehaviour
         if (!chunkStreaming)
         {
             _streamingVisualizer = null;
-            if (Model is TileMapModel tileModel)
-                SetupMapRuntimeCache(tileModel);
-            else
-                SetupMapRuntimeCache(null);
-
             _nonStreamingVisualizer = new TileMapVisualizer(factory, _worldGrid);
             return _nonStreamingVisualizer;
         }
 
         _nonStreamingVisualizer = null;
 
-        if (Model is TileMapModel streamingTileModel)
-            SetupMapRuntimeCache(streamingTileModel);
-        else
-        {
-            Debug.LogWarning("[TileMapManager] TileMapModel이 아니어서 층 컬링을 비활성화합니다.");
-            SetupMapRuntimeCache(null);
-        }
-
         _streamingVisualizer = new TileMapStreamingVisualizer(
             factory, _worldGrid, _chunkStreamer.ChunkSize);
-        _streamingVisualizer.SetFloorVisibilityPolicy(_floorPolicy);
         _chunkStreamer.Attach(_streamingVisualizer, _worldGrid);
         return _streamingVisualizer;
     }
@@ -345,6 +339,9 @@ public class TileMapManager : MonoBehaviour
         _worldGrid.ApplyFromMap(_loader.LastLoadedDto, _gridCellSize);
         BindWorldGridToCharacters();
 
+        if (Model is TileMapModel runtimeTileModel)
+            SetupMapRuntimeCache(runtimeTileModel);
+
         Transform tileContainer = new GameObject("TileContainer").transform;
         tileContainer.SetParent(_tileContainer);
 
@@ -353,7 +350,7 @@ public class TileMapManager : MonoBehaviour
         WireTilePresentationApplier();
         _controller.Init(Model, viewBuilder);
 
-        BindMapCollisionToPlayers();
+        BindMapCollisionServicesOnly();
 
         Debug.Log("[TileMapManager] LoadEditor 완료.");
     }

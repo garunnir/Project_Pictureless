@@ -25,6 +25,8 @@ namespace IsoTilemap
             }
             if (mapData.wallEdges == null)
                 mapData.wallEdges = new System.Collections.Generic.List<WallEdgeSaveData>();
+            if (mapData.floorFaces == null)
+                mapData.floorFaces = new System.Collections.Generic.List<FloorFaceSaveData>();
             return mapData;
         }
      

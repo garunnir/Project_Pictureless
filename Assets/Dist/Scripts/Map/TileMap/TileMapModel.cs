@@ -19,6 +19,8 @@ namespace IsoTilemap
         /// <summary>파생 인덱스: <see cref="tiles"/>·edgeBinder와 동기화된 Guid 조회용.</summary>
         private readonly Dictionary<Guid, TileData> _tilesById = new Dictionary<Guid, TileData>();
         private readonly TileEdgeBinder _edgeBinder = new TileEdgeBinder();
+        private readonly TileFloorFaceBinder _floorFaceBinder = new TileFloorFaceBinder();
+        private readonly List<TileData> _faceVisitBuffer = new List<TileData>();
 
         private List<TileData> _cachedList = new List<TileData>();
         private bool _isDirty;
@@ -38,6 +40,28 @@ namespace IsoTilemap
         private BuildingGroupBuilder _buildingGroupBuilder;
 
         public ITileEdgeBinderReadOnly EdgeBinder => _edgeBinder;
+        public ITileFloorFaceBinderReadOnly FloorFaceBinder => _floorFaceBinder;
+
+        public bool CellHasWalkableFloor(int x, int cellY, int z)
+        {
+            if (_mapCacheHub != null)
+                return _mapCacheHub.Topology.CellHasFloor(x, cellY, z);
+
+            return _floorFaceBinder.TryGetTile(
+                FloorFaceKey.ForWalkableCell(new Vector3Int(x, cellY, z)),
+                out var face) &&
+                TileCollisionFlagsUtil.Has(face.identity.collisionFlags, TileCollisionFlags.ProvidesLogicalFloor);
+        }
+
+        public bool TryGetFloorFaceForWalkableCell(int x, int cellY, int z, out TileData face)
+        {
+            if (_mapCacheHub != null)
+                return _mapCacheHub.Topology.TryGetFloorFaceForWalkableCell(x, cellY, z, out face);
+
+            return _floorFaceBinder.TryGetTile(
+                FloorFaceKey.ForWalkableCell(new Vector3Int(x, cellY, z)),
+                out face);
+        }
 
         public void SetMapCacheHub(TileMapCacheHub hub) => _mapCacheHub = hub;
 
@@ -62,6 +86,7 @@ namespace IsoTilemap
                 buffer.AddRange(list);
 
             _edgeBinder.AppendIncidentEdges(cellPos, buffer);
+            _floorFaceBinder.AppendIncidentFaces(cellPos, buffer);
         }
 
         private void NotifyCell(Vector3Int cell)
@@ -86,6 +111,9 @@ namespace IsoTilemap
                     foreach (var edgeTile in _edgeBinder.EnumerateTiles())
                         _cachedList.Add(edgeTile);
 
+                    foreach (var faceTile in _floorFaceBinder.EnumerateTiles())
+                        _cachedList.Add(faceTile);
+
                     _isDirty = false;
                 }
 
@@ -107,6 +135,13 @@ namespace IsoTilemap
                 var key = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
                 changedCells.Add(key.Anchor);
                 changedCells.Add(key.NeighborCell());
+            }
+            else if ((TileView.TileType)tileData.identity.tileType == TileView.TileType.Floor)
+            {
+                SetFloorFaceTile(tileData);
+                var key = FloorFaceKey.FromFloorTileIdentity(tileData.identity);
+                changedCells.Add(key.CellBelow);
+                changedCells.Add(key.CellAbove);
             }
             else
             {
@@ -132,6 +167,17 @@ namespace IsoTilemap
                     var key = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
                     changedCells.Add(key.Anchor);
                     changedCells.Add(key.NeighborCell());
+                }
+            }
+            else if ((TileView.TileType)tileData.identity.tileType == TileView.TileType.Floor)
+            {
+                if (_floorFaceBinder.TryRemove(tileData.tileDefId, out var removedTile))
+                {
+                    removed = true;
+                    tileData = removedTile;
+                    var key = FloorFaceKey.FromFloorTileIdentity(tileData.identity);
+                    changedCells.Add(key.CellBelow);
+                    changedCells.Add(key.CellAbove);
                 }
             }
             else
@@ -215,6 +261,13 @@ namespace IsoTilemap
 
             for (int i = 0; i < _edgeVisitBuffer.Count; i++)
                 visit(_edgeVisitBuffer[i]);
+
+            _faceVisitBuffer.Clear();
+            foreach (var faceTile in _floorFaceBinder.EnumerateTiles())
+                _faceVisitBuffer.Add(faceTile);
+
+            for (int i = 0; i < _faceVisitBuffer.Count; i++)
+                visit(_faceVisitBuffer[i]);
         }
 
         public void PatchTileIdentity(Guid tileDefId, int buildingId, int roomId)
@@ -232,6 +285,13 @@ namespace IsoTilemap
             if ((TileView.TileType)tile.identity.tileType == TileView.TileType.EdgeWall)
             {
                 if (_edgeBinder.TryReplaceTileData(updated))
+                    IndexTile(updated);
+                return;
+            }
+
+            if ((TileView.TileType)tile.identity.tileType == TileView.TileType.Floor)
+            {
+                if (_floorFaceBinder.TryReplaceTileData(updated))
                     IndexTile(updated);
                 return;
             }
@@ -258,6 +318,14 @@ namespace IsoTilemap
             ForEachRuntimeTile(t => IndexTile(t));
         }
 
+        private static TileData WithIdentity(in TileData tile, in TileIdentity identity) =>
+            new TileData
+            {
+                tileDefId = tile.tileDefId,
+                state = tile.state,
+                identity = identity,
+            };
+
         private static TileIdentity CopyIdentity(in TileIdentity id, int buildingId, int roomId) =>
             new TileIdentity
             {
@@ -266,10 +334,31 @@ namespace IsoTilemap
                 sizeUnit = id.sizeUnit,
                 tileType = id.tileType,
                 edgeFace = id.edgeFace,
+                floorFace = id.floorFace,
                 buildingId = buildingId,
                 roomId = roomId,
                 collisionFlags = id.collisionFlags,
             };
+
+        private void SetFloorFaceTile(TileData tileData)
+        {
+            tileData = WithIdentity(tileData, FloorFaceIdentityUtil.NormalizeFloorIdentity(tileData.identity));
+
+            var key = FloorFaceKey.FromFloorTileIdentity(tileData.identity);
+            if (_floorFaceBinder.TryGetTile(key, out var previous))
+            {
+                OnRuntimeTileRemoved?.Invoke(previous);
+                _tilesById.Remove(previous.tileDefId);
+            }
+
+            _floorFaceBinder.Register(tileData);
+            IndexTile(tileData);
+            _isDirty = true;
+            OnRuntimeTileAdded?.Invoke(tileData);
+
+            NotifyCell(key.CellBelow);
+            NotifyCell(key.CellAbove);
+        }
 
         private void SetEdgeTile(TileData tileData)
         {
@@ -325,6 +414,7 @@ namespace IsoTilemap
         {
             tiles.Clear();
             _edgeBinder.Clear();
+            _floorFaceBinder.Clear();
             _tilesById.Clear();
 
             foreach (var kv in prepared.TilesData)
@@ -333,6 +423,12 @@ namespace IsoTilemap
                 {
                     _edgeBinder.Register(kv);
                     IndexTile(kv);
+                }
+                else if ((TileView.TileType)kv.identity.tileType == TileView.TileType.Floor)
+                {
+                    var faceTile = WithIdentity(kv, FloorFaceIdentityUtil.NormalizeFloorIdentity(kv.identity));
+                    _floorFaceBinder.Register(faceTile);
+                    IndexTile(faceTile);
                 }
                 else
                 {
@@ -354,6 +450,8 @@ namespace IsoTilemap
             _hasLastOcclusionPlayerCell = false;
             if (_buildingGroupBuilder == null)
                 _mapCacheHub?.InvalidateAll();
+            else
+                _buildingGroupBuilder.AssignAll();
         }
 
         /// <summary>청크 sync용. 런타임 <see cref="TileState"/>가 아닌 오클루전 캐시를 반환합니다.</summary>
@@ -532,6 +630,20 @@ namespace IsoTilemap
                     continue;
                 }
 
+                if ((TileView.TileType)tile.identity.tileType == TileView.TileType.Floor)
+                {
+                    var faceTile = WithIdentity(tile, FloorFaceIdentityUtil.NormalizeFloorIdentity(tile.identity));
+
+                    if (!_floorFaceBinder.TryReplaceTileData(faceTile))
+                        continue;
+
+                    IndexTile(faceTile);
+                    var key = FloorFaceKey.FromFloorTileIdentity(faceTile.identity);
+                    changedCells.Add(key.CellBelow);
+                    changedCells.Add(key.CellAbove);
+                    continue;
+                }
+
                 Vector3Int pos = tile.identity.GridPos;
 
                 if (!tiles.TryGetValue(pos, out var existingList))
@@ -559,6 +671,7 @@ namespace IsoTilemap
             a.sizeUnit == b.sizeUnit &&
             a.tileType == b.tileType &&
             a.edgeFace == b.edgeFace &&
+            a.floorFace == b.floorFace &&
             a.buildingId == b.buildingId &&
             a.roomId == b.roomId &&
             a.collisionFlags == b.collisionFlags;

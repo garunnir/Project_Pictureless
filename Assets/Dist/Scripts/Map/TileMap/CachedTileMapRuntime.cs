@@ -39,6 +39,13 @@ namespace IsoTilemap
         public TileMapChunkIndex ChunkIndex => _chunkIndex;
 
         public ITileEdgeBinderReadOnly EdgeBinder => _runtimeData.EdgeBinder;
+        public ITileFloorFaceBinderReadOnly FloorFaceBinder => _runtimeData.FloorFaceBinder;
+
+        public bool CellHasWalkableFloor(int x, int cellY, int z) =>
+            _runtimeData.CellHasWalkableFloor(x, cellY, z);
+
+        public bool TryGetFloorFaceForWalkableCell(int x, int cellY, int z, out TileData face) =>
+            _runtimeData.TryGetFloorFaceForWalkableCell(x, cellY, z, out face);
 
         public void GatherRenderableTiles(Vector3Int cellPos, List<TileData> buffer) =>
             _runtimeData.GatherRenderableTiles(cellPos, buffer);

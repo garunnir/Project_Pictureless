@@ -157,10 +157,10 @@ namespace IsoTilemap
                 if (buildingId <= 0)
                     continue;
 
-                if (tile.identity.GridPos.y != MinCellY)
+                if ((TileView.TileType)tile.identity.tileType != TileView.TileType.Floor)
                     continue;
 
-                if ((TileView.TileType)tile.identity.tileType != TileView.TileType.Floor)
+                if (FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove.y != MinCellY)
                     continue;
 
                 RegisterMinCellYFloorTile(buildingId, tile.tileDefId);

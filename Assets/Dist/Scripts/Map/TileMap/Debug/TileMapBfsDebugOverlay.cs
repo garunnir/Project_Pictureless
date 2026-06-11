@@ -160,15 +160,12 @@ namespace IsoTilemap
 
             var outdoor = new HashSet<Vector3Int>();
             var indoor = new HashSet<Vector3Int>();
-            foreach (var (x, z, b) in hub.Topology.EnumerateOccupiedCells())
+            foreach (var (x, floorCellY, z) in hub.Topology.Index.EnumerateWalkableFloorCells())
             {
-                if (b != cellY)
+                if (floorCellY != cellY)
                     continue;
 
-                if (!hub.TryGetCellTiles(x, z, cellY, out var list) || !FloorMapIndex.CellHasFloor(list))
-                    continue;
-
-                var cell = new Vector3Int(x, cellY, z);
+                var cell = new Vector3Int(x, floorCellY, z);
                 if (hub.IsOutdoorEvaluation(cellY, x, z))
                     outdoor.Add(cell);
                 else
@@ -280,6 +277,17 @@ namespace IsoTilemap
                     continue;
 
                 result.Add(edgeTile);
+            }
+
+            foreach (TileData faceTile in hub.Topology.Index.EnumerateFaceTiles())
+            {
+                if ((TileView.TileType)faceTile.identity.tileType != TileView.TileType.Floor)
+                    continue;
+
+                if (!seen.Add(faceTile.tileDefId))
+                    continue;
+
+                result.Add(faceTile);
             }
 
             return result;

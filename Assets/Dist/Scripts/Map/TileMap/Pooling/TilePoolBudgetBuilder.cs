@@ -17,6 +17,7 @@ namespace IsoTilemap
 
             AccumulateTiles(dto.tiles, counts);
             AccumulateWallEdges(dto.wallEdges, counts);
+            AccumulateFloorFaces(dto.floorFaces, counts);
 
             int totalTiles = 0;
             foreach (var kv in counts)
@@ -71,6 +72,22 @@ namespace IsoTilemap
 
                 counts.TryGetValue(tile.prefabId, out int n);
                 counts[tile.prefabId] = n + 1;
+            }
+        }
+
+        private static void AccumulateFloorFaces(List<FloorFaceSaveData> faces, Dictionary<string, int> counts)
+        {
+            if (faces == null)
+                return;
+
+            for (int i = 0; i < faces.Count; i++)
+            {
+                FloorFaceSaveData face = faces[i];
+                if (face == null || string.IsNullOrEmpty(face.prefabId))
+                    continue;
+
+                counts.TryGetValue(face.prefabId, out int n);
+                counts[face.prefabId] = n + 1;
             }
         }
 
@@ -136,6 +153,20 @@ namespace IsoTilemap
                         continue;
 
                     chunks.Add(TileChunkCoord.FromCell(new Vector3Int(edge.x, edge.y, edge.z), chunkSize));
+                }
+            }
+
+            if (dto.floorFaces != null)
+            {
+                for (int i = 0; i < dto.floorFaces.Count; i++)
+                {
+                    FloorFaceSaveData face = dto.floorFaces[i];
+                    if (face == null)
+                        continue;
+
+                    var below = new Vector3Int(face.x, face.y, face.z);
+                    chunks.Add(TileChunkCoord.FromCell(below, chunkSize));
+                    chunks.Add(TileChunkCoord.FromCell(below + Vector3Int.up, chunkSize));
                 }
             }
 

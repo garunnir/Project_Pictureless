@@ -1,5 +1,5 @@
 // ============================================================
-// FloorMapIndex — 셀 Y별 타일·바닥·벽·엣지 조회 스냅샷
+// FloorMapIndex — 셀 Y별 타일·바닥 face·벽·엣지 조회 스냅샷
 // ============================================================
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,10 +14,11 @@ namespace IsoTilemap
         };
 
         /// <summary>
-        /// 앵커 셀 → 타일 리스트(런타임에서도 동일 List 인스턴스를 유지).
+        /// 앵커 셀 → 타일 리스트(런타임에서도 동일 List 인스턴스를 유지). Floor는 포함하지 않습니다.
         /// </summary>
         readonly Dictionary<Vector3Int, List<TileData>> _tiles;
         readonly IReadOnlyDictionary<WallEdgeKey, TileData> _edges;
+        readonly IReadOnlyDictionary<FloorFaceKey, TileData> _faces;
 
         /// <summary>
         /// 점유 셀 → (원본 List, 인덱스)들의 목록.
@@ -47,44 +48,32 @@ namespace IsoTilemap
 
         public FloorMapIndex(
             Dictionary<Vector3Int, List<TileData>> tiles,
-            IReadOnlyDictionary<WallEdgeKey, TileData> edges)
+            IReadOnlyDictionary<WallEdgeKey, TileData> edges,
+            IReadOnlyDictionary<FloorFaceKey, TileData> faces)
         {
             _tiles = tiles;
             _edges = edges ?? new Dictionary<WallEdgeKey, TileData>();
+            _faces = faces ?? new Dictionary<FloorFaceKey, TileData>();
             RebuildOccupancy();
         }
 
         public static FloorMapIndex FromModel(TileMapModel model) =>
-            new FloorMapIndex(model.tiles, model.EdgeBinder.EdgeIndex);
+            new FloorMapIndex(model.tiles, model.EdgeBinder.EdgeIndex, model.FloorFaceBinder.FaceIndex);
 
         public bool HasAnyTile(int x, int z, int y) => _anyTileAt.Contains((x, z, y));
 
         public IEnumerable<(int x, int z, int y)> EnumerateOccupiedCells() => _anyTileAt;
 
         /// <summary>런타임 topology 변경 후 (x,z,y) 점유 집합을 <see cref="_tiles"/>와 맞춥니다.</summary>
-        public void SyncOccupancyForCell(int x, int z, int y)
-        {
-            // 멀티 점유(sizeUnit) 타일이 있을 수 있어, 단일 셀 증분 sync가 안전하지 않습니다.
-            // topology 변경 빈도가 낮다는 전제 하에 전체 rebuild로 정합성을 우선합니다.
-            RebuildOccupancy();
-        }
+        public void SyncOccupancyForCell(int x, int z, int y) => RebuildOccupancy();
 
-        public void SyncOccupancyFromChangedCells(IEnumerable<Vector3Int> changedCells)
-        {
-            if (changedCells == null)
-                return;
+        public void SyncOccupancyFromChangedCells(IEnumerable<Vector3Int> changedCells) => RebuildOccupancy();
 
-            // 변경 셀 기준으로 부분 rebuild가 가능하지만, sizeUnit 확장으로 인해 영향을 받는 셀이 늘 수 있습니다.
-            RebuildOccupancy();
-        }
-
-        public void RebuildOccupancy() 
+        public void RebuildOccupancy()
         {
             _anyTileAt.Clear();
             _occupiedEntries.Clear();
 
-            // anchor 셀에 있는 tile들을 sizeUnit(x,y,z)만큼 확장해서 점유 셀 엔트리를 만듭니다.
-            // TryGetCellTiles가 점유 셀 기준으로 동작하도록 하여, 멀티 점유에서 lookup 누락이 나지 않게 합니다.
             foreach (var kv in _tiles)
             {
                 var list = kv.Value;
@@ -94,6 +83,9 @@ namespace IsoTilemap
                 for (int i = 0; i < list.Count; i++)
                 {
                     TileData tile = list[i];
+                    if ((TileView.TileType)tile.identity.tileType == TileView.TileType.Floor)
+                        continue;
+
                     int sx = tile.identity.sizeUnit.x;
                     int sy = tile.identity.sizeUnit.y;
                     int sz = tile.identity.sizeUnit.z;
@@ -129,8 +121,6 @@ namespace IsoTilemap
                     _anyTileAt.Add((kv.Key.x, kv.Key.z, kv.Key.y));
             }
 
-            // edge는 TryGetEdgeBetween으로만 막히므로, 점유 셀 lookup에는 포함하지 않지만
-            // EnumerateOccupiedCells/HasAnyTile에는 sizeUnit.y만큼 양 끝 Y 슬라이스를 포함합니다.
             foreach (var kv in _edges)
             {
                 var edgeKey = kv.Key;
@@ -144,6 +134,22 @@ namespace IsoTilemap
                     var cellB = edgeKey.CellB + yOffset;
                     _anyTileAt.Add((cellA.x, cellA.z, cellA.y));
                     _anyTileAt.Add((cellB.x, cellB.z, cellB.y));
+                }
+            }
+
+            foreach (var kv in _faces)
+            {
+                var faceKey = kv.Key;
+                int sy = kv.Value.identity.sizeUnit.y;
+                if (sy < 1) sy = 1;
+
+                for (int dy = 0; dy < sy; dy++)
+                {
+                    var yOffset = new Vector3Int(0, dy, 0);
+                    var below = faceKey.CellBelow + yOffset;
+                    var above = faceKey.CellAbove + yOffset;
+                    _anyTileAt.Add((below.x, below.z, below.y));
+                    _anyTileAt.Add((above.x, above.z, above.y));
                 }
             }
         }
@@ -177,12 +183,64 @@ namespace IsoTilemap
                    _edges.TryGetValue(edgeKey, out edgeWall);
         }
 
+        public bool TryGetHorizontalFaceBetween(Vector3Int cellBelow, Vector3Int cellAbove, out TileData face)
+        {
+            face = default;
+            return FloorFaceKey.TryBetween(cellBelow, cellAbove, out var faceKey) &&
+                   _faces.TryGetValue(faceKey, out face);
+        }
+
+        public bool TryGetFloorFaceForWalkableCell(int x, int cellY, int z, out TileData face) =>
+            TryGetHorizontalFaceBetween(
+                new Vector3Int(x, cellY - 1, z),
+                new Vector3Int(x, cellY, z),
+                out face);
+
+        public bool CellHasFloor(int x, int cellY, int z)
+        {
+            if (!TryGetFloorFaceForWalkableCell(x, cellY, z, out var face))
+                return false;
+
+            return TileCollisionFlagsUtil.Has(
+                face.identity.collisionFlags,
+                TileCollisionFlags.ProvidesLogicalFloor);
+        }
+
         public IEnumerable<TileData> EnumerateEdgeTiles()
         {
             foreach (var kv in _edges)
                 yield return kv.Value;
         }
 
+        public IEnumerable<TileData> EnumerateFaceTiles()
+        {
+            foreach (var kv in _faces)
+                yield return kv.Value;
+        }
+
+        /// <summary>등록된 Floor face의 walkable 셀(CellAbove)을 순회합니다.</summary>
+        public IEnumerable<(int x, int cellY, int z)> EnumerateWalkableFloorCells()
+        {
+            foreach (var kv in _faces)
+            {
+                if (!TileCollisionFlagsUtil.Has(
+                        kv.Value.identity.collisionFlags,
+                        TileCollisionFlags.ProvidesLogicalFloor))
+                    continue;
+
+                var key = kv.Key;
+                int sy = kv.Value.identity.sizeUnit.y;
+                if (sy < 1) sy = 1;
+
+                for (int dy = 0; dy < sy; dy++)
+                {
+                    var above = key.CellAbove + new Vector3Int(0, dy, 0);
+                    yield return (above.x, above.y, above.z);
+                }
+            }
+        }
+
+        /// <summary>점유 셀 타일 리스트에 Floor collision이 있는지(레거시 호환).</summary>
         public static bool CellHasFloor(IReadOnlyList<TileData> list) =>
             TileCollisionFlagsUtil.CellProvidesLogicalFloor(list);
 

@@ -9,7 +9,7 @@ namespace IsoTilemap
     {
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
-            int tileCellY = tile.identity.GridPos.y;
+            int tileCellY = TileVisibilityCellUtil.GetCellY(tile);
             if (tileCellY > ctx.PlayerFloorCellY && tile.identity.buildingId == ctx.PlayerBuildingId)
                 return TileVisibilityVerdict.Hide;
 
@@ -21,7 +21,7 @@ namespace IsoTilemap
     {
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
-            int tileCellY = tile.identity.GridPos.y;
+            int tileCellY = TileVisibilityCellUtil.GetCellY(tile);
             if (tileCellY < ctx.PlayerFloorCellY)
                 return TileVisibilityVerdict.Continue;
 
@@ -35,7 +35,7 @@ namespace IsoTilemap
     {
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
-            int tileCellY = tile.identity.GridPos.y;
+            int tileCellY = TileVisibilityCellUtil.GetCellY(tile);
             if (tileCellY >= ctx.PlayerFloorCellY)
                 return TileVisibilityVerdict.Continue;
 
@@ -44,6 +44,9 @@ namespace IsoTilemap
                 return TileVisibilityVerdict.Show;
 
             var gridPos = tile.identity.GridPos;
+            if (type == TileView.TileType.Floor)
+                gridPos = FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove;
+
             if (ctx.VisibleBelowCells.Contains((gridPos.x, gridPos.z, tileCellY)))
                 return TileVisibilityVerdict.Show;
 
@@ -55,13 +58,15 @@ namespace IsoTilemap
     {
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
+            if (!ctx.IsPlayerOutdoor)
+                return TileVisibilityVerdict.Continue;
+
             int buildingId = tile.identity.buildingId;
             if (buildingId <= 0 || !ctx.PlayerBlockingBuildingIds.Contains(buildingId))
                 return TileVisibilityVerdict.Continue;
 
-            int tileCellY = tile.identity.GridPos.y;
-            if (tileCellY == ctx.MinCellY &&
-                (TileView.TileType)tile.identity.tileType == TileView.TileType.Floor)
+            if ((TileView.TileType)tile.identity.tileType == TileView.TileType.Floor &&
+                FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove.y == ctx.MinCellY)
                 return TileVisibilityVerdict.Continue;
 
             return TileVisibilityVerdict.Hide;

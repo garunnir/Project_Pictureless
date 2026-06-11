@@ -18,6 +18,13 @@ namespace IsoTilemap
             foreach (var td in tileMapData.tiles)
             {
                 byte tileType = NormalizeTileType(td.tileType);
+                if (tileType == (byte)TileView.TileType.Floor)
+                {
+                    if (!TryAddFloorFaceFromLegacyTile(td, prepareData))
+                        continue;
+                    continue;
+                }
+
                 byte edgeFace = TileIdentity.EdgeFaceNone;
                 if (tileType == (byte)TileView.TileType.EdgeWall)
                     edgeFace = (byte)Mathf.Clamp((int)td.face, 0, 1);
@@ -36,6 +43,7 @@ namespace IsoTilemap
                         GridPos = new Vector3Int(td.x, td.y, td.z),
                         sizeUnit = sizeUnit,
                         edgeFace = edgeFace,
+                        floorFace = TileIdentity.FloorFaceNone,
                         collisionFlags = collisionFlags,
                     }
                 });
@@ -64,6 +72,36 @@ namespace IsoTilemap
                             sizeUnit = sizeUnit,
                             tileType = (byte)TileView.TileType.EdgeWall,
                             edgeFace = faceClamped,
+                            floorFace = TileIdentity.FloorFaceNone,
+                            collisionFlags = collisionFlags,
+                        }
+                    });
+                }
+            }
+
+            if (tileMapData.floorFaces != null)
+            {
+                foreach (var ff in tileMapData.floorFaces)
+                {
+                    if (!TryBakeFromDefinition(
+                            ff.prefabId,
+                            (byte)TileView.TileType.Floor,
+                            out var sizeUnit,
+                            out byte collisionFlags))
+                        continue;
+
+                    prepareData.Add(new TileData
+                    {
+                        tileDefId = Guid.NewGuid(),
+                        state = new TileState(),
+                        identity = new TileIdentity
+                        {
+                            PrefabId = ff.prefabId,
+                            GridPos = new Vector3Int(ff.x, ff.y, ff.z),
+                            sizeUnit = sizeUnit,
+                            tileType = (byte)TileView.TileType.Floor,
+                            edgeFace = TileIdentity.EdgeFaceNone,
+                            floorFace = (byte)FloorFace.PosY,
                             collisionFlags = collisionFlags,
                         }
                     });
@@ -91,6 +129,17 @@ namespace IsoTilemap
                         prefabId = ti.identity.PrefabId,
                     });
                 }
+                else if (ti.identity.tileType == (byte)TileView.TileType.Floor)
+                {
+                    tile.floorFaces.Add(new FloorFaceSaveData
+                    {
+                        x = ti.identity.GridPos.x,
+                        y = ti.identity.GridPos.y,
+                        z = ti.identity.GridPos.z,
+                        face = ti.identity.floorFace,
+                        prefabId = ti.identity.PrefabId,
+                    });
+                }
                 else
                 {
                     tile.tiles.Add(new TileSaveData
@@ -108,6 +157,35 @@ namespace IsoTilemap
             }
 
             return tile;
+        }
+
+        static bool TryAddFloorFaceFromLegacyTile(TileSaveData td, List<TileData> prepareData)
+        {
+            if (!TryBakeFromDefinition(
+                    td.prefabId,
+                    (byte)TileView.TileType.Floor,
+                    out var sizeUnit,
+                    out byte collisionFlags))
+                return false;
+
+            Vector3Int walkable = new Vector3Int(td.x, td.y, td.z);
+            var key = FloorFaceKey.ForWalkableCell(walkable);
+            prepareData.Add(new TileData
+            {
+                tileDefId = Guid.NewGuid(),
+                state = new TileState(),
+                identity = new TileIdentity
+                {
+                    PrefabId = td.prefabId,
+                    GridPos = key.Anchor,
+                    sizeUnit = sizeUnit,
+                    tileType = (byte)TileView.TileType.Floor,
+                    edgeFace = TileIdentity.EdgeFaceNone,
+                    floorFace = (byte)FloorFace.PosY,
+                    collisionFlags = collisionFlags,
+                }
+            });
+            return true;
         }
 
         static byte NormalizeTileType(byte raw)

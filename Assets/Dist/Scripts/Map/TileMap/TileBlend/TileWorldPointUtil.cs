@@ -7,11 +7,14 @@ namespace IsoTilemap
 {
     public static class TileWorldPointUtil
     {
-        /// <summary>점유 셀 중심(EdgeWall은 변 중점).</summary>
+        /// <summary>점유 셀 중심(EdgeWall·Floor face는 면 중점).</summary>
         public static Vector3 GetOcclusionWorldPoint(in TileIdentity identity, Vector3Int occupiedCell, float cellSize)
         {
             var type = (TileView.TileType)identity.tileType;
             if (type == TileView.TileType.EdgeWall && identity.edgeFace != TileIdentity.EdgeFaceNone)
+                return GetRepresentativeWorldPoint(identity, cellSize);
+
+            if (type == TileView.TileType.Floor && FloorFaceKey.IsAnchorFormat(identity.floorFace))
                 return GetRepresentativeWorldPoint(identity, cellSize);
 
             return TileHelper.ConvertGridToWorldPos(occupiedCell, cellSize);
@@ -25,6 +28,13 @@ namespace IsoTilemap
             {
                 WallEdgeKey key = WallEdgeKey.FromEdgeTileIdentity(identity);
                 WallEdgeKey.GetWorldPose(key, cellSize, out Vector3 pose, out _);
+                return pose;
+            }
+
+            if (type == TileView.TileType.Floor && FloorFaceKey.IsAnchorFormat(identity.floorFace))
+            {
+                FloorFaceKey key = FloorFaceKey.FromFloorTileIdentity(identity);
+                FloorFaceKey.GetWorldPose(key, cellSize, out Vector3 pose, out _);
                 return pose;
             }
 

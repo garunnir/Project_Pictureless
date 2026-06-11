@@ -6,6 +6,7 @@ namespace IsoTilemap
 {
     /// <summary>
     /// 청크 단위 타일 스트리밍 뷰. 모델은 전체 유지, GameObject는 desired 청크만 스폰.
+    /// 층 가시성은 despawn하지 않고 <see cref="TileViewPresentationApplier"/>가 처리합니다.
     /// </summary>
     public sealed class TileMapStreamingVisualizer : IMapViewBuilder, ITileViewRegistry, IDisposable
     {
@@ -20,17 +21,10 @@ namespace IsoTilemap
 
         private readonly List<TileData> _gatherBuffer = new();
         private readonly List<Vector2Int> _chunkIteration = new();
-        private readonly HashSet<Guid> _orphanCheckIds = new();
         private readonly List<Guid> _pruneGuids = new();
-        private readonly HashSet<int> _buildingsToDespawnScratch = new();
-        private readonly BuildingBlockingController _buildingBlockingController = new();
 
         private TileMapChunkIndex _chunkIndex;
-        private BuildingGroupRegistry _buildingRegistry;
         private IMapModelReadOnly _boundRuntime;
-        private PlayerFloorVisibilityPolicy _floorPolicy;
-        private FloorVisibilityContext _floorContext;
-        private bool _hasFloorContext;
         private TileViewPresentationApplier _presentationApplier;
 
         public TileMapStreamingVisualizer(
@@ -52,34 +46,19 @@ namespace IsoTilemap
 
         public IReadOnlyCollection<Vector2Int> LoadedChunks => _loadedChunks;
 
-        public void SetFloorVisibilityPolicy(PlayerFloorVisibilityPolicy policy) => _floorPolicy = policy;
-
         public void SetPresentationApplier(TileViewPresentationApplier applier) => _presentationApplier = applier;
-
-        public void SetBuildingRegistry(BuildingGroupRegistry buildingRegistry) =>
-            _buildingRegistry = buildingRegistry;
 
         public bool TryGetView(Guid tileId, out TileView view) => _tileViews.TryGetValue(tileId, out view);
 
-        public void SyncFloorVisibility(in FloorVisibilityContext ctx)
+        public void CollectSpawnedTileIds(List<Guid> into)
         {
-            _floorContext = ctx;
-            _hasFloorContext = _floorPolicy != null;
-
-            ApplyBlockingBuildingDelta(in ctx);
-
-            if (_chunkIndex == null || _loadedChunks.Count == 0)
-                return;
-
-            _chunkIteration.Clear();
-            _chunkIteration.AddRange(_loadedChunks);
-            for (int c = 0; c < _chunkIteration.Count; c++)
-            {
-                IReadOnlyList<Vector3Int> cells = _chunkIndex.GetCellsInChunk(_chunkIteration[c]);
-                for (int i = 0; i < cells.Count; i++)
-                    RefreshCellAtLoadedChunk(cells[i]);
-            }
+            into.Clear();
+            foreach (var kv in _tileViews)
+                into.Add(kv.Key);
         }
+
+        public void SyncFloorVisibility(in FloorVisibilityContext ctx) =>
+            _presentationApplier?.SyncFloorVisibility(in ctx, _boundRuntime);
 
         public void Build(IMapModelReadOnly model)
         {
@@ -154,16 +133,9 @@ namespace IsoTilemap
             if (_boundRuntime == null || !IsCellInLoadedChunk(cellPos))
                 return;
 
-            GatherAndFilter(cellPos, _gatherBuffer);
-            PruneOrphanViewsAtCell(cellPos, _gatherBuffer);
+            _boundRuntime.GatherRenderableTiles(cellPos, _gatherBuffer);
+            PruneDeletedTilesAtCell(cellPos, _gatherBuffer);
             RenderTiles(_gatherBuffer);
-        }
-
-        private void GatherAndFilter(Vector3Int cellPos, List<TileData> buffer)
-        {
-            _boundRuntime.GatherRenderableTiles(cellPos, buffer);
-            if (_hasFloorContext && _floorPolicy != null)
-                _floorPolicy.FilterTiles(buffer, _floorContext);
         }
 
         public void Dispose()
@@ -206,14 +178,7 @@ namespace IsoTilemap
                 if (!IsCellInLoadedChunk(cellPos))
                     continue;
 
-                GatherAndFilter(cellPos, _gatherBuffer);
-                if (_gatherBuffer.Count > 0)
-                {
-                    PruneOrphanViewsAtCell(cellPos, _gatherBuffer);
-                    RenderTiles(_gatherBuffer);
-                }
-                else
-                    PruneOrphanViewsAtCell(cellPos, _gatherBuffer);
+                RefreshCellAtLoadedChunk(cellPos);
             }
         }
 
@@ -228,7 +193,7 @@ namespace IsoTilemap
                 if (_boundRuntime == null)
                     continue;
 
-                GatherAndFilter(cells[i], _gatherBuffer);
+                _boundRuntime.GatherRenderableTiles(cells[i], _gatherBuffer);
                 for (int t = 0; t < _gatherBuffer.Count; t++)
                     AcquireTileInChunk(_gatherBuffer[t], chunk);
             }
@@ -310,128 +275,31 @@ namespace IsoTilemap
                 else if (IsTileInLoadedChunk(tileData))
                 {
                     AcquireTileInChunk(tileData, TileChunkCoord.FromCell(GetRepresentativeCell(tileData), _chunkSize));
-                    _presentationApplier?.SyncPresentationForTile(tileData.tileDefId);
                 }
             }
         }
 
-        private void PruneOrphanViewsAtCell(Vector3Int cell, List<TileData> currentTiles)
+        /// <summary>모델에서 삭제된 타일만 제거합니다. 가시성 숨김과 무관합니다.</summary>
+        private void PruneDeletedTilesAtCell(Vector3Int cell, List<TileData> gatheredAtCell)
         {
-            _orphanCheckIds.Clear();
-            for (int i = 0; i < currentTiles.Count; i++)
-                _orphanCheckIds.Add(currentTiles[i].tileDefId);
+            if (_boundRuntime == null)
+                return;
 
             _pruneGuids.Clear();
-            _buildingsToDespawnScratch.Clear();
             foreach (var kv in _tileViews)
             {
-                if (_orphanCheckIds.Contains(kv.Key))
-                    continue;
-
                 if (!ViewTouchesCell(kv.Value, cell))
                     continue;
 
-                if (TryGetBlockingBuildingIdForView(kv.Key, out int buildingId))
-                {
-                    _buildingsToDespawnScratch.Add(buildingId);
+                if (_boundRuntime.TryGetTileById(kv.Key, out _))
                     continue;
-                }
 
                 _pruneGuids.Add(kv.Key);
             }
 
-            foreach (int buildingId in _buildingsToDespawnScratch)
-                DespawnAllLoadedViewsForBuilding(buildingId, in _floorContext);
-
             for (int i = 0; i < _pruneGuids.Count; i++)
                 DespawnViewCompletely(_pruneGuids[i]);
         }
-
-        void ApplyBlockingBuildingDelta(in FloorVisibilityContext ctx)
-        {
-            HashSet<int> newBlocking = ctx.PlayerBlockingBuildingIds;
-            _buildingBlockingController.ApplyDelta(
-                newBlocking,
-                OnBlockingAdded,
-                OnBlockingRemoved,
-                in ctx);
-
-            if (_presentationApplier != null &&
-                (_buildingBlockingController.LastAdded.Count > 0 || _buildingBlockingController.LastRemoved.Count > 0))
-            {
-                var delta = new BuildingSightLinePresentationDelta(
-                    _buildingBlockingController.LastAdded,
-                    _buildingBlockingController.LastRemoved);
-                _presentationApplier.ApplySightLineBlockingDelta(in delta);
-            }
-        }
-
-        void OnBlockingAdded(int buildingId, FloorVisibilityContext ctx) =>
-            DespawnAllLoadedViewsForBuilding(buildingId, in ctx);
-
-        void OnBlockingRemoved(int buildingId, FloorVisibilityContext ctx) =>
-            RespawnVisibleBuildingTiles(buildingId, in ctx);
-
-        void DespawnAllLoadedViewsForBuilding(int buildingId, in FloorVisibilityContext ctx)
-        {
-            if (_buildingRegistry == null || buildingId <= 0)
-                return;
-
-            foreach (Guid tileId in _buildingRegistry.GetTilesForBuilding(buildingId))
-            {
-                if (!_tileViews.ContainsKey(tileId))
-                    continue;
-
-                if (_boundRuntime != null &&
-                    _boundRuntime.TryGetTileById(tileId, out TileData tile) &&
-                    IsMinCellYFloorTile(tile, ctx.MinCellY))
-                    continue;
-
-                DespawnViewCompletely(tileId);
-            }
-        }
-
-        void RespawnVisibleBuildingTiles(int buildingId, in FloorVisibilityContext ctx)
-        {
-            if (_buildingRegistry == null || buildingId <= 0 || _boundRuntime == null || _floorPolicy == null)
-                return;
-
-            foreach (Guid tileId in _buildingRegistry.GetTilesForBuilding(buildingId))
-            {
-                if (!_boundRuntime.TryGetTileById(tileId, out TileData tile))
-                    continue;
-
-                if (!_floorPolicy.IsTileVisible(tile, in ctx))
-                    continue;
-
-                if (!IsTileInLoadedChunk(tile))
-                    continue;
-
-                Vector2Int chunk = _chunkIndex != null &&
-                                   _chunkIndex.TryGetChunkForTile(tileId, out Vector2Int c)
-                    ? c
-                    : TileChunkCoord.FromCell(GetRepresentativeCell(tile), _chunkSize);
-
-                AcquireTileInChunk(tile, chunk);
-            }
-        }
-
-        bool TryGetBlockingBuildingIdForView(Guid tileId, out int buildingId)
-        {
-            buildingId = 0;
-            if (!_buildingBlockingController.HasAnyBlocked)
-                return false;
-
-            if (_boundRuntime == null || !_boundRuntime.TryGetTileById(tileId, out TileData tile))
-                return false;
-
-            buildingId = tile.identity.buildingId;
-            return buildingId > 0 && _buildingBlockingController.IsBlocked(buildingId);
-        }
-
-        static bool IsMinCellYFloorTile(TileData tile, int minCellY) =>
-            tile.identity.GridPos.y == minCellY &&
-            (TileView.TileType)tile.identity.tileType == TileView.TileType.Floor;
 
         private static bool ViewTouchesCell(TileView view, Vector3Int cell)
         {
@@ -442,6 +310,12 @@ namespace IsoTilemap
             {
                 var key = new WallEdgeKey(view.gridPos, (WallFace)view.wallEdgeFace);
                 return key.Anchor == cell || key.NeighborCell() == cell;
+            }
+
+            if (view.tileType == TileView.TileType.Floor)
+            {
+                var key = FloorFaceKey.ForWalkableCell(view.gridPos);
+                return key.CellBelow == cell || key.CellAbove == cell;
             }
 
             return view.gridPos == cell;
@@ -462,6 +336,19 @@ namespace IsoTilemap
 
         private bool IsTileInLoadedChunk(TileData tileData)
         {
+            var type = (TileView.TileType)tileData.identity.tileType;
+            if (type == TileView.TileType.Floor)
+            {
+                FloorFaceKey key = FloorFaceKey.FromFloorTileIdentity(tileData.identity);
+                return IsCellInLoadedChunk(key.CellBelow) || IsCellInLoadedChunk(key.CellAbove);
+            }
+
+            if (type == TileView.TileType.EdgeWall)
+            {
+                WallEdgeKey key = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
+                return IsCellInLoadedChunk(key.Anchor) || IsCellInLoadedChunk(key.NeighborCell());
+            }
+
             if (_chunkIndex != null &&
                 _chunkIndex.TryGetChunkForTile(tileData.tileDefId, out Vector2Int chunk))
                 return _loadedChunks.Contains(chunk);
@@ -473,6 +360,9 @@ namespace IsoTilemap
         {
             if ((TileView.TileType)tileData.identity.tileType == TileView.TileType.EdgeWall)
                 return WallEdgeKey.FromEdgeTileIdentity(tileData.identity).Anchor;
+
+            if ((TileView.TileType)tileData.identity.tileType == TileView.TileType.Floor)
+                return FloorFaceKey.FromFloorTileIdentity(tileData.identity).CellBelow;
 
             return tileData.identity.GridPos;
         }
@@ -487,7 +377,6 @@ namespace IsoTilemap
 
             _tileViews.Clear();
             _tileChunkRefs.Clear();
-            _buildingBlockingController.Reset();
         }
     }
 }

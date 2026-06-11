@@ -36,26 +36,34 @@ namespace IsoTilemap
 
                 byte t = (byte)tileType;
                 byte ef = TileIdentity.EdgeFaceNone;
+                byte ff = TileIdentity.FloorFaceNone;
                 Vector3Int grid = v.gridPos;
 
                 if (tileType == TileView.TileType.EdgeWall)
-                {
                     ef = (byte)Mathf.Clamp(v.wallEdgeFace, 0, 1);
+
+                var identity = new TileIdentity
+                {
+                    PrefabId = v.prefabId ?? string.Empty,
+                    GridPos = grid,
+                    sizeUnit = size,
+                    tileType = t,
+                    edgeFace = ef,
+                    floorFace = ff,
+                    collisionFlags = collisionFlags,
+                };
+
+                if (tileType == TileView.TileType.Floor)
+                {
+                    identity = FloorFaceIdentityUtil.FromWalkableCellPlacement(identity);
+                    ff = identity.floorFace;
                 }
 
                 list.Add(new TileData
                 {
                     tileDefId = Guid.NewGuid(),
                     state = default,
-                    identity = new TileIdentity
-                    {
-                        PrefabId = v.prefabId ?? string.Empty,
-                        GridPos = grid,
-                        sizeUnit = size,
-                        tileType = t,
-                        edgeFace = ef,
-                        collisionFlags = collisionFlags,
-                    }
+                    identity = identity,
                 });
             }
 

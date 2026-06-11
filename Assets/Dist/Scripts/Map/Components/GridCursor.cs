@@ -114,19 +114,26 @@ public class GridCursor : MonoBehaviour
             Mathf.Max(1, def.size.x),
             Mathf.Max(1, def.size.y),
             Mathf.Max(1, def.size.z));
+        var identity = new TileIdentity
+        {
+            PrefabId = def.prefabId,
+            GridPos = _cursorGridPos,
+            sizeUnit = sizeUnit,
+            tileType = placedType,
+            edgeFace = placedType == (byte)TileView.TileType.EdgeWall ? (byte)0 : TileIdentity.EdgeFaceNone,
+            floorFace = placedType == (byte)TileView.TileType.Floor
+                ? (byte)FloorFace.UnsetWalkable
+                : TileIdentity.FloorFaceNone,
+            collisionFlags = TileCollisionProfile.FromDefinitionForTileType(placedType, def),
+        };
+        if (placedType == (byte)TileView.TileType.Floor)
+            identity = FloorFaceIdentityUtil.FromWalkableCellPlacement(identity);
+
         var tileData = new TileData
         {
             tileDefId = Guid.NewGuid(),
-            state     = new TileState(),
-            identity  = new TileIdentity
-            {
-                PrefabId  = def.prefabId,
-                GridPos   = _cursorGridPos,
-                sizeUnit  = sizeUnit,
-                tileType  = placedType,
-                edgeFace  = placedType == (byte)TileView.TileType.EdgeWall ? (byte)0 : TileIdentity.EdgeFaceNone,
-                collisionFlags = TileCollisionProfile.FromDefinitionForTileType(placedType, def),
-            }
+            state = new TileState(),
+            identity = identity,
         };
         _controller.AddAndFlush(tileData);
     }

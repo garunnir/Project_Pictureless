@@ -64,6 +64,7 @@ namespace IsoTilemap
         private float _characterOcclusion;
         private bool _isGhosted;
         private bool _sightLineBuildingHidden;
+        private bool _floorVisibilityHidden;
         private bool _currentSelected;
         private bool _baseStateInitialized;
         private bool _selectedInitialized;
@@ -167,8 +168,12 @@ namespace IsoTilemap
 
             tileType = (TileType)tileData.identity.tileType;
             prefabId = tileData.identity.PrefabId;
-            gridPos = tileData.identity.GridPos;
             size = tileData.identity.sizeUnit;
+            if (tileType == TileType.Floor && FloorFaceKey.IsAnchorFormat(tileData.identity.floorFace))
+                gridPos = FloorFaceKey.FromFloorTileIdentity(tileData.identity).CellAbove;
+            else
+                gridPos = tileData.identity.GridPos;
+
             if (tileType == TileType.EdgeWall)
             {
                 byte ef = tileData.identity.edgeFace;
@@ -202,8 +207,41 @@ namespace IsoTilemap
             ApplySightLineBuildingOverlay();
         }
 
+        /// <summary>층 가시성 정책에 의한 완전 숨김(스트리밍 despawn 없음).</summary>
+        public void SetFloorVisibilityHidden(bool hidden)
+        {
+            if (_floorVisibilityHidden == hidden)
+                return;
+
+            _floorVisibilityHidden = hidden;
+
+            if (hidden)
+            {
+                Renderer renderer = _shadeController?.CachedRenderer;
+                if (renderer != null)
+                    renderer.enabled = false;
+                SetBlockedTraceVisible(false);
+                return;
+            }
+
+            TileBaseVisualState next = ResolveBaseState(_characterOcclusion, _isGhosted);
+            ForceApplyBaseState(next);
+            if (next == TileBaseVisualState.HiddenByCharacter)
+                ApplyCharacterOcclusionDerived();
+            ApplySightLineBuildingOverlay();
+        }
+
         private void RefreshBaseVisualState()
         {
+            if (_floorVisibilityHidden)
+            {
+                Renderer renderer = _shadeController?.CachedRenderer;
+                if (renderer != null)
+                    renderer.enabled = false;
+                SetBlockedTraceVisible(false);
+                return;
+            }
+
             TileBaseVisualState next = ResolveBaseState(_characterOcclusion, _isGhosted);
 
             if (!_baseStateInitialized || _currentBaseState != next)
@@ -223,6 +261,14 @@ namespace IsoTilemap
             {
                 WallEdgeKey key = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
                 WallEdgeKey.GetWorldPose(key, cellSize, out Vector3 pos, out Quaternion rot);
+                transform.SetPositionAndRotation(pos, rot);
+                return;
+            }
+
+            if (type == TileType.Floor && FloorFaceKey.IsAnchorFormat(tileData.identity.floorFace))
+            {
+                FloorFaceKey key = FloorFaceKey.FromFloorTileIdentity(tileData.identity);
+                FloorFaceKey.GetWorldPose(key, cellSize, out Vector3 pos, out Quaternion rot);
                 transform.SetPositionAndRotation(pos, rot);
                 return;
             }
@@ -333,6 +379,7 @@ namespace IsoTilemap
             _characterOcclusion = 0f;
             _isGhosted = false;
             _sightLineBuildingHidden = false;
+            _floorVisibilityHidden = false;
             ForceApplyBaseState(TileBaseVisualState.Visible);
             ForceApplySelectedOverlay(false);
             SetBlockedTraceVisible(false);

@@ -14,6 +14,13 @@ namespace IsoTilemap
         void AppendIncidentEdges(Vector3Int cell, List<TileData> appendTo);
     }
 
+    /// <summary>셀 타일과 분리된 층 사이 Floor face 레지스트리 읽기 전용 뷰.</summary>
+    public interface ITileFloorFaceBinderReadOnly
+    {
+        IReadOnlyDictionary<FloorFaceKey, TileData> FaceIndex { get; }
+        void AppendIncidentFaces(Vector3Int cell, List<TileData> appendTo);
+    }
+
         /// <summary>
         /// 맵 뷰 빌더 담당 초기화,실시간 뷰 구성
         /// </summary>
@@ -48,7 +55,11 @@ namespace IsoTilemap
         event Action<TileData> OnRuntimeTileAdded;
         event Action<TileData> OnRuntimeTileRemoved;
         ITileEdgeBinderReadOnly EdgeBinder { get; }
-        /// <summary>셀에 놓인 타일 + 면 벽 바인더가 연결한 인접 EdgeWall을 합친 목록(렌더 갱신용).</summary>
+        ITileFloorFaceBinderReadOnly FloorFaceBinder { get; }
+        /// <summary>walkable 셀 (x,cellY,z)에 발밑 Floor face가 있는지.</summary>
+        bool CellHasWalkableFloor(int x, int cellY, int z);
+        bool TryGetFloorFaceForWalkableCell(int x, int cellY, int z, out TileData face);
+        /// <summary>셀에 놓인 타일 + 인시던트 EdgeWall·Floor face(렌더 갱신용).</summary>
         void GatherRenderableTiles(Vector3Int cellPos, List<TileData> buffer);
         public IReadOnlyList<TileData> TilesSnapshot { get; }
         public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList);

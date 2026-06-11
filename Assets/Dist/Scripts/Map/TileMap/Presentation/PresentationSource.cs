@@ -7,5 +7,6 @@ namespace IsoTilemap
         ProximitySightLine,
         Ghost,
         BlockingBuildingMinFloor,
+        FloorVisibilityPolicy,
     }
 }

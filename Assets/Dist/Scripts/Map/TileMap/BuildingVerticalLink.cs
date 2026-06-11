@@ -78,6 +78,7 @@ namespace IsoTilemap
                     _scratch.AddRange(baseList);
 
                 map.EdgeBinder.AppendIncidentEdges(new Vector3Int(x, gridY, z), _scratch);
+                map.FloorFaceBinder.AppendIncidentFaces(new Vector3Int(x, gridY, z), _scratch);
             }
 
             public void Dispose()

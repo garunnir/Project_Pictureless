@@ -55,6 +55,15 @@ namespace IsoTilemap
         public bool TryGetEdgeBetween(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall) =>
             _index.TryGetEdgeBetween(cellA, cellB, out edgeWall);
 
+        public bool TryGetHorizontalFaceBetween(Vector3Int cellBelow, Vector3Int cellAbove, out TileData face) =>
+            _index.TryGetHorizontalFaceBetween(cellBelow, cellAbove, out face);
+
+        public bool TryGetFloorFaceForWalkableCell(int x, int cellY, int z, out TileData face) =>
+            _index.TryGetFloorFaceForWalkableCell(x, cellY, z, out face);
+
+        public bool CellHasFloor(int x, int cellY, int z) =>
+            _index.CellHasFloor(x, cellY, z);
+
         public Vector3Int ResolveFloorBfsStart(int cellY, int startX, int startZ) =>
             _index.ResolveFloorBfsStart(cellY, startX, startZ);
 
@@ -83,20 +92,12 @@ namespace IsoTilemap
             buildingId = 0;
             roomId = 0;
 
-            if (!topology.TryGetCellTiles(x, z, cellY, out var list) || !FloorMapIndex.CellHasFloor(list))
+            if (!topology.TryGetFloorFaceForWalkableCell(x, cellY, z, out var face))
                 return false;
 
-            for (int i = 0; i < list.Count; i++)
-            {
-                if ((TileView.TileType)list[i].identity.tileType != TileView.TileType.Floor)
-                    continue;
-
-                buildingId = list[i].identity.buildingId;
-                roomId = list[i].identity.roomId;
-                return true;
-            }
-
-            return false;
+            buildingId = face.identity.buildingId;
+            roomId = face.identity.roomId;
+            return true;
         }
 
         public int TryGetBuildingIdAtCell(int cellY, int x, int z, TopologyLayer topology) =>
@@ -198,24 +199,15 @@ namespace IsoTilemap
         {
             key = default;
 
-            if (!_topology.TryGetCellTiles(x, z, cellY, out var list) || !FloorMapIndex.CellHasFloor(list))
+            if (!_topology.TryGetFloorFaceForWalkableCell(x, cellY, z, out var face))
                 return false;
 
-            for (int i = 0; i < list.Count; i++)
+            int buildingId = face.identity.buildingId;
+            int roomId = face.identity.roomId;
+            if (buildingId > 0 && roomId > 0)
             {
-                var tile = list[i];
-                if ((TileView.TileType)tile.identity.tileType != TileView.TileType.Floor)
-                    continue;
-
-                int buildingId = tile.identity.buildingId;
-                int roomId = tile.identity.roomId;
-                if (buildingId > 0 && roomId > 0)
-                {
-                    key = new RoomKey(buildingId, cellY, roomId);
-                    return true;
-                }
-
-                return false;
+                key = new RoomKey(buildingId, cellY, roomId);
+                return true;
             }
 
             return false;
@@ -258,7 +250,10 @@ namespace IsoTilemap
 
         public static TileMapCacheHub Create(TileMapModel model, BuildingGroupRegistry registry)
         {
-            var index = new FloorMapIndex(model.tiles, model.EdgeBinder.EdgeIndex);
+            var index = new FloorMapIndex(
+                model.tiles,
+                model.EdgeBinder.EdgeIndex,
+                model.FloorFaceBinder.FaceIndex);
             var topology = new TopologyLayer(index);
             var buildings = new BuildingLayer(registry);
             var rooms = new RoomGeometryLayer();
@@ -287,6 +282,12 @@ namespace IsoTilemap
 
         public bool TryGetEdgeBetween(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall) =>
             Topology.TryGetEdgeBetween(cellA, cellB, out edgeWall);
+
+        public bool TryGetHorizontalFaceBetween(Vector3Int cellBelow, Vector3Int cellAbove, out TileData face) =>
+            Topology.TryGetHorizontalFaceBetween(cellBelow, cellAbove, out face);
+
+        public bool TryGetFloorFaceForWalkableCell(int x, int cellY, int z, out TileData face) =>
+            Topology.TryGetFloorFaceForWalkableCell(x, cellY, z, out face);
 
         public IEnumerable<(int x, int z, int y)> EnumerateOccupiedCells() =>
             Topology.EnumerateOccupiedCells();

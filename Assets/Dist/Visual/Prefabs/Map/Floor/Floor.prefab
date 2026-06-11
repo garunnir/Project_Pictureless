@@ -18,6 +18,11 @@ PrefabInstance:
       propertyPath: tileType
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2907014591947330200, guid: f3d540f87bda6194d9218a19dd4205d8,
+        type: 3}
+      propertyPath: _shadeController
+      value: 
+      objectReference: {fileID: 8108746167058850922}
     - target: {fileID: 3120816106238495781, guid: f3d540f87bda6194d9218a19dd4205d8,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -123,6 +128,10 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 423373571137870493, guid: f3d540f87bda6194d9218a19dd4205d8,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8108746167058850922}
     - targetCorrespondingSourceObject: {fileID: 7567173381760207438, guid: f3d540f87bda6194d9218a19dd4205d8,
         type: 3}
       insertIndex: -1
@@ -142,6 +151,19 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 2555139635257487407}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8108746167058850922
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2780284411029826226}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 464940bfc2a8bef44b656858aa0cd8dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::ShadeObjectController
+  _renderer: {fileID: 6697744582125022373}
 --- !u!1 &5364259864502663777 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7567173381760207438, guid: f3d540f87bda6194d9218a19dd4205d8,
@@ -219,4 +241,5 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}

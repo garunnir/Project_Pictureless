@@ -42,9 +42,8 @@ namespace IsoTilemap
                 ? new HashSet<(int x, int z)>()
                 : null;
 
-            if (!index.TryGetCellTiles(start.x, start.z, cellY, out var startList) ||
-                startList == null || startList.Count == 0 ||
-                (restrictBuildingId >= 0 && !CellFloorMatchesBuilding(startList, restrictBuildingId)))
+            if (!index.CellHasFloor(start.x, cellY, start.z) ||
+                (restrictBuildingId >= 0 && !CellFloorMatchesBuilding(index, start.x, cellY, start.z, restrictBuildingId)))
             {
                 if (Config.DebugMode.FloorAlgorithm)
                     Debug.LogWarning($"FloorRoomFloodFill: empty start cell {start}");
@@ -76,27 +75,22 @@ namespace IsoTilemap
                     if (visitedCells.Contains(neighbor))
                         continue;
 
-                    if (!index.TryGetCellTiles(nx, nz, cellY, out var list))
+                    if (!index.CellHasFloor(nx, cellY, nz))
                     {
                         if (collectEmptyNeighbors)
                             emptyDiscovered.Add((nx, nz));
                         continue;
                     }
 
-                    bool hasSolidWall = FloorMapIndex.CellHasSolidWall(list);
-                    bool isFloor = FloorMapIndex.CellHasFloor(list);
-
-                    if (hasSolidWall)
-                        continue;
-
-                    if (!isFloor)
+                    if (index.TryGetCellTiles(nx, nz, cellY, out var list) &&
+                        FloorMapIndex.CellHasSolidWall(list))
                         continue;
 
                     if (excludeCells != null && excludeCells.Contains((nx, nz)))
                         continue;
 
                     if (restrictBuildingId >= 0 &&
-                        !CellFloorMatchesBuilding(list, restrictBuildingId))
+                        !CellFloorMatchesBuilding(index, nx, cellY, nz, restrictBuildingId))
                         continue;
 
                     visitedCells.Add(neighbor);
@@ -111,21 +105,12 @@ namespace IsoTilemap
             return new FloorBfsResult(visited, emptyDiscovered ?? new HashSet<(int x, int z)>());
         }
 
-        public static bool CellFloorMatchesBuilding(IReadOnlyList<TileData> list, int buildingId)
+        public static bool CellFloorMatchesBuilding(FloorMapIndex index, int x, int cellY, int z, int buildingId)
         {
-            if (list == null)
+            if (!index.TryGetFloorFaceForWalkableCell(x, cellY, z, out var face))
                 return false;
 
-            for (int i = 0; i < list.Count; i++)
-            {
-                if ((TileView.TileType)list[i].identity.tileType != TileView.TileType.Floor)
-                    continue;
-
-                if (list[i].identity.buildingId == buildingId)
-                    return true;
-            }
-
-            return false;
+            return face.identity.buildingId == buildingId;
         }
 
         public static HashSet<Vector3Int> ToVector3IntSet(HashSet<(int x, int z)> xzSet, int cellY)

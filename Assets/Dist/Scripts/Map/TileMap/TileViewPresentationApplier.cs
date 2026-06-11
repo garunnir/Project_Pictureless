@@ -19,7 +19,13 @@ namespace IsoTilemap
         private readonly List<Guid> _occlusionTickScratch = new();
         private readonly List<Guid> _occlusionRemoveScratch = new();
         private readonly List<Guid> _engagedIdScratch = new();
+        private readonly List<Guid> _spawnedTileScratch = new();
+        private readonly HashSet<int> _lastBlockingBuildingIds = new();
+        private readonly HashSet<int> _blockingUnionScratch = new();
         private BuildingGroupRegistry _buildingRegistry;
+        private PlayerFloorVisibilityPolicy _floorPolicy;
+        private FloorVisibilityContext _floorContext;
+        private bool _hasFloorContext;
 
         public TileViewPresentationApplier(ITileViewRegistry registry, TileMapModel model)
         {
@@ -35,18 +41,73 @@ namespace IsoTilemap
             _ = mapMinCellY;
         }
 
-        public void ApplySightLineBlockingDelta(in BuildingSightLinePresentationDelta delta)
+        public void ConfigureFloorVisibility(PlayerFloorVisibilityPolicy policy) => _floorPolicy = policy;
+
+        /// <summary>층 가시성 컨텍스트 변경 시 스폰된 뷰에 숨김·시선 흔적을 반영합니다.</summary>
+        public void SyncFloorVisibility(
+            in FloorVisibilityContext ctx,
+            IMapModelReadOnly model)
         {
-            if (delta.IsEmpty)
+            _floorContext = ctx;
+            _hasFloorContext = _floorPolicy != null && model != null;
+
+            if (!_hasFloorContext)
                 return;
 
-            IReadOnlyList<int> added = delta.AddedBuildingIds;
-            for (int i = 0; i < added.Count; i++)
-                SetSightLineHiddenForBuilding(added[i], true);
+            if (ctx.IsPlayerOutdoor)
+                SyncOutdoorBlockingBuildings(model, in ctx);
+            else
+                ClearOutdoorBlockingPresentation(model, in ctx);
 
-            IReadOnlyList<int> removed = delta.RemovedBuildingIds;
-            for (int i = 0; i < removed.Count; i++)
-                SetSightLineHiddenForBuilding(removed[i], false);
+            _registry.CollectSpawnedTileIds(_spawnedTileScratch);
+            for (int i = 0; i < _spawnedTileScratch.Count; i++)
+                ApplyFloorVisibilityForTile(_spawnedTileScratch[i], model, in ctx);
+        }
+
+        void SyncOutdoorBlockingBuildings(IMapModelReadOnly model, in FloorVisibilityContext ctx)
+        {
+            if (_buildingRegistry == null)
+                return;
+
+            _blockingUnionScratch.Clear();
+            foreach (int buildingId in ctx.PlayerBlockingBuildingIds)
+                _blockingUnionScratch.Add(buildingId);
+            foreach (int buildingId in _lastBlockingBuildingIds)
+                _blockingUnionScratch.Add(buildingId);
+
+            foreach (int buildingId in _blockingUnionScratch)
+            {
+                foreach (Guid tileId in _buildingRegistry.GetTilesForBuilding(buildingId))
+                {
+                    if (!model.TryGetTileById(tileId, out _))
+                        continue;
+
+                    ApplyFloorVisibilityForTile(tileId, model, in ctx);
+                }
+            }
+
+            _lastBlockingBuildingIds.Clear();
+            foreach (int buildingId in ctx.PlayerBlockingBuildingIds)
+                _lastBlockingBuildingIds.Add(buildingId);
+        }
+
+        void ClearOutdoorBlockingPresentation(IMapModelReadOnly model, in FloorVisibilityContext ctx)
+        {
+            if (_buildingRegistry == null || _lastBlockingBuildingIds.Count == 0)
+                return;
+
+            foreach (int buildingId in _lastBlockingBuildingIds)
+            {
+                foreach (Guid tileId in _buildingRegistry.GetTilesForBuilding(buildingId))
+                {
+                    if (!model.TryGetTileById(tileId, out _))
+                        continue;
+
+                    ApplyFloorVisibilityForTile(tileId, model, in ctx);
+                }
+            }
+
+            _lastBlockingBuildingIds.Clear();
         }
 
         /// <summary>BFS 아래벽 블렌드 채널.</summary>
@@ -190,7 +251,16 @@ namespace IsoTilemap
 
             view.SetGhosted(PresentationEntryQueries.ResolveGhosted(tileId, _entries));
             view.SetSelected(_store.IsSelected(tileId));
-            view.SetSightLineBuildingHidden(PresentationEntryQueries.ResolveSightLineBuildingHidden(tileId, _entries));
+
+            if (_hasFloorContext && _model.TryGetTileById(tileId, out TileData tile))
+                ApplyFloorVisibilityForTile(tileId, _model, in _floorContext);
+            else
+            {
+                view.SetSightLineBuildingHidden(
+                    PresentationEntryQueries.ResolveSightLineBuildingHidden(tileId, _entries));
+                view.SetFloorVisibilityHidden(
+                    PresentationEntryQueries.ResolveFloorVisibilityHidden(tileId, _entries));
+            }
 
             float target = PresentationEntryQueries.ResolveCharacterOcclusion(tileId, _entries, _model);
             if (target <= DisplayEpsilon)
@@ -204,36 +274,91 @@ namespace IsoTilemap
             view.SetCharacterOcclusion(0f);
         }
 
-        void SetSightLineHiddenForBuilding(int buildingId, bool hidden)
+        void ApplyFloorVisibilityForTile(Guid tileId, IMapModelReadOnly model, in FloorVisibilityContext ctx)
         {
-            if (_buildingRegistry == null || buildingId <= 0)
-                return;
-
-            IReadOnlyCollection<Guid> floorIds = _buildingRegistry.GetMinCellYFloorTilesForBuilding(buildingId);
-
-            foreach (Guid tileId in floorIds)
+            if (!model.TryGetTileById(tileId, out TileData tile))
             {
-                if (hidden)
-                {
-                    _entries.Set(
-                        PresentationConcern.SightLineBuildingHidden,
-                        PresentationSource.BlockingBuildingMinFloor,
-                        tileId,
-                        1f);
-                }
-                else
-                {
-                    _entries.Remove(
-                        PresentationConcern.SightLineBuildingHidden,
-                        PresentationSource.BlockingBuildingMinFloor,
-                        tileId);
-                }
+                SetFloorVisibilityHiddenEntry(tileId, false);
+                SetSightLineBuildingHiddenEntry(tileId, false);
+                return;
+            }
 
-                if (_registry.TryGetView(tileId, out TileView view))
-                {
-                    view.SetSightLineBuildingHidden(
-                        PresentationEntryQueries.ResolveSightLineBuildingHidden(tileId, _entries));
-                }
+            bool hidden = !_floorPolicy.IsTileVisible(tile, in ctx);
+            SetFloorVisibilityHiddenEntry(tileId, hidden);
+            SetSightLineBuildingHiddenEntry(tileId, ShouldShowSightLineBuildingTrace(tile, in ctx));
+        }
+
+        static bool ShouldShowSightLineBuildingTrace(in TileData tile, in FloorVisibilityContext ctx)
+        {
+            if (!ctx.IsPlayerOutdoor)
+                return false;
+
+            int buildingId = tile.identity.buildingId;
+            if (buildingId <= 0 || !ctx.PlayerBlockingBuildingIds.Contains(buildingId))
+                return false;
+
+            return (TileView.TileType)tile.identity.tileType == TileView.TileType.Floor &&
+                   FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove.y == ctx.MinCellY;
+        }
+
+        void SetFloorVisibilityHiddenEntry(Guid tileId, bool hidden)
+        {
+            if (hidden)
+            {
+                _entries.Set(
+                    PresentationConcern.FloorVisibilityHidden,
+                    PresentationSource.FloorVisibilityPolicy,
+                    tileId,
+                    1f);
+                ClearCharacterOcclusionEntries(tileId);
+            }
+            else
+            {
+                _entries.Remove(
+                    PresentationConcern.FloorVisibilityHidden,
+                    PresentationSource.FloorVisibilityPolicy,
+                    tileId);
+            }
+
+            if (_registry.TryGetView(tileId, out TileView view))
+                view.SetFloorVisibilityHidden(PresentationEntryQueries.ResolveFloorVisibilityHidden(tileId, _entries));
+        }
+
+        void ClearCharacterOcclusionEntries(Guid tileId)
+        {
+            _entries.Remove(
+                PresentationConcern.CharacterOcclusion,
+                PresentationSource.ProximitySightLine,
+                tileId);
+            _entries.Remove(
+                PresentationConcern.CharacterOcclusion,
+                PresentationSource.BfsWallOcclusion,
+                tileId);
+            _characterOcclusionDisplay.Remove(tileId);
+        }
+
+        void SetSightLineBuildingHiddenEntry(Guid tileId, bool hidden)
+        {
+            if (hidden)
+            {
+                _entries.Set(
+                    PresentationConcern.SightLineBuildingHidden,
+                    PresentationSource.BlockingBuildingMinFloor,
+                    tileId,
+                    1f);
+            }
+            else
+            {
+                _entries.Remove(
+                    PresentationConcern.SightLineBuildingHidden,
+                    PresentationSource.BlockingBuildingMinFloor,
+                    tileId);
+            }
+
+            if (_registry.TryGetView(tileId, out TileView view))
+            {
+                view.SetSightLineBuildingHidden(
+                    PresentationEntryQueries.ResolveSightLineBuildingHidden(tileId, _entries));
             }
         }
     }
