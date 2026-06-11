@@ -34,6 +34,32 @@ namespace IsoTilemap
 
         public BuildingGroupRegistry Registry => _registry;
 
+        /// <summary>
+        /// 바닥 셀에 roomId가 없으면 BFS로 room을 부여·베이크합니다. 이미 roomId가 있으면 true.
+        /// </summary>
+        public bool EnsureRoomAtFloorCell(int cellY, int x, int z)
+        {
+            int buildingId = GetFloorBuildingId(x, cellY, z);
+            if (buildingId <= 0)
+                return false;
+
+            if (!_model.TryGetCellTiles(x, z, cellY, out var list) || !FloorMapIndex.CellHasFloor(list))
+                return false;
+
+            if (GetFloorRoomId(x, cellY, z) > 0)
+                return true;
+
+            if (!TryBakeRoomFromSeed(buildingId, cellY, x, z))
+                return false;
+
+            TagPerimeterForSlice(buildingId, cellY);
+            IndexEdgeWallsForSlice(buildingId, cellY);
+            _model.ReindexTilesByIdFromRuntime();
+            _registry.RebuildFromTiles(_model.TilesSnapshot);
+            _model.MarkTilesDirty();
+            return true;
+        }
+
         public void AssignAll()
         {
             _hub.InvalidateAll();
@@ -842,6 +868,82 @@ namespace IsoTilemap
 
                 _model.PatchTileIdentity(list[i].tileDefId, buildingId, roomId);
             }
+        }
+
+        bool TryBakeRoomFromSeed(int buildingId, int cellY, int seedX, int seedZ)
+        {
+            var occlusion = FloorRoomFloodFill.Run(
+                _topology.Index, cellY, seedX, seedZ, collectEmptyNeighbors: false, buildingId);
+            var visibility = FloorRoomFloodFill.Run(
+                _topology.Index, cellY, seedX, seedZ, collectEmptyNeighbors: true, buildingId);
+
+            if (occlusion.Visited == null || occlusion.Visited.Count == 0)
+                return false;
+
+            int roomId = FindExistingRoomIdInVisited(buildingId, cellY, occlusion.Visited);
+            bool isNewRoom = roomId == 0;
+            if (isNewRoom)
+                roomId = GetNextRoomIdForSlice(buildingId, cellY);
+
+            var key = new RoomKey(buildingId, cellY, roomId);
+
+            foreach (var (vx, vz) in occlusion.Visited)
+            {
+                if (GetFloorRoomId(vx, cellY, vz) == 0)
+                    SetFloorBuildingRoom(vx, cellY, vz, buildingId, roomId);
+            }
+
+            if (isNewRoom)
+            {
+                _hub.Rooms.Store(key, FloorRoomBfsProfile.Occlusion, occlusion);
+                _hub.CellYGeometry.RegisterFootprint(cellY, FloorRoomBfsProfile.Occlusion, occlusion);
+                _hub.Rooms.Store(key, FloorRoomBfsProfile.Visibility, visibility);
+                _hub.CellYGeometry.RegisterFootprint(cellY, FloorRoomBfsProfile.Visibility, visibility);
+                return true;
+            }
+
+            if (!_hub.Rooms.TryGet(key, FloorRoomBfsProfile.Occlusion, out _))
+            {
+                _hub.Rooms.Store(key, FloorRoomBfsProfile.Occlusion, occlusion);
+                _hub.CellYGeometry.RegisterFootprint(cellY, FloorRoomBfsProfile.Occlusion, occlusion);
+                _hub.Rooms.Store(key, FloorRoomBfsProfile.Visibility, visibility);
+                _hub.CellYGeometry.RegisterFootprint(cellY, FloorRoomBfsProfile.Visibility, visibility);
+            }
+
+            return true;
+        }
+
+        int FindExistingRoomIdInVisited(int buildingId, int cellY, HashSet<(int x, int z)> visited)
+        {
+            foreach (var (vx, vz) in visited)
+            {
+                if (GetFloorBuildingId(vx, cellY, vz) != buildingId)
+                    continue;
+
+                int roomId = GetFloorRoomId(vx, cellY, vz);
+                if (roomId > 0)
+                    return roomId;
+            }
+
+            return 0;
+        }
+
+        int GetNextRoomIdForSlice(int buildingId, int cellY)
+        {
+            int max = 0;
+            foreach (var tile in _model.TilesSnapshot)
+            {
+                if (!IsFloorTile(tile))
+                    continue;
+
+                var pos = tile.identity.GridPos;
+                if (pos.y != cellY || tile.identity.buildingId != buildingId)
+                    continue;
+
+                max = Math.Max(max, tile.identity.roomId);
+            }
+
+            return max + 1;
         }
 
         static bool IsStructural(TileData tile)

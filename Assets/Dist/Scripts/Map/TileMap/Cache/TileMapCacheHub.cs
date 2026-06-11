@@ -242,6 +242,8 @@ namespace IsoTilemap
         public RoomGeometryLayer Rooms { get; }
         public CellYGeometryLayer CellYGeometry { get; }
 
+        BuildingGroupBuilder _roomBakeBuilder;
+
         TileMapCacheHub(
             TopologyLayer topology,
             BuildingLayer buildings,
@@ -262,6 +264,20 @@ namespace IsoTilemap
             var rooms = new RoomGeometryLayer();
             var cellYGeometry = new CellYGeometryLayer(topology, rooms);
             return new TileMapCacheHub(topology, buildings, rooms, cellYGeometry);
+        }
+
+        internal void BindRoomBakeBuilder(BuildingGroupBuilder builder) => _roomBakeBuilder = builder;
+
+        bool TryEnsureRoomKeyAtCell(int cellY, int x, int z, out RoomKey roomKey)
+        {
+            if (CellYGeometry.TryResolveRoomKey(cellY, x, z, out roomKey))
+                return true;
+
+            if (_roomBakeBuilder == null ||
+                !_roomBakeBuilder.EnsureRoomAtFloorCell(cellY, x, z))
+                return false;
+
+            return CellYGeometry.TryResolveRoomKey(cellY, x, z, out roomKey);
         }
 
         public bool CellHasOccupancy(int x, int z, int y) => Topology.HasOccupancy(x, z, y);
@@ -288,7 +304,7 @@ namespace IsoTilemap
 
         /// <summary>
         /// 월드 XZ 스냅 셀의 roomId로 bake된 <see cref="FloorBfsResult.Visited"/>를 읽습니다.
-        /// 스냅 셀에 바닥·roomId가 없으면 null (lazy BFS·이웃 탐색 없음).
+        /// roomId가 없으면 BFS 탐색·부여 후 반환. 바닥·buildingId 없으면 null.
         /// </summary>
         public HashSet<(int x, int z)> GetVisitedForWorld(
             int floorCellY,
@@ -297,7 +313,7 @@ namespace IsoTilemap
             FloorRoomBfsProfile profile)
         {
             Vector3Int snap = TileHelper.ConvertWorldToGrid(worldRef, Mathf.Max(1e-4f, cellSize));
-            if (!CellYGeometry.TryResolveRoomKey(floorCellY, snap.x, snap.z, out var roomKey))
+            if (!TryEnsureRoomKeyAtCell(floorCellY, snap.x, snap.z, out var roomKey))
                 return null;
 
             if (!Rooms.TryGet(roomKey, profile, out var baked))
@@ -312,7 +328,7 @@ namespace IsoTilemap
             if (Buildings.IsPlazaFloor(cellY, x, z))
                 return true;
 
-            if (!CellYGeometry.TryResolveRoomKey(cellY, x, z, out var roomKey))
+            if (!TryEnsureRoomKeyAtCell(cellY, x, z, out var roomKey))
                 return false;
 
             if (!Rooms.TryGet(roomKey, FloorRoomBfsProfile.Visibility, out var visibility))

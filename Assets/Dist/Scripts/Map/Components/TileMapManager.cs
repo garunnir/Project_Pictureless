@@ -196,6 +196,7 @@ public class TileMapManager : MonoBehaviour
             _mapCacheHub = TileMapCacheHub.Create(tileModel, registry);
             tileModel.SetMapCacheHub(_mapCacheHub);
             _buildingGroupBuilder = new BuildingGroupBuilder(tileModel, _mapCacheHub);
+            _mapCacheHub.BindRoomBakeBuilder(_buildingGroupBuilder);
             tileModel.SetBuildingGroupBuilder(_buildingGroupBuilder);
             _buildingGroupBuilder.AssignAll();
         }
