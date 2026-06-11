@@ -9,10 +9,16 @@ namespace IsoTilemap
     // ============================================================
     public sealed class TileViewPresentationApplier
     {
+        const float DisplayEpsilon = 0.015f;
+
         private readonly ITileViewRegistry _registry;
         private readonly TileMapModel _model;
         private readonly TilePresentationStore _store = new TilePresentationStore();
         private readonly TilePresentationEntryStore _entries = new TilePresentationEntryStore();
+        private readonly Dictionary<Guid, float> _characterOcclusionDisplay = new();
+        private readonly List<Guid> _occlusionTickScratch = new();
+        private readonly List<Guid> _occlusionRemoveScratch = new();
+        private readonly List<Guid> _engagedIdScratch = new();
         private BuildingGroupRegistry _buildingRegistry;
 
         public TileViewPresentationApplier(ITileViewRegistry registry, TileMapModel model)
@@ -64,20 +70,92 @@ namespace IsoTilemap
             PresentationSource source,
             PresentationConcern concern)
         {
-            var touched = new HashSet<Guid>();
-
-            IReadOnlyList<(Guid tileId, float occlusion01)> apply = delta.ApplyEntries;
-            for (int i = 0; i < apply.Count; i++)
-                touched.Add(apply[i].tileId);
-
-            IReadOnlyList<Guid> clear = delta.ClearIds;
-            for (int i = 0; i < clear.Count; i++)
-                touched.Add(clear[i]);
-
             _entries.ApplyOcclusionDelta(source, concern, in delta);
+        }
 
-            foreach (Guid tileId in touched)
-                PushPresentationToView(tileId);
+        /// <summary>
+        /// engaged·페이드 중 타일의 display를 resolved target 쪽으로 보간해 뷰에 반영합니다.
+        /// <see cref="CharacterOcclusionDisplayDriver"/>가 매 프레임 호출합니다.
+        /// </summary>
+        public void TickCharacterOcclusionDisplay(float smoothSpeed, float deltaTime)
+        {
+            CollectCharacterOcclusionTickTargets(_occlusionTickScratch);
+            if (_occlusionTickScratch.Count == 0)
+                return;
+
+            float factor = OcclusionBlendMath.ExpSmoothFactor(smoothSpeed, deltaTime);
+            _occlusionRemoveScratch.Clear();
+
+            for (int i = 0; i < _occlusionTickScratch.Count; i++)
+            {
+                Guid tileId = _occlusionTickScratch[i];
+                if (!_registry.TryGetView(tileId, out TileView view))
+                {
+                    _occlusionRemoveScratch.Add(tileId);
+                    continue;
+                }
+
+                float target = PresentationEntryQueries.ResolveCharacterOcclusion(tileId, _entries, _model);
+                _characterOcclusionDisplay.TryGetValue(tileId, out float display);
+                float newDisplay = OcclusionBlendMath.SmoothTowards(display, target, factor);
+                _characterOcclusionDisplay[tileId] = newDisplay;
+
+                if (Mathf.Abs(newDisplay - display) > DisplayEpsilon)
+                    view.SetCharacterOcclusion(newDisplay);
+
+                if (target <= DisplayEpsilon && newDisplay <= DisplayEpsilon)
+                    _occlusionRemoveScratch.Add(tileId);
+            }
+
+            for (int i = 0; i < _occlusionRemoveScratch.Count; i++)
+            {
+                Guid tileId = _occlusionRemoveScratch[i];
+                _characterOcclusionDisplay.Remove(tileId);
+
+                if (_registry.TryGetView(tileId, out TileView view) &&
+                    PresentationEntryQueries.ResolveCharacterOcclusion(tileId, _entries, _model) <= DisplayEpsilon)
+                {
+                    view.SetCharacterOcclusion(0f);
+                }
+            }
+        }
+
+        /// <summary>셧다운·맵 전환 시 display 상태와 뷰를 초기화합니다.</summary>
+        public void ResetCharacterOcclusionDisplay()
+        {
+            foreach (KeyValuePair<Guid, float> kv in _characterOcclusionDisplay)
+            {
+                if (_registry.TryGetView(kv.Key, out TileView view))
+                    view.SetCharacterOcclusion(0f);
+            }
+
+            _characterOcclusionDisplay.Clear();
+            _occlusionTickScratch.Clear();
+            _occlusionRemoveScratch.Clear();
+        }
+
+        void CollectCharacterOcclusionTickTargets(List<Guid> into)
+        {
+            into.Clear();
+            AppendEngagedOcclusionTiles(PresentationSource.ProximitySightLine, into);
+            AppendEngagedOcclusionTiles(PresentationSource.BfsWallOcclusion, into);
+
+            foreach (KeyValuePair<Guid, float> kv in _characterOcclusionDisplay)
+            {
+                if (kv.Value > DisplayEpsilon && !into.Contains(kv.Key))
+                    into.Add(kv.Key);
+            }
+        }
+
+        void AppendEngagedOcclusionTiles(PresentationSource source, List<Guid> into)
+        {
+            _entries.CollectEngagedTileIds(source, _engagedIdScratch);
+            for (int i = 0; i < _engagedIdScratch.Count; i++)
+            {
+                Guid tileId = _engagedIdScratch[i];
+                if (!into.Contains(tileId))
+                    into.Add(tileId);
+            }
         }
 
         public void SetGhosted(Guid tileId, bool ghosted)
@@ -111,17 +189,19 @@ namespace IsoTilemap
                 return;
 
             view.SetGhosted(PresentationEntryQueries.ResolveGhosted(tileId, _entries));
-            view.SetCharacterOcclusion(PresentationEntryQueries.ResolveCharacterOcclusion(tileId, _entries, _model));
             view.SetSelected(_store.IsSelected(tileId));
             view.SetSightLineBuildingHidden(PresentationEntryQueries.ResolveSightLineBuildingHidden(tileId, _entries));
-        }
 
-        void PushPresentationToView(Guid tileId)
-        {
-            if (!_registry.TryGetView(tileId, out TileView view))
+            float target = PresentationEntryQueries.ResolveCharacterOcclusion(tileId, _entries, _model);
+            if (target <= DisplayEpsilon)
+            {
+                _characterOcclusionDisplay.Remove(tileId);
+                view.SetCharacterOcclusion(0f);
                 return;
+            }
 
-            view.SetCharacterOcclusion(PresentationEntryQueries.ResolveCharacterOcclusion(tileId, _entries, _model));
+            _characterOcclusionDisplay[tileId] = 0f;
+            view.SetCharacterOcclusion(0f);
         }
 
         void SetSightLineHiddenForBuilding(int buildingId, bool hidden)

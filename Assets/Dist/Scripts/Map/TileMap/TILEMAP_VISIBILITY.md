@@ -35,7 +35,7 @@ flowchart TD
     ProxPipe --> Applier[TileViewPresentationApplier → TileView]
 ```
 
-**틱 순서**: `PlayerFloorVisibilityDriver` (`-100`) → `SightLineProximityBlendDriver` (`-95`) → 청크 스트리밍. 차단 building context가 먼저 반영된 뒤 청크 Load.
+**틱 순서**: `PlayerFloorVisibilityDriver` (`-100`) → `SightLineProximityBlendDriver` (`-95`, target) → `CharacterVisibilityBroadcaster` (플레이어 이동 시 BFS target) → `CharacterOcclusionDisplayDriver` (`50`, display 보간) → 청크 스트리밍. 차단 building context가 먼저 반영된 뒤 청크 Load.
 
 ---
 
@@ -136,7 +136,7 @@ flowchart TD
 | `NoneBeyondPerpDistance` | 8 | 수직 거리가 이 값보다 크면 0 |
 | `BandRadiusCells` | 2 | 샘플 셀 주변 확장 |
 | `SegmentTEpsilon` | 0.15 | 플레이어 뒤쪽 여유(셀 단위) |
-| `ApplyEpsilon` | 0.015 | 변화 미만이면 스킵 |
+| `ApplyEpsilon` | 0.015 | target 변화 미만이면 store delta 스킵 |
 
 **Floor 오탐 방지**: `Floor`이고 `(x,z)`가 플레이어와 같고 `y <= PlayerFloorCellY` → occlusion 0 (발밑 기둥).
 
@@ -155,7 +155,14 @@ flowchart TD
 
 **관여(engagement)**: `Set`된 타일만 per-tile 관여. Query·`TryGetEngagedEntry`는 관여 타일 entry만 반환. `SetSourceEngaged(source, false)`는 제공자 비활성 시 해당 Source entry 전부 제거 (예: proximity driver Shutdown).
 
-**파이프라인 역할**: `ProximitySightLineBlendPipeline`은 후보·강도 산출만 담당. 이전 값은 entry store `CopyScalarsForSource`에서 읽고, 반영은 applier가 store에 Set.
+**파이프라인 역할**: `ProximitySightLineBlendPipeline`은 후보·**target** 강도 산출만 담당. 이전 target은 `CopyScalarsForSource`로 delta 스킵에 사용. **프레임 간 보간은 하지 않음.**
+
+**display 보간** (`CharacterOcclusionDisplayDriver` → `TileViewPresentationApplier.TickCharacterOcclusionDisplay`):
+
+- entry store·BFS 캐시 = **target** (`ResolveCharacterOcclusion`)
+- Applier `_characterOcclusionDisplay` = **display** (engaged·페이드 중 타일만)
+- 매 프레임 engaged ∪ (display &gt; 0) 타일만 순회 → `TileView.SetCharacterOcclusion(display)` (TileView에 Update 없음)
+- 청크 스폰 `SyncPresentationForTile`: display 0에서 target으로 올라감
 
 **CharacterOcclusion 해석** (`PresentationEntryQueries`):
 
@@ -225,6 +232,7 @@ flowchart TD
 | 시선 세그먼트 샘플 | `TileBlend/SightLineSegmentSampler.cs` (건물·블렌드 공통 step) |
 | 근접 시선 블렌드 | `TileBlend/ProximitySightLineBlendPipeline.cs`, `SightLineOcclusionStrength.cs` |
 | 블렌드 드라이버 | `SightLineProximityBlendDriver.cs` |
+| display 보간 드라이버 | `CharacterOcclusionDisplayDriver.cs` |
 | 스트리밍 despawn/흔적 | `TileMapStreamingVisualizer.cs`, `BuildingBlockingController.cs` |
 | 뷰 표현·entry store | `Presentation/TilePresentationEntryStore.cs`, `Presentation/PresentationEntryQueries.cs`, `TileView.cs`, `TileViewPresentationApplier.cs` |
 | 야외 판정 | `TileMapCacheHub.IsOutdoorEvaluation` |

@@ -30,6 +30,7 @@ public class TileMapManager : MonoBehaviour
     [Tooltip("비우면 ChunkStreamer 카메라 → Camera.main 순으로 사용합니다.")]
     [SerializeField] private Camera _visibilityCamera;
     [SerializeField] private SightLineProximityBlendDriver _proximityBlendDriver;
+    [SerializeField] private CharacterOcclusionDisplayDriver _occlusionDisplayDriver;
 
     [Header("Floor Visibility (chunk streaming only)")]
     [SerializeField] private PlayerFloorVisibilityDriver _floorVisibilityDriver;
@@ -109,6 +110,15 @@ public class TileMapManager : MonoBehaviour
                 ResolveFloorVisibilityCamera);
         }
 
+        _occlusionDisplayDriver ??= GetComponent<CharacterOcclusionDisplayDriver>();
+        if (_occlusionDisplayDriver != null && _presentationApplier != null)
+            _occlusionDisplayDriver.Init(_presentationApplier);
+        else if (_presentationApplier != null)
+        {
+            Debug.LogWarning(
+                "[TileMapManager] CharacterOcclusionDisplayDriver가 없어 character occlusion display 보간이 비활성화됩니다.");
+        }
+
         _chunkStreamer?.SyncNow();
         _saver.Init(Model, _worldGrid);
         BindMapCollisionToPlayers();
@@ -119,6 +129,7 @@ public class TileMapManager : MonoBehaviour
         UnwireTilePresentationApplier();
         _floorVisibilityDriver?.Shutdown();
         _proximityBlendDriver?.Shutdown();
+        _occlusionDisplayDriver?.Shutdown();
     }
 
     private void WireTilePresentationApplier()

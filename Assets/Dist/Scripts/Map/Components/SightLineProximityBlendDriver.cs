@@ -99,9 +99,6 @@ public sealed class SightLineProximityBlendDriver : MonoBehaviour
             PresentationConcern.CharacterOcclusion,
             _previousScratch);
 
-        float smoothFactor = OcclusionBlendMath.ExpSmoothFactor(
-            _blendSettings.OcclusionSmoothSpeed, Time.deltaTime);
-
         TileOcclusionPresentationDelta delta = _pipeline.Evaluate(
             cameraWorld,
             playerWorld,
@@ -109,8 +106,7 @@ public sealed class SightLineProximityBlendDriver : MonoBehaviour
             ctx.PlayerFloorCellY,
             ctx.IsPlayerOutdoor,
             _blendSettings,
-            _previousScratch,
-            smoothFactor);
+            _previousScratch);
 
         if (!delta.IsEmpty)
             _presentationApplier.ApplyProximityBlendDelta(delta);

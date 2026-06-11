@@ -180,7 +180,7 @@ namespace IsoTilemap
             TileCollisionPolicy.Apply(this, tileData.identity.collisionFlags);
         }
 
-        /// <summary>캐릭터 오클루전(0~1)과 shadow·추가광·blocked trace 파생 표현.</summary>
+        /// <summary>화면에 그릴 캐릭터 오클루전 display(0~1). target 보간은 Applier가 담당합니다.</summary>
         public void SetCharacterOcclusion(float occlusion01)
         {
             _characterOcclusion = Mathf.Clamp01(occlusion01);

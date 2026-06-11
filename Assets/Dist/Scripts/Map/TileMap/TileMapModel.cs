@@ -611,8 +611,6 @@ namespace IsoTilemap
                 currentHiddenIds.Add(wall.tileDefId);
 
                 float occ = ComputeOcclusionStrength(playerWorld, wall.identity, cs, settings);
-                if (_lastAppliedOcclusion.TryGetValue(wall.tileDefId, out float prevOcc))
-                    occ = SmoothOcclusionTowards(prevOcc, occ, settings);
 
                 _occlusionDeltaApply.Add((wall.tileDefId, occ));
                 _hiddenWallTileCache[wall.tileDefId] = wall;
@@ -623,18 +621,6 @@ namespace IsoTilemap
             {
                 if (currentHiddenIds.Contains(hiddenId))
                     continue;
-
-                if (_lastAppliedOcclusion.TryGetValue(hiddenId, out float prevOcc))
-                {
-                    float faded = SmoothOcclusionTowards(prevOcc, 0f, settings);
-                    if (faded > settings.ApplyEpsilon)
-                    {
-                        currentHiddenIds.Add(hiddenId);
-                        _occlusionDeltaApply.Add((hiddenId, faded));
-                        _lastAppliedOcclusion[hiddenId] = faded;
-                        continue;
-                    }
-                }
 
                 _occlusionDeltaClear.Add(hiddenId);
                 _hiddenWallTileCache.Remove(hiddenId);
@@ -690,12 +676,8 @@ namespace IsoTilemap
 
                 float d = Mathf.Sqrt(OcclusionDistSqXZ(playerWorld, entry.WallWorldX, entry.WallWorldZ));
                 float occ = OcclusionCurve(d, settings);
-                if (_lastAppliedOcclusion.TryGetValue(id, out float prev))
-                {
-                    occ = SmoothOcclusionTowards(prev, occ, settings);
-                    if (Mathf.Abs(occ - prev) <= eps)
-                        continue;
-                }
+                if (_lastAppliedOcclusion.TryGetValue(id, out float prev) && Mathf.Abs(occ - prev) <= eps)
+                    continue;
 
                 _occlusionDeltaApply.Add((id, occ));
                 _lastAppliedOcclusion[id] = occ;
@@ -759,15 +741,6 @@ namespace IsoTilemap
                 distance,
                 s.OcclusionFullWithinDistance,
                 s.OcclusionNoneBeyondDistance);
-
-        private static float SmoothOcclusionTowards(
-            float current,
-            float target,
-            in OcclusionProximitySettings settings)
-        {
-            float factor = OcclusionBlendMath.ExpSmoothFactor(settings.OcclusionSmoothSpeed, Time.deltaTime);
-            return OcclusionBlendMath.SmoothTowards(current, target, factor);
-        }
 
         private readonly struct OcclusionWallEntry
         {
