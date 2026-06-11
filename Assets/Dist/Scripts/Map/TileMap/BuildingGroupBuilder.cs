@@ -67,7 +67,7 @@ namespace IsoTilemap
             ComputeCellYRange();
             ResetStructuralIds();
             RecomputeOutdoorFromMin();
-            AssignBuildingsFromSeeds(CollectY0BuildingSeeds());
+            AssignBuildingsFromSeeds(CollectMinCellYBuildingSeeds());
             AssignOrphanFloorBuildings();
             BakeAllRooms();
             _model.ReindexTilesByIdFromRuntime();
@@ -171,7 +171,7 @@ namespace IsoTilemap
                 RecomputeOutdoorFromMinAndRebuildLost(changedCells);
             else if (buildingId > 0)
                 RebuildRooms(CollectAffectedRoomKeys(removed, changedCells));
-            else if (IsY0FloorChange(changedCells))
+            else if (IsMinCellYFloorChange(changedCells))
                 RecomputeOutdoorFromMinAndRebuildLost(changedCells);
         }
 
@@ -180,7 +180,7 @@ namespace IsoTilemap
             if (changedCells == null || changedCells.Count == 0)
                 return;
 
-            if (IsY0FloorChange(changedCells))
+            if (IsMinCellYFloorChange(changedCells))
                 RecomputeOutdoorFromMinAndRebuildLost(changedCells);
 
             var keys = new HashSet<RoomKey>();
@@ -301,7 +301,7 @@ namespace IsoTilemap
             return found;
         }
 
-        HashSet<(int x, int z)> CollectY0BuildingSeeds()
+        HashSet<(int x, int z)> CollectMinCellYBuildingSeeds()
         {
             var seeds = new HashSet<(int x, int z)>();
 
@@ -651,10 +651,7 @@ namespace IsoTilemap
                 if (GetFloorRoomId(x, cellY, z) != 0)
                     return;
 
-                var occlusion = FloorRoomFloodFill.Run(
-                    _topology.Index, cellY, x, z, collectEmptyNeighbors: false, buildingId);
-                var visibility = FloorRoomFloodFill.Run(
-                    _topology.Index, cellY, x, z, collectEmptyNeighbors: true, buildingId);
+                var (occlusion, visibility) = RunRoomBfsAt(cellY, x, z, buildingId);
 
                 if (occlusion.Visited.Count == 0)
                     return;
@@ -668,10 +665,7 @@ namespace IsoTilemap
                     SetFloorBuildingRoom(vx, cellY, vz, buildingId, roomId);
                 }
 
-                _hub.Rooms.Store(key, FloorRoomBfsProfile.Occlusion, occlusion);
-                _hub.CellYGeometry.RegisterFootprint(cellY, FloorRoomBfsProfile.Occlusion, occlusion);
-                _hub.Rooms.Store(key, FloorRoomBfsProfile.Visibility, visibility);
-                _hub.CellYGeometry.RegisterFootprint(cellY, FloorRoomBfsProfile.Visibility, visibility);
+                StoreRoomBfsProfiles(cellY, key, occlusion, visibility);
             }
 
             foreach (var (x, z, b) in _model.EnumerateOccupiedCells())
@@ -807,7 +801,7 @@ namespace IsoTilemap
             }
         }
 
-        bool IsY0FloorChange(IReadOnlyCollection<Vector3Int> cells)
+        bool IsMinCellYFloorChange(IReadOnlyCollection<Vector3Int> cells)
         {
             if (cells == null)
                 return false;
@@ -872,10 +866,7 @@ namespace IsoTilemap
 
         bool TryBakeRoomFromSeed(int buildingId, int cellY, int seedX, int seedZ)
         {
-            var occlusion = FloorRoomFloodFill.Run(
-                _topology.Index, cellY, seedX, seedZ, collectEmptyNeighbors: false, buildingId);
-            var visibility = FloorRoomFloodFill.Run(
-                _topology.Index, cellY, seedX, seedZ, collectEmptyNeighbors: true, buildingId);
+            var (occlusion, visibility) = RunRoomBfsAt(cellY, seedX, seedZ, buildingId);
 
             if (occlusion.Visited == null || occlusion.Visited.Count == 0)
                 return false;
@@ -893,24 +884,32 @@ namespace IsoTilemap
                     SetFloorBuildingRoom(vx, cellY, vz, buildingId, roomId);
             }
 
-            if (isNewRoom)
-            {
-                _hub.Rooms.Store(key, FloorRoomBfsProfile.Occlusion, occlusion);
-                _hub.CellYGeometry.RegisterFootprint(cellY, FloorRoomBfsProfile.Occlusion, occlusion);
-                _hub.Rooms.Store(key, FloorRoomBfsProfile.Visibility, visibility);
-                _hub.CellYGeometry.RegisterFootprint(cellY, FloorRoomBfsProfile.Visibility, visibility);
-                return true;
-            }
-
-            if (!_hub.Rooms.TryGet(key, FloorRoomBfsProfile.Occlusion, out _))
-            {
-                _hub.Rooms.Store(key, FloorRoomBfsProfile.Occlusion, occlusion);
-                _hub.CellYGeometry.RegisterFootprint(cellY, FloorRoomBfsProfile.Occlusion, occlusion);
-                _hub.Rooms.Store(key, FloorRoomBfsProfile.Visibility, visibility);
-                _hub.CellYGeometry.RegisterFootprint(cellY, FloorRoomBfsProfile.Visibility, visibility);
-            }
+            if (isNewRoom || !_hub.Rooms.TryGet(key, FloorRoomBfsProfile.Occlusion, out _))
+                StoreRoomBfsProfiles(cellY, key, occlusion, visibility);
 
             return true;
+        }
+
+        (FloorBfsResult occlusion, FloorBfsResult visibility) RunRoomBfsAt(
+            int cellY, int seedX, int seedZ, int buildingId)
+        {
+            var occlusion = FloorRoomFloodFill.Run(
+                _topology.Index, cellY, seedX, seedZ, collectEmptyNeighbors: false, buildingId);
+            var visibility = FloorRoomFloodFill.Run(
+                _topology.Index, cellY, seedX, seedZ, collectEmptyNeighbors: true, buildingId);
+            return (occlusion, visibility);
+        }
+
+        void StoreRoomBfsProfiles(
+            int cellY,
+            RoomKey key,
+            FloorBfsResult occlusion,
+            FloorBfsResult visibility)
+        {
+            _hub.Rooms.Store(key, FloorRoomBfsProfile.Occlusion, occlusion);
+            _hub.CellYGeometry.RegisterFootprint(cellY, FloorRoomBfsProfile.Occlusion, occlusion);
+            _hub.Rooms.Store(key, FloorRoomBfsProfile.Visibility, visibility);
+            _hub.CellYGeometry.RegisterFootprint(cellY, FloorRoomBfsProfile.Visibility, visibility);
         }
 
         int FindExistingRoomIdInVisited(int buildingId, int cellY, HashSet<(int x, int z)> visited)

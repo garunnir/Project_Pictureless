@@ -69,9 +69,10 @@ namespace IsoTilemap
         private bool _selectedInitialized;
 
         private const float OcclusionEpsilon = 1e-4f;
-        private const float ShadowOnlyOcclusionThreshold = 0.99f;
-        private const float BlockedTraceOcclusionThreshold = 0.4f;
-        private const float AdditionalLightCutoffOcclusionThreshold = 0.55f;
+        private const float ShadowOnlyOcclusionThreshold = 0.98f;
+        private const float BlockedTraceOcclusionThreshold = 0.5f;
+        private const float AdditionalLightFadeStart = 0.25f;
+        private const float AdditionalLightFadeEnd = 0.7f;
 
         private void Awake()
         {
@@ -301,17 +302,19 @@ namespace IsoTilemap
         private void ApplyCharacterOcclusionDerived()
         {
             Renderer renderer = _shadeController?.CachedRenderer;
-            _shadeController?.SetCharacterOcclusion(_characterOcclusion);
+            float displayOcclusion = OcclusionBlendMath.PerceptualOcclusion01(_characterOcclusion);
+            _shadeController?.SetCharacterOcclusion(displayOcclusion);
 
             if (renderer != null)
             {
-                renderer.shadowCastingMode = _characterOcclusion >= ShadowOnlyOcclusionThreshold
+                renderer.shadowCastingMode = displayOcclusion >= ShadowOnlyOcclusionThreshold
                     ? ShadowCastingMode.ShadowsOnly
                     : _defaultShadowCastingMode;
             }
 
-            _shadeController?.SetAdditionalLightEnabled(
-                _characterOcclusion < AdditionalLightCutoffOcclusionThreshold);
+            float additionalLight = 1f - Mathf.SmoothStep(
+                AdditionalLightFadeStart, AdditionalLightFadeEnd, _characterOcclusion);
+            _shadeController?.SetAdditionalLightBlend(additionalLight);
 
             SetBlockedTraceVisible(_characterOcclusion >= BlockedTraceOcclusionThreshold);
         }

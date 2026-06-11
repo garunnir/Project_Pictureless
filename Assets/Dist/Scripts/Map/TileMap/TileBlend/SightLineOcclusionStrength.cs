@@ -94,19 +94,11 @@ namespace IsoTilemap
 
 
 
-        public static float PerpDistanceCurve(float perpDistance, in SightLineBlendSettings settings)
-
-        {
-
-            float full = Mathf.Max(0f, settings.FullBlendWithinPerpDistance);
-
-            float none = Mathf.Max(full + 1e-3f, settings.NoneBeyondPerpDistance);
-
-            float clamped = Mathf.Clamp(perpDistance, full, none);
-
-            return Mathf.InverseLerp(none, full, clamped);
-
-        }
+        public static float PerpDistanceCurve(float perpDistance, in SightLineBlendSettings settings) =>
+            OcclusionBlendMath.DistanceToOcclusion01(
+                perpDistance,
+                settings.FullBlendWithinPerpDistance,
+                settings.NoneBeyondPerpDistance);
 
 
 

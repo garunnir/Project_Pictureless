@@ -18,13 +18,15 @@ public class ShadeObjectController : ShaderController
         _characterOcclusionId = Shader.PropertyToID("_CharacterOcclusion");
     }
 
-    public void SetAdditionalLightEnabled(bool enabled)
+    public void SetAdditionalLightEnabled(bool enabled) =>
+        SetAdditionalLightBlend(enabled ? 1f : 0f);
+
+    public void SetAdditionalLightBlend(float blend01)
     {
         if (Mat == null)
-        {
             return;
-        }
-        Mat.SetFloat(_additionalLightEnabledId, enabled ? 1.0f : 0.0f);
+
+        Mat.SetFloat(_additionalLightEnabledId, Mathf.Clamp01(blend01));
     }
 
     // URP에서는 MaterialPropertyBlock 사용 시 SRP Batcher가 깨지므로

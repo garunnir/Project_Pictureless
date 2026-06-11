@@ -71,25 +71,22 @@ flowchart TD
 `IsTileVisible`에서 **`BlockingBuildingFullHideLayer`를 실내·야외 공통 선적용**합니다.
 
 - `buildingId`가 `ctx.PlayerBlockingBuildingIds`에 있으면 → **Hide**
-- **예외**: `tileCellY == MinCellY` 이고 타입이 `Floor`
+- **예외**: `tileCellY == MinCellY` 이고 타입이 `Floor` (§4 흔적 유지)
 - 야외 분기(`OutdoorTileVisibilityPipeline`)는 차단 통과 타일에 **`ShowAllLayer`** 만 적용
 
 **차단 buildingId 수집** (`BuildingPlayerOcclusionResolver` — 실내·야외 공통):
 
-- 카메라 월드 위치 ↔ 플레이어 월드 **3D** 선분을 샘플 (플레이어 셀 포함)
-- 각 샘플 → `ConvertWorldToGrid` → 그리드 셀 `(x, y, z)` (x·y·z 동일한 셀 좌표)
-- 경로상 셀 타일 중 `occludesOccupiedCells` / `occludesEdge` bake 플래그가 있는 타일만 `buildingId > 0` 수집 (§3 벽 오클루전과 동일 정의; Floor는 일반적으로 제외)
-- **`PlayerBuildingId` 제외** — 플레이어 소속 building은 차단 목록에 넣지 않음 (셀 스킵 없이 buildingId로 필터)
-- 수집된 `buildingId`마다 건물 **전체**가 Hide 대상 (MinCellY Floor만 예외)
-- resolver 산출 집합을 **즉시** context에 반영 (`BuildingBlockingController`가 추가/제거 델타 적용)
-- `IsTileVisible` 진입 시 차단 building Hide를 **실내·야외 모두** 선적용 (`BlockingBuildingFullHideLayer`)
+- 카메라↔플레이어 월드 **3D** 선분 샘플 (플레이어 셀 포함) → `ConvertWorldToGrid` → `(x, y, z)`
+- 경로상 타일 중 collision bake 플래그 `occludesOccupiedCells` / `occludesEdge`가 있는 것만 `buildingId > 0` 수집 (Floor는 일반적으로 제외 — [TILEMAP.md](TILEMAP.md) §TileDefinition)
+- **`PlayerBuildingId` 제외** — 플레이어 소속 building은 차단 목록에 넣지 않음
+- resolver 산출 집합을 **즉시** context에 반영 (`BuildingBlockingController` 델타)
 
-**토글**: `PlayerFloorVisibilityDriver._outdoorSightLineBuildingHideEnabled` / `OutdoorSightLineBuildingHideEnabled == false` → 차단 집합 비움.
+**토글**: `OutdoorSightLineBuildingHideEnabled == false` → 차단 집합 비움.
 
-**적용 방식**: 차단 building 추가 시 **building 전체 despawn** (MinCellY Floor 제외·흔적 유지). 근접 타일 블렌드(§3)와 독립.
+**스트리밍 적용** (근접 타일 블렌드 §3와 독립):
 
-- 차단 building 추가: despawn (MinCellY Floor는 despawn 제외·흔적 유지)
-- 차단 building 제거: 가시성 통과 타일만 respawn
+- 차단 building **추가** → building 전체 despawn (MinCellY Floor 제외)
+- 차단 building **제거** → 가시성 통과 타일만 respawn
 - 셀 `Prune` 시 차단 building 소속 뷰는 **building 단위 despawn**으로 승격
 
 ### 2.3 실내 — `IndoorTileVisibilityPipeline`

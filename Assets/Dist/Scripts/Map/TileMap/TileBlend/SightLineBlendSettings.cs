@@ -27,14 +27,18 @@ namespace IsoTilemap
         [Tooltip("변화가 이 미만이면 적용 스킵")]
         public float ApplyEpsilon;
 
+        [Tooltip("0=즉시 반영. 클수록 프레임 간 occlusion 변화가 완만해집니다.")]
+        public float OcclusionSmoothSpeed;
+
         public static SightLineBlendSettings DefaultUnity => new SightLineBlendSettings
         {
             CellSize = 1f,
-            FullBlendWithinPerpDistance = 0.75f,
-            NoneBeyondPerpDistance = 8f,
+            FullBlendWithinPerpDistance = 1.25f,
+            NoneBeyondPerpDistance = 10f,
             BandRadiusCells = 2,
             SegmentTEpsilon = 0.15f,
-            ApplyEpsilon = 0.015f,
+            ApplyEpsilon = 0.01f,
+            OcclusionSmoothSpeed = 6f,
         };
     }
 }

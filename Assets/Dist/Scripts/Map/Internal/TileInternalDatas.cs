@@ -64,15 +64,19 @@ using UnityEngine;namespace IsoTilemap
         [Tooltip("근접도 재계산 시 이전 값과 차이가 이 미만이면 배치 적용 스킵")]
         public float ApplyEpsilon;
 
+        [Tooltip("0=즉시 반영. 클수록 프레임 간 occlusion 변화가 완만해집니다.")]
+        public float OcclusionSmoothSpeed;
+
         [Tooltip("플레이어 주변 삼각 마스크로 추가 숨김 벽을 포함합니다. 끄면 BFS·거리 오클루전만 적용됩니다.")]
         public bool PlayerProximityMaskEnabled;
 
         public static OcclusionProximitySettings DefaultUnity => new OcclusionProximitySettings
         {
             CellSize = 1f,
-            OcclusionFullWithinDistance = 0.75f,
-            OcclusionNoneBeyondDistance = 8f,
-            ApplyEpsilon = 0.015f,
+            OcclusionFullWithinDistance = 1.25f,
+            OcclusionNoneBeyondDistance = 10f,
+            ApplyEpsilon = 0.01f,
+            OcclusionSmoothSpeed = 6f,
             PlayerProximityMaskEnabled = true,
         };
     }

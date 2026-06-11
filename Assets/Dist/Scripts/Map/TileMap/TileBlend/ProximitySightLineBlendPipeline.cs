@@ -32,7 +32,8 @@ namespace IsoTilemap
             int playerFloorCellY,
             bool isPlayerOutdoor,
             in SightLineBlendSettings settings,
-            IReadOnlyDictionary<Guid, float> previous)
+            IReadOnlyDictionary<Guid, float> previous,
+            float smoothFactor = 1f)
         {
             _scratch.Clear();
             _applyScratch.Clear();
@@ -78,6 +79,30 @@ namespace IsoTilemap
                     AccumulateOcclusion(
                         _edgeTilesScratch[i], cell, cameraWorld, playerWorld,
                         playerCell, playerFloorCellY, isPlayerOutdoor, cellSize, settings, eps);
+                }
+            }
+
+            if (previous != null && smoothFactor < 1f)
+            {
+                var activeIds = new List<Guid>(_scratch.Keys);
+                for (int i = 0; i < activeIds.Count; i++)
+                {
+                    Guid id = activeIds[i];
+                    float target = _scratch[id];
+                    if (previous.TryGetValue(id, out float prev))
+                        target = OcclusionBlendMath.SmoothTowards(prev, target, smoothFactor);
+
+                    _scratch[id] = target;
+                }
+
+                foreach (var kv in previous)
+                {
+                    if (_scratch.ContainsKey(kv.Key))
+                        continue;
+
+                    float faded = OcclusionBlendMath.SmoothTowards(kv.Value, 0f, smoothFactor);
+                    if (faded > eps)
+                        _scratch[kv.Key] = faded;
                 }
             }
 
