@@ -111,8 +111,31 @@ namespace IsoTilemap
 
 
         /// <summary>플레이어 XZ 기준 +X·-Z 사분면만 통과 (dx≥0, dz≤0).</summary>
-        public static bool PassesPlayerDownXQuadrant(Vector3Int occupiedCell, Vector3Int playerCell) =>
-            occupiedCell.x >= playerCell.x && occupiedCell.z <= playerCell.z;
+        public static bool PassesPlayerDownXQuadrant(Vector3Int cell, Vector3Int playerCell) =>
+            cell.x >= playerCell.x && cell.z <= playerCell.z;
+
+        /// <summary>
+        /// 근접 시선 오클루전 후보가 +X·-Z 사분면에 있는지 검사합니다.
+        /// EdgeWall은 변 중점(2배 정수 좌표) 기준 — 밴드 셀만 보면 -X/+Z 면이 누락될 수 있습니다.
+        /// </summary>
+        public static bool PassesPlayerDownXQuadrantForOccluder(
+            in TileData tile,
+            Vector3Int occupiedCell,
+            Vector3Int playerCell)
+        {
+            if ((TileView.TileType)tile.identity.tileType == TileView.TileType.EdgeWall &&
+                tile.identity.edgeFace != TileIdentity.EdgeFaceNone)
+            {
+                WallEdgeKey key = WallEdgeKey.FromEdgeTileIdentity(tile.identity);
+                int centerX2 = key.CellA.x + key.CellB.x;
+                int centerZ2 = key.CellA.z + key.CellB.z;
+                int playerX2 = playerCell.x << 1;
+                int playerZ2 = playerCell.z << 1;
+                return centerX2 >= playerX2 && centerZ2 <= playerZ2;
+            }
+
+            return PassesPlayerDownXQuadrant(occupiedCell, playerCell);
+        }
 
         public static bool IsStructuralOcclusionTile(in TileData tile)
         {

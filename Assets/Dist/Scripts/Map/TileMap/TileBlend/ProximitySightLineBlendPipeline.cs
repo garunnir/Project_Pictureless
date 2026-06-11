@@ -49,6 +49,9 @@ namespace IsoTilemap
 
             foreach (Vector3Int cell in _bandCells)
             {
+                if (!SightLineOcclusionStrength.PassesPlayerDownXQuadrant(cell, playerCell))
+                    continue;
+
                 _cellTilesScratch.Clear();
                 _edgeTilesScratch.Clear();
 
@@ -126,7 +129,7 @@ namespace IsoTilemap
             in SightLineBlendSettings settings,
             float eps)
         {
-            if (!SightLineOcclusionStrength.PassesPlayerDownXQuadrant(occupiedCell, playerCell))
+            if (!SightLineOcclusionStrength.PassesPlayerDownXQuadrantForOccluder(tile, occupiedCell, playerCell))
                 return;
 
             if (SightLineOcclusionStrength.ShouldSkipProximityForIndoorStructural(isPlayerOutdoor, tile))
