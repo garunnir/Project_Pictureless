@@ -1,19 +1,17 @@
 // ============================================================
-// OcclusionModeController — 전역 오클루전 모드 상태전이/델타 계산
+// BuildingBlockingController — 시선 차단 buildingId 델타 추적
 // ============================================================
 using System;
 using System.Collections.Generic;
 
 namespace IsoTilemap
 {
-    public sealed class OcclusionModeController
+    public sealed class BuildingBlockingController
     {
         readonly HashSet<int> _appliedBuildingIds = new();
         readonly List<int> _addedScratch = new();
         readonly List<int> _removedScratch = new();
-        OcclusionMode _currentMode = OcclusionMode.LegacyCompatible;
 
-        public OcclusionMode CurrentMode => _currentMode;
         public IReadOnlyList<int> LastAdded => _addedScratch;
         public IReadOnlyList<int> LastRemoved => _removedScratch;
         public bool HasAnyBlocked => _appliedBuildingIds.Count > 0;
@@ -26,29 +24,15 @@ namespace IsoTilemap
             _appliedBuildingIds.Clear();
             _addedScratch.Clear();
             _removedScratch.Clear();
-            _currentMode = OcclusionMode.LegacyCompatible;
         }
 
         public void ApplyDelta(
             HashSet<int> nextBlocking,
-            OcclusionMode nextMode,
-            FloorVisibilityContext ctx,
-            Action<int, OcclusionMode, FloorVisibilityContext> onAdded,
-            Action<int, OcclusionMode, FloorVisibilityContext> onRemoved)
+            Action<int, FloorVisibilityContext> onAdded,
+            Action<int, FloorVisibilityContext> onRemoved,
+            in FloorVisibilityContext ctx)
         {
             nextBlocking ??= new HashSet<int>();
-
-            if (_currentMode != nextMode && _appliedBuildingIds.Count > 0)
-            {
-                _removedScratch.Clear();
-                foreach (int id in _appliedBuildingIds)
-                    _removedScratch.Add(id);
-
-                for (int i = 0; i < _removedScratch.Count; i++)
-                    onRemoved?.Invoke(_removedScratch[i], _currentMode, ctx);
-
-                _appliedBuildingIds.Clear();
-            }
 
             _addedScratch.Clear();
             foreach (int id in nextBlocking)
@@ -65,16 +49,14 @@ namespace IsoTilemap
             }
 
             for (int i = 0; i < _addedScratch.Count; i++)
-                onAdded?.Invoke(_addedScratch[i], nextMode, ctx);
+                onAdded?.Invoke(_addedScratch[i], ctx);
 
             for (int i = 0; i < _removedScratch.Count; i++)
-                onRemoved?.Invoke(_removedScratch[i], nextMode, ctx);
+                onRemoved?.Invoke(_removedScratch[i], ctx);
 
             _appliedBuildingIds.Clear();
             foreach (int id in nextBlocking)
                 _appliedBuildingIds.Add(id);
-
-            _currentMode = nextMode;
         }
     }
 }

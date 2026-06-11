@@ -21,11 +21,12 @@ MonoBehaviour:
     providesLogicalFloor: 1
     blocksPassageAndOcclusion: 0
     usePhysicsCollider: 0
-    splitPassageAndOcclusion: 0
+    splitPassageAndOcclusion: 1
     blocksOccupiedCells: 0
-    occludesOccupiedCells: 0
+    occludesOccupiedCells: 1
   edge:
     blocksPassageAndOcclusion: 0
     splitPassageAndOcclusion: 0
     blocksEdge: 0
+    separatesRoom: 0
     occludesEdge: 0

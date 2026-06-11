@@ -14,7 +14,6 @@ namespace IsoTilemap
         public event Action<TileData> OnRuntimeTileAdded;
         public event Action<TileData> OnRuntimeTileRemoved;
         public event Action<TileOcclusionPresentationDelta> OnTileOcclusionPresentationDelta;
-
         internal Dictionary<Vector3Int, List<TileData>> tiles = new Dictionary<Vector3Int, List<TileData>>();
 
         /// <summary>파생 인덱스: <see cref="tiles"/>·edgeBinder와 동기화된 Guid 조회용.</summary>
@@ -361,22 +360,23 @@ namespace IsoTilemap
         public bool TryGetTileOcclusionPresentation(Guid tileId, out float occlusion01) =>
             _lastAppliedOcclusion.TryGetValue(tileId, out occlusion01);
 
+        /// <summary><see cref="WallOcclusionFinder"/> BFS 숨김 집합의 Wall·EdgeWall이면 true.</summary>
+        public bool IsBfsOcclusionStructuralTile(Guid tileId)
+        {
+            if (!_hiddenWallTileIds.Contains(tileId))
+                return false;
+
+            if (!TryGetTileById(tileId, out TileData tile))
+                return false;
+
+            var type = (TileView.TileType)tile.identity.tileType;
+            return type is TileView.TileType.Wall or TileView.TileType.EdgeWall;
+        }
+
         public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {
             _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex, _mapCacheHub?.Topology, this);
             return _occlusionFinder.Find(playerCellPos);
-        }
-
-        public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList)
-        {
-            if (tiles.TryGetValue(pos, out var list))
-            {
-                tileList = list;
-                return true;
-            }
-
-            tileList = null;
-            return false;
         }
 
         /// <summary>BFS 결과 집합만 갱신하고 거리 occlusion을 채운 뒌 API(호환용). 월드 기반 갱신은 <see cref="UpdateOcclusionFromPlayerWorld"/>를 쓰세요.</summary>
@@ -411,48 +411,64 @@ namespace IsoTilemap
         public void UpdateOcclusionFromPlayerWorld(Vector3 playerWorld, OcclusionProximitySettings settings)
         {
             float cs = Mathf.Max(1e-4f, settings.CellSize);
+            int floorCellY = TileHelper.ConvertWorldToGrid(playerWorld, cs).y;
+            UpdateOcclusionFromPlayerWorld(playerWorld, floorCellY, settings);
+        }
+
+        /// <inheritdoc cref="UpdateOcclusionFromPlayerWorld(Vector3, OcclusionProximitySettings)"/>
+        public void UpdateOcclusionFromPlayerWorld(
+            Vector3 playerWorld,
+            int playerFloorCellY,
+            OcclusionProximitySettings settings)
+        {
+            float cs = Mathf.Max(1e-4f, settings.CellSize);
 
             NormalizeProximity(ref settings);
 
-            Vector3Int cell = TileHelper.ConvertWorldToGrid(playerWorld, cs);
+            Vector3Int snapCell = TileHelper.ConvertWorldToGrid(playerWorld, cs);
+            Vector3Int playerCell = new Vector3Int(snapCell.x, playerFloorCellY, snapCell.z);
 
-            if (_mapCacheHub != null && _mapCacheHub.IsOutdoorEvaluation(cell.y, cell.x, cell.z))
+            if (_mapCacheHub != null)
             {
-                if (_hiddenWallTileIds.Count > 0 || _lastAppliedOcclusion.Count > 0)
-                    ClearWallCharacterOcclusion();
-                _hasLastOcclusionPlayerCell = false;
-                return;
+                int evalX = snapCell.x;
+                int evalZ = snapCell.z;
+                if (_mapCacheHub.TryResolveFloorAnchorXZ(playerFloorCellY, playerWorld, cs, out int floorX, out int floorZ))
+                {
+                    evalX = floorX;
+                    evalZ = floorZ;
+                }
+
+                if (_mapCacheHub.IsOutdoorEvaluation(playerFloorCellY, evalX, evalZ))
+                {
+                    if (_hiddenWallTileIds.Count > 0 || _lastAppliedOcclusion.Count > 0)
+                        ClearWallCharacterOcclusion();
+                    _hasLastOcclusionPlayerCell = false;
+                    return;
+                }
             }
 
-            bool needRebuild = !_hasLastOcclusionPlayerCell || cell != _lastOcclusionPlayerCell;
+            bool needRebuild = !_hasLastOcclusionPlayerCell || playerCell != _lastOcclusionPlayerCell;
             if (needRebuild)
             {
-                RebuildOcclusionMembership(cell, playerWorld, settings);
+                RebuildOcclusionMembership(playerCell, playerWorld, playerFloorCellY, settings);
                 _hasLastOcclusionPlayerCell = true;
-                _lastOcclusionPlayerCell = cell;
+                _lastOcclusionPlayerCell = playerCell;
             }
 
             RefreshOcclusionProximity(playerWorld, settings);
         }
 
-        private static void NormalizeProximity(ref OcclusionProximitySettings s)
+        public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList)
         {
-            if (s.OcclusionFullWithinDistance > s.OcclusionNoneBeyondDistance)
+            if (tiles.TryGetValue(pos, out var list))
             {
-                (s.OcclusionFullWithinDistance, s.OcclusionNoneBeyondDistance) =
-                    (s.OcclusionNoneBeyondDistance, s.OcclusionFullWithinDistance);
+                tileList = list;
+                return true;
             }
 
-            float minSpan = 1e-3f;
-            if (Mathf.Abs(s.OcclusionNoneBeyondDistance - s.OcclusionFullWithinDistance) < minSpan)
-                s.OcclusionNoneBeyondDistance = s.OcclusionFullWithinDistance + minSpan;
-
-            if (s.ApplyEpsilon < 0f)
-                s.ApplyEpsilon = 0f;
+            tileList = null;
+            return false;
         }
-
-        private void InvalidateOcclusionPlayerTracking() =>
-            _hasLastOcclusionPlayerCell = false;
 
         private void NotifyBuildingTopologyChanged(
             HashSet<Vector3Int> changedCells,
@@ -475,15 +491,117 @@ namespace IsoTilemap
             }
         }
 
-        private void RebuildOcclusionMembership(Vector3Int playerCellPos, Vector3 playerWorld,
+        private bool TryFindTileById(Guid tileId, out TileData tileData) =>
+            _tilesById.TryGetValue(tileId, out tileData);
+
+        private static void IndexTile(in TileData tile, Dictionary<Guid, TileData> index) =>
+            index[tile.tileDefId] = tile;
+
+        private void IndexTile(in TileData tile) => IndexTile(tile, _tilesById);
+
+        /// <inheritdoc cref="IMapModel.ApplyTileStates"/>
+        /// <remarks>프레젠테이션(오클루전·고스트·선택)은 <see cref="TileViewPresentationApplier"/> 경로만 사용합니다.</remarks>
+        public void ApplyTileStates(IReadOnlyList<TileData> tileList)
+        {
+        }
+
+        /// <inheritdoc cref="IMapModel.ApplyTiles"/>
+        public void ApplyTiles(IReadOnlyList<TileData> tileList)
+        {
+            if (tileList == null || tileList.Count == 0)
+                return;
+
+            if (!MergeTilesIntoRuntime(tileList, _changedCellsBuffer))
+                return;
+
+            _isDirty = true;
+            NotifyBuildingTopologyChanged(_changedCellsBuffer);
+            OnRuntimeBatchChanged?.Invoke(_changedCellsBuffer);
+        }
+
+        /// <summary>런타임 딕셔너리에 타일을 반영하고 변경된 셀을 수집합니다.</summary>
+        private bool MergeTilesIntoRuntime(IReadOnlyList<TileData> tileList, HashSet<Vector3Int> changedCells)
+        {
+            changedCells.Clear();
+
+            for (int t = 0; t < tileList.Count; t++)
+            {
+                TileData tile = tileList[t];
+
+                if ((TileView.TileType)tile.identity.tileType == TileView.TileType.EdgeWall)
+                {
+                    if (!_edgeBinder.TryReplaceTileData(tile))
+                        continue;
+
+                    IndexTile(tile);
+                    var key = WallEdgeKey.FromEdgeTileIdentity(tile.identity);
+                    changedCells.Add(key.Anchor);
+                    changedCells.Add(key.NeighborCell());
+                    continue;
+                }
+
+                Vector3Int pos = tile.identity.GridPos;
+
+                if (!tiles.TryGetValue(pos, out var existingList))
+                    continue;
+
+                for (int i = 0; i < existingList.Count; i++)
+                {
+                    if (existingList[i].tileDefId != tile.tileDefId)
+                        continue;
+
+                    existingList[i] = tile;
+                    IndexTile(tile);
+                    break;
+                }
+
+                changedCells.Add(pos);
+            }
+
+            return changedCells.Count > 0;
+        }
+
+        private static bool IdentityEquals(in TileIdentity a, in TileIdentity b) =>
+            a.PrefabId == b.PrefabId &&
+            a.GridPos == b.GridPos &&
+            a.sizeUnit == b.sizeUnit &&
+            a.tileType == b.tileType &&
+            a.edgeFace == b.edgeFace &&
+            a.buildingId == b.buildingId &&
+            a.roomId == b.roomId &&
+            a.collisionFlags == b.collisionFlags;
+
+        private static void NormalizeProximity(ref OcclusionProximitySettings s)
+        {
+            if (s.OcclusionFullWithinDistance > s.OcclusionNoneBeyondDistance)
+            {
+                (s.OcclusionFullWithinDistance, s.OcclusionNoneBeyondDistance) =
+                    (s.OcclusionNoneBeyondDistance, s.OcclusionFullWithinDistance);
+            }
+
+            float minSpan = 1e-3f;
+            if (Mathf.Abs(s.OcclusionNoneBeyondDistance - s.OcclusionFullWithinDistance) < minSpan)
+                s.OcclusionNoneBeyondDistance = s.OcclusionFullWithinDistance + minSpan;
+
+            if (s.ApplyEpsilon < 0f)
+                s.ApplyEpsilon = 0f;
+        }
+
+        private void InvalidateOcclusionPlayerTracking() =>
+            _hasLastOcclusionPlayerCell = false;
+
+        private void RebuildOcclusionMembership(
+            Vector3Int playerCellPos,
+            Vector3 playerWorld,
+            int playerFloorCellY,
             OcclusionProximitySettings settings)
         {
+            float cs = Mathf.Max(1e-4f, settings.CellSize);
             HashSet<(int x, int z)> roomVisited = null;
             if (_mapCacheHub != null)
             {
-                roomVisited = _mapCacheHub.GetVisitedForCell(
-                    playerCellPos.y, playerCellPos.x, playerCellPos.z,
-                    FloorRoomBfsProfile.Occlusion);
+                roomVisited = _mapCacheHub.GetVisitedForWorld(
+                    playerFloorCellY, playerWorld, cs, FloorRoomBfsProfile.Occlusion);
             }
 
             _occlusionFinder ??= new WallOcclusionFinder(tiles, _edgeBinder.EdgeIndex, _mapCacheHub?.Topology, this);
@@ -494,7 +612,6 @@ namespace IsoTilemap
             _occlusionDeltaClear.Clear();
 
             var list = batch.FinalOccluding;
-            float cs = Mathf.Max(1e-4f, settings.CellSize);
 
             for (int i = 0; i < list.Count; i++)
             {
@@ -637,86 +754,6 @@ namespace IsoTilemap
                 s.OcclusionFullWithinDistance,
                 clamped);
         }
-
-        private bool TryFindTileById(Guid tileId, out TileData tileData) =>
-            _tilesById.TryGetValue(tileId, out tileData);
-
-        private static void IndexTile(in TileData tile, Dictionary<Guid, TileData> index) =>
-            index[tile.tileDefId] = tile;
-
-        private void IndexTile(in TileData tile) => IndexTile(tile, _tilesById);
-
-        /// <inheritdoc cref="IMapModel.ApplyTileStates"/>
-        /// <remarks>프레젠테이션(오클루전·고스트·선택)은 <see cref="TileViewPresentationApplier"/> 경로만 사용합니다.</remarks>
-        public void ApplyTileStates(IReadOnlyList<TileData> tileList)
-        {
-        }
-
-        /// <inheritdoc cref="IMapModel.ApplyTiles"/>
-        public void ApplyTiles(IReadOnlyList<TileData> tileList)
-        {
-            if (tileList == null || tileList.Count == 0)
-                return;
-
-            if (!MergeTilesIntoRuntime(tileList, _changedCellsBuffer))
-                return;
-
-            _isDirty = true;
-            NotifyBuildingTopologyChanged(_changedCellsBuffer);
-            OnRuntimeBatchChanged?.Invoke(_changedCellsBuffer);
-        }
-
-        /// <summary>런타임 딕셔너리에 타일을 반영하고 변경된 셀을 수집합니다.</summary>
-        private bool MergeTilesIntoRuntime(IReadOnlyList<TileData> tileList, HashSet<Vector3Int> changedCells)
-        {
-            changedCells.Clear();
-
-            for (int t = 0; t < tileList.Count; t++)
-            {
-                TileData tile = tileList[t];
-
-                if ((TileView.TileType)tile.identity.tileType == TileView.TileType.EdgeWall)
-                {
-                    if (!_edgeBinder.TryReplaceTileData(tile))
-                        continue;
-
-                    IndexTile(tile);
-                    var key = WallEdgeKey.FromEdgeTileIdentity(tile.identity);
-                    changedCells.Add(key.Anchor);
-                    changedCells.Add(key.NeighborCell());
-                    continue;
-                }
-
-                Vector3Int pos = tile.identity.GridPos;
-
-                if (!tiles.TryGetValue(pos, out var existingList))
-                    continue;
-
-                for (int i = 0; i < existingList.Count; i++)
-                {
-                    if (existingList[i].tileDefId != tile.tileDefId)
-                        continue;
-
-                    existingList[i] = tile;
-                    IndexTile(tile);
-                    break;
-                }
-
-                changedCells.Add(pos);
-            }
-
-            return changedCells.Count > 0;
-        }
-
-        private static bool IdentityEquals(in TileIdentity a, in TileIdentity b) =>
-            a.PrefabId == b.PrefabId &&
-            a.GridPos == b.GridPos &&
-            a.sizeUnit == b.sizeUnit &&
-            a.tileType == b.tileType &&
-            a.edgeFace == b.edgeFace &&
-            a.buildingId == b.buildingId &&
-            a.roomId == b.roomId &&
-            a.collisionFlags == b.collisionFlags;
 
         private readonly struct OcclusionWallEntry
         {

@@ -50,7 +50,6 @@ namespace IsoTilemap
         ITileEdgeBinderReadOnly EdgeBinder { get; }
         /// <summary>셀에 놓인 타일 + 면 벽 바인더가 연결한 인접 EdgeWall을 합친 목록(렌더 갱신용).</summary>
         void GatherRenderableTiles(Vector3Int cellPos, List<TileData> buffer);
-        public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos);
         public IReadOnlyList<TileData> TilesSnapshot { get; }
         public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList);
         /// <summary>점유·앵커 기준 셀 타일. hub가 있으면 topology, 없으면 <see cref="TryGetTiles"/> 폴백.</summary>
@@ -75,6 +74,15 @@ namespace IsoTilemap
 
         /// <summary>플레이어 월드 위치로 오클루전(셀 변경 시 BFS + 거리 occlusion) 갱신.</summary>
         void UpdateOcclusionFromPlayerWorld(Vector3 playerWorld, OcclusionProximitySettings settings);
+
+        /// <summary>
+        /// <paramref name="playerFloorCellY"/>는 층 가시성과 동일한 밴드 해석.
+        /// room 베이크 조회는 <paramref name="playerWorld"/> XZ 기준 논리 바닥 앵커를 사용합니다.
+        /// </summary>
+        void UpdateOcclusionFromPlayerWorld(
+            Vector3 playerWorld,
+            int playerFloorCellY,
+            OcclusionProximitySettings settings);
         public void Initialize(MapModelDTO prepared);
     }
 /// <summary>

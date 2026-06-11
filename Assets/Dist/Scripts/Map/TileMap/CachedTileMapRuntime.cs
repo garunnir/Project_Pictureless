@@ -1,22 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace IsoTilemap
 {
-    /// <summary>오클루전 BFS 캐시 + 공유 청크 인덱스 증분 갱신 래퍼.</summary>
+    /// <summary>공유 청크 인덱스 증분 갱신 래퍼.</summary>
     public class CachedTileMapRuntime : IMapModel
     {
         private readonly IMapModel _runtimeData;
         private readonly TileMapChunkIndex _chunkIndex;
         private readonly int _chunkSize;
         private readonly bool _ownsChunkIndex;
-
-#nullable enable
-        private List<TileData>? _cachedtiles = null;
-        private HashSet<Vector3Int>? _cachedCurrentRoomID = null;
-#nullable disable
 
         public CachedTileMapRuntime(IMapModel runtimeData, TileMapChunkIndex sharedChunkIndex = null, int chunkSize = 16)
         {
@@ -75,24 +69,6 @@ namespace IsoTilemap
             remove => _runtimeData.OnRuntimeTileRemoved -= value;
         }
 
-        public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos)
-        {
-            if (_cachedtiles != null && _cachedCurrentRoomID != null && _cachedCurrentRoomID.Contains(playerCellPos))
-                return _cachedtiles;
-
-            IReadOnlyList<TileData> resultTiles = _runtimeData.GetOccludingWalls(playerCellPos);
-            IEnumerable<Vector3Int> visited = resultTiles.Select(x => x.identity.GridPos);
-            _cachedCurrentRoomID = visited.ToHashSet();
-            _cachedtiles = resultTiles.ToList();
-            return resultTiles;
-        }
-
-        public void ClearCache()
-        {
-            _cachedtiles = null;
-            _cachedCurrentRoomID = null;
-        }
-
         public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList) =>
             _runtimeData.TryGetTiles(pos, out tileList);
 
@@ -116,41 +92,31 @@ namespace IsoTilemap
             _runtimeData.Initialize(prepared);
             if (_ownsChunkIndex)
                 _chunkIndex.Build(_runtimeData, _chunkSize);
-            ClearCache();
         }
 
-        public void SetTile(TileData tileData)
-        {
-            ClearCache();
+        public void SetTile(TileData tileData) =>
             _runtimeData.SetTile(tileData);
-        }
 
-        public void RemoveTile(TileData tileData)
-        {
-            ClearCache();
+        public void RemoveTile(TileData tileData) =>
             _runtimeData.RemoveTile(tileData);
-        }
 
-        public void ApplyTiles(IReadOnlyList<TileData> tiles)
-        {
-            ClearCache();
+        public void ApplyTiles(IReadOnlyList<TileData> tiles) =>
             _runtimeData.ApplyTiles(tiles);
-        }
 
         public void ApplyTileStates(IReadOnlyList<TileData> tiles) =>
             _runtimeData.ApplyTileStates(tiles);
 
-        public void HideOcclusionTileWall(Vector3Int playerCellPos)
-        {
-            ClearCache();
+        public void HideOcclusionTileWall(Vector3Int playerCellPos) =>
             _runtimeData.HideOcclusionTileWall(playerCellPos);
-        }
 
-        public void UpdateOcclusionFromPlayerWorld(Vector3 playerWorld, OcclusionProximitySettings settings)
-        {
-            ClearCache();
+        public void UpdateOcclusionFromPlayerWorld(Vector3 playerWorld, OcclusionProximitySettings settings) =>
             _runtimeData.UpdateOcclusionFromPlayerWorld(playerWorld, settings);
-        }
+
+        public void UpdateOcclusionFromPlayerWorld(
+            Vector3 playerWorld,
+            int playerFloorCellY,
+            OcclusionProximitySettings settings) =>
+            _runtimeData.UpdateOcclusionFromPlayerWorld(playerWorld, playerFloorCellY, settings);
 
         private void HandleTileAdded(TileData tileData) =>
             _chunkIndex.RegisterTile(tileData, _chunkSize);

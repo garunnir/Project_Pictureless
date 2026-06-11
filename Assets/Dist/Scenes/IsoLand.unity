@@ -15600,6 +15600,7 @@ MonoBehaviour:
   _gridCellSize: 1
   _chunkStreamer: {fileID: 299715457}
   _floorVisibilityDriver: {fileID: 299715458}
+  _proximityBlendDriver: {fileID: 1383865924}
   _enableTilePooling: 1
   _maxPooledInstances: 2000
   _maxPoolMemoryMb: 20000
@@ -15640,7 +15641,6 @@ MonoBehaviour:
   _playerState: {fileID: 1383865919}
   _heightOffsetWorld: 0
   _outdoorSightLineBuildingHideEnabled: 1
-  _outdoorOcclusionMode: 0
 --- !u!1001 &300644938
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -56250,6 +56250,7 @@ MonoBehaviour:
   tileBfsSceneOverlay: 0
   tileBuildingIdLabels: 1
   tileIndoorOutdoorOverlay: 1
+  tileSightLineBuildingOverlay: 1
   player: 1
   playerInteraction: 1
   playerMovement: 1
@@ -59832,6 +59833,7 @@ GameObject:
   - component: {fileID: 1383865920}
   - component: {fileID: 1383865921}
   - component: {fileID: 1383865923}
+  - component: {fileID: 1383865924}
   - component: {fileID: 1383865919}
   m_Layer: 0
   m_Name: '>PlayerCharacter'
@@ -60074,6 +60076,27 @@ MonoBehaviour:
   _aimObstructionMask:
     serializedVersion: 2
     m_Bits: 55
+--- !u!114 &1383865924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1383865911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8f4e2a19b3d4e6f8a0c1d2e3f4a5b6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::SightLineProximityBlendDriver
+  _playerState: {fileID: 1383865919}
+  _tileMapManager: {fileID: 299715456}
+  _blendSettings:
+    CellSize: 1
+    FullBlendWithinPerpDistance: 0.75
+    NoneBeyondPerpDistance: 8
+    BandRadiusCells: 2
+    SegmentTEpsilon: 0.15
+    ApplyEpsilon: 0.015
 --- !u!1 &1384417763
 GameObject:
   m_ObjectHideFlags: 0

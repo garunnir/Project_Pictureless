@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace IsoTilemap
 {
@@ -11,9 +12,8 @@ namespace IsoTilemap
         private readonly ITileViewRegistry _registry;
         private readonly TileMapModel _model;
         private readonly TilePresentationStore _store = new TilePresentationStore();
+        private readonly TilePresentationEntryStore _entries = new TilePresentationEntryStore();
         private BuildingGroupRegistry _buildingRegistry;
-        private int _mapMinCellY;
-        private OcclusionMode _occlusionMode = OcclusionMode.LegacyCompatible;
 
         public TileViewPresentationApplier(ITileViewRegistry registry, TileMapModel model)
         {
@@ -21,13 +21,13 @@ namespace IsoTilemap
             _model = model ?? throw new ArgumentNullException(nameof(model));
         }
 
+        public TilePresentationEntryStore Entries => _entries;
+
         public void ConfigureSightLinePresentation(BuildingGroupRegistry buildingRegistry, int mapMinCellY)
         {
             _buildingRegistry = buildingRegistry;
-            _mapMinCellY = mapMinCellY;
+            _ = mapMinCellY;
         }
-
-        public void SetOcclusionMode(OcclusionMode mode) => _occlusionMode = mode;
 
         public void ApplySightLineBlockingDelta(in BuildingSightLinePresentationDelta delta)
         {
@@ -36,48 +36,61 @@ namespace IsoTilemap
 
             IReadOnlyList<int> added = delta.AddedBuildingIds;
             for (int i = 0; i < added.Count; i++)
-            {
-                int buildingId = added[i];
-                _store.SetSightLineHiddenBuilding(buildingId, true);
-                ApplySightLineHiddenForBuilding(buildingId, true);
-            }
+                SetSightLineHiddenForBuilding(added[i], true);
 
             IReadOnlyList<int> removed = delta.RemovedBuildingIds;
             for (int i = 0; i < removed.Count; i++)
-            {
-                int buildingId = removed[i];
-                _store.SetSightLineHiddenBuilding(buildingId, false);
-                ApplySightLineHiddenForBuilding(buildingId, false);
-            }
+                SetSightLineHiddenForBuilding(removed[i], false);
         }
 
-        public void ApplyOcclusionDelta(TileOcclusionPresentationDelta delta)
+        /// <summary>BFS 아래벽 블렌드 채널.</summary>
+        public void ApplyOcclusionDelta(TileOcclusionPresentationDelta delta) =>
+            ApplyCharacterOcclusionDelta(PresentationSource.BfsWallOcclusion, delta);
+
+        /// <summary>카메라↔플레이어 시선 근접 블렌드 채널.</summary>
+        public void ApplyProximityBlendDelta(TileOcclusionPresentationDelta delta) =>
+            ApplyCharacterOcclusionDelta(PresentationSource.ProximitySightLine, delta);
+
+        void ApplyCharacterOcclusionDelta(PresentationSource source, TileOcclusionPresentationDelta delta)
         {
             if (delta.IsEmpty)
                 return;
 
+            ApplyPresentationDelta(delta, source, PresentationConcern.CharacterOcclusion);
+        }
+
+        void ApplyPresentationDelta(
+            TileOcclusionPresentationDelta delta,
+            PresentationSource source,
+            PresentationConcern concern)
+        {
+            var touched = new HashSet<Guid>();
+
             IReadOnlyList<(Guid tileId, float occlusion01)> apply = delta.ApplyEntries;
             for (int i = 0; i < apply.Count; i++)
-            {
-                (Guid tileId, float occlusion01) entry = apply[i];
-                if (_registry.TryGetView(entry.tileId, out TileView view))
-                    ApplyWallOcclusionByMode(view, entry.occlusion01);
-            }
+                touched.Add(apply[i].tileId);
 
             IReadOnlyList<Guid> clear = delta.ClearIds;
             for (int i = 0; i < clear.Count; i++)
-            {
-                Guid tileId = clear[i];
-                if (_registry.TryGetView(tileId, out TileView view))
-                    ApplyWallOcclusionByMode(view, 0f);
-            }
+                touched.Add(clear[i]);
+
+            _entries.ApplyOcclusionDelta(source, concern, in delta);
+
+            foreach (Guid tileId in touched)
+                PushPresentationToView(tileId);
         }
 
         public void SetGhosted(Guid tileId, bool ghosted)
         {
-            _store.SetGhosted(tileId, ghosted);
+            if (ghosted)
+                _entries.Set(PresentationConcern.GhostAmount, PresentationSource.Ghost, tileId, 1f);
+            else
+            {
+                _entries.Remove(PresentationConcern.GhostAmount, PresentationSource.Ghost, tileId);
+            }
+
             if (_registry.TryGetView(tileId, out TileView view))
-                view.SetGhosted(ghosted);
+                view.SetGhosted(PresentationEntryQueries.ResolveGhosted(tileId, _entries));
         }
 
         public void SetSelected(Guid tileId, bool selected)
@@ -87,54 +100,60 @@ namespace IsoTilemap
                 view.SetSelected(selected);
         }
 
-        /// <summary>청크 로드·스폰 직후 모델 캐시·store와 뷰를 맞춥니다.</summary>
+        /// <summary>디버그·오버레이: 타일에 관여 중인 entry만 (기본 Query).</summary>
+        public IReadOnlyList<TilePresentationEntry> QueryEntriesForTile(Guid tileId) =>
+            _entries.Query(PresentationQuery.ForTile(tileId));
+
+        /// <summary>청크 로드·스폰 직후 entry store·선택 상태와 뷰를 맞춥니다.</summary>
         public void SyncPresentationForTile(Guid tileId)
         {
             if (!_registry.TryGetView(tileId, out TileView view))
                 return;
 
-            float occ = 0f;
-            if (_model.TryGetTileOcclusionPresentation(tileId, out float cached))
-                occ = cached;
-            view.SetGhosted(_store.IsGhosted(tileId));
-            ApplyWallOcclusionByMode(view, occ);
+            view.SetGhosted(PresentationEntryQueries.ResolveGhosted(tileId, _entries));
+            view.SetCharacterOcclusion(PresentationEntryQueries.ResolveCharacterOcclusion(tileId, _entries, _model));
             view.SetSelected(_store.IsSelected(tileId));
-            view.SetSightLineBuildingHidden(ResolveSightLineHiddenForTile(tileId));
+            view.SetSightLineBuildingHidden(PresentationEntryQueries.ResolveSightLineBuildingHidden(tileId, _entries));
         }
 
-        void ApplyWallOcclusionByMode(TileView view, float occlusion01)
+        void PushPresentationToView(Guid tileId)
         {
-            if (view == null)
+            if (!_registry.TryGetView(tileId, out TileView view))
                 return;
 
-            view.ApplyWallOcclusionMode(occlusion01, _occlusionMode);
+            view.SetCharacterOcclusion(PresentationEntryQueries.ResolveCharacterOcclusion(tileId, _entries, _model));
         }
 
-        bool ResolveSightLineHiddenForTile(Guid tileId)
+        void SetSightLineHiddenForBuilding(int buildingId, bool hidden)
         {
-            if (_buildingRegistry == null ||
-                !_model.TryGetTileById(tileId, out TileData tile))
-                return false;
-
-            if ((TileView.TileType)tile.identity.tileType != TileView.TileType.Floor)
-                return false;
-
-            if (tile.identity.GridPos.y != _mapMinCellY)
-                return false;
-
-            return _store.IsSightLineHiddenBuilding(tile.identity.buildingId);
-        }
-
-        void ApplySightLineHiddenForBuilding(int buildingId, bool hidden)
-        {
-            if (_buildingRegistry == null)
+            if (_buildingRegistry == null || buildingId <= 0)
                 return;
 
             IReadOnlyCollection<Guid> floorIds = _buildingRegistry.GetMinCellYFloorTilesForBuilding(buildingId);
+
             foreach (Guid tileId in floorIds)
             {
+                if (hidden)
+                {
+                    _entries.Set(
+                        PresentationConcern.SightLineBuildingHidden,
+                        PresentationSource.BlockingBuildingMinFloor,
+                        tileId,
+                        1f);
+                }
+                else
+                {
+                    _entries.Remove(
+                        PresentationConcern.SightLineBuildingHidden,
+                        PresentationSource.BlockingBuildingMinFloor,
+                        tileId);
+                }
+
                 if (_registry.TryGetView(tileId, out TileView view))
-                    view.SetSightLineBuildingHidden(hidden);
+                {
+                    view.SetSightLineBuildingHidden(
+                        PresentationEntryQueries.ResolveSightLineBuildingHidden(tileId, _entries));
+                }
             }
         }
     }

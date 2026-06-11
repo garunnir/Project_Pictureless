@@ -177,6 +177,12 @@ namespace IsoTilemap
                    _edges.TryGetValue(edgeKey, out edgeWall);
         }
 
+        public IEnumerable<TileData> EnumerateEdgeTiles()
+        {
+            foreach (var kv in _edges)
+                yield return kv.Value;
+        }
+
         public static bool CellHasFloor(IReadOnlyList<TileData> list) =>
             TileCollisionFlagsUtil.CellProvidesLogicalFloor(list);
 

@@ -91,7 +91,7 @@ graph TD
 - **RoomKey.cs** — (buildingId, cellY, roomId) 캐시 키
 - **FloorRoomFloodFill.cs** — 방 BFS 계산 (결과는 Hub가 캐시)
 
-소비자(`BuildingGroupBuilder`, `PlayerFloorVisibilityPolicy`, `WallOcclusionFinder`)는 `TileMap/` 루트에 두고 Hub만 참조.
+소비자(`BuildingGroupBuilder`, `PlayerFloorVisibilityPolicy`, `ProximitySightLineBlendPipeline`)는 `TileMap/` 루트에 두고 Hub만 참조.
 
 ### 맵 의미 bake / 런타임 읽기
 
@@ -148,12 +148,12 @@ flowchart LR
     Bake --> Identity
     Identity --> FloorMapIndex
     Identity --> TileCollisionPolicy
-    Identity --> WallOcclusionFinder
+    Identity --> BuildingOcclusion[BuildingPlayerOcclusionResolver]
 ```
 
 - **점유 셀** (`occupied`): 논리 바닥, Physics Collider, 통행·오클루전 연동 토글 (`blocksPassageAndOcclusion`). `splitPassageAndOcclusion=true`이면 통행(`blocksOccupiedCells`)·오클루전(`occludesOccupiedCells`) 개별 제어.
 - **엣지** (`edge`): 동일 패턴 — `blocksPassageAndOcclusion` / `splitPassageAndOcclusion` → `BlocksEdge` / `OccludesEdge`.
-- **소비**: `FloorMapIndex.CellHasFloor` / `CellHasSolidWall`, `MapTopologyGridSegment`, `TileCollisionPolicy`, `WallOcclusionFinder`는 **`tileType`이 아닌 `collisionFlags`** 사용.
+- **소비**: `FloorMapIndex`, `MapTopologyGridSegment`, `TileCollisionPolicy`, `BuildingPlayerOcclusionResolver` 등은 **`tileType`이 아닌 `collisionFlags`** 사용. 근접 블렌드(§3) 강도는 `collisionFlags`가 아닌 카메라↔플레이어 3D 선분 거리.
 - **에디터 마이그레이션**: `Tools/Map/Apply collision presets to TileDefinitions`
 
 ### Util
@@ -197,7 +197,7 @@ flowchart LR
 
 ---
 
-## BFS 벽 오클루전
+## 근접 시선 블렌드
 
-현재 구현은 `WallOcclusionFinder`(방 BFS + +X/-Z 방향 벽 + 거리 곡선)입니다.  
-레거시 `GetOccludingWalls` 요약은 [TILEMAP_VISIBILITY.md §3](TILEMAP_VISIBILITY.md)를 참고하세요.
+현재 구현은 `ProximitySightLineBlendPipeline`(카메라↔플레이어 3D 세그먼트 밴드 + 3D 선분 수직 거리 가림 강도)입니다.  
+상세는 [TILEMAP_VISIBILITY.md §3](TILEMAP_VISIBILITY.md)를 참고하세요.

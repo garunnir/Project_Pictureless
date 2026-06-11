@@ -26,7 +26,12 @@ public class TileMapManager : MonoBehaviour
     [Tooltip("연결 시 청크 스트리밍 경로를 사용합니다. 청크·카메라 설정은 TileMapChunkStreamer에 있습니다.")]
     [SerializeField] private TileMapChunkStreamer _chunkStreamer;
 
-    [Header("Floor Visibility (chunk streaming)")]
+    [Header("Tile Visibility and Presentation")]
+    [Tooltip("비우면 ChunkStreamer 카메라 → Camera.main 순으로 사용합니다.")]
+    [SerializeField] private Camera _visibilityCamera;
+    [SerializeField] private SightLineProximityBlendDriver _proximityBlendDriver;
+
+    [Header("Floor Visibility (chunk streaming only)")]
     [SerializeField] private PlayerFloorVisibilityDriver _floorVisibilityDriver;
 
     [Header("Tile Pooling (chunk streaming only)")]
@@ -55,6 +60,18 @@ public class TileMapManager : MonoBehaviour
     public TilePrefabDB PrefabDB => _prefabDB;
     public IWorldGrid WorldGrid => _worldGrid;
 
+    /// <summary>층 가시성과 동일한 playerFloorCellY (몸 높이 기준).</summary>
+    public int ResolvePlayerFloorCellY(float playerHeightWorldY)
+    {
+        if (Model is TileMapModel tileModel)
+            SetupMapRuntimeCache(tileModel);
+
+        if (_floorPolicy != null)
+            return _floorPolicy.ResolvePlayerFloorCellY(playerHeightWorldY);
+
+        return TileHelper.ConvertWorldToGrid(new Vector3(0f, playerHeightWorldY, 0f), _gridCellSize).y;
+    }
+
     private bool UseChunkStreaming => _chunkStreamer != null;
 
     void Start()
@@ -80,6 +97,18 @@ public class TileMapManager : MonoBehaviour
             _floorVisibilityDriver.ApplyNow();
         }
 
+        if (_proximityBlendDriver != null &&
+            _presentationApplier != null &&
+            _floorPolicy != null &&
+            _mapCacheHub != null)
+        {
+            _proximityBlendDriver.Init(
+                _mapCacheHub,
+                _presentationApplier,
+                _floorPolicy,
+                ResolveFloorVisibilityCamera);
+        }
+
         _chunkStreamer?.SyncNow();
         _saver.Init(Model, _worldGrid);
         BindMapCollisionToPlayers();
@@ -89,6 +118,7 @@ public class TileMapManager : MonoBehaviour
     {
         UnwireTilePresentationApplier();
         _floorVisibilityDriver?.Shutdown();
+        _proximityBlendDriver?.Shutdown();
     }
 
     private void WireTilePresentationApplier()
@@ -106,6 +136,7 @@ public class TileMapManager : MonoBehaviour
             return;
 
         _presentationApplier = new TileViewPresentationApplier(registry, tileModel);
+        tileModel.OnTileOcclusionPresentationDelta += _presentationApplier.ApplyOcclusionDelta;
         if (_floorPolicy != null && _mapCacheHub != null)
         {
             _presentationApplier.ConfigureSightLinePresentation(
@@ -113,7 +144,6 @@ public class TileMapManager : MonoBehaviour
                 _floorPolicy.MinCellY);
         }
 
-        tileModel.OnTileOcclusionPresentationDelta += _presentationApplier.ApplyOcclusionDelta;
         _streamingVisualizer?.SetPresentationApplier(_presentationApplier);
         _streamingVisualizer?.SetBuildingRegistry(_mapCacheHub?.Buildings.Registry);
         _nonStreamingVisualizer?.SetPresentationApplier(_presentationApplier);
@@ -131,6 +161,9 @@ public class TileMapManager : MonoBehaviour
 
     private Camera ResolveFloorVisibilityCamera()
     {
+        if (_visibilityCamera != null)
+            return _visibilityCamera;
+
         if (_chunkStreamer != null)
             return _chunkStreamer.ResolveStreamingCamera();
 
@@ -147,17 +180,35 @@ public class TileMapManager : MonoBehaviour
             states[i].BindWorldGrid(_worldGrid);
     }
 
-    void EnsureMapCacheHub(TileMapModel tileModel)
+    void SetupMapRuntimeCache(TileMapModel tileModel)
     {
-        if (_mapCacheHub != null)
+        if (tileModel == null)
+        {
+            _floorPolicy = null;
+            _mapCacheHub = null;
+            _buildingGroupBuilder = null;
             return;
+        }
 
-        var registry = new BuildingGroupRegistry();
-        _mapCacheHub = TileMapCacheHub.Create(tileModel, registry);
-        tileModel.SetMapCacheHub(_mapCacheHub);
+        if (_mapCacheHub == null)
+        {
+            var registry = new BuildingGroupRegistry();
+            _mapCacheHub = TileMapCacheHub.Create(tileModel, registry);
+            tileModel.SetMapCacheHub(_mapCacheHub);
+            _buildingGroupBuilder = new BuildingGroupBuilder(tileModel, _mapCacheHub);
+            tileModel.SetBuildingGroupBuilder(_buildingGroupBuilder);
+            _buildingGroupBuilder.AssignAll();
+        }
 
-        _buildingGroupBuilder ??= new BuildingGroupBuilder(tileModel, _mapCacheHub);
-        _buildingGroupBuilder.AssignAll();
+        if (_floorPolicy == null)
+        {
+            _floorPolicy = PlayerFloorVisibilityPolicy.Build(
+                tileModel.TilesSnapshot,
+                _mapCacheHub,
+                _gridCellSize,
+                ResolveFloorVisibilityCamera,
+                cellEpsilonWorld: 0f);
+        }
     }
 
     void BindMapCollisionToPlayers()
@@ -165,7 +216,7 @@ public class TileMapManager : MonoBehaviour
         if (Model is not TileMapModel tileModel)
             return;
 
-        EnsureMapCacheHub(tileModel);
+        SetupMapRuntimeCache(tileModel);
         if (_mapCacheHub == null)
             return;
 
@@ -232,36 +283,23 @@ public class TileMapManager : MonoBehaviour
         if (!chunkStreaming)
         {
             _streamingVisualizer = null;
-            _floorPolicy = null;
-            _mapCacheHub = null;
+            if (Model is TileMapModel tileModel)
+                SetupMapRuntimeCache(tileModel);
+            else
+                SetupMapRuntimeCache(null);
+
             _nonStreamingVisualizer = new TileMapVisualizer(factory, _worldGrid);
             return _nonStreamingVisualizer;
         }
 
         _nonStreamingVisualizer = null;
 
-        if (Model is TileMapModel tileModel)
-        {
-            var registry = new BuildingGroupRegistry();
-            _mapCacheHub = TileMapCacheHub.Create(tileModel, registry);
-            _buildingGroupBuilder = new BuildingGroupBuilder(tileModel, _mapCacheHub);
-            tileModel.SetMapCacheHub(_mapCacheHub);
-            tileModel.SetBuildingGroupBuilder(_buildingGroupBuilder);
-            _buildingGroupBuilder.AssignAll();
-
-            _floorPolicy = PlayerFloorVisibilityPolicy.Build(
-                Model.TilesSnapshot,
-                _mapCacheHub,
-                _gridCellSize,
-                ResolveFloorVisibilityCamera,
-                cellEpsilonWorld: 0f);
-        }
+        if (Model is TileMapModel streamingTileModel)
+            SetupMapRuntimeCache(streamingTileModel);
         else
         {
             Debug.LogWarning("[TileMapManager] TileMapModel이 아니어서 층 컬링을 비활성화합니다.");
-            _floorPolicy = null;
-            _mapCacheHub = null;
-            _buildingGroupBuilder = null;
+            SetupMapRuntimeCache(null);
         }
 
         _streamingVisualizer = new TileMapStreamingVisualizer(

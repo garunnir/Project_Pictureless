@@ -16,5 +16,6 @@ public static class Config
         public static bool TileBfsSceneOverlay = true; // SceneView BFS/occlusion lines/legend
         public static bool TileBuildingIdLabels = false; // SceneView per-structural-tile buildingId labels
         public static bool TileIndoorOutdoorOverlay = false; // SceneView floor indoor/outdoor evaluation
+        public static bool TileSightLineBuildingOverlay = false; // SceneView §2.2 building sight-line sample cells
     }
 }

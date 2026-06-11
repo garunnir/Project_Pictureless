@@ -10,6 +10,7 @@ public class DebugLogController : MonoBehaviour
     [SerializeField] bool tileBfsSceneOverlay = false;
     [SerializeField] bool tileBuildingIdLabels = false;
     [SerializeField] bool tileIndoorOutdoorOverlay = false;
+    [SerializeField] bool tileSightLineBuildingOverlay = true;
     [SerializeField] bool player = false;
     [SerializeField] bool playerInteraction = false;
     [SerializeField] bool playerMovement = false;
@@ -34,6 +35,7 @@ public class DebugLogController : MonoBehaviour
         Config.DebugMode.TileBfsSceneOverlay = tileRuntimeEnabled && tileBfsSceneOverlay;
         Config.DebugMode.TileBuildingIdLabels = tileRuntimeEnabled && tileBuildingIdLabels;
         Config.DebugMode.TileIndoorOutdoorOverlay = tileRuntimeEnabled && tileIndoorOutdoorOverlay;
+        Config.DebugMode.TileSightLineBuildingOverlay = tileRuntimeEnabled && tileSightLineBuildingOverlay;
 
         Config.DebugMode.Player = playerEnabled;
         Config.DebugMode.PlayerInteraction = playerEnabled && playerInteraction;

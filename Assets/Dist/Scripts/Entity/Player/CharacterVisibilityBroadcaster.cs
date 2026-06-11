@@ -90,7 +90,12 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
         NormalizeSettings(ref settings);
         _occlusionSettings = settings;
 
-        _tileMapManager.Model?.UpdateOcclusionFromPlayerWorld(_lastOcclusionWorld, settings);
+        int playerFloorCellY = _tileMapManager != null
+            ? _tileMapManager.ResolvePlayerFloorCellY(_characterState.BodyWorldPoint.y)
+            : TileHelper.ConvertWorldToGrid(_characterState.BodyWorldPoint, settings.CellSize).y;
+
+        _tileMapManager.Model?.UpdateOcclusionFromPlayerWorld(
+            _lastOcclusionWorld, playerFloorCellY, settings);
     }
 
     private static void NormalizeSettings(ref OcclusionProximitySettings s)

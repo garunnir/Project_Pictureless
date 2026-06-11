@@ -118,6 +118,9 @@ namespace IsoTilemap
             Vector3Int.right, Vector3Int.back
         };
 
+        static bool HasUsableVisited(HashSet<(int x, int z)> precomputedVisited) =>
+            precomputedVisited != null && precomputedVisited.Count > 0;
+
         private static readonly Dictionary<WallEdgeKey, TileData> EmptyEdges = new Dictionary<WallEdgeKey, TileData>();
 
         private readonly Dictionary<Vector3Int, List<TileData>> _tiles;
@@ -178,7 +181,7 @@ namespace IsoTilemap
                         }
                     }
 
-                    if (!found)
+                    if (!found && !HasUsableVisited(precomputedVisited))
                     {
                         var adjTiles = CollectAdjacentWalls(start);
                         var adjEdges = CollectAdjacentWallEdges(start);
@@ -192,7 +195,7 @@ namespace IsoTilemap
 
             if (TryGetCellTilesAt(start, out var stlist))
             {
-                if (stlist == null || stlist.Count == 0)
+                if ((stlist == null || stlist.Count == 0) && !HasUsableVisited(precomputedVisited))
                 {
                     if (Config.DebugMode.FloorAlgorithm) Debug.LogWarning("내 위치에 아무것도 없음." + start);
                     return new OcclusionSelection(new List<TileData>(), new List<TileData>(), new List<TileData>());
@@ -201,8 +204,9 @@ namespace IsoTilemap
 
             int cellY = playerCellPos.y;
             start = _topology.ResolveFloorBfsStart(cellY, start.x, start.z);
-            HashSet<(int x, int z)> xzVisited = precomputedVisited ??
-                FloorRoomFloodFill.Run(_topology.Index, cellY, start.x, start.z, collectEmptyNeighbors: false).Visited;
+            HashSet<(int x, int z)> xzVisited = HasUsableVisited(precomputedVisited)
+                ? precomputedVisited
+                : FloorRoomFloodFill.Run(_topology.Index, cellY, start.x, start.z, collectEmptyNeighbors: false).Visited;
             var visited = FloorRoomFloodFill.ToVector3IntSet(xzVisited, cellY);
             var floorChecked = visited;
             var wallCellChecked = new HashSet<Vector3Int>();
@@ -272,8 +276,7 @@ namespace IsoTilemap
                 belowEdges,
                 cornerExtras,
                 finalOccluding,
-                extraOccludingByPlayer,
-                CollectStructuralTilesForDebugLabels());
+                extraOccludingByPlayer);
 #endif
 
             return new OcclusionSelection(merged, extraOccludingByPlayer, finalOccluding);
@@ -287,12 +290,9 @@ namespace IsoTilemap
             List<TileData> belowEdges,
             List<TileData> cornerExtras,
             List<TileData> finalOccluding,
-            List<TileData> extraOccludingByPlayer,
-            List<TileData> structuralTiles)
+            List<TileData> extraOccludingByPlayer)
         {
-            bool showBfsOverlay = Config.DebugMode.TileBfsSceneOverlay;
-            bool showBuildingIdLabels = Config.DebugMode.TileBuildingIdLabels;
-            if (!showBfsOverlay && !showBuildingIdLabels)
+            if (!Config.DebugMode.TileBfsSceneOverlay)
             {
                 TileMapBfsDebugOverlay.ClearBfsLayers();
                 return;
@@ -312,20 +312,13 @@ namespace IsoTilemap
             Action action = () =>
             {
                 TileMapBfsDebugOverlay.ClearBfsLayers();
-                if (showBfsOverlay)
-                {
-                    TileMapBfsDebugOverlay.AddCellLayer("초록 — BFS 방문 바닥", Color.green, floorChecked);
-                    TileMapBfsDebugOverlay.AddCellLayer("빨강 — 인접 벽 검사 셀", Color.red, wallChecked, 0.05f);
-                    TileMapBfsDebugOverlay.AddCellLayer("청록 — BFS 시작 셀", Color.cyan, startSnapshot, 0.01f);
-                    TileMapBfsDebugOverlay.AddCellLayer("노랑 — 최종 오클루전 셀", Color.yellow, finalOcclusionCells, 0.02f);
-                    TileMapBfsDebugOverlay.AddEdgeLayer("노랑 — 오클루전 EdgeWall", Color.yellow, belowEdges, 0.02f);
-                    TileMapBfsDebugOverlay.AddCellLayer("파랑 — 코너 추가 벽", Color.blue, cornerExtraCells, 0.02f);
-                    TileMapBfsDebugOverlay.AddCellLayer("자홍 — 플레이어 마스크 추가", Color.magenta, extraByPlayerCells, 0.03f);
-                }
-
-                if (showBuildingIdLabels)
-                    TileMapBfsDebugOverlay.AddTileBuildingIdLabelLayer("하양 — 구조 타일 buildingId", Color.white, structuralTiles, 0.08f);
-
+                TileMapBfsDebugOverlay.AddCellLayer("초록 — BFS 방문 바닥", Color.green, floorChecked);
+                TileMapBfsDebugOverlay.AddCellLayer("빨강 — 인접 벽 검사 셀", Color.red, wallChecked, 0.05f);
+                TileMapBfsDebugOverlay.AddCellLayer("청록 — BFS 시작 셀", Color.cyan, startSnapshot, 0.01f);
+                TileMapBfsDebugOverlay.AddCellLayer("노랑 — 최종 오클루전 셀", Color.yellow, finalOcclusionCells, 0.02f);
+                TileMapBfsDebugOverlay.AddEdgeLayer("노랑 — 오클루전 EdgeWall", Color.yellow, belowEdges, 0.02f);
+                TileMapBfsDebugOverlay.AddCellLayer("파랑 — 코너 추가 벽", Color.blue, cornerExtraCells, 0.02f);
+                TileMapBfsDebugOverlay.AddCellLayer("자홍 — 플레이어 마스크 추가", Color.magenta, extraByPlayerCells, 0.03f);
                 TileMapBfsDebugOverlay.EnsureSubscribed();
             };
 
@@ -637,36 +630,6 @@ namespace IsoTilemap
             return false;
         }
 
-        private List<TileData> CollectStructuralTilesForDebugLabels()
-        {
-            var result = new List<TileData>();
-            var seen = new HashSet<Guid>();
-
-            ForEachOccupiedCellTileDistinct(tile =>
-            {
-                if (!IsStructuralTile((TileView.TileType)tile.identity.tileType))
-                    return;
-
-                if (!seen.Add(tile.tileDefId))
-                    return;
-
-                result.Add(tile);
-            });
-
-            foreach (var edgeTile in _edges.Values)
-            {
-                if ((TileView.TileType)edgeTile.identity.tileType != TileView.TileType.EdgeWall)
-                    continue;
-
-                if (!seen.Add(edgeTile.tileDefId))
-                    continue;
-
-                result.Add(edgeTile);
-            }
-
-            return result;
-        }
-
         void ForEachOccupiedCellTileDistinct(Action<TileData> visit)
         {
             if (visit == null)
@@ -692,9 +655,6 @@ namespace IsoTilemap
                 }
             }
         }
-
-        private static bool IsStructuralTile(TileView.TileType type) =>
-            type == TileView.TileType.Floor || type == TileView.TileType.Wall;
 
     }
 }

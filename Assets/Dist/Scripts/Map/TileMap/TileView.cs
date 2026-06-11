@@ -62,7 +62,6 @@ namespace IsoTilemap
 
         private TileBaseVisualState _currentBaseState = TileBaseVisualState.Visible;
         private float _characterOcclusion;
-        private OcclusionMode _wallOcclusionMode = OcclusionMode.LegacyCompatible;
         private bool _isGhosted;
         private bool _sightLineBuildingHidden;
         private bool _currentSelected;
@@ -202,28 +201,6 @@ namespace IsoTilemap
             ApplySightLineBuildingOverlay();
         }
 
-        public void ApplyWallOcclusionMode(float occlusion01, OcclusionMode mode)
-        {
-            _wallOcclusionMode = mode;
-            switch (mode)
-            {
-                case OcclusionMode.LegacyCompatible:
-                case OcclusionMode.FullDespawn:
-                    SetCharacterOcclusion(occlusion01);
-                    break;
-                case OcclusionMode.AlphaBlendPreserve:
-                    ApplyAlphaBlendWallOcclusion(occlusion01);
-                    break;
-                case OcclusionMode.RenderOnly:
-                    ApplyRenderOnlyWallOcclusion(occlusion01);
-                    break;
-                // ColliderOnly: LogicalOnly 타일은 런타임 collider가 비활성이라 레거시 호환만 유지.
-                case OcclusionMode.ColliderOnly:
-                    ApplyColliderOnlyWallOcclusion(occlusion01);
-                    break;
-            }
-        }
-
         private void RefreshBaseVisualState()
         {
             TileBaseVisualState next = ResolveBaseState(_characterOcclusion, _isGhosted);
@@ -232,12 +209,7 @@ namespace IsoTilemap
                 ForceApplyBaseState(next);
 
             if (next == TileBaseVisualState.HiddenByCharacter)
-            {
-                if (_wallOcclusionMode == OcclusionMode.AlphaBlendPreserve)
-                    ApplyAlphaBlendWallOcclusion(_characterOcclusion);
-                else
-                    ApplyCharacterOcclusionDerived();
-            }
+                ApplyCharacterOcclusionDerived();
 
             ApplySightLineBuildingOverlay();
         }
@@ -344,49 +316,6 @@ namespace IsoTilemap
             SetBlockedTraceVisible(_characterOcclusion >= BlockedTraceOcclusionThreshold);
         }
 
-        void ApplyAlphaBlendWallOcclusion(float occlusion01)
-        {
-            _characterOcclusion = Mathf.Clamp01(occlusion01);
-            Renderer renderer = _shadeController?.CachedRenderer;
-            if (renderer != null)
-                renderer.enabled = true;
-
-            _shadeController?.SetGhost(false);
-            _shadeController?.SetCharacterOcclusion(_characterOcclusion);
-            SetBlockedTraceVisible(false);
-
-            if (_characterOcclusion <= OcclusionEpsilon)
-                ForceApplyBaseState(TileBaseVisualState.Visible);
-            else
-            {
-                _currentBaseState = TileBaseVisualState.HiddenByCharacter;
-                _baseStateInitialized = true;
-            }
-
-            ApplySightLineBuildingOverlay();
-        }
-
-        void ApplyRenderOnlyWallOcclusion(float occlusion01)
-        {
-            bool hidden = occlusion01 > OcclusionEpsilon;
-            Renderer renderer = _shadeController?.CachedRenderer;
-            if (renderer != null)
-                renderer.enabled = !hidden;
-
-            // RenderOnly/ColliderOnly에서는 기존 캐릭터 오클루전 파생 표현을 제거합니다.
-            _shadeController?.SetCharacterOcclusion(0f);
-            _shadeController?.SetAdditionalLightEnabled(true);
-            SetBlockedTraceVisible(false);
-        }
-
-        void ApplyColliderOnlyWallOcclusion(float occlusion01)
-        {
-            ApplyRenderOnlyWallOcclusion(occlusion01);
-            var colliders = GetComponentsInChildren<Collider>(true);
-            for (int i = 0; i < colliders.Length; i++)
-                colliders[i].enabled = true;
-        }
-
         private void SetBlockedTraceVisible(bool visible)
         {
             if (_blockedTraceObject == null) return;
@@ -401,7 +330,6 @@ namespace IsoTilemap
             _characterOcclusion = 0f;
             _isGhosted = false;
             _sightLineBuildingHidden = false;
-            _wallOcclusionMode = OcclusionMode.LegacyCompatible;
             ForceApplyBaseState(TileBaseVisualState.Visible);
             ForceApplySelectedOverlay(false);
             SetBlockedTraceVisible(false);
