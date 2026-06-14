@@ -1,5 +1,7 @@
 # Project Pictureless
 
+**[프로젝트 위키 (Notion)](https://platinum-snowstorm-e11.notion.site/2a4f453fbe768022a0aad18946279d37?v=2a4f453fbe7680e4ac3c000c97ff3a01)**
+
 Unity 6 기반 **아이소메트릭 타일맵** 개인 프로젝트.  
 확장 가능한 맵·가시성·캐릭터 상호작용을 직접 구현하며, **몰입감 있는 스토리·관계·시각 표현**을 목표로 한다.
 
