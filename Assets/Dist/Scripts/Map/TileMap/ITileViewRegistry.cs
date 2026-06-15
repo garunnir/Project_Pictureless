@@ -10,4 +10,10 @@ namespace IsoTilemap
 
         void CollectSpawnedTileIds(List<Guid> into);
     }
+
+    /// <summary>층 가시성 컨텍스트를 스폰된 뷰 presentation에 반영합니다.</summary>
+    public interface IFloorVisibilitySync
+    {
+        void SyncFloorVisibility(in FloorVisibilityContext ctx);
+    }
 }

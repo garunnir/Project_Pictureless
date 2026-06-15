@@ -9,7 +9,7 @@ namespace IsoTilemap
     public static class SightLineSegmentSampler
     {
         /// <summary>
-        /// <see cref="BuildingPlayerOcclusionResolver"/>와 동일한 카메라↔플레이어 3D 샘플 셀 (x, y, z).
+        /// <see cref="BuildingPlayerOcclusionResolver"/>와 동일 step. 샘플 높이 그리드 (점유 여부 무관, 블렌드 슬라이스용).
         /// </summary>
         public static void CollectSegmentCells(
             Vector3 cameraWorld,
@@ -27,12 +27,13 @@ namespace IsoTilemap
             {
                 float t = steps == 0 ? 0f : i / (float)steps;
                 Vector3 p = Vector3.Lerp(cameraWorld, playerWorld, t);
-                output.Add(TileHelper.ConvertWorldToGrid(p, cellSize));
+                output.Add(OccupiedCellCoord.GridAtSightSampleHeight(p, cellSize));
             }
         }
 
-        /// <summary>시선 3D 샘플(건물 resolver와 동일 step) + 각 샘플 Y에서 XZ 밴드 확장.</summary>
-        public static void CollectBlendBandCells(
+        /// <summary>시선 3D 샘플(건물 resolver와 동일 step) + 각 샘플 점유셀에서 XZ 반경 확장.</summary>
+        public static void CollectBlendCells(
+            TileMapCacheHub hub,
             Vector3 cameraWorld,
             Vector3 playerWorld,
             Vector3Int playerCell,
@@ -40,20 +41,22 @@ namespace IsoTilemap
             HashSet<Vector3Int> output)
         {
             output.Clear();
+            if (hub == null)
+                return;
 
             float cellSize = Mathf.Max(1e-4f, settings.CellSize);
-            int band = Mathf.Max(0, settings.BandRadiusCells);
+            int radius = Mathf.Max(0, settings.RadiusCells);
 
             var segmentScratch = new HashSet<Vector3Int>();
             CollectSegmentCells(cameraWorld, playerWorld, cellSize, segmentScratch);
 
             foreach (Vector3Int sample in segmentScratch)
-                ExpandChebyshevBand(sample.x, sample.y, sample.z, band, output);
+                ExpandChebyshevRadius(sample.x, sample.y, sample.z, radius, output);
 
-            ExpandChebyshevBand(playerCell.x, playerCell.y, playerCell.z, band, output);
+            ExpandChebyshevRadius(playerCell.x, playerCell.y, playerCell.z, radius, output);
         }
 
-        static void ExpandChebyshevBand(int centerX, int centerY, int centerZ, int radius, HashSet<Vector3Int> output)
+        static void ExpandChebyshevRadius(int centerX, int centerY, int centerZ, int radius, HashSet<Vector3Int> output)
         {
             if (radius <= 0)
             {

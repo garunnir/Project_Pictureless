@@ -35,13 +35,19 @@ namespace IsoTilemap
 
         public TilePresentationEntryStore Entries => _entries;
 
-        public void ConfigureSightLinePresentation(BuildingGroupRegistry buildingRegistry, int mapMinCellY)
+        public void ConfigureFloorVisibility(
+            PlayerFloorVisibilityPolicy policy,
+            BuildingGroupRegistry buildingRegistry)
         {
+            _floorPolicy = policy;
             _buildingRegistry = buildingRegistry;
-            _ = mapMinCellY;
         }
 
-        public void ConfigureFloorVisibility(PlayerFloorVisibilityPolicy policy) => _floorPolicy = policy;
+        public void ResetFloorVisibilityState()
+        {
+            _hasFloorContext = false;
+            _lastBlockingBuildingIds.Clear();
+        }
 
         /// <summary>층 가시성 컨텍스트 변경 시 스폰된 뷰에 숨김·시선 흔적을 반영합니다.</summary>
         public void SyncFloorVisibility(
@@ -156,16 +162,24 @@ namespace IsoTilemap
                     continue;
                 }
 
+                if (PresentationEntryQueries.ResolveFloorVisibilityHidden(tileId, _entries))
+                {
+                    FadeOcclusionDisplayTowards(tileId, view, 0f, factor);
+                    continue;
+                }
+
                 float target = PresentationEntryQueries.ResolveCharacterOcclusion(tileId, _entries, _model);
                 _characterOcclusionDisplay.TryGetValue(tileId, out float display);
                 float newDisplay = OcclusionBlendMath.SmoothTowards(display, target, factor);
                 _characterOcclusionDisplay[tileId] = newDisplay;
 
-                if (Mathf.Abs(newDisplay - display) > DisplayEpsilon)
-                    view.SetCharacterOcclusion(newDisplay);
-
                 if (target <= DisplayEpsilon && newDisplay <= DisplayEpsilon)
+                {
                     _occlusionRemoveScratch.Add(tileId);
+                    continue;
+                }
+
+                view.SetCharacterOcclusion(newDisplay);
             }
 
             for (int i = 0; i < _occlusionRemoveScratch.Count; i++)
@@ -285,20 +299,23 @@ namespace IsoTilemap
 
             bool hidden = !_floorPolicy.IsTileVisible(tile, in ctx);
             SetFloorVisibilityHiddenEntry(tileId, hidden);
-            SetSightLineBuildingHiddenEntry(tileId, ShouldShowSightLineBuildingTrace(tile, in ctx));
+            SetSightLineBuildingHiddenEntry(tileId, ShouldShowSightLineBuildingTrace(tile, in ctx, _buildingRegistry));
         }
 
-        static bool ShouldShowSightLineBuildingTrace(in TileData tile, in FloorVisibilityContext ctx)
+        static bool ShouldShowSightLineBuildingTrace(
+            in TileData tile,
+            in FloorVisibilityContext ctx,
+            BuildingGroupRegistry buildingRegistry)
         {
-            if (!ctx.IsPlayerOutdoor)
+            if (!ctx.IsPlayerOutdoor || buildingRegistry == null)
                 return false;
 
             int buildingId = tile.identity.buildingId;
             if (buildingId <= 0 || !ctx.PlayerBlockingBuildingIds.Contains(buildingId))
                 return false;
 
-            return (TileView.TileType)tile.identity.tileType == TileView.TileType.Floor &&
-                   FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove.y == ctx.MinCellY;
+            return TileIdentityUtil.IsFloorTile(tile.identity) &&
+                   buildingRegistry.IsBottomFloorTile(buildingId, tile.tileDefId);
         }
 
         void SetFloorVisibilityHiddenEntry(Guid tileId, bool hidden)
@@ -310,7 +327,7 @@ namespace IsoTilemap
                     PresentationSource.FloorVisibilityPolicy,
                     tileId,
                     1f);
-                ClearCharacterOcclusionEntries(tileId);
+                ResetProximityOcclusionPresentation(tileId);
             }
             else
             {
@@ -320,21 +337,56 @@ namespace IsoTilemap
                     tileId);
             }
 
-            if (_registry.TryGetView(tileId, out TileView view))
-                view.SetFloorVisibilityHidden(PresentationEntryQueries.ResolveFloorVisibilityHidden(tileId, _entries));
+            if (!_registry.TryGetView(tileId, out TileView view))
+                return;
+
+            view.SetFloorVisibilityHidden(
+                PresentationEntryQueries.ResolveFloorVisibilityHidden(tileId, _entries));
+
+            if (!hidden)
+                SyncCharacterOcclusionView(tileId, view);
         }
 
-        void ClearCharacterOcclusionEntries(Guid tileId)
+        void ResetProximityOcclusionPresentation(Guid tileId)
         {
             _entries.Remove(
                 PresentationConcern.CharacterOcclusion,
                 PresentationSource.ProximitySightLine,
                 tileId);
-            _entries.Remove(
-                PresentationConcern.CharacterOcclusion,
-                PresentationSource.BfsWallOcclusion,
-                tileId);
             _characterOcclusionDisplay.Remove(tileId);
+
+            if (_registry.TryGetView(tileId, out TileView view))
+                view.SetCharacterOcclusion(0f);
+        }
+
+        void SyncCharacterOcclusionView(Guid tileId, TileView view)
+        {
+            float target = PresentationEntryQueries.ResolveCharacterOcclusion(tileId, _entries, _model);
+            if (target <= DisplayEpsilon)
+            {
+                _characterOcclusionDisplay.Remove(tileId);
+                view.SetCharacterOcclusion(0f);
+                return;
+            }
+
+            _characterOcclusionDisplay[tileId] = 0f;
+            view.SetCharacterOcclusion(0f);
+        }
+
+        void FadeOcclusionDisplayTowards(Guid tileId, TileView view, float target, float factor)
+        {
+            _characterOcclusionDisplay.TryGetValue(tileId, out float display);
+            float newDisplay = OcclusionBlendMath.SmoothTowards(display, target, factor);
+
+            if (newDisplay <= DisplayEpsilon)
+            {
+                _characterOcclusionDisplay.Remove(tileId);
+                view.SetCharacterOcclusion(0f);
+                return;
+            }
+
+            _characterOcclusionDisplay[tileId] = newDisplay;
+            view.SetCharacterOcclusion(newDisplay);
         }
 
         void SetSightLineBuildingHiddenEntry(Guid tileId, bool hidden)

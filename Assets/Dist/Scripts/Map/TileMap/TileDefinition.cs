@@ -22,6 +22,9 @@ namespace IsoTilemap
         [VerticalGroup("Row/Info"), LabelWidth(70)]
         public Vector3Int size = Vector3Int.one;
 
+        [VerticalGroup("Row/Info"), LabelWidth(70)]
+        public TilePlacementSlot placementSlot = TilePlacementSlot.None;
+
 #if UNITY_EDITOR
         [FoldoutGroup("충돌·오클루전", expanded: true)]
         [PropertyOrder(-10)]
@@ -58,33 +61,41 @@ namespace IsoTilemap
         [FoldoutGroup("충돌·오클루전")]
         [Button("Floor"), HorizontalGroup("충돌·오클루전/Presets")]
         void ApplyFloorPreset() => ApplyPreset(
+            placement: TilePlacementSlot.HorizontalFace,
             occupied: new TileOccupiedCellCollision { providesLogicalFloor = true },
             edge: default);
 
         [FoldoutGroup("충돌·오클루전")]
         [Button("Wall"), HorizontalGroup("충돌·오클루전/Presets")]
         void ApplyWallPreset() => ApplyPreset(
+            placement: TilePlacementSlot.OccupiedCell,
             occupied: new TileOccupiedCellCollision { blocksPassageAndOcclusion = true },
             edge: default);
 
         [FoldoutGroup("충돌·오클루전")]
         [Button("EdgeWall"), HorizontalGroup("충돌·오클루전/Presets")]
         void ApplyEdgeWallPreset() => ApplyPreset(
+            placement: TilePlacementSlot.VerticalFace,
             occupied: default,
             edge: new TileEdgeCollision { blocksPassageAndOcclusion = true });
 
         [FoldoutGroup("충돌·오클루전")]
         [Button("Slope/Physics"), HorizontalGroup("충돌·오클루전/Presets")]
         void ApplyPhysicsPreset() => ApplyPreset(
+            placement: TilePlacementSlot.OccupiedCell,
             occupied: new TileOccupiedCellCollision { usePhysicsCollider = true },
             edge: default);
 
         [FoldoutGroup("충돌·오클루전")]
         [Button("None"), HorizontalGroup("충돌·오클루전/Presets")]
-        void ApplyNonePreset() => ApplyPreset(default, default);
+        void ApplyNonePreset() => ApplyPreset(TilePlacementSlot.OccupiedCell, default, default);
 
-        void ApplyPreset(TileOccupiedCellCollision occupied, TileEdgeCollision edge)
+        void ApplyPreset(
+            TilePlacementSlot placement,
+            TileOccupiedCellCollision occupied,
+            TileEdgeCollision edge)
         {
+            placementSlot = placement;
             this.occupied = occupied;
             this.edge = edge;
             MarkDirty();

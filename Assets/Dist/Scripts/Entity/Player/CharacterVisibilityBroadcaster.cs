@@ -91,7 +91,7 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
         _occlusionSettings = settings;
 
         int playerFloorCellY = _tileMapManager != null
-            ? _tileMapManager.ResolvePlayerFloorCellY(_characterState.BodyWorldPoint.y)
+            ? _tileMapManager.ResolvePlayerFloorCellY(_characterState.BodyWorldPoint)
             : TileHelper.ConvertWorldToGrid(_characterState.BodyWorldPoint, settings.CellSize).y;
 
         _tileMapManager.Model?.UpdateOcclusionFromPlayerWorld(

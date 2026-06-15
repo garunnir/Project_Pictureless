@@ -62,16 +62,26 @@ public class TileMapManager : MonoBehaviour
     public TilePrefabDB PrefabDB => _prefabDB;
     public IWorldGrid WorldGrid => _worldGrid;
 
-    /// <summary>층 가시성과 동일한 playerFloorCellY (몸 높이 기준).</summary>
-    public int ResolvePlayerFloorCellY(float playerHeightWorldY)
+    /// <summary>층 가시성과 동일한 playerFloorCellY (몸 위치 기준 점유셀).</summary>
+    public int ResolvePlayerFloorCellY(Vector3 playerWorld)
     {
         if (_floorPolicy != null)
-            return _floorPolicy.ResolvePlayerFloorCellY(playerHeightWorldY);
+            return _floorPolicy.ResolvePlayerFloorCellY(playerWorld.y, playerWorld);
 
-        return TileHelper.ConvertWorldToGrid(new Vector3(0f, playerHeightWorldY, 0f), _gridCellSize).y;
+        return TileHelper.ConvertWorldToGrid(playerWorld, _gridCellSize).y;
     }
 
+    public int ResolvePlayerFloorCellY(float playerHeightWorldY) =>
+        ResolvePlayerFloorCellY(new Vector3(0f, playerHeightWorldY, 0f));
+
     private bool UseChunkStreaming => _chunkStreamer != null;
+
+    void EnsureOcclusionDisplayDriver()
+    {
+        _occlusionDisplayDriver ??= GetComponent<CharacterOcclusionDisplayDriver>();
+        if (_occlusionDisplayDriver == null)
+            _occlusionDisplayDriver = gameObject.AddComponent<CharacterOcclusionDisplayDriver>();
+    }
 
     void Start()
     {
@@ -93,10 +103,16 @@ public class TileMapManager : MonoBehaviour
 
         _controller.Init(Model, viewBuilder);
 
-        if (UseChunkStreaming && _floorVisibilityDriver != null && _floorPolicy != null && _streamingVisualizer != null)
+        if (_floorVisibilityDriver != null && _floorPolicy != null)
         {
-            _floorVisibilityDriver.Init(_floorPolicy, _streamingVisualizer);
-            _floorVisibilityDriver.ApplyNow();
+            IFloorVisibilitySync sync = UseChunkStreaming
+                ? _streamingVisualizer
+                : _nonStreamingVisualizer;
+            if (sync != null)
+            {
+                _floorVisibilityDriver.Init(_floorPolicy, sync);
+                _floorVisibilityDriver.ApplyNow();
+            }
         }
 
         if (_proximityBlendDriver != null &&
@@ -111,7 +127,7 @@ public class TileMapManager : MonoBehaviour
                 ResolveFloorVisibilityCamera);
         }
 
-        _occlusionDisplayDriver ??= GetComponent<CharacterOcclusionDisplayDriver>();
+        EnsureOcclusionDisplayDriver();
         if (_occlusionDisplayDriver != null && _presentationApplier != null)
             _occlusionDisplayDriver.Init(_presentationApplier);
         else if (_presentationApplier != null)
@@ -151,10 +167,9 @@ public class TileMapManager : MonoBehaviour
         tileModel.OnTileOcclusionPresentationDelta += _presentationApplier.ApplyOcclusionDelta;
         if (_floorPolicy != null && _mapCacheHub != null)
         {
-            _presentationApplier.ConfigureSightLinePresentation(
-                _mapCacheHub.Buildings.Registry,
-                _floorPolicy.MinCellY);
-            _presentationApplier.ConfigureFloorVisibility(_floorPolicy);
+            _presentationApplier.ConfigureFloorVisibility(
+                _floorPolicy,
+                _mapCacheHub.Buildings.Registry);
         }
 
         _streamingVisualizer?.SetPresentationApplier(_presentationApplier);
@@ -166,6 +181,7 @@ public class TileMapManager : MonoBehaviour
         if (Model is TileMapModel tileModel && _presentationApplier != null)
             tileModel.OnTileOcclusionPresentationDelta -= _presentationApplier.ApplyOcclusionDelta;
 
+        _presentationApplier?.ResetFloorVisibilityState();
         _presentationApplier = null;
         _streamingVisualizer?.SetPresentationApplier(null);
         _nonStreamingVisualizer?.SetPresentationApplier(null);
@@ -221,12 +237,12 @@ public class TileMapManager : MonoBehaviour
         if (_floorPolicy == null)
         {
             _floorPolicy = PlayerFloorVisibilityPolicy.Build(
-                tileModel.TilesSnapshot,
                 _mapCacheHub,
                 _gridCellSize,
                 ResolveFloorVisibilityCamera,
+                _mapCacheHub.Buildings.Registry,
                 cellEpsilonWorld: 0f);
-            _presentationApplier?.ConfigureFloorVisibility(_floorPolicy);
+            _presentationApplier?.ConfigureFloorVisibility(_floorPolicy, _mapCacheHub.Buildings.Registry);
         }
     }
 

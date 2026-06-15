@@ -26,7 +26,7 @@ namespace IsoTilemap
             var list = tiles.Tiles;
             for (int i = 0; i < list.Count; i++)
             {
-                if (IsStructuralType((TileView.TileType)list[i].identity.tileType))
+                if (TileIdentityUtil.IsStructural(list[i].identity))
                     return true;
             }
 
@@ -45,8 +45,7 @@ namespace IsoTilemap
             for (int i = 0; i < list.Count; i++)
             {
                 var tile = list[i];
-                var type = (TileView.TileType)tile.identity.tileType;
-                if (!IsVerticalSourceType(type))
+                if (!TileIdentityUtil.IsStructural(tile.identity))
                     continue;
 
                 if (tile.identity.buildingId == buildingId)
@@ -56,17 +55,7 @@ namespace IsoTilemap
             return false;
         }
 
-        static bool IsStructuralType(TileView.TileType type) =>
-            type is TileView.TileType.Floor
-                or TileView.TileType.Wall
-                or TileView.TileType.EdgeWall;
-
-        static bool IsVerticalSourceType(TileView.TileType type) =>
-            type is TileView.TileType.Floor
-                or TileView.TileType.Wall
-                or TileView.TileType.EdgeWall;
-
-        /// <summary>셀 타일 + 인시던트 EdgeWall(멀티 Y 인덱스 포함)을 함께 조회합니다.</summary>
+        /// <summary>셀 타일 + 인시던트 수직·수평 면(멀티 Y 인덱스 포함)을 함께 조회합니다.</summary>
         sealed class CellTileQueryBuffer : System.IDisposable
         {
             readonly List<TileData> _scratch = new();
@@ -77,8 +66,8 @@ namespace IsoTilemap
                 if (map.TryGetCellTiles(x, z, gridY, out var baseList))
                     _scratch.AddRange(baseList);
 
-                map.EdgeBinder.AppendIncidentEdges(new Vector3Int(x, gridY, z), _scratch);
-                map.FloorFaceBinder.AppendIncidentFaces(new Vector3Int(x, gridY, z), _scratch);
+                map.FaceBinder.AppendWallFacesAtCell(new Vector3Int(x, gridY, z), _scratch);
+                map.FaceBinder.AppendFloorFacesAtCell(new Vector3Int(x, gridY, z), _scratch);
             }
 
             public void Dispose()
@@ -87,4 +76,3 @@ namespace IsoTilemap
         }
     }
 }
-

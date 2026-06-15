@@ -1,16 +1,33 @@
 # TileMap — 가려짐·가시성 조건
 
-타일맵에서 “안 보이게” 만드는 경로는 **서로 독립된 3개 시스템**이다. 혼동을 막기 위해 먼저 구분하고, 각각의 판정 조건을 아래에 정리한다.
+## 좌표 규약
 
-| 시스템 | 목적 | 적용 단위 | 결과 | TileDefinition |
-|--------|------|-----------|------|----------------|
-| **층 가시성 — 야외 시선 차단** | 카메라↔플레이어 사이 건물 숨김 | **buildingId** (건물 전체) | `FloorVisibilityHidden` (MinCellY Floor는 흔적 셰이더) | (없음 — `buildingId`로 판정) |
-| **근접 시선 블렌드** | 카메라↔플레이어 시선에 가리는 타일 블렌드 | 시선 밴드 내 **모든 타일** | 셰이더 `_CharacterOcclusion` (0~1) | — |
-| **시선 차단 건물 흔적** | 야외에서 가린 건물 1층 바닥 윤곽 | MinCellY Floor (스폰 유지) | `_SightLineBuildingHidden` 어둡게 | — |
+**점유 인덱스를 우선 신뢰한다** (`CellHasOccupancy`, bake `RebuildOccupancy`). 가시성·시선에서 셀 후보는 **인덱스에 등록된 점유셀만** 쓴다.
 
-**혼동 주의**: “플레이어를 가리는 타일 블렌드”는 **근접 시선 블렌드**(§3). 야외 **건물 despawn**(§2.2)은 타일 블렌드가 아니라 buildingId 단위 스트리밍 숨김이다.
+| 대상 | 월드 → 셀 |
+|------|-----------|
+| **플레이어 층** | `OccupiedCellCoord.ResolveFromWorld` (발밑 바닥, `y--` 하향) |
+| **시선 샘플** (건물 차단 §2.2) | `TryResolveSightOccupiedCell` (`CellHasOccupancy` true만) |
+| **시선 높이 슬라이스** (근접 블렌드 §3) | `GridAtSightSampleHeight` (높이 그리드, 점유 무관) |
+| **타일 대표 셀** | `OccupiedCellCoord.PrimaryCellFromIdentity` |
 
-추가로 **Ghost**(`SetGhosted`)는 별도 표현 플래그이며, 층 가시성·근접 블렌드와 자동 연동되지 않는다.
+바닥은 그리드 층 사이 면이나 bake가 `CellBelow`/`CellAbove` 둘 다 인덱스에 넣는다 → 시선에서 y±1 수동 탐색 **금지**.
+
+- walkable = Floor `CellAbove` (논리 바닥 위 점유셀). 통행 가능과 **다른 용어**.
+- Y 층 band/`distinctOccupiedCellYs` **금지**. XZ Chebyshev만 `RadiusCells`.
+- 상세: [DATA.md §좌표 규약](../Internal/DATA.md), [TILEMAP.md §좌표 규약](TILEMAP.md).
+
+---
+
+타일맵에서 “안 보이게” 만드는 경로는 **서로 독립된 3개 시스템**이다.
+
+| 시스템 | 목적 | 적용 단위 | 결과 |
+|--------|------|-----------|------|
+| **층 가시성** | 야외 시선 차단·실내 층/스코프 | buildingId·cellY | `FloorVisibilityHidden` (renderer off) |
+| **근접 시선 블렌드** | 카메라↔플레이어 시선 XZ 반경 | 타일별 | 셰이더 `_CharacterOcclusion` |
+| **시선 차단 건물 흔적** | 야외 차단 building **건물별 최하층** 바닥 윤곽 | `BuildingGroupRegistry.IsBottomFloorTile` | `_SightLineBuildingHidden` |
+
+**스트리밍(`TileMapStreamingVisualizer`)은 청크 로드/언로드만 담당한다.** 층 가시성은 despawn하지 않으며 `TileViewPresentationApplier`가 처리한다.
 
 ---
 
@@ -18,238 +35,123 @@
 
 ```mermaid
 flowchart TD
-    Player[플레이어 위치] --> Driver[PlayerFloorVisibilityDriver LateUpdate]
+    Player[플레이어 위치] --> Driver[PlayerFloorVisibilityDriver]
     Driver --> Policy[PlayerFloorVisibilityPolicy.ResolveContext]
-    Policy --> Outdoor{IsPlayerOutdoor?}
-    Outdoor -->|예| OutdoorPipe[OutdoorTileVisibilityPipeline]
-    Outdoor -->|아니오| IndoorBranch{tile.buildingId == PlayerBuildingId?}
-    IndoorBranch -->|아니오| ShowOther[Show — 광장·타 건물]
-    IndoorBranch -->|예| IndoorPipe[IndoorTileVisibilityPipeline]
-    OutdoorPipe --> ApplierFloor[TileViewPresentationApplier.SyncFloorVisibility]
-    IndoorPipe --> Stream
-    Policy --> SightLine[차단 buildingId 집합]
-    SightLine --> MinFloor[MinCellY Floor: despawn 제외 + 셰이더 흔적]
+    Policy --> Applier[TileViewPresentationApplier.SyncFloorVisibility]
+    Applier --> View[TileView.SetFloorVisibilityHidden / SetSightLineBuildingHidden]
 
-    Player --> BlendDriver[SightLineProximityBlendDriver LateUpdate]
+    Player --> BlendDriver[SightLineProximityBlendDriver]
     BlendDriver --> ProxPipe[ProximitySightLineBlendPipeline]
-    ProxPipe --> Applier[TileViewPresentationApplier → TileView]
+    ProxPipe --> ApplierOccl[TileViewPresentationApplier.ApplyProximityBlendDelta]
+
+    Chunk[TileMapChunkStreamer] --> Stream[TileMapStreamingVisualizer Load/Unload]
 ```
 
-**틱 순서**: `PlayerFloorVisibilityDriver` (`-100`) → `SightLineProximityBlendDriver` (`-95`, target) → `CharacterVisibilityBroadcaster` (플레이어 이동 시 BFS target) → `CharacterOcclusionDisplayDriver` (`50`, display 보간) → 청크 스트리밍. 차단 building context가 먼저 반영된 뒤 청크 Load.
+**틱 순서**: `PlayerFloorVisibilityDriver` (`-100`) → `SightLineProximityBlendDriver` (`-95`) → `CharacterVisibilityBroadcaster` → `CharacterOcclusionDisplayDriver` (`50`) → 청크 스트리밍.
 
 ---
 
 ## 1. 플레이어 실내/야외 판정
 
-단일 API: `TileMapCacheHub.IsOutdoorEvaluation(cellY, x, z)`  
-**`buildingId == 0`만으로 야외를 추론하지 않는다.**
+`TileMapCacheHub.IsOutdoorEvaluation(cellY, x, z)` — **`buildingId == 0`만으로 야외를 추론하지 않는다.**
 
-| 조건 | 야외(true) |
-|------|------------|
-| MinCellY 광장 바닥 | `BuildingGroupRegistry.IsPlazaFloor(cellY, x, z)` |
-| visibility bake | 해당 셀의 `FloorRoomBfsProfile.Visibility` 결과에서 `EmptyDiscovered.Count > 0` **이고** `Visited`에 `(x,z)` 포함 |
-
-플레이어 **층(cellY)** 은 월드 높이 `playerHeightWorldY + cellEpsilon` 기준으로, 맵 타일의 대표 cellY(`TileVisibilityCellUtil.GetCellY` — Floor는 `CellAbove.y`) 중 `cellY * cellSize <= ceiling` 을 만족하는 최대 cellY (`PlayerFloorVisibilityPolicy.ResolvePlayerFloorCellY`).
+플레이어 점유셀: `PlayerFloorVisibilityPolicy.ResolvePlayerOccupiedCell` → `OccupiedCellCoord.ResolveFromWorld`. `ResolvePlayerFloorCellY` = `.y` 래퍼. 타일 대표 셀: `OccupiedCellCoord.PrimaryCellFromIdentity`.
 
 ---
 
-## 2. 층 가시성 (스트리밍)
+## 2. 층 가시성 (presentation)
 
-진입: `PlayerFloorVisibilityPolicy.IsTileVisible` → `TileViewPresentationApplier.SyncFloorVisibility` (스트리밍 despawn 없음).
+진입: `PlayerFloorVisibilityPolicy.IsTileVisible` → `TileViewPresentationApplier.SyncFloorVisibility`.
 
-### 2.1 분기 요약
+### 2.1 분기
 
-| 플레이어 | 타일 | 파이프라인 | 기본 결과 |
-|----------|------|------------|-----------|
-| 실내·야외 공통 | `buildingId ∈ PlayerBlockingBuildingIds` | `BlockingBuildingFullHideLayer` | **Hide** (MinCellY Floor 제외) — 아래 2.2 |
-| 야외 | 그 외 모든 타일 | Outdoor `ShowAllLayer` | **Show** |
-| 실내 | `buildingId != PlayerBuildingId` (차단 목록 밖) | (없음) | **Show** |
-| 실내 | `buildingId == PlayerBuildingId` | Indoor 3레이어 | 아래 2.3 |
+| 플레이어 | 타일 | 결과 |
+|----------|------|------|
+| **야외** | `buildingId ∈ PlayerBlockingBuildingIds` | Hide (`FloorVisibilityHidden`), **건물별 최하층** Floor 제외 → §4 흔적 |
+| **야외** | 그 외 | Show |
+| **실내** | `buildingId != PlayerBuildingId` | Show |
+| **실내** | 같은 building | `IndoorTileVisibilityPipeline` (위층 Hide·스코프·아래 peek) |
 
-### 2.2 시선 차단 건물 — `BlockingBuildingFullHideLayer` (+ 야외 `ShowAllLayer`)
+### 2.2 야외 시선 차단 building
 
-`IsTileVisible`에서 **`BlockingBuildingFullHideLayer`를 실내·야외 공통 선적용**합니다.
+`BlockingBuildingFullHideLayer` — **`IsPlayerOutdoor`일 때만** 적용.
 
-- `buildingId`가 `ctx.PlayerBlockingBuildingIds`에 있으면 → **Hide**
-- **예외**: 타입이 `Floor`이고 walkable 셀 `CellAbove.y == MinCellY` (§4 흔적 유지)
-- 야외 분기(`OutdoorTileVisibilityPipeline`)는 차단 통과 타일에 **`ShowAllLayer`** 만 적용
+차단 buildingId: `BuildingPlayerOcclusionResolver` — 시선 샘플 경로에 `CellHasOccupancy` 점유셀(바닥·벽 포함) + `buildingId > 0`이면 차단. `PlayerBuildingId` 제외.
 
-**차단 buildingId 수집** (`BuildingPlayerOcclusionResolver` — 실내·야외 공통):
+토글: `OutdoorSightLineBuildingHideEnabled == false` → 차단 집합 비움.
 
-- 카메라↔플레이어 월드 **3D** 선분 샘플 (플레이어 셀 포함) → `ConvertWorldToGrid` → `(x, y, z)`
-- 경로상 **점유 셀 타일** + 카드널 이웃 **EdgeWall**(`TryGetEdgeBetween`) 중 `occludesOccupiedCells` / `occludesEdge`가 있는 것만 `buildingId > 0` 수집 (Floor face는 일반적으로 제외 — [TILEMAP.md](TILEMAP.md) §TileDefinition)
-- **`PlayerBuildingId` 제외** — 플레이어 소속 building은 차단 목록에 넣지 않음
-- resolver 산출 집합을 **즉시** context에 반영 (`BuildingBlockingController` 델타)
+**적용**: `SyncFloorVisibility`가
+1. 차단/해제된 building 전체 타일을 `BuildingGroupRegistry`로 일괄 갱신
+2. 스폰된 모든 뷰를 순회해 `IsTileVisible` 반영
 
-**토글**: `OutdoorSightLineBuildingHideEnabled == false` → 차단 집합 비움.
-
-**스트리밍 적용** (근접 타일 블렌드 §3와 독립):
-
-- 차단 building **추가** → building 전체 despawn (MinCellY Floor 제외)
-- 차단 building **제거** → 가시성 통과 타일만 respawn
-- 셀 `Prune` 시 차단 building 소속 뷰는 **building 단위 despawn**으로 승격
-
-### 2.3 실내 — `IndoorTileVisibilityPipeline`
-
-레이어 순서:
-
-| 레이어 | Hide 조건 | Show 조건 |
-|--------|-----------|-----------|
-| `SameBuildingUpperFloorHideLayer` | 같은 building **이고** `tileCellY > PlayerFloorCellY` | — |
-| `BuildingScopeLayer` | `tileCellY >= PlayerFloorCellY` 이고 `buildingId != PlayerBuildingId` | 같은 building |
-| `BelowFloorPeekLayer` | `tileCellY < PlayerFloorCellY` 이고 아래 조건 불만족 | `Wall`/`EdgeWall` **또는** `VisibleBelowCells`에 `(x,z,y)` 포함 |
-
-**아래층 peek** (`VisibleBelowCells`):
-
-- 플레이어 층 visibility BFS의 `EmptyDiscovered`(구멍)에서 아래 cellY로 내려가 첫 점유 층의 visibility `Visited` 셀을 수집
-- `PlayerFloorCellY <= MinCellY` 이면 빈 집합
+MinCellY Floor는 Hide 대신 `SightLineBuildingHidden` 셰이더.
 
 ---
 
-## 3. 근접 시선 블렌드 (카메라↔플레이어 — 플레이어 가림 강도)
+## 3. 근접 시선 블렌드
 
-진입: `SightLineProximityBlendDriver` → `ProximitySightLineBlendPipeline`  
-실내·야외 구분 없음. **청크 스트리밍과 무관** — `ITileViewRegistry`에 스폰된 `TileView`에만 `TileViewPresentationApplier`가 반영합니다.  
-§2.2 건물 despawn과 **독립** (despawn된 뷰는 블렌드 대상 아님).
+`SightLineProximityBlendDriver` → `ProximitySightLineBlendPipeline` → `ApplyProximityBlendDelta`.
 
-### 3.1 후보 셀
+- 청크 스트리밍과 무관. 스폰된 `TileView`만 대상.
+- 시선 3D 샘플 슬라이스: `GridAtSightSampleHeight` (§좌표 규약). `ResolveFromWorld` **금지**.
+- `FloorVisibilityHidden`인 타일은 occlusion tick 스킵.
+- Floor face 면제: 타일 대표 점유셀 `y <= PlayerFloorCellY` → occlusion 0.
 
-1. 카메라↔플레이어 3D 세그먼트 샘플 (`BuildingPlayerOcclusionResolver`와 **동일 step·3D 셀**; 플레이어 셀 **포함**)
-2. 각 샘플의 `(x, y, z)`에서 Y를 바꾸지 않고 `BandRadiusCells` Chebyshev XZ 확장 (플레이어 셀도 동일)
-3. 확장 셀 좌표로 Hub 조회 — 점유 셀 타일 + 카드널 이웃 `TryGetEdgeBetween` **EdgeWall** + Y 인접 `TryGetHorizontalFaceBetween` **Floor face** (§3.2 면제 적용). 가림 포인트는 점유 셀 중심(EdgeWall·Floor face는 면 중점).
-4. **사분면 필터**: 점유 셀이 플레이어 XZ 기준 **+X·-Z** 사분면(`dx≥0`, `dz≤0`)에 있을 때만 후보.
-5. **실내 구조벽 제외**: 플레이어가 실내이면 `Wall`·`EdgeWall`은 후보에서 제외 — BFS(`WallOcclusionFinder`) 전담. (윗층·비-BFS -XZ 벽에 근접 시선이 겹치지 않음)
+### entry store
 
-### 3.2 가림 강도 (0~1)
-
-**플레이어를 강하게 가릴수록 `_CharacterOcclusion` ↑** (셰이더에서 더 투명).
-
-가림 포인트(점유 셀 중심 / EdgeWall 변 중점)와 **카메라↔플레이어 3D 선분** 사이의 수직 거리(XYZ)로 강도를 산출합니다:
-
-- 선분에 가까울수록 occlusion ↑ (`InverseLerp` on `perpDist`)
-- 선분에서 멀수록 occlusion ↓
-- 플레이어 뒤(`SegmentTEpsilon` 셀 여유 밖) → 0
-
-| 설정 (`SightLineBlendSettings`) | 기본값 | 의미 |
-|---------------------------------|--------|------|
-| `FullBlendWithinPerpDistance` | 0.75 | 3D 선분 수직 거리가 이 값 미만이면 occlusion ≈ 1 |
-| `NoneBeyondPerpDistance` | 8 | 수직 거리가 이 값보다 크면 0 |
-| `BandRadiusCells` | 2 | 샘플 셀 주변 확장 |
-| `SegmentTEpsilon` | 0.15 | 플레이어 뒤쪽 여유(셀 단위) |
-| `ApplyEpsilon` | 0.015 | target 변화 미만이면 store delta 스킵 |
-
-**Floor 오탐 방지 (face 기준)**: `Floor` face의 walkable `CellAbove.y <= PlayerFloorCellY` → occlusion 0 (발밑·같은 층·이하 면 전부 면제). `CellAbove.y > PlayerFloorCellY`인 윗층 face만 근접 블렌드 대상.
-
-### 3.3 표현·entry store·합성
-
-`TilePresentationEntryStore`가 Concern×Source×Priority entry를 보관합니다. Store는 합성하지 않으며, `TileViewPresentationApplier`가 `PresentationEntryQueries`로 해석해 `TileView`에 반영합니다.
-
-**Concern / Source**
-
-| Concern | Source | Priority | 프로듀서 |
-|---------|--------|----------|----------|
-| `CharacterOcclusion` | `BfsWallOcclusion` | 100 | `TileMapModel` BFS delta |
-| `CharacterOcclusion` | `ProximitySightLine` | 50 | `SightLineProximityBlendDriver` |
-| `GhostAmount` | `Ghost` | 10 | `SetGhosted` |
-| `SightLineBuildingHidden` | `BlockingBuildingMinFloor` | 80 | `ApplySightLineBlockingDelta` |
-
-**관여(engagement)**: `Set`된 타일만 per-tile 관여. Query·`TryGetEngagedEntry`는 관여 타일 entry만 반환. `SetSourceEngaged(source, false)`는 제공자 비활성 시 해당 Source entry 전부 제거 (예: proximity driver Shutdown).
-
-**파이프라인 역할**: `ProximitySightLineBlendPipeline`은 후보·**target** 강도 산출만 담당. 이전 target은 `CopyScalarsForSource`로 delta 스킵에 사용. **프레임 간 보간은 하지 않음.**
-
-**display 보간** (`CharacterOcclusionDisplayDriver` → `TileViewPresentationApplier.TickCharacterOcclusionDisplay`):
-
-- entry store·BFS 캐시 = **target** (`ResolveCharacterOcclusion`)
-- Applier `_characterOcclusionDisplay` = **display** (engaged·페이드 중 타일만)
-- 매 프레임 engaged ∪ (display &gt; 0) 타일만 순회 → `TileView.SetCharacterOcclusion(display)` (TileView에 Update 없음)
-- 청크 스폰 `SyncPresentationForTile`: display 0에서 target으로 올라감
-
-**CharacterOcclusion 해석** (`PresentationEntryQueries`):
-
-후보: engaged `BfsWallOcclusion`, model BFS 캐시(engaged 없을 때), engaged `ProximitySightLine`.  
-**`PresentationPriorityTable`이 가장 높은 Source의 `Scalar01`을 선택** (`Mathf.Max` 합성 없음).  
-기본값: BfsWallOcclusion 100, ProximitySightLine 50 — 동일 타일에 둘 다 있으면 BFS가 이김.
-
-| 타일 | 비고 |
-|------|------|
-| BFS·근접 entry 동시 존재 | **우선순위 높은 Source** 값 (보통 BFS) |
-| BFS entry 없음, model 캐시만 | BFS 캐시 (priority 100) |
-| 근접만 engaged | `ProximitySightLine` |
-| 실내 `Wall`·`EdgeWall` (BFS 밖) | 근접 파이프라인 후보 제외 → 보통 0 |
-
-**디버그 조회**: `TileViewPresentationApplier.QueryEntriesForTile(tileId)` — 관여 중인 entry만.
-
-`TileView.SetCharacterOcclusion` — 파생: shadow/trace/추가광 (§3.2 임계값).
-
-기본 상태 우선순위: **HiddenByCharacter > Ghosted > Visible**.
+| Concern | Source | Priority |
+|---------|--------|----------|
+| `CharacterOcclusion` | `BfsWallOcclusion` | 100 |
+| `CharacterOcclusion` | `ProximitySightLine` | 50 |
+| `FloorVisibilityHidden` | `FloorVisibilityPolicy` | 90 |
+| `SightLineBuildingHidden` | `BlockingBuildingMinFloor` | 80 |
+| `GhostAmount` | `Ghost` | 10 |
 
 ---
 
-## 4. 시선 차단 건물 흔적 (야외)
+## 4. 시선 차단 건물 흔적
 
-차단 building의 **MinCellY Floor** 타일은 despawn하지 않고 스폰 유지.
-
-- `BuildingGroupRegistry.RebuildMinCellYFloorIndex` — bake 시 building별 MinCellY Floor guid 집합
-- `TileViewPresentationApplier.ApplySightLineBlockingDelta` → `SetSightLineBuildingHidden`
-- 셰이더: `SpriteUV4Point._SightLineBuildingHidden` (`ShadeObjectController`)
-
-차단 집합이 바뀔 때만 building 단위로 on/off.
+차단 building의 MinCellY Floor — 스폰 유지, `SetSightLineBuildingHidden` + `_SightLineBuildingHidden` 셰이더.
 
 ---
 
-## 5. Ghost · 선택 (가려짐과 별도)
+## 5. Ghost · 선택
 
-| API | entry / 역할 |
-|-----|----------------|
-| `TileViewPresentationApplier.SetGhosted` | `GhostAmount` / `Ghost` → `_GhostAmount` |
-| `TileView.SetSelected` | entry store 밖 — URP RenderingLayer |
-
-런타임 타일 상태 DTO의 `isGhosted`는 applier 경로와 별도; 표현은 entry store만 신뢰.
+`SetGhosted` / `SetSelected` — 층 가시성과 별도.
 
 ---
 
 ## 6. 디버그
 
-| 플래그 | 표시 |
+| 플래그 | 용도 |
 |--------|------|
-| `Config.DebugMode.FloorAlgorithm` | BFS 로그 |
-| `Config.DebugMode.TileBfsSceneOverlay` | 씬 오버레이: 방문 바닥(초록), 벽 검사 셀(빨강), 최종 오클루전(노랑), 플레이어 마스크(자홍) 등 — `TileMapBfsDebugOverlay` |
-| `Config.DebugMode.TileBuildingIdLabels` | 구조 타일별 `buildingId` 라벨 |
-| `Config.DebugMode.TileIndoorOutdoorOverlay` | 플레이어 층 바닥의 야외(청록)/실내(주황) 판정 셀 외곽선 — `PlayerFloorVisibilityDriver` 갱신 |
-| `Config.DebugMode.TileSightLineBuildingOverlay` | **§2.2 건물 차단 전용** — 흰선(카메라↔플레이어 3D), 회색(세그먼트 샘플 셀), 빨강(`occludes*` 타일이 기여한 차단 셀). `BuildingPlayerOcclusionResolver` 스냅샷 |
-
-**§3 근접 블렌드** 전용 씬 오버레이는 없음. 블렌드는 동일 3D 세그먼트 샘플 + `BandRadiusCells` 밴드·3D 선분 수직 거리로 동작하며, 밴드 셀·`occlusion01` 값은 디버그에 표시되지 않음.
+| `TileBuildingIdLabels` | buildingId 라벨 |
+| `TileIndoorOutdoorOverlay` | 야외/실내 판정 |
+| `TileSightLineBuildingOverlay` | 시선 차단 building (§2.2) |
 
 ---
 
-## 7. 관련 소스 (빠른 참조)
+## 7. 관련 소스
 
 | 주제 | 파일 |
 |------|------|
-| 층 정책·context | `PlayerFloorVisibilityPolicy.cs` |
-| 실내/야외 레이어 | `TileVisibility/VisibilityLayers.cs` |
-| 카메라 시선 building | `BuildingPlayerOcclusionResolver.cs` |
-| 시선 세그먼트 샘플 | `TileBlend/SightLineSegmentSampler.cs` (건물·블렌드 공통 step) |
-| 근접 시선 블렌드 | `TileBlend/ProximitySightLineBlendPipeline.cs`, `SightLineOcclusionStrength.cs` |
-| 블렌드 드라이버 | `SightLineProximityBlendDriver.cs` |
-| display 보간 드라이버 | `CharacterOcclusionDisplayDriver.cs` |
-| 스트리밍 despawn/흔적 | `TileMapStreamingVisualizer.cs`, `BuildingBlockingController.cs` |
-| 뷰 표현·entry store | `Presentation/TilePresentationEntryStore.cs`, `Presentation/PresentationEntryQueries.cs`, `TileView.cs`, `TileViewPresentationApplier.cs` |
-| 야외 판정 | `TileMapCacheHub.IsOutdoorEvaluation` |
+| 층 정책 | `PlayerFloorVisibilityPolicy.cs` |
+| 레이어 | `TileVisibility/VisibilityLayers.cs` |
+| 시선 building | `BuildingPlayerOcclusionResolver.cs` |
+| 근접 블렌드 | `TileBlend/ProximitySightLineBlendPipeline.cs` |
+| presentation | `TileViewPresentationApplier.cs`, `TileView.cs` |
+| 청크 스트리밍 | `TileMapStreamingVisualizer.cs` |
+| 드라이버 | `PlayerFloorVisibilityDriver.cs`, `IFloorVisibilitySync` |
 | bake | `BuildingGroupBuilder.cs`, `BuildingGroupRegistry.cs` |
-| 층 가시성 드라이버 | `PlayerFloorVisibilityDriver.cs` |
 
 ---
 
-## 8. 의사결정 치트시트
+## 8. 치트시트
 
 ```
 타일이 안 보인다?
-├─ GameObject 자체가 없다
-│  ├─ 청크 미로드 → 스트리밍 (가시성과 무관)
-│  └─ FloorVisibility Hide → §2 (야외 차단 building / 실내 위층·스코프)
-├─ 오브젝트는 있는데 벽이 투명/윤곽만
-│  └─ §3 characterOcclusion > 0 (카메라↔플레이어 시선 근접 블렌드)
-└─ 1층 바닥만 어둡다 (야외)
-   └─ §4 sight-line building hidden (차단 building MinCellY Floor)
+├─ 청크 밖 → 스트리밍 (가시성 무관)
+├─ renderer off, 오브젝트는 있음 → §2 FloorVisibilityHidden
+├─ 반투명/윤곽 → §3 CharacterOcclusion
+└─ 1층 바닥만 어둡다 (야외) → §4 SightLineBuildingHidden
 ```

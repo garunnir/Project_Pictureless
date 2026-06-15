@@ -17,6 +17,7 @@ MonoBehaviour:
   prefab: {fileID: 7270704505922181963, guid: 103991ee748417d4b82f89a7a47c12a7, type: 3}
   category: 
   size: {x: 1, y: 1, z: 1}
+  placementSlot: 1
   occupied:
     providesLogicalFloor: 0
     blocksPassageAndOcclusion: 1

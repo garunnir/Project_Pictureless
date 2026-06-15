@@ -18,10 +18,10 @@ namespace IsoTilemap
         readonly TileMapCacheHub _hub;
         readonly TopologyLayer _topology;
         readonly BuildingGroupRegistry _registry;
-        readonly TileEdgeBinder _edgeBinder;
 
         int _minCellY;
         int _maxCellY;
+        readonly List<TileData> _wallFaceScratch = new List<TileData>();
 
         public BuildingGroupBuilder(TileMapModel model, TileMapCacheHub hub)
         {
@@ -29,7 +29,6 @@ namespace IsoTilemap
             _hub = hub;
             _topology = hub.Topology;
             _registry = hub.Buildings.Registry;
-            _edgeBinder = (TileEdgeBinder)model.EdgeBinder;
         }
 
         public BuildingGroupRegistry Registry => _registry;
@@ -71,6 +70,8 @@ namespace IsoTilemap
             AssignBuildingsFromSeeds(CollectMinCellYBuildingSeeds());
             AssignOrphanFloorBuildings();
             BakeAllRooms();
+            _topology.RebuildOccupancy();
+            VerifyOccupancyIndexAfterBake();
             _model.ReindexTilesByIdFromRuntime();
             _registry.RebuildFromTiles(_model.TilesSnapshot);
             _registry.RebuildMinCellYFloorIndex(_model.TilesSnapshot, _minCellY);
@@ -165,11 +166,11 @@ namespace IsoTilemap
         public void HandleRemoveTile(TileData removed, HashSet<Vector3Int> changedCells)
         {
             int buildingId = removed.identity.buildingId;
-            int cellY = IsFloorTile(removed)
+            int cellY = TileIdentityUtil.IsFloorTile(removed.identity)
                 ? FloorFaceKey.FromFloorTileIdentity(removed.identity).CellAbove.y
                 : removed.identity.GridPos.y;
 
-            if (IsFloorTile(removed) &&
+            if (TileIdentityUtil.IsFloorTile(removed.identity) &&
                 (buildingId == TileIdentity.BuildingIdOutdoor ||
                  buildingId == TileIdentity.BuildingIdUnassigned))
                 RecomputeOutdoorFromMinAndRebuildLost(changedCells);
@@ -239,18 +240,18 @@ namespace IsoTilemap
             _minCellY = int.MaxValue;
             _maxCellY = int.MinValue;
 
-            _model.ForEachRuntimeTile(tile =>
+            foreach (var tile in _model.TilesSnapshot)
             {
-                if (!IsStructural(tile))
-                    return;
+                if (!TileIdentityUtil.IsStructural(tile.identity))
+                    continue;
 
-                int y = IsFloorTile(tile)
+                int y = TileIdentityUtil.IsFloorTile(tile.identity)
                     ? FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove.y
                     : tile.identity.GridPos.y;
 
                 if (y < _minCellY) _minCellY = y;
                 if (y > _maxCellY) _maxCellY = y;
-            });
+            }
 
             if (_minCellY == int.MaxValue)
             {
@@ -261,9 +262,9 @@ namespace IsoTilemap
 
         void ResetStructuralIds()
         {
-            _model.ForEachRuntimeTile(tile =>
+            _model.ForEachRuntimeTileMutating(tile =>
             {
-                if (!IsStructural(tile))
+                if (!TileIdentityUtil.IsStructural(tile.identity))
                     return;
 
                 _model.PatchTileIdentity(tile.tileDefId, TileIdentity.BuildingIdUnassigned, 0);
@@ -492,8 +493,7 @@ namespace IsoTilemap
                     for (int i = 0; i < list.Count; i++)
                     {
                         var tile = list[i];
-                        var type = (TileView.TileType)tile.identity.tileType;
-                        if (type != TileView.TileType.Wall && type != TileView.TileType.EdgeWall)
+                        if (!TileIdentityUtil.IsWallLike(tile.identity))
                             continue;
 
                         if (tile.identity.buildingId != TileIdentity.BuildingIdUnassigned)
@@ -504,11 +504,11 @@ namespace IsoTilemap
                 }
 
                 edgeScratch.Clear();
-                _model.EdgeBinder.AppendIncidentEdges(new Vector3Int(x, cellY, z), edgeScratch);
+                _model.FaceBinder.AppendWallFacesAtCell(new Vector3Int(x, cellY, z), edgeScratch);
                 for (int i = 0; i < edgeScratch.Count; i++)
                 {
                     var edge = edgeScratch[i];
-                    if ((TileView.TileType)edge.identity.tileType != TileView.TileType.EdgeWall)
+                    if (!TileIdentityUtil.IsVerticalFace(edge.identity))
                         continue;
 
                     if (edge.identity.buildingId != TileIdentity.BuildingIdUnassigned)
@@ -585,7 +585,7 @@ namespace IsoTilemap
 
             foreach (var tile in _model.TilesSnapshot)
             {
-                if (!IsFloorTile(tile))
+                if (!TileIdentityUtil.IsFloorTile(tile.identity))
                     continue;
 
                 int buildingId = tile.identity.buildingId;
@@ -610,9 +610,11 @@ namespace IsoTilemap
 
         void IndexEdgeWallsForSlice(int buildingId, int cellY)
         {
-            foreach (var edge in _edgeBinder.EnumerateTiles())
+            _model.FaceBinder.CopyWallFacesTo(_wallFaceScratch);
+            for (int i = 0; i < _wallFaceScratch.Count; i++)
             {
-                var edgeKey = WallEdgeKey.FromEdgeTileIdentity(edge.identity);
+                var edge = _wallFaceScratch[i];
+                var edgeKey = WallEdgeKey.FromWallTileIdentity(edge.identity);
                 if (edgeKey.Anchor.y != cellY)
                     continue;
 
@@ -702,9 +704,9 @@ namespace IsoTilemap
 
         void ClearRoomIdsOnSlice(int buildingId, int cellY)
         {
-            _model.ForEachRuntimeTile(tile =>
+            _model.ForEachRuntimeTileMutating(tile =>
             {
-                if (!IsFloorTile(tile))
+                if (!TileIdentityUtil.IsFloorTile(tile.identity))
                     return;
 
                 var key = FloorFaceKey.FromFloorTileIdentity(tile.identity);
@@ -723,16 +725,16 @@ namespace IsoTilemap
 
         void TagPerimeterForSlice(int buildingId, int cellY)
         {
-            _model.ForEachRuntimeTile(tile =>
+            _model.ForEachRuntimeTileMutating(tile =>
             {
-                var type = (TileView.TileType)tile.identity.tileType;
-                if (type != TileView.TileType.Wall &&
-                    type != TileView.TileType.EdgeWall)
+                if (!TileIdentityUtil.IsWallLike(tile.identity))
+                    return;
+
+                int tileCellY = OccupiedCellCoord.PrimaryCellFromIdentity(tile.identity).y;
+                if (tileCellY != cellY)
                     return;
 
                 var pos = tile.identity.GridPos;
-                if (pos.y != cellY)
-                    return;
 
                 if (!TryGetAdjacentFloorRoom(pos, out int adjBuilding, out int adjRoom))
                     return;
@@ -799,14 +801,14 @@ namespace IsoTilemap
 
         void TryAddRoomKeyFromTile(TileData tile, HashSet<RoomKey> keys)
         {
-            if (IsFloorTile(tile) && tile.identity.buildingId > 0 && tile.identity.roomId > 0)
+            if (TileIdentityUtil.IsFloorTile(tile.identity) && tile.identity.buildingId > 0 && tile.identity.roomId > 0)
             {
                 var key = FloorFaceKey.FromFloorTileIdentity(tile.identity);
                 keys.Add(new RoomKey(tile.identity.buildingId, key.CellAbove.y, tile.identity.roomId));
                 return;
             }
 
-            if (IsWallLike(tile))
+            if (TileIdentityUtil.IsWallLike(tile.identity))
             {
                 var pos = tile.identity.GridPos;
                 CollectRoomKeysNearCell(pos, keys);
@@ -922,7 +924,7 @@ namespace IsoTilemap
             int max = 0;
             foreach (var tile in _model.TilesSnapshot)
             {
-                if (!IsFloorTile(tile))
+                if (!TileIdentityUtil.IsFloorTile(tile.identity))
                     continue;
 
                 var key = FloorFaceKey.FromFloorTileIdentity(tile.identity);
@@ -935,24 +937,6 @@ namespace IsoTilemap
             return max + 1;
         }
 
-        static bool IsStructural(TileData tile)
-        {
-            var type = (TileView.TileType)tile.identity.tileType;
-            return type is TileView.TileType.Floor
-                or TileView.TileType.Wall
-                or TileView.TileType.EdgeWall;
-        }
-
-        static bool IsFloorTile(TileData tile) =>
-            (TileView.TileType)tile.identity.tileType == TileView.TileType.Floor;
-
-        static bool IsWallLike(TileData tile)
-        {
-            var type = (TileView.TileType)tile.identity.tileType;
-            return type is TileView.TileType.Wall
-                or TileView.TileType.EdgeWall;
-        }
-
         void LogBakeSummaryIfDebug()
         {
             if (!Config.DebugMode.FloorAlgorithm)
@@ -963,7 +947,7 @@ namespace IsoTilemap
             int outdoorMin = 0;
             foreach (var tile in _model.TilesSnapshot)
             {
-                if (!IsFloorTile(tile))
+                if (!TileIdentityUtil.IsFloorTile(tile.identity))
                     continue;
 
                 faceCount++;
@@ -978,6 +962,27 @@ namespace IsoTilemap
             Debug.Log(
                 $"[BuildingGroupBuilder] bake: minCellY={_minCellY}, floorFaces={faceCount}, " +
                 $"outdoor@min={outdoorMin}, upperWithBuildingId={bakedAboveMin}, buildings={_registry.TilesByBuildingId.Count}");
+        }
+
+        void VerifyOccupancyIndexAfterBake()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (!Config.DebugMode.FloorAlgorithm)
+                return;
+
+            foreach (var tile in _model.TilesSnapshot)
+            {
+                if (!TileIdentityUtil.IsStructural(tile.identity))
+                    continue;
+
+                Vector3Int primary = OccupiedCellCoord.PrimaryCellFromIdentity(tile.identity);
+                if (_topology.Index.HasAnyTile(primary.x, primary.z, primary.y))
+                    continue;
+
+                Debug.LogWarning(
+                    $"[BuildingGroupBuilder] 점유 인덱스 미등록: prefab={tile.identity.PrefabId} primary={primary}");
+            }
+#endif
         }
     }
 }

@@ -252,8 +252,8 @@ namespace IsoTilemap
         {
             var index = new FloorMapIndex(
                 model.tiles,
-                model.EdgeBinder.EdgeIndex,
-                model.FloorFaceBinder.FaceIndex);
+                model.FaceBinder.WallFaceIndex,
+                model.FaceBinder.FloorFaceIndex);
             var topology = new TopologyLayer(index);
             var buildings = new BuildingLayer(registry);
             var rooms = new RoomGeometryLayer();
@@ -276,6 +276,50 @@ namespace IsoTilemap
         }
 
         public bool CellHasOccupancy(int x, int z, int y) => Topology.HasOccupancy(x, z, y);
+
+        public bool CellHasFloor(int x, int cellY, int z) =>
+            Topology.CellHasFloor(x, cellY, z);
+
+        public void CollectStructuralOccludersAtOccupiedCell(
+            Vector3Int occupiedCell,
+            List<TileData> cellTilesOut,
+            List<TileData> wallFacesOut)
+        {
+            cellTilesOut?.Clear();
+            wallFacesOut?.Clear();
+
+            if (!CellHasOccupancy(occupiedCell.x, occupiedCell.z, occupiedCell.y))
+                return;
+
+            if (cellTilesOut != null &&
+                TryGetCellTiles(occupiedCell.x, occupiedCell.z, occupiedCell.y, out var tiles))
+            {
+                for (int i = 0; i < tiles.Count; i++)
+                    cellTilesOut.Add(tiles[i]);
+            }
+
+            if (wallFacesOut == null)
+                return;
+
+            AppendWallFacesAtOccupiedCell(occupiedCell, wallFacesOut);
+        }
+
+        static readonly Vector3Int[] StructuralCardinalNeighbors =
+        {
+            Vector3Int.right, Vector3Int.back, Vector3Int.left, Vector3Int.forward
+        };
+
+        void AppendWallFacesAtOccupiedCell(Vector3Int cell, List<TileData> appendTo)
+        {
+            for (int i = 0; i < StructuralCardinalNeighbors.Length; i++)
+            {
+                Vector3Int neighbor = cell + StructuralCardinalNeighbors[i];
+                if (!Topology.TryGetEdgeBetween(cell, neighbor, out TileData edge))
+                    continue;
+
+                appendTo.Add(edge);
+            }
+        }
 
         public bool TryGetCellTiles(int x, int z, int cellY, out List<TileData> list) =>
             Topology.TryGetCellTiles(x, z, cellY, out list);

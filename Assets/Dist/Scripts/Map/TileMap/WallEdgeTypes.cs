@@ -30,8 +30,12 @@ namespace IsoTilemap
             Face = face;
         }
 
+        public static WallEdgeKey FromWallTileIdentity(in TileIdentity id) =>
+            new WallEdgeKey(id.GridPos, (WallFace)id.wallFace);
+
+        [Obsolete("Use FromWallTileIdentity")]
         public static WallEdgeKey FromEdgeTileIdentity(in TileIdentity id) =>
-            new WallEdgeKey(id.GridPos, (WallFace)id.edgeFace);
+            FromWallTileIdentity(id);
 
         public bool Equals(WallEdgeKey other) => Anchor.Equals(other.Anchor) && Face == other.Face;
 
@@ -69,9 +73,7 @@ namespace IsoTilemap
         public static void GetWorldPose(in WallEdgeKey key, float cellSize, out Vector3 position, out Quaternion rotation)
         {
             Vector3Int n = key.NeighborCell();
-            Vector3 c0 = TileHelper.ConvertGridToWorldPos(key.Anchor, cellSize);
-            Vector3 c1 = TileHelper.ConvertGridToWorldPos(n, cellSize);
-            position = (c0 + c1) * 0.5f;
+            position = TileHelper.GetAdjacentCellFaceMidpoint(key.Anchor, n, cellSize);
             Vector3 outward = new Vector3(n.x - key.Anchor.x, 0f, n.z - key.Anchor.z);
             if (outward.sqrMagnitude < 0.0001f)
                 outward = Vector3.forward;

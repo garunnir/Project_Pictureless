@@ -22,7 +22,8 @@ namespace IsoTilemap
             {
                 ConsiderCandidate(bfs.Scalar01, bfs.Priority, ref bestScalar, ref bestPriority, ref hasCandidate);
             }
-            else if (model.TryGetTileOcclusionPresentation(tileId, out float modelBfs))
+            else if (model.IsBfsOcclusionStructuralTile(tileId) &&
+                     model.TryGetTileOcclusionPresentation(tileId, out float modelBfs))
             {
                 int bfsPriority = PresentationPriorityTable.Get(PresentationSource.BfsWallOcclusion);
                 ConsiderCandidate(modelBfs, bfsPriority, ref bestScalar, ref bestPriority, ref hasCandidate);

@@ -91,7 +91,7 @@ public sealed class SightLineProximityBlendDriver : MonoBehaviour
 
         float playerHeight = playerWorld.y;
         FloorVisibilityContext ctx = _policy.ResolveContext(playerHeight, playerWorld);
-        Vector3Int playerCell = TileHelper.ConvertWorldToGrid(playerWorld, _blendSettings.CellSize);
+        Vector3Int playerCell = _policy.ResolvePlayerOccupiedCell(playerHeight, playerWorld);
 
         TilePresentationEntryStore entries = _presentationApplier.Entries;
         entries.CopyScalarsForSource(

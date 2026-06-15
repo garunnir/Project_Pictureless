@@ -258,7 +258,7 @@ namespace IsoTilemap
                 for (int i = 0; i < list.Count; i++)
                 {
                     TileData tile = list[i];
-                    if (!IsStructuralCellTile((TileView.TileType)tile.identity.tileType))
+                    if (!IsStructuralCellTile(tile.identity))
                         continue;
 
                     if (!seen.Add(tile.tileDefId))
@@ -270,7 +270,7 @@ namespace IsoTilemap
 
             foreach (TileData edgeTile in hub.Topology.Index.EnumerateEdgeTiles())
             {
-                if ((TileView.TileType)edgeTile.identity.tileType != TileView.TileType.EdgeWall)
+                if (!TileIdentityUtil.IsVerticalFace(edgeTile.identity))
                     continue;
 
                 if (!seen.Add(edgeTile.tileDefId))
@@ -281,7 +281,7 @@ namespace IsoTilemap
 
             foreach (TileData faceTile in hub.Topology.Index.EnumerateFaceTiles())
             {
-                if ((TileView.TileType)faceTile.identity.tileType != TileView.TileType.Floor)
+                if (!TileIdentityUtil.IsHorizontalFace(faceTile.identity))
                     continue;
 
                 if (!seen.Add(faceTile.tileDefId))
@@ -293,8 +293,8 @@ namespace IsoTilemap
             return result;
         }
 
-        static bool IsStructuralCellTile(TileView.TileType type) =>
-            type == TileView.TileType.Floor || type == TileView.TileType.Wall;
+        static bool IsStructuralCellTile(in TileIdentity id) =>
+            TileIdentityUtil.IsWallLike(id);
 
         public static void EnsureSubscribed()
         {
@@ -439,7 +439,7 @@ namespace IsoTilemap
             Vector3 sum = Vector3.zero;
             for (int i = 0; i < edges.Count; i++)
             {
-                var key = WallEdgeKey.FromEdgeTileIdentity(edges[i].identity);
+                var key = WallEdgeKey.FromWallTileIdentity(edges[i].identity);
                 sum += TileHelper.ConvertGridToWorldPos(key.CellA, 1f);
                 sum += TileHelper.ConvertGridToWorldPos(key.CellB, 1f);
             }
@@ -482,7 +482,7 @@ namespace IsoTilemap
             Handles.color = color;
             for (int i = 0; i < edgeTiles.Count; i++)
             {
-                var key = WallEdgeKey.FromEdgeTileIdentity(edgeTiles[i].identity);
+                var key = WallEdgeKey.FromWallTileIdentity(edgeTiles[i].identity);
                 Vector3Int neighbor = key.CellB;
                 Vector3 cellToNeighbor = neighbor - key.CellA;
                 Vector3 perpendicularDir = new Vector3(-cellToNeighbor.z, 0, cellToNeighbor.x).normalized;
@@ -524,17 +524,8 @@ namespace IsoTilemap
             }
         }
 
-        static Vector3 ResolveBuildingIdLabelWorldPos(TileData tile)
-        {
-            if ((TileView.TileType)tile.identity.tileType == TileView.TileType.EdgeWall)
-            {
-                var key = WallEdgeKey.FromEdgeTileIdentity(tile.identity);
-                WallEdgeKey.GetWorldPose(key, 1f, out Vector3 edgePos, out _);
-                return edgePos;
-            }
-
-            return TileHelper.ConvertGridToWorldPos(tile.identity.GridPos, 1f);
-        }
+        static Vector3 ResolveBuildingIdLabelWorldPos(TileData tile) =>
+            TileWorldPointUtil.GetRepresentativeWorldPoint(tile.identity, 1f);
     }
 }
 #endif

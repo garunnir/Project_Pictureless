@@ -129,7 +129,7 @@ namespace IsoTilemap
         private readonly IMapModelReadOnly _cellQuery;
         public OcclusionMaskOptions MaskOptions { get; set; } = OcclusionMaskOptions.Default;
 
-        /// <param name="edges"><see cref="TileEdgeBinder"/> 등 면 벽 레지스트리 인덱스(셀 리스트와 분리).</param>
+        /// <param name="edges"><see cref="TileFaceBinder.WallFaceIndex"/> 등 면 벽 레지스트리 인덱스(셀 리스트와 분리).</param>
         /// <param name="topology">공유 <see cref="TileMapCacheHub.Topology"/> (null이면 내부 인덱스 생성).</param>
         /// <param name="cellQuery">셀 조회 창구. 있으면 <see cref="IMapModelReadOnly.TryGetCellTiles"/>·<see cref="IMapModelReadOnly.EnumerateOccupiedCells"/> 사용.</param>
         public WallOcclusionFinder(
@@ -344,7 +344,7 @@ namespace IsoTilemap
             for (int i = 0; i < source.Count; i++)
             {
                 var tile = source[i];
-                if (!IsTileInBottomVisibilityBand(tile, playerCellPos, options, downScale))
+                if (!IsTileInBottomVisibilityMask(tile, playerCellPos, options, downScale))
                     continue;
                 if (IsTileInsideMask(tile, playerCellPos, options, downScale, rightScale))
                     extraOccluding.Add(tile);
@@ -353,7 +353,7 @@ namespace IsoTilemap
             return new MaskApplicationResult(extraOccluding);
         }
 
-        private static bool IsTileInBottomVisibilityBand(
+        private static bool IsTileInBottomVisibilityMask(
             TileData tile,
             Vector3Int playerCellPos,
             OcclusionMaskOptions options,
@@ -362,9 +362,9 @@ namespace IsoTilemap
             int minDown = options.MinStartDepthTiles * downScale;
             int maxDown = options.DownTiles * downScale;
 
-            if ((TileView.TileType)tile.identity.tileType == TileView.TileType.EdgeWall)
+            if (TileIdentityUtil.IsVerticalFace(tile.identity))
             {
-                WallEdgeKey key = WallEdgeKey.FromEdgeTileIdentity(tile.identity);
+                WallEdgeKey key = WallEdgeKey.FromWallTileIdentity(tile.identity);
                 int downA = DotXZ(new Vector3Int(key.CellA.x - playerCellPos.x, 0, key.CellA.z - playerCellPos.z), options.DownAxis);
                 int downB = DotXZ(new Vector3Int(key.CellB.x - playerCellPos.x, 0, key.CellB.z - playerCellPos.z), options.DownAxis);
                 // EdgeWall은 상단 간섭 방지를 위해 양쪽 셀이 모두 하단 밴드 안에 있어야 후보로 인정.
@@ -430,9 +430,9 @@ namespace IsoTilemap
             int downScale,
             int rightScale)
         {
-            if ((TileView.TileType)tile.identity.tileType == TileView.TileType.EdgeWall)
+            if (TileIdentityUtil.IsVerticalFace(tile.identity))
             {
-                WallEdgeKey key = WallEdgeKey.FromEdgeTileIdentity(tile.identity);
+                WallEdgeKey key = WallEdgeKey.FromWallTileIdentity(tile.identity);
                 if (!IsEdgeFaceInBottomHemisphere(key, playerCellPos, options.DownAxis))
                     return false;
                 // 상단 누수 방지를 위해 EdgeWall은 양 끝 셀이 모두 마스크 안일 때만 포함.

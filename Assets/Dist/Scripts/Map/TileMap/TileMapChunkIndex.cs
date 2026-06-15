@@ -27,10 +27,9 @@ namespace IsoTilemap
         public void RegisterTile(TileData tile, int chunkSize)
         {
             chunkSize = Mathf.Max(1, chunkSize);
-            var type = (TileView.TileType)tile.identity.tileType;
-            if (type == TileView.TileType.EdgeWall)
+            if (TileIdentityUtil.IsVerticalFace(tile.identity))
             {
-                WallEdgeKey key = WallEdgeKey.FromEdgeTileIdentity(tile.identity);
+                WallEdgeKey key = WallEdgeKey.FromWallTileIdentity(tile.identity);
                 Vector2Int anchorChunk = TileChunkCoord.FromCell(key.Anchor, chunkSize);
                 _primaryChunkByTile[tile.tileDefId] = anchorChunk;
                 AddCell(anchorChunk, key.Anchor);
@@ -38,7 +37,7 @@ namespace IsoTilemap
                 return;
             }
 
-            if (type == TileView.TileType.Floor)
+            if (TileIdentityUtil.IsHorizontalFace(tile.identity))
             {
                 FloorFaceKey key = FloorFaceKey.FromFloorTileIdentity(tile.identity);
                 Vector2Int belowChunk = TileChunkCoord.FromCell(key.CellBelow, chunkSize);
@@ -60,16 +59,15 @@ namespace IsoTilemap
             if (!_primaryChunkByTile.Remove(tile.tileDefId))
                 return;
 
-            var type = (TileView.TileType)tile.identity.tileType;
-            if (type == TileView.TileType.EdgeWall)
+            if (TileIdentityUtil.IsVerticalFace(tile.identity))
             {
-                WallEdgeKey key = WallEdgeKey.FromEdgeTileIdentity(tile.identity);
+                WallEdgeKey key = WallEdgeKey.FromWallTileIdentity(tile.identity);
                 RemoveCell(TileChunkCoord.FromCell(key.Anchor, chunkSize), key.Anchor);
                 RemoveCell(TileChunkCoord.FromCell(key.NeighborCell(), chunkSize), key.NeighborCell());
                 return;
             }
 
-            if (type == TileView.TileType.Floor)
+            if (TileIdentityUtil.IsHorizontalFace(tile.identity))
             {
                 FloorFaceKey key = FloorFaceKey.FromFloorTileIdentity(tile.identity);
                 RemoveCell(TileChunkCoord.FromCell(key.CellBelow, chunkSize), key.CellBelow);

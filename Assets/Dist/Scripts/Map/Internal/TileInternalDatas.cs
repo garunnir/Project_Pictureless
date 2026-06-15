@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;namespace IsoTilemap
+using UnityEngine;
+
+namespace IsoTilemap
 {
     public struct TileData
     {
@@ -19,22 +21,18 @@ using UnityEngine;namespace IsoTilemap
     }
     public readonly struct TileIdentity
     {
-        /// <summary>255이면 칸 타일. 0=+X 면, 1=+Z 면(GridPos 정렬 앵커 기준, WallFace와 동일).</summary>
-        public const byte EdgeFaceNone = 255;
-
-        /// <summary>255이면 레거시 셀 Floor. 0=+Y 면(앵커=CellBelow, FloorFace와 동일).</summary>
-        public const byte FloorFaceNone = 255;
-
         public string PrefabId{init; get;}
 
         /// <summary>
-        /// 칸 타일이면 점유 셀입니다. EdgeWall/Floor face이면 점유 셀이 아니라 두 셀 사이 면을 정렬/저장하기 위한 앵커입니다.
-        /// Floor face 앵커는 CellBelow입니다.
+        /// <see cref="TilePlacementSlot.OccupiedCell"/>이면 점유 셀.
+        /// 면 슬롯이면 정렬·저장용 앵커 (점유 아님). HorizontalFace 앵커는 CellBelow.
         /// </summary>
         public Vector3Int GridPos{init; get;}
         public Vector3Int sizeUnit{init; get;}
-        public byte tileType{init; get;}
-        public byte edgeFace{init; get;}
+        public byte placementSlot{init; get;}
+        /// <summary><see cref="TilePlacementSlot.VerticalFace"/>일 때 <see cref="WallFace"/>.</summary>
+        public byte wallFace{init; get;}
+        /// <summary><see cref="TilePlacementSlot.HorizontalFace"/>일 때 <see cref="FloorFace"/>.</summary>
         public byte floorFace{init; get;}
 
         /// <summary>bake: <see cref="BuildingIdUnassigned"/> 미할당, <see cref="BuildingIdOutdoor"/> 광장 Floor, &gt;0 건물. 런타임 야외 분기는 <c>IsOutdoorEvaluation</c>.</summary>
@@ -49,7 +47,7 @@ using UnityEngine;namespace IsoTilemap
         /// <summary>0=room 미할당; 같은 buildingId·cellY 내 방 번호.</summary>
         public int roomId { init; get; }
 
-        /// <summary><see cref="TileDefinition"/> 충돌·오클루전 bake. <see cref="TileCollisionProfile.FromDefinition"/>.</summary>
+        /// <summary><see cref="TileDefinition"/> 충돌·오클루전 bake. <see cref="TileCollisionProfile.FromDefinitionForSlot"/>.</summary>
         public byte collisionFlags { init; get; }
     }
 

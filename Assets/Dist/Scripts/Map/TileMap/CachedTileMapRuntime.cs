@@ -38,8 +38,7 @@ namespace IsoTilemap
 
         public TileMapChunkIndex ChunkIndex => _chunkIndex;
 
-        public ITileEdgeBinderReadOnly EdgeBinder => _runtimeData.EdgeBinder;
-        public ITileFloorFaceBinderReadOnly FloorFaceBinder => _runtimeData.FloorFaceBinder;
+        public ITileFaceBinderReadOnly FaceBinder => _runtimeData.FaceBinder;
 
         public bool CellHasWalkableFloor(int x, int cellY, int z) =>
             _runtimeData.CellHasWalkableFloor(x, cellY, z);
@@ -88,8 +87,8 @@ namespace IsoTilemap
         public bool TryGetTileById(Guid tileId, out TileData tileData) =>
             _runtimeData.TryGetTileById(tileId, out tileData);
 
-        public void ForEachRuntimeTile(Action<TileData> visit) =>
-            _runtimeData.ForEachRuntimeTile(visit);
+        public void ForEachRuntimeTileMutating(Action<TileData> visit) =>
+            _runtimeData.ForEachRuntimeTileMutating(visit);
 
         public void PatchTileIdentity(Guid tileDefId, int buildingId, int roomId) =>
             _runtimeData.PatchTileIdentity(tileDefId, buildingId, roomId);

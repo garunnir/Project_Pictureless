@@ -39,12 +39,11 @@ namespace IsoTilemap
             if (tileCellY >= ctx.PlayerFloorCellY)
                 return TileVisibilityVerdict.Continue;
 
-            var type = (TileView.TileType)tile.identity.tileType;
-            if (type is TileView.TileType.Wall or TileView.TileType.EdgeWall)
+            if (TileIdentityUtil.IsWallLike(tile.identity))
                 return TileVisibilityVerdict.Show;
 
             var gridPos = tile.identity.GridPos;
-            if (type == TileView.TileType.Floor)
+            if (TileIdentityUtil.IsFloorTile(tile.identity))
                 gridPos = FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove;
 
             if (ctx.VisibleBelowCells.Contains((gridPos.x, gridPos.z, tileCellY)))
@@ -54,8 +53,14 @@ namespace IsoTilemap
         }
     }
 
+    /// <summary>야외 시선 차단 building — presentation <c>FloorVisibilityHidden</c>로 반영.</summary>
     public sealed class BlockingBuildingFullHideLayer : ITileVisibilityLayer
     {
+        readonly BuildingGroupRegistry _registry;
+
+        public BlockingBuildingFullHideLayer(BuildingGroupRegistry registry) =>
+            _registry = registry;
+
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
             if (!ctx.IsPlayerOutdoor)
@@ -65,8 +70,9 @@ namespace IsoTilemap
             if (buildingId <= 0 || !ctx.PlayerBlockingBuildingIds.Contains(buildingId))
                 return TileVisibilityVerdict.Continue;
 
-            if ((TileView.TileType)tile.identity.tileType == TileView.TileType.Floor &&
-                FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove.y == ctx.MinCellY)
+            if (_registry != null &&
+                TileIdentityUtil.IsFloorTile(tile.identity) &&
+                _registry.IsBottomFloorTile(buildingId, tile.tileDefId))
                 return TileVisibilityVerdict.Continue;
 
             return TileVisibilityVerdict.Hide;

@@ -144,27 +144,64 @@ namespace IsoTilemap
             return new HashSet<Guid>(set);
         }
 
-        /// <summary>맵 bake 후 MinCellY Floor 타일 guid 집합을 타일 스냅샷에서 재구성합니다.</summary>
+        /// <summary>맵 bake 후 building별 <b>최하층</b> Floor 타일 guid 집합을 재구성합니다.</summary>
         public void RebuildMinCellYFloorIndex(IEnumerable<TileData> tiles, int MinCellY)
         {
+            _ = MinCellY;
             _minCellYFloorTilesByBuildingId.Clear();
             if (tiles == null)
                 return;
 
+            var minFloorYByBuilding = new Dictionary<int, int>();
+
             foreach (var tile in tiles)
             {
                 int buildingId = tile.identity.buildingId;
-                if (buildingId <= 0)
+                if (buildingId <= 0 || !TileIdentityUtil.IsFloorTile(tile.identity))
                     continue;
 
-                if ((TileView.TileType)tile.identity.tileType != TileView.TileType.Floor)
-                    continue;
+                var key = FloorFaceKey.FromFloorTileIdentity(tile.identity);
+                int sy = tile.identity.sizeUnit.y;
+                if (sy < 1) sy = 1;
 
-                if (FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove.y != MinCellY)
-                    continue;
-
-                RegisterMinCellYFloorTile(buildingId, tile.tileDefId);
+                for (int dy = 0; dy < sy; dy++)
+                {
+                    int floorY = key.CellAbove.y + dy;
+                    if (!minFloorYByBuilding.TryGetValue(buildingId, out int minY) || floorY < minY)
+                        minFloorYByBuilding[buildingId] = floorY;
+                }
             }
+
+            foreach (var tile in tiles)
+            {
+                int buildingId = tile.identity.buildingId;
+                if (buildingId <= 0 || !TileIdentityUtil.IsFloorTile(tile.identity))
+                    continue;
+
+                if (!minFloorYByBuilding.TryGetValue(buildingId, out int minFloorY))
+                    continue;
+
+                var key = FloorFaceKey.FromFloorTileIdentity(tile.identity);
+                int sy = tile.identity.sizeUnit.y;
+                if (sy < 1) sy = 1;
+
+                for (int dy = 0; dy < sy; dy++)
+                {
+                    if (key.CellAbove.y + dy != minFloorY)
+                        continue;
+
+                    RegisterMinCellYFloorTile(buildingId, tile.tileDefId);
+                }
+            }
+        }
+
+        public bool IsBottomFloorTile(int buildingId, Guid tileId)
+        {
+            if (buildingId <= 0 ||
+                !_minCellYFloorTilesByBuildingId.TryGetValue(buildingId, out var set))
+                return false;
+
+            return set.Contains(tileId);
         }
 
         public void RegisterMinCellYFloorTile(int buildingId, Guid tileId)

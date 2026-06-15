@@ -35,6 +35,32 @@ namespace IsoTilemap
 );
             return wPos;
         }
+
+        /// <summary>
+        /// 카드널 인접 두 셀 사이 면의 월드 중점 (수직 벽 EdgeWall용).
+        /// X/Z는 <see cref="ConvertGridToWorldPos"/> 셀 중심, Y는 동일 층이므로 셀 바닥.
+        /// </summary>
+        public static Vector3 GetAdjacentCellFaceMidpoint(Vector3Int cellA, Vector3Int cellB, float cellSize = 1f)
+        {
+            if (cellSize <= 0f) cellSize = 1f;
+            Vector3 a = ConvertGridToWorldPos(cellA, cellSize);
+            Vector3 b = ConvertGridToWorldPos(cellB, cellSize);
+            return (a + b) * 0.5f;
+        }
+
+        /// <summary>
+        /// 수직 인접 두 셀 사이 수평 바닥면 pose. Y는 격자 경계(<see cref="cellAbove"/> 바닥), X/Z는 셀 열 중심.
+        /// </summary>
+        public static Vector3 GetHorizontalCellFaceWorldPos(
+            Vector3Int cellBelow,
+            Vector3Int cellAbove,
+            float cellSize = 1f)
+        {
+            if (cellSize <= 0f) cellSize = 1f;
+            Vector3 below = ConvertGridToWorldPos(cellBelow, cellSize);
+            float boundaryY = ConvertGridToWorldPos(cellAbove, cellSize).y;
+            return new Vector3(below.x, boundaryY, below.z);
+        }
     }
 
 }

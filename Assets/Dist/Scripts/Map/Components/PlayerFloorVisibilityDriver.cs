@@ -6,7 +6,7 @@ using UnityEngine;
 
 /// <summary>
 /// 플레이어 월드 높이·그리드 XZ → <see cref="PlayerFloorVisibilityPolicy"/> →
-/// <see cref="TileMapStreamingVisualizer.SyncFloorVisibility"/>.
+/// <see cref="IFloorVisibilitySync.SyncFloorVisibility"/>.
 /// </summary>
 [DefaultExecutionOrder(-100)]
 [DisallowMultipleComponent]
@@ -16,11 +16,11 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
     [Tooltip("BodyWorldPoint.y에 더할 오프셋(발끝·캡슐 보정).")]
     [SerializeField] private float _heightOffsetWorld;
 
-    [Tooltip("Play 전 Inspector. 끄면 야외 시선상 가림 건물 숨김(벽 despawn)을 하지 않습니다.")]
+    [Tooltip("Play 전 Inspector. 끄면 야외 시선상 가림 건물 presentation 숨김을 하지 않습니다.")]
     [SerializeField] private bool _outdoorSightLineBuildingHideEnabled = true;
 
     private PlayerFloorVisibilityPolicy _policy;
-    private TileMapStreamingVisualizer _visualizer;
+    private IFloorVisibilitySync _visibilitySync;
     private FloorVisibilityContext _lastCtx;
     private bool _hasLastCtx;
     private bool _isActive;
@@ -28,15 +28,15 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
     private bool _buildingIdLabelsPublished;
 #endif
 
-    public void Init(PlayerFloorVisibilityPolicy policy, TileMapStreamingVisualizer visualizer)
+    public void Init(PlayerFloorVisibilityPolicy policy, IFloorVisibilitySync visibilitySync)
     {
         Shutdown();
 
         _policy = policy;
         _policy.OutdoorSightLineBuildingHideEnabled = _outdoorSightLineBuildingHideEnabled;
-        _visualizer = visualizer;
+        _visibilitySync = visibilitySync;
         _isActive = true;
-        ApplyNow(); // 최초 1회 동기화 
+        ApplyNow();
     }
 
     public void Shutdown()
@@ -48,14 +48,14 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
         _buildingIdLabelsPublished = false;
 #endif
         _policy = null;
-        _visualizer = null;
+        _visibilitySync = null;
         _hasLastCtx = false;
         _isActive = false;
     }
 
     public void ApplyNow()
     {
-        if (_policy == null || _visualizer == null || _playerState == null)
+        if (_policy == null || _visibilitySync == null || _playerState == null)
             return;
 
         _policy.OutdoorSightLineBuildingHideEnabled = _outdoorSightLineBuildingHideEnabled;
@@ -68,7 +68,7 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
 
         if (!_hasLastCtx || !ctx.Equals(_lastCtx))
         {
-            _visualizer.SyncFloorVisibility(ctx);
+            _visibilitySync.SyncFloorVisibility(ctx);
             _lastCtx = ctx;
             _hasLastCtx = true;
         }

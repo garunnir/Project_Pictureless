@@ -109,25 +109,27 @@ public class GridCursor : MonoBehaviour
         if (_placementState.Selected == null) return;
 
         var def = _placementState.Selected;
-        byte placedType = InferTileTypeFromPrefabId(def.prefabId);
+        var slot = TileIdentityUtil.ResolvePlacementSlot(def, def.prefabId);
         var sizeUnit = new Vector3Int(
             Mathf.Max(1, def.size.x),
             Mathf.Max(1, def.size.y),
             Mathf.Max(1, def.size.z));
+        Vector3Int gridPos = slot == TilePlacementSlot.HorizontalFace
+            ? _cursorGridPos + Vector3Int.down
+            : _cursorGridPos;
+
         var identity = new TileIdentity
         {
             PrefabId = def.prefabId,
-            GridPos = _cursorGridPos,
+            GridPos = gridPos,
             sizeUnit = sizeUnit,
-            tileType = placedType,
-            edgeFace = placedType == (byte)TileView.TileType.EdgeWall ? (byte)0 : TileIdentity.EdgeFaceNone,
-            floorFace = placedType == (byte)TileView.TileType.Floor
-                ? (byte)FloorFace.UnsetWalkable
-                : TileIdentity.FloorFaceNone,
-            collisionFlags = TileCollisionProfile.FromDefinitionForTileType(placedType, def),
+            placementSlot = (byte)slot,
+            wallFace = slot == TilePlacementSlot.VerticalFace ? (byte)0 : (byte)0,
+            floorFace = slot == TilePlacementSlot.HorizontalFace
+                ? (byte)FloorFace.PosY
+                : (byte)0,
+            collisionFlags = TileCollisionProfile.FromDefinitionForSlot(slot, def),
         };
-        if (placedType == (byte)TileView.TileType.Floor)
-            identity = FloorFaceIdentityUtil.FromWalkableCellPlacement(identity);
 
         var tileData = new TileData
         {
@@ -157,20 +159,6 @@ public class GridCursor : MonoBehaviour
 
     float ResolveCellSize() =>
         _tileMapManager?.WorldGrid != null ? _tileMapManager.WorldGrid.CellSize : 1f;
-
-    static byte InferTileTypeFromPrefabId(string prefabId)
-    {
-        if (string.IsNullOrEmpty(prefabId)) return 0;
-        if (prefabId.StartsWith("SlimWall/", StringComparison.Ordinal))
-            return (byte)TileView.TileType.EdgeWall;
-        if (prefabId.StartsWith("Floor/", StringComparison.Ordinal))
-            return (byte)TileView.TileType.Floor;
-        if (prefabId.StartsWith("ThickWall/", StringComparison.Ordinal))
-            return (byte)TileView.TileType.Wall;
-        if (prefabId.StartsWith("Slope/", StringComparison.Ordinal))
-            return (byte)TileView.TileType.Slope;
-        return 0;
-    }
 
     void OnDestroy()
     {

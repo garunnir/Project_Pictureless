@@ -7,14 +7,10 @@ namespace IsoTilemap
 {
     public static class TileWorldPointUtil
     {
-        /// <summary>점유 셀 중심(EdgeWall·Floor face는 면 중점).</summary>
+        /// <summary>점유 셀 중심(수직·수평 면 타일은 면 pose).</summary>
         public static Vector3 GetOcclusionWorldPoint(in TileIdentity identity, Vector3Int occupiedCell, float cellSize)
         {
-            var type = (TileView.TileType)identity.tileType;
-            if (type == TileView.TileType.EdgeWall && identity.edgeFace != TileIdentity.EdgeFaceNone)
-                return GetRepresentativeWorldPoint(identity, cellSize);
-
-            if (type == TileView.TileType.Floor && FloorFaceKey.IsAnchorFormat(identity.floorFace))
+            if (TileIdentityUtil.IsFaceSlot(identity))
                 return GetRepresentativeWorldPoint(identity, cellSize);
 
             return TileHelper.ConvertGridToWorldPos(occupiedCell, cellSize);
@@ -23,15 +19,14 @@ namespace IsoTilemap
         public static Vector3 GetRepresentativeWorldPoint(in TileIdentity identity, float cellSize)
         {
             cellSize = Mathf.Max(1e-4f, cellSize);
-            var type = (TileView.TileType)identity.tileType;
-            if (type == TileView.TileType.EdgeWall && identity.edgeFace != TileIdentity.EdgeFaceNone)
+            if (TileIdentityUtil.IsVerticalFace(identity))
             {
-                WallEdgeKey key = WallEdgeKey.FromEdgeTileIdentity(identity);
+                WallEdgeKey key = WallEdgeKey.FromWallTileIdentity(identity);
                 WallEdgeKey.GetWorldPose(key, cellSize, out Vector3 pose, out _);
                 return pose;
             }
 
-            if (type == TileView.TileType.Floor && FloorFaceKey.IsAnchorFormat(identity.floorFace))
+            if (TileIdentityUtil.IsHorizontalFace(identity))
             {
                 FloorFaceKey key = FloorFaceKey.FromFloorTileIdentity(identity);
                 FloorFaceKey.GetWorldPose(key, cellSize, out Vector3 pose, out _);

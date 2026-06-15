@@ -10,7 +10,7 @@ namespace IsoTilemap
     /// 타일맵 시각화 담당 클래스
     /// 모델 이벤트를 받아 게임 월드 렌더 상태를 동기화합니다.
     /// </summary>
-    public class TileMapVisualizer : IMapViewBuilder, ITileViewRegistry, IDisposable
+    public class TileMapVisualizer : IMapViewBuilder, ITileViewRegistry, IFloorVisibilitySync, IDisposable
     {
         private Dictionary<Guid, TileView> _tileViews = new Dictionary<Guid, TileView>();
 
@@ -65,6 +65,9 @@ namespace IsoTilemap
             foreach (var kv in _tileViews)
                 into.Add(kv.Key);
         }
+
+        public void SyncFloorVisibility(in FloorVisibilityContext ctx) =>
+            _presentationApplier?.SyncFloorVisibility(in ctx, _boundRuntime);
 
         public void Bind(IMapModelReadOnly runtime)
         {

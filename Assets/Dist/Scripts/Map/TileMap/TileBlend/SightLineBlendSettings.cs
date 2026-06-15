@@ -1,8 +1,9 @@
 // ============================================================
-// SightLineBlendSettings — 카메라↔플레이어 시선 근접 블렌드 거리·밴드
+// SightLineBlendSettings — 카메라↔플레이어 시선 근접 블렌드 거리·XZ 반경
 // ============================================================
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace IsoTilemap
 {
@@ -18,8 +19,9 @@ namespace IsoTilemap
         [Tooltip("3D 선분 수직 거리가 이 값보다 크면 occlusion=0")]
         public float NoneBeyondPerpDistance;
 
-        [Tooltip("세그먼트 샘플 셀 주변 XZ Chebyshev 확장(타일 단위)")]
-        public int BandRadiusCells;
+        [Tooltip("세그먼트 샘플 점유셀 주변 XZ Chebyshev 확장(타일 단위)")]
+        [FormerlySerializedAs("BandRadiusCells")]
+        public int RadiusCells;
 
         [Tooltip("시선 세그먼트 플레이어 뒤쪽 여유(셀 단위). 이보다 뒤에 있으면 occlusion=0")]
         public float SegmentTEpsilon;
@@ -35,7 +37,7 @@ namespace IsoTilemap
             CellSize = 1f,
             FullBlendWithinPerpDistance = 1.25f,
             NoneBeyondPerpDistance = 10f,
-            BandRadiusCells = 2,
+            RadiusCells = 2,
             SegmentTEpsilon = 0.15f,
             ApplyEpsilon = 0.01f,
             OcclusionSmoothSpeed = 6f,

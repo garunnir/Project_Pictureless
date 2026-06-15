@@ -5,10 +5,10 @@ using UnityEngine;
 namespace IsoTilemap
 {
     /// <summary>
-    /// 청크 단위 타일 스트리밍 뷰. 모델은 전체 유지, GameObject는 desired 청크만 스폰.
-    /// 층 가시성은 despawn하지 않고 <see cref="TileViewPresentationApplier"/>가 처리합니다.
+    /// ?? ?? ?? ????. ??? ?? ??, GameObject? desired ??? ??.
+    /// ? ???? <see cref="TileViewPresentationApplier"/>? ?????.
     /// </summary>
-    public sealed class TileMapStreamingVisualizer : IMapViewBuilder, ITileViewRegistry, IDisposable
+    public sealed class TileMapStreamingVisualizer : IMapViewBuilder, ITileViewRegistry, IFloorVisibilitySync, IDisposable
     {
         private readonly TileObjFactory _tileFactory;
         private readonly IWorldGrid _worldGrid;
@@ -134,7 +134,7 @@ namespace IsoTilemap
                 return;
 
             _boundRuntime.GatherRenderableTiles(cellPos, _gatherBuffer);
-            PruneDeletedTilesAtCell(cellPos, _gatherBuffer);
+            PruneDeletedTilesAtCell(cellPos);
             RenderTiles(_gatherBuffer);
         }
 
@@ -279,8 +279,8 @@ namespace IsoTilemap
             }
         }
 
-        /// <summary>모델에서 삭제된 타일만 제거합니다. 가시성 숨김과 무관합니다.</summary>
-        private void PruneDeletedTilesAtCell(Vector3Int cell, List<TileData> gatheredAtCell)
+        /// <summary>???? ??? ??? ?????. ???? ?????.</summary>
+        private void PruneDeletedTilesAtCell(Vector3Int cell)
         {
             if (_boundRuntime == null)
                 return;
@@ -306,15 +306,15 @@ namespace IsoTilemap
             if (view == null)
                 return false;
 
-            if (view.tileType == TileView.TileType.EdgeWall)
+            if (view.placementSlot == TilePlacementSlot.VerticalFace)
             {
-                var key = new WallEdgeKey(view.gridPos, (WallFace)view.wallEdgeFace);
+                var key = new WallEdgeKey(view.gridPos, (WallFace)view.wallFace);
                 return key.Anchor == cell || key.NeighborCell() == cell;
             }
 
-            if (view.tileType == TileView.TileType.Floor)
+            if (view.placementSlot == TilePlacementSlot.HorizontalFace)
             {
-                var key = FloorFaceKey.ForWalkableCell(view.gridPos);
+                var key = new FloorFaceKey(view.gridPos, FloorFace.PosY);
                 return key.CellBelow == cell || key.CellAbove == cell;
             }
 
@@ -336,16 +336,15 @@ namespace IsoTilemap
 
         private bool IsTileInLoadedChunk(TileData tileData)
         {
-            var type = (TileView.TileType)tileData.identity.tileType;
-            if (type == TileView.TileType.Floor)
+            if (TileIdentityUtil.IsHorizontalFace(tileData.identity))
             {
                 FloorFaceKey key = FloorFaceKey.FromFloorTileIdentity(tileData.identity);
                 return IsCellInLoadedChunk(key.CellBelow) || IsCellInLoadedChunk(key.CellAbove);
             }
 
-            if (type == TileView.TileType.EdgeWall)
+            if (TileIdentityUtil.IsVerticalFace(tileData.identity))
             {
-                WallEdgeKey key = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
+                WallEdgeKey key = WallEdgeKey.FromWallTileIdentity(tileData.identity);
                 return IsCellInLoadedChunk(key.Anchor) || IsCellInLoadedChunk(key.NeighborCell());
             }
 
@@ -358,10 +357,10 @@ namespace IsoTilemap
 
         private static Vector3Int GetRepresentativeCell(TileData tileData)
         {
-            if ((TileView.TileType)tileData.identity.tileType == TileView.TileType.EdgeWall)
-                return WallEdgeKey.FromEdgeTileIdentity(tileData.identity).Anchor;
+            if (TileIdentityUtil.IsVerticalFace(tileData.identity))
+                return WallEdgeKey.FromWallTileIdentity(tileData.identity).Anchor;
 
-            if ((TileView.TileType)tileData.identity.tileType == TileView.TileType.Floor)
+            if (TileIdentityUtil.IsHorizontalFace(tileData.identity))
                 return FloorFaceKey.FromFloorTileIdentity(tileData.identity).CellBelow;
 
             return tileData.identity.GridPos;

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 
 // ============================================================
 // TileView — 씬 타일 오브젝트의 identity·pose·프레젠테이션 뷰
@@ -18,7 +19,7 @@ namespace IsoTilemap
             Wall = 2,
             // 3 = legacy Obstacle (JSON 로드 시 Wall로 정규화)
             Slope = 5,
-            /// <summary>JSON wallEdges 승격. GridPos=앵커 셀, TileIdentity.edgeFace=면.</summary>
+            /// <summary>JSON wallEdges 승격. GridPos=앵커 셀, TileIdentity.wallFace=면.</summary>
             EdgeWall = 4
         }
 
@@ -31,7 +32,8 @@ namespace IsoTilemap
             HiddenByCharacter = 2,
         }
         [Header("Grid Anchor Position (xyz)")]
-        public Vector3Int gridPos;          // gx, gy, gz
+        [Tooltip("OccupiedCell=점유 셀. VerticalFace/HorizontalFace=앵커 셀(CellBelow).")]
+        public Vector3Int gridPos;
 
         [Header("Tile Size in Grid Units")]
         public Vector3Int size = Vector3Int.one; // 1x1x1, 2x1x1 등 (x,y,z 방향)
@@ -39,11 +41,15 @@ namespace IsoTilemap
         [Header("Prefab Identity")]
         public string prefabId;             // 어떤 프리팹/타입인지 식별용
 
-        [Header("Tile Type")]
-        public TileType tileType = TileType.none;
+        [Header("Placement Slot")]
+        public TilePlacementSlot placementSlot = TilePlacementSlot.None;
 
-        /// <summary>EdgeWall일 때 JSON wallEdges의 face(0=+X, 1=+Z). 에디터 저장 시 사용.</summary>
-        [Range(0, 1)] public byte wallEdgeFace;
+        [FormerlySerializedAs("tileType")]
+        [SerializeField, HideInInspector] TileType _legacyTileType = TileType.none;
+
+        /// <summary>VerticalFace일 때 JSON wallEdges의 face(0=+X, 1=+Z). 에디터 저장 시 사용.</summary>
+        [FormerlySerializedAs("wallEdgeFace")]
+        [Range(0, 1)] public byte wallFace;
 
         [Header("Gizmo (Grid) Settings")]
         [Tooltip("기즈모에서 사용할 셀 크기: 그리드 단위 1의 월드 길이입니다.")]
@@ -77,6 +83,7 @@ namespace IsoTilemap
 
         private void Awake()
         {
+            MigrateLegacyTileType();
             CacheControllers();
             ForceApplyBaseState(TileBaseVisualState.Visible);
             ForceApplySelectedOverlay(false);
@@ -98,25 +105,63 @@ namespace IsoTilemap
 
         private void OnValidate()
         {
+            MigrateLegacyTileType();
+            if (placementSlot == TilePlacementSlot.None &&
+                !string.IsNullOrEmpty(prefabId))
+            {
+                var inferred = TileIdentityUtil.InferSlotFromPrefabId(prefabId);
+                if (inferred != TilePlacementSlot.None)
+                    placementSlot = inferred;
+            }
+
             CacheControllers();
             float cs = Mathf.Max(0.0001f, gizmoCellSize);
-            if (tileType == TileType.EdgeWall)
+            if (placementSlot == TilePlacementSlot.VerticalFace)
             {
                 if (WallEdgePicker.TryPickNearest(transform.position, cs, out var nearest))
                 {
                     gridPos = nearest.Anchor;
-                    wallEdgeFace = (byte)nearest.Face;
+                    wallFace = (byte)nearest.Face;
                 }
 
-                WallEdgeKey key = new WallEdgeKey(gridPos, (WallFace)Mathf.Clamp(wallEdgeFace, 0, 1));
+                WallEdgeKey key = new WallEdgeKey(gridPos, (WallFace)Mathf.Clamp(wallFace, 0, 1));
                 WallEdgeKey.GetWorldPose(key, cs, out Vector3 edgePos, out Quaternion edgeRot);
                 transform.SetPositionAndRotation(edgePos, edgeRot);
+            }
+            else if (placementSlot == TilePlacementSlot.HorizontalFace)
+            {
+                if (FloorFacePicker.TryPickNearest(transform.position, cs, out var nearest))
+                    gridPos = nearest.Anchor;
+
+                FloorFaceKey key = new FloorFaceKey(gridPos, FloorFace.PosY);
+                FloorFaceKey.GetWorldPose(key, cs, out Vector3 floorPos, out Quaternion floorRot);
+                transform.SetPositionAndRotation(floorPos, floorRot);
             }
             else
             {
                 gridPos = TileHelper.ConvertWorldToGrid(transform.position, cs);
                 transform.position = TileHelper.ConvertGridToWorldPos(gridPos, cs);
             }
+        }
+
+        static TilePlacementSlot MapLegacyTileType(TileType legacy) =>
+            legacy switch
+            {
+                TileType.Floor => TilePlacementSlot.HorizontalFace,
+                TileType.EdgeWall => TilePlacementSlot.VerticalFace,
+                TileType.Wall or TileType.Slope => TilePlacementSlot.OccupiedCell,
+                _ => TilePlacementSlot.None,
+            };
+
+        void MigrateLegacyTileType()
+        {
+            if (_legacyTileType == TileType.none)
+                return;
+
+            if (placementSlot == TilePlacementSlot.None)
+                placementSlot = MapLegacyTileType(_legacyTileType);
+
+            _legacyTileType = TileType.none;
         }
 
         private void CacheControllers()
@@ -166,21 +211,13 @@ namespace IsoTilemap
         {
             ApplyWorldPose(tileData, cellSize);
 
-            tileType = (TileType)tileData.identity.tileType;
+            placementSlot = TileIdentityUtil.GetPlacementSlot(tileData.identity);
             prefabId = tileData.identity.PrefabId;
             size = tileData.identity.sizeUnit;
-            if (tileType == TileType.Floor && FloorFaceKey.IsAnchorFormat(tileData.identity.floorFace))
-                gridPos = FloorFaceKey.FromFloorTileIdentity(tileData.identity).CellAbove;
-            else
-                gridPos = tileData.identity.GridPos;
+            gridPos = tileData.identity.GridPos;
 
-            if (tileType == TileType.EdgeWall)
-            {
-                byte ef = tileData.identity.edgeFace;
-                wallEdgeFace = ef == TileIdentity.EdgeFaceNone
-                    ? (byte)0
-                    : (byte)Mathf.Clamp(ef, 0, 1);
-            }
+            if (placementSlot == TilePlacementSlot.VerticalFace)
+                wallFace = (byte)Mathf.Clamp(tileData.identity.wallFace, 0, 1);
 
             TileCollisionPolicy.Apply(this, tileData.identity.collisionFlags);
         }
@@ -224,10 +261,8 @@ namespace IsoTilemap
                 return;
             }
 
-            TileBaseVisualState next = ResolveBaseState(_characterOcclusion, _isGhosted);
-            ForceApplyBaseState(next);
-            if (next == TileBaseVisualState.HiddenByCharacter)
-                ApplyCharacterOcclusionDerived();
+            _characterOcclusion = 0f;
+            ForceApplyBaseState(TileBaseVisualState.Visible);
             ApplySightLineBuildingOverlay();
         }
 
@@ -256,16 +291,15 @@ namespace IsoTilemap
         private void ApplyWorldPose(in TileData tileData, float cellSize)
         {
             cellSize = Mathf.Max(1e-4f, cellSize);
-            var type = (TileType)tileData.identity.tileType;
-            if (type == TileType.EdgeWall)
+            if (TileIdentityUtil.IsVerticalFace(tileData.identity))
             {
-                WallEdgeKey key = WallEdgeKey.FromEdgeTileIdentity(tileData.identity);
+                WallEdgeKey key = WallEdgeKey.FromWallTileIdentity(tileData.identity);
                 WallEdgeKey.GetWorldPose(key, cellSize, out Vector3 pos, out Quaternion rot);
                 transform.SetPositionAndRotation(pos, rot);
                 return;
             }
 
-            if (type == TileType.Floor && FloorFaceKey.IsAnchorFormat(tileData.identity.floorFace))
+            if (TileIdentityUtil.IsHorizontalFace(tileData.identity))
             {
                 FloorFaceKey key = FloorFaceKey.FromFloorTileIdentity(tileData.identity);
                 FloorFaceKey.GetWorldPose(key, cellSize, out Vector3 pos, out Quaternion rot);

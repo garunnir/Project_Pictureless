@@ -121,11 +121,10 @@ namespace IsoTilemap
         readonly float _cellSize;
         readonly float _cellEpsilonWorld;
         readonly int _minCellY;
-        readonly int[] _distinctOccupiedCellYs;
         readonly TileMapCacheHub _hub;
         readonly IndoorTileVisibilityPipeline _indoor = new();
         readonly OutdoorTileVisibilityPipeline _outdoor = new();
-        readonly BlockingBuildingFullHideLayer _blockingBuildingHide = new();
+        readonly BlockingBuildingFullHideLayer _blockingBuildingHide;
         readonly BuildingPlayerOcclusionResolver _occlusionResolver;
 
         readonly HashSet<int> _blockingScratch = new();
@@ -134,8 +133,7 @@ namespace IsoTilemap
         HashSet<int> _blockingForContext = new();
         HashSet<(int x, int z, int y)> _visibleBelowForContext = new();
 
-        Vector3Int _cachedPlayerGridCell;
-        int _cachedPlayerFloorCellY;
+        Vector3Int _cachedPlayerOccupiedCell;
         bool _cachedHideEnabled;
         bool _hasStableIdentity;
         bool _cachedIsOutdoor;
@@ -149,16 +147,16 @@ namespace IsoTilemap
             float cellSize,
             float cellEpsilonWorld,
             int minCellY,
-            int[] distinctOccupiedCellYs,
             TileMapCacheHub hub,
+            BuildingGroupRegistry buildingRegistry,
             BuildingPlayerOcclusionResolver occlusionResolver)
         {
             _cellSize = cellSize;
             _cellEpsilonWorld = cellEpsilonWorld;
             _minCellY = minCellY;
-            _distinctOccupiedCellYs = distinctOccupiedCellYs;
             _hub = hub;
             _occlusionResolver = occlusionResolver;
+            _blockingBuildingHide = new BlockingBuildingFullHideLayer(buildingRegistry);
         }
 
         public int MinCellY => _minCellY;
@@ -170,52 +168,45 @@ namespace IsoTilemap
         public SightLineBuildingDebugSnapshot LastSightLineDebug => _occlusionResolver.LastDebug;
 
         public static PlayerFloorVisibilityPolicy Build(
-            IReadOnlyList<TileData> tiles,
             TileMapCacheHub hub,
             float cellSize,
             Func<Camera> resolveCamera,
+            BuildingGroupRegistry buildingRegistry,
             float cellEpsilonWorld = 0f,
             float groundPlaneY = 0f)
         {
+            if (hub == null)
+                throw new ArgumentNullException(nameof(hub));
+
             if (cellSize <= 0f)
                 cellSize = 1f;
 
-            var bandSet = new HashSet<int>();
-            if (tiles != null)
-            {
-                for (int i = 0; i < tiles.Count; i++)
-                    bandSet.Add(TileVisibilityCellUtil.GetCellY(tiles[i]));
-            }
-
-            if (bandSet.Count == 0)
-                bandSet.Add(0);
-
-            var distinctBands = new int[bandSet.Count];
-            bandSet.CopyTo(distinctBands);
-            Array.Sort(distinctBands);
-
             _ = groundPlaneY;
+            int minCellY = OccupiedCellCoord.ResolveMinStructuralFloorCellY(hub);
             var resolver = new BuildingPlayerOcclusionResolver(hub, cellSize, resolveCamera);
 
             return new PlayerFloorVisibilityPolicy(
                 cellSize,
                 cellEpsilonWorld,
-                distinctBands[0],
-                distinctBands,
+                minCellY,
                 hub,
+                buildingRegistry,
                 resolver);
         }
+
+        public Vector3Int ResolvePlayerOccupiedCell(float playerHeightWorldY, Vector3 playerWorld) =>
+            OccupiedCellCoord.ResolveFromWorld(
+                _hub, playerWorld, _cellSize, playerHeightWorldY, _cellEpsilonWorld, _minCellY);
 
         public FloorVisibilityContext ResolveContext(
             float playerHeightWorldY,
             Vector3 playerWorld)
         {
-            Vector3Int sightPlayerCell = TileHelper.ConvertWorldToGrid(playerWorld, _cellSize);
-            int playerFloorCellY = ResolvePlayerFloorCellY(playerHeightWorldY);
+            Vector3Int playerOccupiedCell = ResolvePlayerOccupiedCell(playerHeightWorldY, playerWorld);
+            int playerFloorCellY = playerOccupiedCell.y;
 
             bool reuseIdentity = _hasStableIdentity &&
-                sightPlayerCell == _cachedPlayerGridCell &&
-                playerFloorCellY == _cachedPlayerFloorCellY &&
+                playerOccupiedCell == _cachedPlayerOccupiedCell &&
                 OutdoorSightLineBuildingHideEnabled == _cachedHideEnabled;
 
             bool isOutdoor;
@@ -230,25 +221,27 @@ namespace IsoTilemap
             }
             else
             {
-                isOutdoor = _hub.IsOutdoorEvaluation(playerFloorCellY, sightPlayerCell.x, sightPlayerCell.z);
+                isOutdoor = _hub.IsOutdoorEvaluation(
+                    playerFloorCellY, playerOccupiedCell.x, playerOccupiedCell.z);
                 _hub.TryGetFloorBuildingRoom(
-                    playerFloorCellY, sightPlayerCell.x, sightPlayerCell.z, out playerBuildingId, out _);
+                    playerFloorCellY, playerOccupiedCell.x, playerOccupiedCell.z,
+                    out playerBuildingId, out _);
 
                 visibleBelow = isOutdoor
                     ? EmptyVisibleBelow
-                    : ResolveVisibleBelowForContext(playerFloorCellY, sightPlayerCell.x, sightPlayerCell.z);
+                    : ResolveVisibleBelowForContext(
+                        playerFloorCellY, playerOccupiedCell.x, playerOccupiedCell.z);
 
                 _cachedIsOutdoor = isOutdoor;
                 _cachedPlayerBuildingId = playerBuildingId;
                 CopyVisibleBelow(visibleBelow, _cachedVisibleBelow);
-                _cachedPlayerGridCell = sightPlayerCell;
-                _cachedPlayerFloorCellY = playerFloorCellY;
+                _cachedPlayerOccupiedCell = playerOccupiedCell;
                 _cachedHideEnabled = OutdoorSightLineBuildingHideEnabled;
                 _hasStableIdentity = true;
             }
 
             HashSet<int> blocking = OutdoorSightLineBuildingHideEnabled
-                ? ResolveBlockingForContext(playerWorld, sightPlayerCell, playerBuildingId)
+                ? ResolveBlockingForContext(playerWorld, playerOccupiedCell, playerBuildingId)
                 : EmptyBlocking;
 
             return new FloorVisibilityContext(
@@ -269,15 +262,12 @@ namespace IsoTilemap
 
         HashSet<int> ResolveBlockingForContext(
             Vector3 playerWorld,
-            Vector3Int sightPlayerCell,
+            Vector3Int playerOccupiedCell,
             int playerBuildingId)
         {
             int excludeBuildingId = playerBuildingId > 0 ? playerBuildingId : 0;
             _occlusionResolver.ResolveBlockingBuildingIds(
-                playerWorld, _blockingScratch, excludeBuildingId);
-
-            if (SetEqualsBlocking(_blockingScratch, _blockingForContext))
-                return _blockingForContext;
+                playerWorld, playerOccupiedCell, _blockingScratch, excludeBuildingId);
 
             if (_blockingScratch.Count == 0)
             {
@@ -349,33 +339,13 @@ namespace IsoTilemap
             return _indoor.IsVisible(tile, ctx);
         }
 
-        public void FilterTiles(List<TileData> buffer, in FloorVisibilityContext ctx)
-        {
-            if (buffer == null || buffer.Count == 0)
-                return;
-
-            for (int i = buffer.Count - 1; i >= 0; i--)
-            {
-                if (!IsTileVisible(buffer[i], ctx))
-                    buffer.RemoveAt(i);
-            }
-        }
-
         /// <summary>플레이어 월드 높이 → 점유 층 cellY (층 가시성·room 조회 공용).</summary>
-        public int ResolvePlayerFloorCellY(float playerHeightWorldY)
-        {
-            int playerFloorCellY = _minCellY;
-            float ceiling = playerHeightWorldY + _cellEpsilonWorld;
+        public int ResolvePlayerFloorCellY(float playerHeightWorldY, Vector3 playerWorld) =>
+            ResolvePlayerOccupiedCell(playerHeightWorldY, playerWorld).y;
 
-            for (int i = 0; i < _distinctOccupiedCellYs.Length; i++)
-            {
-                int occupiedCellY = _distinctOccupiedCellYs[i];
-                if (occupiedCellY * _cellSize <= ceiling)
-                    playerFloorCellY = occupiedCellY;
-            }
-
-            return playerFloorCellY;
-        }
+        /// <summary>XZ만 있을 때 Y는 <see cref="ResolvePlayerOccupiedCell"/>과 동일 규칙으로 world.y 기준.</summary>
+        public int ResolvePlayerFloorCellY(float playerHeightWorldY) =>
+            ResolvePlayerFloorCellY(playerHeightWorldY, new Vector3(0f, playerHeightWorldY, 0f));
 
         void BuildVisibleBelowCells(int playerFloorCellY, int gridX, int gridZ)
         {

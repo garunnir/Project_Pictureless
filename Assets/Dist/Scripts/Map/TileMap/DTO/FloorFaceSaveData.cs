@@ -8,7 +8,7 @@ namespace IsoTilemap
         public int x;
         public int y;
         public int z;
-        /// <summary>0 = +Y 면 (앵커=CellBelow).</summary>
+        /// <summary>+Y 면. JSON x,y,z = CellBelow 앵커.</summary>
         public byte face;
         public string prefabId;
     }

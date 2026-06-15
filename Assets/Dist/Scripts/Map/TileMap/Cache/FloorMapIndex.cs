@@ -58,7 +58,7 @@ namespace IsoTilemap
         }
 
         public static FloorMapIndex FromModel(TileMapModel model) =>
-            new FloorMapIndex(model.tiles, model.EdgeBinder.EdgeIndex, model.FloorFaceBinder.FaceIndex);
+            new FloorMapIndex(model.tiles, model.FaceBinder.WallFaceIndex, model.FaceBinder.FloorFaceIndex);
 
         public bool HasAnyTile(int x, int z, int y) => _anyTileAt.Contains((x, z, y));
 
@@ -83,7 +83,7 @@ namespace IsoTilemap
                 for (int i = 0; i < list.Count; i++)
                 {
                     TileData tile = list[i];
-                    if ((TileView.TileType)tile.identity.tileType == TileView.TileType.Floor)
+                    if (TileIdentityUtil.IsHorizontalFace(tile.identity))
                         continue;
 
                     int sx = tile.identity.sizeUnit.x;

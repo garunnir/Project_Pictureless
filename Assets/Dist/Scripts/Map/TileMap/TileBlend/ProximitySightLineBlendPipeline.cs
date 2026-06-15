@@ -1,5 +1,5 @@
 // ============================================================
-// ProximitySightLineBlendPipeline — 시선 밴드 내 타일 가림 강도 산출
+// ProximitySightLineBlendPipeline — 시선 XZ 반경 내 타일 가림 강도 산출
 // ============================================================
 using System;
 using System.Collections.Generic;
@@ -15,7 +15,7 @@ namespace IsoTilemap
         };
 
         readonly TileMapCacheHub _hub;
-        readonly HashSet<Vector3Int> _bandCells = new();
+        readonly HashSet<Vector3Int> _blendCells = new();
         readonly List<TileData> _cellTilesScratch = new();
         readonly List<TileData> _edgeTilesScratch = new();
         readonly List<TileData> _faceTilesScratch = new();
@@ -42,13 +42,13 @@ namespace IsoTilemap
             if (_hub == null)
                 return new TileOcclusionPresentationDelta(_applyScratch, _clearScratch);
 
-            SightLineSegmentSampler.CollectBlendBandCells(
-                cameraWorld, playerWorld, playerCell, settings, _bandCells);
+            SightLineSegmentSampler.CollectBlendCells(
+                _hub, cameraWorld, playerWorld, playerCell, settings, _blendCells);
 
             float cellSize = settings.CellSize > 0f ? settings.CellSize : 1f;
             float eps = Mathf.Max(0f, settings.ApplyEpsilon);
 
-            foreach (Vector3Int cell in _bandCells)
+            foreach (Vector3Int cell in _blendCells)
             {
                 if (!SightLineOcclusionStrength.PassesPlayerDownXQuadrant(cell, playerCell))
                     continue;
@@ -63,8 +63,8 @@ namespace IsoTilemap
                         _cellTilesScratch.Add(tiles[i]);
                 }
 
-                AppendIncidentEdges(cell, _edgeTilesScratch);
-                AppendIncidentFaces(cell, _faceTilesScratch);
+                AppendWallFacesAtCell(cell, _edgeTilesScratch);
+                AppendFloorFacesAtCell(cell, _faceTilesScratch);
 
                 if (_cellTilesScratch.Count == 0 &&
                     _edgeTilesScratch.Count == 0 &&
@@ -117,7 +117,7 @@ namespace IsoTilemap
             return new TileOcclusionPresentationDelta(_applyScratch, _clearScratch);
         }
 
-        void AppendIncidentEdges(Vector3Int cell, List<TileData> appendTo)
+        void AppendWallFacesAtCell(Vector3Int cell, List<TileData> appendTo)
         {
             for (int i = 0; i < CardinalNeighbors.Length; i++)
             {
@@ -129,7 +129,7 @@ namespace IsoTilemap
             }
         }
 
-        void AppendIncidentFaces(Vector3Int cell, List<TileData> appendTo)
+        void AppendFloorFacesAtCell(Vector3Int cell, List<TileData> appendTo)
         {
             if (_hub.TryGetHorizontalFaceBetween(cell + Vector3Int.down, cell, out TileData belowFace))
                 appendTo.Add(belowFace);

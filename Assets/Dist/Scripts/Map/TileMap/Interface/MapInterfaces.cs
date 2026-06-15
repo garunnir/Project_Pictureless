@@ -6,19 +6,19 @@ using UnityEngine;
 
 namespace IsoTilemap
 {
-    /// <summary>셀 타일과 분리된 면 벽(EdgeWall) 레지스트리 읽기 전용 뷰.</summary>
-    public interface ITileEdgeBinderReadOnly
+    /// <summary>셀 dict와 분리된 수직·수평 면 타일 레지스트리.</summary>
+    public interface ITileFaceBinderReadOnly
     {
-        IReadOnlyDictionary<WallEdgeKey, TileData> EdgeIndex { get; }
-        /// <summary>해당 그리드 칸에 인접한 EdgeWall 타일을 버퍼에 추가합니다.</summary>
-        void AppendIncidentEdges(Vector3Int cell, List<TileData> appendTo);
-    }
-
-    /// <summary>셀 타일과 분리된 층 사이 Floor face 레지스트리 읽기 전용 뷰.</summary>
-    public interface ITileFloorFaceBinderReadOnly
-    {
-        IReadOnlyDictionary<FloorFaceKey, TileData> FaceIndex { get; }
-        void AppendIncidentFaces(Vector3Int cell, List<TileData> appendTo);
+        /// <summary>내부 dict 직접 순회용. bake·집계는 <see cref="CopyWallFacesTo"/> / <see cref="CopyFloorFacesTo"/> 사용.</summary>
+        IReadOnlyDictionary<WallEdgeKey, TileData> WallFaceIndex { get; }
+        IReadOnlyDictionary<FloorFaceKey, TileData> FloorFaceIndex { get; }
+        /// <summary>벽 면 타일 스냅샷. buffer를 비운 뒤 채웁니다.</summary>
+        void CopyWallFacesTo(List<TileData> buffer);
+        /// <summary>바닥 면 타일 스냅샷. buffer를 비운 뒤 채웁니다.</summary>
+        void CopyFloorFacesTo(List<TileData> buffer);
+        void AppendFacesAtCell(Vector3Int cell, List<TileData> appendTo);
+        void AppendWallFacesAtCell(Vector3Int cell, List<TileData> appendTo);
+        void AppendFloorFacesAtCell(Vector3Int cell, List<TileData> appendTo);
     }
 
         /// <summary>
@@ -54,13 +54,13 @@ namespace IsoTilemap
         public event Action<IReadOnlyCollection<Vector3Int>> OnRuntimeBatchChanged;
         event Action<TileData> OnRuntimeTileAdded;
         event Action<TileData> OnRuntimeTileRemoved;
-        ITileEdgeBinderReadOnly EdgeBinder { get; }
-        ITileFloorFaceBinderReadOnly FloorFaceBinder { get; }
+        ITileFaceBinderReadOnly FaceBinder { get; }
         /// <summary>walkable 셀 (x,cellY,z)에 발밑 Floor face가 있는지.</summary>
         bool CellHasWalkableFloor(int x, int cellY, int z);
         bool TryGetFloorFaceForWalkableCell(int x, int cellY, int z, out TileData face);
         /// <summary>셀에 놓인 타일 + 인시던트 EdgeWall·Floor face(렌더 갱신용).</summary>
         void GatherRenderableTiles(Vector3Int cellPos, List<TileData> buffer);
+        /// <summary>점유 셀 + 면 타일의 시점 스냅샷. 읽기·집계 전용. 런타임 변경 시 <c>MarkTilesDirty</c> 후 갱신.</summary>
         public IReadOnlyList<TileData> TilesSnapshot { get; }
         public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList);
         /// <summary>점유·앵커 기준 셀 타일. hub가 있으면 topology, 없으면 <see cref="TryGetTiles"/> 폴백.</summary>
@@ -68,8 +68,6 @@ namespace IsoTilemap
         /// <summary>점유된 (x,z,y) 셀. hub가 있으면 topology, 없으면 앵커 dict 키 기준 폴백.</summary>
         IEnumerable<(int x, int z, int y)> EnumerateOccupiedCells();
         bool TryGetTileById(Guid tileId, out TileData tileData);
-        /// <summary>셀 타일 + 엣지 벽을 순회합니다(읽기 전용).</summary>
-        void ForEachRuntimeTile(Action<TileData> visit);
     }
     public interface IMapModel : IMapModelReadOnly
     {
@@ -77,6 +75,8 @@ namespace IsoTilemap
         void RemoveTile(TileData tileData);
         /// <summary>bake용 buildingId·roomId만 갱신하고 ID 인덱스를 동기화합니다.</summary>
         void PatchTileIdentity(Guid tileDefId, int buildingId, int roomId);
+        /// <summary>런타임 타일 전체 스냅샷 순회. 콜백에서 <see cref="PatchTileIdentity"/> 등 수정 가능.</summary>
+        void ForEachRuntimeTileMutating(Action<TileData> visit);
         /// <summary><see cref="TileIdentity"/>·배치가 바뀔 때. 토폴로지(방/건물) 갱신 포함.</summary>
         void ApplyTiles(IReadOnlyList<TileData> tiles);
         /// <summary>레거시 API. 프레젠테이션은 <see cref="TileViewPresentationApplier"/> 사용.</summary>
@@ -87,8 +87,8 @@ namespace IsoTilemap
         void UpdateOcclusionFromPlayerWorld(Vector3 playerWorld, OcclusionProximitySettings settings);
 
         /// <summary>
-        /// <paramref name="playerFloorCellY"/>는 층 가시성과 동일한 밴드 해석.
-        /// room 베이크 조회는 <paramref name="playerWorld"/> XZ 기준 논리 바닥 앵커를 사용합니다.
+        /// <paramref name="playerFloorCellY"/>는 층 가시성과 동일한 점유셀 해석(<see cref="OccupiedCellCoord.ResolveFromWorld"/>).
+        /// room 베이크 조회는 <paramref name="playerWorld"/> XZ 기준 점유셀을 사용합니다.
         /// </summary>
         void UpdateOcclusionFromPlayerWorld(
             Vector3 playerWorld,

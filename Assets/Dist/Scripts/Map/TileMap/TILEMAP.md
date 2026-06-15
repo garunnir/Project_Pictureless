@@ -1,5 +1,20 @@
 # TileMap — 핵심 로직
 
+## 좌표 규약
+
+→ 상세 용어·walkable 정의: [DATA.md §좌표 규약](../Internal/DATA.md) · 가시성 소비: [TILEMAP_VISIBILITY.md](TILEMAP_VISIBILITY.md)
+
+**점유 인덱스를 우선 신뢰한다.** bake 후 `RebuildOccupancy` 인덱스가 「어떤 `(x,y,z)`에 무엇이 있나」의 단일 진실원이다.  
+조회는 `CellHasOccupancy` / `TryGetCellTiles` / incident 면·엣지. 바닥 face는 bake가 `CellBelow`·`CellAbove` **둘 다** 등록하므로 시선 코드에서 y±1 수동 탐색 **하지 않는다**.
+
+| 용도 | 방법 |
+|------|------|
+| 플레이어 층 | `OccupiedCellCoord.ResolveFromWorld` (발밑 바닥, `y--` 하향) |
+| 시선 샘플·차단·근접 블렌드 | `ConvertWorldToGrid` → `CellHasOccupancy` true인 셀만 |
+| 타일 대표 점유셀 | `OccupiedCellCoord.PrimaryCellFromIdentity` |
+
+시선·차단에 `ResolveFromWorld` 쓰지 않음. 전역 Y 목록·기둥 인덱스 **금지**.
+
 ## 내부 의존성 다이어그램
 
 ```mermaid
@@ -108,7 +123,7 @@ graph TD
 3. **상향** — `(x,y,z)`에 `buildingId`가 붙은 Floor/Wall/EdgeWall이 있고 `(x,y+1,z)`에 구조물(Floor/Wall/EdgeWall)이 있으면 위 셀 y로 진입 → room BFS·floor ID·벽 ID 반복.
 4. **roomId** — room bake·perimeter는 기존과 동일 (`TagPerimeterForSlice`가 벽 `roomId` 보정).
 
-점유 조회는 `EnumerateOccupiedCells` + `TryGetCellTiles`만 사용. 점유 인덱스는 타일 `sizeUnit(x,y,z)`를 반영해 확장되며, 빌딩 상향 판정은 `(x,y+1,z)` 셀 조회 결과를 그대로 사용한다. EdgeWall 인접셀 병합은 기본 OFF이며, 상향 연결 경로에서만 옵션으로 ON 한다. XZ footprint 겹침·4방 인접·`sizeUnit` 수동 확장은 사용하지 않음.
+점유 조회는 `EnumerateOccupiedCells` + `TryGetCellTiles`만 사용 (→ [§좌표 규약](#좌표-규약)). 점유 인덱스는 타일 `sizeUnit(x,y,z)`를 반영해 확장되며, 빌딩 상향 판정은 `(x,y+1,z)` 셀 조회 결과를 그대로 사용한다. EdgeWall 인접셀 병합은 기본 OFF이며, 상향 연결 경로에서만 옵션으로 ON 한다. XZ footprint 겹침·4방 인접·`sizeUnit` 수동 확장은 사용하지 않음.
 
 ### 층 가시성·가려짐
 
@@ -181,17 +196,21 @@ flowchart LR
 
 | 계층 | 역할 | 조회 API |
 |------|------|----------|
-| **TileMapModel** `tiles` + `TileEdgeBinder` | 쓰기 진실원 | `SetTile` / `RemoveTile` / `PatchTileIdentity` |
+| **TileMapModel** `tiles` + `TileFaceBinder` | 쓰기 진실원 | `SetTile` / `RemoveTile` / `PatchTileIdentity` |
 | **`_tilesById`** | Guid → `TileData` 파생 인덱스 | `TryGetTileById` (bake 후 `ReindexTilesByIdFromRuntime`) |
 | **TileMapCacheHub** | topology·building·room bake 캐시 | `TryGetCellTiles` (스트리밍 시 Model이 hub 경유) |
+| **OccupiedCellCoord** | 월드·identity → 점유셀 | 플레이어: `ResolveFromWorld`. 시선 차단: `TryResolveSightOccupiedCell`. 블렌드: `GridAtSightSampleHeight`. identity: `PrimaryCellFromIdentity` |
 
 **규칙**
 
+- **점유 인덱스 우선**: 존재·차단·시선 후보는 `CellHasOccupancy` / bake 인덱스. 시선에 `ResolveFromWorld`·y±1 probe 금지 (→ §좌표 규약).
 - 셀 타일 읽기: `IMapModel.TryGetCellTiles` (hub topology 우선, 없으면 앵커 셀 dict 폴백).
 - 점유 셀 순회: `IMapModel.EnumerateOccupiedCells` (Builder·전역 스캔 동일).
 - ID 읽기: `TryGetTileById`만 사용. `tiles` dict 직접 접근 금지(어셈블리 `internal`).
 - `BuildingGroupBuilder` / `BuildingVerticalLink` / 오클루전 셀 조회는 `IMapModel` API 사용. `FloorRoomFloodFill`용 `_topology.Index`만 hub 직접 참조.
-- `ForEachRuntimeTile`은 엣지 벽을 스냅샷한 뒤 순회합니다(`PatchTileIdentity`가 `_edges`를 수정할 수 있음).
+- 전역 타일 읽기·집계: `IMapModelReadOnly.TilesSnapshot` (시점 스냅샷).
+- 면 타일 읽기: `ITileFaceBinderReadOnly.CopyWallFacesTo` / `CopyFloorFacesTo` (`WallFaceIndex` 직접 `foreach` 지양).
+- bake 중 identity 수정 순회: `IMapModel.ForEachRuntimeTileMutating` (내부 스냅샷, `PatchTileIdentity` 허용).
 - bake로 `buildingId`/`roomId` 변경: `PatchTileIdentity` 또는 bake 배치 종료 시 재색인.
 - building/room BFS·edge 집계: `CacheHub` / `BuildingGroupBuilder` (셀 조회와 질문이 다름).
 
@@ -199,5 +218,5 @@ flowchart LR
 
 ## 근접 시선 블렌드
 
-현재 구현은 `ProximitySightLineBlendPipeline`(카메라↔플레이어 3D 세그먼트 밴드 + 3D 선분 수직 거리 가림 강도)입니다.  
+현재 구현은 `ProximitySightLineBlendPipeline`(카메라↔플레이어 3D 세그먼트 XZ `RadiusCells` + 3D 선분 수직 거리 가림 강도)입니다.  
 상세는 [TILEMAP_VISIBILITY.md §3](TILEMAP_VISIBILITY.md)를 참고하세요.

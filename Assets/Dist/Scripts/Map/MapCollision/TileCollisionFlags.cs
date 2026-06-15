@@ -75,20 +75,19 @@ namespace IsoTilemap
 
     public static class TileCollisionProfile
     {
-        /// <summary>레거시·에디터 프리셋. 런타임 bake는 <see cref="FromDefinitionForTileType"/> 사용.</summary>
+        /// <summary>레거시·에디터 프리셋. 런타임 bake는 <see cref="FromDefinitionForSlot"/> 사용.</summary>
         public static byte FromDefinition(TileDefinition def) =>
-            FromDefinitionForTileType(0, def);
+            FromDefinitionForSlot(TilePlacementSlot.OccupiedCell, def);
 
         /// <summary>
-        /// EdgeWall은 <see cref="TileEdgeCollision"/>만, 그 외는 <see cref="TileOccupiedCellCollision"/>만 flatten.
-        /// EdgeWall의 Physics Collider는 occupied.usePhysicsCollider만 추가로 반영합니다.
+        /// VerticalFace는 <see cref="TileEdgeCollision"/>만, 그 외는 <see cref="TileOccupiedCellCollision"/> flatten.
         /// </summary>
-        public static byte FromDefinitionForTileType(byte tileType, TileDefinition def)
+        public static byte FromDefinitionForSlot(TilePlacementSlot slot, TileDefinition def)
         {
             if (def == null)
                 return 0;
 
-            if (tileType == (byte)TileView.TileType.EdgeWall)
+            if (slot == TilePlacementSlot.VerticalFace)
             {
                 byte flags = FlattenEdge(def.edge);
                 if (def.occupied.usePhysicsCollider)
@@ -97,6 +96,15 @@ namespace IsoTilemap
             }
 
             return FlattenOccupied(def.occupied);
+        }
+
+        [Obsolete("Use FromDefinitionForSlot")]
+        public static byte FromDefinitionForTileType(byte tileType, TileDefinition def)
+        {
+            var slot = TileIdentityUtil.InferSlotFromLegacyTileType(tileType);
+            if (slot == TilePlacementSlot.None)
+                slot = TilePlacementSlot.OccupiedCell;
+            return FromDefinitionForSlot(slot, def);
         }
 
         static byte FlattenOccupied(in TileOccupiedCellCollision occupied)

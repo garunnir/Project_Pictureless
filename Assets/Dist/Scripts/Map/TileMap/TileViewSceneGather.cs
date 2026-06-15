@@ -10,7 +10,7 @@ namespace IsoTilemap
     public static class TileViewSceneGather
     {
         /// <summary>
-        /// tileType이 none이 아닌 뷰만 포함합니다. 새 export용 <see cref="TileData.tileDefId"/>는 매번 새로 만듭니다.
+        /// placementSlot이 None이 아닌 뷰만 포함합니다. 새 export용 <see cref="TileData.tileDefId"/>는 매번 새로 만듭니다.
         /// </summary>
         public static List<TileData> BuildTileDataSnapshot(IEnumerable<TileView> views)
         {
@@ -19,45 +19,50 @@ namespace IsoTilemap
             {
                 if (v == null) continue;
 
-                // Slope prefabs는 과거에 tileType이 none으로 저장된 경우가 있어,
-                // export 시 prefabId로 다시 승격해서 저장되도록 방어합니다.
-                var tileType = v.tileType;
-                if (tileType == TileView.TileType.none &&
+                var slot = v.placementSlot;
+                if (slot == TilePlacementSlot.None &&
                     !string.IsNullOrEmpty(v.prefabId) &&
                     v.prefabId.StartsWith("Slope/", StringComparison.Ordinal))
                 {
-                    tileType = TileView.TileType.Slope;
+                    slot = TilePlacementSlot.OccupiedCell;
                 }
 
-                if (tileType == TileView.TileType.none) continue;
+                if (slot == TilePlacementSlot.None &&
+                    !string.IsNullOrEmpty(v.prefabId))
+                {
+                    slot = TileIdentityUtil.InferSlotFromPrefabId(v.prefabId);
+                }
 
-                if (!TryBakeFromDefinition(v.prefabId, (byte)tileType, out var size, out byte collisionFlags))
+                if (slot == TilePlacementSlot.None) continue;
+
+                if (!TryBakeFromDefinition(v.prefabId, slot, out var size, out byte collisionFlags))
                     continue;
 
-                byte t = (byte)tileType;
-                byte ef = TileIdentity.EdgeFaceNone;
-                byte ff = TileIdentity.FloorFaceNone;
-                Vector3Int grid = v.gridPos;
+                byte wallFace = slot == TilePlacementSlot.VerticalFace
+                    ? (byte)Mathf.Clamp(v.wallFace, 0, 1)
+                    : (byte)0;
+                byte floorFace = slot == TilePlacementSlot.HorizontalFace
+                    ? (byte)FloorFace.PosY
+                    : (byte)0;
 
-                if (tileType == TileView.TileType.EdgeWall)
-                    ef = (byte)Mathf.Clamp(v.wallEdgeFace, 0, 1);
+                Vector3Int gridPos = v.gridPos;
+                if (slot == TilePlacementSlot.HorizontalFace)
+                {
+                    float cellSize = Mathf.Max(1e-4f, v.gizmoCellSize);
+                    if (FloorFacePicker.TryPickNearest(v.transform.position, cellSize, out var nearest))
+                        gridPos = nearest.Anchor;
+                }
 
                 var identity = new TileIdentity
                 {
                     PrefabId = v.prefabId ?? string.Empty,
-                    GridPos = grid,
+                    GridPos = gridPos,
                     sizeUnit = size,
-                    tileType = t,
-                    edgeFace = ef,
-                    floorFace = ff,
+                    placementSlot = (byte)slot,
+                    wallFace = wallFace,
+                    floorFace = floorFace,
                     collisionFlags = collisionFlags,
                 };
-
-                if (tileType == TileView.TileType.Floor)
-                {
-                    identity = FloorFaceIdentityUtil.FromWalkableCellPlacement(identity);
-                    ff = identity.floorFace;
-                }
 
                 list.Add(new TileData
                 {
@@ -72,7 +77,7 @@ namespace IsoTilemap
 
         static bool TryBakeFromDefinition(
             string prefabId,
-            byte tileType,
+            TilePlacementSlot slot,
             out Vector3Int sizeUnit,
             out byte collisionFlags)
         {
@@ -89,7 +94,7 @@ namespace IsoTilemap
                 Mathf.Max(1, def.size.x),
                 Mathf.Max(1, def.size.y),
                 Mathf.Max(1, def.size.z));
-            collisionFlags = TileCollisionProfile.FromDefinitionForTileType(tileType, def);
+            collisionFlags = TileCollisionProfile.FromDefinitionForSlot(slot, def);
             return true;
         }
     }
