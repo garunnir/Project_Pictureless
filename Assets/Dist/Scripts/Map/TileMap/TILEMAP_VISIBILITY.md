@@ -288,11 +288,11 @@ flowchart TD
 | 3 | 점유 floor에 `SpaceId` → `SpaceBakeResult.isOutdoor` |
 | 4 | building floor인데 Space 없음 → **야외** (`true`) — bake 누락·개방 area indoor pipeline 고착 방지 |
 
-`isOutdoor` 산출: [건물 bake §7](TILEMAP_BUILDING_BAKE.md) — `SpaceLeakEvaluator`(천장 `maxStructuralY` + footprint 측면).
+`isOutdoor` 산출: [건물 bake §7](TILEMAP_BUILDING_BAKE.md) — `SpaceLeakEvaluator` topology (`buildingId`·footprint·extent). **`collisionFlags` leak 금지** — [대전제](TILEMAP_BUILDING_BAKE.md).
 
 **room / `roomId`와 혼동하지 않는다.** room은 §5.1 slice floor 묶음(peek용). 실내/야외는 Space.
 
-**논리 충돌로 둘러싸였다고 밀폐로 확정하지 않는다.** §5.1.1 — Physics Collider·`UsePhysicsCollider` 한계 동일.
+**§5.1.1 (비대칭):** 논리로 닫힌 루프면 bake 그래프상 밀폐로 볼 수 있으나, **비트가 비었다고 비밀폐로 단정하지 않음.** `isOutdoor=false`도 밀폐 증명이 아님.
 
 플레이어 점유셀: `PlayerFloorVisibilityPolicy.ResolvePlayerOccupiedCell` → `OccupiedCellCoord.ResolveFromWorld`.
 

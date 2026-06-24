@@ -32,6 +32,8 @@ bake·가시성·시선·building shell 태깅에서 **Wall / EdgeWall / ThickWa
 **신규·수정 코드 규칙**: ad-hoc 타일 종류 루프 대신 **`TryCollectTilesAtOccupiedCell` → footprint(`CollectAffectedCells`)** 패턴을 쓴다.  
 **HorizontalFace**(walkable floor)의 `buildingId`는 floor bake(§2·§3) SSOT. structural shell `buildingId`는 [건물 bake §4](TILEMAP_BUILDING_BAKE.md) **occupied-cell flood**.
 
+**Floor face와 Edge wall**: 배치 slot만 다를 뿐 **§4에서 동일 structural face** — `buildingId` flood만 동일 취급 ([대전제](TILEMAP_BUILDING_BAKE.md) §3). §7 leak과 혼동 금지.
+
 ## 내부 의존성 다이어그램
 
 ```mermaid

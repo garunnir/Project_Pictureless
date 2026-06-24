@@ -7,6 +7,16 @@
 
 ---
 
+## 대전제 (합의·재논의 금지)
+
+1. **`collisionFlags`(논리 충돌)로 Space `isOutdoor` / 실내·야외 leak를 판정하지 않는다.**  
+   오류·오탐 — [§5.1.1](#511-논리-충돌과-밀폐-추론-비대칭). room BFS·시선 occlusion용이지 **야외 분기·밀폐 증명**용이 아님.
+2. **§7 `isOutdoor` 입력** = `buildingId` · `floorFootprint[cellY]` · `BuildingExtent` · 점유 인덱스(`TryGetCellTiles`) **만**.
+3. **Floor face = Edge wall 동일** = [§4](#4-occupied-cell-flood--열-상향-shell-전파) `buildingId` flood (`IsStructural`) **한정**. §7 leak과 **혼동 금지**.
+4. `isOutdoor=false`는 **물리 밀폐 증명이 아님** — topology상 plaza·타 building·개방 천장(`maxStructuralY` 초과) **미연결**일 때만 실내 **분기**.
+
+---
+
 ## 왜 structural shell에서 floor 기준으로 번복했는가
 
 > **나중에 까먹지 않도록 — 설계가 바뀐 이유.**
@@ -57,6 +67,7 @@ structural shell BFS·structural merge pass는 **폐기**.
 | **BuildingExtent** | bake 후 `buildingId`별 **공간 인덱스** — §6. slice별 floor 칸 집합 + building 전체 AABB + `maxStructuralY` |
 | **AABB** | Axis-Aligned Bounding Box. building **전체** 점유셀의 min/max X·Y·Z **상자 하나** (§6). slice마다 상자를 두는 것 **아님** |
 | **floorFootprint[cellY]** | 한 slice에서 해당 `buildingId` walkable floor가 있는 **(x,z) 칸 집합** — AABB가 아닌 **정확한 칸 목록** |
+| **structural face** | **HorizontalFace**(Floor)와 **VerticalFace**(EdgeWall·벽)는 **배치 방향만 다른 동일 개념** — §4 `buildingId` flood에서 **종류별 분기 금지** (대전제 §3) |
 
 핵심: **시드 = walkable floor**. **buildingId 부여 = §4 occupied-cell flood 단일 경로**. column-up·이중 write **금지** — [TILEMAP.md §점유셀](TILEMAP.md).
 
@@ -239,19 +250,24 @@ buildingId 붙은 뒤 **building × slice**: room BFS → `roomId`, `TagPerimete
 
 Visibility 프로필의 `EmptyDiscovered`는 room **바깥** 인접 빈 칸 기록(peek·디버그용)이며, “이 room이 밀폐다”는 뜻이 **아니다**.
 
-### 5.1.1 논리 충돌만으로 밀폐 확정 불가
+### 5.1.1 논리 충돌과 밀폐 추론 (비대칭)
 
 타일 충돌은 **bake된 `collisionFlags`(논리)** 와 **Physics Collider(물리)** 가 공존한다. `UsePhysicsCollider`가 켜진 타일은 통행·막힘을 collider가 일부·전부 담당하고, `BlocksOccupiedCells`·`BlocksEdge`·`SeparatesRoom` 등 논리 비트가 **없거나 약할 수 있다** ([`TileCollisionPolicy`](Assets/Dist/Scripts/Map/MapCollision/TileCollisionRole.cs) — `WalkableOnly` vs `LogicalOnly`).
 
-| 함의 | 내용 |
+**밀폐 추론은 한 방향만 성립한다.**
+
+| 방향 | 내용 |
 |------|------|
-| **bake·BFS 관점** | room BFS·edge 차단·가시성 occlusion 후보는 **`collisionFlags`만** 본다. Collider mesh·틈·비표준 형상은 bake 그래프에 **안 들어감** |
-| **“논리로 감싸짐”** | slice에서 논리 비트가 둘레를 이루는 것처럼 보여도, 물리 collider만 막거나·논리는 비어 있는 구간이 있을 수 있음 → **밀폐(sealed)로 확정 불가** |
-| **설계상 금지** | 논리 충돌 루프·room footprint·`EmptyDiscovered` 부재만으로 “실내 밀폐” 추론 **하지 않음**. plaza·**§7 Space bake** 등 **별도 규칙** 필요 |
+| **허용 (→ 밀폐)** | 해당 slice에서 `collisionFlags` 그래프가 floor를 **닫힌 루프**로 막으면 → bake·room BFS·occlusion **그래프 안**에서는 **밀폐로 취급** |
+| **금지 (¬밀폐 추론)** | 논리 비트가 비거나 bake 그래프상 열려 있다고 해서 **반드시 비밀폐·야외**로 결론 내리지 않음 — `UsePhysicsCollider`만 막거나 비트가 약한 구간이 있을 수 있음 |
+| **금지 (우회 추론)** | room footprint·`EmptyDiscovered` 부재·불완전 둘레만으로 밀폐 추론 **하지 않음** — plaza·**§7 Space bake** 등 **별도 규칙** 필요 |
+| **bake·BFS 관점** | room BFS·edge 차단·가시성 occlusion 후보는 **`collisionFlags`만** 본다. Collider mesh·틈·비표준 형상은 bake 그래프에 **미반영** |
 
 ```text
-  [논리 벽]—[floor]—[PhysicsCollider 난간]     ← room BFS: 난간 쪽 edge/셀 비트 없으면 통과
-        ↑ collider mesh에만 막힘이 있어도 bake 그래프는 열림
+  (허용) [논리벽]—[floor]—[논리벽]—[논리벽]   닫힌 루프 → 그래프상 밀폐
+
+  (금지) [논리벽]—[floor]—[PhysicsCollider 난간]   비트 없음 ≠ 밀폐 아님
+         ↑ collider만 막혀도 bake 그래프는 열림 — "야외"로 단정 금지
 ```
 
 타일 정의·비트 의미: [TILEMAP.md](TILEMAP.md) §collision.
@@ -307,7 +323,7 @@ plaza·id 0 shell-disconnected wall은 집계 **제외** (§4·§5.1.1과 동일
 | 발코니·ㄱ자 층 윤곽 | `floorFootprint[cellY]` | slice AABB, building AABB만 |
 | building 대략 위치·크기 | **AABB** | AABB를 측면 밀폐 판정에 단독 사용 |
 | 천장 높이 상한 | `maxStructuralY` | floor footprint 최대 Y만 |
-| 밀폐 확정 | §7 Space bake + `SpaceLeakEvaluator` | footprint/AABB 단독 (§5.1.1) |
+| 야외 분기용 topology leak | §7 `SpaceLeakEvaluator` (buildingId·footprint·extent) | collisionFlags·AABB 단독 (대전제·§5.1.1) |
 
 AABB는 **있으니 필요 시 활용**하되, **footprint가 있는 질문에 AABB만으로 대체하지 않는다** — ㄱ자·발코니에서 바깥 빈 칸이 상자 안에 들어가 오판한다.
 
@@ -331,7 +347,9 @@ AABB는 **있으니 필요 시 활용**하되, **footprint가 있는 질문에 A
 2. seed에 **이미 `SpaceId` 있으면 skip**
 3. `SpaceFloodFill3D` — 3D floor graph (cardinal slice + column `+Y`)
 4. 경계 `SpaceId` 있으면 `min(id)` 흡수, 없으면 신규 id
-5. `SpaceLeakEvaluator` — `maxStructuralY` 천장 + `floorFootprint` 측면 누수 → `isOutdoor`
+5. `SpaceLeakEvaluator` — topology leak (`buildingId`·footprint·`maxStructuralY`) → `isOutdoor` — **collisionFlags 사용 금지** (대전제 §1)
+
+**의미:** `isOutdoor=true` = 외부 연결 감지. `false` = 미감지 → 실내 파이프라인 (≠ 밀폐 증명).
 
 ### 7.2 구현
 
@@ -341,6 +359,19 @@ AABB는 **있으니 필요 시 활용**하되, **footprint가 있는 질문에 A
 | `SpaceLeakEvaluator` | 천장·측면 누수 |
 | `SpaceRegistry` / `SpaceLayer` | floor cell → SpaceId, `isOutdoor` |
 | `BuildingGroupBuilder.BakeAllSpaces` | 전체·편집 후 재 bake |
+
+### 7.3 §4 structural face vs §7 topology leak
+
+**HorizontalFace와 VerticalFace는 §4에서 동일** — `IsStructural` + occupied-cell flood로 **같은 `buildingId`** (대전제 §3).
+
+**§7 leak은 별도** — [대전제 §1·§2](#대전제-합의재논의-금지). `collisionFlags`·`EdgeSeparatesRoom`·`CellHasSolidWall` **금지**.
+
+| 누수 | 판정 (topology만) |
+|------|-------------------|
+| **측면** | footprint 밖 — **edge·점유 타일** `buildingId == space.buildingId`면 차단; plaza·타 building·바닥·shell 없음 → leak |
+| **천장 (+Y)** | column 최고 walkable Y에서 상향 — `buildingId` 일치 점유·**같은 building 윗층 floor**면 중단; `y > maxStructuralY` → leak |
+
+천장 막힘은 §4가 shell에 붙인 **`buildingId`** 로 본다 (Floor face·벽 동일 id 전파).
 
 ---
 
@@ -381,7 +412,8 @@ flowchart LR
 | column 전체 wall id | shell-disconnected까지 id |
 | buildingId만으로 outdoor | plaza bake 분리 |
 | roomId로 실내/야외·밀폐 추론 | room = slice floor graph partition; 개방·밀폐 구분 없음 |
-| 논리 충돌 비트만으로 밀폐 확정 | `UsePhysicsCollider` 등으로 물리가 논리를 대체·보완 — bake는 flags만 봄 |
+| 논리 비트 부재만으로 비밀폐·야외 확정 | `UsePhysicsCollider` 등 물리 막힘이 flags에 없을 수 있음 — §5.1.1 역방향 금지 |
+| **§7 Space leak에 `collisionFlags` 사용** | 대전제 §1 — `CellHasSolidWall`·`EdgeSeparatesRoom` 등 **오탐** |
 
 ---
 
@@ -399,6 +431,7 @@ flowchart LR
 | room·perimeter | `BakeAllRooms`, `TagPerimeterForSlice` |
 | §6 extent | `BuildingGroupRegistry.RebuildIndicesFromTiles`, `BuildingExtent`, `TryGetBuildingExtent` |
 | §7 Space | `BakeAllSpaces`, `SpaceFloodFill3D`, `SpaceLeakEvaluator`, `SpaceRegistry` |
+| §7 topology leak | `SpaceLeakEvaluator` — `buildingId`·footprint·`maxStructuralY` (flags 금지) |
 | incremental | `HandleSetOrApply` → merge + `RebuildRooms` + wall tag + indices + **Space** |
 | read | `TileMapCacheHub` / `BuildingGroupRegistry` |
 
@@ -414,7 +447,7 @@ flowchart LR
 | 4 | 구름다리 = **floor 인접 merge** (plaza 제외, min id 흡수) |
 | 5 | plaza/outdoor = merge·wall tag **제외** |
 | 6 | **BuildingExtent**: slice = `floorFootprint` 칸 집합; building 전체 = **AABB** + `maxStructuralY`. 정밀 판정은 footprint, 대략·필터는 AABB (§6.3) |
-| 7 | **Space bake**: `isOutdoor` = 천장·측면 누수 OR. **야외/실내 분기만** — peek·blocking·hide 규칙 불변 |
+| 7 | **Space bake**: `isOutdoor` = topology leak (`buildingId`·footprint·`maxStructuralY`). **collisionFlags 금지** (대전제). 분기만 — peek·blocking·hide 불변 |
 | 8 | **buildingId 전파 원점**: `CanPropagateBuildingIdFrom` — **&gt;0 만**. `0` 수신만, `-1` plaza 확장·덮어쓰기 금지 |
 
 ---

@@ -61,6 +61,7 @@ namespace IsoTilemap
             {
                 Debug.Log(
                     $"[BuildingGroupBuilder] spaces={spaceCount} outdoor={outdoorSpaces} indoor={spaceCount - outdoorSpaces}");
+                LogSpaceLeakDiagnosis();
             }
 
             int shellTagged = 0;
@@ -91,6 +92,42 @@ namespace IsoTilemap
                 $"afterBake tagged={shellTagged} untagged={shellUntagged} taggedMaxY={shellTaggedMaxY}");
 
             LogBuildingConnectionDiagnosis(3, 24);
+        }
+
+        void LogSpaceLeakDiagnosis()
+        {
+            var registry = _hub.Spaces.Registry;
+            var index = _topology.Index;
+            int ceilingOnly = 0;
+            int lateralOnly = 0;
+            int both = 0;
+            int indoor = 0;
+
+            foreach (int spaceId in registry.SpaceIds)
+            {
+                if (!registry.TryGetSpace(spaceId, out var space))
+                    continue;
+
+                if (!_registry.TryGetBuildingExtent(space.BuildingId, out var extent))
+                    continue;
+
+                var cells = registry.GetFloorCells(spaceId);
+                SpaceLeakEvaluator.EvaluateComponents(
+                    cells, space.BuildingId, extent, index, out bool ceiling, out bool lateral);
+
+                if (!ceiling && !lateral)
+                    indoor++;
+                else if (ceiling && lateral)
+                    both++;
+                else if (ceiling)
+                    ceilingOnly++;
+                else
+                    lateralOnly++;
+            }
+
+            Debug.Log(
+                $"[BuildingGroupBuilder] spaceLeak: indoor={indoor} ceilingOnly={ceilingOnly} " +
+                $"lateralOnly={lateralOnly} both={both}");
         }
 
         void LogBuildingConnectionDiagnosis(int idA, int idB)
