@@ -80,7 +80,7 @@ namespace IsoTilemap
             _sightLineSummary = null;
         }
 
-        /// <summary>시선 차단 <see cref="BuildingPlayerOcclusionResolver"/> 샘플 셀을 표시합니다.</summary>
+        /// <summary>근접 에드온 blocking·평가 셀을 표시합니다.</summary>
         public static void PublishSightLineBuilding(
             in SightLineBuildingDebugSnapshot snapshot,
             float cellSize,
@@ -108,11 +108,11 @@ namespace IsoTilemap
             string outdoorTag = isPlayerOutdoor ? "야외" : "실내";
             string playerBuildingTag = playerBuildingId > 0 ? $"player B:{playerBuildingId} 제외" : "player B:없음";
             _sightLineSummary =
-                $"{outdoorTag} | {playerBuildingTag} | 샘플 {CountCells(snapshot.SampledCells)} | 차단기여 {CountCells(snapshot.BlockingCells)} | resolver B:{resolvedCount} applied B:{appliedCount}";
+                $"{outdoorTag} | {playerBuildingTag} | 근접후보 {CountCells(snapshot.SampledCells)} | 차단기여 {CountCells(snapshot.BlockingCells)} | addon B:{resolvedCount} applied B:{appliedCount}";
 
-            AddSightLineCellLayer("회색 — 시선 샘플 셀", new Color(0.75f, 0.75f, 0.75f),
+            AddSightLineCellLayer("회색 — 근접 평가 후보 셀", new Color(0.75f, 0.75f, 0.75f),
                 ToCellHashSet(snapshot.SampledCells), 0.04f);
-            AddSightLineCellLayer("빨강 — 차단 buildingId 기여 셀", Color.red,
+            AddSightLineCellLayer("빨강 — blocking building 기여 점유셀", Color.red,
                 ToCellHashSet(snapshot.BlockingCells), 0.06f);
             EnsureSubscribed();
         }
@@ -172,8 +172,8 @@ namespace IsoTilemap
                     indoor.Add(cell);
             }
 
-            AddIndoorOutdoorCellLayer("청록 — 야외 판정 바닥", new Color(0.2f, 0.85f, 0.95f), outdoor, 0.04f);
-            AddIndoorOutdoorCellLayer("주황 — 실내 판정 바닥", new Color(1f, 0.55f, 0.15f), indoor, 0.06f);
+            AddIndoorOutdoorCellLayer("청록 — 야외 판정 바닥 (Space bake)", new Color(0.2f, 0.85f, 0.95f), outdoor, 0.04f);
+            AddIndoorOutdoorCellLayer("주황 — 실내 판정 바닥 (Space bake)", new Color(1f, 0.55f, 0.15f), indoor, 0.06f);
             EnsureSubscribed();
         }
 
@@ -249,15 +249,16 @@ namespace IsoTilemap
         {
             var result = new List<TileData>();
             var seen = new HashSet<Guid>();
+            var scratch = new List<TileData>();
 
             foreach (var (x, z, y) in hub.EnumerateOccupiedCells())
             {
-                if (!hub.TryGetCellTiles(x, z, y, out var list))
+                if (!hub.TryCollectTilesAtOccupiedCell(x, z, y, scratch))
                     continue;
 
-                for (int i = 0; i < list.Count; i++)
+                for (int i = 0; i < scratch.Count; i++)
                 {
-                    TileData tile = list[i];
+                    TileData tile = scratch[i];
                     if (!IsStructuralCellTile(tile.identity))
                         continue;
 

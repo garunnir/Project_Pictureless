@@ -1,0 +1,23 @@
+---
+description: Unity implementation rules for Assets scripts
+globs: Assets/**
+alwaysApply: false
+---
+
+# Collaboration Rules — Unity (Assets)
+
+Canonical stack: `docs/tech-stack.md` · auto-loaded via `unity-stack.mdc`.
+
+## Rule 2 — Mermaid
+Required when **any** applies: cross-class event/callback flow · UniTask **3+** async stages · new Manager/Service/system class.  
+Clarification-only turn (Rule 3): exempt; 1–2 sentence text flow is enough. If Mermaid cannot render, use text flow.
+
+## Rule 6 — Hot Path
+In `Update`/`FixedUpdate`/`LateUpdate`, physics callbacks, Jobs, or `ScriptableRenderPass.Execute` and URP render pipeline event callbacks: state **heap allocation** (closure·boxing·LINQ·string 포함) and CPU cost; for UniTask note allocation and `PlayerLoopTiming`.  
+Jobs (Burst): managed allocation prohibited — zero-alloc mandatory; verify unmanaged types.  
+If unverified: include `Unverified`, assumptions, expected risk, and how to verify.
+
+## Pre-implementation Checklist (Agent only)
+
+Cover Rule 1 → Rule 5; add Rule 2 / Rule 6 when applicable.  
+Single-file changes with **no external references and no Inspector fields** may use concise prose instead of the full checklist.

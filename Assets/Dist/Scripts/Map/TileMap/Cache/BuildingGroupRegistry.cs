@@ -12,6 +12,7 @@ namespace IsoTilemap
 
         readonly Dictionary<int, HashSet<Guid>> _tilesByBuildingId = new();
         readonly Dictionary<int, HashSet<Guid>> _minCellYFloorTilesByBuildingId = new();
+        readonly Dictionary<int, BuildingExtent> _extentsByBuildingId = new();
         readonly Dictionary<RoomKey, HashSet<Guid>> _edgeIdsByRoom = new();
         readonly HashSet<(int x, int z)> _plazaFloorXZ = new();
         int _plazaCellY = int.MinValue;
@@ -28,6 +29,7 @@ namespace IsoTilemap
         {
             _tilesByBuildingId.Clear();
             _minCellYFloorTilesByBuildingId.Clear();
+            _extentsByBuildingId.Clear();
             _edgeIdsByRoom.Clear();
             _plazaFloorXZ.Clear();
             _plazaCellY = int.MinValue;
@@ -121,19 +123,63 @@ namespace IsoTilemap
             return false;
         }
 
-        public void RebuildFromTiles(IEnumerable<TileData> tiles)
+        public void RebuildFromTiles(IEnumerable<TileData> tiles) =>
+            RebuildIndicesFromTiles(tiles);
+
+        /// <summary>tile guid 역인덱스·최하층 floor·<see cref="BuildingExtent"/>를 한 패스로 재구성합니다.</summary>
+        public void RebuildIndicesFromTiles(IEnumerable<TileData> tiles)
         {
             _tilesByBuildingId.Clear();
+            _minCellYFloorTilesByBuildingId.Clear();
+            _extentsByBuildingId.Clear();
 
             if (tiles == null)
                 return;
 
+            var extentBuilders = new Dictionary<int, BuildingExtent.Builder>();
+
             foreach (var tile in tiles)
             {
-                int id = tile.identity.buildingId;
-                if (id > 0)
-                    RegisterTile(tile.tileDefId, id);
+                int buildingId = tile.identity.buildingId;
+                if (buildingId <= 0)
+                    continue;
+
+                RegisterTile(tile.tileDefId, buildingId);
+
+                if (!extentBuilders.TryGetValue(buildingId, out var builder))
+                {
+                    builder = new BuildingExtent.Builder(buildingId);
+                    extentBuilders[buildingId] = builder;
+                }
+
+                builder.IncludeTile(tile);
             }
+
+            foreach (var kv in extentBuilders)
+            {
+                var extent = kv.Value.Build();
+                if (extent.HasBounds)
+                    _extentsByBuildingId[kv.Key] = extent;
+
+                foreach (Guid tileId in kv.Value.MinFloorTileIds)
+                    RegisterMinCellYFloorTile(kv.Key, tileId);
+            }
+        }
+
+        public bool TryGetBuildingExtent(int buildingId, out BuildingExtent extent)
+        {
+            if (buildingId > 0 && _extentsByBuildingId.TryGetValue(buildingId, out extent))
+                return true;
+
+            extent = BuildingExtent.Empty;
+            return false;
+        }
+
+        [Obsolete("Use RebuildIndicesFromTiles — min floor index is included.")]
+        public void RebuildMinCellYFloorIndex(IEnumerable<TileData> tiles, int MinCellY)
+        {
+            _ = MinCellY;
+            RebuildIndicesFromTiles(tiles);
         }
 
         public HashSet<Guid> GetTilesForBuilding(int buildingId)
@@ -144,55 +190,22 @@ namespace IsoTilemap
             return new HashSet<Guid>(set);
         }
 
-        /// <summary>맵 bake 후 building별 <b>최하층</b> Floor 타일 guid 집합을 재구성합니다.</summary>
-        public void RebuildMinCellYFloorIndex(IEnumerable<TileData> tiles, int MinCellY)
+        public void EnumerateTilesForBuilding(int buildingId, Action<Guid> visitor)
         {
-            _ = MinCellY;
-            _minCellYFloorTilesByBuildingId.Clear();
-            if (tiles == null)
+            if (buildingId <= 0 || visitor == null ||
+                !_tilesByBuildingId.TryGetValue(buildingId, out var set))
                 return;
 
-            var minFloorYByBuilding = new Dictionary<int, int>();
+            foreach (Guid tileId in set)
+                visitor(tileId);
+        }
 
-            foreach (var tile in tiles)
-            {
-                int buildingId = tile.identity.buildingId;
-                if (buildingId <= 0 || !TileIdentityUtil.IsFloorTile(tile.identity))
-                    continue;
+        public IReadOnlyCollection<Guid> GetTileIdsReadOnly(int buildingId)
+        {
+            if (buildingId <= 0 || !_tilesByBuildingId.TryGetValue(buildingId, out var set))
+                return Array.Empty<Guid>();
 
-                var key = FloorFaceKey.FromFloorTileIdentity(tile.identity);
-                int sy = tile.identity.sizeUnit.y;
-                if (sy < 1) sy = 1;
-
-                for (int dy = 0; dy < sy; dy++)
-                {
-                    int floorY = key.CellAbove.y + dy;
-                    if (!minFloorYByBuilding.TryGetValue(buildingId, out int minY) || floorY < minY)
-                        minFloorYByBuilding[buildingId] = floorY;
-                }
-            }
-
-            foreach (var tile in tiles)
-            {
-                int buildingId = tile.identity.buildingId;
-                if (buildingId <= 0 || !TileIdentityUtil.IsFloorTile(tile.identity))
-                    continue;
-
-                if (!minFloorYByBuilding.TryGetValue(buildingId, out int minFloorY))
-                    continue;
-
-                var key = FloorFaceKey.FromFloorTileIdentity(tile.identity);
-                int sy = tile.identity.sizeUnit.y;
-                if (sy < 1) sy = 1;
-
-                for (int dy = 0; dy < sy; dy++)
-                {
-                    if (key.CellAbove.y + dy != minFloorY)
-                        continue;
-
-                    RegisterMinCellYFloorTile(buildingId, tile.tileDefId);
-                }
-            }
+            return set;
         }
 
         public bool IsBottomFloorTile(int buildingId, Guid tileId)

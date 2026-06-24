@@ -35,7 +35,10 @@ namespace IsoTilemap
         /// <summary><see cref="TilePlacementSlot.HorizontalFace"/>일 때 <see cref="FloorFace"/>.</summary>
         public byte floorFace{init; get;}
 
-        /// <summary>bake: <see cref="BuildingIdUnassigned"/> 미할당, <see cref="BuildingIdOutdoor"/> 광장 Floor, &gt;0 건물. 런타임 야외 분기는 <c>IsOutdoorEvaluation</c>.</summary>
+        /// <summary>
+        /// bake: <see cref="BuildingIdUnassigned"/> 미할당(수신만), <see cref="BuildingIdOutdoor"/> plaza(확장 원점 아님), &gt;0 건물(전파·merge 시드).
+        /// 전파 원점 규칙: <c>BuildingGroupBuilder.CanPropagateBuildingIdFrom</c>. 런타임 야외 분기는 <c>IsOutdoorEvaluation</c>.
+        /// </summary>
         public int buildingId { init; get; }
 
         /// <summary>bake 초기·건물 BFS 대기 Floor.</summary>

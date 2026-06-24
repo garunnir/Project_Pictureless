@@ -72,3 +72,6 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 /*.log
 /ProfilerCaptures
+
+# Agent one-off refactor scripts (not part of Unity project)
+/_tools/

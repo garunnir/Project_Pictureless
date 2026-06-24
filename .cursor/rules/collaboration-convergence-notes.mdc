@@ -1,0 +1,22 @@
+# Collaboration Convergence Notes (Optional)
+
+This document is optional and separate from mandatory development rules.
+Use it only when running document-convergence rounds.
+
+## Scope
+- Convergence and batch-merge operation notes
+- Pending batch handling guidance
+- Short Form synchronization workflow notes
+
+## Frozen Operation (Moved from collaboration-rules.mdc)
+This document context may be in a frozen operating state. Outside an approved release window, direct edits to the main rules body are prohibited.
+New change requests should be collected as `Pending` items and must not be merged into the main body until batch approval is completed in an approved release window.
+
+## Optional Guidance
+1. In frozen state, convergence outputs can be recorded as `Pending Batch` proposals.
+2. Higher-priority runtime instructions may still be translated into proposals without immediate body merge.
+3. During release-window updates, review and synchronize any derived summary sections with the main body.
+
+## Non-Normative
+This file does not override `collaboration-rules.mdc`.
+If any conflict exists, follow `collaboration-rules.mdc`.

@@ -8,7 +8,7 @@ using UnityEngine;
 /// 플레이어 월드 높이·그리드 XZ → <see cref="PlayerFloorVisibilityPolicy"/> →
 /// <see cref="IFloorVisibilitySync.SyncFloorVisibility"/>.
 /// </summary>
-[DefaultExecutionOrder(-100)]
+[DefaultExecutionOrder(-99)]
 [DisallowMultipleComponent]
 public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
 {

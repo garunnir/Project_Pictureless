@@ -67,29 +67,5 @@ namespace IsoTilemap
 
             return entry.Scalar01 > GhostEpsilon;
         }
-
-        public static bool ResolveSightLineBuildingHidden(System.Guid tileId, TilePresentationEntryStore store)
-        {
-            if (!store.TryGetEngagedEntry(
-                    tileId,
-                    PresentationConcern.SightLineBuildingHidden,
-                    PresentationSource.BlockingBuildingMinFloor,
-                    out TilePresentationEntry entry))
-                return false;
-
-            return entry.Scalar01 > OcclusionEpsilon;
-        }
-
-        public static bool ResolveFloorVisibilityHidden(System.Guid tileId, TilePresentationEntryStore store)
-        {
-            if (!store.TryGetEngagedEntry(
-                    tileId,
-                    PresentationConcern.FloorVisibilityHidden,
-                    PresentationSource.FloorVisibilityPolicy,
-                    out TilePresentationEntry entry))
-                return false;
-
-            return entry.Scalar01 > OcclusionEpsilon;
-        }
     }
 }

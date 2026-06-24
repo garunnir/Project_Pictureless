@@ -27,6 +27,9 @@ namespace IsoTilemap
         Dictionary<Vector3Int, OccupiedCellEntry> _occupiedEntries = new();
 
         readonly HashSet<(int x, int z, int y)> _anyTileAt = new();
+        readonly Dictionary<Vector3Int, List<WallEdgeKey>> _wallKeysAtCell = new();
+        readonly Dictionary<Vector3Int, List<FloorFaceKey>> _floorKeysAtCell = new();
+        readonly HashSet<System.Guid> _collectDedupeScratch = new();
 
         readonly struct TileRef
         {
@@ -73,6 +76,8 @@ namespace IsoTilemap
         {
             _anyTileAt.Clear();
             _occupiedEntries.Clear();
+            _wallKeysAtCell.Clear();
+            _floorKeysAtCell.Clear();
 
             foreach (var kv in _tiles)
             {
@@ -134,6 +139,8 @@ namespace IsoTilemap
                     var cellB = edgeKey.CellB + yOffset;
                     _anyTileAt.Add((cellA.x, cellA.z, cellA.y));
                     _anyTileAt.Add((cellB.x, cellB.z, cellB.y));
+                    RegisterWallIncident(cellA, edgeKey);
+                    RegisterWallIncident(cellB, edgeKey);
                 }
             }
 
@@ -150,8 +157,110 @@ namespace IsoTilemap
                     var above = faceKey.CellAbove + yOffset;
                     _anyTileAt.Add((below.x, below.z, below.y));
                     _anyTileAt.Add((above.x, above.z, above.y));
+                    RegisterFloorIncident(below, faceKey);
+                    RegisterFloorIncident(above, faceKey);
                 }
             }
+        }
+
+        /// <summary>
+        /// 점유셀에 incident한 OccupiedCell·VerticalFace·HorizontalFace 타일을 모읍니다.
+        /// <see cref="HasAnyTile"/> false이면 into를 비우고 false. 중복 tileDefId는 한 번만 넣습니다.
+        /// </summary>
+        public bool TryCollectTilesAtOccupiedCell(Vector3Int cell, List<TileData> into)
+        {
+            into.Clear();
+            if (!HasAnyTile(cell.x, cell.z, cell.y))
+                return false;
+
+            _collectDedupeScratch.Clear();
+
+            if (_occupiedEntries.TryGetValue(cell, out var entry) && entry.Refs.Count > 0)
+                AppendOccupiedRefs(entry, into, _collectDedupeScratch);
+
+            if (_wallKeysAtCell.TryGetValue(cell, out var wallKeys))
+            {
+                for (int i = 0; i < wallKeys.Count; i++)
+                {
+                    if (!_edges.TryGetValue(wallKeys[i], out var edge))
+                        continue;
+
+                    AppendUniqueTile(into, edge, _collectDedupeScratch);
+                }
+            }
+
+            if (_floorKeysAtCell.TryGetValue(cell, out var floorKeys))
+            {
+                for (int i = 0; i < floorKeys.Count; i++)
+                {
+                    if (!_faces.TryGetValue(floorKeys[i], out var face))
+                        continue;
+
+                    AppendUniqueTile(into, face, _collectDedupeScratch);
+                }
+            }
+
+            return into.Count > 0;
+        }
+
+        public bool TryCollectTilesAtOccupiedCell(int x, int z, int cellY, List<TileData> into) =>
+            TryCollectTilesAtOccupiedCell(new Vector3Int(x, cellY, z), into);
+
+        void RegisterWallIncident(Vector3Int cell, WallEdgeKey key)
+        {
+            if (!_wallKeysAtCell.TryGetValue(cell, out var keys))
+            {
+                keys = new List<WallEdgeKey>(2);
+                _wallKeysAtCell[cell] = keys;
+            }
+
+            for (int i = 0; i < keys.Count; i++)
+            {
+                if (keys[i].Equals(key))
+                    return;
+            }
+
+            keys.Add(key);
+        }
+
+        void RegisterFloorIncident(Vector3Int cell, FloorFaceKey key)
+        {
+            if (!_floorKeysAtCell.TryGetValue(cell, out var keys))
+            {
+                keys = new List<FloorFaceKey>(2);
+                _floorKeysAtCell[cell] = keys;
+            }
+
+            for (int i = 0; i < keys.Count; i++)
+            {
+                if (keys[i].Equals(key))
+                    return;
+            }
+
+            keys.Add(key);
+        }
+
+        static void AppendOccupiedRefs(
+            OccupiedCellEntry entry,
+            List<TileData> into,
+            HashSet<System.Guid> dedupe)
+        {
+            for (int i = 0; i < entry.Refs.Count; i++)
+            {
+                var tr = entry.Refs[i];
+                AppendUniqueTile(into, tr.OwnerList[tr.OwnerIndex], dedupe);
+            }
+        }
+
+        static void AppendUniqueTile(List<TileData> into, TileData tile, HashSet<System.Guid> dedupe)
+        {
+            if (dedupe != null)
+            {
+                if (!dedupe.Add(tile.tileDefId))
+                    return;
+            }
+
+            into.Add(tile);
         }
 
         public bool TryGetCellTiles(int x, int z, int cellY, out List<TileData> list) =>

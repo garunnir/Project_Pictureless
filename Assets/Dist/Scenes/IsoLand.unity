@@ -58023,7 +58023,7 @@ MonoBehaviour:
   tileBuildingIdLabels: 1
   tileIndoorOutdoorOverlay: 1
   tileSightLineBuildingOverlay: 1
-  player: 1
+  player: 0
   playerInteraction: 1
   playerMovement: 1
   playerPosUpdate: 1
@@ -61982,7 +61982,7 @@ MonoBehaviour:
     CellSize: 1
     FullBlendWithinPerpDistance: 0.75
     NoneBeyondPerpDistance: 8
-    BandRadiusCells: 2
+    RadiusCells: 2
     SegmentTEpsilon: 0.15
     ApplyEpsilon: 0.015
     OcclusionSmoothSpeed: 6

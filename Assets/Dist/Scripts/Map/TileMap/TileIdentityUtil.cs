@@ -70,8 +70,29 @@ namespace IsoTilemap
                     AppendFloorIncidentCells(ToFloorFaceKey(id), id.sizeUnit.y, cells);
                     break;
                 default:
-                    cells.Add(id.GridPos);
+                    AppendOccupiedCellBox(id.GridPos, id.sizeUnit, cells);
                     break;
+            }
+        }
+
+        public static void AppendOccupiedCellBox(Vector3Int basePos, Vector3Int sizeUnit, ICollection<Vector3Int> cells)
+        {
+            int sx = Mathf.Max(1, sizeUnit.x);
+            int sy = Mathf.Max(1, sizeUnit.y);
+            int sz = Mathf.Max(1, sizeUnit.z);
+
+            for (int dx = 0; dx < sx; dx++)
+            {
+                for (int dy = 0; dy < sy; dy++)
+                {
+                    for (int dz = 0; dz < sz; dz++)
+                    {
+                        cells.Add(new Vector3Int(
+                            basePos.x + dx,
+                            basePos.y + dy,
+                            basePos.z + dz));
+                    }
+                }
             }
         }
 

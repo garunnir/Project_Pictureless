@@ -1,0 +1,14 @@
+---
+description: Unity stack and C# 9 constraints for Assets scripts
+globs: Assets/**
+alwaysApply: false
+---
+
+# Unity Stack
+
+Full detail: `docs/tech-stack.md`
+
+* Unity **6000.3.10f1 LTS** · **URP** · **C# 9** (no C# 10+)
+* **UniTask** for new async (no new Coroutines — see collaboration-rules Exceptions)
+* **Input System** · **Odin** Inspector attrs only (no OdinSerializer)
+* Namespace: `.asmdef` assembly name, or `ProjectName.FeatureName`; confirm if uncertain; new asmdef/NS needs approval

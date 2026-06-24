@@ -15,6 +15,23 @@
 
 시선·차단에 `ResolveFromWorld` 쓰지 않음. 전역 Y 목록·기둥 인덱스 **금지**.
 
+### 점유셀 — 통합 탐색 단위
+
+bake·가시성·시선·building shell 태깅에서 **Wall / EdgeWall / ThickWall / Floor를 코드 경로마다 따로 나누지 않는다.**  
+`Vector3Int (x,y,z)` **점유셀**이 공통 그래프 노드다. 타일 placement slot(VerticalFace 등)은 **저장·인덱스 구현 세부**일 뿐, 소비자는 **셀 단위**로 통일한다.
+
+| API | 역할 |
+|------|------|
+| `CellHasOccupancy` / `HasOccupancy` | 셀에 무언가 등록됨 (OccupiedCell box + face/edge **incident** 포함) |
+| **`TryCollectTilesAtOccupiedCell`** | **점유셀 SSOT 조회** — OccupiedCell + incident VerticalFace + HorizontalFace 전부 |
+| `TryGetCellTiles` | OccupiedCell 박스 타일만 (저수준; 신규 코드는 collect 우선) |
+| `FaceBinder.AppendWallFacesAtCell` 등 | 레거시·FaceBinder 직접 접근 시에만 |
+| `TileIdentityUtil.CollectAffectedCells` | 타일이 차지하는 **전체** 점유 footprint |
+| `EnumerateOccupiedCells` | bake 인덱스 전체 순회 |
+
+**신규·수정 코드 규칙**: ad-hoc 타일 종류 루프 대신 **`TryCollectTilesAtOccupiedCell` → footprint(`CollectAffectedCells`)** 패턴을 쓴다.  
+**HorizontalFace**(walkable floor)의 `buildingId`는 floor bake(§2·§3) SSOT. structural shell `buildingId`는 [건물 bake §4](TILEMAP_BUILDING_BAKE.md) **occupied-cell flood**.
+
 ## 내부 의존성 다이어그램
 
 ```mermaid
@@ -102,7 +119,7 @@ graph TD
 ### Cache (`TileMap/Cache/`)
 - **TileMapCacheHub.cs** — topology·building·cellY·room geometry 통합 조회·무효화 진입점
 - **FloorMapIndex.cs** — 셀·엣지·점유 (x, y, z) 인덱스
-- **BuildingGroupRegistry.cs** — buildingId·광장(MinCellY) 바닥 XZ·room edge 역인덱스
+- **BuildingGroupRegistry.cs** — buildingId·광장(MinCellY) 바닥 XZ·room edge 역인덱스·**BuildingExtent**(slice footprint + AABB — [bake §6](TILEMAP_BUILDING_BAKE.md))
 - **RoomKey.cs** — (buildingId, cellY, roomId) 캐시 키
 - **FloorRoomFloodFill.cs** — 방 BFS 계산 (결과는 Hub가 캐시)
 
@@ -112,23 +129,26 @@ graph TD
 
 | 경로 | 위치 | 규칙 |
 |------|------|------|
-| **쓰기** | `BuildingGroupBuilder` (`AssignAll`, slice rebuild) | outdoor·buildingId·room·BFS geometry bake — 아래 상향 규칙 |
+| **쓰기** | `BuildingGroupBuilder` (`AssignAll`, slice rebuild) | outdoor·buildingId·room·BFS geometry bake — [건물 bake 논리](TILEMAP_BUILDING_BAKE.md) |
 | **저장** | `TileMapModel` floor ids, `BuildingGroupRegistry`, `Hub.Rooms`/`CellYGeometry` | 역할별 분리(효율) |
 | **읽기** | `TileMapCacheHub` / `BuildingLayer` | `IsOutdoorEvaluation`, `TryGetFloorBuildingRoom` — **buildingId로 야외 추론 금지** (bake: `0` 미할당, `-1` 광장 Floor, `>0` 건물) |
 
-**buildingId bake (열 상향)**
+**buildingId bake (column-up)** — 논리 SSOT: [TILEMAP_BUILDING_BAKE.md](TILEMAP_BUILDING_BAKE.md) (구조 변경 전까지 재합의 불필요)
 
-1. **seed cellY** — `FloorRoomFloodFill`로 수평 room footprint → 미할당 floor에 `buildingId`.
-2. **같은 cellY** — footprint·상향 진입 열의 Wall/EdgeWall에 동일 `buildingId` (`roomId=0`).
-3. **상향** — `(x,y,z)`에 `buildingId`가 붙은 Floor/Wall/EdgeWall이 있고 `(x,y+1,z)`에 구조물(Floor/Wall/EdgeWall)이 있으면 위 셀 y로 진입 → room BFS·floor ID·벽 ID 반복.
-4. **roomId** — room bake·perimeter는 기존과 동일 (`TagPerimeterForSlice`가 벽 `roomId` 보정).
+요약:
 
-점유 조회는 `EnumerateOccupiedCells` + `TryGetCellTiles`만 사용 (→ [§좌표 규약](#좌표-규약)). 점유 인덱스는 타일 `sizeUnit(x,y,z)`를 반영해 확장되며, 빌딩 상향 판정은 `(x,y+1,z)` 셀 조회 결과를 그대로 사용한다. EdgeWall 인접셀 병합은 기본 OFF이며, 상향 연결 경로에서만 옵션으로 ON 한다. XZ footprint 겹침·4방 인접·`sizeUnit` 수동 확장은 사용하지 않음.
+1. **minCellY seed** — room BFS → unassigned floor에 buildingId.
+2. **same slice** — **floor**에 buildingId (column-up); structural shell은 §4 **occupied-cell flood**.
+3. **column-up** — vertical probe·entry column으로 위 slice.
+4. **floor merge** — 인접 floor id 충돌 시 min id 흡수 (구름다리, plaza 제외).
+5. **room** — building×slice room BFS·perimeter → wall tag.
+
+점유 조회는 [§점유셀](#점유셀--통합-탐색-단위) API만 사용. 폐기된 **floor-seed structural shell BFS**·structural merge는 **사용하지 않음**. §4 shell은 **floor 시드 점유셀 → occupied-cell flood**만.
 
 ### 층 가시성·가려짐
 
 → **상세 조건·표·흐름도**: [TILEMAP_VISIBILITY.md](TILEMAP_VISIBILITY.md)  
-(층 스트리밍 despawn, 벽 BFS 오클루전, 야외 시선 차단 흔적 — 3시스템 분리 정리)
+(층 hide diff·근접 에드온 blocking·BFS 오클루전 — 3시스템 분리)
 
 ### Serialization
 - **TilemapSerializer.cs** — `JsonUtility` 기반 파일 읽기/쓰기

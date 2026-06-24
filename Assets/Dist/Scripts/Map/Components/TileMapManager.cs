@@ -34,6 +34,8 @@ public class TileMapManager : MonoBehaviour
 
     [Header("Floor Visibility (chunk streaming only)")]
     [SerializeField] private PlayerFloorVisibilityDriver _floorVisibilityDriver;
+    [SerializeField] private FloorHidePresentationMode _floorHidePresentationMode =
+        FloorHidePresentationMode.DisableGameObject;
 
     [Header("Tile Pooling (chunk streaming only)")]
     [SerializeField] private bool _enableTilePooling = true;
@@ -103,18 +105,6 @@ public class TileMapManager : MonoBehaviour
 
         _controller.Init(Model, viewBuilder);
 
-        if (_floorVisibilityDriver != null && _floorPolicy != null)
-        {
-            IFloorVisibilitySync sync = UseChunkStreaming
-                ? _streamingVisualizer
-                : _nonStreamingVisualizer;
-            if (sync != null)
-            {
-                _floorVisibilityDriver.Init(_floorPolicy, sync);
-                _floorVisibilityDriver.ApplyNow();
-            }
-        }
-
         if (_proximityBlendDriver != null &&
             _presentationApplier != null &&
             _floorPolicy != null &&
@@ -125,6 +115,18 @@ public class TileMapManager : MonoBehaviour
                 _presentationApplier,
                 _floorPolicy,
                 ResolveFloorVisibilityCamera);
+        }
+
+        if (_floorVisibilityDriver != null && _floorPolicy != null)
+        {
+            IFloorVisibilitySync sync = UseChunkStreaming
+                ? _streamingVisualizer
+                : _nonStreamingVisualizer;
+            if (sync != null)
+            {
+                _floorVisibilityDriver.Init(_floorPolicy, sync);
+                _floorVisibilityDriver.ApplyNow();
+            }
         }
 
         EnsureOcclusionDisplayDriver();
@@ -169,7 +171,9 @@ public class TileMapManager : MonoBehaviour
         {
             _presentationApplier.ConfigureFloorVisibility(
                 _floorPolicy,
-                _mapCacheHub.Buildings.Registry);
+                _mapCacheHub.Buildings.Registry,
+                _mapCacheHub,
+                _floorHidePresentationMode);
         }
 
         _streamingVisualizer?.SetPresentationApplier(_presentationApplier);
@@ -239,10 +243,13 @@ public class TileMapManager : MonoBehaviour
             _floorPolicy = PlayerFloorVisibilityPolicy.Build(
                 _mapCacheHub,
                 _gridCellSize,
-                ResolveFloorVisibilityCamera,
                 _mapCacheHub.Buildings.Registry,
                 cellEpsilonWorld: 0f);
-            _presentationApplier?.ConfigureFloorVisibility(_floorPolicy, _mapCacheHub.Buildings.Registry);
+            _presentationApplier?.ConfigureFloorVisibility(
+                _floorPolicy,
+                _mapCacheHub.Buildings.Registry,
+                _mapCacheHub,
+                _floorHidePresentationMode);
         }
     }
 

@@ -9,24 +9,19 @@ namespace IsoTilemap
 {
     public sealed class ProximitySightLineBlendPipeline
     {
-        static readonly Vector3Int[] CardinalNeighbors =
-        {
-            Vector3Int.right, Vector3Int.back, Vector3Int.left, Vector3Int.forward
-        };
-
         readonly TileMapCacheHub _hub;
         readonly HashSet<Vector3Int> _blendCells = new();
         readonly List<TileData> _cellTilesScratch = new();
-        readonly List<TileData> _edgeTilesScratch = new();
-        readonly List<TileData> _faceTilesScratch = new();
         readonly Dictionary<Guid, float> _scratch = new();
         readonly List<(Guid tileId, float occlusion01)> _applyScratch = new();
         readonly List<Guid> _clearScratch = new();
+        readonly List<ProximityEvaluatedHit> _evaluatedHitsScratch = new();
+        readonly List<Vector3Int> _blendCellsListScratch = new();
 
         public ProximitySightLineBlendPipeline(TileMapCacheHub hub) =>
             _hub = hub ?? throw new ArgumentNullException(nameof(hub));
 
-        public TileOcclusionPresentationDelta Evaluate(
+        public ProximityBlendEvaluationResult Evaluate(
             Vector3 cameraWorld,
             Vector3 playerWorld,
             Vector3Int playerCell,
@@ -38,12 +33,21 @@ namespace IsoTilemap
             _scratch.Clear();
             _applyScratch.Clear();
             _clearScratch.Clear();
+            _evaluatedHitsScratch.Clear();
+            _blendCellsListScratch.Clear();
 
             if (_hub == null)
-                return new TileOcclusionPresentationDelta(_applyScratch, _clearScratch);
+            {
+                return new ProximityBlendEvaluationResult(
+                    new TileOcclusionPresentationDelta(_applyScratch, _clearScratch),
+                    ProximityBlendEvaluationSnapshot.Empty);
+            }
 
             SightLineSegmentSampler.CollectBlendCells(
                 _hub, cameraWorld, playerWorld, playerCell, settings, _blendCells);
+
+            foreach (Vector3Int cell in _blendCells)
+                _blendCellsListScratch.Add(cell);
 
             float cellSize = settings.CellSize > 0f ? settings.CellSize : 1f;
             float eps = Mathf.Max(0f, settings.ApplyEpsilon);
@@ -54,41 +58,13 @@ namespace IsoTilemap
                     continue;
 
                 _cellTilesScratch.Clear();
-                _edgeTilesScratch.Clear();
-                _faceTilesScratch.Clear();
-
-                if (_hub.TryGetCellTiles(cell.x, cell.z, cell.y, out var tiles))
-                {
-                    for (int i = 0; i < tiles.Count; i++)
-                        _cellTilesScratch.Add(tiles[i]);
-                }
-
-                AppendWallFacesAtCell(cell, _edgeTilesScratch);
-                AppendFloorFacesAtCell(cell, _faceTilesScratch);
-
-                if (_cellTilesScratch.Count == 0 &&
-                    _edgeTilesScratch.Count == 0 &&
-                    _faceTilesScratch.Count == 0)
+                if (!_hub.TryCollectTilesAtOccupiedCell(cell, _cellTilesScratch))
                     continue;
 
                 for (int i = 0; i < _cellTilesScratch.Count; i++)
                 {
                     AccumulateOcclusion(
                         _cellTilesScratch[i], cell, cameraWorld, playerWorld,
-                        playerCell, playerFloorCellY, isPlayerOutdoor, cellSize, settings, eps);
-                }
-
-                for (int i = 0; i < _edgeTilesScratch.Count; i++)
-                {
-                    AccumulateOcclusion(
-                        _edgeTilesScratch[i], cell, cameraWorld, playerWorld,
-                        playerCell, playerFloorCellY, isPlayerOutdoor, cellSize, settings, eps);
-                }
-
-                for (int i = 0; i < _faceTilesScratch.Count; i++)
-                {
-                    AccumulateOcclusion(
-                        _faceTilesScratch[i], cell, cameraWorld, playerWorld,
                         playerCell, playerFloorCellY, isPlayerOutdoor, cellSize, settings, eps);
                 }
             }
@@ -114,28 +90,15 @@ namespace IsoTilemap
                 }
             }
 
-            return new TileOcclusionPresentationDelta(_applyScratch, _clearScratch);
-        }
+            var snapshot = new ProximityBlendEvaluationSnapshot(
+                _blendCellsListScratch,
+                _evaluatedHitsScratch,
+                cameraWorld,
+                playerWorld);
 
-        void AppendWallFacesAtCell(Vector3Int cell, List<TileData> appendTo)
-        {
-            for (int i = 0; i < CardinalNeighbors.Length; i++)
-            {
-                Vector3Int neighbor = cell + CardinalNeighbors[i];
-                if (!_hub.TryGetEdgeBetween(cell, neighbor, out TileData edge))
-                    continue;
-
-                appendTo.Add(edge);
-            }
-        }
-
-        void AppendFloorFacesAtCell(Vector3Int cell, List<TileData> appendTo)
-        {
-            if (_hub.TryGetHorizontalFaceBetween(cell + Vector3Int.down, cell, out TileData belowFace))
-                appendTo.Add(belowFace);
-
-            if (_hub.TryGetHorizontalFaceBetween(cell, cell + Vector3Int.up, out TileData aboveFace))
-                appendTo.Add(aboveFace);
+            return new ProximityBlendEvaluationResult(
+                new TileOcclusionPresentationDelta(_applyScratch, _clearScratch),
+                snapshot);
         }
 
         void AccumulateOcclusion(
@@ -159,6 +122,8 @@ namespace IsoTilemap
             if (SightLineOcclusionStrength.ShouldExemptFloor(tile, occupiedCell, playerCell, playerFloorCellY))
                 return;
 
+            RecordEvaluatedHit(tile, occupiedCell);
+
             Vector3 world = TileWorldPointUtil.GetOcclusionWorldPoint(tile.identity, occupiedCell, cellSize);
             float occ = SightLineOcclusionStrength.Evaluate(
                 cameraWorld, playerWorld, world, cellSize, settings);
@@ -171,6 +136,19 @@ namespace IsoTilemap
                 _scratch[id] = Math.Max(prevOcc, occ);
             else
                 _scratch[id] = occ;
+        }
+
+        void RecordEvaluatedHit(in TileData tile, Vector3Int occupiedCell)
+        {
+            Guid id = tile.tileDefId;
+            for (int i = 0; i < _evaluatedHitsScratch.Count; i++)
+            {
+                ProximityEvaluatedHit hit = _evaluatedHitsScratch[i];
+                if (hit.Tile.tileDefId == id && hit.OccupiedCell == occupiedCell)
+                    return;
+            }
+
+            _evaluatedHitsScratch.Add(new ProximityEvaluatedHit(tile, occupiedCell));
         }
 
     }

@@ -52,6 +52,12 @@ namespace IsoTilemap
         public bool TryGetCellTiles(int x, int z, int cellY, out List<TileData> list) =>
             _index.TryGetCellTiles(x, z, cellY, out list);
 
+        public bool TryCollectTilesAtOccupiedCell(Vector3Int cell, List<TileData> into) =>
+            _index.TryCollectTilesAtOccupiedCell(cell, into);
+
+        public bool TryCollectTilesAtOccupiedCell(int x, int z, int cellY, List<TileData> into) =>
+            _index.TryCollectTilesAtOccupiedCell(x, z, cellY, into);
+
         public bool TryGetEdgeBetween(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall) =>
             _index.TryGetEdgeBetween(cellA, cellB, out edgeWall);
 
@@ -102,6 +108,13 @@ namespace IsoTilemap
 
         public int TryGetBuildingIdAtCell(int cellY, int x, int z, TopologyLayer topology) =>
             TryGetFloorBuildingRoom(cellY, x, z, topology, out int buildingId, out _) ? buildingId : 0;
+
+        public bool TryGetBuildingExtent(int buildingId, out BuildingExtent extent) =>
+            _registry.TryGetBuildingExtent(buildingId, out extent);
+
+        public bool IsInBuildingFloorFootprint(int buildingId, int cellY, int x, int z) =>
+            _registry.TryGetBuildingExtent(buildingId, out var extent) &&
+            extent.ContainsFloorFootprint(cellY, x, z);
     }
 
     /// <summary>RoomKey + profile 단위 bake된 BFS geometry.</summary>
@@ -133,6 +146,20 @@ namespace IsoTilemap
 
         public bool TryGet(RoomKey key, FloorRoomBfsProfile profile, out FloorBfsResult result) =>
             _byRoomProfile.TryGetValue((key, profile), out result);
+
+        public void CollectRoomKeys(FloorRoomBfsProfile profile, List<RoomKey> into)
+        {
+            if (into == null)
+                return;
+
+            foreach (var kv in _byRoomProfile)
+            {
+                if (kv.Key.profile != profile)
+                    continue;
+
+                into.Add(kv.Key.key);
+            }
+        }
     }
 
     /// <summary>(cellY, profile)별 (x,z) → BFS 결과 역인덱스. lazy 선형 탐색 대체.</summary>
@@ -226,6 +253,29 @@ namespace IsoTilemap
         }
     }
 
+    /// <summary>SpaceId·야외/실내 Space bake 결과 (판정 전용).</summary>
+    public sealed class SpaceLayer
+    {
+        readonly SpaceRegistry _registry;
+
+        internal SpaceLayer(SpaceRegistry registry) => _registry = registry;
+
+        public SpaceRegistry Registry => _registry;
+
+        public void Clear() => _registry.Clear();
+
+        public bool TryGetSpaceAtFloorCell(int cellY, int x, int z, out int spaceId) =>
+            _registry.TryGetSpaceAtFloorCell(cellY, x, z, out spaceId);
+
+        public bool TryGetSpaceAtFloorCell(Vector3Int floorCell, out int spaceId) =>
+            _registry.TryGetSpaceAtFloorCell(floorCell, out spaceId);
+
+        public bool TryGetSpace(int spaceId, out SpaceBakeResult result) =>
+            _registry.TryGetSpace(spaceId, out result);
+
+        public bool IsOutdoorSpace(int spaceId) => _registry.IsOutdoorSpace(spaceId);
+    }
+
     /// <summary>맵 캐시 단일 진입점 — 소비자는 읽기 API, Builder는 계층 쓰기.</summary>
     public sealed class TileMapCacheHub
     {
@@ -233,19 +283,23 @@ namespace IsoTilemap
         public BuildingLayer Buildings { get; }
         public RoomGeometryLayer Rooms { get; }
         public CellYGeometryLayer CellYGeometry { get; }
+        public SpaceLayer Spaces { get; }
 
         BuildingGroupBuilder _roomBakeBuilder;
+        readonly List<TileData> _occupiedCellCollectScratch = new();
 
         TileMapCacheHub(
             TopologyLayer topology,
             BuildingLayer buildings,
             RoomGeometryLayer rooms,
-            CellYGeometryLayer cellYGeometry)
+            CellYGeometryLayer cellYGeometry,
+            SpaceLayer spaces)
         {
             Topology = topology;
             Buildings = buildings;
             Rooms = rooms;
             CellYGeometry = cellYGeometry;
+            Spaces = spaces;
         }
 
         public static TileMapCacheHub Create(TileMapModel model, BuildingGroupRegistry registry)
@@ -258,7 +312,8 @@ namespace IsoTilemap
             var buildings = new BuildingLayer(registry);
             var rooms = new RoomGeometryLayer();
             var cellYGeometry = new CellYGeometryLayer(topology, rooms);
-            return new TileMapCacheHub(topology, buildings, rooms, cellYGeometry);
+            var spaces = new SpaceLayer(new SpaceRegistry());
+            return new TileMapCacheHub(topology, buildings, rooms, cellYGeometry, spaces);
         }
 
         internal void BindRoomBakeBuilder(BuildingGroupBuilder builder) => _roomBakeBuilder = builder;
@@ -288,38 +343,30 @@ namespace IsoTilemap
             cellTilesOut?.Clear();
             wallFacesOut?.Clear();
 
-            if (!CellHasOccupancy(occupiedCell.x, occupiedCell.z, occupiedCell.y))
+            if (!TryCollectTilesAtOccupiedCell(occupiedCell, _occupiedCellCollectScratch))
                 return;
 
-            if (cellTilesOut != null &&
-                TryGetCellTiles(occupiedCell.x, occupiedCell.z, occupiedCell.y, out var tiles))
+            for (int i = 0; i < _occupiedCellCollectScratch.Count; i++)
             {
-                for (int i = 0; i < tiles.Count; i++)
-                    cellTilesOut.Add(tiles[i]);
-            }
+                TileData tile = _occupiedCellCollectScratch[i];
+                if (TileIdentityUtil.IsWallLike(tile.identity))
+                {
+                    wallFacesOut?.Add(tile);
+                    continue;
+                }
 
-            if (wallFacesOut == null)
-                return;
-
-            AppendWallFacesAtOccupiedCell(occupiedCell, wallFacesOut);
-        }
-
-        static readonly Vector3Int[] StructuralCardinalNeighbors =
-        {
-            Vector3Int.right, Vector3Int.back, Vector3Int.left, Vector3Int.forward
-        };
-
-        void AppendWallFacesAtOccupiedCell(Vector3Int cell, List<TileData> appendTo)
-        {
-            for (int i = 0; i < StructuralCardinalNeighbors.Length; i++)
-            {
-                Vector3Int neighbor = cell + StructuralCardinalNeighbors[i];
-                if (!Topology.TryGetEdgeBetween(cell, neighbor, out TileData edge))
+                if (TileIdentityUtil.IsHorizontalFace(tile.identity))
                     continue;
 
-                appendTo.Add(edge);
+                cellTilesOut?.Add(tile);
             }
         }
+
+        public bool TryCollectTilesAtOccupiedCell(Vector3Int cell, List<TileData> into) =>
+            Topology.TryCollectTilesAtOccupiedCell(cell, into);
+
+        public bool TryCollectTilesAtOccupiedCell(int x, int z, int cellY, List<TileData> into) =>
+            Topology.TryCollectTilesAtOccupiedCell(x, z, cellY, into);
 
         public bool TryGetCellTiles(int x, int z, int cellY, out List<TileData> list) =>
             Topology.TryGetCellTiles(x, z, cellY, out list);
@@ -367,29 +414,39 @@ namespace IsoTilemap
             return baked.Visited;
         }
 
-        /// <summary>야외 분기 판정 단일 API. buildingId==0으로 야외 추론하지 않습니다.</summary>
+        /// <summary>야외/실내 분기 판정 단일 API. buildingId==0만으로 야외를 추론하지 않습니다.</summary>
         public bool IsOutdoorEvaluation(int cellY, int x, int z)
         {
             if (Buildings.IsPlazaFloor(cellY, x, z))
                 return true;
 
-            if (!TryEnsureRoomKeyAtCell(cellY, x, z, out var roomKey))
+            if (!TryGetFloorBuildingRoom(cellY, x, z, out int buildingId, out _))
                 return false;
 
-            if (!Rooms.TryGet(roomKey, FloorRoomBfsProfile.Visibility, out var visibility))
+            if (buildingId <= 0)
                 return false;
 
-            return visibility.EmptyDiscovered != null && visibility.EmptyDiscovered.Count > 0
-                && visibility.Visited != null && visibility.Visited.Contains((x, z));
+            if (Spaces.TryGetSpaceAtFloorCell(cellY, x, z, out int spaceId) &&
+                Spaces.TryGetSpace(spaceId, out var space))
+                return space.IsOutdoor;
+
+            return true;
         }
 
         public bool TryGetFloorBuildingRoom(int cellY, int x, int z, out int buildingId, out int roomId) =>
             Buildings.TryGetFloorBuildingRoom(cellY, x, z, Topology, out buildingId, out roomId);
 
+        public bool TryGetBuildingExtent(int buildingId, out BuildingExtent extent) =>
+            Buildings.TryGetBuildingExtent(buildingId, out extent);
+
+        public bool IsInBuildingFloorFootprint(int buildingId, int cellY, int x, int z) =>
+            Buildings.IsInBuildingFloorFootprint(buildingId, cellY, x, z);
+
         public void InvalidateAll()
         {
             Rooms.InvalidateAll();
             CellYGeometry.InvalidateAll();
+            Spaces.Clear();
         }
 
         public void InvalidateRooms(IEnumerable<RoomKey> keys) =>

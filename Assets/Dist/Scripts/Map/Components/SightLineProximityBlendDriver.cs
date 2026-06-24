@@ -10,7 +10,7 @@ using UnityEngine;
 /// 플레이어·카메라 위치로 <see cref="ProximitySightLineBlendPipeline"/>을 실행하고
 /// <see cref="TileViewPresentationApplier"/>에 반영합니다.
 /// </summary>
-[DefaultExecutionOrder(-95)]
+[DefaultExecutionOrder(-100)]
 [DisallowMultipleComponent]
 public sealed class SightLineProximityBlendDriver : MonoBehaviour
 {
@@ -22,6 +22,8 @@ public sealed class SightLineProximityBlendDriver : MonoBehaviour
     ProximitySightLineBlendPipeline _pipeline;
     readonly Dictionary<Guid, float> _previousScratch = new();
     readonly List<Guid> _clearScratch = new();
+    readonly HashSet<int> _blockingScratch = new();
+    readonly HashSet<Vector3Int> _blockingCellsScratch = new();
     bool _isActive;
 
     public void Init(
@@ -99,7 +101,7 @@ public sealed class SightLineProximityBlendDriver : MonoBehaviour
             PresentationConcern.CharacterOcclusion,
             _previousScratch);
 
-        TileOcclusionPresentationDelta delta = _pipeline.Evaluate(
+        ProximityBlendEvaluationResult result = _pipeline.Evaluate(
             cameraWorld,
             playerWorld,
             playerCell,
@@ -107,6 +109,24 @@ public sealed class SightLineProximityBlendDriver : MonoBehaviour
             ctx.IsPlayerOutdoor,
             _blendSettings,
             _previousScratch);
+
+        TileOcclusionPresentationDelta delta = result.Delta;
+        ProximityBlendEvaluationSnapshot snapshot = result.Snapshot;
+
+        ProximityBuildingHideAddon.CollectBlockingBuildingIds(
+            in snapshot,
+            ctx.PlayerBuildingId,
+            ctx.IsPlayerOutdoor,
+            _policy.OutdoorSightLineBuildingHideEnabled,
+            _blockingScratch,
+            _blockingCellsScratch);
+
+        SightLineBuildingDebugSnapshot debug = ProximityBuildingHideAddon.BuildDebugSnapshot(
+            in snapshot,
+            _blockingScratch,
+            _blockingCellsScratch,
+            ctx.IsPlayerOutdoor);
+        _policy.SetProximityBlockingBuildingIds(_blockingScratch, debug);
 
         if (!delta.IsEmpty)
             _presentationApplier.ApplyProximityBlendDelta(delta);

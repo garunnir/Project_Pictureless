@@ -71,6 +71,7 @@ namespace IsoTilemap
         private bool _isGhosted;
         private bool _sightLineBuildingHidden;
         private bool _floorVisibilityHidden;
+        private FloorHidePresentationMode _floorHideMode = FloorHidePresentationMode.DisableGameObject;
         private bool _currentSelected;
         private bool _baseStateInitialized;
         private bool _selectedInitialized;
@@ -237,6 +238,23 @@ namespace IsoTilemap
 
         public void SetSelected(bool selected) => ForceApplySelectedOverlay(selected);
 
+        public void ConfigureFloorHidePresentationMode(FloorHidePresentationMode mode) =>
+            _floorHideMode = mode;
+
+        /// <summary>Applier SSOT — 합성된 표현을 한 경로로 적용합니다.</summary>
+        public void ApplyResolvedPresentation(in TilePresentationResolved resolved)
+        {
+            ApplyFloorHidden(resolved.FloorHidden);
+            SetSightLineBuildingHidden(resolved.SightLineTrace);
+
+            if (resolved.FloorHidden)
+                return;
+
+            SetGhosted(resolved.Ghosted);
+            SetSelected(resolved.Selected);
+            SetCharacterOcclusion(resolved.CharacterOcclusion);
+        }
+
         /// <summary>야외 시선 차단 building MinCellY Floor 어둡게 표시.</summary>
         public void SetSightLineBuildingHidden(bool hidden)
         {
@@ -245,12 +263,30 @@ namespace IsoTilemap
         }
 
         /// <summary>층 가시성 정책에 의한 완전 숨김(스트리밍 despawn 없음).</summary>
-        public void SetFloorVisibilityHidden(bool hidden)
+        public void SetFloorVisibilityHidden(bool hidden) => ApplyFloorHidden(hidden);
+
+        void ApplyFloorHidden(bool hidden)
         {
             if (_floorVisibilityHidden == hidden)
                 return;
 
             _floorVisibilityHidden = hidden;
+
+            if (_floorHideMode == FloorHidePresentationMode.DisableGameObject)
+            {
+                if (hidden)
+                {
+                    SetBlockedTraceVisible(false);
+                    gameObject.SetActive(false);
+                    return;
+                }
+
+                gameObject.SetActive(true);
+                _characterOcclusion = 0f;
+                ForceApplyBaseState(TileBaseVisualState.Visible);
+                ApplySightLineBuildingOverlay();
+                return;
+            }
 
             if (hidden)
             {
@@ -270,6 +306,9 @@ namespace IsoTilemap
         {
             if (_floorVisibilityHidden)
             {
+                if (_floorHideMode == FloorHidePresentationMode.DisableGameObject)
+                    return;
+
                 Renderer renderer = _shadeController?.CachedRenderer;
                 if (renderer != null)
                     renderer.enabled = false;
@@ -414,6 +453,8 @@ namespace IsoTilemap
             _isGhosted = false;
             _sightLineBuildingHidden = false;
             _floorVisibilityHidden = false;
+            if (!gameObject.activeSelf)
+                gameObject.SetActive(true);
             ForceApplyBaseState(TileBaseVisualState.Visible);
             ForceApplySelectedOverlay(false);
             SetBlockedTraceVisible(false);

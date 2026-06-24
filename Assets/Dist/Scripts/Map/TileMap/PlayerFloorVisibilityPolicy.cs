@@ -125,13 +125,14 @@ namespace IsoTilemap
         readonly IndoorTileVisibilityPipeline _indoor = new();
         readonly OutdoorTileVisibilityPipeline _outdoor = new();
         readonly BlockingBuildingFullHideLayer _blockingBuildingHide;
-        readonly BuildingPlayerOcclusionResolver _occlusionResolver;
 
-        readonly HashSet<int> _blockingScratch = new();
+        readonly HashSet<int> _proximityBlockingScratch = new();
         readonly HashSet<(int x, int z, int y)> _visibleBelowScratch = new();
 
         HashSet<int> _blockingForContext = new();
         HashSet<(int x, int z, int y)> _visibleBelowForContext = new();
+
+        SightLineBuildingDebugSnapshot _lastProximityBlockingDebug = SightLineBuildingDebugSnapshot.Empty;
 
         Vector3Int _cachedPlayerOccupiedCell;
         bool _cachedHideEnabled;
@@ -148,14 +149,12 @@ namespace IsoTilemap
             float cellEpsilonWorld,
             int minCellY,
             TileMapCacheHub hub,
-            BuildingGroupRegistry buildingRegistry,
-            BuildingPlayerOcclusionResolver occlusionResolver)
+            BuildingGroupRegistry buildingRegistry)
         {
             _cellSize = cellSize;
             _cellEpsilonWorld = cellEpsilonWorld;
             _minCellY = minCellY;
             _hub = hub;
-            _occlusionResolver = occlusionResolver;
             _blockingBuildingHide = new BlockingBuildingFullHideLayer(buildingRegistry);
         }
 
@@ -165,12 +164,26 @@ namespace IsoTilemap
 
         public float CellSize => _cellSize;
 
-        public SightLineBuildingDebugSnapshot LastSightLineDebug => _occlusionResolver.LastDebug;
+        public SightLineBuildingDebugSnapshot LastSightLineDebug => _lastProximityBlockingDebug;
+
+        /// <summary>근접 Evaluate 에드온이 매 프레임 주입하는 야외 blocking buildingId.</summary>
+        public void SetProximityBlockingBuildingIds(
+            HashSet<int> blockingBuildingIds,
+            SightLineBuildingDebugSnapshot debugSnapshot)
+        {
+            _proximityBlockingScratch.Clear();
+            if (blockingBuildingIds != null)
+            {
+                foreach (int buildingId in blockingBuildingIds)
+                    _proximityBlockingScratch.Add(buildingId);
+            }
+
+            _lastProximityBlockingDebug = debugSnapshot;
+        }
 
         public static PlayerFloorVisibilityPolicy Build(
             TileMapCacheHub hub,
             float cellSize,
-            Func<Camera> resolveCamera,
             BuildingGroupRegistry buildingRegistry,
             float cellEpsilonWorld = 0f,
             float groundPlaneY = 0f)
@@ -183,15 +196,13 @@ namespace IsoTilemap
 
             _ = groundPlaneY;
             int minCellY = OccupiedCellCoord.ResolveMinStructuralFloorCellY(hub);
-            var resolver = new BuildingPlayerOcclusionResolver(hub, cellSize, resolveCamera);
 
             return new PlayerFloorVisibilityPolicy(
                 cellSize,
                 cellEpsilonWorld,
                 minCellY,
                 hub,
-                buildingRegistry,
-                resolver);
+                buildingRegistry);
         }
 
         public Vector3Int ResolvePlayerOccupiedCell(float playerHeightWorldY, Vector3 playerWorld) =>
@@ -240,9 +251,7 @@ namespace IsoTilemap
                 _hasStableIdentity = true;
             }
 
-            HashSet<int> blocking = OutdoorSightLineBuildingHideEnabled
-                ? ResolveBlockingForContext(playerWorld, playerOccupiedCell, playerBuildingId)
-                : EmptyBlocking;
+            HashSet<int> blocking = ResolveBlockingForContext(isOutdoor);
 
             return new FloorVisibilityContext(
                 isOutdoor, playerFloorCellY, _minCellY, playerBuildingId, blocking, visibleBelow);
@@ -260,22 +269,15 @@ namespace IsoTilemap
                 dest.Add(cell);
         }
 
-        HashSet<int> ResolveBlockingForContext(
-            Vector3 playerWorld,
-            Vector3Int playerOccupiedCell,
-            int playerBuildingId)
+        HashSet<int> ResolveBlockingForContext(bool isPlayerOutdoor)
         {
-            int excludeBuildingId = playerBuildingId > 0 ? playerBuildingId : 0;
-            _occlusionResolver.ResolveBlockingBuildingIds(
-                playerWorld, playerOccupiedCell, _blockingScratch, excludeBuildingId);
-
-            if (_blockingScratch.Count == 0)
+            if (!OutdoorSightLineBuildingHideEnabled || !isPlayerOutdoor || _proximityBlockingScratch.Count == 0)
             {
                 _blockingForContext = EmptyBlocking;
                 return _blockingForContext;
             }
 
-            _blockingForContext = new HashSet<int>(_blockingScratch);
+            _blockingForContext = new HashSet<int>(_proximityBlockingScratch);
             return _blockingForContext;
         }
 
@@ -293,20 +295,6 @@ namespace IsoTilemap
 
             _visibleBelowForContext = new HashSet<(int x, int z, int y)>(_visibleBelowScratch);
             return _visibleBelowForContext;
-        }
-
-        static bool SetEqualsBlocking(HashSet<int> a, HashSet<int> b)
-        {
-            if (ReferenceEquals(a, b))
-                return true;
-            if (a == null || b == null || a.Count != b.Count)
-                return false;
-            foreach (int id in a)
-            {
-                if (!b.Contains(id))
-                    return false;
-            }
-            return true;
         }
 
         static bool SetEqualsBelowCells(
