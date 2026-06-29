@@ -9,6 +9,51 @@ namespace IsoTilemap
 {
     public sealed partial class BuildingGroupBuilder
     {
+        void LogCenterMacroLeakTrace()
+        {
+            const int centerBuildingId = 3;
+            const int initSeedX = -4;
+            const int initSeedZ = 2;
+
+            if (!_registry.TryGetBuildingExtent(centerBuildingId, out var extent) || !extent.HasBounds)
+            {
+                Debug.Log($"[CenterLeak] buildingId={centerBuildingId} noExtent");
+                return;
+            }
+
+            Debug.Log(
+                $"[CenterLeak] initSeed=({initSeedX},{_minCellY},{initSeedZ}) buildingId={centerBuildingId} " +
+                $"aabb=({extent.MinX},{extent.MinOccupiedY},{extent.MinZ})-({extent.MaxX},{extent.MaxOccupiedY},{extent.MaxZ}) " +
+                $"maxStructuralY={extent.MaxStructuralY} floorSlices={extent.FloorFootprintByCellY.Count}");
+
+            var registry = _hub.Spaces.Registry;
+            var index = _topology.Index;
+            int spaceCount = 0;
+
+            foreach (int spaceId in registry.SpaceIds)
+            {
+                if (!registry.TryGetSpace(spaceId, out var space) || space.BuildingId != centerBuildingId)
+                    continue;
+
+                spaceCount++;
+                var floorCells = registry.GetFloorCells(spaceId);
+                LogSpaceLeakDiagnostics(
+                    "[CenterLeak]",
+                    spaceId,
+                    space,
+                    floorCells,
+                    centerBuildingId,
+                    extent,
+                    index,
+                    lateralPrefix: $"[CenterLeak] lateral space={spaceId}",
+                    ceilingPrefix: $"[CenterLeak] ceiling space={spaceId}");
+            }
+
+            Debug.Log($"[CenterLeak] buildingId={centerBuildingId} spaceCount={spaceCount}");
+            LogSpaceLeakDetailAtFloorCell("macro-center-init-seed", initSeedX, _minCellY, initSeedZ);
+            LogSpaceLeakDetailAtFloorCell("macro-center-upper", 3, 2, 3);
+        }
+
         void LogBakeSummaryIfDebug()
         {
             if (!Config.DebugMode.FloorAlgorithm)
@@ -33,7 +78,10 @@ namespace IsoTilemap
 
             Debug.Log(
                 $"[BuildingGroupBuilder] bake: minCellY={_minCellY}, floorFaces={faceCount}, " +
-                $"outdoor@min={outdoorMin}, upperWithBuildingId={bakedAboveMin}, buildings={_registry.TilesByBuildingId.Count}");
+                $"outdoor@min={outdoorMin}, upperWithBuildingId={bakedAboveMin}, buildings={_registry.TilesByBuildingId.Count}, " +
+                $"componentRounds={_lastComponentBakeRoundCount}, componentUnions={_lastComponentUnionCount}, " +
+                $"componentStructuralUnions={_lastStructuralUnionCount}, initFootprints={_initFootprintCount}, " +
+                $"componentNewFloors={_lastComponentNewFloorTags}");
 
             foreach (var kv in _registry.TilesByBuildingId)
             {
@@ -91,7 +139,173 @@ namespace IsoTilemap
                 $"patched={_lastStructuralFloodPatched} bridgedFloors={_lastStructuralFloodBridgedFloors} | " +
                 $"afterBake tagged={shellTagged} untagged={shellUntagged} taggedMaxY={shellTaggedMaxY}");
 
-            LogBuildingConnectionDiagnosis(3, 24);
+            LogBuildingConnectionDiagnosisFromRegistry();
+            LogSpaceLeakDetailForProbeCells();
+        }
+
+        readonly List<(Vector3Int floorCell, Vector3Int neighbor, string reason)> _lateralLeakDiagScratch = new();
+        readonly List<(int x, int z, int probeY, string reason)> _ceilingLeakDiagScratch = new();
+
+        void LogSpaceLeakDetailForProbeCells()
+        {
+            LogIndoorSpaceInventory();
+            LogSpaceLeakDetailAtFloorCell("edge1F-z3-strip", 3, 0, 3);
+            LogSpaceLeakDetailAtFloorCell("macro-center-upper", 3, 2, 3);
+            LogSpaceLeakDetailAtFloorCell("east-macro", 12, 0, 2);
+        }
+
+        void LogIndoorSpaceInventory()
+        {
+            var registry = _hub.Spaces.Registry;
+            int indoorCount = 0;
+            foreach (int spaceId in registry.SpaceIds)
+            {
+                if (!registry.TryGetSpace(spaceId, out var space) || space.IsOutdoor)
+                    continue;
+
+                indoorCount++;
+                var cells = registry.GetFloorCells(spaceId);
+                Debug.Log(
+                    $"[SpaceLeakDetail] indoorSpace id={spaceId} buildingId={space.BuildingId} " +
+                    $"floorCells={cells.Count} sample={FirstFloorCellSample(cells)}");
+            }
+
+            Debug.Log($"[SpaceLeakDetail] indoorSpaceInventory count={indoorCount}");
+        }
+
+        void LogSpaceLeakDetailAtFloorCell(string probeLabel, int x, int cellY, int z)
+        {
+            var probe = new Vector3Int(x, cellY, z);
+            if (!_topology.Index.CellHasFloor(x, cellY, z))
+            {
+                Debug.Log($"[SpaceLeakDetail] label={probeLabel} probe={probe} noWalkableFloor");
+                return;
+            }
+
+            if (!_hub.Spaces.TryGetSpaceAtFloorCell(probe, out int spaceId) ||
+                !_hub.Spaces.TryGetSpace(spaceId, out var space))
+            {
+                Debug.Log($"[SpaceLeakDetail] label={probeLabel} probe={probe} noSpace");
+                return;
+            }
+
+            if (!_registry.TryGetBuildingExtent(space.BuildingId, out var extent))
+            {
+                Debug.Log(
+                    $"[SpaceLeakDetail] label={probeLabel} probe={probe} spaceId={spaceId} buildingId={space.BuildingId} noExtent");
+                return;
+            }
+
+            var floorCells = _hub.Spaces.Registry.GetFloorCells(spaceId);
+            var index = _topology.Index;
+            Debug.Log(
+                $"[SpaceLeakDetail] label={probeLabel} probe={probe} spaceId={spaceId} buildingId={space.BuildingId} " +
+                $"isOutdoor={space.IsOutdoor} maxStructuralY={extent.MaxStructuralY} floorCells={floorCells.Count}");
+
+            LogSpaceLeakDiagnostics(
+                "[SpaceLeakDetail]",
+                spaceId,
+                space,
+                floorCells,
+                space.BuildingId,
+                extent,
+                index,
+                lateralPrefix: "[SpaceLeakDetail] lateral",
+                ceilingPrefix: "[SpaceLeakDetail] ceiling",
+                includeSummaryLine: true);
+        }
+
+        void LogSpaceLeakDiagnostics(
+            string logPrefix,
+            int spaceId,
+            SpaceBakeResult space,
+            IReadOnlyCollection<Vector3Int> floorCells,
+            int buildingId,
+            BuildingExtent extent,
+            FloorMapIndex index,
+            string lateralPrefix,
+            string ceilingPrefix,
+            bool includeSummaryLine = false)
+        {
+            SpaceLeakEvaluator.EvaluateComponents(
+                floorCells, buildingId, extent, index,
+                out bool ceilingLeak, out bool lateralLeak);
+
+            if (includeSummaryLine)
+            {
+                Debug.Log(
+                    $"{logPrefix} spaceId={spaceId} buildingId={buildingId} " +
+                    $"ceilingLeak={ceilingLeak} lateralLeak={lateralLeak}");
+            }
+            else
+            {
+                Debug.Log(
+                    $"{logPrefix} space id={spaceId} floorCells={floorCells.Count} sample={FirstFloorCellSample(floorCells)} " +
+                    $"isOutdoor={space.IsOutdoor} ceilingLeak={ceilingLeak} lateralLeak={lateralLeak}");
+            }
+
+            SpaceLeakEvaluator.DiagnoseLateralLeaks(
+                floorCells, buildingId, extent, index, _lateralLeakDiagScratch);
+            for (int i = 0; i < _lateralLeakDiagScratch.Count; i++)
+            {
+                var (floorCell, neighbor, reason) = _lateralLeakDiagScratch[i];
+                Debug.Log(
+                    $"{lateralPrefix} floor={floorCell} neighbor={neighbor} reason={reason} " +
+                    $"{FormatEdgeBetweenNote(index, floorCell, neighbor)} {DescribeOccupiedCellBuildingIds(neighbor)}");
+            }
+
+            SpaceLeakEvaluator.DiagnoseCeilingLeaks(
+                floorCells, buildingId, extent, index, _ceilingLeakDiagScratch);
+            for (int i = 0; i < _ceilingLeakDiagScratch.Count; i++)
+            {
+                var (cx, cz, probeY, reason) = _ceilingLeakDiagScratch[i];
+                Debug.Log($"{ceilingPrefix} column=({cx},{cz}) {reason}");
+            }
+        }
+
+        static Vector3Int FirstFloorCellSample(IReadOnlyCollection<Vector3Int> floorCells)
+        {
+            foreach (var cell in floorCells)
+                return cell;
+
+            return default;
+        }
+
+        static string FormatEdgeBetweenNote(FloorMapIndex index, Vector3Int cellA, Vector3Int cellB) =>
+            index.TryGetEdgeBetween(cellA, cellB, out var edge)
+                ? $"edgeBid={edge.identity.buildingId}"
+                : "edge=none";
+
+        string DescribeOccupiedCellBuildingIds(Vector3Int cell)
+        {
+            if (!_topology.TryCollectTilesAtOccupiedCell(cell, _occupiedCellCollectScratch))
+                return "occ=empty";
+
+            var parts = new List<string>(_occupiedCellCollectScratch.Count);
+            for (int i = 0; i < _occupiedCellCollectScratch.Count; i++)
+            {
+                TileData tile = _occupiedCellCollectScratch[i];
+                parts.Add($"{tile.identity.PrefabId}@bid={tile.identity.buildingId}");
+            }
+
+            return "occ=[" + string.Join(", ", parts) + "]";
+        }
+
+        void LogBuildingConnectionDiagnosisFromRegistry()
+        {
+            if (!Config.DebugMode.FloorAlgorithm)
+                return;
+
+            var ids = new List<int>(_registry.TilesByBuildingId.Keys);
+            ids.Sort();
+            if (ids.Count < 2)
+            {
+                Debug.Log(
+                    $"[BuildingDiagnosis] bakedBuildingCount={ids.Count} (need 2+ for pair diagnosis)");
+                return;
+            }
+
+            LogBuildingConnectionDiagnosis(ids[0], ids[1]);
         }
 
         void LogSpaceLeakDiagnosis()

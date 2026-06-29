@@ -30,6 +30,13 @@ namespace IsoTilemap
                     if (registry.TryGetSpaceAtFloorCell(cell, out _))
                         continue;
 
+                    if (roomKey.BuildingId == 3)
+                    {
+                        Debug.Log(
+                            $"[SpaceBake] floodSeed buildingId=3 roomY={roomKey.CellY} roomId={roomKey.RoomId} " +
+                            $"startCell={cell}");
+                    }
+
                     SpaceFloodResult flood = SpaceFloodFill3D.Run(
                         index, registry, cell, roomKey.BuildingId);
 

@@ -1,5 +1,5 @@
 // ============================================================
-// BuildingGroupBuilder.Merge — floor 인접 building merge
+// BuildingGroupBuilder.Merge — 레거시 floor merge (AssignAll 미사용)
 // ============================================================
 using System;
 using System.Collections.Generic;
@@ -8,6 +8,7 @@ namespace IsoTilemap
 {
     public sealed partial class BuildingGroupBuilder
     {
+        [Obsolete("Replaced by component batch union in BuildingGroupBuilder.Components.cs")]
         void MergeBuildingsOnFloorAdjacency()
         {
             bool merged;

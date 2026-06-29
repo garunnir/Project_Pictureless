@@ -44,6 +44,12 @@ namespace IsoTilemap
         int _lastStructuralFloodPatched;
         int _lastStructuralFloodBridgedFloors;
 
+        readonly Dictionary<Vector3Int, Vector3Int> _floodParentScratch = new();
+        readonly Dictionary<Vector3Int, string> _floodViaScratch = new();
+        Vector3Int _floodTraceSourceCur;
+        string _floodTraceSourceVia;
+        bool _floodTraceActive;
+
         public BuildingGroupBuilder(TileMapModel model, TileMapCacheHub hub)
         {
             _model = model;
@@ -91,14 +97,8 @@ namespace IsoTilemap
             ComputeCellYRange();
             ResetStructuralIds();
             RecomputeOutdoorFromMin();
-            AssignBuildingsFromSeeds(CollectMinCellYBuildingSeeds());
-            PropagateBuildingIdThroughAdjacentUnassignedFloorsUntilFixed();
-            MergeBuildingsOnFloorAdjacency();
-            TagAllWallsFromFloorAdjacency(null);
-            MergeBuildingsOnFloorAdjacency();
-            PropagateBuildingIdThroughAdjacentUnassignedFloorsUntilFixed();
-            AssignOrphanFloorBuildings();
-            MergeBuildingsOnFloorAdjacency();
+            BakeBuildingComponentsForMap();
+            AssignBuildingIdsFromComponents();
             BakeAllRooms();
             _topology.RebuildOccupancy();
             VerifyOccupancyIndexAfterBake();
@@ -106,6 +106,7 @@ namespace IsoTilemap
             RebuildRegistryIndices();
             BakeAllSpaces();
             _model.MarkTilesDirty();
+            LogCenterMacroLeakTrace();
             LogBakeSummaryIfDebug();
         }
 
@@ -173,6 +174,35 @@ namespace IsoTilemap
             RebuildRegistryIndices();
             BakeAllSpaces();
             _model.MarkTilesDirty();
+        }
+
+        void VisitWalkableFloorFootprintCells(int x, int cellY, int z, Action<Vector3Int> visit)
+        {
+            if (!_topology.TryCollectTilesAtOccupiedCell(x, cellY, z, _occupiedCellCollectScratch))
+                return;
+
+            for (int i = 0; i < _occupiedCellCollectScratch.Count; i++)
+            {
+                if (!TileIdentityUtil.IsHorizontalFace(_occupiedCellCollectScratch[i].identity))
+                    continue;
+
+                _occupiedCellAffectedScratch.Clear();
+                TileIdentityUtil.CollectAffectedCells(
+                    _occupiedCellCollectScratch[i].identity, _occupiedCellAffectedScratch);
+                foreach (var cell in _occupiedCellAffectedScratch)
+                    visit(cell);
+            }
+        }
+
+        bool AnyCollectedIncidentTileBlocks(Func<TileIdentity, bool> shouldBlock)
+        {
+            for (int i = 0; i < _occupiedCellCollectScratch.Count; i++)
+            {
+                if (shouldBlock(_occupiedCellCollectScratch[i].identity))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

@@ -30,7 +30,21 @@ bake·가시성·시선·building shell 태깅에서 **Wall / EdgeWall / ThickWa
 | `EnumerateOccupiedCells` | bake 인덱스 전체 순회 |
 
 **신규·수정 코드 규칙**: ad-hoc 타일 종류 루프 대신 **`TryCollectTilesAtOccupiedCell` → footprint(`CollectAffectedCells`)** 패턴을 쓴다.  
-**HorizontalFace**(walkable floor)의 `buildingId`는 floor bake(§2·§3) SSOT. structural shell `buildingId`는 [건물 bake §4](TILEMAP_BUILDING_BAKE.md) **occupied-cell flood**.
+walkable floor·structural shell 모두 **점유셀 그래프** 위에서 bake한다. 상세: [건물 bake §점유셀 = bake 기본구조](TILEMAP_BUILDING_BAKE.md#점유셀--bake-기본구조).
+
+#### 점유셀 = 기본 구조 (필수)
+
+**맵 탐색·bake·building 그룹핑의 근본 단위는 `Vector3Int` 점유셀 하나다.**
+
+| 원칙 | 내용 |
+|------|------|
+| **노드** | 그래프 노드 = 점유셀 `(x,y,z)`. `(x,z)` slice 좌표·타일 종류별 루프·pass 이름만으로 **두 번째 그래프를 만들지 않는다** |
+| **조회** | `TryCollectTilesAtOccupiedCell` → `CollectAffectedCells` footprint |
+| **엣지** | 연결 규칙만 다름 — 모두 **점유셀 쌍** (FloorHorizontal cardinal, Structural6, ColumnUp 등) |
+| **금지** | walkable `(x,z)` BFS + merge 스캔 + occupied-cell flood를 **서로 다른 기본 구조**로 병렬 유지 |
+| **예외** | `FloorRoomFloodFill`(roomId)은 buildingId 확정 **후** slice partition — building component SSOT **아님** |
+
+신규 bake scratch·Union-Find·flood는 **`Dictionary<Vector3Int, …>`** 기준.
 
 **Floor face와 Edge wall**: 배치 slot만 다를 뿐 **§4에서 동일 structural face** — `buildingId` flood만 동일 취급 ([대전제](TILEMAP_BUILDING_BAKE.md) §3). §7 leak과 혼동 금지.
 

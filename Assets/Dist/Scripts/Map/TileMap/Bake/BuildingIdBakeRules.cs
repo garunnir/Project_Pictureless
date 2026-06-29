@@ -26,5 +26,17 @@ namespace IsoTilemap
 
             return existing != targetBuildingId;
         }
+
+        /// <summary>incident 타일 buildingId 기준 structural flood traverse 차단 (walkable 조회 없음).</summary>
+        public static bool ShouldBlockBuildingFloodFromIncidentTile(in TileIdentity id, int propagatingBuildingId)
+        {
+            if (id.buildingId == TileIdentity.BuildingIdOutdoor)
+                return true;
+
+            if (IsConflictingPropagableBuildingId(id.buildingId, propagatingBuildingId))
+                return true;
+
+            return false;
+        }
     }
 }

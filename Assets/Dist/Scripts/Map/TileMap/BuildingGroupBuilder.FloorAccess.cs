@@ -31,6 +31,7 @@ namespace IsoTilemap
 
             _model.PatchTileIdentity(face.tileDefId, buildingId, roomId);
         }
+        /// <summary>Init footprint·floor horizontal union·orphan 전용. structural flood traverse에 사용 금지.</summary>
         bool IsPlazaOrOutdoorFloor(int x, int z, int cellY)
         {
             if (cellY == _minCellY && _registry.IsPlazaXZ(x, z))

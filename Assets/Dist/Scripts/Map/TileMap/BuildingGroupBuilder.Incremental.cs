@@ -15,7 +15,15 @@ namespace IsoTilemap
                 return;
 
             if (IsMinCellYFloorChange(changedCells))
+            {
                 RecomputeOutdoorFromMinAndRebuildLost(changedCells);
+                TagWallsFromFloorAdjacencyNearCells(changedCells);
+                _model.ReindexTilesByIdFromRuntime();
+                RebuildRegistryIndices();
+                BakeAllSpaces();
+                _model.MarkTilesDirty();
+                return;
+            }
 
             var keys = new HashSet<RoomKey>();
             var extraSeeds = new HashSet<(int x, int z, int y)>();
@@ -31,17 +39,16 @@ namespace IsoTilemap
                 }
             }
 
-            TryAssignLocalBuildingSeeds(extraSeeds);
-            PropagateBuildingIdThroughAdjacentUnassignedFloorsUntilFixed();
-            MergeBuildingsOnFloorAdjacency();
+            ResetIndoorBuildingIds();
+            RebakeBuildingIdsFromComponents();
             RebuildRooms(keys, extraSeeds);
-            PropagateBuildingIdThroughAdjacentUnassignedFloorsUntilFixed();
             TagWallsFromFloorAdjacencyNearCells(changedCells);
             _model.ReindexTilesByIdFromRuntime();
             RebuildRegistryIndices();
             BakeAllSpaces();
             _model.MarkTilesDirty();
         }
+
         public void HandleRemoveTile(TileData removed, HashSet<Vector3Int> changedCells)
         {
             int buildingId = removed.identity.buildingId;
@@ -70,10 +77,8 @@ namespace IsoTilemap
                     lost.Add((x, z));
             }
 
-            if (lost.Count > 0)
-                AssignBuildingsFromSeeds(lost);
-
-            PropagateBuildingIdThroughAdjacentUnassignedFloorsUntilFixed();
+            ResetIndoorBuildingIds();
+            RebakeBuildingIdsFromComponents();
 
             var keys = new HashSet<RoomKey>();
             if (changedCells != null)

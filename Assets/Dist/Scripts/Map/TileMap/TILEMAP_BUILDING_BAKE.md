@@ -14,6 +14,38 @@
 2. **§7 `isOutdoor` 입력** = `buildingId` · `floorFootprint[cellY]` · `BuildingExtent` · 점유 인덱스(`TryGetCellTiles`) **만**.
 3. **Floor face = Edge wall 동일** = [§4](#4-occupied-cell-flood--열-상향-shell-전파) `buildingId` flood (`IsStructural`) **한정**. §7 leak과 **혼동 금지**.
 4. `isOutdoor=false`는 **물리 밀폐 증명이 아님** — topology상 plaza·타 building·개방 천장(`maxStructuralY` 초과) **미연결**일 때만 실내 **분기**.
+5. **building·component bake = 점유셀 그래프만** — [§점유셀 = bake 기본구조](#점유셀--bake-기본구조). `(x,z)` slice 전용 pass·타일 종류별 id 전파 pass **금지**.
+
+---
+
+## 점유셀 = bake 기본구조
+
+**building component·`buildingId` 확정은 점유셀 단일 그래프에서만 수행한다.**  
+[TILEMAP.md §점유셀](TILEMAP.md)과 동일 전제.
+
+### 노드·scratch
+
+- **노드:** `Vector3Int` 점유셀 (walkable floor·structural shell 동일 좌표계)
+- **bake scratch:** component·Union-Find — **점유셀 키** (`(x,z)` 별도 맵 금지)
+
+### 엣지 종류 (별도 pass가 아님)
+
+| 엣지 | 의미 |
+|------|------|
+| **FloorHorizontal** | 같은 `cellY` walkable floor 점유셀 cardinal 인접 (`SeparatesRoom`·solid wall 차단 동일) |
+| **Structural6** | 점유셀 6방향 + `CollectAffectedCells` footprint |
+| **ColumnUp** | 방문 열 `+Y` 상향 |
+
+### 배치 union 라운드
+
+시드·0 흡수·구름다리·shell은 **라운드마다**:
+
+1. FloorHorizontal·0 footprint **union 후보 전부 수집**
+2. Union-Find **한 번에** `Union`
+3. component별 structural flood 1회
+
+최대 `MaxComponentBakeRounds`(3). flood가 새 floor를 열면 다음 라운드에서 union 후보 추가.  
+**`buildingId` 양수는 `AssignBuildingIdsFromComponents()` 맨 마지막에만** — bake 중 `0`/`-1`만.
 
 ---
 
@@ -40,7 +72,7 @@ floor seed에서 **structural끼리 cardinal multi-hop** (floor→wall→wall→
 | **buildingId SSOT** | **walkable floor 시드** → **occupied-cell flood**(+열 상향)로 floor·shell **단일 전파** |
 | **wall / EdgeWall / HorizontalFace** | flood가 **같은 buildingId**로 patch — 타일 종류별 분기 **금지** |
 | **wall–wall 단독 전파 없음** | bake 시 벽끼리만 id 전파 **안 함** — floor 시드 점유셀 그래프만 |
-| **구름다리 merge** | **floor끼리 cardinal 인접**으로 다른 id가 맞닿으면 min id 흡수 (plaza 제외) |
+| **구름다리 merge** | **floor끼리 cardinal 인접** → component union (plaza 제외). id는 맨 마지막 할당 |
 
 structural shell BFS·structural merge pass는 **폐기**.
 
@@ -89,30 +121,22 @@ structural shell BFS·structural merge pass는 **폐기**.
 flowchart TD
     Start[bake 시작] --> Init[structural id reset · occupancy rebuild]
     Init --> Outdoor[minCellY plaza BFS]
-    Outdoor --> Seeds[minCellY building seed — slice footprint only]
-    Seeds --> AdjZero[§2.2 building 인접 0 footprint 흡수]
-    AdjZero --> FloorMerge1[§2.1 floor 인접 충돌 흡수]
-    FloorMerge1 --> Propagate[§4 occupied-cell flood + 열 상향]
-    Propagate --> FloorMerge2[§2.1 floor merge 2차]
-    FloorMerge2 --> AdjZero2[§2.2 0 흡수 2차]
-    AdjZero2 --> Orphan[orphan — 고립 0만 새 id]
-    Orphan --> FloorMerge3[§2.1 merge 3차]
-    FloorMerge3 --> Rooms[room bake · perimeter]
+    Outdoor --> CompBake[BakeBuildingComponentsForMap]
+    CompBake --> AssignId[AssignBuildingIdsFromComponents]
+    AssignId --> Rooms[room bake · perimeter]
     Rooms --> Extent[§6 BuildingExtent · registry rebuild]
     Extent --> SpaceBake[§7 Space bake]
     SpaceBake --> Done[index ready]
 ```
 
-| phase | 산출 | roomId |
-|-------|------|--------|
-| minCellY seed | **해당 slice** floor buildingId | 0 |
-| **§2.2 인접 0 흡수** | `buildingId>0`에 cardinal로 닿은 **0** footprint → 동일 id | 0 |
-| §4 propagate | floor·wall·HorizontalFace **동일 buildingId** | 0 |
-| floor merge | propagate 전·후·orphan 후 | 0 |
-| **orphan** | propagate 후에도 **고립** `0` footprint만 새 id | 0 |
-| room bake | floor + perimeter wall roomId | >0 |
-| extent rebuild | `BuildingExtent` per buildingId | — |
-| Space bake | `SpaceId` + `isOutdoor` (야외/실내 **판정**) | — |
+| phase | 산출 | tile buildingId | roomId |
+|-------|------|-----------------|--------|
+| outdoor | plaza `-1` | -1 / 0 | 0 |
+| component bake | `_occupiedComponent` scratch | **0** (plaza -1) | 0 |
+| **AssignBuildingIdsFromComponents** | floor·shell stamp | **>0** | 0 |
+| room bake | perimeter | >0 | >0 |
+| extent rebuild | `BuildingExtent` | — | — |
+| Space bake | `SpaceId` + `isOutdoor` | — | — |
 
 ---
 
@@ -368,10 +392,10 @@ AABB는 **있으니 필요 시 활용**하되, **footprint가 있는 질문에 A
 
 | 누수 | 판정 (topology만) |
 |------|-------------------|
-| **측면** | footprint 밖 — **edge·점유 타일** `buildingId == space.buildingId`면 차단; plaza·타 building·바닥·shell 없음 → leak |
-| **천장 (+Y)** | column 최고 walkable Y에서 상향 — `buildingId` 일치 점유·**같은 building 윗층 floor**면 중단; `y > maxStructuralY` → leak |
+| **측면** | footprint 밖 — 바닥 없음·plaza(`-1`)·unassigned → leak; **그 외 indoor floor 있음 = seal (buildingId 무관)** |
+| **천장 (+Y)** | column 최고 walkable Y에서 상향 — **아무 structural 점유** 또는 **아무 floor**면 seal; `y > maxStructuralY`·비어 있으면 leak |
 
-천장 막힘은 §4가 shell에 붙인 **`buildingId`** 로 본다 (Floor face·벽 동일 id 전파).
+천장 seal은 §4 shell의 structural 점유·윗층 floor 존재로 본다 (`buildingId` 일치 조건 없음).
 
 ---
 
@@ -379,13 +403,12 @@ AABB는 **있으니 필요 시 활용**하되, **footprint가 있는 질문에 A
 
 ```mermaid
 flowchart TD
-    Edit[타일 변경] --> Seed[minCellY local seed if needed]
-    Seed --> FloorMerge[§2.1 floor merge]
-    FloorMerge --> Room[room·perimeter rebuild]
+    Edit[타일 변경] --> Rebake[RebakeBuildingIdsFromComponents]
+    Rebake --> Room[room·perimeter rebuild]
     Room --> WallTag[§4 해당 slice wall tag]
 ```
 
-벽 추가/제거: **인접 floor의 buildingId**로만 §4 재실행. **wall chain 우선 없음.**
+편집: indoor `buildingId` 리셋 후 **component 배치 bake** → id 할당 → room. 벽 추가/제거 시 **인접 floor buildingId**로 §4 slice wall tag.
 
 ---
 
@@ -413,7 +436,8 @@ flowchart LR
 | buildingId만으로 outdoor | plaza bake 분리 |
 | roomId로 실내/야외·밀폐 추론 | room = slice floor graph partition; 개방·밀폐 구분 없음 |
 | 논리 비트 부재만으로 비밀폐·야외 확정 | `UsePhysicsCollider` 등 물리 막힘이 flags에 없을 수 있음 — §5.1.1 역방향 금지 |
-| **§7 Space leak에 `collisionFlags` 사용** | 대전제 §1 — `CellHasSolidWall`·`EdgeSeparatesRoom` 등 **오탐** |
+| bake 중 `AbsorbBuildingId` 전역 id 갈아끼우기 | component 확정 전 양수 id → 오통합 |
+| `(x,z)`·merge·shell 이중 그래프로 building bake | 점유셀 SSOT 위반 — [§점유셀 = bake 기본구조](#점유셀--bake-기본구조) |
 
 ---
 
@@ -422,18 +446,18 @@ flowchart LR
 | 논리 | 구현 |
 |------|------|
 | 전체 bake | `BuildingGroupBuilder.AssignAll` |
-| floor column-up | **폐기** — `AssignBuildingFootprintOnSlice` (시드·orphan, **한 slice**) |
-| §2.2 인접 0 흡수 | `PropagateBuildingIdThroughAdjacentUnassignedFloorsUntilFixed` |
-| 전파·patch 규칙 SSOT | `BuildingIdBakeRules` — `CanPropagateBuildingIdFrom`, `ShouldOverwriteBuildingIdForPropagation`, `ShouldPatchBuildingIdAtOccupiedCell`, `IsConflictingPropagableBuildingId` |
-| 전파 원점 규칙 | `BuildingIdBakeRules.CanPropagateBuildingIdFrom` — `>0` 만; `0`·`-1` 확장 원점 아님 |
-| §4 propagate | `TagAllWallsFromFloorAdjacency`, `TagStructuralFromOccupiedCellFlood`, `PropagateBuildingIdUpColumn` |
-| §2.1 floor merge | `MergeBuildingsOnFloorAdjacency` (propagate 전·후) |
+| component bake | `BakeBuildingComponentsForMap` — `InitComponentsFromMinCellYFloorOccCells`, `RunComponentBakeRounds`, `AssignOrphanComponents` |
+| 배치 union | `CollectFloorHorizontalUnionCandidates`, `CollectZeroFootprintUnionCandidates`, `UnionAllCandidates` |
+| component flood | `FloodStructuralComponentFromSeeds` (`BuildingGroupBuilder.Components.cs`) |
+| **buildingId 할당** | `AssignBuildingIdsFromComponents` — **유일한** `AllocateBuildingId` 시점 |
+| 전파·patch 규칙 SSOT | `BuildingIdBakeRules`, `ComponentBakeRules` |
+| §4 slice wall tag (편집·EnsureRoom) | `TagAllWallsFromFloorAdjacency` (buildingId 확정 후) |
 | room·perimeter | `BakeAllRooms`, `TagPerimeterForSlice` |
 | §6 extent | `BuildingGroupRegistry.RebuildIndicesFromTiles`, `BuildingExtent`, `TryGetBuildingExtent` |
 | §7 Space | `BakeAllSpaces`, `SpaceFloodFill3D`, `SpaceLeakEvaluator`, `SpaceRegistry` |
-| §7 topology leak | `SpaceLeakEvaluator` — `buildingId`·footprint·`maxStructuralY` (flags 금지) |
-| incremental | `HandleSetOrApply` → merge + `RebuildRooms` + wall tag + indices + **Space** |
+| incremental | `HandleSetOrApply` → `RebakeBuildingIdsFromComponents` + `RebuildRooms` + wall tag |
 | read | `TileMapCacheHub` / `BuildingGroupRegistry` |
+| 레거시 (미사용) | `MergeBuildingsOnFloorAdjacency`, `AssignBuildingsFromSeeds`, `PropagateBuildingIdThroughAdjacentUnassignedFloorsUntilFixed` |
 
 ---
 
@@ -444,7 +468,8 @@ flowchart LR
 | 1 | **시드 = walkable floor (slice footprint)** — 윗층은 §4 |
 | 2 | buildingId 전파 = **occupied-cell flood 단일 경로** (`IsStructural` **포함** HorizontalFace) |
 | 3 | **column-up buildingId assign 폐기** — 이중 write 금지 |
-| 4 | 구름다리 = **floor 인접 merge** (plaza 제외, min id 흡수) |
+| 4 | 구름다리 = **floor 인접 component union** (plaza 제외). `buildingId`는 맨 마지막 |
+| 9 | **component bake** = 점유셀 scratch + 배치 union 라운드 → `AssignBuildingIdsFromComponents` |
 | 5 | plaza/outdoor = merge·wall tag **제외** |
 | 6 | **BuildingExtent**: slice = `floorFootprint` 칸 집합; building 전체 = **AABB** + `maxStructuralY`. 정밀 판정은 footprint, 대략·필터는 AABB (§6.3) |
 | 7 | **Space bake**: `isOutdoor` = topology leak (`buildingId`·footprint·`maxStructuralY`). **collisionFlags 금지** (대전제). 분기만 — peek·blocking·hide 불변 |
@@ -454,4 +479,4 @@ flowchart LR
 
 ## 한 줄 요약
 
-> **시드 = walkable floor (slice). buildingId = occupied-cell flood 단일 전파 (floor·wall·천장 동일 id). 구름다리 = floor merge.**
+> **점유셀 그래프에서 component 확정(배치 union 라운드) → 맨 마지막 `buildingId` 할당 → room bake.**
