@@ -19,7 +19,10 @@ namespace IsoTilemap
         private readonly List<Guid> _occlusionTickScratch = new();
         private readonly List<Guid> _occlusionRemoveScratch = new();
         private readonly List<Guid> _engagedIdScratch = new();
-        private readonly HashSet<Guid> _appliedHidden = new();
+        private readonly List<(Guid tileId, float occlusion01)> _occlusionApplyFilterScratch = new();
+        private readonly List<Guid> _occlusionClearFilterScratch = new();
+        /// <summary>현재 구조물 숨김 대상 타일 ID 캐시. 판정 SSOT는 policy+ctx이며 스킵 근거로 쓰지 않는다.</summary>
+        private readonly HashSet<Guid> _structuralHidden = new();
         private readonly HashSet<Guid> _appliedSightLineTrace = new();
         private readonly HashSet<Guid> _newHiddenScratch = new();
         private readonly HashSet<Guid> _newTraceScratch = new();
@@ -27,10 +30,10 @@ namespace IsoTilemap
         private BuildingGroupRegistry _buildingRegistry;
         private PlayerFloorVisibilityPolicy _floorPolicy;
         private FloorVisibilitySyncPlanner _planner;
-        private FloorVisibilityHiddenSetComputer _hiddenComputer;
+        private StructuralVisibilityHiddenSetComputer _hiddenComputer;
         private FloorVisibilityContext _floorContext;
         private FloorVisibilityContext _lastSyncedCtx;
-        private FloorHidePresentationMode _floorHideMode = FloorHidePresentationMode.DisableGameObject;
+        private StructuralHidePresentationMode _structuralHideMode = StructuralHidePresentationMode.DisableGameObject;
         private bool _hasFloorContext;
         private bool _hasLastSyncedCtx;
 
@@ -42,7 +45,7 @@ namespace IsoTilemap
 
         public TilePresentationEntryStore Entries => _entries;
 
-        public bool IsFloorVisibilityHidden(Guid tileId) => _appliedHidden.Contains(tileId);
+        public bool IsStructuralVisibilityHidden(Guid tileId) => _structuralHidden.Contains(tileId);
 
         public bool IsSightLineBuildingTrace(Guid tileId) => _appliedSightLineTrace.Contains(tileId);
 
@@ -50,7 +53,7 @@ namespace IsoTilemap
             PlayerFloorVisibilityPolicy policy,
             BuildingGroupRegistry buildingRegistry,
             TileMapCacheHub hub,
-            FloorHidePresentationMode floorHideMode = FloorHidePresentationMode.DisableGameObject)
+            StructuralHidePresentationMode structuralHideMode = StructuralHidePresentationMode.DisableGameObject)
         {
             _floorPolicy = policy;
             _buildingRegistry = buildingRegistry;
@@ -58,25 +61,25 @@ namespace IsoTilemap
                 ? new FloorVisibilitySyncPlanner(buildingRegistry, hub)
                 : null;
             _hiddenComputer = policy != null
-                ? new FloorVisibilityHiddenSetComputer(policy, _model)
+                ? new StructuralVisibilityHiddenSetComputer(policy, _model)
                 : null;
-            SetFloorHidePresentationMode(floorHideMode);
+            SetStructuralHidePresentationMode(structuralHideMode);
         }
 
-        public void SetFloorHidePresentationMode(FloorHidePresentationMode mode)
+        public void SetStructuralHidePresentationMode(StructuralHidePresentationMode mode)
         {
-            if (_floorHideMode == mode)
+            if (_structuralHideMode == mode)
                 return;
 
-            _floorHideMode = mode;
-            ReapplyFloorHiddenPresentation();
+            _structuralHideMode = mode;
+            ReapplyStructuralHiddenPresentation();
         }
 
         public void ResetFloorVisibilityState()
         {
             _hasFloorContext = false;
             _hasLastSyncedCtx = false;
-            _appliedHidden.Clear();
+            _structuralHidden.Clear();
             _appliedSightLineTrace.Clear();
         }
 
@@ -92,22 +95,48 @@ namespace IsoTilemap
             if (!_hasFloorContext)
                 return;
 
+            bool indoorToOutdoorTransition = _hasLastSyncedCtx &&
+                                             !_lastSyncedCtx.IsPlayerOutdoor &&
+                                             ctx.IsPlayerOutdoor;
+            bool outdoorToIndoorTransition = _hasLastSyncedCtx &&
+                                             _lastSyncedCtx.IsPlayerOutdoor &&
+                                             !ctx.IsPlayerOutdoor;
+            bool visibilityModeTransition = indoorToOutdoorTransition || outdoorToIndoorTransition;
+
+            if (visibilityModeTransition)
+                _model.ClearWallCharacterOcclusion();
+
             _planner.BuildCandidateTileIds(
                 in ctx,
                 in _lastSyncedCtx,
                 _hasLastSyncedCtx,
-                _appliedHidden,
+                _structuralHidden,
                 _candidateScratch);
 
+            if (indoorToOutdoorTransition)
+                AppendTransitionOcclusionCandidates(_candidateScratch);
+
             _hiddenComputer.Compute(in ctx, _candidateScratch, _newHiddenScratch);
-            ApplyHiddenDiff(_newHiddenScratch, _candidateScratch);
+            ReconcileStructuralVisibilityCandidates(
+                _newHiddenScratch,
+                _candidateScratch,
+                clearShowOcclusion: indoorToOutdoorTransition || outdoorToIndoorTransition);
             SyncSightLineTrace(in ctx);
 
             _lastSyncedCtx = ctx;
             _hasLastSyncedCtx = true;
         }
 
-        void ApplyHiddenDiff(HashSet<Guid> newHidden, HashSet<Guid> candidates)
+        /// <summary>
+        /// 층 가시성 sync 후보를 policy 결과로 일괄 재적용합니다.
+        /// - 구조물 숨김 대상 캐시(_structuralHidden) 갱신
+        /// - 전환 시 stale occlusion 채널 정리
+        /// - 최종 표현 ApplyResolved
+        /// </summary>
+        void ReconcileStructuralVisibilityCandidates(
+            HashSet<Guid> newHidden,
+            HashSet<Guid> candidates,
+            bool clearShowOcclusion)
         {
             if (candidates == null || candidates.Count == 0)
                 return;
@@ -115,19 +144,61 @@ namespace IsoTilemap
             foreach (Guid tileId in candidates)
             {
                 bool shouldHide = newHidden.Contains(tileId);
-                if (_appliedHidden.Contains(tileId) == shouldHide)
-                    continue;
-
-                if (shouldHide)
-                    _appliedHidden.Add(tileId);
-                else
-                    _appliedHidden.Remove(tileId);
-
-                if (shouldHide)
-                    ResetProximityOcclusionPresentation(tileId);
-
-                ApplyResolved(tileId);
+                bool forceOcclusionClear = clearShowOcclusion && !shouldHide;
+                ApplyPolicyVisibilityToTile(tileId, shouldHide, forceOcclusionClear);
             }
+        }
+
+        /// <summary>
+        /// 단일 타일에 policy 결과를 반영합니다.
+        /// 구조물 숨김 대상 캐시를 갱신하고, 필요 시 occlusion 상태를 비운 뒤 최종 표현을 적용합니다.
+        /// <see cref="SyncPresentationForTile"/>과 동일 규칙.
+        /// </summary>
+        void ApplyPolicyVisibilityToTile(Guid tileId, bool shouldHide, bool forceClearOcclusion)
+        {
+            bool wasHidden = _structuralHidden.Contains(tileId);
+
+            if (shouldHide)
+                _structuralHidden.Add(tileId);
+            else
+                _structuralHidden.Remove(tileId);
+
+            if (shouldHide || wasHidden != shouldHide || forceClearOcclusion)
+                ClearCharacterOcclusionState(tileId);
+
+            SyncOcclusionDisplayCacheForTile(tileId);
+            ApplyResolved(tileId);
+        }
+
+        /// <summary>
+        /// display 캐시는 즉시 표시값이 아니라 target 페이드 시작점을 나타냅니다.
+        /// 보일 타일의 target occlusion이 남아 있으면 0f에서 다시 보간하도록 캐시를 유지합니다.
+        /// </summary>
+        void SyncOcclusionDisplayCacheForTile(Guid tileId)
+        {
+            TilePresentationResolved resolved = Resolve(tileId);
+            if (!resolved.StructuralHidden && resolved.CharacterOcclusion > DisplayEpsilon)
+                _characterOcclusionDisplay[tileId] = 0f;
+            else
+                _characterOcclusionDisplay.Remove(tileId);
+        }
+
+        /// <summary>
+        /// 실내→실외 전환 시 구조물 숨김 후보에 없더라도 stale occlusion이 남아있을 수 있는 타일을
+        /// sync 후보에 강제로 포함합니다.
+        /// </summary>
+        void AppendTransitionOcclusionCandidates(HashSet<Guid> candidates)
+        {
+            _entries.CollectEngagedTileIds(PresentationSource.ProximitySightLine, _engagedIdScratch);
+            for (int i = 0; i < _engagedIdScratch.Count; i++)
+                candidates.Add(_engagedIdScratch[i]);
+
+            _entries.CollectEngagedTileIds(PresentationSource.BfsWallOcclusion, _engagedIdScratch);
+            for (int i = 0; i < _engagedIdScratch.Count; i++)
+                candidates.Add(_engagedIdScratch[i]);
+
+            foreach (KeyValuePair<Guid, float> kv in _characterOcclusionDisplay)
+                candidates.Add(kv.Key);
         }
 
         void SyncSightLineTrace(in FloorVisibilityContext ctx)
@@ -180,14 +251,14 @@ namespace IsoTilemap
         /// </summary>
         public TilePresentationResolved Resolve(Guid tileId)
         {
-            bool floorHidden = _appliedHidden.Contains(tileId);
+            bool structuralHidden = _structuralHidden.Contains(tileId);
             bool trace = _appliedSightLineTrace.Contains(tileId);
-            float occlusion = floorHidden
+            float occlusion = structuralHidden
                 ? 0f
                 : PresentationEntryQueries.ResolveCharacterOcclusion(tileId, _entries, _model);
             bool ghosted = PresentationEntryQueries.ResolveGhosted(tileId, _entries);
             bool selected = _store.IsSelected(tileId);
-            return new TilePresentationResolved(floorHidden, trace, occlusion, ghosted, selected);
+            return new TilePresentationResolved(structuralHidden, trace, occlusion, ghosted, selected);
         }
 
         public void ApplyResolved(Guid tileId)
@@ -195,13 +266,13 @@ namespace IsoTilemap
             if (!_registry.TryGetView(tileId, out TileView view))
                 return;
 
-            view.ConfigureFloorHidePresentationMode(_floorHideMode);
+            view.ConfigureStructuralHidePresentationMode(_structuralHideMode);
             view.ApplyResolvedPresentation(Resolve(tileId));
         }
 
-        void ReapplyFloorHiddenPresentation()
+        void ReapplyStructuralHiddenPresentation()
         {
-            foreach (Guid tileId in _appliedHidden)
+            foreach (Guid tileId in _structuralHidden)
                 ApplyResolved(tileId);
         }
 
@@ -218,7 +289,44 @@ namespace IsoTilemap
             if (delta.IsEmpty)
                 return;
 
-            ApplyPresentationDelta(delta, source, PresentationConcern.CharacterOcclusion);
+            if (!_hasFloorContext)
+            {
+                ApplyPresentationDelta(delta, source, PresentationConcern.CharacterOcclusion);
+                return;
+            }
+
+            _occlusionApplyFilterScratch.Clear();
+            for (int i = 0; i < delta.ApplyEntries.Count; i++)
+            {
+                (Guid tileId, float occlusion01) = delta.ApplyEntries[i];
+                if (ShouldSkipCharacterOcclusionForTile(tileId))
+                    continue;
+
+                _occlusionApplyFilterScratch.Add((tileId, occlusion01));
+            }
+
+            _occlusionClearFilterScratch.Clear();
+            for (int i = 0; i < delta.ClearIds.Count; i++)
+                _occlusionClearFilterScratch.Add(delta.ClearIds[i]);
+
+            if (_occlusionApplyFilterScratch.Count == 0 && _occlusionClearFilterScratch.Count == 0)
+                return;
+
+            var filtered = new TileOcclusionPresentationDelta(
+                _occlusionApplyFilterScratch,
+                _occlusionClearFilterScratch);
+            ApplyPresentationDelta(filtered, source, PresentationConcern.CharacterOcclusion);
+        }
+
+        bool ShouldSkipCharacterOcclusionForTile(Guid tileId)
+        {
+            if (_structuralHidden.Contains(tileId))
+                return true;
+
+            if (!_model.TryGetTileById(tileId, out TileData tile))
+                return false;
+
+            return !_floorPolicy.IsTileVisible(tile, in _floorContext);
         }
 
         void ApplyPresentationDelta(
@@ -251,7 +359,7 @@ namespace IsoTilemap
                     continue;
                 }
 
-                if (IsFloorVisibilityHidden(tileId))
+                if (IsStructuralVisibilityHidden(tileId))
                 {
                     FadeOcclusionDisplayTowards(tileId, view, 0f, factor);
                     continue;
@@ -350,26 +458,19 @@ namespace IsoTilemap
 
             if (_hasFloorContext && _model.TryGetTileById(tileId, out TileData tile))
             {
-                bool hidden = !_floorPolicy.IsTileVisible(tile, in _floorContext);
+                bool shouldHide = !_floorPolicy.IsTileVisible(tile, in _floorContext);
                 bool trace = ShouldShowSightLineBuildingTrace(tile, in _floorContext, _buildingRegistry);
-
-                if (hidden)
-                    _appliedHidden.Add(tileId);
-                else
-                    _appliedHidden.Remove(tileId);
 
                 if (trace)
                     _appliedSightLineTrace.Add(tileId);
                 else
                     _appliedSightLineTrace.Remove(tileId);
+
+                ApplyPolicyVisibilityToTile(tileId, shouldHide, forceClearOcclusion: false);
+                return;
             }
 
-            TilePresentationResolved resolved = Resolve(tileId);
-            if (!resolved.FloorHidden && resolved.CharacterOcclusion > DisplayEpsilon)
-                _characterOcclusionDisplay[tileId] = 0f;
-            else
-                _characterOcclusionDisplay.Remove(tileId);
-
+            SyncOcclusionDisplayCacheForTile(tileId);
             ApplyResolved(tileId);
         }
 
@@ -389,11 +490,16 @@ namespace IsoTilemap
                    buildingRegistry.IsBottomFloorTile(buildingId, tile.tileDefId);
         }
 
-        void ResetProximityOcclusionPresentation(Guid tileId)
+        /// <summary>타일의 캐릭터 가림 관련 모든 채널(proximity/BFS/display)을 초기화합니다.</summary>
+        void ClearCharacterOcclusionState(Guid tileId)
         {
             _entries.Remove(
                 PresentationConcern.CharacterOcclusion,
                 PresentationSource.ProximitySightLine,
+                tileId);
+            _entries.Remove(
+                PresentationConcern.CharacterOcclusion,
+                PresentationSource.BfsWallOcclusion,
                 tileId);
             _characterOcclusionDisplay.Remove(tileId);
         }

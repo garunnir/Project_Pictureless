@@ -6,6 +6,6 @@ namespace IsoTilemap
         CharacterOcclusion,
         GhostAmount,
         SightLineBuildingHidden,
-        FloorVisibilityHidden,
+        StructuralVisibilityHidden,
     }
 }

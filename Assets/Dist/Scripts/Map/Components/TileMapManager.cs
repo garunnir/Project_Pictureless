@@ -1,5 +1,6 @@
 using IsoTilemap;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>
 /// 타일맵 생명주기 조율자.
@@ -34,8 +35,9 @@ public class TileMapManager : MonoBehaviour
 
     [Header("Floor Visibility (chunk streaming only)")]
     [SerializeField] private PlayerFloorVisibilityDriver _floorVisibilityDriver;
-    [SerializeField] private FloorHidePresentationMode _floorHidePresentationMode =
-        FloorHidePresentationMode.DisableGameObject;
+    [FormerlySerializedAs("_floorHidePresentationMode")]
+    [SerializeField] private StructuralHidePresentationMode _structuralHidePresentationMode =
+        StructuralHidePresentationMode.DisableGameObject;
 
     [Header("Tile Pooling (chunk streaming only)")]
     [SerializeField] private bool _enableTilePooling = true;
@@ -75,6 +77,19 @@ public class TileMapManager : MonoBehaviour
 
     public int ResolvePlayerFloorCellY(float playerHeightWorldY) =>
         ResolvePlayerFloorCellY(new Vector3(0f, playerHeightWorldY, 0f));
+
+    /// <summary>층 가시성 정책 컨텍스트 (CharacterVisibilityBroadcaster 등).</summary>
+    public bool TryResolveFloorVisibilityContext(Vector3 playerWorld, out FloorVisibilityContext ctx)
+    {
+        if (_floorPolicy == null)
+        {
+            ctx = default;
+            return false;
+        }
+
+        ctx = _floorPolicy.ResolveContext(playerWorld.y, playerWorld);
+        return true;
+    }
 
     private bool UseChunkStreaming => _chunkStreamer != null;
 
@@ -173,7 +188,7 @@ public class TileMapManager : MonoBehaviour
                 _floorPolicy,
                 _mapCacheHub.Buildings.Registry,
                 _mapCacheHub,
-                _floorHidePresentationMode);
+                _structuralHidePresentationMode);
         }
 
         _streamingVisualizer?.SetPresentationApplier(_presentationApplier);
@@ -249,7 +264,7 @@ public class TileMapManager : MonoBehaviour
                 _floorPolicy,
                 _mapCacheHub.Buildings.Registry,
                 _mapCacheHub,
-                _floorHidePresentationMode);
+                _structuralHidePresentationMode);
         }
     }
 

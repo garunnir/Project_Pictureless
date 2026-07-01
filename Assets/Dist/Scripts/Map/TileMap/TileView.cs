@@ -70,8 +70,8 @@ namespace IsoTilemap
         private float _characterOcclusion;
         private bool _isGhosted;
         private bool _sightLineBuildingHidden;
-        private bool _floorVisibilityHidden;
-        private FloorHidePresentationMode _floorHideMode = FloorHidePresentationMode.DisableGameObject;
+        private bool _structuralVisibilityHidden;
+        private StructuralHidePresentationMode _structuralHideMode = StructuralHidePresentationMode.DisableGameObject;
         private bool _currentSelected;
         private bool _baseStateInitialized;
         private bool _selectedInitialized;
@@ -238,16 +238,16 @@ namespace IsoTilemap
 
         public void SetSelected(bool selected) => ForceApplySelectedOverlay(selected);
 
-        public void ConfigureFloorHidePresentationMode(FloorHidePresentationMode mode) =>
-            _floorHideMode = mode;
+        public void ConfigureStructuralHidePresentationMode(StructuralHidePresentationMode mode) =>
+            _structuralHideMode = mode;
 
         /// <summary>Applier SSOT — 합성된 표현을 한 경로로 적용합니다.</summary>
         public void ApplyResolvedPresentation(in TilePresentationResolved resolved)
         {
-            ApplyFloorHidden(resolved.FloorHidden);
+            ApplyStructuralHidden(resolved.StructuralHidden);
             SetSightLineBuildingHidden(resolved.SightLineTrace);
 
-            if (resolved.FloorHidden)
+            if (resolved.StructuralHidden)
                 return;
 
             SetGhosted(resolved.Ghosted);
@@ -262,17 +262,17 @@ namespace IsoTilemap
             ApplySightLineBuildingOverlay();
         }
 
-        /// <summary>층 가시성 정책에 의한 완전 숨김(스트리밍 despawn 없음).</summary>
-        public void SetFloorVisibilityHidden(bool hidden) => ApplyFloorHidden(hidden);
+        /// <summary>구조물 가시성 정책에 의한 완전 숨김(스트리밍 despawn 없음).</summary>
+        public void SetStructuralVisibilityHidden(bool hidden) => ApplyStructuralHidden(hidden);
 
-        void ApplyFloorHidden(bool hidden)
+        void ApplyStructuralHidden(bool hidden)
         {
-            if (_floorVisibilityHidden == hidden)
+            if (_structuralVisibilityHidden == hidden)
                 return;
 
-            _floorVisibilityHidden = hidden;
+            _structuralVisibilityHidden = hidden;
 
-            if (_floorHideMode == FloorHidePresentationMode.DisableGameObject)
+            if (_structuralHideMode == StructuralHidePresentationMode.DisableGameObject)
             {
                 if (hidden)
                 {
@@ -304,9 +304,9 @@ namespace IsoTilemap
 
         private void RefreshBaseVisualState()
         {
-            if (_floorVisibilityHidden)
+            if (_structuralVisibilityHidden)
             {
-                if (_floorHideMode == FloorHidePresentationMode.DisableGameObject)
+                if (_structuralHideMode == StructuralHidePresentationMode.DisableGameObject)
                     return;
 
                 Renderer renderer = _shadeController?.CachedRenderer;
@@ -452,7 +452,7 @@ namespace IsoTilemap
             _characterOcclusion = 0f;
             _isGhosted = false;
             _sightLineBuildingHidden = false;
-            _floorVisibilityHidden = false;
+            _structuralVisibilityHidden = false;
             if (!gameObject.activeSelf)
                 gameObject.SetActive(true);
             ForceApplyBaseState(TileBaseVisualState.Visible);

@@ -135,7 +135,9 @@ flowchart TD
 | ③ indoor other building | tile buildingId ≠ player | show |
 | ④ upper floor | same building + tile floor > player | hide |
 | ⑤ player floor+ | same building + tile floor ≥ player | show |
-| ⑥ below peek | same building + tile floor < player | Wall show; Floor+peek show; else hide |
+| ⑥ below peek | same building + tile slice &lt; player | structural 공통 — peek cell에 포함 시 show, 아니면 hide |
+
+**structural face parity**: HorizontalFace(Floor)와 VerticalFace(EdgeWall)는 bake SSOT([`TILEMAP_BUILDING_BAKE.md`](TILEMAP_BUILDING_BAKE.md) `structural face`)와 동일하게 가시성 slice Y·peek·hide에 **slot 분기 없이** 취급한다. 구현: `TileVisibilityCellUtil.GetVisibilitySliceY`.
 
 outdoor block은 **player floor 변경과 무관** — blocking set 같으면 동일.
 
@@ -235,7 +237,7 @@ flowchart TD
         FloorDriver[PlayerFloorVisibilityDriver]
         Policy[PlayerFloorVisibilityPolicy.ResolveContext]
         Planner[FloorVisibilitySyncPlanner]
-        Compute[FloorVisibilityHiddenSetComputer]
+        Compute[StructuralVisibilityHiddenSetComputer]
         Diff[ApplyHiddenDiff]
     end
     subgraph view [뷰]
@@ -308,15 +310,17 @@ flowchart TD
 |------|------|
 | 누가 숨길지 (판정) | 층 가시성 정책 |
 | 어떻게 그릴지 (합성·적용) | `TileViewPresentationApplier.Resolve` → `ApplyResolved` |
-| 구조적 숨김 표현 | `FloorHidePresentationMode` — 기본 GameObject off, Renderer off (`TileMapManager`) |
+| 구조적 숨김 표현 | `StructuralHidePresentationMode` — 기본 GameObject off, Renderer off (`TileMapManager`) |
 
-**적용**: `_appliedHidden`은 후보 타일만 patch. 후보 0이면 **no-op** (야외·차단 목록 불변 시 층만 바뀌어도 기존 숨김 유지).
+**적용**: `_structuralHidden`은 **현재 구조물 숨김 대상 캐시**이다. 판정 SSOT는 policy+ctx이며, 후보 타일 sync 시 캐시 갱신 후 무조건 `ApplyResolved`한다. 후보 0이면 **no-op** (야외·차단 목록 불변 시 층만 바뀌어도 기존 숨김 유지).
 
 ### 2.1 분기·레이어
 
 `IsTileVisible`은 **선행** `BlockingBuildingFullHideLayer`(야외만) 후 outdoor/indoor pipeline.
 
 실내 `IndoorTileVisibilityPipeline` 순서: `SameBuildingUpperFloorHideLayer` → `BuildingScopeLayer` → `BelowFloorPeekLayer`.
+
+slice Y는 `TileVisibilityCellUtil.GetVisibilitySliceY` — Floor·EdgeWall 동일 규칙 ([`TILEMAP_BUILDING_BAKE.md`](TILEMAP_BUILDING_BAKE.md) structural face parity).
 
 | 플레이어 | 타일 | 결과 |
 |----------|------|------|
@@ -340,7 +344,7 @@ flowchart TD
 |----------|-----------|
 | 야외 blocking만 | blocking added∪removed building 타일 |
 | 실내 | `PlayerBuildingId` building + peek symmetric diff |
-| 실내↔야외 | `_appliedHidden` + 양쪽 blocking/building/peek |
+| 실내↔야외 | `_structuralHidden` + 양쪽 blocking/building/peek |
 | 동일 ctx | sync 생략 (driver) |
 
 청크 스폰: `SyncPresentationForTile` — **해당 타일 1개**만 `IsTileVisible` 판정.
@@ -352,7 +356,7 @@ flowchart TD
 `SightLineProximityBlendDriver` → `Evaluate` → `ApplyProximityBlendDelta`.
 
 - 청크 스트리밍과 무관. 스폰된 `TileView`만 대상.
-- `_appliedHidden` 타일은 occlusion display tick 스킵.
+- `_structuralHidden` 타일은 occlusion display tick 스킵.
 - hide 전환 시 proximity entry reset.
 
 ### BFS 벽 오클루전
@@ -367,7 +371,7 @@ flowchart TD
 | `CharacterOcclusion` | `ProximitySightLine` | 50 |
 | `GhostAmount` | `Ghost` | 10 |
 
-층 hide·흔적은 entry가 아닌 applier `_appliedHidden` / `_appliedSightLineTrace`.
+구조물 숨김·흔적은 entry가 아닌 applier `_structuralHidden` / `_appliedSightLineTrace`.
 
 ---
 
@@ -398,7 +402,7 @@ flowchart TD
 | 주제 | 파일 |
 |------|------|
 | 층 정책 | `PlayerFloorVisibilityPolicy.cs` |
-| hide diff | `FloorVisibilityHiddenSetComputer.cs`, `FloorVisibilitySyncPlanner.cs` |
+| hide diff | `StructuralVisibilityHiddenSetComputer.cs`, `FloorVisibilitySyncPlanner.cs` |
 | 레이어 | `TileVisibility/VisibilityLayers.cs`, `IndoorTileVisibilityPipeline.cs` |
 | 근접·에드온 | `ProximitySightLineBlendPipeline.cs`, `ProximityBuildingHideAddon.cs` |
 | presentation | `TileViewPresentationApplier.cs`, `TilePresentationResolved.cs`, `TileView.cs` |

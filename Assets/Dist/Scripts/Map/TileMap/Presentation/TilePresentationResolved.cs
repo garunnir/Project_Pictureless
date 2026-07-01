@@ -1,33 +1,33 @@
-// ============================================================
-// TilePresentationResolved — 타일 화면 표현 SSOT 출력
-// ============================================================
-namespace IsoTilemap
-{
-    /// <summary>
-    /// Applier가 합성한 최종 표현. 우선순위:
-    /// 구조적 숨김 &gt; 시선 가림 강도 &gt; Ghost &gt; Visible.
-    /// 차단 흔적은 별도 오버레이.
-    /// </summary>
-    public readonly struct TilePresentationResolved
-    {
-        public bool FloorHidden { get; }
-        public bool SightLineTrace { get; }
-        public float CharacterOcclusion { get; }
-        public bool Ghosted { get; }
-        public bool Selected { get; }
-
-        public TilePresentationResolved(
-            bool floorHidden,
-            bool sightLineTrace,
-            float characterOcclusion,
-            bool ghosted,
-            bool selected)
-        {
-            FloorHidden = floorHidden;
-            SightLineTrace = sightLineTrace;
-            CharacterOcclusion = characterOcclusion;
-            Ghosted = ghosted;
-            Selected = selected;
-        }
-    }
-}
+// ============================================================
+// TilePresentationResolved — 타일 화면 표현 SSOT 출력
+// ============================================================
+namespace IsoTilemap
+{
+    /// <summary>
+    /// Applier가 합성한 최종 표현. 우선순위:
+    /// 구조적 숨김 &gt; 시선 가림 강도 &gt; Ghost &gt; Visible.
+    /// 차단 흔적은 별도 오버레이.
+    /// </summary>
+    public readonly struct TilePresentationResolved
+    {
+        public bool StructuralHidden { get; }
+        public bool SightLineTrace { get; }
+        public float CharacterOcclusion { get; }
+        public bool Ghosted { get; }
+        public bool Selected { get; }
+
+        public TilePresentationResolved(
+            bool structuralHidden,
+            bool sightLineTrace,
+            float characterOcclusion,
+            bool ghosted,
+            bool selected)
+        {
+            StructuralHidden = structuralHidden;
+            SightLineTrace = sightLineTrace;
+            CharacterOcclusion = characterOcclusion;
+            Ghosted = ghosted;
+            Selected = selected;
+        }
+    }
+}

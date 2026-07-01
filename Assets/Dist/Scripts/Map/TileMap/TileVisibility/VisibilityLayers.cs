@@ -9,8 +9,8 @@ namespace IsoTilemap
     {
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
-            int tileCellY = TileVisibilityCellUtil.GetCellY(tile);
-            if (tileCellY > ctx.PlayerFloorCellY && tile.identity.buildingId == ctx.PlayerBuildingId)
+            int sliceY = TileVisibilityCellUtil.GetVisibilitySliceY(tile.identity);
+            if (sliceY > ctx.PlayerFloorCellY && tile.identity.buildingId == ctx.PlayerBuildingId)
                 return TileVisibilityVerdict.Hide;
 
             return TileVisibilityVerdict.Continue;
@@ -21,8 +21,8 @@ namespace IsoTilemap
     {
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
-            int tileCellY = TileVisibilityCellUtil.GetCellY(tile);
-            if (tileCellY < ctx.PlayerFloorCellY)
+            int sliceY = TileVisibilityCellUtil.GetVisibilitySliceY(tile.identity);
+            if (sliceY < ctx.PlayerFloorCellY)
                 return TileVisibilityVerdict.Continue;
 
             return tile.identity.buildingId == ctx.PlayerBuildingId
@@ -35,25 +35,18 @@ namespace IsoTilemap
     {
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
-            int tileCellY = TileVisibilityCellUtil.GetCellY(tile);
-            if (tileCellY >= ctx.PlayerFloorCellY)
+            int sliceY = TileVisibilityCellUtil.GetVisibilitySliceY(tile.identity);
+            if (sliceY >= ctx.PlayerFloorCellY)
                 return TileVisibilityVerdict.Continue;
 
-            if (TileIdentityUtil.IsWallLike(tile.identity))
-                return TileVisibilityVerdict.Show;
-
-            var gridPos = tile.identity.GridPos;
-            if (TileIdentityUtil.IsFloorTile(tile.identity))
-                gridPos = FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove;
-
-            if (ctx.VisibleBelowCells.Contains((gridPos.x, gridPos.z, tileCellY)))
+            if (TileVisibilityCellUtil.IsSliceInPeekBelow(tile.identity, sliceY, in ctx))
                 return TileVisibilityVerdict.Show;
 
             return TileVisibilityVerdict.Hide;
         }
     }
 
-    /// <summary>야외 시선 차단 building — presentation <c>FloorVisibilityHidden</c>로 반영.</summary>
+    /// <summary>야외 시선 차단 building — presentation <c>SightLineBuildingHidden</c>로 반영.</summary>
     public sealed class BlockingBuildingFullHideLayer : ITileVisibilityLayer
     {
         readonly BuildingGroupRegistry _registry;

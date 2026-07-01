@@ -25,20 +25,20 @@ namespace IsoTilemap
             in FloorVisibilityContext ctx,
             in FloorVisibilityContext lastCtx,
             bool hasLastCtx,
-            HashSet<Guid> appliedHidden,
+            HashSet<Guid> structuralHidden,
             HashSet<Guid> candidates)
         {
             candidates.Clear();
 
             if (!hasLastCtx)
             {
-                AddModeTransitionCandidates(ctx, in lastCtx, hasLastCtx: false, appliedHidden, candidates);
+                AddModeTransitionCandidates(ctx, in lastCtx, hasLastCtx: false, structuralHidden, candidates);
                 return;
             }
 
             if (ctx.IsPlayerOutdoor != lastCtx.IsPlayerOutdoor)
             {
-                AddModeTransitionCandidates(ctx, in lastCtx, hasLastCtx: true, appliedHidden, candidates);
+                AddModeTransitionCandidates(ctx, in lastCtx, hasLastCtx: true, structuralHidden, candidates);
                 return;
             }
 
@@ -76,12 +76,12 @@ namespace IsoTilemap
             in FloorVisibilityContext ctx,
             in FloorVisibilityContext lastCtx,
             bool hasLastCtx,
-            HashSet<Guid> appliedHidden,
+            HashSet<Guid> structuralHidden,
             HashSet<Guid> candidates)
         {
-            if (appliedHidden != null)
+            if (structuralHidden != null)
             {
-                foreach (Guid tileId in appliedHidden)
+                foreach (Guid tileId in structuralHidden)
                     candidates.Add(tileId);
             }
 
