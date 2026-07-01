@@ -4,6 +4,7 @@
 using IsoTilemap;
 using UnityEngine;
 
+[DefaultExecutionOrder(-99)]
 [RequireComponent(typeof(CharacterState))]
 public class CharacterVisibilityBroadcaster : MonoBehaviour
 {
@@ -62,7 +63,10 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
         _occlusionSettings = settings;
     }
 
-    private void LateUpdate()
+    private void LateUpdate() => ApplyNow();
+
+    /// <summary>틱 오케스트레이션·진단용. LateUpdate와 동일 규칙.</summary>
+    public void ApplyNow()
     {
         if (_characterState == null)
             return;
@@ -123,7 +127,7 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
             ? _tileMapManager.ResolvePlayerFloorCellY(_characterState.BodyWorldPoint)
             : TileHelper.ConvertWorldToGrid(_characterState.BodyWorldPoint, settings.CellSize).y;
 
-        _tileMapManager.Model?.UpdateOcclusionFromPlayerWorld(
+        _tileMapManager?.UpdateWallOcclusionFromPlayer(
             _lastOcclusionWorld, playerFloorCellY, settings);
     }
 

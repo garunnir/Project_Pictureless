@@ -54,6 +54,8 @@ namespace IsoTilemap.Diagnostics
 
             Transform root = null;
             DiagRegistry registry = null;
+            TileMapModel model = null;
+            TileViewPresentationApplier applier = null;
 
             try
             {
@@ -69,11 +71,13 @@ namespace IsoTilemap.Diagnostics
                     new TileMapModelBuilder(),
                     new TileMapDtoMapper()).Load(mapPath);
 
-                if (loadResult.Model is not TileMapModel model)
+                if (loadResult.Model is not TileMapModel loadedModel)
                 {
                     Debug.LogError($"{LogTag} Failed to load TileMapModel.");
                     return;
                 }
+
+                model = loadedModel;
 
                 float cellSize = 1f;
                 var buildingRegistry = new BuildingGroupRegistry();
@@ -98,12 +102,13 @@ namespace IsoTilemap.Diagnostics
                     registry.Add(tile.tileDefId, view);
                 }
 
-                var applier = new TileViewPresentationApplier(registry, model);
+                applier = new TileViewPresentationApplier(registry, model);
                 applier.ConfigureFloorVisibility(
                     policy,
                     buildingRegistry,
                     hub,
                     StructuralHidePresentationMode.DisableGameObject);
+                model.OnTileOcclusionPresentationDelta += applier.ApplyOcclusionDelta;
 
                 if (!TryPickIndoorScenario(model, hub, buildingRegistry, out int buildingId, out int playerFloorY, out List<Guid> upperFloorTileIds))
                 {
@@ -111,18 +116,29 @@ namespace IsoTilemap.Diagnostics
                     return;
                 }
 
+                bool hasPlayerWorld = TryResolvePlayerWorld(
+                    model, buildingRegistry, buildingId, cellSize, out Vector3 playerWorld);
+                FloorVisibilityContext resolvedPlayerCtx = hasPlayerWorld
+                    ? policy.ResolveContext(playerWorld.y, playerWorld)
+                    : default;
+
                 report.AppendLine($"{LogTag} Scenario: buildingId={buildingId} playerFloorY={playerFloorY} upperFloorTiles={upperFloorTileIds.Count}");
 
                 var indoorCtx = new FloorVisibilityContext(
                     isPlayerOutdoor: false,
-                    playerFloorCellY: playerFloorY,
+                    playerFloorCellY: hasPlayerWorld ? resolvedPlayerCtx.PlayerFloorCellY : playerFloorY,
                     minCellY: policy.MinCellY,
-                    playerBuildingId: buildingId,
+                    playerBuildingId: resolvedPlayerCtx.PlayerBuildingId > 0 ? resolvedPlayerCtx.PlayerBuildingId : buildingId,
                     playerBlockingBuildingIds: new HashSet<int>(),
-                    visibleBelowCells: new HashSet<(int x, int z, int y)>());
+                    visibleBelowCells: hasPlayerWorld ? resolvedPlayerCtx.VisibleBelowCells : new HashSet<(int x, int z, int y)>(),
+                    playerSpaceId: hasPlayerWorld ? resolvedPlayerCtx.PlayerSpaceId : 0,
+                    playerSpaceMinY: hasPlayerWorld ? resolvedPlayerCtx.PlayerSpaceMinY : playerFloorY,
+                    playerSpaceMaxY: hasPlayerWorld ? resolvedPlayerCtx.PlayerSpaceMaxY : playerFloorY,
+                    playerSpaceFloorCells: hasPlayerWorld ? resolvedPlayerCtx.PlayerSpaceFloorCells : null);
 
                 applier.SyncFloorVisibility(in indoorCtx, model);
                 AppendPhaseReport(report, "AfterIndoorSync", applier, policy, model, in indoorCtx, upperFloorTileIds, registry);
+                AppendPlayerSpaceWallReport(report, "AfterIndoorSync", applier, model, in indoorCtx, buildingId);
 
                 int occlusionSample = Mathf.Min(10, upperFloorTileIds.Count);
                 var proximityApply = new List<(Guid tileId, float occlusion01)>(occlusionSample);
@@ -164,6 +180,27 @@ namespace IsoTilemap.Diagnostics
                 AppendOcclusionReport(report, "AfterOutdoorSync_NoBlocking", applier, upperFloorTileIds, occlusionSample, registry);
                 AppendStructuralParityReport(report, "AfterOutdoorSync_NoBlocking", applier, policy, model, in outdoorCtx, upperFloorTileIds);
 
+                if (hasPlayerWorld)
+                {
+                    RunModelOcclusionPathScenario(
+                        report,
+                        model,
+                        applier,
+                        policy,
+                        in indoorCtx,
+                        in outdoorCtx,
+                        upperFloorTileIds,
+                        occlusionSample,
+                        registry,
+                        playerWorld,
+                        playerFloorY,
+                        cellSize);
+                }
+                else
+                {
+                    report.AppendLine($"{LogTag} Model path: skipped (no player world for building {buildingId})");
+                }
+
                 ClassifyHypotheses(report, applier, policy, model, in outdoorCtx, upperFloorTileIds, registry);
 
                 var blocking = new HashSet<int> { buildingId };
@@ -180,6 +217,9 @@ namespace IsoTilemap.Diagnostics
             }
             finally
             {
+                if (model != null && applier != null)
+                    model.OnTileOcclusionPresentationDelta -= applier.ApplyOcclusionDelta;
+
                 registry?.DestroyAll();
                 if (root != null)
                     UnityEngine.Object.DestroyImmediate(root.gameObject);
@@ -289,6 +329,151 @@ namespace IsoTilemap.Diagnostics
             }
 
             return buildingId > 0 && upperFloorTileIds.Count > 0;
+        }
+
+        static bool TryResolvePlayerWorld(
+            TileMapModel model,
+            BuildingGroupRegistry registry,
+            int buildingId,
+            float cellSize,
+            out Vector3 playerWorld)
+        {
+            playerWorld = default;
+            int bestSliceY = int.MaxValue;
+            Vector3Int bestWalkable = default;
+            bool found = false;
+
+            registry.EnumerateTilesForBuilding(buildingId, tileId =>
+            {
+                if (!model.TryGetTileById(tileId, out TileData tile))
+                    return;
+                if (!TileIdentityUtil.IsHorizontalFace(tile.identity))
+                    return;
+
+                int sliceY = TileVisibilityCellUtil.GetCellY(tile);
+                var walkable = FloorFaceKey.FromFloorTileIdentity(tile.identity).CellAbove;
+                if (sliceY >= bestSliceY)
+                    return;
+
+                bestSliceY = sliceY;
+                bestWalkable = walkable;
+                found = true;
+            });
+
+            if (!found)
+                return false;
+
+            playerWorld = TileHelper.ConvertGridToWorldPos(bestWalkable, cellSize);
+            playerWorld.y += cellSize * 0.5f;
+            return true;
+        }
+
+        static void RunModelOcclusionPathScenario(
+            StringBuilder report,
+            TileMapModel model,
+            TileViewPresentationApplier applier,
+            PlayerFloorVisibilityPolicy policy,
+            in FloorVisibilityContext indoorCtx,
+            in FloorVisibilityContext outdoorCtx,
+            List<Guid> upperFloorTileIds,
+            int occlusionSample,
+            DiagRegistry registry,
+            Vector3 playerWorld,
+            int playerFloorY,
+            float cellSize)
+        {
+            report.AppendLine($"{LogTag} --- Model path (BFS evaluate + policy filter) playerWorld={playerWorld} ---");
+
+            var settings = OcclusionProximitySettings.DefaultUnity;
+            settings.CellSize = cellSize;
+
+            applier.SyncFloorVisibility(in indoorCtx, model);
+            FloorVisibilityContext indoorCtxCopy = indoorCtx;
+            model.UpdateOcclusionFromPlayerWorld(
+                playerWorld,
+                playerFloorY,
+                settings,
+                tile => policy.IsTileVisible(tile, in indoorCtxCopy));
+            AppendOcclusionReport(report, "ModelPath_IndoorBfs", applier, upperFloorTileIds, occlusionSample, registry);
+            AppendStructuralParityReport(report, "ModelPath_IndoorBfs", applier, policy, model, in indoorCtx, upperFloorTileIds);
+
+            applier.SyncFloorVisibility(in outdoorCtx, model);
+            FloorVisibilityContext outdoorCtxCopy = outdoorCtx;
+            model.UpdateOcclusionFromPlayerWorld(
+                playerWorld,
+                playerFloorY,
+                settings,
+                tile => policy.IsTileVisible(tile, in outdoorCtxCopy));
+            AppendOcclusionReport(report, "ModelPath_OutdoorSamePos", applier, upperFloorTileIds, occlusionSample, registry);
+            AppendStructuralParityReport(report, "ModelPath_OutdoorSamePos", applier, policy, model, in outdoorCtx, upperFloorTileIds);
+
+            int structuralParityMismatch = CountStructuralParityMismatch(
+                applier, policy, model, in outdoorCtx, upperFloorTileIds);
+            report.AppendLine($"{LogTag} ModelPath_OutdoorSamePos structural parity mismatch={structuralParityMismatch}");
+        }
+
+        static int CountStructuralParityMismatch(
+            TileViewPresentationApplier applier,
+            PlayerFloorVisibilityPolicy policy,
+            TileMapModel model,
+            in FloorVisibilityContext ctx,
+            List<Guid> tileIds)
+        {
+            int mismatch = 0;
+            for (int i = 0; i < tileIds.Count; i++)
+            {
+                Guid tileId = tileIds[i];
+                if (!model.TryGetTileById(tileId, out TileData tile))
+                    continue;
+
+                bool hidden = applier.IsStructuralVisibilityHidden(tileId);
+                bool visible = policy.IsTileVisible(tile, in ctx);
+                if (hidden != !visible)
+                    mismatch++;
+            }
+
+            return mismatch;
+        }
+
+        static void AppendPlayerSpaceWallReport(
+            StringBuilder report,
+            string phase,
+            TileViewPresentationApplier applier,
+            TileMapModel model,
+            in FloorVisibilityContext ctx,
+            int buildingId)
+        {
+            int spaceWalls = 0;
+            int hiddenSpaceWalls = 0;
+            int spaceFloors = 0;
+            int hiddenSpaceFloors = 0;
+
+            foreach (TileData tile in model.TilesSnapshot)
+            {
+                if (tile.identity.buildingId != buildingId)
+                    continue;
+
+                bool touchesSpace = SpaceVisibilityUtil.TouchesPlayerSpace(tile.identity, in ctx);
+                if (!touchesSpace)
+                    continue;
+
+                bool hidden = applier.IsStructuralVisibilityHidden(tile.tileDefId);
+                if (TileIdentityUtil.IsVerticalFace(tile.identity))
+                {
+                    spaceWalls++;
+                    if (hidden) hiddenSpaceWalls++;
+                }
+                else if (TileIdentityUtil.IsHorizontalFace(tile.identity))
+                {
+                    spaceFloors++;
+                    if (hidden) hiddenSpaceFloors++;
+                }
+            }
+
+            report.AppendLine(
+                $"{LogTag} {phase} playerSpace id={ctx.PlayerSpaceId} band={ctx.PlayerSpaceMinY}..{ctx.PlayerSpaceMaxY} " +
+                $"spaceEdgeWalls hidden/total={hiddenSpaceWalls}/{spaceWalls} " +
+                $"spaceFloors hidden/total={hiddenSpaceFloors}/{spaceFloors}");
         }
 
         static void AppendPhaseReport(

@@ -16,8 +16,9 @@
 
 | 논리 용어 | 구현에서의 읽기 |
 |-----------|----------------|
-| player floor | `ResolvePlayerOccupiedCell` → 점유 cell Y |
-| tile floor | 타일 대표 cell Y |
+| player floor | `ResolvePlayerOccupiedCell` → 점유 cell Y (fallback·peek 기준) |
+| player space band | `SpaceRegistry`의 player `SpaceId` floor cells `minY..maxY` |
+| tile structural band | `SpaceVisibilityUtil.TryGetStructuralBand` |
 | buildingId | 타일·플레이어 `identity.buildingId` (0 = terrain) |
 | blocking building set | context blocking building id 집합 |
 | peek cells | player floor room BFS hole → below-floor room cells (room은 개방 floor 묶음일 수 있음 — [bake §5.1](TILEMAP_BUILDING_BAKE.md)) |
@@ -44,6 +45,23 @@
 
 ---
 
+## 구현 원칙
+
+**논리는 단순하게, 코드는 땜빵 없이 근본적으로.**
+
+| 원칙 | 의미 |
+|------|------|
+| **판정 SSOT 1곳** | show/hide·space band·peek은 `PlayerFloorVisibilityPolicy` + `SpaceVisibilityUtil`만. 뷰·드라이버·모델에 같은 규칙을 다시 쓰지 않는다. |
+| **표현 SSOT 1곳** | 화면 상태는 `TileViewPresentationApplier.Resolve` → `ApplyResolved` 한 경로. `TileView` 로컬 플래그는 캐시일 뿐 진실원이 아니다. |
+| **structural parity** | Floor·EdgeWall 등 `IsStructural`은 같은 indoor pipeline을 따른다. 단, Floor는 walkable cell, EdgeWall은 incident cell band로 읽는다. |
+| **채널 분리** | structural hide(완전 숨김)와 CharacterOcclusion(반투명)은 **다른 목적**. policy가 hide면 occlusion을 씌우지 않는다 — **입력 단계에서 차단**, apply 후 필터·전환 후보 patch로 막지 않는다. |
+| **전환은 reconcile** | indoor↔outdoor·blocking 변경은 “stale 타일 목록을 또 하나 더”가 아니라 **ctx diff universe 전체 reconcile** 한 번으로 끝낸다. |
+| **땜빵 금지** | 증상별 `if (전환) Clear…`, `AppendTransition…`, 위치 gate 우회, apply 시 filter만 추가하는 패턴은 **임시**다. 같은 버그가 두 번 나오면 **발생 경로를 제거**하는 쪽으로 리팩터한다. |
+
+**허용되는 복잡도**: 3개 독립 시스템(층 가시성 · 근접 블렌드 · BFS wall occlusion)은 **도메인상** 분리다. 복잡도가 문제인 곳은 **틱·상태 저장소가 3벌**인 지점이다.
+
+---
+
 ## 가리기 논리
 
 **판정 규칙 전용 절.** code 필드명·API 이름 없음.
@@ -56,8 +74,9 @@
 
 | 용어 | 의미 |
 |------|------|
-| **player floor** | 플레이어가 서 있는 slice Y |
-| **tile floor** | 타일 대표 slice Y |
+| **player floor** | 플레이어가 서 있는 점유 cell Y (fallback·peek 기준) |
+| **player space** | 플레이어 점유 floor cell의 SpaceId. 같은 space의 walkable Y 전체를 한 structural 층으로 본다 |
+| **tile structural band** | 타일이 차지하는 structural Y 구간. Floor는 walkable cell, EdgeWall은 incident cell band |
 | **buildingId** | 타일·player 소속 building. 0 = terrain |
 | **blocking building set** | outdoor에서 sight에 걸려 통째 hide할 building 목록 |
 | **peek cells** | player floor hole 아래 slice에서 보이는 room cells |
@@ -69,14 +88,15 @@
 |---------|------|
 | player outdoor | 점유 cell 기준. buildingId만으로 outdoor 추론 금지 |
 | player floor | 발밑 floor 기준 Y |
+| player space band | player SpaceId floor cells의 `minY..maxY` |
 | player buildingId | indoor일 때 소속 |
-| tile buildingId · tile floor | 판정 대상 타일 |
+| tile buildingId · tile structural band | 판정 대상 타일 |
 | blocking building set | outdoor 통째 hide 대상 |
 | peek cells | indoor · player floor 아래 expose 집합 |
 
 blocking set은 **proximity evaluate 이후** 채움 (outdoor · feature on).
 
-peek cells: player floor **room BFS**로 hole 찾고, 아래 slice connected room cells 수집.
+peek cells: player floor **room BFS**로 hole 찾고, player space 아래 connected room cells 수집.
 
 **buildingId 출처 (bake SSOT)**: [TILEMAP_BUILDING_BAKE.md](TILEMAP_BUILDING_BAKE.md) — **floor SSOT**, structural shell은 **occupied-cell flood** ([TILEMAP.md](TILEMAP.md) §점유셀). indoor hide는 tile `buildingId` vs player `buildingId`; **shell-disconnected**(id 0)은 step ③ **show** (의도).
 
@@ -116,11 +136,11 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    I[same building] --> U{tile floor\n> player floor?}
+    I[same building] --> U{tile band entirely\nabove player space?}
     U -->|yes| Hide[hide]
-    U -->|no| Ge{tile floor\n≥ player floor?}
-    Ge -->|yes| Show[show]
-    Ge -->|no| Below[below floor]
+    U -->|no| Touch{tile touches\nplayer space?}
+    Touch -->|yes| Show[show]
+    Touch -->|no| Below{tile band entirely\nbelow player space?}
     Below --> W{Wall?}
     W -->|yes| Show
     W -->|no| Peek{Floor and\nCellAbove in peek?}
@@ -133,15 +153,15 @@ flowchart TD
 | ① outdoor block | outdoor + blocking set building | hide (min-floor footprint **제외**) |
 | ② outdoor default | outdoor + ① 아님 | show |
 | ③ indoor other building | tile buildingId ≠ player | show |
-| ④ upper floor | same building + tile floor > player | hide |
-| ⑤ player floor+ | same building + tile floor ≥ player | show |
-| ⑥ below peek | same building + tile slice &lt; player | structural 공통 — peek cell에 포함 시 show, 아니면 hide |
+| ④ above space | same building + tile structural band 전체가 player space 위 | hide |
+| ⑤ player space | same building + tile이 player space floor cell에 접촉 | show |
+| ⑥ below space | same building + tile structural band 전체가 player space 아래 | Wall은 show, Floor는 peek cell에 포함 시 show |
 
-**structural face parity**: HorizontalFace(Floor)와 VerticalFace(EdgeWall)는 bake SSOT([`TILEMAP_BUILDING_BAKE.md`](TILEMAP_BUILDING_BAKE.md) `structural face`)와 동일하게 가시성 slice Y·peek·hide에 **slot 분기 없이** 취급한다. 구현: `TileVisibilityCellUtil.GetVisibilitySliceY`.
+**structural face parity**: HorizontalFace(Floor)와 VerticalFace(EdgeWall)는 같은 indoor pipeline을 따른다. Floor는 `CellAbove`, EdgeWall은 anchor·neighbor incident cell band로 player space 접촉 여부를 판정한다. 구현: `SpaceVisibilityUtil`.
 
 outdoor block은 **player floor 변경과 무관** — blocking set 같으면 동일.
 
-indoor ④~⑥은 **player floor·peek** 변경에 반응.
+indoor ④~⑥은 **player space band·peek** 변경에 반응.
 
 ---
 
@@ -238,7 +258,7 @@ flowchart TD
         Policy[PlayerFloorVisibilityPolicy.ResolveContext]
         Planner[FloorVisibilitySyncPlanner]
         Compute[StructuralVisibilityHiddenSetComputer]
-        Diff[ApplyHiddenDiff]
+        Reconcile[ReconcileStructuralVisibilityCandidates]
     end
     subgraph view [뷰]
         Applier[TileViewPresentationApplier]
@@ -254,12 +274,14 @@ flowchart TD
     FloorDriver --> Policy
     Policy --> Planner
     Planner --> Compute
-    Compute --> Diff
-    Diff --> Applier
+    Compute --> Reconcile
+    Reconcile --> Applier
     Applier --> Display
 ```
 
-**틱 순서**: `SightLineProximityBlendDriver` (`-100`) → `PlayerFloorVisibilityDriver` (`-99`) → `CharacterVisibilityBroadcaster` → `CharacterOcclusionDisplayDriver` (`50`) → 청크 스트리밍.
+**틱 순서**: `SightLineProximityBlendDriver` (`-100`) → `CharacterVisibilityBroadcaster` (`-99`) → `PlayerFloorVisibilityDriver` (`-98`) → `CharacterOcclusionDisplayDriver` (`50`) → 청크 스트리밍.
+
+> **2026-07**: occlusion evaluate가 floor structural reconcile **이전**에 돌아야 outdoor 전환 시 policy-invisible 타일이 BFS에 남지 않는다. `TileVisibilityTick` 단일 오케스트레이터는 미도입(§7.2).
 
 `PlayerFloorVisibilityDriver`는 `FloorVisibilityContext.Equals`가 바뀔 때만 `SyncFloorVisibility`를 호출한다.
 
@@ -270,8 +292,9 @@ flowchart TD
 | 필드 | 용도 |
 |------|------|
 | `IsPlayerOutdoor` | 야외 blocking·실내 pipeline 분기 |
-| `PlayerFloorCellY` | 실내 위층 hide·peek |
+| `PlayerFloorCellY` | fallback·peek 기준 |
 | `PlayerBuildingId` | 실내 scope·에드온 exclude |
+| `PlayerSpaceId`, `PlayerSpaceMinY`, `PlayerSpaceMaxY` | 실내 structural hide의 층 단위 |
 | `PlayerBlockingBuildingIds` | 야외 통째 hide 대상 (근접 에드온 주입) |
 | `VisibleBelowCells` | indoor peek cells |
 
@@ -281,7 +304,7 @@ flowchart TD
 
 `TileMapCacheHub.IsOutdoorEvaluation(cellY, x, z)` — **`buildingId == 0`만으로 야외를 추론하지 않는다.**
 
-**Space bake는 가리기가 아니라 분기만 바꾼다.** `IsPlayerOutdoor` → outdoor/indoor pipeline 선택. peek cells·blocking building set·upper-floor hide **규칙은 변경 없음**.
+**Space bake는 두 가지에만 쓴다.** `IsPlayerOutdoor` 분기와, 실내에서 player space vertical band를 한 structural 층으로 보는 판정. 근접/BFS occlusion은 별도 채널이다.
 
 | 순서 | 규칙 |
 |------|------|
@@ -292,7 +315,7 @@ flowchart TD
 
 `isOutdoor` 산출: [건물 bake §7](TILEMAP_BUILDING_BAKE.md) — `SpaceLeakEvaluator` topology (`buildingId`·footprint·extent). **`collisionFlags` leak 금지** — [대전제](TILEMAP_BUILDING_BAKE.md).
 
-**room / `roomId`와 혼동하지 않는다.** room은 §5.1 slice floor 묶음(peek용). 실내/야외는 Space.
+**room / `roomId`와 혼동하지 않는다.** room은 §5.1 slice floor 묶음(peek용). 실내/야외와 structural 층 단위는 Space.
 
 **§5.1.1 (비대칭):** 논리로 닫힌 루프면 bake 그래프상 밀폐로 볼 수 있으나, **비트가 비었다고 비밀폐로 단정하지 않음.** `isOutdoor=false`도 밀폐 증명이 아님.
 
@@ -318,9 +341,9 @@ flowchart TD
 
 `IsTileVisible`은 **선행** `BlockingBuildingFullHideLayer`(야외만) 후 outdoor/indoor pipeline.
 
-실내 `IndoorTileVisibilityPipeline` 순서: `SameBuildingUpperFloorHideLayer` → `BuildingScopeLayer` → `BelowFloorPeekLayer`.
+실내 `IndoorTileVisibilityPipeline` 순서: `SpaceAboveHideLayer` → `SpaceMembershipShowLayer` → `BelowSpaceLayer`.
 
-slice Y는 `TileVisibilityCellUtil.GetVisibilitySliceY` — Floor·EdgeWall 동일 규칙 ([`TILEMAP_BUILDING_BAKE.md`](TILEMAP_BUILDING_BAKE.md) structural face parity).
+player space band는 `FloorVisibilityContext`, tile structural band·space 접촉은 `SpaceVisibilityUtil`.
 
 | 플레이어 | 타일 | 결과 |
 |----------|------|------|
@@ -358,6 +381,7 @@ slice Y는 `TileVisibilityCellUtil.GetVisibilitySliceY` — Floor·EdgeWall 동�
 - 청크 스트리밍과 무관. 스폰된 `TileView`만 대상.
 - `_structuralHidden` 타일은 occlusion display tick 스킵.
 - hide 전환 시 proximity entry reset.
+- player space 안에서 structural show된 뒤 벽·시선상 벽은 이 반투명 채널이 담당한다.
 
 ### BFS 벽 오클루전
 
@@ -397,7 +421,61 @@ slice Y는 `TileVisibilityCellUtil.GetVisibilitySliceY` — Floor·EdgeWall 동�
 
 ---
 
-## 7. 관련 소스
+## 7. 리팩터링 후보 (구조 단순화)
+
+현재 동작은 맞춰졌으나 **땜빵이 겹친 구간**이 있다. 아래는 근본 정리 시 우선 검토할 목록이다. 새 증상 패치 전에 이 표를 본다.
+
+### 7.1 상태 저장소 통합 (최우선)
+
+| 현재 | 문제 | 목표 | 상태 |
+|------|------|------|------|
+| `TileMapModel` `_hiddenWallTileIds` + `_lastAppliedOcclusion` | BFS SSOT가 모델에 있음 | BFS membership·scalar를 **applier entry store 단일**로 | **미완** (evaluate는 model, emit은 entry) |
+| `TilePresentationEntryStore` + `_characterOcclusionDisplay` | target vs display 이중 | display는 tick용 파생 | 유지 |
+| `PresentationEntryQueries` → model fallback | entry 없을 때 model 재조회 | fallback 제거, delta 경로만 | **완료** |
+
+**효과**: `AppendTransitionOcclusionCandidates`·`ShouldSkipCharacterOcclusionForTile` **제거 완료**. `ClearWallCharacterOcclusion`은 model outdoor early-out·policy invisible rebuild에만 잔존.
+
+### 7.2 틱 오케스트레이션 1곳
+
+| 현재 | 문제 | 목표 | 상태 |
+|------|------|------|------|
+| `SightLineProximityBlendDriver` (-100) | 각자 ctx·위치 gate | `TileVisibilityTick` (가칭) **단일 LateUpdate** | **부분** (실행 순서만 정렬) |
+| `CharacterVisibilityBroadcaster` (-99) | occlusion evaluate | ③ occlusion evaluate | **완료** (`UpdateWallOcclusionFromPlayer`) |
+| `PlayerFloorVisibilityDriver` (-98) | floor sync만 | ② structural reconcile | 순서 **완료** |
+| `CharacterOcclusionDisplayDriver` (50) | display만 | 마지막 단계로 유지 | 유지 |
+
+**효과**: indoor↔outdoor 시 “누가 먼저 clear하는가” 순서 버그 **구조적으로 불가능**.
+
+### 7.3 reconcile API 단일화
+
+| 현재 | 문제 | 목표 | 상태 |
+|------|------|------|------|
+| `SyncFloorVisibility` + `SyncPresentationForTile` | 거의 같은 apply | `ReconcileTilePresentation` **하나** | **완료** |
+| `StructuralVisibilityHiddenSetComputer` | policy 래퍼 40줄 | inline `!IsTileVisible` | 후보 |
+| `AppendTransitionOcclusionCandidates` | stale occlusion universe patch | planner 전수 후보로 대체 | **삭제 완료** |
+
+### 7.4 occlusion 입력 차단을 apply가 아닌 evaluate로
+
+| 현재 (땜빵) | 근본 | 상태 |
+|-------------|------|------|
+| `ShouldSkipCharacterOcclusionForTile` (apply 시 filter) | `WallOcclusionFinder` / proximity evaluate가 **policy invisible 타일 제외** | **완료** (`IsOcclusionTileVisible` + `UpdateWallOcclusionFromPlayer`) |
+| `SyncFloorVisibility` → applier `ClearWallCharacterOcclusion` | outdoor 전환 시 BFS **빈 delta** + entry clear | **완료** (model outdoor + `forceClearOcclusion`) |
+| `CharacterVisibilityBroadcaster` ctx gate | indoor/outdoor ctx 변경 시 위치 동일해도 재평가 | **완료** |
+
+### 7.5 명칭·문서 정리 (낮은 비용)
+
+- 논리 용어 `floor hide` → 문서상 **structural hide**로 통일 (policy 도메인 `FloorVisibility*`는 유지).
+- [`TilePresentationResolved.cs`](Presentation/TilePresentationResolved.cs) 등 표현 타입은 이미 `Structural*` — 문서 §2 표 제목만 맞추기.
+
+### 7.6 하지 말 것
+
+- sync 밖 전환 훅 (`RecoverIndoor…`, building 전체 `ApplyResolved` 루프) **재도입 금지**.
+- slot별 hide 예외 **재도입 금지**.
+- `MaterialPropertyBlock` / 머티리얼 스왑으로 가림 우회 **금지** ([URP 규약](../../../.cursor/rules/urp-rendering.mdc)).
+
+---
+
+## 8. 관련 소스
 
 | 주제 | 파일 |
 |------|------|
@@ -406,12 +484,13 @@ slice Y는 `TileVisibilityCellUtil.GetVisibilitySliceY` — Floor·EdgeWall 동�
 | 레이어 | `TileVisibility/VisibilityLayers.cs`, `IndoorTileVisibilityPipeline.cs` |
 | 근접·에드온 | `ProximitySightLineBlendPipeline.cs`, `ProximityBuildingHideAddon.cs` |
 | presentation | `TileViewPresentationApplier.cs`, `TilePresentationResolved.cs`, `TileView.cs` |
-| 드라이버 | `SightLineProximityBlendDriver.cs`, `PlayerFloorVisibilityDriver.cs` |
+| 드라이버 | `SightLineProximityBlendDriver.cs`, `PlayerFloorVisibilityDriver.cs`, `CharacterVisibilityBroadcaster.cs` |
+| slice Y | `TileVisibilityCellUtil.cs` |
 | bake | `BuildingGroupBuilder.cs`, `BuildingGroupRegistry.cs` |
 
 ---
 
-## 8. 치트시트
+## 9. 치트시트
 
 ```
 타일이 안 보인다?

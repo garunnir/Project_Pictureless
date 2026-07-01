@@ -3,12 +3,11 @@ namespace IsoTilemap
     public static class PresentationEntryQueries
     {
         const float GhostEpsilon = 1e-4f;
-        const float OcclusionEpsilon = 1e-4f;
 
+        /// <summary>BFS·proximity entry store만 합성. model fallback 없음 — applier entry가 SSOT.</summary>
         public static float ResolveCharacterOcclusion(
             System.Guid tileId,
-            TilePresentationEntryStore store,
-            TileMapModel model)
+            TilePresentationEntryStore store)
         {
             float bestScalar = 0f;
             int bestPriority = int.MinValue;
@@ -21,12 +20,6 @@ namespace IsoTilemap
                     out TilePresentationEntry bfs))
             {
                 ConsiderCandidate(bfs.Scalar01, bfs.Priority, ref bestScalar, ref bestPriority, ref hasCandidate);
-            }
-            else if (model.IsBfsOcclusionStructuralTile(tileId) &&
-                     model.TryGetTileOcclusionPresentation(tileId, out float modelBfs))
-            {
-                int bfsPriority = PresentationPriorityTable.Get(PresentationSource.BfsWallOcclusion);
-                ConsiderCandidate(modelBfs, bfsPriority, ref bestScalar, ref bestPriority, ref hasCandidate);
             }
 
             if (store.TryGetEngagedEntry(

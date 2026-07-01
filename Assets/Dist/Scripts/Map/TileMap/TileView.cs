@@ -99,8 +99,12 @@ namespace IsoTilemap
             // 하이어라키의 인스턴스 → 원본 프리팹 오브젝트
 #if UNITY_EDITOR
             var source = UnityEditor.PrefabUtility.GetCorrespondingObjectFromSource(gameObject);
-            Debug.Log(UnityEditor.Tile.PrefabDBExtensions.GetTilePrefabName(source));
-            prefabId = UnityEditor.Tile.PrefabDBExtensions.GetTilePrefabName(source);
+            if (source != null)
+            {
+                string tilePrefabName = UnityEditor.Tile.PrefabDBExtensions.GetTilePrefabName(source);
+                Debug.Log(tilePrefabName);
+                prefabId = tilePrefabName;
+            }
 #endif
         }
 

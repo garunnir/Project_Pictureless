@@ -13,8 +13,12 @@ namespace IsoTilemap
         public int PlayerFloorCellY { get; }
         public int MinCellY { get; }
         public int PlayerBuildingId { get; }
+        public int PlayerSpaceId { get; }
+        public int PlayerSpaceMinY { get; }
+        public int PlayerSpaceMaxY { get; }
         public HashSet<int> PlayerBlockingBuildingIds { get; }
         public HashSet<(int x, int z, int y)> VisibleBelowCells { get; }
+        public HashSet<Vector3Int> PlayerSpaceFloorCells { get; }
 
         public FloorVisibilityContext(
             bool isPlayerOutdoor,
@@ -22,14 +26,30 @@ namespace IsoTilemap
             int minCellY,
             int playerBuildingId,
             HashSet<int> playerBlockingBuildingIds,
-            HashSet<(int x, int z, int y)> visibleBelowCells)
+            HashSet<(int x, int z, int y)> visibleBelowCells,
+            int playerSpaceId = 0,
+            int playerSpaceMinY = int.MinValue,
+            int playerSpaceMaxY = int.MinValue,
+            HashSet<Vector3Int> playerSpaceFloorCells = null)
         {
             IsPlayerOutdoor = isPlayerOutdoor;
             PlayerFloorCellY = playerFloorCellY;
             MinCellY = minCellY;
             PlayerBuildingId = playerBuildingId;
+            PlayerSpaceId = playerSpaceId;
+            if (playerSpaceMinY <= playerSpaceMaxY)
+            {
+                PlayerSpaceMinY = playerSpaceMinY;
+                PlayerSpaceMaxY = playerSpaceMaxY;
+            }
+            else
+            {
+                PlayerSpaceMinY = playerFloorCellY;
+                PlayerSpaceMaxY = playerFloorCellY;
+            }
             PlayerBlockingBuildingIds = playerBlockingBuildingIds ?? new HashSet<int>();
             VisibleBelowCells = visibleBelowCells ?? new HashSet<(int x, int z, int y)>();
+            PlayerSpaceFloorCells = playerSpaceFloorCells ?? new HashSet<Vector3Int>();
         }
 
         public bool Equals(FloorVisibilityContext other) =>
@@ -37,6 +57,9 @@ namespace IsoTilemap
             PlayerFloorCellY == other.PlayerFloorCellY &&
             MinCellY == other.MinCellY &&
             PlayerBuildingId == other.PlayerBuildingId &&
+            PlayerSpaceId == other.PlayerSpaceId &&
+            PlayerSpaceMinY == other.PlayerSpaceMinY &&
+            PlayerSpaceMaxY == other.PlayerSpaceMaxY &&
             SetEquals(PlayerBlockingBuildingIds, other.PlayerBlockingBuildingIds) &&
             SetEquals(VisibleBelowCells, other.VisibleBelowCells);
 
@@ -44,7 +67,14 @@ namespace IsoTilemap
 
         public override int GetHashCode()
         {
-            int hash = HashCode.Combine(IsPlayerOutdoor, PlayerFloorCellY, MinCellY, PlayerBuildingId);
+            int hash = HashCode.Combine(
+                IsPlayerOutdoor,
+                PlayerFloorCellY,
+                MinCellY,
+                PlayerBuildingId,
+                PlayerSpaceId,
+                PlayerSpaceMinY,
+                PlayerSpaceMaxY);
             hash = HashCombineSet(hash, PlayerBlockingBuildingIds);
             return HashCombineBelowCells(hash, VisibleBelowCells);
         }
@@ -117,6 +147,7 @@ namespace IsoTilemap
     {
         static readonly HashSet<int> EmptyBlocking = new();
         static readonly HashSet<(int x, int z, int y)> EmptyVisibleBelow = new();
+        static readonly HashSet<Vector3Int> EmptySpaceFloorCells = new();
 
         readonly float _cellSize;
         readonly float _cellEpsilonWorld;
@@ -139,6 +170,10 @@ namespace IsoTilemap
         bool _hasStableIdentity;
         bool _cachedIsOutdoor;
         int _cachedPlayerBuildingId;
+        int _cachedPlayerSpaceId;
+        int _cachedPlayerSpaceMinY;
+        int _cachedPlayerSpaceMaxY;
+        HashSet<Vector3Int> _cachedPlayerSpaceFloorCells = EmptySpaceFloorCells;
         HashSet<(int x, int z, int y)> _cachedVisibleBelow = new();
 
         /// <summary>시선상 가림 건물 전층 Hide(실내·야외 공통). false면 차단 집합을 비웁니다.</summary>
@@ -222,12 +257,20 @@ namespace IsoTilemap
 
             bool isOutdoor;
             int playerBuildingId;
+            int playerSpaceId;
+            int playerSpaceMinY;
+            int playerSpaceMaxY;
+            HashSet<Vector3Int> playerSpaceFloorCells;
             HashSet<(int x, int z, int y)> visibleBelow;
 
             if (reuseIdentity)
             {
                 isOutdoor = _cachedIsOutdoor;
                 playerBuildingId = _cachedPlayerBuildingId;
+                playerSpaceId = _cachedPlayerSpaceId;
+                playerSpaceMinY = _cachedPlayerSpaceMinY;
+                playerSpaceMaxY = _cachedPlayerSpaceMaxY;
+                playerSpaceFloorCells = _cachedPlayerSpaceFloorCells ?? EmptySpaceFloorCells;
                 visibleBelow = _cachedVisibleBelow.Count == 0 ? EmptyVisibleBelow : _cachedVisibleBelow;
             }
             else
@@ -237,6 +280,13 @@ namespace IsoTilemap
                 _hub.TryGetFloorBuildingRoom(
                     playerFloorCellY, playerOccupiedCell.x, playerOccupiedCell.z,
                     out playerBuildingId, out _);
+                ResolvePlayerSpace(
+                    playerOccupiedCell,
+                    playerFloorCellY,
+                    out playerSpaceId,
+                    out playerSpaceMinY,
+                    out playerSpaceMaxY,
+                    out playerSpaceFloorCells);
 
                 visibleBelow = isOutdoor
                     ? EmptyVisibleBelow
@@ -245,6 +295,10 @@ namespace IsoTilemap
 
                 _cachedIsOutdoor = isOutdoor;
                 _cachedPlayerBuildingId = playerBuildingId;
+                _cachedPlayerSpaceId = playerSpaceId;
+                _cachedPlayerSpaceMinY = playerSpaceMinY;
+                _cachedPlayerSpaceMaxY = playerSpaceMaxY;
+                _cachedPlayerSpaceFloorCells = playerSpaceFloorCells ?? EmptySpaceFloorCells;
                 CopyVisibleBelow(visibleBelow, _cachedVisibleBelow);
                 _cachedPlayerOccupiedCell = playerOccupiedCell;
                 _cachedHideEnabled = OutdoorSightLineBuildingHideEnabled;
@@ -254,7 +308,44 @@ namespace IsoTilemap
             HashSet<int> blocking = ResolveBlockingForContext(isOutdoor);
 
             return new FloorVisibilityContext(
-                isOutdoor, playerFloorCellY, _minCellY, playerBuildingId, blocking, visibleBelow);
+                isOutdoor,
+                playerFloorCellY,
+                _minCellY,
+                playerBuildingId,
+                blocking,
+                visibleBelow,
+                playerSpaceId,
+                playerSpaceMinY,
+                playerSpaceMaxY,
+                playerSpaceFloorCells);
+        }
+
+        void ResolvePlayerSpace(
+            Vector3Int playerOccupiedCell,
+            int playerFloorCellY,
+            out int playerSpaceId,
+            out int playerSpaceMinY,
+            out int playerSpaceMaxY,
+            out HashSet<Vector3Int> playerSpaceFloorCells)
+        {
+            playerSpaceId = 0;
+            playerSpaceMinY = playerFloorCellY;
+            playerSpaceMaxY = playerFloorCellY;
+            playerSpaceFloorCells = EmptySpaceFloorCells;
+
+            if (!_hub.Spaces.TryGetSpaceAtFloorCell(playerOccupiedCell, out int spaceId) ||
+                !_hub.Spaces.TryGetSpace(spaceId, out SpaceBakeResult space) ||
+                !space.HasFloorBounds)
+            {
+                return;
+            }
+
+            playerSpaceId = spaceId;
+            playerSpaceMinY = space.MinFloorY;
+            playerSpaceMaxY = space.MaxFloorY;
+
+            IReadOnlyCollection<Vector3Int> cells = _hub.Spaces.Registry.GetFloorCells(spaceId);
+            playerSpaceFloorCells = cells as HashSet<Vector3Int> ?? new HashSet<Vector3Int>(cells);
         }
 
         static void CopyVisibleBelow(

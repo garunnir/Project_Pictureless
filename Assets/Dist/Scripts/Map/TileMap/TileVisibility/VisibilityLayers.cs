@@ -5,41 +5,39 @@ using System.Collections.Generic;
 
 namespace IsoTilemap
 {
-    public sealed class SameBuildingUpperFloorHideLayer : ITileVisibilityLayer
+    public sealed class SpaceAboveHideLayer : ITileVisibilityLayer
     {
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
-            int sliceY = TileVisibilityCellUtil.GetVisibilitySliceY(tile.identity);
-            if (sliceY > ctx.PlayerFloorCellY && tile.identity.buildingId == ctx.PlayerBuildingId)
+            if (SpaceVisibilityUtil.IsEntirelyAbovePlayerSpace(tile.identity, in ctx))
                 return TileVisibilityVerdict.Hide;
 
             return TileVisibilityVerdict.Continue;
         }
     }
 
-    public sealed class BuildingScopeLayer : ITileVisibilityLayer
+    public sealed class SpaceMembershipShowLayer : ITileVisibilityLayer
     {
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
-            int sliceY = TileVisibilityCellUtil.GetVisibilitySliceY(tile.identity);
-            if (sliceY < ctx.PlayerFloorCellY)
-                return TileVisibilityVerdict.Continue;
-
-            return tile.identity.buildingId == ctx.PlayerBuildingId
+            return SpaceVisibilityUtil.TouchesPlayerSpace(tile.identity, in ctx)
                 ? TileVisibilityVerdict.Show
-                : TileVisibilityVerdict.Hide;
+                : TileVisibilityVerdict.Continue;
         }
     }
 
-    public sealed class BelowFloorPeekLayer : ITileVisibilityLayer
+    public sealed class BelowSpaceLayer : ITileVisibilityLayer
     {
         public TileVisibilityVerdict Evaluate(TileData tile, in FloorVisibilityContext ctx)
         {
-            int sliceY = TileVisibilityCellUtil.GetVisibilitySliceY(tile.identity);
-            if (sliceY >= ctx.PlayerFloorCellY)
+            if (!SpaceVisibilityUtil.IsEntirelyBelowPlayerSpace(tile.identity, in ctx))
                 return TileVisibilityVerdict.Continue;
 
-            if (TileVisibilityCellUtil.IsSliceInPeekBelow(tile.identity, sliceY, in ctx))
+            if (TileIdentityUtil.IsWallLike(tile.identity))
+                return TileVisibilityVerdict.Show;
+
+            SpaceVisibilityUtil.TryGetStructuralBand(tile.identity, out _, out int maxY);
+            if (TileVisibilityCellUtil.IsSliceInPeekBelow(tile.identity, maxY, in ctx))
                 return TileVisibilityVerdict.Show;
 
             return TileVisibilityVerdict.Hide;

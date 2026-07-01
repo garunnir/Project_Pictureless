@@ -25,6 +25,7 @@ namespace IsoTilemap
         private WallOcclusionFinder _occlusionFinder;
         private readonly HashSet<Guid> _hiddenWallTileIds = new HashSet<Guid>();
         private readonly Dictionary<Guid, TileData> _hiddenWallTileCache = new Dictionary<Guid, TileData>();
+        /// <summary>BFS delta 산출용 내부 캐시. 화면 SSOT는 applier entry store.</summary>
         private readonly Dictionary<Guid, float> _lastAppliedOcclusion = new Dictionary<Guid, float>();
         private readonly List<(Guid tileId, float occlusion01)> _occlusionDeltaApply = new List<(Guid, float)>();
         private readonly List<Guid> _occlusionDeltaClear = new List<Guid>();
@@ -34,6 +35,7 @@ namespace IsoTilemap
 
         private bool _hasLastOcclusionPlayerCell;
         private Vector3Int _lastOcclusionPlayerCell;
+        private Func<TileData, bool> _occlusionTileVisible;
         private TileMapCacheHub _mapCacheHub;
         private BuildingGroupBuilder _buildingGroupBuilder;
 
@@ -503,22 +505,6 @@ namespace IsoTilemap
                 _buildingGroupBuilder.AssignAll();
         }
 
-        /// <summary>청크 sync용. 런타임 <see cref="TileState"/>가 아닌 오클루전 캐시를 반환합니다.</summary>
-        public bool TryGetTileOcclusionPresentation(Guid tileId, out float occlusion01) =>
-            _lastAppliedOcclusion.TryGetValue(tileId, out occlusion01);
-
-        /// <summary><see cref="WallOcclusionFinder"/> BFS 숨김 집합의 Wall·EdgeWall이면 true.</summary>
-        public bool IsBfsOcclusionStructuralTile(Guid tileId)
-        {
-            if (!_hiddenWallTileIds.Contains(tileId))
-                return false;
-
-            if (!TryGetTileById(tileId, out TileData tile))
-                return false;
-
-            return TileIdentityUtil.IsWallLike(tile.identity);
-        }
-
         public IReadOnlyList<TileData> GetOccludingWalls(Vector3Int playerCellPos)
         {
             _occlusionFinder ??= new WallOcclusionFinder(tiles, _faceBinder.WallFaceIndex, _mapCacheHub?.Topology, this);
@@ -533,7 +519,7 @@ namespace IsoTilemap
             UpdateOcclusionFromPlayerWorld(world, settings);
         }
 
-        /// <summary>적용 중인 벽 캐릭터 오클루전을 모두 해제하고 뷰에 반영합니다.</summary>
+        /// <summary>적용 중인 벽 캐릭터 오클루전을 모두 해제하고 presentation delta를 emit합니다.</summary>
         public void ClearWallCharacterOcclusion()
         {
             if (_hiddenWallTileIds.Count == 0 && _lastAppliedOcclusion.Count == 0)
@@ -569,6 +555,19 @@ namespace IsoTilemap
             int playerFloorCellY,
             OcclusionProximitySettings settings)
         {
+            UpdateOcclusionFromPlayerWorld(playerWorld, playerFloorCellY, settings, occlusionTileVisible: null);
+        }
+
+        /// <summary>
+        /// <paramref name="occlusionTileVisible"/>가 false인 타일은 BFS·거리 occlusion 대상에서 제외됩니다 (policy hide 등).
+        /// </summary>
+        public void UpdateOcclusionFromPlayerWorld(
+            Vector3 playerWorld,
+            int playerFloorCellY,
+            OcclusionProximitySettings settings,
+            Func<TileData, bool> occlusionTileVisible)
+        {
+            _occlusionTileVisible = occlusionTileVisible;
             float cs = Mathf.Max(1e-4f, settings.CellSize);
 
             NormalizeProximity(ref settings);
@@ -591,6 +590,21 @@ namespace IsoTilemap
             }
 
             bool needRebuild = !_hasLastOcclusionPlayerCell || playerCell != _lastOcclusionPlayerCell;
+            if (!needRebuild && _occlusionTileVisible != null)
+            {
+                foreach (Guid hiddenId in _hiddenWallTileIds)
+                {
+                    if (!_tilesById.TryGetValue(hiddenId, out TileData hiddenTile))
+                        continue;
+
+                    if (!_occlusionTileVisible(hiddenTile))
+                    {
+                        needRebuild = true;
+                        break;
+                    }
+                }
+            }
+
             if (needRebuild)
             {
                 RebuildOcclusionMembership(playerCell, playerWorld, playerFloorCellY, settings);
@@ -766,6 +780,9 @@ namespace IsoTilemap
             for (int i = 0; i < list.Count; i++)
             {
                 TileData wall = list[i];
+                if (!IsOcclusionTileVisible(wall))
+                    continue;
+
                 currentHiddenIds.Add(wall.tileDefId);
 
                 float occ = ComputeOcclusionStrength(playerWorld, wall.identity, cs, settings);
@@ -830,6 +847,15 @@ namespace IsoTilemap
                         continue;
 
                     _hiddenWallTileCache[id] = wall;
+                }
+
+                if (!IsOcclusionTileVisible(wall))
+                {
+                    if (_lastAppliedOcclusion.ContainsKey(id))
+                        _occlusionDeltaClear.Add(id);
+                    _lastAppliedOcclusion.Remove(id);
+                    _hiddenWallTileCache.Remove(id);
+                    continue;
                 }
 
                 float d = Mathf.Sqrt(OcclusionDistSqXZ(playerWorld, entry.WallWorldX, entry.WallWorldZ));
@@ -898,6 +924,9 @@ namespace IsoTilemap
                 distance,
                 s.OcclusionFullWithinDistance,
                 s.OcclusionNoneBeyondDistance);
+
+        bool IsOcclusionTileVisible(in TileData tile) =>
+            _occlusionTileVisible == null || _occlusionTileVisible(tile);
 
         private readonly struct OcclusionWallEntry
         {

@@ -65,6 +65,7 @@ namespace IsoTilemap
                 {
                     cellSet.Add(cell);
                     _floorCellToSpaceId[cell] = spaceId;
+                    result.IncludeFloorCell(cell);
                 }
             }
 
@@ -86,6 +87,8 @@ namespace IsoTilemap
             {
                 cellSet.Add(cell);
                 _floorCellToSpaceId[cell] = canonicalSpaceId;
+                if (_spacesById.TryGetValue(canonicalSpaceId, out var result))
+                    result.IncludeFloorCell(cell);
             }
         }
 

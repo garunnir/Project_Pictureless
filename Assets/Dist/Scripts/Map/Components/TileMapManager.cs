@@ -91,6 +91,27 @@ public class TileMapManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// BFS wall occlusion 갱신. policy가 invisible인 타일은 evaluate 단계에서 제외됩니다.
+    /// </summary>
+    public void UpdateWallOcclusionFromPlayer(
+        Vector3 playerWorld,
+        int playerFloorCellY,
+        OcclusionProximitySettings settings)
+    {
+        if (Model is not TileMapModel model)
+            return;
+
+        System.Func<TileData, bool> visible = null;
+        if (_floorPolicy != null)
+        {
+            FloorVisibilityContext ctx = _floorPolicy.ResolveContext(playerWorld.y, playerWorld);
+            visible = tile => _floorPolicy.IsTileVisible(tile, in ctx);
+        }
+
+        model.UpdateOcclusionFromPlayerWorld(playerWorld, playerFloorCellY, settings, visible);
+    }
+
     private bool UseChunkStreaming => _chunkStreamer != null;
 
     void EnsureOcclusionDisplayDriver()

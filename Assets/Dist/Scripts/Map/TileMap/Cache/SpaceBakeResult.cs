@@ -9,6 +9,9 @@ namespace IsoTilemap
         public int BuildingId { get; }
         public RoomKey SeedRoom { get; }
         public bool IsOutdoor { get; set; }
+        public int MinFloorY { get; private set; } = int.MaxValue;
+        public int MaxFloorY { get; private set; } = int.MinValue;
+        public bool HasFloorBounds => MinFloorY <= MaxFloorY;
 
         public SpaceBakeResult(int spaceId, int buildingId, RoomKey seedRoom, bool isOutdoor = false)
         {
@@ -16,6 +19,14 @@ namespace IsoTilemap
             BuildingId = buildingId;
             SeedRoom = seedRoom;
             IsOutdoor = isOutdoor;
+        }
+
+        public void IncludeFloorCell(UnityEngine.Vector3Int floorCell)
+        {
+            if (floorCell.y < MinFloorY)
+                MinFloorY = floorCell.y;
+            if (floorCell.y > MaxFloorY)
+                MaxFloorY = floorCell.y;
         }
     }
 }
