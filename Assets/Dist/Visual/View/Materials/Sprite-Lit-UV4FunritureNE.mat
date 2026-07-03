@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Sprite-Lit-UV4FunritureNE
   m_Shader: {fileID: 4800000, guid: 48c295f6856d7d044bc0ec11ea90c8f5, type: 3}
-  m_Parent: {fileID: 2100000, guid: 25576a42bbe47144db07689b0a23ff5f, type: 2}
+  m_Parent: {fileID: 2100000, guid: 65ee7d159c0669144a7820851aee05e5, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -25,6 +25,9 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats: []
-    m_Colors: []
+    m_Colors:
+    - _UV00: {r: 0, g: -0.09, b: 0, a: 0}
+    - _UV10: {r: 1, g: 0.2, b: 0, a: 0}
+    - _UV11: {r: 1, g: 1.08, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
