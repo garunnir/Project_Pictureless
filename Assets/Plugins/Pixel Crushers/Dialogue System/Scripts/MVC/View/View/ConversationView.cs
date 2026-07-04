@@ -425,7 +425,10 @@ namespace PixelCrushers.DialogueSystem
         public void HandleContinueButtonClick()
         {
             // If we just started and another conversation just ended, ignore the continue:
-            if (Time.frameCount == initialFrameCount && initialFrameCount == ConversationController.frameLastConversationEnded)
+            if (Time.frameCount == initialFrameCount && 
+                initialFrameCount == ConversationController.frameLastConversationEnded &&
+                !DialogueManager.allowSimultaneousConversations &&
+                DialogueManager.ignoreContinueWhenConversationsStartAndEndSameFrame)
             {
                 if (DialogueDebug.logInfo) Debug.Log($"Dialogue System: At frame {Time.frameCount}, just started a conversation but another just ended, so ignoring continue button.");
                 return;
@@ -662,6 +665,7 @@ namespace PixelCrushers.DialogueSystem
                     if (validListenerTransform && !speakerIsListener) lastSubtitle.listenerInfo.transform.BroadcastMessage(DialogueSystemMessages.OnConversationResponseMenu, responses, SendMessageOptions.DontRequireReceiver);
                 }
                 DialogueManager.instance.BroadcastMessage(DialogueSystemMessages.OnConversationResponseMenu, responses, SendMessageOptions.DontRequireReceiver);
+                DialogueManager.instance.InvokeConversationResponseMenuPrepared(responses);
             }
         }
 

@@ -1,7 +1,4 @@
-// Recompile at 2026-04-13 오후 4:59:46
-
-
-// Copyright (c) Pixel Crushers. All rights reserved.
+﻿// Copyright (c) Pixel Crushers. All rights reserved.
 
 using System.Collections;
 using System.Collections.Generic;
@@ -408,7 +405,7 @@ namespace PixelCrushers.DialogueSystem
         public override void Stop()
         {
             var wasPlaying = isPlaying;
-            StopCharacterAudio();
+            StopOrFadeCharacterAudio();
             StopTypewriterCoroutine();
             if (wasPlaying)
             {

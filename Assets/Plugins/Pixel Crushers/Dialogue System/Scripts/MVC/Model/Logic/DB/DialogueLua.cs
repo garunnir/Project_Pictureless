@@ -17,6 +17,9 @@ namespace PixelCrushers.DialogueSystem
     /// For speed, this class occasionally bypasses the Lua wrapper class and works directly
     /// with the underlying Lua implementation, Lua Interpreter.
     /// </summary>
+#if VISUAL_SCRIPTING
+    [Unity.VisualScripting.IncludeInSettings(true)]
+#endif
     public static class DialogueLua
     {
 
@@ -1370,9 +1373,13 @@ namespace PixelCrushers.DialogueSystem
         /// <param name="value">Value to set.</param>
         public static void SetConversationField(int conversationID, string field, object value)
         {
-            var safeValue = (value == null) ? "nil"
-                : (value.GetType() == typeof(string)) ? $"\"{DoubleQuotesToSingle(value.ToString())}\""
-                : value.ToString();
+            var safeValue = (value == null) 
+                ? "nil"
+                : (value.GetType() == typeof(string)) 
+                    ? $"\"{DoubleQuotesToSingle(value.ToString())}\""
+                    : value.GetType() == typeof(bool)
+                        ? value.ToString().ToLower()
+                        : value.ToString();
             Lua.Run(string.Format("Conversation[{0}].{1} = {2}", new System.Object[] { conversationID, StringToTableIndex(field), safeValue }), false, true);
         }
 

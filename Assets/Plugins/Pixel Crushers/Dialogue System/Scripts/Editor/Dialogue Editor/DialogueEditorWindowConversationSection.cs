@@ -81,6 +81,7 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
 
         private void SetCurrentConversationByID()
         {
+            if (database == null) return;
             if (verboseDebug) Debug.Log("<color=magenta>Set conversation ID to " + currentConversationID + "</color>");
             conversationTitles = null;
             OpenConversation(database.GetConversation(currentConversationID));

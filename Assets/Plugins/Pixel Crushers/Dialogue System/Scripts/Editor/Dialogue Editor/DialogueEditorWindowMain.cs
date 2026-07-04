@@ -311,7 +311,15 @@ namespace PixelCrushers.DialogueSystem.DialogueEditor
                 database = newDatabase;
                 ClearDatabaseNameStyle();
                 LoadTemplateFromDatabase();
-                serializedObject = new SerializedObject(database);
+                try
+                {
+                    serializedObject = new SerializedObject(database);
+                }
+                catch (System.ArgumentException e)
+                {
+                    if (debug) Debug.Log($"<color=yellow>Dialogue Editor: SelectDatabase error {newDatabase}: {e.Message}", newDatabase);
+                    database = null;
+                }
                 if (needToReset)
                 {
                     Reset();

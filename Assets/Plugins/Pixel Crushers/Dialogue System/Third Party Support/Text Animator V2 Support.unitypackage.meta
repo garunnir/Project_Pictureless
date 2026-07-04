@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 970d97a951a4c47429aa5f916dceb18a
+guid: 136093d2938679642b9468b40913b1ac
 timeCreated: 1589555711
 licenseType: Store
 DefaultImporter:
@@ -11,7 +11,7 @@ AssetOrigin:
   serializedVersion: 1
   productId: 11672
   packageName: Dialogue System for Unity
-  packageVersion: 2.2.69
+  packageVersion: 2.2.72
   assetPath: Assets/Plugins/Pixel Crushers/Dialogue System/Third Party Support/Text
     Animator V2 Support.unitypackage
-  uploadId: 897442
+  uploadId: 942428

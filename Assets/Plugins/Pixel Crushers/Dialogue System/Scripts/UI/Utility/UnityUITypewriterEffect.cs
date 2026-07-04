@@ -669,7 +669,7 @@ namespace PixelCrushers.DialogueSystem
         public override void Stop()
         {
             var wasPlaying = isPlaying;
-            StopCharacterAudio();
+            StopOrFadeCharacterAudio();
             StopTypewriterCoroutine();
             if (wasPlaying)
             {
