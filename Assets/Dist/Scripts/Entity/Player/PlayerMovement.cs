@@ -122,18 +122,23 @@ public class PlayerMovement : MonoBehaviour, IMovable
 
     void ConnectController()
     {
-        InputManager.Instance.Actions.Player.Move.performed += OnMove;
-        InputManager.Instance.Actions.Player.Move.canceled  += OnMove;
-        InputManager.Instance.Actions.Player.Run.performed  += OnRun;
-        InputManager.Instance.Actions.Player.Run.canceled   += OnRun;
+        InputManager input = InputManager.Instance;
+        input.PlayerMovePerformed += OnMove;
+        input.PlayerMoveCanceled += OnMove;
+        input.PlayerRunPerformed += OnRun;
+        input.PlayerRunCanceled += OnRun;
     }
 
     void DisconnectController()
     {
-        InputManager.Instance.Actions.Player.Move.performed -= OnMove;
-        InputManager.Instance.Actions.Player.Move.canceled  -= OnMove;
-        InputManager.Instance.Actions.Player.Run.performed  -= OnRun;
-        InputManager.Instance.Actions.Player.Run.canceled   -= OnRun;
+        InputManager input = InputManager.Instance;
+        if (input == null)
+            return;
+
+        input.PlayerMovePerformed -= OnMove;
+        input.PlayerMoveCanceled -= OnMove;
+        input.PlayerRunPerformed -= OnRun;
+        input.PlayerRunCanceled -= OnRun;
     }
 
     public UnityEngine.Vector2 GetDirection(){

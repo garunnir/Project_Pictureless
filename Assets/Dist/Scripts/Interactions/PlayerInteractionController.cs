@@ -14,7 +14,6 @@ namespace Interactions
         private DirectionalRaycaster _raycaster;
         private PlayerAimController _aimController;
         private Collider _lastHitCollider;
-        private InputActions _interactAction;
         private readonly Dictionary<Collider, IInteractable> _interactableCache = new();
 
         private void Awake()
@@ -26,14 +25,13 @@ namespace Interactions
 
         private void Start()
         {
-            _interactAction = InputManager.Instance.Actions;
-            _interactAction.Player.Interaction.performed += OnInteract;
+            InputManager.Instance.PlayerInteractPerformed += OnInteract;
         }
 
         private void OnDestroy()
         {
-            if (_interactAction != null)
-                _interactAction.Player.Interaction.performed -= OnInteract;
+            if (InputManager.Instance != null)
+                InputManager.Instance.PlayerInteractPerformed -= OnInteract;
         }
 
         public void OnInteract(InputAction.CallbackContext context)

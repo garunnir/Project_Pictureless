@@ -19,6 +19,12 @@ public class UIConstruction : MonoBehaviour
     private int _categoryIndex;
     private Button _selectedButton;
 
+    void Awake()
+    {
+        if (GetComponent<UiMenuInputBehaviour>() == null)
+            gameObject.AddComponent<UiMenuInputBehaviour>();
+    }
+
     void Start()
     {
         if(prevBtn == null)         Debug.LogError("prevBtn is null");
@@ -33,7 +39,7 @@ public class UIConstruction : MonoBehaviour
         nextBtn.onClick.AddListener(Next);
         closeBtn.onClick.AddListener(Close);
 
-        InputManager.Instance.Actions.UI.Pagination.performed += OnPagination;
+        InputManager.Instance.UiPaginationPerformed += OnPagination;
 
         BuildGroups();
         ShowCategory(_categoryIndex);
@@ -123,14 +129,12 @@ public class UIConstruction : MonoBehaviour
     {
         _placementState.Clear();
         _gridCursor.SetActive(false);
-        InputManager.Instance.SwitchToPlayer();
         gameObject.SetActive(false);
     }
 
     public void Open()
     {
         gameObject.SetActive(true);
-        InputManager.Instance.SwitchToUI();
         _gridCursor.SetActive(true);
     }
     private void OnEnable()
@@ -145,6 +149,6 @@ public class UIConstruction : MonoBehaviour
     void OnDestroy()
     {
         if (InputManager.Instance == null) return;
-        InputManager.Instance.Actions.UI.Pagination.performed -= OnPagination;
+        InputManager.Instance.UiPaginationPerformed -= OnPagination;
     }
 }

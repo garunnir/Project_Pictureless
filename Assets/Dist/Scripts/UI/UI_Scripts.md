@@ -243,9 +243,31 @@ UI.cs 상속, ContentSizeFitter 필수
 **역할:** 프로젝트 전용 한글 폰트
 
 - `Katuri.otf` / `Katuri.ttf` — 원본 폰트 파일
-- `Katuri SDF.asset` — TextMeshPro용 SDF 렌더링 에셋
+- `Katuri SDF.asset` — TextMeshPro용 SDF 렌더링 에셋 (`Assets/Dist/Scripts/UI/Font/Katuri SDF.asset`)
 
-**효용:** UIVerticalView, UISender 등에서 `UILocalizationManager.localizedFonts`를 통해 언어별 TMP 폰트로 사용됨.
+**기본값 (필수):** Dist UI의 모든 `TextMeshProUGUI`는 **Katuri SDF**를 폰트 에셋으로 사용한다. TMP 기본값(Liberation Sans)이나 미지정은 사용하지 않는다.
+
+- 신규 UI 프리팹·베이크 스크립트: 위 경로의 `Katuri SDF.asset` 참조
+- 인벤 UI (`Visual/Prefabs/UIComponents/Inventory/`): `Grp_ItemListRow`, `Grp_ContainerSlot`의 TMP가 Katuri SDF를 참조
+- 에디터 베이크: `Dist/Inventory/Bake UI Prefabs` → `InventoryUIHierarchyBuilder.DefaultUIFontPath` 사용
+
+**효용:** UIVerticalView, UISender 등에서 `UILocalizationManager.localizedFonts`를 통해 언어별 TMP 폰트로 사용됨. 신규 UI도 동일 폰트를 기본으로 맞춘다.
+
+---
+
+## Inventory/ (신규 인벤 UI)
+
+경로: `Assets/Dist/Scripts/UI/Inventory/` · 프리팹: `Assets/Dist/Visual/Prefabs/UIComponents/Inventory/`
+
+| 프리팹 | 역할 |
+|--------|------|
+| `Grp_InventoryListWindow` | 리스트 + 사이드바 창 |
+| `Grp_ItemListRow` | 아이템 행 (LeanPool) |
+| `Grp_ContainerSlot` | 사이드바 컨테이너 슬롯 |
+
+**폰트:** 텍스트가 있는 행·슬롯 프리팹의 TMP는 **Katuri SDF** 고정. 레이아웃 재생성 시 `Dist → Inventory → Bake UI Prefabs` 메뉴 사용.
+
+**빈 아이콘:** 아이템 `_icon` 미지정 시 `ui_icon_empty.png` (`Visual/Sprites/Textures/UI/Inventory/`) 스프라이트를 `UIItemListRow._emptyIconSprite` 폴백으로 표시. 베이크 시 `InventoryUIHierarchyBuilder.EmptyItemIconPath` 참조.
 
 ---
 

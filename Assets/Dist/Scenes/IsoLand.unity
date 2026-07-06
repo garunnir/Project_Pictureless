@@ -26483,6 +26483,7 @@ GameObject:
   - component: {fileID: 525082049}
   - component: {fileID: 525082050}
   - component: {fileID: 525082051}
+  - component: {fileID: 525082052}
   m_Layer: 0
   m_Name: PopUpManager
   m_TagString: Untagged
@@ -26531,7 +26532,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12d4ccade72caf64186dcf4e648a0bc4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::UIOverlayRouter
-  _inventoryController: {fileID: 1383865928}
+  _inventoryController: {fileID: 525082052}
+--- !u!114 &525082052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 525082048}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: afa34e9711e153141bacc00519b4f196, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::UIInventoryController
+  _windowPrefab: {fileID: 7321731330271670947, guid: e79f6e4fcbb1ac64ba5d1b8b243725af, type: 3}
+  _primaryWindow: {fileID: 0}
+  _lootWindow: {fileID: 0}
+  _uiCanvas: {fileID: 715630606}
+  _lootWindowOffset: {x: 380, y: 0}
 --- !u!1001 &526094256
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -61785,7 +61803,7 @@ GameObject:
   - component: {fileID: 1383865919}
   - component: {fileID: 1383865927}
   - component: {fileID: 1383865926}
-  - component: {fileID: 1383865928}
+  - component: {fileID: 1383865929}
   m_Layer: 0
   m_Name: '>PlayerCharacter'
   m_TagString: Untagged
@@ -62082,7 +62100,7 @@ MonoBehaviour:
   _bodyDefinition: {fileID: 11400000, guid: 459888fd28594614794b08d47b418264, type: 2}
   _baseMaxWeight: 50
   _baseMaxVolume: 30
---- !u!114 &1383865928
+--- !u!114 &1383865929
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -62091,15 +62109,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1383865911}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: afa34e9711e153141bacc00519b4f196, type: 3}
+  m_Script: {fileID: 11500000, guid: b9295618bde8f1d41a1308245ea83916, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: DistScript::UIInventoryController
+  m_EditorClassIdentifier: DistScript::PlayerInventoryRuntime
   _host: {fileID: 1383865927}
   _detector: {fileID: 1383865926}
-  _primaryWindow: {fileID: 0}
-  _lootWindow: {fileID: 0}
-  _uiCanvas: {fileID: 715630606}
-  _seedDemoItems: 1
+  _seedDemoItemsOnStart: 1
 --- !u!1 &1384417763
 GameObject:
   m_ObjectHideFlags: 0

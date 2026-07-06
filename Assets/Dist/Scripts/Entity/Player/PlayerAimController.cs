@@ -41,16 +41,21 @@ public class PlayerAimController : MonoBehaviour
 
     void ConnectController()
     {
-        InputManager.Instance.Actions.Player.LookAt.started += OnLookAt;
-        InputManager.Instance.Actions.Player.LookAt.performed += OnLookAt;
-        InputManager.Instance.Actions.Player.LookAt.canceled += OnLookAtCanceled;
+        InputManager input = InputManager.Instance;
+        input.PlayerLookAtStarted += OnLookAt;
+        input.PlayerLookAtPerformed += OnLookAt;
+        input.PlayerLookAtCanceled += OnLookAtCanceled;
     }
 
     void DisconnectController()
     {
-        InputManager.Instance.Actions.Player.LookAt.started -= OnLookAt;
-        InputManager.Instance.Actions.Player.LookAt.performed -= OnLookAt;
-        InputManager.Instance.Actions.Player.LookAt.canceled -= OnLookAtCanceled;
+        InputManager input = InputManager.Instance;
+        if (input == null)
+            return;
+
+        input.PlayerLookAtStarted -= OnLookAt;
+        input.PlayerLookAtPerformed -= OnLookAt;
+        input.PlayerLookAtCanceled -= OnLookAtCanceled;
     }
 
     void OnLookAt(InputAction.CallbackContext context)
@@ -66,7 +71,9 @@ public class PlayerAimController : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!_isAiming) return;
+        if (!_isAiming || !InputManager.Instance.IsPlayerActionEnabled(PlayerAction.Aim))
+            return;
+
         Camera cam = _refCam != null ? _refCam : Camera.main;
         Vector3 origin = transform.position + Vector3.up * _castOriginYOffset;
 

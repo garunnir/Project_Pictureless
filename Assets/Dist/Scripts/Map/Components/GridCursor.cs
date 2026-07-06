@@ -26,10 +26,10 @@ public class GridCursor : MonoBehaviour
     {
         if (_camera == null) _camera = Camera.main;
 
-        var actions = InputManager.Instance.Actions;
-        actions.UI.Navigate.started  += OnNavigateStarted;
-        actions.UI.Navigate.canceled += OnNavigateCanceled;
-        actions.UI.Submit.performed  += OnSubmit;
+        InputManager input = InputManager.Instance;
+        input.UiNavigateStarted += OnNavigateStarted;
+        input.UiNavigateCanceled += OnNavigateCanceled;
+        input.UiSubmitPerformed += OnSubmit;
     }
 
     void Update()
@@ -162,10 +162,12 @@ public class GridCursor : MonoBehaviour
 
     void OnDestroy()
     {
-        if (InputManager.Instance == null) return;
-        var actions = InputManager.Instance.Actions;
-        actions.UI.Navigate.started  -= OnNavigateStarted;
-        actions.UI.Navigate.canceled -= OnNavigateCanceled;
-        actions.UI.Submit.performed  -= OnSubmit;
+        InputManager input = InputManager.Instance;
+        if (input == null)
+            return;
+
+        input.UiNavigateStarted -= OnNavigateStarted;
+        input.UiNavigateCanceled -= OnNavigateCanceled;
+        input.UiSubmitPerformed -= OnSubmit;
     }
 }
