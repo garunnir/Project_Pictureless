@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 759fd3be5a268804cb9b354ab0f3dc0b, type: 3}
+  m_Name: ItemCatalog
+  m_EditorClassIdentifier: DistScript::Garunnir.Runtime.Gameplay.Item.ItemCatalogSO
+  _items:
+  - {fileID: 11400000, guid: c6e995c2e47a77f4a9dfb37b979af057, type: 2}
+  - {fileID: 11400000, guid: d73beeebfad9c6e4eab6a140e469c88e, type: 2}

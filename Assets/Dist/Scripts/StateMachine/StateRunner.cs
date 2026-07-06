@@ -7,7 +7,7 @@ public interface IFrameState
     void Exit();
 }
 
-public class StateRunner : Singleton<StateRunner>
+public class StateRunner : SceneSingleton<StateRunner>
 {
     IFrameState _state;
 

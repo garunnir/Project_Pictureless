@@ -2,14 +2,15 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class InputManager : Singleton<InputManager>
+public class InputManager : SceneSingleton<InputManager>
 {
     public static Func<bool> click;
 
     public InputActions Actions { get; private set; }
 
-    void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         click = IsClike;
         Actions = new InputActions();
         Actions.Player.Enable();
@@ -27,9 +28,10 @@ public class InputManager : Singleton<InputManager>
         Actions.Player.Enable();
     }
 
-    void OnDestroy()
+    protected override void OnDestroy()
     {
-        Actions.Dispose();
+        Actions?.Dispose();
+        base.OnDestroy();
     }
 
     private bool IsClike() { return Pointer.current?.press.wasPressedThisFrame ?? false; }

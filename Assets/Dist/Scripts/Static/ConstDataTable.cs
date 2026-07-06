@@ -70,11 +70,9 @@ public class ConstDataTable
             public const string Personalized = "Conv.PersonalizedConversation";
         }
     }
-    public class Equipment
+    public class Item
     {
-        /// <summary>
-        /// 무기
-        /// </summary>
+        /// <summary>무기 인덱스 — Dialogue Actor 필드 키 (레거시 Equipment.* 문자열 유지)</summary>
         public const string Weapon = "Equipment.Weapon";
         public const string Equip = "Equipment.Equip";
     }

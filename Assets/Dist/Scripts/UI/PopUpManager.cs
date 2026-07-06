@@ -4,7 +4,7 @@ using UnityEngine;
 using Interactions;
 namespace UIManagement
 {
-    public class PopUpManager : Singleton<PopUpManager>
+    public class PopUpManager : SceneSingleton<PopUpManager>
 {
     [SerializeField] private List<UI> popups; // 인스펙터에 드래그
     private Dictionary<System.Type, UI> _popupMap;

@@ -1,0 +1,28 @@
+{
+    "name": "DistScript.Legacy.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:faba5e8a51554044583b9d7724baa5ad",
+        "DistScript.Legacy",
+        "DialogueSystem",
+        "DialogueSystemEditor",
+        "PixelCrushers",
+        "GUID:25bb11dd35c063e4aa2c7cccc0212586",
+        "GUID:cd0624525ae0db442b9d3d7f27953406"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+        "Sirenix.OdinInspector.Attributes.dll",
+        "Sirenix.OdinInspector.Editor.dll",
+        "Sirenix.Utilities.Editor.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
