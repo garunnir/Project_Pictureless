@@ -48,13 +48,17 @@ MonoBehaviour:
   gridPos: {x: 0, y: 0, z: 0}
   size: {x: 1, y: 1, z: 1}
   prefabId: 
-  tileType: 0
-  wallEdgeFace: 0
+  placementSlot: 0
+  _legacyTileType: 0
+  wallFace: 0
   gizmoCellSize: 1
   drawGizmoGrid: 1
   gizmoGridColor: {r: 0, g: 0.7, b: 0.9, a: 0.6}
   _shadeController: {fileID: 0}
   _selectionLayer: {fileID: 11400000, guid: c70ec1a880df4f04d90d465eb917ea4f, type: 2}
+  _selectionApplyMode: 0
+  _selectionEmphasisAmount: 0.2
+  _blockedTraceObject: {fileID: 0}
 --- !u!1 &4165041982396032203
 GameObject:
   m_ObjectHideFlags: 0
@@ -128,7 +132,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2512235035036671797}
-  - component: {fileID: 9109397830780418345}
   m_Layer: 0
   m_Name: Renderer
   m_TagString: Untagged
@@ -151,61 +154,3 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5349916790053248383}
   m_LocalEulerAnglesHint: {x: 30, y: 0, z: 0}
---- !u!212 &9109397830780418345
-SpriteRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7567173381760207438}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: ffb7d1354fddb75499351ed63c28d060, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 0
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 2ae3ab7f4fd82054bb6e9638d0db4e7b, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
-  m_FlipY: 0
-  m_DrawMode: 0
-  m_Size: {x: 1.0546875, y: 1.09375}
-  m_AdaptiveModeThreshold: 0.5
-  m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
-  m_SpriteSortPoint: 0

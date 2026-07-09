@@ -11,6 +11,9 @@ public static class Config
         public static bool PlayerSight = false;
         public static bool PlayerPosUpdate = false;
 
+        public static bool Inventory = false;
+        public static bool InventoryProximityScan = false;
+
         public static bool TileMapRuntime = true;
         public static bool FloorAlgorithm = true;   // Algorithm logs/diagnostics
         public static bool TileBfsSceneOverlay = true; // SceneView BFS/occlusion lines/legend

@@ -23,19 +23,27 @@ static class InventoryUIHierarchyBuilder
     {
         var row = CreateRect("Grp_ItemListRow", null, RowColor);
         var rowRect = row.GetComponent<RectTransform>();
+        rowRect.anchorMin = new Vector2(0f, 0.5f);
+        rowRect.anchorMax = new Vector2(1f, 0.5f);
+        rowRect.pivot = new Vector2(0.5f, 0.5f);
         rowRect.sizeDelta = new Vector2(0f, 36f);
         var layout = row.AddComponent<HorizontalLayoutGroup>();
         layout.padding = new RectOffset(8, 8, 4, 4);
         layout.spacing = 8f;
         layout.childAlignment = TextAnchor.MiddleLeft;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = false;
+        layout.childForceExpandHeight = false;
         row.AddComponent<LayoutElement>().preferredHeight = 36f;
 
         Image icon = CreateIcon("Icon", row.transform, 32f);
-        var category = CreateTmp("Category", row.transform, 80f, 14);
-        var name = CreateTmp("Name", row.transform, 200f, 16);
-        var detail = CreateTmp("Detail", row.transform, 160f, 14);
+        var category = CreateTmp("Category", row.transform, 64f, 14);
+        var name = CreateTmp("Name", row.transform, 0f, 16, flexibleWidth: true);
+        var detail = CreateTmp("Detail", row.transform, 88f, 14);
 
         var rowView = row.AddComponent<UIItemListRow>();
+        SetReference(rowView, "_backgroundImage", row.GetComponent<Image>());
         SetReference(rowView, "_iconImage", icon);
         SetReference(rowView, "_emptyIconSprite", LoadEmptyItemIcon());
         SetReference(rowView, "_categoryText", category);
@@ -71,26 +79,72 @@ static class InventoryUIHierarchyBuilder
         rootRect.anchorMin = new Vector2(0.5f, 0.5f);
         rootRect.anchorMax = new Vector2(0.5f, 0.5f);
         rootRect.pivot = new Vector2(0.5f, 0.5f);
-        rootRect.sizeDelta = new Vector2(720f, 420f);
+        rootRect.sizeDelta = new Vector2(480f, 360f);
         rootRect.anchoredPosition = Vector2.zero;
 
+        var headerArea = CreateRect("Area_Header", root.transform, new Color(0.16f, 0.16f, 0.16f, 1f));
+        var headerRect = headerArea.GetComponent<RectTransform>();
+        headerRect.anchorMin = new Vector2(0f, 1f);
+        headerRect.anchorMax = new Vector2(1f, 1f);
+        headerRect.pivot = new Vector2(0.5f, 1f);
+        headerRect.anchoredPosition = Vector2.zero;
+        headerRect.sizeDelta = new Vector2(0f, InventoryWindowLayout.HeaderHeight);
+        headerArea.AddComponent<InventoryWindowDragHandler>();
+
+        var headerTitle = CreateTmp("Txt_Title", headerArea.transform, 0f, 14);
+        headerTitle.text = "Inventory";
+        headerTitle.alignment = TextAlignmentOptions.MidlineLeft;
+        headerTitle.raycastTarget = false;
+        Stretch(headerTitle.rectTransform, 10f, 10f, 0f, 0f);
+
         var listArea = CreateRect("Area_List", root.transform, new Color(0.1f, 0.1f, 0.1f, 1f));
-        Stretch(listArea.GetComponent<RectTransform>(), 10f, 10f, 130f, 10f);
+        var listRect = listArea.GetComponent<RectTransform>();
+        Stretch(listRect, 10f, 10f, InventoryWindowLayout.HeaderHeight + 10f, 10f);
 
         var sidebarArea = CreateRect("Area_Sidebar", root.transform, new Color(0.08f, 0.08f, 0.08f, 1f));
         var sidebarRect = sidebarArea.GetComponent<RectTransform>();
         sidebarRect.anchorMin = new Vector2(1f, 0f);
         sidebarRect.anchorMax = new Vector2(1f, 1f);
         sidebarRect.pivot = new Vector2(1f, 0.5f);
-        sidebarRect.anchoredPosition = new Vector2(-10f, 0f);
-        sidebarRect.sizeDelta = new Vector2(110f, -20f);
+        sidebarRect.offsetMin = new Vector2(-120f, 10f);
+        sidebarRect.offsetMax = new Vector2(-10f, -(InventoryWindowLayout.HeaderHeight + 10f));
+
+        const float edgeThickness = 6f;
+        const float cornerSize = 10f;
+        var handleColor = new Color(1f, 1f, 1f, 0.02f);
+
+        CreateResizeHandle(root.transform, "Area_ResizeHandle_Left", handleColor, WindowResizeEdge.Left,
+            new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), Vector2.zero,
+            new Vector2(edgeThickness, 0f));
+        CreateResizeHandle(root.transform, "Area_ResizeHandle_Right", handleColor, WindowResizeEdge.Right,
+            new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f), Vector2.zero,
+            new Vector2(edgeThickness, 0f));
+        CreateResizeHandle(root.transform, "Area_ResizeHandle_Top", handleColor, WindowResizeEdge.Top,
+            new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), Vector2.zero,
+            new Vector2(0f, edgeThickness));
+        CreateResizeHandle(root.transform, "Area_ResizeHandle_Bottom", handleColor, WindowResizeEdge.Bottom,
+            new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), Vector2.zero,
+            new Vector2(0f, edgeThickness));
+        CreateResizeHandle(root.transform, "Area_ResizeHandle_TopLeft", handleColor, WindowResizeEdge.TopLeft,
+            new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), Vector2.zero,
+            new Vector2(cornerSize, cornerSize));
+        CreateResizeHandle(root.transform, "Area_ResizeHandle_TopRight", handleColor, WindowResizeEdge.TopRight,
+            new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f), Vector2.zero,
+            new Vector2(cornerSize, cornerSize));
+        CreateResizeHandle(root.transform, "Area_ResizeHandle_BottomLeft", handleColor, WindowResizeEdge.BottomLeft,
+            new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f), Vector2.zero,
+            new Vector2(cornerSize, cornerSize));
+        CreateResizeHandle(root.transform, "Area_ResizeHandle_BottomRight", handleColor, WindowResizeEdge.BottomRight,
+            new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), Vector2.zero,
+            new Vector2(cornerSize, cornerSize));
 
         UIItemListView listView = listArea.AddComponent<UIItemListView>();
         ScrollRect scroll = listArea.AddComponent<ScrollRect>();
-        var viewport = CreateRect("Viewport", listArea.transform, Color.white);
+        var viewport = CreateRect("Viewport", listArea.transform, new Color(1f, 1f, 1f, 0f));
         Stretch(viewport.GetComponent<RectTransform>(), 0f, 0f, 0f, 0f);
-        var mask = viewport.AddComponent<Mask>();
-        mask.showMaskGraphic = false;
+        Image viewportImage = viewport.GetComponent<Image>();
+        viewportImage.raycastTarget = true;
+        viewport.gameObject.AddComponent<RectMask2D>();
         var content = CreateRect("Content", viewport.transform, Color.clear);
         var contentRect = content.GetComponent<RectTransform>();
         contentRect.anchorMin = new Vector2(0f, 1f);
@@ -100,13 +154,21 @@ static class InventoryUIHierarchyBuilder
         contentRect.sizeDelta = new Vector2(0f, 0f);
         var contentLayout = content.AddComponent<VerticalLayoutGroup>();
         contentLayout.childControlHeight = true;
+        contentLayout.childControlWidth = true;
+        contentLayout.childForceExpandWidth = true;
         contentLayout.childForceExpandHeight = false;
         contentLayout.spacing = 4f;
         contentLayout.padding = new RectOffset(4, 4, 4, 4);
         content.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        UIInventoryListDropZone dropZone = viewport.AddComponent<UIInventoryListDropZone>();
+        InventoryListMarqueeSelector marquee = viewport.AddComponent<InventoryListMarqueeSelector>();
+        RectTransform marqueeRect = CreateMarqueeSelectionRect(viewport.transform);
+        SetReference(marquee, "_selectionRect", marqueeRect);
         scroll.viewport = viewport.GetComponent<RectTransform>();
         scroll.content = contentRect;
         scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
         viewport.AddComponent<InventoryScrollDragHandler>();
         SetReference(listView, "_contentRoot", contentRect);
         SetReference(listView, "_rowPrefab", rowPrefab);
@@ -125,7 +187,46 @@ static class InventoryUIHierarchyBuilder
         var window = root.AddComponent<UIInventoryListWindow>();
         SetReference(window, "_listView", listView);
         SetReference(window, "_sidebar", sidebar);
+        SetReference(window, "_listArea", listRect);
+        SetReference(window, "_sidebarArea", sidebarRect);
+        SetReference(window, "_windowDragHandler", headerArea.GetComponent<InventoryWindowDragHandler>());
+        SetReference(window, "_headerTitle", headerTitle);
         return window;
+    }
+
+    static RectTransform CreateMarqueeSelectionRect(Transform parent)
+    {
+        var go = CreateRect("MarqueeSelection", parent, new Color(0.35f, 0.55f, 0.85f, 0.25f));
+        var rect = go.GetComponent<RectTransform>();
+        rect.pivot = Vector2.zero;
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.zero;
+        go.GetComponent<Image>().raycastTarget = false;
+        go.SetActive(false);
+        return rect;
+    }
+
+    static void CreateResizeHandle(
+        Transform parent,
+        string name,
+        Color color,
+        WindowResizeEdge edge,
+        Vector2 anchorMin,
+        Vector2 anchorMax,
+        Vector2 pivot,
+        Vector2 anchoredPosition,
+        Vector2 sizeDelta)
+    {
+        var handle = CreateRect(name, parent, color);
+        var rect = handle.GetComponent<RectTransform>();
+        rect.anchorMin = anchorMin;
+        rect.anchorMax = anchorMax;
+        rect.pivot = pivot;
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = sizeDelta;
+
+        InventoryWindowResizeHandler resizeHandler = handle.AddComponent<InventoryWindowResizeHandler>();
+        SetEnumReference(resizeHandler, "_edge", edge);
     }
 
     static GameObject CreateRect(string name, Transform parent, Color color)
@@ -138,7 +239,7 @@ static class InventoryUIHierarchyBuilder
         return go;
     }
 
-    static TMP_Text CreateTmp(string name, Transform parent, float width, float fontSize)
+    static TMP_Text CreateTmp(string name, Transform parent, float width, float fontSize, bool flexibleWidth = false)
     {
         var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
         go.transform.SetParent(parent, false);
@@ -148,9 +249,17 @@ static class InventoryUIHierarchyBuilder
         text.fontSize = fontSize;
         text.color = Color.white;
         text.alignment = TextAlignmentOptions.MidlineLeft;
-        if (width > 0f)
+        text.overflowMode = TextOverflowModes.Ellipsis;
+        text.enableWordWrapping = false;
+
+        var layout = go.AddComponent<LayoutElement>();
+        if (flexibleWidth)
         {
-            var layout = go.AddComponent<LayoutElement>();
+            layout.flexibleWidth = 1f;
+            layout.minWidth = 48f;
+        }
+        else if (width > 0f)
+        {
             layout.preferredWidth = width;
         }
 
@@ -179,6 +288,20 @@ static class InventoryUIHierarchyBuilder
         rect.anchorMax = Vector2.one;
         rect.offsetMin = new Vector2(left, bottom);
         rect.offsetMax = new Vector2(-right, -top);
+    }
+
+    static void SetEnumReference(Object target, string propertyName, System.Enum value)
+    {
+        var serialized = new SerializedObject(target);
+        SerializedProperty property = serialized.FindProperty(propertyName);
+        if (property == null)
+        {
+            Debug.LogError($"[InventoryUIHierarchyBuilder] Missing property '{propertyName}' on {target.GetType().Name}.");
+            return;
+        }
+
+        property.enumValueIndex = System.Convert.ToInt32(value);
+        serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 
     static void SetReference(Object target, string propertyName, Object value)

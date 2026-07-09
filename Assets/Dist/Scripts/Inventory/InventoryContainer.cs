@@ -38,6 +38,37 @@ public sealed class InventoryContainer
 
     internal List<ItemStack> MutableStacks => _stacks;
 
+    public int AddItem(ItemDefinitionSO item, int count)
+    {
+        if (item == null || count <= 0)
+            return 0;
+
+        int remaining = count;
+        for (int i = 0; i < _stacks.Count && remaining > 0; i++)
+        {
+            ItemStack existing = _stacks[i];
+            if (existing.Item != item)
+                continue;
+
+            int space = item.MaxStack - existing.Count;
+            if (space <= 0)
+                continue;
+
+            int merged = Math.Min(space, remaining);
+            existing.SetCount(existing.Count + merged);
+            remaining -= merged;
+        }
+
+        while (remaining > 0)
+        {
+            int chunk = Math.Min(item.MaxStack, remaining);
+            _stacks.Add(new ItemStack(item, chunk));
+            remaining -= chunk;
+        }
+
+        return count;
+    }
+
     public float GetTotalWeight()
     {
         float total = 0f;

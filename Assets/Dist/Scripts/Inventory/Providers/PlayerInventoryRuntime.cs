@@ -11,13 +11,16 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
 {
     [Required, SerializeField] PlayerInventoryHost _host;
     [Required, SerializeField] NearbyContainerDetector _detector;
-    [SerializeField] bool _seedDemoItemsOnStart = true;
+    [SerializeField] bool _seedDemoItemsOnStart = false;
+
+    readonly LootProximityCoordinator _lootProximity = new();
 
     InventorySession _session;
     bool _inventoryContextActive;
 
     public InventorySession Session => _session;
     public PlayerInventoryHost Host => _host;
+    public LootProximityCoordinator LootProximity => _lootProximity;
     public bool IsInventoryContextActive => _inventoryContextActive;
 
     public static PlayerInventoryRuntime Active { get; private set; }
@@ -27,7 +30,7 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
     {
         EnsureReferences();
         _session = new InventorySession();
-        _detector.Bind(_session);
+        _detector.Bind(_session, _lootProximity);
     }
 
     void Start()
@@ -73,6 +76,7 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
             return;
 
         _host.RegisterToSession(_session);
+        _session.RefreshNestedContainers();
         _detector.Activate();
         _inventoryContextActive = true;
     }
@@ -89,6 +93,14 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
 
     public bool TryAddSidebarContainer(InventoryContainer container) =>
         _session != null && _session.TryAddSidebarContainer(container);
+
+    public void RefreshNearbyContainers() => _detector?.RefreshImmediate();
+
+    public bool IsWorldLootContainer(string instanceId) =>
+        _detector != null && _detector.IsManagedWorldContainer(instanceId);
+
+    public bool TryIncludeLootContainer(InventoryContainer container) =>
+        _detector != null && _detector.TryIncludeManagedContainer(container);
 
     public void SeedContainerIfEmpty(InventoryContainer container) =>
         InventoryDemoSeeder.SeedIfEmpty(container);

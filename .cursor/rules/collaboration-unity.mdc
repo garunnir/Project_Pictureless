@@ -17,6 +17,19 @@ In `Update`/`FixedUpdate`/`LateUpdate`, physics callbacks, Jobs, or `ScriptableR
 Jobs (Burst): managed allocation prohibited — zero-alloc mandatory; verify unmanaged types.  
 If unverified: include `Unverified`, assumptions, expected risk, and how to verify.
 
+## Prefab Component Wiring
+
+**모든 프리팹**(월드·UI·캐릭터·가구 등 `Assets/**` 내 `.prefab`)에는 런타임 `AddComponent`로 MonoBehaviour를 붙이지 않는다.
+
+- 필요한 컴포넌트는 **프리팹 에셋에 미리 배치**한다.
+- 런타임 스크립트는 `[RequireComponent]` / `[SerializeField]` 참조 + Awake·OnEnable에서 `GetComponent` 캐시만 허용한다.
+- `TryGetComponent` 후 없으면 `AddComponent` 하는 **폴백 패턴 금지** (프리팹 미배치를 런타임에 메우지 않는다).
+- **예외** (프리팹 인스턴스가 아닌 경우만):
+  - Editor bake·프리팹 생성 스크립트 (`InventoryUIHierarchyBuilder` 등) — bake 시점 `AddComponent`는 허용
+  - 런타임 팩토리·풀·`new GameObject`로 **처음부터 동적 생성**하는 오브젝트
+  - `#if UNITY_EDITOR` / 디버그 전용 진단 스크립트
+- **에이전트 의무**: 코드 리뷰·구현·사용자 변경 검토 시, 프리팹 인스턴스 경로에서 `AddComponent`가 보이면 **반드시 위반으로 지적**한다. 사용자가 직접 작성한 코드도 예외 없음.
+
 ## Pre-implementation Checklist (Agent only)
 
 Cover Rule 1 → Rule 5; add Rule 2 / Rule 6 when applicable.  

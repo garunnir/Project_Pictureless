@@ -10,7 +10,9 @@ public sealed class UIOverlayRouter : MonoBehaviour
 {
     public static UIOverlayRouter Instance { get; private set; }
 
-    [Required, SerializeField] UIInventoryController _inventoryController;
+    [Required, SerializeField] MonoBehaviour _inventoryController;
+
+    IInventoryOverlayController InventoryController => _inventoryController as IInventoryOverlayController;
 
     void Awake()
     {
@@ -32,21 +34,39 @@ public sealed class UIOverlayRouter : MonoBehaviour
     void OnValidate()
     {
         if (!_inventoryController)
-            _inventoryController = FindAnyObjectByType<UIInventoryController>();
+        {
+            MonoBehaviour[] candidates = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (int i = 0; i < candidates.Length; i++)
+            {
+                if (candidates[i] is IInventoryOverlayController)
+                {
+                    _inventoryController = candidates[i];
+                    break;
+                }
+            }
+        }
+
+        if (_inventoryController != null && _inventoryController is not IInventoryOverlayController)
+        {
+            Debug.LogWarning(
+                $"[UIOverlayRouter] Assigned component does not implement {nameof(IInventoryOverlayController)}.",
+                this);
+            _inventoryController = null;
+        }
     }
 
-    public void OpenInventory() => _inventoryController?.OpenInventory();
+    public void OpenInventory() => InventoryController?.OpenInventory();
 
-    public void CloseInventory() => _inventoryController?.CloseInventory();
+    public void CloseInventory() => InventoryController?.CloseInventory();
 
-    public void ToggleInventory() => _inventoryController?.ToggleInventory();
+    public void ToggleInventory() => InventoryController?.ToggleInventory();
 
     public void OpenLootFromInteractable(ContainerInteractable interactable)
     {
         if (interactable?.Container == null)
             return;
 
-        _inventoryController?.OpenLoot(interactable.Container);
+        InventoryController?.OpenLoot(interactable.Container);
     }
 
     public void HandlePopup(UIPopupType type, object data)

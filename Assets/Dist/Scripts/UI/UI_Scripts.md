@@ -257,17 +257,9 @@ UI.cs 상속, ContentSizeFitter 필수
 
 ## Inventory/ (신규 인벤 UI)
 
-경로: `Assets/Dist/Scripts/UI/Inventory/` · 프리팹: `Assets/Dist/Visual/Prefabs/UIComponents/Inventory/`
+인벤토리 UI 상세 문서는 아래로 분리:
 
-| 프리팹 | 역할 |
-|--------|------|
-| `Grp_InventoryListWindow` | 리스트 + 사이드바 창 |
-| `Grp_ItemListRow` | 아이템 행 (LeanPool) |
-| `Grp_ContainerSlot` | 사이드바 컨테이너 슬롯 |
-
-**폰트:** 텍스트가 있는 행·슬롯 프리팹의 TMP는 **Katuri SDF** 고정. 레이아웃 재생성 시 `Dist → Inventory → Bake UI Prefabs` 메뉴 사용.
-
-**빈 아이콘:** 아이템 `_icon` 미지정 시 `ui_icon_empty.png` (`Visual/Sprites/Textures/UI/Inventory/`) 스프라이트를 `UIItemListRow._emptyIconSprite` 폴백으로 표시. 베이크 시 `InventoryUIHierarchyBuilder.EmptyItemIconPath` 참조.
+- `Assets/Dist/Scripts/UI/Inventory/INVENTORY_UI.md`
 
 ---
 

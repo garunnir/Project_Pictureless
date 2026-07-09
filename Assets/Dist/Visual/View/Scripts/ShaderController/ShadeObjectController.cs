@@ -9,6 +9,7 @@ public class ShadeObjectController : ShaderController
     private int _ghostAmountId;
     private int _sightLineBuildingHiddenId;
     private int _characterOcclusionId;
+    private int _emphasisBlendId;
 
     protected override void CachePropertyIDs()
     {
@@ -16,6 +17,7 @@ public class ShadeObjectController : ShaderController
         _ghostAmountId = Shader.PropertyToID("_GhostAmount");
         _sightLineBuildingHiddenId = Shader.PropertyToID("_SightLineBuildingHidden");
         _characterOcclusionId = Shader.PropertyToID("_CharacterOcclusion");
+        _emphasisBlendId = Shader.PropertyToID("_EmphasisBlend");
     }
 
     public void SetAdditionalLightEnabled(bool enabled) =>
@@ -62,5 +64,13 @@ public class ShadeObjectController : ShaderController
             return;
         }
         Mat.SetFloat(_characterOcclusionId, Mathf.Clamp01(occlusion01));
+    }
+
+    public void SetEmphasisBlend(float blend01)
+    {
+        if (Mat == null)
+            return;
+
+        Mat.SetFloat(_emphasisBlendId, Mathf.Clamp01(blend01));
     }
 }

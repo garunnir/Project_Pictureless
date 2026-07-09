@@ -1,43 +1,125 @@
-// ============================================================
-// UIItemListRow — 아이템 리스트 한 행 바인딩
-// ============================================================
-
-using Garunnir.Runtime.Gameplay.Item;
-using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
-
-public sealed class UIItemListRow : MonoBehaviour
-{
-    [SerializeField] TMP_Text _categoryText;
-    [SerializeField] TMP_Text _nameText;
-    [SerializeField] TMP_Text _detailText;
-    [SerializeField] Image _iconImage;
-    [SerializeField] Sprite _emptyIconSprite;
-
-    public void Bind(ItemStack stack)
-    {
-        if (stack?.Item == null)
-        {
-            gameObject.SetActive(false);
-            return;
-        }
-
-        gameObject.SetActive(true);
-        ItemDefinitionSO item = stack.Item;
-
-        if (_categoryText != null)
-            _categoryText.text = item.Category.ToString();
-        if (_nameText != null)
-            _nameText.text = UITextPresenter.GetItemName(item);
-        if (_detailText != null)
-            _detailText.text = $"x{stack.Count}  {stack.TotalWeight:0.##}kg  {stack.TotalVolume:0.##}L";
-
-        if (_iconImage != null)
-        {
-            Sprite icon = item.Icon != null ? item.Icon : _emptyIconSprite;
-            _iconImage.enabled = icon != null;
-            _iconImage.sprite = icon;
-        }
-    }
-}
+// ============================================================
+// UIItemListRow — 아이템 리스트 한 행 (바인딩 + 선택 + 드래그)
+// ============================================================
+
+using System.Collections.Generic;
+using Garunnir.Runtime.Gameplay.Item;
+using TMPro;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+public sealed class UIItemListRow : MonoBehaviour,
+    IBeginDragHandler,
+    IDragHandler,
+    IEndDragHandler
+{
+    static readonly Color NormalColor = new(0.18f, 0.18f, 0.18f, 1f);
+    static readonly Color SelectedColor = new(0.28f, 0.38f, 0.48f, 1f);
+
+    [SerializeField] TMP_Text _categoryText;
+    [SerializeField] TMP_Text _nameText;
+    [SerializeField] TMP_Text _detailText;
+    [SerializeField] Image _iconImage;
+    [SerializeField] Image _backgroundImage;
+    [SerializeField] Sprite _emptyIconSprite;
+
+    ItemStack _stack;
+    InventoryContainer _ownerContainer;
+    InventoryListSelection _selection;
+    IInventoryItemDragHost _dragHost;
+
+    public ItemStack Stack => _stack;
+    public RectTransform RectTransform => transform as RectTransform;
+
+    public void Bind(
+        ItemStack stack,
+        InventoryContainer ownerContainer,
+        InventoryListSelection selection,
+        IInventoryItemDragHost dragHost)
+    {
+        _stack = stack;
+        _ownerContainer = ownerContainer;
+        _selection = selection;
+        _dragHost = dragHost;
+
+        if (_backgroundImage == null)
+            TryGetComponent(out _backgroundImage);
+
+        if (stack?.Item == null)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+
+        gameObject.SetActive(true);
+        ItemDefinitionSO item = stack.Item;
+
+        if (_categoryText != null)
+        {
+            _categoryText.overflowMode = TextOverflowModes.Ellipsis;
+            _categoryText.text = item.Category.ToString();
+        }
+
+        if (_nameText != null)
+        {
+            _nameText.overflowMode = TextOverflowModes.Ellipsis;
+            _nameText.text = UITextPresenter.GetItemName(item);
+        }
+
+        if (_detailText != null)
+        {
+            _detailText.overflowMode = TextOverflowModes.Ellipsis;
+            _detailText.text = $"x{stack.Count}  {stack.TotalWeight:0.##}kg  {stack.TotalVolume:0.##}L";
+        }
+
+        if (_iconImage != null)
+        {
+            Sprite icon = item.Icon != null ? item.Icon : _emptyIconSprite;
+            _iconImage.enabled = icon != null;
+            _iconImage.sprite = icon;
+        }
+
+        RefreshSelectionVisual();
+    }
+
+    public void RefreshSelectionVisual()
+    {
+        if (_backgroundImage == null)
+            return;
+
+        bool selected = _selection != null && _stack != null && _selection.IsSelected(_stack);
+        _backgroundImage.color = selected ? SelectedColor : NormalColor;
+    }
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        if (_stack == null || _ownerContainer == null || _selection == null || _dragHost == null)
+            return;
+
+        if (!_selection.IsSelected(_stack))
+            _selection.SetSingle(_stack);
+
+        IReadOnlyList<ItemStack> stacks = _selection.GetSelectedStacks();
+        InventoryDragState.Begin(_ownerContainer, _selection, stacks);
+
+        _dragHost.OnItemDragStarted();
+        _dragHost.UpdateDragGhost(eventData.position, stacks.Count);
+
+        eventData.Use();
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (!InventoryDragState.IsDragging)
+            return;
+
+        _dragHost?.UpdateDragGhost(eventData.position, _selection?.Count ?? 1);
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        _dragHost?.HideDragGhost();
+        _dragHost?.OnItemDragEnded();
+    }
+}

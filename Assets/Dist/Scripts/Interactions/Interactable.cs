@@ -1,6 +1,12 @@
 using UnityEngine;
 namespace Interactions
 {
+public interface IInteractableFocusVisual
+{
+    void OnFocusVisual(GameObject interactor);
+    void OnUnfocusVisual(GameObject interactor);
+}
+
 public interface IInteractable
 {
     Transform InteractTransform { get; } // UI용 위치 등
@@ -14,12 +20,20 @@ public abstract class Interactable : MonoBehaviour, IInteractable
 {
     [SerializeField] protected string displayName;
     [SerializeField] protected string hintText;   // "E 키: 문 열기" 이런 거
-    [SerializeField] protected SpriteRenderer _outlineSpriteRenderer;
+    IInteractableFocusVisual _focusVisual;
 
     public virtual Transform InteractTransform => transform;
     protected virtual void Awake()
     {
-        _outlineSpriteRenderer= GetComponentInChildren<SpriteRenderer>();
+        MonoBehaviour[] behaviours = GetComponentsInChildren<MonoBehaviour>(true);
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (behaviours[i] is IInteractableFocusVisual visual)
+            {
+                _focusVisual = visual;
+                break;
+            }
+        }
     }
     public virtual bool CanInteract(GameObject interactor) => true;
 
@@ -28,17 +42,13 @@ public abstract class Interactable : MonoBehaviour, IInteractable
     public virtual void OnFocus(GameObject interactor)
     {
         UIEvents.RequestPopup(UIPopupType.InteractionHint, this);
-        // 하이라이트, 아웃라인, UI 표시 등'
-        if(_outlineSpriteRenderer!=null)
-        _outlineSpriteRenderer.color = Color.green;
+        _focusVisual?.OnFocusVisual(interactor);
     }
 
     public virtual void OnUnfocus(GameObject interactor)
     {
-        // 하이라이트 해제, UI 숨김 등
-               UIEvents.RequestPopup(UIPopupType.none, this);
-        if(_outlineSpriteRenderer!=null)
-        _outlineSpriteRenderer.color = Color.white;
+        UIEvents.RequestPopup(UIPopupType.none, this);
+        _focusVisual?.OnUnfocusVisual(interactor);
     }
 
     public string DisplayName => displayName;

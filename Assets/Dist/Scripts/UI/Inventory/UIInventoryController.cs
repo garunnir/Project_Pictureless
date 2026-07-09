@@ -4,29 +4,44 @@
 // [A] UiMenu 입력은 사용하지 않음 (건설 UI 전용).
 // 창 위 마우스 구간: Zoom/Aim만 SuppressPlayerAction. Move(WASD)는 유지.
 
+using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-public sealed class UIInventoryController : MonoBehaviour, IInventoryScrollDragHost
+public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayController, IInventoryScrollDragHost, IInventoryItemDragHost
 {
     [Required, SerializeField] UIInventoryListWindow _windowPrefab;
     [SerializeField] UIInventoryListWindow _primaryWindow;
     [SerializeField] UIInventoryListWindow _lootWindow;
     [SerializeField] Canvas _uiCanvas;
-    [SerializeField] Vector2 _lootWindowOffset = new(380f, 0f);
+    [SerializeField] Vector2 _primaryWindowInitialPosition = new(-220f, 0f);
+    [SerializeField] Vector2 _lootWindowInitialPosition = new(220f, 0f);
 
     PlayerInventoryRuntime _activeRuntime;
     GameObject _scrollDragOverlay;
+    UIInventoryDragGhost _dragGhost;
     int _scrollDragDepth;
-    bool _isOpen;
+    bool _isPrimaryOpen;
+    bool _isLootOpen;
+    bool _cachedSuppressMouseActions;
+    bool _hasCachedSuppressState;
+
+    bool IsAnyWindowOpen => _isPrimaryOpen || _isLootOpen;
+
+    static void SetWindowActive(UIInventoryListWindow window, bool active)
+    {
+        if (window)
+            window.gameObject.SetActive(active);
+    }
 
     void Awake()
     {
         EnsureReferences();
         EnsureWindows();
         EnsureScrollDragOverlay();
+        EnsureDragGhost();
         WireScrollDragHandler(_primaryWindow);
         WireScrollDragHandler(_lootWindow);
 
@@ -42,23 +57,42 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryScrollDragH
     {
         PlayerInventoryRuntime.ActiveChanged -= OnActivePlayerChanged;
         ClearMouseActionSuppressions();
-        CloseInventory();
+        CloseAllWindows();
     }
 
-    void OnDestroy() => CloseInventory();
+    void OnDestroy() => CloseAllWindows();
 
     void Update()
     {
         if (Keyboard.current != null && Keyboard.current.iKey.wasPressedThisFrame)
-            ToggleInventory();
+            TogglePrimaryWindow();
     }
 
     void LateUpdate()
     {
-        if (!_isOpen)
+        if (!IsAnyWindowOpen)
+        {
+            if (_hasCachedSuppressState && _cachedSuppressMouseActions)
+                ApplyMouseActionSuppression(false);
             return;
+        }
 
         bool suppressMouseActions = _scrollDragDepth > 0 || IsPointerOverAnyVisibleWindow();
+        if (!_hasCachedSuppressState || suppressMouseActions != _cachedSuppressMouseActions)
+            ApplyMouseActionSuppression(suppressMouseActions);
+
+        if (InventoryDragState.IsDragging && !(Pointer.current?.press.isPressed ?? false))
+        {
+            InventoryDragState.End();
+            HideDragGhost();
+        }
+    }
+
+    void ApplyMouseActionSuppression(bool suppressMouseActions)
+    {
+        _cachedSuppressMouseActions = suppressMouseActions;
+        _hasCachedSuppressState = true;
+
         InputManager input = InputManager.Instance;
         if (input == null)
             return;
@@ -83,6 +117,99 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryScrollDragH
         _scrollDragDepth--;
         if (_scrollDragDepth == 0 && _scrollDragOverlay != null)
             _scrollDragOverlay.SetActive(false);
+    }
+
+    public void OnItemDragStarted() => OnScrollDragStarted();
+
+    public void OnItemDragEnded() => OnScrollDragEnded();
+
+    public void UpdateDragGhost(Vector2 screenPosition, int stackCount)
+    {
+        if (_dragGhost == null)
+            return;
+
+        Sprite icon = null;
+        if (InventoryDragState.TryGetActive(out InventoryDragPayload payload) &&
+            payload.Stacks != null &&
+            payload.Stacks.Count > 0 &&
+            payload.Stacks[0]?.Item != null)
+        {
+            icon = payload.Stacks[0].Item.Icon;
+        }
+
+        _dragGhost.Show(icon, stackCount, screenPosition);
+    }
+
+    public void HideDragGhost() => _dragGhost?.Hide();
+
+    void EnsureDragGhost()
+    {
+        if (_dragGhost != null || _uiCanvas == null)
+            return;
+
+        var go = new GameObject(
+            "InventoryDragGhost",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image));
+
+        go.transform.SetParent(_uiCanvas.transform, false);
+        go.transform.SetAsLastSibling();
+
+        var rect = go.GetComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(40f, 40f);
+
+        var icon = go.GetComponent<Image>();
+        icon.preserveAspect = true;
+        icon.raycastTarget = false;
+
+        var labelGo = new GameObject(
+            "Count",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(TMPro.TextMeshProUGUI));
+
+        labelGo.transform.SetParent(go.transform, false);
+        var labelRect = labelGo.GetComponent<RectTransform>();
+        labelRect.anchorMin = new Vector2(1f, 1f);
+        labelRect.anchorMax = new Vector2(1f, 1f);
+        labelRect.pivot = new Vector2(0f, 0f);
+        labelRect.anchoredPosition = new Vector2(4f, -4f);
+        labelRect.sizeDelta = new Vector2(48f, 20f);
+
+        var label = labelGo.GetComponent<TMPro.TextMeshProUGUI>();
+        label.fontSize = 12f;
+        label.color = Color.white;
+        label.alignment = TMPro.TextAlignmentOptions.BottomRight;
+
+        _dragGhost = go.AddComponent<UIInventoryDragGhost>();
+        _dragGhost.Initialize(icon, label, _uiCanvas);
+        go.SetActive(false);
+    }
+
+    void ConfigureWindow(UIInventoryListWindow window)
+    {
+        if (window == null || _uiCanvas == null)
+            return;
+
+        Vector2 maxSize = InventoryWindowLayout.GetMaxSize(_uiCanvas);
+        Vector2 minSize = new(InventoryWindowLayout.MinWidth, InventoryWindowLayout.MinHeight);
+
+        ApplyWindowSizeClamp(window, minSize, maxSize);
+        window.ConfigureWindowChrome(_uiCanvas, minSize, maxSize);
+        window.ConfigureDragAndDrop(this, _uiCanvas);
+    }
+
+    void ApplyWindowSizeClamp(UIInventoryListWindow window, Vector2 minSize, Vector2 maxSize)
+    {
+        RectTransform rect = window.WindowRect;
+        if (rect == null)
+            return;
+
+        Vector2 size = rect.sizeDelta;
+        size.x = Mathf.Clamp(size.x, minSize.x, maxSize.x);
+        size.y = Mathf.Clamp(size.y, minSize.y, maxSize.y);
+        rect.sizeDelta = size;
     }
 
     void EnsureReferences()
@@ -111,13 +238,14 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryScrollDragH
         {
             _primaryWindow = Instantiate(_windowPrefab, _uiCanvas.transform);
             _primaryWindow.name = "Grp_InventoryListWindow_Primary";
+            _primaryWindow.WindowRect.anchoredPosition = _primaryWindowInitialPosition;
         }
 
         if (_lootWindow == null)
         {
             _lootWindow = Instantiate(_windowPrefab, _uiCanvas.transform);
             _lootWindow.name = "Grp_InventoryListWindow_Loot";
-            _lootWindow.GetComponent<RectTransform>().anchoredPosition = _lootWindowOffset;
+            _lootWindow.WindowRect.anchoredPosition = _lootWindowInitialPosition;
         }
     }
 
@@ -154,74 +282,117 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryScrollDragH
 
         InventoryScrollDragHandler handler = window.GetComponentInChildren<InventoryScrollDragHandler>(true);
         if (handler == null)
-        {
-            ScrollRect scroll = window.GetComponentInChildren<ScrollRect>();
-            if (scroll?.viewport != null)
-                handler = scroll.viewport.gameObject.AddComponent<InventoryScrollDragHandler>();
-        }
+            Debug.LogError("[UIInventoryController] InventoryScrollDragHandler missing on inventory window prefab.", window);
 
         handler?.Bind(this);
     }
 
-    public void ToggleInventory()
+    public void ToggleInventory() => TogglePrimaryWindow();
+
+    public void TogglePrimaryWindow()
     {
-        if (_isOpen)
-            CloseInventory();
+        if (_isPrimaryOpen)
+            ClosePrimaryWindow();
         else
-            OpenInventory();
+            OpenPrimaryWindow();
     }
 
-    public void OpenInventory()
+    public void ToggleLootWindow()
     {
-        if (_isOpen)
+        if (_isLootOpen)
+            CloseLootWindow();
+        else
+            OpenLootWindow(null);
+    }
+
+    public void OpenInventory() => OpenPrimaryWindow();
+
+    public void OpenPrimaryWindow()
+    {
+        if (_isPrimaryOpen)
             return;
 
         PlayerInventoryRuntime runtime = PlayerInventoryRuntime.Active;
-        if (runtime == null)
+        if (runtime?.Host?.Container == null)
         {
             Debug.LogWarning("[UIInventoryController] No active player inventory runtime.", this);
             return;
         }
 
-        BindRuntime(runtime);
-        runtime.BeginInventoryContext();
+        EnsureInventoryContext(runtime);
 
         _primaryWindow.gameObject.SetActive(true);
-        _primaryWindow.Initialize(runtime.Session, runtime.Host.Container);
-        _isOpen = true;
+        _primaryWindow.SetHeaderTitle("Inventory");
+        _primaryWindow.Initialize(runtime.Session, InventoryWindowMode.PlayerOnly, runtime.Host.Container);
+        ConfigureWindow(_primaryWindow);
+        _primaryWindow.RefreshListOnly();
+        _isPrimaryOpen = true;
+
+        int stackCount = runtime.Host.Container.Stacks.Count;
+        Debug.Log(
+            $"[UIInventoryController] OpenPrimaryWindow stacks={stackCount} rows={_primaryWindow.ListView?.ActiveRowCount ?? 0}",
+            this);
     }
 
-    public void CloseInventory()
+    public void CloseInventory() => CloseAllWindows();
+
+    public void ClosePrimaryWindow()
     {
-        if (!_isOpen)
-        {
-            UnbindRuntime();
+        if (!_isPrimaryOpen)
             return;
-        }
+
+        SetWindowActive(_primaryWindow, false);
+        _isPrimaryOpen = false;
+        TryEndInventoryContext();
+        CleanupIfNoWindowsOpen();
+    }
+
+    public void CloseLootWindow()
+    {
+        if (!_isLootOpen)
+            return;
+
+        _activeRuntime?.LootProximity?.ClearActive();
+        SetWindowActive(_lootWindow, false);
+        _isLootOpen = false;
+        TryEndInventoryContext();
+        CleanupIfNoWindowsOpen();
+    }
+
+    void CloseAllWindows()
+    {
+        bool wasOpen = IsAnyWindowOpen;
+
+        SetWindowActive(_primaryWindow, false);
+        SetWindowActive(_lootWindow, false);
+        _activeRuntime?.LootProximity?.ClearActive();
+        _isPrimaryOpen = false;
+        _isLootOpen = false;
+
+        if (wasOpen)
+            TryEndInventoryContext();
+
+        CleanupIfNoWindowsOpen();
+    }
+
+    void CleanupIfNoWindowsOpen()
+    {
+        if (IsAnyWindowOpen)
+            return;
 
         _scrollDragDepth = 0;
         if (_scrollDragOverlay != null)
             _scrollDragOverlay.SetActive(false);
 
-        _activeRuntime?.EndInventoryContext();
-
-        _primaryWindow.gameObject.SetActive(false);
-        if (_lootWindow != null)
-            _lootWindow.gameObject.SetActive(false);
-
-        _isOpen = false;
+        InventoryDragState.End();
+        HideDragGhost();
         ClearMouseActionSuppressions();
-        UnbindRuntime();
     }
 
     void ClearMouseActionSuppressions()
     {
-        InputManager input = InputManager.Instance;
-        if (input == null)
-            return;
-
-        input.SuppressPlayerAction(PlayerAction.Zoom, this, false);
-        input.SuppressPlayerAction(PlayerAction.Aim, this, false);
+        ApplyMouseActionSuppression(false);
+        _hasCachedSuppressState = false;
     }
 
     bool IsPointerOverAnyVisibleWindow()
@@ -232,11 +403,11 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryScrollDragH
         Vector2 position = Mouse.current.position.ReadValue();
         Camera uiCamera = GetCanvasCamera();
 
-        if (_primaryWindow != null && _primaryWindow.IsVisible &&
+        if (_primaryWindow && _primaryWindow.IsVisible &&
             RectTransformUtility.RectangleContainsScreenPoint(_primaryWindow.WindowRect, position, uiCamera))
             return true;
 
-        if (_lootWindow != null && _lootWindow.IsVisible &&
+        if (_lootWindow && _lootWindow.IsVisible &&
             RectTransformUtility.RectangleContainsScreenPoint(_lootWindow.WindowRect, position, uiCamera))
             return true;
 
@@ -250,9 +421,6 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryScrollDragH
 
     public void OpenLoot(InventoryContainer focusContainer)
     {
-        if (focusContainer == null)
-            return;
-
         PlayerInventoryRuntime runtime = PlayerInventoryRuntime.Active;
         if (runtime == null)
         {
@@ -260,29 +428,82 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryScrollDragH
             return;
         }
 
-        if (!_isOpen)
-            OpenInventory();
+        EnsureInventoryContext(runtime);
+        runtime.RefreshNearbyContainers();
 
-        runtime.TryAddSidebarContainer(focusContainer);
-        runtime.SeedContainerIfEmpty(focusContainer);
+        if (focusContainer != null && !runtime.IsWorldLootContainer(focusContainer.InstanceId))
+            runtime.TryIncludeLootContainer(focusContainer);
 
-        if (_lootWindow != null)
-        {
-            _lootWindow.gameObject.SetActive(true);
-            _lootWindow.Initialize(runtime.Session, focusContainer);
-        }
+        if (focusContainer != null)
+            runtime.SeedContainerIfEmpty(focusContainer);
+
+        if (!_isLootOpen)
+            OpenLootWindow(focusContainer);
+        else if (focusContainer != null &&
+                 runtime.IsWorldLootContainer(focusContainer.InstanceId))
+            _lootWindow.SelectContainer(focusContainer);
         else
+            _lootWindow.OnSidebarChanged();
+    }
+
+    void OpenLootWindow(InventoryContainer initialFocus)
+    {
+        PlayerInventoryRuntime runtime = PlayerInventoryRuntime.Active;
+        if (runtime == null)
+            return;
+
+        EnsureInventoryContext(runtime);
+        runtime.RefreshNearbyContainers();
+
+        InventoryContainer focus = initialFocus;
+        if (focus != null && !runtime.IsWorldLootContainer(focus.InstanceId))
+            runtime.TryIncludeLootContainer(focus);
+
+        if (focus != null && !runtime.IsWorldLootContainer(focus.InstanceId))
+            focus = null;
+
+        if (focus == null)
         {
-            _primaryWindow.SelectContainer(focusContainer);
+            IReadOnlyList<InventoryContainer> detected = runtime.LootProximity.DetectedContainers;
+            for (int i = 0; i < detected.Count; i++)
+            {
+                focus = detected[i];
+                break;
+            }
         }
+
+        _lootWindow.gameObject.SetActive(true);
+        _lootWindow.SetHeaderTitle("Loot");
+        _lootWindow.Initialize(runtime.Session, InventoryWindowMode.NearbyOnly, focus);
+        ConfigureWindow(_lootWindow);
+        _lootWindow.RefreshListOnly();
+        _isLootOpen = true;
     }
 
     void OnActivePlayerChanged(PlayerInventoryRuntime runtime)
     {
-        if (_isOpen)
-            CloseInventory();
+        if (IsAnyWindowOpen)
+            CloseAllWindows();
         else
             UnbindRuntime();
+    }
+
+    void EnsureInventoryContext(PlayerInventoryRuntime runtime)
+    {
+        if (runtime == null)
+            return;
+
+        BindRuntime(runtime);
+        runtime.BeginInventoryContext();
+    }
+
+    void TryEndInventoryContext()
+    {
+        if (IsAnyWindowOpen)
+            return;
+
+        _activeRuntime?.EndInventoryContext();
+        UnbindRuntime();
     }
 
     void BindRuntime(PlayerInventoryRuntime runtime)
@@ -294,23 +515,68 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryScrollDragH
         _activeRuntime = runtime;
 
         if (_activeRuntime?.Session != null)
+        {
             _activeRuntime.Session.SidebarChanged += OnSessionChanged;
+            _activeRuntime.Session.StacksChanged += OnInventoryDataChanged;
+        }
+
+        if (_activeRuntime?.LootProximity != null)
+        {
+            _activeRuntime.LootProximity.NearbyContainersChanged += OnLootNearbyContainersChanged;
+            _activeRuntime.LootProximity.ActiveLootContainerChanged += OnLootActiveContainerChanged;
+        }
     }
 
     void UnbindRuntime()
     {
+        if (_activeRuntime?.LootProximity != null)
+        {
+            _activeRuntime.LootProximity.NearbyContainersChanged -= OnLootNearbyContainersChanged;
+            _activeRuntime.LootProximity.ActiveLootContainerChanged -= OnLootActiveContainerChanged;
+        }
+
         if (_activeRuntime?.Session != null)
+        {
             _activeRuntime.Session.SidebarChanged -= OnSessionChanged;
+            _activeRuntime.Session.StacksChanged -= OnInventoryDataChanged;
+        }
 
         _activeRuntime = null;
     }
 
+    void OnLootNearbyContainersChanged(IReadOnlyList<InventoryContainer> _)
+    {
+        if (_lootWindow && _lootWindow.IsVisible)
+            _lootWindow.OnSidebarChanged();
+    }
+
+    void OnLootActiveContainerChanged(InventoryContainer container)
+    {
+        if (_lootWindow && _lootWindow.IsVisible)
+            _lootWindow.ApplyActiveLootContainer(container);
+    }
+
     void OnSessionChanged()
     {
-        if (_primaryWindow != null && _primaryWindow.IsVisible)
-            _primaryWindow.OnSessionChanged();
+        if (_primaryWindow && _primaryWindow.IsVisible)
+            _primaryWindow.OnSidebarChanged();
 
-        if (_lootWindow != null && _lootWindow.IsVisible)
-            _lootWindow.OnSessionChanged();
+        if (_lootWindow && _lootWindow.IsVisible)
+            _lootWindow.OnSidebarChanged();
+    }
+
+    void OnInventoryDataChanged()
+    {
+        if (_primaryWindow && _primaryWindow.IsVisible)
+            _primaryWindow.OnStacksChanged();
+
+        if (_lootWindow && _lootWindow.IsVisible)
+            _lootWindow.OnStacksChanged();
+    }
+
+    void RefreshVisibleWindows()
+    {
+        OnSessionChanged();
+        OnInventoryDataChanged();
     }
 }

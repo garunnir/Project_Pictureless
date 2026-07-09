@@ -1,25 +1,38 @@
 // ============================================================
-// ContainerInteractable — 월드 상자·냉장고 등 (Interactable + 컨테이너 Provider)
+// ContainerInteractable — 월드 컨테이너 상호작용 + provider
 // ============================================================
 
+using System;
+using System.Security.Cryptography;
+using System.Text;
 using Garunnir.Runtime.Gameplay.Item;
 using Interactions;
 using IsoTilemap;
 using UnityEngine;
 
+[RequireComponent(typeof(ContainerTileViewRegistrar))]
 public sealed class ContainerInteractable : Interactable, IInventoryContainerProvider
 {
     const string LogPrefix = "[ContainerInteractable]";
 
     [SerializeField] ContainerDefinitionSO _definition;
-    [SerializeField, Min(0.01f)] float _cellSize = 1f;
+    [SerializeField] string _containerId;
     [SerializeField] bool _seedDemoItems = true;
+    [SerializeField] TileView _tileView;
+    [SerializeField] Guid _presentationTileId;
 
     InventoryContainer _container;
-    Vector3Int _gridPosition;
+    IWorldGrid _worldGrid;
+    string _runtimeContainerId;
+
+    public string ContainerId =>
+        string.IsNullOrWhiteSpace(_runtimeContainerId) ? _containerId : _runtimeContainerId;
 
     public InventoryContainer Container => _container;
-    public Vector3Int GridPosition => _gridPosition;
+    public Vector3 WorldPosition => transform.position;
+    public Vector3Int GridPosition => ResolveGridPosition();
+    public TileView TileView => _tileView;
+    public Guid PresentationTileId => ResolvePresentationTileId();
 
     protected override void Awake()
     {
@@ -31,10 +44,24 @@ public sealed class ContainerInteractable : Interactable, IInventoryContainerPro
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(_containerId))
+            _containerId = $"world-{name}";
+
+        _runtimeContainerId = ResolveRuntimeContainerId(_containerId);
+
         _container = InventoryContainer.Create(
             _definition,
             new FixedContainerCapacityPolicy(),
-            $"world-{name}-{GetInstanceID()}");
+            _runtimeContainerId);
+
+        if (_presentationTileId == Guid.Empty)
+            _presentationTileId = CreateDeterministicTileId(_runtimeContainerId);
+
+        if (_tileView == null)
+            _tileView = GetComponentInChildren<TileView>(true);
+
+        EnsureWorldGrid();
+        SyncTileViewGrid();
     }
 
     void Start()
@@ -45,17 +72,22 @@ public sealed class ContainerInteractable : Interactable, IInventoryContainerPro
 
     void OnEnable()
     {
-        RefreshGridPosition();
+        EnsureWorldGrid();
+        SyncTileViewGrid();
+
         if (_container != null)
-            ContainerGridRegistry.Instance.Register(this);
+            InventoryContainerRegistry.Register(this);
     }
 
-    void OnDisable()
-    {
-        ContainerGridRegistry.Instance.Unregister(this);
-    }
+    void OnDisable() => InventoryContainerRegistry.Unregister(this);
 
     public bool IsAvailableToPlayer(GameObject player) => player != null;
+
+    public void BindTileView(TileView tileView)
+    {
+        _tileView = tileView;
+        SyncTileViewGrid();
+    }
 
     public override void Interact(GameObject interactor)
     {
@@ -68,15 +100,95 @@ public sealed class ContainerInteractable : Interactable, IInventoryContainerPro
         Debug.Log($"{LogPrefix} Interact {displayName} ({_container?.InstanceId}) — UIOverlayRouter missing", this);
     }
 
-    void RefreshGridPosition()
+    Guid ResolvePresentationTileId()
     {
-        _gridPosition = TileHelper.ConvertWorldToGrid(transform.position, _cellSize);
+        if (_presentationTileId != Guid.Empty)
+            return _presentationTileId;
+
+        string id = ContainerId;
+        if (string.IsNullOrWhiteSpace(id))
+            return Guid.Empty;
+
+        _presentationTileId = CreateDeterministicTileId(id);
+        return _presentationTileId;
+    }
+
+    Vector3Int ResolveGridPosition()
+    {
+        EnsureWorldGrid();
+        return _worldGrid != null
+            ? _worldGrid.WorldToCell(transform.position)
+            : TileHelper.ConvertWorldToGrid(transform.position, 1f);
+    }
+
+    void SyncTileViewGrid()
+    {
+        if (_tileView != null)
+            _tileView.gridPos = ResolveGridPosition();
+    }
+
+    void EnsureWorldGrid()
+    {
+        if (_worldGrid != null)
+            return;
+
+        TileMapManager manager = FindFirstObjectByType<TileMapManager>();
+        if (manager?.WorldGrid != null)
+            _worldGrid = manager.WorldGrid;
+    }
+
+    string ResolveRuntimeContainerId(string templateId)
+    {
+        if (!Application.isPlaying)
+            return templateId;
+
+        if (!HasDuplicateTemplateId(templateId))
+            return templateId;
+
+        string unique = $"{templateId}-{GetInstanceID():x}";
+        Debug.LogWarning(
+            $"{LogPrefix} Duplicate template containerId '{templateId}' on {name}. Runtime id changed to '{unique}'.",
+            this);
+        return unique;
+    }
+
+    bool HasDuplicateTemplateId(string templateId)
+    {
+        ContainerInteractable[] all = FindObjectsByType<ContainerInteractable>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        for (int i = 0; i < all.Length; i++)
+        {
+            ContainerInteractable other = all[i];
+            if (other == null || other == this)
+                continue;
+
+            if (string.Equals(other._containerId, templateId, StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
+    }
+
+    public static Guid CreateDeterministicTileId(string containerId)
+    {
+        if (string.IsNullOrWhiteSpace(containerId))
+            return Guid.Empty;
+
+        using var md5 = MD5.Create();
+        byte[] hash = md5.ComputeHash(Encoding.UTF8.GetBytes($"container-presentation:{containerId}"));
+        return new Guid(hash);
     }
 
 #if UNITY_EDITOR
     void OnValidate()
     {
-        RefreshGridPosition();
+        if (string.IsNullOrWhiteSpace(_containerId))
+            _containerId = $"world-{name}";
+
+        SyncTileViewGrid();
     }
 #endif
 }
+

@@ -31,6 +31,12 @@ namespace IsoTilemap
             Ghosted = 1,
             HiddenByCharacter = 2,
         }
+
+        public enum TileSelectionApplyMode
+        {
+            RenderingLayer = 0,
+            EmphasisBlend = 1,
+        }
         [Header("Grid Anchor Position (xyz)")]
         [Tooltip("OccupiedCell=점유 셀. VerticalFace/HorizontalFace=앵커 셀(CellBelow).")]
         public Vector3Int gridPos;
@@ -61,6 +67,8 @@ namespace IsoTilemap
         [SerializeField] private ShadeObjectController _shadeController;
         [Tooltip("Selected 오버레이용 URP RenderingLayer 비트의 단일 진실원 SO")]
         [SerializeField] private SelectionLayerConfig _selectionLayer;
+        [SerializeField] private TileSelectionApplyMode _selectionApplyMode = TileSelectionApplyMode.RenderingLayer;
+        [SerializeField, Range(0f, 0.5f)] private float _selectionEmphasisAmount = 0.2f;
         [Header("Blocked Trace")]
         [Tooltip("타일이 숨김 상태일 때 표시할 흔적 오브젝트(데칼/메시 등).")]
         [SerializeField] private GameObject _blockedTraceObject;
@@ -242,6 +250,14 @@ namespace IsoTilemap
 
         public void SetSelected(bool selected) => ForceApplySelectedOverlay(selected);
 
+        public void ConfigureSelectionApplyMode(TileSelectionApplyMode mode, float emphasisAmount = 0.2f)
+        {
+            _selectionApplyMode = mode;
+            _selectionEmphasisAmount = Mathf.Clamp(emphasisAmount, 0f, 0.5f);
+            if (_selectedInitialized)
+                ForceApplySelectedOverlay(_currentSelected);
+        }
+
         public void ConfigureStructuralHidePresentationMode(StructuralHidePresentationMode mode) =>
             _structuralHideMode = mode;
 
@@ -409,15 +425,23 @@ namespace IsoTilemap
 
         private void ForceApplySelectedOverlay(bool next)
         {
-            Renderer renderer = _shadeController?.CachedRenderer;
-            if (renderer != null && _selectionLayer != null)
+            if (_selectionApplyMode == TileSelectionApplyMode.EmphasisBlend)
             {
-                uint mask = renderer.renderingLayerMask;
-                uint bit = _selectionLayer.RenderingLayerMask;
-                if (next) mask |= bit;
-                else mask &= ~bit;
-                renderer.renderingLayerMask = mask;
+                _shadeController?.SetEmphasisBlend(next ? _selectionEmphasisAmount : 0f);
             }
+            else
+            {
+                Renderer renderer = _shadeController?.CachedRenderer;
+                if (renderer != null && _selectionLayer != null)
+                {
+                    uint mask = renderer.renderingLayerMask;
+                    uint bit = _selectionLayer.RenderingLayerMask;
+                    if (next) mask |= bit;
+                    else mask &= ~bit;
+                    renderer.renderingLayerMask = mask;
+                }
+            }
+
             _currentSelected = next;
             _selectedInitialized = true;
         }

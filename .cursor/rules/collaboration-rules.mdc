@@ -26,6 +26,8 @@ Unity-specific implementation rules: `collaboration-unity.mdc` on `Assets/**`.
 
 Hot-path code (`Update`/physics/Jobs/URP): state **heap allocation** and CPU cost; detail in `collaboration-unity.mdc`.
 
+**Prefab wiring:** 모든 프리팹 인스턴스에 런타임 `AddComponent` 금지 — 상세·예외는 `collaboration-unity.mdc` §Prefab Component Wiring. 리뷰·구현 시 위반 발견하면 **반드시 사용자에게 알린다** (본인 작성 코드 포함).
+
 ## Rules (Agent + approved implementation)
 
 ### Rule 1 — Prerequisites

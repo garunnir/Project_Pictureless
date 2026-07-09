@@ -6,6 +6,7 @@ namespace Interactions
     {
         [SerializeField] private bool isOpen = false;
         private Animator _doorAnimator;
+
         protected override void Awake()
         {
             base.Awake();

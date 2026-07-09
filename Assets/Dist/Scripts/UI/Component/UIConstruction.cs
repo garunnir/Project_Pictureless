@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using IsoTilemap;
 
+[RequireComponent(typeof(UiMenuInputBehaviour))]
 public class UIConstruction : MonoBehaviour
 {
     [SerializeField] Button prevBtn;
@@ -18,12 +19,6 @@ public class UIConstruction : MonoBehaviour
     private Dictionary<string, List<TileDefinition>> _grouped = new();
     private int _categoryIndex;
     private Button _selectedButton;
-
-    void Awake()
-    {
-        if (GetComponent<UiMenuInputBehaviour>() == null)
-            gameObject.AddComponent<UiMenuInputBehaviour>();
-    }
 
     void Start()
     {

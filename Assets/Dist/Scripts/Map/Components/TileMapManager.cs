@@ -9,6 +9,8 @@ using UnityEngine.Serialization;
 /// </summary>
 [DisallowMultipleComponent]
 [DefaultExecutionOrder(-50)]
+[RequireComponent(typeof(TilePresentationSystem))]
+[RequireComponent(typeof(CharacterOcclusionDisplayDriver))]
 public class TileMapManager : MonoBehaviour
 {
     [Header("로드 → 컨트롤러/세이버 초기화 → 저장 흐름을 책임집니다.")]
@@ -55,6 +57,7 @@ public class TileMapManager : MonoBehaviour
     private TileMapStreamingVisualizer _streamingVisualizer;
     private TileMapVisualizer _nonStreamingVisualizer;
     private TileViewPresentationApplier _presentationApplier;
+    private TilePresentationSystem _presentationSystem;
     private PlayerFloorVisibilityPolicy _floorPolicy;
     private TileMapCacheHub _mapCacheHub;
     private BuildingGroupBuilder _buildingGroupBuilder;
@@ -63,6 +66,7 @@ public class TileMapManager : MonoBehaviour
 
     public IMapModel Model { get; private set; }
     public TileViewPresentationApplier PresentationApplier => _presentationApplier;
+    public TilePresentationSystem PresentationSystem => _presentationSystem;
     public TilePrefabDB PrefabDB => _prefabDB;
     public IWorldGrid WorldGrid => _worldGrid;
 
@@ -118,7 +122,7 @@ public class TileMapManager : MonoBehaviour
     {
         _occlusionDisplayDriver ??= GetComponent<CharacterOcclusionDisplayDriver>();
         if (_occlusionDisplayDriver == null)
-            _occlusionDisplayDriver = gameObject.AddComponent<CharacterOcclusionDisplayDriver>();
+            Debug.LogError("[TileMapManager] CharacterOcclusionDisplayDriver가 씬 오브젝트에 배치되어 있어야 합니다.", this);
     }
 
     void Start()
@@ -194,14 +198,18 @@ public class TileMapManager : MonoBehaviour
         if (Model is not TileMapModel tileModel)
             return;
 
-        ITileViewRegistry registry = UseChunkStreaming
+        ITileViewRegistry mapRegistry = UseChunkStreaming
             ? _streamingVisualizer
             : _nonStreamingVisualizer;
 
-        if (registry == null)
+        if (mapRegistry == null)
             return;
 
-        _presentationApplier = new TileViewPresentationApplier(registry, tileModel);
+        var compositeRegistry = new CompositeTileViewRegistry(
+            mapRegistry,
+            ContainerTileViewRegistry.Instance);
+
+        _presentationApplier = new TileViewPresentationApplier(compositeRegistry, tileModel);
         tileModel.OnTileOcclusionPresentationDelta += _presentationApplier.ApplyOcclusionDelta;
         if (_floorPolicy != null && _mapCacheHub != null)
         {
@@ -214,6 +222,15 @@ public class TileMapManager : MonoBehaviour
 
         _streamingVisualizer?.SetPresentationApplier(_presentationApplier);
         _nonStreamingVisualizer?.SetPresentationApplier(_presentationApplier);
+        EnsurePresentationSystem();
+        _presentationSystem?.Initialize(_presentationApplier);
+    }
+
+    void EnsurePresentationSystem()
+    {
+        _presentationSystem ??= GetComponent<TilePresentationSystem>();
+        if (_presentationSystem == null)
+            Debug.LogError("[TileMapManager] TilePresentationSystem이 씬 오브젝트에 배치되어 있어야 합니다.", this);
     }
 
     private void UnwireTilePresentationApplier()
@@ -223,6 +240,7 @@ public class TileMapManager : MonoBehaviour
 
         _presentationApplier?.ResetFloorVisibilityState();
         _presentationApplier = null;
+        _presentationSystem?.ClearLootContainerHighlight();
         _streamingVisualizer?.SetPresentationApplier(null);
         _nonStreamingVisualizer?.SetPresentationApplier(null);
     }

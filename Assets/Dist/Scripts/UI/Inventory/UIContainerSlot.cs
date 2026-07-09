@@ -1,27 +1,58 @@
 // ============================================================
-// UIContainerSlot — 사이드바 컨테이너 슬롯 버튼
+// UIContainerSlot — 사이드바 컨테이너 슬롯 (선택·드래그)
 // ============================================================
 
 using System;
 using Garunnir.Runtime.Gameplay.Item;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public sealed class UIContainerSlot : MonoBehaviour
+public enum ContainerSlotVisualState
 {
+    Normal,
+    Selected,
+    Dragging,
+}
+
+[RequireComponent(typeof(UIContainerSlotDropZone))]
+public sealed class UIContainerSlot : MonoBehaviour,
+    IBeginDragHandler,
+    IDragHandler,
+    IEndDragHandler
+{
+    static readonly Color NormalColor = new(0.18f, 0.18f, 0.18f, 1f);
+    static readonly Color SelectedColor = new(0.28f, 0.38f, 0.48f, 1f);
+    static readonly Color DraggingColor = new(0.18f, 0.18f, 0.18f, 0.45f);
+
     [SerializeField] Button _button;
     [SerializeField] TMP_Text _label;
     [SerializeField] Image _iconImage;
     [SerializeField] Image _highlight;
+    [SerializeField] Image _backgroundImage;
 
     InventoryContainer _container;
+    InventoryContainer _dragParentContainer;
+    ItemStack _dragContainerStack;
     Action<InventoryContainer> _onSelected;
+    IInventoryItemDragHost _dragHost;
+    UIInventoryListWindow _window;
+    InventorySession _session;
+    bool _isDraggable;
+    ContainerSlotVisualState _visualState = ContainerSlotVisualState.Normal;
+    bool _isSelected;
+
+    public InventoryContainer Container => _container;
+    public string ContainerInstanceId => _container != null ? _container.InstanceId : string.Empty;
 
     void Awake()
     {
         if (_button != null)
             _button.onClick.AddListener(OnClick);
+
+        if (_backgroundImage == null)
+            _backgroundImage = GetComponent<Image>();
     }
 
     void OnDestroy()
@@ -33,10 +64,22 @@ public sealed class UIContainerSlot : MonoBehaviour
     public void Bind(
         InventoryContainer container,
         bool selected,
-        Action<InventoryContainer> onSelected)
+        Action<InventoryContainer> onSelected,
+        IInventoryItemDragHost dragHost,
+        UIInventoryListWindow window,
+        InventorySession session)
     {
         _container = container;
         _onSelected = onSelected;
+        _dragHost = dragHost;
+        _window = window;
+        _session = session;
+        _isDraggable = false;
+        _dragParentContainer = null;
+        _dragContainerStack = null;
+
+        UIContainerSlotDropZone dropZone = GetComponent<UIContainerSlotDropZone>();
+        dropZone?.Bind(window, this);
 
         if (container?.Definition == null)
         {
@@ -56,17 +99,86 @@ public sealed class UIContainerSlot : MonoBehaviour
             _iconImage.enabled = def.Icon != null;
         }
 
+        if (_session != null &&
+            _session.TryGetContainerItemStack(container, out InventoryContainer parent, out ItemStack stack))
+        {
+            _isDraggable = true;
+            _dragParentContainer = parent;
+            _dragContainerStack = stack;
+        }
+
         SetSelected(selected);
     }
 
     public void SetSelected(bool selected)
     {
-        if (_highlight == null)
+        _isSelected = selected;
+
+        if (_highlight != null)
+        {
+            _highlight.gameObject.SetActive(selected);
+            _highlight.enabled = selected;
+        }
+
+        if (_visualState != ContainerSlotVisualState.Dragging)
+            ApplyBackgroundColor(selected ? SelectedColor : NormalColor);
+    }
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        if (!_isDraggable ||
+            _dragParentContainer == null ||
+            _dragContainerStack == null ||
+            _dragHost == null)
             return;
 
-        _highlight.gameObject.SetActive(selected);
-        _highlight.enabled = selected;
+        InventoryDragState.BeginContainerTab(_dragParentContainer, _dragContainerStack);
+        SetVisualState(ContainerSlotVisualState.Dragging);
+        _dragHost.OnItemDragStarted();
+        _dragHost.UpdateDragGhost(eventData.position, 1);
+        eventData.Use();
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (!InventoryDragState.IsDragging)
+            return;
+
+        _dragHost?.UpdateDragGhost(eventData.position, 1);
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        if (_visualState == ContainerSlotVisualState.Dragging)
+            SetVisualState(_isSelected ? ContainerSlotVisualState.Selected : ContainerSlotVisualState.Normal);
+
+        _dragHost?.HideDragGhost();
+        _dragHost?.OnItemDragEnded();
     }
 
     void OnClick() => _onSelected?.Invoke(_container);
+
+    void SetVisualState(ContainerSlotVisualState state)
+    {
+        _visualState = state;
+
+        switch (state)
+        {
+            case ContainerSlotVisualState.Dragging:
+                ApplyBackgroundColor(DraggingColor);
+                break;
+            case ContainerSlotVisualState.Selected:
+                ApplyBackgroundColor(SelectedColor);
+                break;
+            default:
+                ApplyBackgroundColor(NormalColor);
+                break;
+        }
+    }
+
+    void ApplyBackgroundColor(Color color)
+    {
+        if (_backgroundImage != null)
+            _backgroundImage.color = color;
+    }
 }

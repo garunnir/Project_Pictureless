@@ -53,6 +53,7 @@
 |------|------|
 | **판정 SSOT 1곳** | show/hide·space band·peek은 `PlayerFloorVisibilityPolicy` + `SpaceVisibilityUtil`만. 뷰·드라이버·모델에 같은 규칙을 다시 쓰지 않는다. |
 | **표현 SSOT 1곳** | 화면 상태는 `TileViewPresentationApplier.Resolve` → `ApplyResolved` 한 경로. `TileView` 로컬 플래그는 캐시일 뿐 진실원이 아니다. |
+| **표현 진입점** | 게임플레이·UI 코드는 `TileViewPresentationApplier`를 직접 호출하지 않는다. 신규 월드 표현 요청은 `TilePresentationSystem`을 경유한다. |
 | **structural parity** | Floor·EdgeWall 등 `IsStructural`은 같은 indoor pipeline을 따른다. 단, Floor는 walkable cell, EdgeWall은 incident cell band로 읽는다. |
 | **채널 분리** | structural hide(완전 숨김)와 CharacterOcclusion(반투명)은 **다른 목적**. policy가 hide면 occlusion을 씌우지 않는다 — **입력 단계에서 차단**, apply 후 필터·전환 후보 patch로 막지 않는다. |
 | **전환은 reconcile** | indoor↔outdoor·blocking 변경은 “stale 타일 목록을 또 하나 더”가 아니라 **ctx diff universe 전체 reconcile** 한 번으로 끝낸다. |

@@ -97,8 +97,11 @@ public abstract class UI : MonoBehaviour
     }
     public void Init()
     {
-        CanvasGroup group;
-        canvasGroup ??= gameObject.TryGetComponent(out group) ? group : gameObject.AddComponent<CanvasGroup>();
+        if (canvasGroup != null)
+            return;
+
+        if (!gameObject.TryGetComponent(out canvasGroup))
+            Debug.LogError("[UI] CanvasGroup이 프리팹/씬 오브젝트에 배치되어 있어야 합니다.", this);
     }
 }
 

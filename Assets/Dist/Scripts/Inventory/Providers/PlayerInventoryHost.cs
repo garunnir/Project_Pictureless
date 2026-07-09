@@ -13,6 +13,7 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
 
     [Required, SerializeField] CharacterState _characterState;
     [SerializeField] ContainerDefinitionSO _bodyDefinition;
+    [SerializeField] string _containerId = DefaultInstanceId;
     [SerializeField, Min(0f)] float _baseMaxWeight = 50f;
     [SerializeField, Min(0f)] float _baseMaxVolume = 30f;
 
@@ -20,6 +21,8 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
     PlayerCarryCapacityPolicy _capacityPolicy;
 
     public InventoryContainer Container => _container;
+    public string ContainerId => _containerId;
+    public Vector3 WorldPosition => transform.position;
     public Vector3Int GridPosition => _characterState.GridPos;
 
     void Awake()
@@ -33,8 +36,12 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
         _capacityPolicy = new PlayerCarryCapacityPolicy(
             () => _baseMaxWeight,
             () => _baseMaxVolume);
-        _container = InventoryContainer.Create(_bodyDefinition, _capacityPolicy, DefaultInstanceId);
+        string instanceId = string.IsNullOrWhiteSpace(_containerId) ? DefaultInstanceId : _containerId;
+        _container = InventoryContainer.Create(_bodyDefinition, _capacityPolicy, instanceId);
     }
+    
+    void OnEnable() => InventoryContainerRegistry.Register(this);
+    void OnDisable() => InventoryContainerRegistry.Unregister(this);
 
     void OnValidate() => EnsureReferences();
     void Reset() => EnsureReferences();
@@ -42,6 +49,8 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
     void EnsureReferences()
     {
         if (!_characterState) TryGetComponent(out _characterState);
+        if (string.IsNullOrWhiteSpace(_containerId))
+            _containerId = DefaultInstanceId;
     }
 
     public bool IsAvailableToPlayer(GameObject player) =>

@@ -1,0 +1,20 @@
+{
+    "name": "Dist.Inventory.UI",
+    "rootNamespace": "",
+    "references": [
+        "DistScript",
+        "LeanPool",
+        "Sirenix.OdinInspector.Attributes",
+        "Unity.InputSystem",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

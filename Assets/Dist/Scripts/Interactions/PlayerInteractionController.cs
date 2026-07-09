@@ -83,8 +83,9 @@ namespace Interactions
                 _interactableCache[hit.collider] = interactable;
             }
 
-            if (Config.DebugMode.PlayerInteraction)
-                Debug.Log("Interaction SphereCast hit: " + hit.collider.gameObject.name);
+            DebugLogController.LogPlayerInteraction(
+                "Interaction SphereCast hit: " + hit.collider.gameObject.name,
+                this);
 
             if (interactable != null)
             {
@@ -104,8 +105,9 @@ namespace Interactions
             _currentTarget = newTarget;
             _currentTarget.OnFocus(gameObject);
 
-            if (Config.DebugMode.PlayerInteraction)
-                Debug.Log("Focused on: " + (newTarget as MonoBehaviour).gameObject.name);
+            DebugLogController.LogPlayerInteraction(
+                "Focused on: " + (newTarget as MonoBehaviour).gameObject.name,
+                this);
         }
 
         private void ClearTarget()
@@ -113,8 +115,7 @@ namespace Interactions
             _currentTarget.OnUnfocus(gameObject);
             _currentTarget = null;
 
-            if (Config.DebugMode.PlayerInteraction)
-                Debug.Log("Unfocused");
+            DebugLogController.LogPlayerInteraction("Unfocused", this);
         }
     }
 }

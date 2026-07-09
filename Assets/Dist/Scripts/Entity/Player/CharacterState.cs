@@ -18,6 +18,21 @@ public class CharacterState : MonoBehaviour
     public Vector3 MoveDir { get; private set; } = Vector3.zero;
     public Vector3Int GridPos { get; private set; } = Vector3Int.zero;
 
+    /// <summary>현재 몸 위치 기준 그리드 셀. <see cref="GridPos"/>보다 최신 월드 좌표를 우선합니다.</summary>
+    public Vector3Int ResolveCurrentGridCell()
+    {
+        Vector3 world = BodyWorldPoint.sqrMagnitude > 1e-6f
+            ? BodyWorldPoint
+            : transform.position;
+
+        return ResolveGridCell(world);
+    }
+
+    public Vector3Int ResolveGridCell(Vector3 worldPos) =>
+        _worldGrid != null
+            ? _worldGrid.WorldToCell(worldPos)
+            : TileHelper.ConvertWorldToGrid(worldPos, 1f);
+
     public bool IsAiming { get; private set; }
     public event Action<Vector3Int> GridPosChanged;
     /// <summary>매 <see cref="UpdateGridPos"/> 호출 때마다(셀 변경 없이 포함) 발생.</summary>

@@ -17,6 +17,8 @@ public class DebugLogController : MonoBehaviour
     [SerializeField] bool playerPosUpdate = false;
     [SerializeField] bool tileMapRuntime = false;
     [SerializeField] bool playerSight = false;
+    [SerializeField] bool inventory = false;
+    [SerializeField] bool inventoryProximityScan = false;
 
     void Start()
     {
@@ -42,6 +44,24 @@ public class DebugLogController : MonoBehaviour
         Config.DebugMode.PlayerMovement = playerEnabled && playerMovement;
         Config.DebugMode.PlayerPosUpdate = playerEnabled && playerPosUpdate;
         Config.DebugMode.PlayerSight = playerEnabled && playerSight;
+
+        bool inventoryEnabled = globalEnabled && inventory;
+        Config.DebugMode.Inventory = inventoryEnabled;
+        Config.DebugMode.InventoryProximityScan = inventoryEnabled && inventoryProximityScan;
+    }
+
+    public static bool InventoryProximityScanEnabled => Config.DebugMode.InventoryProximityScan;
+
+    public static void LogInventory(string message, Object context = null)
+    {
+        if (!Config.DebugMode.Inventory) return;
+        Debug.Log(message, context);
+    }
+
+    public static void LogInventoryProximityScan(string message, Object context = null)
+    {
+        if (!Config.DebugMode.InventoryProximityScan) return;
+        Debug.Log(message, context);
     }
 
     public static void LogPlayerRun(bool isRun)
@@ -60,5 +80,11 @@ public class DebugLogController : MonoBehaviour
     {
         if (!Config.DebugMode.PlayerMovement || lastSlideSqrMagnitude <= 0f) return;
         Debug.Log("PlayerMovement: Sliding");
+    }
+
+    public static void LogPlayerInteraction(string message, Object context = null)
+    {
+        if (!Config.DebugMode.PlayerInteraction) return;
+        Debug.Log(message, context);
     }
 }
