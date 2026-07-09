@@ -132,7 +132,7 @@ PrefabInstance:
     - target: {fileID: 551125349126247287, guid: 860884360b6c90e408b0da8f700e74cf,
         type: 3}
       propertyPath: m_Name
-      value: Create
+      value: Crate
       objectReference: {fileID: 0}
     - target: {fileID: 2957317007801697743, guid: 860884360b6c90e408b0da8f700e74cf,
         type: 3}
@@ -186,6 +186,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3031511674221878130, guid: 860884360b6c90e408b0da8f700e74cf,
         type: 3}
+      propertyPath: prefabId
+      value: Furniture/Create
+      objectReference: {fileID: 0}
+    - target: {fileID: 3031511674221878130, guid: 860884360b6c90e408b0da8f700e74cf,
+        type: 3}
       propertyPath: gridPos.x
       value: 0
       objectReference: {fileID: 0}
@@ -222,6 +227,18 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 2466359702727447532}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &587810853183129758 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3031511674221878130, guid: 860884360b6c90e408b0da8f700e74cf,
+    type: 3}
+  m_PrefabInstance: {fileID: 2466359702727447532}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2711088364153094299}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a890e5593cc6414baac56973ae216b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::TileInfo
 --- !u!1 &2711088364153094299 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 551125349126247287, guid: 860884360b6c90e408b0da8f700e74cf,
@@ -242,12 +259,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::ContainerInteractable
   displayName: "\uC0C1\uC790"
   hintText: "E: \uB8E8\uD305"
-  _outlineSpriteRenderer: {fileID: 0}
   _definition: {fileID: 11400000, guid: 430732fd920486a4394a3d2a6806978a, type: 2}
   _containerId: world-WorldContainer_Crate_A
-  _cellSize: 1
   _seedDemoItems: 1
-  _tileView: {fileID: 0}
+  _tileView: {fileID: 587810853183129758}
 --- !u!114 &7123456789012345678
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -261,10 +276,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DistScript::ContainerTileViewRegistrar
   _interactable: {fileID: 8938542129476957710}
-  _tileView: {fileID: 0}
-  _presentationTileId:
-    serializedVersion: 2
-    m_Data0: 0
-    m_Data1: 0
-    m_Data2: 0
-    m_Data3: 0
+  _tileView: {fileID: 587810853183129758}

@@ -3,12 +3,12 @@ using UnityEngine;
 using Cysharp.Threading.Tasks;
 namespace IsoTilemap
 {
-    public class MapSavePipline
+    public class MapSavePipeline
     {
         private readonly IMapMapper _mapper;
         private readonly IMapModelReadOnly _runtime;
 
-        public MapSavePipline(IMapModelReadOnly runtime,
+        public MapSavePipeline(IMapModelReadOnly runtime,
             IMapMapper mapper)
         {
             _mapper = mapper;

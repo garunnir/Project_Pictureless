@@ -12,7 +12,7 @@ graph LR
     Loader --> LoadPipe[MapLoadPipeline]
     Loader --> Visualizer[TileMapVisualizer]
 
-    Saver --> SavePipe[MapSavePipline]
+    Saver --> SavePipe[MapSavePipeline]
 
     Controller --> IView[IMapViewBuilder]
     Controller --> IModel[IMapModel]
@@ -56,7 +56,7 @@ Load()
 
 ```
 Init(IMapModel)         ← TileMapManager에서 주입
-Save()                  → MapSavePipline.Save(path)
+Save()                  → MapSavePipeline.Save(path)
                            or SaveAsync()       ← UniTask 스레드풀
                            or SaveSafeAsync()   ← Newtonsoft 스트리밍 (대용량)
 ```

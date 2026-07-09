@@ -87,7 +87,7 @@ graph TD
 
     subgraph Pipeline
         LoadPipe[MapLoadPipeline]
-        SavePipe[MapSavePipline]
+        SavePipe[MapSavePipeline]
         LoadPipe --> Serializer
         LoadPipe --> Mapper
         LoadPipe --> Builder
@@ -172,7 +172,7 @@ graph TD
 
 ### Pipeline
 - **MapLoadPipeline.cs** — Read → ToPrepared → Build 조합
-- **MapSavePipline.cs** — `Save()` / `SaveAsync()` / `SaveSafeAsync()` (Newtonsoft 스트리밍)
+- **MapSavePipeline.cs** — `Save()` / `SaveAsync()` / `SaveSafeAsync()` (Newtonsoft 스트리밍)
 
 ### View
 - **TileMapVisualizer.cs** — `Dictionary<Guid, TileView>` 추적, Bind/Build/RefreshCell. Model이 이벤트로 보낸 `TileData.tileDefId`로 대응하는 TileView를 조회해 업데이트

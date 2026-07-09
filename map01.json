@@ -278,6 +278,17 @@
             "face": 0
         },
         {
+            "x": -3,
+            "y": 0,
+            "z": -3,
+            "sizeX": 1,
+            "sizeY": 1,
+            "sizeZ": 1,
+            "prefabId": "Furniture/Create",
+            "tileType": 0,
+            "face": 0
+        },
+        {
             "x": -4,
             "y": 0,
             "z": -2,
@@ -340,6 +351,17 @@
             "sizeY": 1,
             "sizeZ": 1,
             "prefabId": "ThickWall/Wall_WN",
+            "tileType": 0,
+            "face": 0
+        },
+        {
+            "x": -3,
+            "y": 0,
+            "z": -4,
+            "sizeX": 1,
+            "sizeY": 1,
+            "sizeZ": 1,
+            "prefabId": "Furniture/Create",
             "tileType": 0,
             "face": 0
         },

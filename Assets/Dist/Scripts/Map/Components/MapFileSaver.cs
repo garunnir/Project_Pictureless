@@ -23,7 +23,7 @@ public class MapFileSaver : MonoBehaviour
     public void Save()
     {
         float cellSize = _worldGrid != null ? _worldGrid.CellSize : 1f;
-        new MapSavePipline(_model, _mapper).Save(GetFullPath(), cellSize);
+        new MapSavePipeline(_model, _mapper).Save(GetFullPath(), cellSize);
     }
 
     private string GetFullPath()

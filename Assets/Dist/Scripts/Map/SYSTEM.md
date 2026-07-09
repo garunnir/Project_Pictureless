@@ -21,7 +21,7 @@ graph TD
 
     subgraph Pipeline["TileMap / Pipeline"]
         LoadPipe[MapLoadPipeline]
-        SavePipe[MapSavePipline]
+        SavePipe[MapSavePipeline]
     end
 
     subgraph Serialization["TileMap / Serialization"]
