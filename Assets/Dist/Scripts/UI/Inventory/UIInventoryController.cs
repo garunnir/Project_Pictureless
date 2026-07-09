@@ -16,12 +16,13 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
     [SerializeField] UIInventoryListWindow _primaryWindow;
     [SerializeField] UIInventoryListWindow _lootWindow;
     [SerializeField] Canvas _uiCanvas;
+    [SerializeField] UIInventoryDragGhost _dragGhost;
+    [SerializeField] GameObject _scrollDragOverlay;
     [SerializeField] Vector2 _primaryWindowInitialPosition = new(-220f, 0f);
     [SerializeField] Vector2 _lootWindowInitialPosition = new(220f, 0f);
 
     PlayerInventoryRuntime _activeRuntime;
-    GameObject _scrollDragOverlay;
-    UIInventoryDragGhost _dragGhost;
+    int _itemDragDepth;
     int _scrollDragDepth;
     bool _isPrimaryOpen;
     bool _isLootOpen;
@@ -53,6 +54,12 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
     void OnEnable() => PlayerInventoryRuntime.ActiveChanged += OnActivePlayerChanged;
 
+    void Start()
+    {
+        if (InputManager.Instance != null)
+            InputManager.Instance.PlayerInventoryTogglePerformed += OnInventoryTogglePerformed;
+    }
+
     void OnDisable()
     {
         PlayerInventoryRuntime.ActiveChanged -= OnActivePlayerChanged;
@@ -60,12 +67,20 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         CloseAllWindows();
     }
 
-    void OnDestroy() => CloseAllWindows();
-
-    void Update()
+    void OnDestroy()
     {
-        if (Keyboard.current != null && Keyboard.current.iKey.wasPressedThisFrame)
-            TogglePrimaryWindow();
+        if (InputManager.Instance != null)
+            InputManager.Instance.PlayerInventoryTogglePerformed -= OnInventoryTogglePerformed;
+
+        CloseAllWindows();
+    }
+
+    void OnInventoryTogglePerformed(InputAction.CallbackContext context)
+    {
+        if (!context.performed)
+            return;
+
+        TogglePrimaryWindow();
     }
 
     void LateUpdate()
@@ -77,14 +92,33 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
             return;
         }
 
-        bool suppressMouseActions = _scrollDragDepth > 0 || IsPointerOverAnyVisibleWindow();
+        bool suppressMouseActions =
+            _itemDragDepth > 0 || _scrollDragDepth > 0 || IsPointerOverAnyVisibleWindow();
         if (!_hasCachedSuppressState || suppressMouseActions != _cachedSuppressMouseActions)
             ApplyMouseActionSuppression(suppressMouseActions);
+    }
 
-        if (InventoryDragState.IsDragging && !(Pointer.current?.press.isPressed ?? false))
-        {
+    void FinalizeItemDrag()
+    {
+        if (InventoryDragState.IsDragging)
             InventoryDragState.End();
-            HideDragGhost();
+
+        HideDragGhost();
+        RefreshVisibleWindowsAfterDrag();
+    }
+
+    void RefreshVisibleWindowsAfterDrag()
+    {
+        if (_primaryWindow && _primaryWindow.IsVisible)
+        {
+            _primaryWindow.ClearSidebarDropHovers();
+            _primaryWindow.RefreshListOnly();
+        }
+
+        if (_lootWindow && _lootWindow.IsVisible)
+        {
+            _lootWindow.ClearSidebarDropHovers();
+            _lootWindow.RefreshListOnly();
         }
     }
 
@@ -119,72 +153,106 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
             _scrollDragOverlay.SetActive(false);
     }
 
-    public void OnItemDragStarted() => OnScrollDragStarted();
-
-    public void OnItemDragEnded() => OnScrollDragEnded();
-
-    public void UpdateDragGhost(Vector2 screenPosition, int stackCount)
+    public void OnItemDragStarted()
     {
-        if (_dragGhost == null)
+        _itemDragDepth++;
+    }
+
+    public void OnItemDragEnded()
+    {
+        if (_itemDragDepth > 0)
+            _itemDragDepth--;
+
+        FinalizeItemDrag();
+    }
+
+    public void BeginDragGhost(Vector2 screenPosition, int stackCount)
+    {
+        EnsureDragGhost();
+        if (!_dragGhost)
             return;
 
-        Sprite icon = null;
+        _dragGhost.Show(ResolveDragIcon(), stackCount, screenPosition);
+    }
+
+    public void UpdateDragGhostPosition(Vector2 screenPosition)
+    {
+        EnsureDragGhost();
+        if (!_dragGhost)
+            return;
+
+        _dragGhost.SetScreenPosition(screenPosition);
+    }
+
+    Sprite ResolveDragIcon()
+    {
         if (InventoryDragState.TryGetActive(out InventoryDragPayload payload) &&
             payload.Stacks != null &&
             payload.Stacks.Count > 0 &&
             payload.Stacks[0]?.Item != null)
         {
-            icon = payload.Stacks[0].Item.Icon;
+            Sprite icon = payload.Stacks[0].Item.Icon;
+            if (icon != null)
+                return icon;
         }
 
-        _dragGhost.Show(icon, stackCount, screenPosition);
+        return GetEmptyDragIcon();
     }
 
-    public void HideDragGhost() => _dragGhost?.Hide();
+    Sprite GetEmptyDragIcon()
+    {
+        if (_primaryWindow != null && _primaryWindow.IsVisible)
+        {
+            Sprite icon = _primaryWindow.ListView?.RowEmptyIconSprite;
+            if (icon != null)
+                return icon;
+        }
+
+        if (_lootWindow != null && _lootWindow.IsVisible)
+        {
+            Sprite icon = _lootWindow.ListView?.RowEmptyIconSprite;
+            if (icon != null)
+                return icon;
+        }
+
+        return _windowPrefab?.ListView?.RowEmptyIconSprite;
+    }
+
+    public void HideDragGhost()
+    {
+        if (!_dragGhost)
+        {
+            _dragGhost = null;
+            return;
+        }
+
+        _dragGhost.Hide();
+    }
 
     void EnsureDragGhost()
     {
-        if (_dragGhost != null || _uiCanvas == null)
+        EnsureReferences();
+        if (_uiCanvas == null)
             return;
 
-        var go = new GameObject(
-            "InventoryDragGhost",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(Image));
+        if (!_dragGhost)
+            _dragGhost = GetComponentInChildren<UIInventoryDragGhost>(true);
 
-        go.transform.SetParent(_uiCanvas.transform, false);
-        go.transform.SetAsLastSibling();
+        if (!_dragGhost && _uiCanvas.transform.Find("InventoryDragGhost") is Transform existing &&
+            existing.TryGetComponent(out UIInventoryDragGhost found))
+        {
+            _dragGhost = found;
+        }
 
-        var rect = go.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(40f, 40f);
+        if (!_dragGhost)
+        {
+            Debug.LogError(
+                "[UIInventoryController] UIInventoryDragGhost is not assigned. Run Dist/Inventory/Setup Canvas Overlays In Open Scene.",
+                this);
+            return;
+        }
 
-        var icon = go.GetComponent<Image>();
-        icon.preserveAspect = true;
-        icon.raycastTarget = false;
-
-        var labelGo = new GameObject(
-            "Count",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(TMPro.TextMeshProUGUI));
-
-        labelGo.transform.SetParent(go.transform, false);
-        var labelRect = labelGo.GetComponent<RectTransform>();
-        labelRect.anchorMin = new Vector2(1f, 1f);
-        labelRect.anchorMax = new Vector2(1f, 1f);
-        labelRect.pivot = new Vector2(0f, 0f);
-        labelRect.anchoredPosition = new Vector2(4f, -4f);
-        labelRect.sizeDelta = new Vector2(48f, 20f);
-
-        var label = labelGo.GetComponent<TMPro.TextMeshProUGUI>();
-        label.fontSize = 12f;
-        label.color = Color.white;
-        label.alignment = TMPro.TextAlignmentOptions.BottomRight;
-
-        _dragGhost = go.AddComponent<UIInventoryDragGhost>();
-        _dragGhost.Initialize(icon, label, _uiCanvas);
-        go.SetActive(false);
+        _dragGhost.EnsureReady(_uiCanvas, GetEmptyDragIcon());
     }
 
     void ConfigureWindow(UIInventoryListWindow window)
@@ -254,25 +322,16 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         if (_scrollDragOverlay != null || _uiCanvas == null)
             return;
 
-        _scrollDragOverlay = new GameObject(
-            "InventoryScrollDragOverlay",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(Image));
+        Transform existing = _uiCanvas.transform.Find("InventoryScrollDragOverlay");
+        if (existing != null)
+            _scrollDragOverlay = existing.gameObject;
 
-        _scrollDragOverlay.transform.SetParent(_uiCanvas.transform, false);
-        _scrollDragOverlay.transform.SetAsLastSibling();
-
-        var rect = _scrollDragOverlay.GetComponent<RectTransform>();
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-
-        var image = _scrollDragOverlay.GetComponent<Image>();
-        image.color = new Color(0f, 0f, 0f, 0f);
-        image.raycastTarget = true;
-        _scrollDragOverlay.SetActive(false);
+        if (_scrollDragOverlay == null)
+        {
+            Debug.LogError(
+                "[UIInventoryController] InventoryScrollDragOverlay is not assigned. Run Dist/Inventory/Setup Canvas Overlays In Open Scene.",
+                this);
+        }
     }
 
     void WireScrollDragHandler(UIInventoryListWindow window)
@@ -380,12 +439,14 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         if (IsAnyWindowOpen)
             return;
 
+        _itemDragDepth = 0;
         _scrollDragDepth = 0;
         if (_scrollDragOverlay != null)
             _scrollDragOverlay.SetActive(false);
 
         InventoryDragState.End();
         HideDragGhost();
+        _dragGhost = null;
         ClearMouseActionSuppressions();
     }
 
@@ -397,10 +458,10 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
     bool IsPointerOverAnyVisibleWindow()
     {
-        if (Mouse.current == null)
+        InputManager input = InputManager.Instance;
+        if (input == null || !input.TryReadPointerScreenPosition(out Vector2 position))
             return false;
 
-        Vector2 position = Mouse.current.position.ReadValue();
         Camera uiCamera = GetCanvasCamera();
 
         if (_primaryWindow && _primaryWindow.IsVisible &&

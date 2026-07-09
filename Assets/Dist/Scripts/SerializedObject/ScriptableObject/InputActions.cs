@@ -138,6 +138,15 @@ namespace UnityEngine.InputSystem
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""InventoryToggle"",
+                    ""type"": ""Button"",
+                    ""id"": ""a7b8c9d0-e1f2-4345-b6c7-d8e9f0a1b234"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -237,6 +246,17 @@ namespace UnityEngine.InputSystem
                     ""processors"": """",
                     ""groups"": "";Keyboard&Mouse"",
                     ""action"": ""Zoom"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b8c9d0e1-f2a3-4456-c7d8-e9f0a1b2c345"",
+                    ""path"": ""<Keyboard>/i"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""InventoryToggle"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -871,6 +891,7 @@ namespace UnityEngine.InputSystem
             m_Player_Run = m_Player.FindAction("Run", throwIfNotFound: true);
             m_Player_LookAt = m_Player.FindAction("LookAt", throwIfNotFound: true);
             m_Player_Zoom = m_Player.FindAction("Zoom", throwIfNotFound: true);
+            m_Player_InventoryToggle = m_Player.FindAction("InventoryToggle", throwIfNotFound: true);
             // UI
             m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
             m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -970,6 +991,7 @@ namespace UnityEngine.InputSystem
         private readonly InputAction m_Player_Run;
         private readonly InputAction m_Player_LookAt;
         private readonly InputAction m_Player_Zoom;
+        private readonly InputAction m_Player_InventoryToggle;
         /// <summary>
         /// Provides access to input actions defined in input action map "Player".
         /// </summary>
@@ -1001,6 +1023,10 @@ namespace UnityEngine.InputSystem
             /// Provides access to the underlying input action "Player/Zoom".
             /// </summary>
             public InputAction @Zoom => m_Wrapper.m_Player_Zoom;
+            /// <summary>
+            /// Provides access to the underlying input action "Player/InventoryToggle".
+            /// </summary>
+            public InputAction @InventoryToggle => m_Wrapper.m_Player_InventoryToggle;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -1042,6 +1068,9 @@ namespace UnityEngine.InputSystem
                 @Zoom.started += instance.OnZoom;
                 @Zoom.performed += instance.OnZoom;
                 @Zoom.canceled += instance.OnZoom;
+                @InventoryToggle.started += instance.OnInventoryToggle;
+                @InventoryToggle.performed += instance.OnInventoryToggle;
+                @InventoryToggle.canceled += instance.OnInventoryToggle;
             }
 
             /// <summary>
@@ -1068,6 +1097,9 @@ namespace UnityEngine.InputSystem
                 @Zoom.started -= instance.OnZoom;
                 @Zoom.performed -= instance.OnZoom;
                 @Zoom.canceled -= instance.OnZoom;
+                @InventoryToggle.started -= instance.OnInventoryToggle;
+                @InventoryToggle.performed -= instance.OnInventoryToggle;
+                @InventoryToggle.canceled -= instance.OnInventoryToggle;
             }
 
             /// <summary>
@@ -1414,6 +1446,13 @@ namespace UnityEngine.InputSystem
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnZoom(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "InventoryToggle" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnInventoryToggle(InputAction.CallbackContext context);
         }
         /// <summary>
         /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UI" which allows adding and removing callbacks.

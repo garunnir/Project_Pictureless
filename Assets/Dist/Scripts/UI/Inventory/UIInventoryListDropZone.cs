@@ -18,7 +18,10 @@ public sealed class UIInventoryListDropZone : MonoBehaviour, IDropHandler
 
         InventorySession session = _window.Session;
         InventoryContainer target = _window.SelectedContainer;
-        if (session == null || target == null || payload.SourceContainer == null)
+        if (session == null || target == null || payload.SourceContainer == null || payload.Stacks == null)
+            return;
+
+        if (payload.Stacks.Count == 0)
             return;
 
         if (payload.SourceContainer == target)
@@ -28,6 +31,5 @@ public sealed class UIInventoryListDropZone : MonoBehaviour, IDropHandler
             return;
 
         payload.SourceSelection?.Clear();
-        InventoryDragState.End();
     }
 }

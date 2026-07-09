@@ -66,6 +66,12 @@ public sealed class InventorySession
         if (from == to)
             return false;
 
+        for (int i = 0; i < stacks.Count; i++)
+        {
+            if (!CanPlaceStackInContainer(stacks[i], to))
+                return false;
+        }
+
         var pending = new List<ItemStack>(stacks.Count);
         float pendingWeight = 0f;
         float pendingVolume = 0f;
@@ -143,6 +149,38 @@ public sealed class InventorySession
     void NotifySidebarChanged() => SidebarChanged?.Invoke();
 
     void NotifyStacksChanged() => StacksChanged?.Invoke();
+
+    static bool CanPlaceStackInContainer(ItemStack stack, InventoryContainer target)
+    {
+        if (stack?.Item == null || target == null)
+            return false;
+
+        if (!stack.Item.IsContainer || stack.Nested == null)
+            return true;
+
+        return !IsContainerWithinHierarchy(target, stack.Nested);
+    }
+
+    static bool IsContainerWithinHierarchy(InventoryContainer inner, InventoryContainer outer)
+    {
+        if (inner == null || outer == null)
+            return false;
+
+        if (inner == outer)
+            return true;
+
+        for (int i = 0; i < outer.Stacks.Count; i++)
+        {
+            ItemStack stack = outer.Stacks[i];
+            if (stack?.Item == null || !stack.Item.IsContainer || stack.Nested == null)
+                continue;
+
+            if (stack.Nested == inner || IsContainerWithinHierarchy(inner, stack.Nested))
+                return true;
+        }
+
+        return false;
+    }
 
     static void TransferStack(InventoryContainer from, InventoryContainer to, ItemStack stack)
     {

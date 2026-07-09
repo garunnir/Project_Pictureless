@@ -48,6 +48,8 @@ public sealed class UIItemListView : MonoBehaviour
 
     public int ActiveRowCount => _activeRows.Count;
 
+    public Sprite RowEmptyIconSprite => _rowPrefab != null ? _rowPrefab.EmptyIconSprite : null;
+
 
 
     bool _selectionEventsWired;
@@ -317,7 +319,7 @@ public sealed class UIItemListView : MonoBehaviour
 
 
 
-    public void SelectRowsInRect(Rect screenRect)
+    public void SelectRowsInRect(Rect screenRect, Camera uiCamera = null)
 
     {
 
@@ -335,7 +337,7 @@ public sealed class UIItemListView : MonoBehaviour
 
 
 
-            if (RowIntersectsScreenRect(row.RectTransform, screenRect))
+            if (RowIntersectsScreenRect(row.RectTransform, screenRect, uiCamera))
 
                 selected.Add(row.Stack);
 
@@ -349,7 +351,7 @@ public sealed class UIItemListView : MonoBehaviour
 
 
 
-    static bool RowIntersectsScreenRect(RectTransform rowRect, Rect screenRect)
+    static bool RowIntersectsScreenRect(RectTransform rowRect, Rect screenRect, Camera uiCamera)
 
     {
 
@@ -357,13 +359,33 @@ public sealed class UIItemListView : MonoBehaviour
 
         rowRect.GetWorldCorners(corners);
 
-        float minX = corners[0].x;
+        float minX = float.PositiveInfinity;
 
-        float minY = corners[0].y;
+        float minY = float.PositiveInfinity;
 
-        float maxX = corners[2].x;
+        float maxX = float.NegativeInfinity;
 
-        float maxY = corners[2].y;
+        float maxY = float.NegativeInfinity;
+
+
+
+        for (int i = 0; i < corners.Length; i++)
+
+        {
+
+            Vector2 screen = RectTransformUtility.WorldToScreenPoint(uiCamera, corners[i]);
+
+            minX = Mathf.Min(minX, screen.x);
+
+            minY = Mathf.Min(minY, screen.y);
+
+            maxX = Mathf.Max(maxX, screen.x);
+
+            maxY = Mathf.Max(maxY, screen.y);
+
+        }
+
+
 
         var rowScreen = Rect.MinMaxRect(minX, minY, maxX, maxY);
 

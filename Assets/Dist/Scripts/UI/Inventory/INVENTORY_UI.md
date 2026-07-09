@@ -32,7 +32,11 @@
 
 - 드래그 수명주기(`Begin/Commit/Cancel`)는 단일 상태 소유자에서 종료한다.
 
-- `OnEndDrag`, `OnDrop`, `LateUpdate`에 종료 책임을 분산하지 않는다.
+- `InventoryDragState.End()`는 `UIInventoryController.FinalizeItemDrag` / `CleanupIfNoWindowsOpen`에서만 호출한다. `OnDrop`은 이동·선택 해제만 수행하고, 종료는 `OnEndDrag` → `OnItemDragEnded` 한 경로로 모은다.
+
+- `LateUpdate`는 드래그 종료·고스트 위치가 아니라 창 위 포인터 캐시·Zoom/Aim 억제 전용이다.
+- 드래그 고스트 위치는 `OnBeginDrag` → `BeginDragGhost`, `OnDrag` → `UpdateDragGhostPosition` 이벤트 경로만 사용한다.
+- 아이템 드래그는 스크롤 오버레이(`InventoryScrollDragOverlay`)를 켜지 않는다. 오버레이는 리스트 스크롤 드래그 전용이다.
 
 
 
@@ -48,7 +52,7 @@
 
 - 차이는 `InventoryWindowMode` 데이터 바인딩뿐이다.
 
-  - `PlayerOnly`: 플레이어 컨테이너(`player-body`) 단일 리스트, 사이드바 숨김
+  - `PlayerOnly`: 플레이어 컨테이너(`player-body`) 단일 리스트. 중첩 가방 탭이 있으면 사이드바 표시, 없으면 숨김.
 
   - `NearbyOnly`: `NearbyContainerDetector`가 등록한 주변 컨테이너 전체를 사이드탭으로 표시 (플레이어 제외). `TrackLootContainer` 없음 — 반경 스캔만 사용.
   - 감지 SSOT: 컨테이너 후보 판정은 `InventoryContainerRegistry` provider 목록 + `CharacterState.ResolveGridCell`(WorldGrid 기준) 단일 경로를 사용한다. `ContainerGridRegistry`는 Nearby 판단 경로에서 사용하지 않는다.
@@ -67,6 +71,8 @@
 - 크기 제한: 최소 320×240, 최대 Canvas의 75%×78% (`InventoryWindowLayout`).
 
 - 사이드탭 클릭 시 해당 컨테이너 아이템 리스트로 즉시 전환.
+- **창 선택 SSOT:** `UIInventoryListWindow.SelectedContainer` — 활성 탭 하이라이트와 리스트 `Bind`는 `SetActiveContainer` 단일 경로로만 갱신한다. 사이드바/리스트 단독 갱신 금지.
+- **루팅 월드 SSOT:** `LootProximityCoordinator` — `NearbyOnly` 탭 클릭은 coordinator 경유 후 `ApplyActiveLootContainer` → `SetActiveContainer`로 창에 반영한다.
 
 
 
@@ -92,6 +98,10 @@
 
 | `Grp_ContainerSlot` | 사이드바 컨테이너 슬롯 |
 
+| `Grp_InventoryDragGhost` | 드래그 고스트 (`UICanvas` 하위, bake 또는 `Setup Canvas Overlays In Open Scene`) |
+
+| `InventoryScrollDragOverlay` | 스크롤/드래그 중 전체 캔버스 레이캐스트 차단 (`UICanvas` 하위) |
+
 
 
 폰트: 텍스트가 있는 행/슬롯 프리팹 TMP는 `Katuri SDF` 사용.
@@ -99,6 +109,8 @@
 빈 아이콘 폴백: `UIItemListRow._emptyIconSprite` (`ui_icon_empty.png`).
 
 프리팹 갱신: `Dist/Inventory/Bake UI Prefabs` (bake 시점 `AddComponent`는 허용 — 런타임 폴백 아님).
+
+캔버스 오버레이 배선: `Dist/Inventory/Setup Canvas Overlays In Open Scene` (IsoLand 등 씬 1회 실행).
 
 ### 월드 컨테이너 프리팹 (인벤 관련)
 
@@ -189,7 +201,7 @@
 
 - `LauncherTarget.Loot` → 루팅창 토글
 
-- `I` 키는 플레이어창 토글만 수행한다.
+- `I` 키는 `InputManager.PlayerInventoryTogglePerformed` → 플레이어창 토글만 수행한다.
 
 
 

@@ -12,27 +12,56 @@ public sealed class UIInventoryDragGhost : MonoBehaviour
     TMP_Text _countLabel;
     Canvas _rootCanvas;
     RectTransform _rect;
+    Sprite _emptyIconSprite;
 
-    public void Initialize(Image iconImage, TMP_Text countLabel, Canvas rootCanvas)
+    public void Initialize(Image iconImage, TMP_Text countLabel, Canvas rootCanvas, Sprite emptyIconSprite)
     {
         _iconImage = iconImage;
         _countLabel = countLabel;
         _rootCanvas = rootCanvas;
+        _emptyIconSprite = emptyIconSprite;
         _rect = transform as RectTransform;
         gameObject.SetActive(false);
     }
 
+    public void EnsureReady(Canvas rootCanvas, Sprite emptyIconSprite)
+    {
+        if (_rect == null)
+            _rect = transform as RectTransform;
+
+        if (_iconImage == null)
+            TryGetComponent(out _iconImage);
+
+        if (_countLabel == null)
+            _countLabel = GetComponentInChildren<TMP_Text>(true);
+
+        if (rootCanvas != null)
+            _rootCanvas = rootCanvas;
+        else if (_rootCanvas == null)
+            _rootCanvas = GetComponentInParent<Canvas>();
+
+        if (emptyIconSprite != null)
+            _emptyIconSprite = emptyIconSprite;
+    }
+
+    public void SetEmptyIconSprite(Sprite emptyIconSprite) => _emptyIconSprite = emptyIconSprite;
+
     public void Show(Sprite icon, int stackCount, Vector2 screenPosition)
     {
+        if (!this)
+            return;
+
         if (_iconImage != null)
         {
-            _iconImage.enabled = icon != null;
-            _iconImage.sprite = icon;
+            Sprite displayIcon = icon != null ? icon : _emptyIconSprite;
+            _iconImage.sprite = displayIcon;
+            _iconImage.enabled = displayIcon != null;
         }
 
         if (_countLabel != null)
             _countLabel.text = stackCount > 1 ? $"x{stackCount}" : string.Empty;
 
+        transform.SetAsLastSibling();
         gameObject.SetActive(true);
         SetScreenPosition(screenPosition);
     }
@@ -56,5 +85,11 @@ public sealed class UIInventoryDragGhost : MonoBehaviour
         }
     }
 
-    public void Hide() => gameObject.SetActive(false);
+    public void Hide()
+    {
+        if (!this)
+            return;
+
+        gameObject.SetActive(false);
+    }
 }

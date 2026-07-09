@@ -106,6 +106,15 @@ public sealed class UIContainerSidebar : MonoBehaviour
         _lastSelectedId = string.Empty;
     }
 
+    public void ClearDropHovers()
+    {
+        for (int i = 0; i < _slots.Count; i++)
+        {
+            if (_slots[i] != null)
+                _slots[i].SetDropHover(false);
+        }
+    }
+
     void AddSlot(
         InventoryContainer container,
         Action<InventoryContainer> onSelected,

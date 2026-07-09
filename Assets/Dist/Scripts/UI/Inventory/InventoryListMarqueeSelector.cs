@@ -61,7 +61,7 @@ public sealed class InventoryListMarqueeSelector : MonoBehaviour,
             return;
 
         UpdateSelectionRect(_startLocal, currentLocal);
-        _listView.SelectRowsInRect(GetScreenRect(_startLocal, currentLocal));
+        _listView.SelectRowsInRect(GetScreenRect(_startLocal, currentLocal), _uiCamera);
     }
 
     public void OnPointerUp(PointerEventData eventData)
@@ -76,14 +76,23 @@ public sealed class InventoryListMarqueeSelector : MonoBehaviour,
 
     void UpdateSelectionRect(Vector2 startLocal, Vector2 endLocal)
     {
-        if (_selectionRect == null)
+        if (_selectionRect == null || _hostRect == null)
             return;
 
-        Vector2 min = Vector2.Min(startLocal, endLocal);
-        Vector2 max = Vector2.Max(startLocal, endLocal);
+        Vector2 start = PivotLocalToBottomLeftAnchored(startLocal, _hostRect);
+        Vector2 end = PivotLocalToBottomLeftAnchored(endLocal, _hostRect);
+        Vector2 min = Vector2.Min(start, end);
+        Vector2 max = Vector2.Max(start, end);
         _selectionRect.gameObject.SetActive(true);
         _selectionRect.anchoredPosition = min;
         _selectionRect.sizeDelta = max - min;
+    }
+
+    static Vector2 PivotLocalToBottomLeftAnchored(Vector2 pivotLocal, RectTransform host)
+    {
+        Rect rect = host.rect;
+        Vector2 pivot = host.pivot;
+        return pivotLocal + new Vector2(rect.width * pivot.x, rect.height * pivot.y);
     }
 
     Rect GetScreenRect(Vector2 startLocal, Vector2 endLocal)

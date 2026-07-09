@@ -1,5 +1,5 @@
 // ============================================================
-// UIContainerSlotDropZone — 사이드바 탭 드롭·호버 선택
+// UIContainerSlotDropZone — 사이드바 탭 드롭·호버 힌트
 // ============================================================
 
 using UnityEngine;
@@ -7,7 +7,8 @@ using UnityEngine.EventSystems;
 
 public sealed class UIContainerSlotDropZone : MonoBehaviour,
     IDropHandler,
-    IPointerEnterHandler
+    IPointerEnterHandler,
+    IPointerExitHandler
 {
     UIInventoryListWindow _window;
     UIContainerSlot _slot;
@@ -37,7 +38,7 @@ public sealed class UIContainerSlotDropZone : MonoBehaviour,
         if (payload.Kind == InventoryDragKind.Item)
             payload.SourceSelection?.Clear();
 
-        InventoryDragState.End();
+        _slot.SetDropHover(false);
         _window.SelectContainer(target);
     }
 
@@ -46,6 +47,12 @@ public sealed class UIContainerSlotDropZone : MonoBehaviour,
         if (!InventoryDragState.IsDragging || _slot == null)
             return;
 
-        _window?.SelectContainer(_slot.Container);
+        _slot.SetDropHover(true);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (_slot != null)
+            _slot.SetDropHover(false);
     }
 }

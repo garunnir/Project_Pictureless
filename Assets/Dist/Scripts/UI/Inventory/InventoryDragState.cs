@@ -38,12 +38,22 @@ public static class InventoryDragState
         if (sourceContainer == null || stacks == null || stacks.Count == 0)
             return;
 
+        var snapshot = new List<ItemStack>(stacks.Count);
+        for (int i = 0; i < stacks.Count; i++)
+        {
+            if (stacks[i] != null)
+                snapshot.Add(stacks[i]);
+        }
+
+        if (snapshot.Count == 0)
+            return;
+
         _active = new InventoryDragPayload
         {
             Kind = InventoryDragKind.Item,
             SourceContainer = sourceContainer,
             SourceSelection = sourceSelection,
-            Stacks = stacks,
+            Stacks = snapshot,
         };
     }
 
@@ -62,4 +72,6 @@ public static class InventoryDragState
     }
 
     public static void End() => _active = null;
+
+    // End()는 UIInventoryController.FinalizeItemDrag / CleanupIfNoWindowsOpen 에서만 호출한다.
 }

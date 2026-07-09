@@ -30,6 +30,7 @@ public class InputManager : SceneSingleton<InputManager>
     public event Action<InputAction.CallbackContext> PlayerLookAtPerformed;
     public event Action<InputAction.CallbackContext> PlayerLookAtCanceled;
     public event Action<InputAction.CallbackContext> PlayerInteractPerformed;
+    public event Action<InputAction.CallbackContext> PlayerInventoryTogglePerformed;
 
     public event Action<InputAction.CallbackContext> UiNavigateStarted;
     public event Action<InputAction.CallbackContext> UiNavigateCanceled;
@@ -109,6 +110,25 @@ public class InputManager : SceneSingleton<InputManager>
         return true;
     }
 
+    public bool TryReadPointerScreenPosition(out Vector2 position)
+    {
+        position = Vector2.zero;
+
+        if (Pointer.current != null)
+        {
+            position = Pointer.current.position.ReadValue();
+            return true;
+        }
+
+        if (Mouse.current != null)
+        {
+            position = Mouse.current.position.ReadValue();
+            return true;
+        }
+
+        return false;
+    }
+
     void WireActionCallbacks()
     {
         _actions.Player.Move.performed += ForwardPlayerMovePerformed;
@@ -119,6 +139,7 @@ public class InputManager : SceneSingleton<InputManager>
         _actions.Player.LookAt.performed += ForwardPlayerLookAtPerformed;
         _actions.Player.LookAt.canceled += ForwardPlayerLookAtCanceled;
         _actions.Player.Interaction.performed += ForwardPlayerInteractPerformed;
+        _actions.Player.InventoryToggle.performed += ForwardPlayerInventoryTogglePerformed;
 
         _actions.UI.Navigate.started += ForwardUiNavigateStarted;
         _actions.UI.Navigate.canceled += ForwardUiNavigateCanceled;
@@ -139,6 +160,7 @@ public class InputManager : SceneSingleton<InputManager>
         _actions.Player.LookAt.performed -= ForwardPlayerLookAtPerformed;
         _actions.Player.LookAt.canceled -= ForwardPlayerLookAtCanceled;
         _actions.Player.Interaction.performed -= ForwardPlayerInteractPerformed;
+        _actions.Player.InventoryToggle.performed -= ForwardPlayerInventoryTogglePerformed;
 
         _actions.UI.Navigate.started -= ForwardUiNavigateStarted;
         _actions.UI.Navigate.canceled -= ForwardUiNavigateCanceled;
@@ -205,6 +227,14 @@ public class InputManager : SceneSingleton<InputManager>
             return;
 
         PlayerInteractPerformed?.Invoke(ctx);
+    }
+
+    void ForwardPlayerInventoryTogglePerformed(InputAction.CallbackContext ctx)
+    {
+        if (IsUiMenuInputActive)
+            return;
+
+        PlayerInventoryTogglePerformed?.Invoke(ctx);
     }
 
     void ForwardUiNavigateStarted(InputAction.CallbackContext ctx)

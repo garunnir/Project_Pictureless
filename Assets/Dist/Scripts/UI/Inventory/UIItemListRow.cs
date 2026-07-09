@@ -29,6 +29,8 @@ public sealed class UIItemListRow : MonoBehaviour,
     InventoryListSelection _selection;
     IInventoryItemDragHost _dragHost;
 
+    public Sprite EmptyIconSprite => _emptyIconSprite;
+
     public ItemStack Stack => _stack;
     public RectTransform RectTransform => transform as RectTransform;
 
@@ -104,7 +106,7 @@ public sealed class UIItemListRow : MonoBehaviour,
         InventoryDragState.Begin(_ownerContainer, _selection, stacks);
 
         _dragHost.OnItemDragStarted();
-        _dragHost.UpdateDragGhost(eventData.position, stacks.Count);
+        _dragHost.BeginDragGhost(eventData.position, stacks.Count);
 
         eventData.Use();
     }
@@ -114,12 +116,17 @@ public sealed class UIItemListRow : MonoBehaviour,
         if (!InventoryDragState.IsDragging)
             return;
 
-        _dragHost?.UpdateDragGhost(eventData.position, _selection?.Count ?? 1);
+        if (_dragHost == null)
+            return;
+
+        _dragHost.UpdateDragGhostPosition(eventData.position);
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        _dragHost?.HideDragGhost();
-        _dragHost?.OnItemDragEnded();
+        if (_dragHost == null)
+            return;
+
+        _dragHost.OnItemDragEnded();
     }
 }

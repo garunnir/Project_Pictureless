@@ -126,6 +126,9 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         }
 
         _listView.Configure(_session, dragHost);
+
+        if (_selectedContainer != null)
+            SetActiveContainer(_selectedContainer);
     }
 
     void EnsureSidebarRaycastTarget()
@@ -159,7 +162,7 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         ApplyModeLayout();
 
         if (_mode == InventoryWindowMode.PlayerOnly && initialFocus != null)
-            _selectedContainer = initialFocus;
+            SetActiveContainer(initialFocus, refreshList: false);
         else if (_mode == InventoryWindowMode.NearbyOnly)
             SyncNearbySelectionFromCoordinator(initialFocus, refreshList: false);
         else
@@ -178,7 +181,6 @@ public sealed class UIInventoryListWindow : MonoBehaviour
 
         EnsureSelectedContainerForSidebar();
         RefreshSidebarAndSelection();
-        RefreshListOnly();
     }
 
     public void ApplyActiveLootContainer(InventoryContainer container)
@@ -186,9 +188,8 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         if (_mode != InventoryWindowMode.NearbyOnly)
             return;
 
-        _selectedContainer = container;
+        SetActiveContainer(container);
         RefreshSidebarAndSelection();
-        RefreshListOnly();
     }
 
     public void OnStacksChanged()
@@ -199,13 +200,18 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         if (_mode == InventoryWindowMode.PlayerOnly)
         {
             if (_selectedContainer == null)
-                ResolvePlayerContainer();
+            {
+                InventoryContainer resolved = ResolvePlayerContainer();
+                if (resolved != null)
+                    SetActiveContainer(resolved, refreshList: false);
+            }
 
             ApplyModeLayout();
             RefreshSidebarAndSelection();
         }
 
-        RefreshListOnly();
+        if (_selectedContainer != null)
+            SetActiveContainer(_selectedContainer);
     }
 
     public void OnSessionChanged()
@@ -241,12 +247,7 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             return;
         }
 
-        _selectedContainer = container;
-
-        if (refreshList)
-            RefreshListOnly();
-        else
-            RefreshSidebarSelectionOnly();
+        SetActiveContainer(container, refreshList);
     }
 
     public void SelectContainer(string instanceId)
@@ -268,12 +269,35 @@ public sealed class UIInventoryListWindow : MonoBehaviour
     public void RefreshAll()
     {
         RefreshSidebarAndSelection();
-        RefreshListOnly();
+        if (_selectedContainer != null)
+            SetActiveContainer(_selectedContainer);
     }
 
     public void RefreshListOnly()
     {
-        _listView?.Bind(_selectedContainer);
+        if (_selectedContainer == null)
+            return;
+
+        SetActiveContainer(_selectedContainer);
+    }
+
+    public void ClearSidebarDropHovers()
+    {
+        if (!ShouldShowSidebar())
+            return;
+
+        _sidebar.ClearDropHovers();
+    }
+
+    void SetActiveContainer(InventoryContainer container, bool refreshList = true)
+    {
+        _selectedContainer = container;
+        ApplySidebarSelectionHighlight();
+
+        if (!refreshList || InventoryDragState.IsDragging)
+            return;
+
+        _listView?.Bind(container);
     }
 
     public void RefreshSidebarAndSelection()
@@ -290,7 +314,7 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         }
     }
 
-    void RefreshSidebarSelectionOnly()
+    void ApplySidebarSelectionHighlight()
     {
         if (!ShouldShowSidebar())
             return;
@@ -309,56 +333,50 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             ContainsSidebarContainer(GetSidebarContainersForMode(), preferred.InstanceId))
             coordinator.RequestActiveContainer(preferred);
 
-        _selectedContainer = coordinator.ActiveContainer;
-
-        if (refreshList)
-            RefreshListOnly();
-        else
-            RefreshSidebarSelectionOnly();
+        SetActiveContainer(coordinator.ActiveContainer, refreshList);
     }
 
     void EnsureSelectedContainerForSidebar()
     {
         IReadOnlyList<InventoryContainer> sidebar = GetSidebarContainersForMode();
 
+        if (_selectedContainer != null && ContainsSidebarContainer(sidebar, _selectedContainer.InstanceId))
+            return;
+
+        InventoryContainer fallback = null;
+
         if (_mode == InventoryWindowMode.PlayerOnly)
-        {
-            if (_selectedContainer == null)
-                ResolvePlayerContainer();
-            else if (!ContainsSidebarContainer(sidebar, _selectedContainer.InstanceId))
-                _selectedContainer = GetPlayerBodyContainer() ?? _selectedContainer;
-        }
+            fallback = GetPlayerBodyContainer() ?? ResolvePlayerContainer();
         else
         {
             LootProximityCoordinator coordinator = PlayerInventoryRuntime.Active?.LootProximity;
             InventoryContainer active = coordinator?.ActiveContainer;
 
             if (active != null && ContainsSidebarContainer(sidebar, active.InstanceId))
-                _selectedContainer = active;
-            else if (_selectedContainer == null ||
-                     !ContainsSidebarContainer(sidebar, _selectedContainer.InstanceId))
-                _selectedContainer = sidebar.Count > 0 ? sidebar[0] : null;
+                fallback = active;
+            else if (sidebar.Count > 0)
+                fallback = sidebar[0];
         }
+
+        if (fallback != null)
+            SetActiveContainer(fallback);
+        else
+            _selectedContainer = null;
     }
 
-    void ResolvePlayerContainer()
+    InventoryContainer ResolvePlayerContainer()
     {
         if (_session == null)
-            return;
+            return GetPlayerBodyContainer();
 
         IReadOnlyList<InventoryContainer> all = _session.GetSidebarContainers();
         for (int i = 0; i < all.Count; i++)
         {
             if (all[i].InstanceId == PlayerInventoryHost.DefaultInstanceId)
-            {
-                _selectedContainer = all[i];
-                return;
-            }
+                return all[i];
         }
 
-        PlayerInventoryRuntime runtime = PlayerInventoryRuntime.Active;
-        if (runtime?.Host?.Container != null)
-            _selectedContainer = runtime.Host.Container;
+        return GetPlayerBodyContainer();
     }
 
     void ApplyModeLayout()

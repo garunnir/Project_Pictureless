@@ -14,11 +14,35 @@ public sealed class InventoryScrollDragHandler : MonoBehaviour,
 
     public void Bind(IInventoryScrollDragHost host) => _host = host;
 
-    public void OnBeginDrag(PointerEventData eventData) => _host?.OnScrollDragStarted();
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        if (_host == null)
+            return;
 
-    public void OnEndDrag(PointerEventData eventData) => _host?.OnScrollDragEnded();
+        _host.OnScrollDragStarted();
+    }
 
-    public void OnPointerUp(PointerEventData eventData) => _host?.OnScrollDragEnded();
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        if (_host == null)
+            return;
 
-    void OnDisable() => _host?.OnScrollDragEnded();
+        _host.OnScrollDragEnded();
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        if (_host == null)
+            return;
+
+        _host.OnScrollDragEnded();
+    }
+
+    void OnDisable()
+    {
+        if (_host == null)
+            return;
+
+        _host.OnScrollDragEnded();
+    }
 }

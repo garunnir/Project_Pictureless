@@ -24,6 +24,7 @@ public sealed class UIContainerSlot : MonoBehaviour,
 {
     static readonly Color NormalColor = new(0.18f, 0.18f, 0.18f, 1f);
     static readonly Color SelectedColor = new(0.28f, 0.38f, 0.48f, 1f);
+    static readonly Color DropHoverColor = new(0.32f, 0.42f, 0.32f, 1f);
     static readonly Color DraggingColor = new(0.18f, 0.18f, 0.18f, 0.45f);
 
     [SerializeField] Button _button;
@@ -40,6 +41,7 @@ public sealed class UIContainerSlot : MonoBehaviour,
     UIInventoryListWindow _window;
     InventorySession _session;
     bool _isDraggable;
+    bool _isDropHover;
     ContainerSlotVisualState _visualState = ContainerSlotVisualState.Normal;
     bool _isSelected;
 
@@ -107,6 +109,7 @@ public sealed class UIContainerSlot : MonoBehaviour,
             _dragContainerStack = stack;
         }
 
+        _isDropHover = false;
         SetSelected(selected);
     }
 
@@ -120,8 +123,13 @@ public sealed class UIContainerSlot : MonoBehaviour,
             _highlight.enabled = selected;
         }
 
-        if (_visualState != ContainerSlotVisualState.Dragging)
-            ApplyBackgroundColor(selected ? SelectedColor : NormalColor);
+        ApplyIdleBackgroundColor();
+    }
+
+    public void SetDropHover(bool hover)
+    {
+        _isDropHover = hover;
+        ApplyIdleBackgroundColor();
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -135,16 +143,16 @@ public sealed class UIContainerSlot : MonoBehaviour,
         InventoryDragState.BeginContainerTab(_dragParentContainer, _dragContainerStack);
         SetVisualState(ContainerSlotVisualState.Dragging);
         _dragHost.OnItemDragStarted();
-        _dragHost.UpdateDragGhost(eventData.position, 1);
+        _dragHost.BeginDragGhost(eventData.position, 1);
         eventData.Use();
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (!InventoryDragState.IsDragging)
+        if (!InventoryDragState.IsDragging || _dragHost == null)
             return;
 
-        _dragHost?.UpdateDragGhost(eventData.position, 1);
+        _dragHost.UpdateDragGhostPosition(eventData.position);
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -152,8 +160,10 @@ public sealed class UIContainerSlot : MonoBehaviour,
         if (_visualState == ContainerSlotVisualState.Dragging)
             SetVisualState(_isSelected ? ContainerSlotVisualState.Selected : ContainerSlotVisualState.Normal);
 
-        _dragHost?.HideDragGhost();
-        _dragHost?.OnItemDragEnded();
+        if (_dragHost == null)
+            return;
+
+        _dragHost.OnItemDragEnded();
     }
 
     void OnClick() => _onSelected?.Invoke(_container);
@@ -167,13 +177,21 @@ public sealed class UIContainerSlot : MonoBehaviour,
             case ContainerSlotVisualState.Dragging:
                 ApplyBackgroundColor(DraggingColor);
                 break;
-            case ContainerSlotVisualState.Selected:
-                ApplyBackgroundColor(SelectedColor);
-                break;
             default:
-                ApplyBackgroundColor(NormalColor);
+                ApplyIdleBackgroundColor();
                 break;
         }
+    }
+
+    void ApplyIdleBackgroundColor()
+    {
+        if (_visualState == ContainerSlotVisualState.Dragging)
+            return;
+
+        if (_isDropHover)
+            ApplyBackgroundColor(DropHoverColor);
+        else
+            ApplyBackgroundColor(_isSelected ? SelectedColor : NormalColor);
     }
 
     void ApplyBackgroundColor(Color color)

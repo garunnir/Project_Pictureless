@@ -70,6 +70,52 @@ static class InventoryUIHierarchyBuilder
         return slotView;
     }
 
+    public static UIInventoryDragGhost BuildDragGhostRoot(Canvas rootCanvas)
+    {
+        var go = CreateRect("InventoryDragGhost", null, new Color(1f, 1f, 1f, 0f));
+        var rect = go.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(40f, 40f);
+
+        Image icon = go.GetComponent<Image>();
+        icon.preserveAspect = true;
+        icon.raycastTarget = false;
+
+        var labelGo = new GameObject("Count", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        labelGo.transform.SetParent(go.transform, false);
+        labelGo.layer = LayerMask.NameToLayer("UI");
+        var labelRect = labelGo.GetComponent<RectTransform>();
+        labelRect.anchorMin = new Vector2(1f, 1f);
+        labelRect.anchorMax = new Vector2(1f, 1f);
+        labelRect.pivot = new Vector2(0f, 0f);
+        labelRect.anchoredPosition = new Vector2(4f, -4f);
+        labelRect.sizeDelta = new Vector2(48f, 20f);
+
+        TMP_Text label = labelGo.GetComponent<TextMeshProUGUI>();
+        label.font = LoadDefaultFont();
+        label.fontSize = 12f;
+        label.color = Color.white;
+        label.alignment = TextAlignmentOptions.BottomRight;
+        label.raycastTarget = false;
+
+        var ghost = go.AddComponent<UIInventoryDragGhost>();
+        ghost.Initialize(icon, label, rootCanvas, LoadEmptyItemIcon());
+        go.SetActive(false);
+        return ghost;
+    }
+
+    public static GameObject BuildScrollDragOverlayRoot()
+    {
+        var overlay = CreateRect("InventoryScrollDragOverlay", null, new Color(0f, 0f, 0f, 0f));
+        Stretch(overlay.GetComponent<RectTransform>(), 0f, 0f, 0f, 0f);
+        Image image = overlay.GetComponent<Image>();
+        image.raycastTarget = true;
+        overlay.SetActive(false);
+        return overlay;
+    }
+
     public static UIInventoryListWindow BuildWindowRoot(
         UIItemListRow rowPrefab,
         UIContainerSlot slotPrefab)
