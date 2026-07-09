@@ -2,8 +2,11 @@
     "name": "Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:faba5e8a51554044583b9d7724baa5ad",
-        "GUID:6a874b40b4ccc4245a515b1a3b07794a",
+        "DistScript",
+        "Dist.Map",
+        "Dist.Inventory",
+        "Dist.Gameplay.Item",
+        "Dist.Visual",
         "GUID:6055be8ebefd69e48b49212b09b47b2f",
         "GUID:71c4ae7573588cc4c9e9ee859ce3512d",
         "Dist.Inventory.UI"

@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(CinemachineCamera))]
-public class CameraZoomController : MonoBehaviour
+public class CameraZoomController : MonoBehaviour, IMaxOrthographicSizeProvider
 {
     [SerializeField, Min(0.01f)] private float _minOrthographicSize = 3f;
     [SerializeField, Min(0.01f)] private float _maxOrthographicSize = 10f;

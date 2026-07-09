@@ -119,7 +119,6 @@ namespace IsoTilemap
         static void RequestInspectorRepaint()
         {
             UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
-            Sirenix.Utilities.Editor.GUIHelper.RequestRepaint();
         }
 
         void SaveAssetToDisk()

@@ -91,9 +91,7 @@ public class TileMapChunkStreamer : MonoBehaviour
         float maxOrtho = TileViewportBounds.ResolveOrthographicSize(null, _cinemachineCamera);
 
         if (_cinemachineCamera != null &&
-
-            _cinemachineCamera.TryGetComponent(out CameraZoomController zoom))
-
+            _cinemachineCamera.TryGetComponent(out IMaxOrthographicSizeProvider zoom))
             maxOrtho = zoom.MaxOrthographicSize;
 
 

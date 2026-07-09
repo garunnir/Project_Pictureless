@@ -32,11 +32,13 @@ public class TileMapManager : MonoBehaviour
     [Header("Tile Visibility and Presentation")]
     [Tooltip("비우면 ChunkStreamer 카메라 → Camera.main 순으로 사용합니다.")]
     [SerializeField] private Camera _visibilityCamera;
-    [SerializeField] private SightLineProximityBlendDriver _proximityBlendDriver;
+    [SerializeField] private MonoBehaviour _proximityBlendDriver;
     [SerializeField] private CharacterOcclusionDisplayDriver _occlusionDisplayDriver;
+    [Tooltip("컨테이너 TileView registry bridge. 비우면 맵 타일만 조회합니다.")]
+    [SerializeField] private MonoBehaviour _externalTileViewRegistry;
 
     [Header("Floor Visibility (chunk streaming only)")]
-    [SerializeField] private PlayerFloorVisibilityDriver _floorVisibilityDriver;
+    [SerializeField] private MonoBehaviour _floorVisibilityDriver;
     [FormerlySerializedAs("_floorHidePresentationMode")]
     [SerializeField] private StructuralHidePresentationMode _structuralHidePresentationMode =
         StructuralHidePresentationMode.DisableGameObject;
@@ -67,6 +69,7 @@ public class TileMapManager : MonoBehaviour
     public IMapModel Model { get; private set; }
     public TileViewPresentationApplier PresentationApplier => _presentationApplier;
     public TilePresentationSystem PresentationSystem => _presentationSystem;
+    public MapCollisionServices MapCollisionServices => _mapCollisionServices;
     public TilePrefabDB PrefabDB => _prefabDB;
     public IWorldGrid WorldGrid => _worldGrid;
 
@@ -131,7 +134,6 @@ public class TileMapManager : MonoBehaviour
         Model = _loader.Model;
 
         _worldGrid.ApplyFromMap(_loader.LastLoadedDto, _gridCellSize);
-        BindWorldGridToCharacters();
 
         if (Model is TileMapModel runtimeTileModel)
             SetupMapRuntimeCache(runtimeTileModel);
@@ -145,27 +147,27 @@ public class TileMapManager : MonoBehaviour
 
         _controller.Init(Model, viewBuilder);
 
-        if (_proximityBlendDriver != null &&
+        if (_proximityBlendDriver is IProximityBlendDriver proximityBlend &&
             _presentationApplier != null &&
             _floorPolicy != null &&
             _mapCacheHub != null)
         {
-            _proximityBlendDriver.Init(
+            proximityBlend.Init(
                 _mapCacheHub,
                 _presentationApplier,
                 _floorPolicy,
                 ResolveFloorVisibilityCamera);
         }
 
-        if (_floorVisibilityDriver != null && _floorPolicy != null)
+        if (_floorVisibilityDriver is IFloorVisibilityDriver floorVisibility && _floorPolicy != null)
         {
             IFloorVisibilitySync sync = UseChunkStreaming
                 ? _streamingVisualizer
                 : _nonStreamingVisualizer;
             if (sync != null)
             {
-                _floorVisibilityDriver.Init(_floorPolicy, sync);
-                _floorVisibilityDriver.ApplyNow();
+                floorVisibility.Init(_floorPolicy, sync);
+                floorVisibility.ApplyNow();
             }
         }
 
@@ -180,14 +182,16 @@ public class TileMapManager : MonoBehaviour
 
         _chunkStreamer?.SyncNow();
         _saver.Init(Model, _worldGrid);
-        BindMapCollisionServicesOnly();
+        SetupMapCollisionServices();
     }
 
     private void OnDestroy()
     {
         UnwireTilePresentationApplier();
-        _floorVisibilityDriver?.Shutdown();
-        _proximityBlendDriver?.Shutdown();
+        if (_floorVisibilityDriver is IFloorVisibilityDriver floorVisibility)
+            floorVisibility.Shutdown();
+        if (_proximityBlendDriver is IProximityBlendDriver proximityBlend)
+            proximityBlend.Shutdown();
         _occlusionDisplayDriver?.Shutdown();
     }
 
@@ -205,11 +209,11 @@ public class TileMapManager : MonoBehaviour
         if (mapRegistry == null)
             return;
 
-        var compositeRegistry = new CompositeTileViewRegistry(
-            mapRegistry,
-            ContainerTileViewRegistry.Instance);
+        ITileViewRegistry registry = mapRegistry;
+        if (_externalTileViewRegistry is ITileViewRegistry externalRegistry)
+            registry = new CompositeTileViewRegistry(mapRegistry, externalRegistry);
 
-        _presentationApplier = new TileViewPresentationApplier(compositeRegistry, tileModel);
+        _presentationApplier = new TileViewPresentationApplier(registry, tileModel);
         tileModel.OnTileOcclusionPresentationDelta += _presentationApplier.ApplyOcclusionDelta;
         if (_floorPolicy != null && _mapCacheHub != null)
         {
@@ -256,14 +260,46 @@ public class TileMapManager : MonoBehaviour
         return Camera.main;
     }
 
-    private void BindWorldGridToCharacters()
+    void SetupMapCollisionServices()
     {
-        var states = FindObjectsByType<CharacterState>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None);
+        if (Model is not TileMapModel tileModel)
+            return;
 
-        for (int i = 0; i < states.Length; i++)
-            states[i].BindWorldGrid(_worldGrid);
+        if (_mapCacheHub == null)
+            SetupMapRuntimeCache(tileModel);
+        if (_mapCacheHub == null)
+            return;
+
+        _mapCollisionServices = MapCollisionServices.Create(_mapCacheHub, _gridCellSize);
+    }
+
+    private TileObjFactory CreateTileFactory(Transform tileContainer, bool chunkStreaming)
+    {
+        TileViewPoolRegistry pool = null;
+        if (chunkStreaming && _enableTilePooling && _loader.LastLoadedDto != null)
+        {
+            var poolSettings = new TilePoolSettings(
+                _maxPooledInstances,
+                _maxPoolMemoryMb,
+                _estimatedBytesPerTile,
+                _poolReserveRatio,
+                _minPoolPerPrefab,
+                _maxPoolPerPrefab,
+                _streamingPeakOverride);
+
+            var streamEstimate = _chunkStreamer.CreatePoolStreamEstimate(_worldGrid);
+
+            var caps = TilePoolBudgetBuilder.Build(
+                _loader.LastLoadedDto,
+                poolSettings,
+                streamEstimate);
+
+            pool = new TileViewPoolRegistry(tileContainer, _prefabDB);
+            foreach (var kv in caps)
+                pool.RegisterCap(kv.Key, kv.Value);
+        }
+
+        return new TileObjFactory(tileContainer, _prefabDB, pool);
     }
 
     void SetupMapRuntimeCache(TileMapModel tileModel)
@@ -307,74 +343,6 @@ public class TileMapManager : MonoBehaviour
         }
     }
 
-    void BindMapCollisionServicesOnly()
-    {
-        if (Model is not TileMapModel tileModel)
-            return;
-
-        if (_mapCacheHub == null)
-            SetupMapRuntimeCache(tileModel);
-        if (_mapCacheHub == null)
-            return;
-
-        _mapCollisionServices = MapCollisionServices.Create(_mapCacheHub, _gridCellSize);
-
-        var movements = FindObjectsByType<PlayerMovement>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None);
-        for (int i = 0; i < movements.Length; i++)
-            movements[i].BindMapCollision(_mapCollisionServices);
-
-        var aimControllers = FindObjectsByType<PlayerAimController>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None);
-        for (int i = 0; i < aimControllers.Length; i++)
-        {
-            aimControllers[i].BindMapCollision(_mapCollisionServices.LineCast);
-        }
-
-        var raycasters = FindObjectsByType<DirectionalRaycaster>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None);
-        for (int i = 0; i < raycasters.Length; i++)
-        {
-            var state = raycasters[i].GetComponent<CharacterState>();
-            if (state == null)
-                continue;
-
-            raycasters[i].BindMapCollision(_mapCollisionServices.LineCast, state);
-        }
-    }
-
-    private TileObjFactory CreateTileFactory(Transform tileContainer, bool chunkStreaming)
-    {
-        TileViewPoolRegistry pool = null;
-        if (chunkStreaming && _enableTilePooling && _loader.LastLoadedDto != null)
-        {
-            var poolSettings = new TilePoolSettings(
-                _maxPooledInstances,
-                _maxPoolMemoryMb,
-                _estimatedBytesPerTile,
-                _poolReserveRatio,
-                _minPoolPerPrefab,
-                _maxPoolPerPrefab,
-                _streamingPeakOverride);
-
-            var streamEstimate = _chunkStreamer.CreatePoolStreamEstimate(_worldGrid);
-
-            var caps = TilePoolBudgetBuilder.Build(
-                _loader.LastLoadedDto,
-                poolSettings,
-                streamEstimate);
-
-            pool = new TileViewPoolRegistry(tileContainer, _prefabDB);
-            foreach (var kv in caps)
-                pool.RegisterCap(kv.Key, kv.Value);
-        }
-
-        return new TileObjFactory(tileContainer, _prefabDB, pool);
-    }
-
     private IMapViewBuilder CreateViewBuilder(TileObjFactory factory, bool chunkStreaming)
     {
         if (!chunkStreaming)
@@ -414,7 +382,6 @@ public class TileMapManager : MonoBehaviour
         }
 
         _worldGrid.ApplyFromMap(_loader.LastLoadedDto, _gridCellSize);
-        BindWorldGridToCharacters();
 
         if (Model is TileMapModel runtimeTileModel)
             SetupMapRuntimeCache(runtimeTileModel);
@@ -427,7 +394,7 @@ public class TileMapManager : MonoBehaviour
         WireTilePresentationApplier();
         _controller.Init(Model, viewBuilder);
 
-        BindMapCollisionServicesOnly();
+        SetupMapCollisionServices();
 
         Debug.Log("[TileMapManager] LoadEditor 완료.");
     }

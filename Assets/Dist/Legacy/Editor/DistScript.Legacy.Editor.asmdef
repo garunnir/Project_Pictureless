@@ -2,13 +2,14 @@
     "name": "DistScript.Legacy.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:faba5e8a51554044583b9d7724baa5ad",
+        "DistScript",
         "DistScript.Legacy",
+        "Config",
         "DialogueSystem",
         "DialogueSystemEditor",
         "PixelCrushers",
-        "GUID:25bb11dd35c063e4aa2c7cccc0212586",
-        "GUID:cd0624525ae0db442b9d3d7f27953406"
+        "Unity.TextMeshPro.Editor",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

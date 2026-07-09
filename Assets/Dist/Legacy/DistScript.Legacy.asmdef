@@ -2,8 +2,9 @@
     "name": "DistScript.Legacy",
     "rootNamespace": "",
     "references": [
-        "GUID:faba5e8a51554044583b9d7724baa5ad",
-        "GUID:6a874b40b4ccc4245a515b1a3b07794a",
+        "DistScript",
+        "Config",
+        "Dist.Gameplay.Item",
         "DialogueSystem",
         "PixelCrushers",
         "GUID:174bc9f391f1b7f4292b3824c5019a21",

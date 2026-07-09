@@ -83,6 +83,12 @@ public sealed class ContainerInteractable : Interactable, IInventoryContainerPro
 
     public bool IsAvailableToPlayer(GameObject player) => player != null;
 
+    public void BindWorldGrid(IWorldGrid worldGrid)
+    {
+        _worldGrid = worldGrid;
+        SyncTileViewGrid();
+    }
+
     public void BindTileView(TileView tileView)
     {
         _tileView = tileView;
@@ -131,10 +137,6 @@ public sealed class ContainerInteractable : Interactable, IInventoryContainerPro
     {
         if (_worldGrid != null)
             return;
-
-        TileMapManager manager = FindFirstObjectByType<TileMapManager>();
-        if (manager?.WorldGrid != null)
-            _worldGrid = manager.WorldGrid;
     }
 
     string ResolveRuntimeContainerId(string templateId)

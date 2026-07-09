@@ -1,5 +1,5 @@
 // ============================================================
-// TilePresentationSystem — 월드 타일 표현 단일 진입점
+// TilePresentationSystem — 월드 타일 표현 단일 진입점 (Map)
 // ============================================================
 
 using System;
@@ -7,13 +7,12 @@ using IsoTilemap;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class TilePresentationSystem : MonoBehaviour
+public sealed class TilePresentationSystem : MonoBehaviour, ITileLootHighlightSink
 {
     public static TilePresentationSystem Instance { get; private set; }
 
     TileViewPresentationApplier _applier;
     Guid _activeLootTileId = Guid.Empty;
-    LootProximityCoordinator _subscribedCoordinator;
 
     public void Initialize(TileViewPresentationApplier applier) => _applier = applier;
 
@@ -32,59 +31,14 @@ public sealed class TilePresentationSystem : MonoBehaviour
     {
         if (Instance == this)
             Instance = null;
-
-        UnsubscribeFromProximity();
     }
 
-    void OnEnable()
-    {
-        PlayerInventoryRuntime.ActiveChanged += OnActivePlayerChanged;
-        TrySubscribeToProximity(PlayerInventoryRuntime.Active);
-    }
+    void OnDisable() => ClearLootHighlight();
 
-    void OnDisable()
-    {
-        PlayerInventoryRuntime.ActiveChanged -= OnActivePlayerChanged;
-        UnsubscribeFromProximity();
-        ClearLootContainerHighlight();
-    }
+    public void SetLootHighlight(Guid presentationTileId, bool highlighted) =>
+        SetLootContainerHighlight(presentationTileId, highlighted);
 
-    void OnActivePlayerChanged(PlayerInventoryRuntime runtime) =>
-        TrySubscribeToProximity(runtime);
-
-    void TrySubscribeToProximity(PlayerInventoryRuntime runtime)
-    {
-        UnsubscribeFromProximity();
-
-        if (runtime?.LootProximity == null)
-            return;
-
-        _subscribedCoordinator = runtime.LootProximity;
-        _subscribedCoordinator.ActiveLootContainerChanged += OnActiveLootContainerChanged;
-        OnActiveLootContainerChanged(_subscribedCoordinator.ActiveContainer);
-    }
-
-    void UnsubscribeFromProximity()
-    {
-        if (_subscribedCoordinator == null)
-            return;
-
-        _subscribedCoordinator.ActiveLootContainerChanged -= OnActiveLootContainerChanged;
-        _subscribedCoordinator = null;
-    }
-
-    void OnActiveLootContainerChanged(InventoryContainer container)
-    {
-        ClearLootContainerHighlight();
-
-        if (container == null)
-            return;
-
-        if (!TryResolvePresentationTileId(container, out Guid tileId))
-            return;
-
-        SetLootContainerHighlight(tileId, true);
-    }
+    public void ClearLootHighlight() => ClearLootContainerHighlight();
 
     public void SetLootContainerHighlight(Guid presentationTileId, bool highlighted)
     {
@@ -117,26 +71,5 @@ public sealed class TilePresentationSystem : MonoBehaviour
 
         _applier.SetSelected(_activeLootTileId, false);
         _activeLootTileId = Guid.Empty;
-    }
-
-    static bool TryResolvePresentationTileId(InventoryContainer container, out Guid tileId)
-    {
-        tileId = Guid.Empty;
-        if (container == null)
-            return false;
-
-        if (ContainerTileViewRegistry.Instance.TryGetPresentationTileId(container.InstanceId, out tileId))
-            return tileId != Guid.Empty;
-
-        if (!InventoryContainerRegistry.TryGetProviderByInstanceId(container.InstanceId, out IInventoryContainerProvider provider))
-            return false;
-
-        if (provider is ContainerInteractable interactable)
-        {
-            tileId = interactable.PresentationTileId;
-            return tileId != Guid.Empty;
-        }
-
-        return false;
     }
 }

@@ -16139,6 +16139,9 @@ GameObject:
   - component: {fileID: 299715458}
   - component: {fileID: 299715460}
   - component: {fileID: 299715459}
+  - component: {fileID: 299715461}
+  - component: {fileID: 299715462}
+  - component: {fileID: 299715463}
   m_Layer: 0
   m_Name: MapManager
   m_TagString: Untagged
@@ -16183,6 +16186,7 @@ MonoBehaviour:
   _visibilityCamera: {fileID: 0}
   _proximityBlendDriver: {fileID: 1383865924}
   _occlusionDisplayDriver: {fileID: 0}
+  _externalTileViewRegistry: {fileID: 299715463}
   _floorVisibilityDriver: {fileID: 299715458}
   _structuralHidePresentationMode: 0
   _enableTilePooling: 1
@@ -16250,6 +16254,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: faf74c18d02e39d49b62bbb34969651e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::TilePresentationSystem
+--- !u!114 &299715461
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 299715452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f60718293a4b5c6d7e8f90, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::LootTileHighlightBridge
+  _tileMapManager: {fileID: 299715456}
+--- !u!114 &299715462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 299715452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2c3d4e5f60718293a4b5c6d7e8f9012, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::MapGameplayBootstrap
+  _tileMapManager: {fileID: 299715456}
+--- !u!114 &299715463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 299715452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3d4e5f60718293a4b5c6d7e8f9012a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::ContainerTileViewRegistryBridge
 --- !u!1001 &300644938
 PrefabInstance:
   m_ObjectHideFlags: 0

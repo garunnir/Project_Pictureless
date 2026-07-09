@@ -1,0 +1,16 @@
+{
+    "name": "Dist.Inventory",
+    "rootNamespace": "",
+    "references": [
+        "Dist.Gameplay.Item"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

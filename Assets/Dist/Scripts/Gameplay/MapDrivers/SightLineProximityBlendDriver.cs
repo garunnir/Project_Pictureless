@@ -12,7 +12,7 @@ using UnityEngine;
 /// </summary>
 [DefaultExecutionOrder(-100)]
 [DisallowMultipleComponent]
-public sealed class SightLineProximityBlendDriver : MonoBehaviour
+public sealed class SightLineProximityBlendDriver : MonoBehaviour, IProximityBlendDriver
 {
     [SerializeField] private CharacterState _playerState;
     [SerializeField] private TileMapManager _tileMapManager;

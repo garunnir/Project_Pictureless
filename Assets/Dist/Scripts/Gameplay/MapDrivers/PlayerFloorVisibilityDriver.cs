@@ -10,7 +10,7 @@ using UnityEngine;
 /// </summary>
 [DefaultExecutionOrder(-98)]
 [DisallowMultipleComponent]
-public sealed class PlayerFloorVisibilityDriver : MonoBehaviour
+public sealed class PlayerFloorVisibilityDriver : MonoBehaviour, IFloorVisibilityDriver
 {
     [SerializeField] private CharacterState _playerState;
     [Tooltip("BodyWorldPoint.y에 더할 오프셋(발끝·캡슐 보정).")]

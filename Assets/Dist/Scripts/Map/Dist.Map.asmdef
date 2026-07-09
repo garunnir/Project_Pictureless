@@ -1,14 +1,13 @@
 {
-    "name": "Dist.Inventory.UI",
+    "name": "Dist.Map",
     "rootNamespace": "",
     "references": [
-        "DistScript",
-        "Dist.Inventory",
-        "Dist.Map",
-        "Dist.Gameplay.Item",
-        "LeanPool",
-        "Unity.InputSystem",
-        "Unity.TextMeshPro"
+        "Config",
+        "Dist.Visual",
+        "UniTask",
+        "Unity.Cinemachine",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

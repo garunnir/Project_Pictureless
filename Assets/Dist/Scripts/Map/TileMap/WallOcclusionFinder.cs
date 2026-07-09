@@ -323,7 +323,7 @@ namespace IsoTilemap
                 TileMapBfsDebugOverlay.EnsureSubscribed();
             };
 
-            StateRunner.Instance.ChangeState(new DebugTileRunner(action));
+            action();
         }
 #endif
 

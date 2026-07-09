@@ -10,14 +10,14 @@ namespace IsoTilemap
     public sealed class CompositeTileViewRegistry : ITileViewRegistry
     {
         readonly ITileViewRegistry _mapRegistry;
-        readonly ContainerTileViewRegistry _containerRegistry;
+        readonly ITileViewRegistry _externalRegistry;
 
         public CompositeTileViewRegistry(
             ITileViewRegistry mapRegistry,
-            ContainerTileViewRegistry containerRegistry)
+            ITileViewRegistry externalRegistry)
         {
             _mapRegistry = mapRegistry ?? throw new ArgumentNullException(nameof(mapRegistry));
-            _containerRegistry = containerRegistry ?? throw new ArgumentNullException(nameof(containerRegistry));
+            _externalRegistry = externalRegistry ?? throw new ArgumentNullException(nameof(externalRegistry));
         }
 
         public bool TryGetView(Guid tileId, out TileView view)
@@ -25,7 +25,7 @@ namespace IsoTilemap
             if (_mapRegistry.TryGetView(tileId, out view))
                 return true;
 
-            return _containerRegistry.TryGetView(tileId, out view);
+            return _externalRegistry.TryGetView(tileId, out view);
         }
 
         public void CollectSpawnedTileIds(List<Guid> into)
@@ -34,7 +34,7 @@ namespace IsoTilemap
                 return;
 
             _mapRegistry.CollectSpawnedTileIds(into);
-            _containerRegistry.CollectTileIds(into);
+            _externalRegistry.CollectSpawnedTileIds(into);
         }
     }
 }

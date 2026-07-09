@@ -1,5 +1,10 @@
 ﻿<Solution>
   <Project Path="DistScript.csproj" />
+  <Project Path="Dist.Map.csproj" />
+  <Project Path="Dist.Inventory.csproj" />
+  <Project Path="Dist.Gameplay.Item.csproj" />
+  <Project Path="Dist.Visual.csproj" />
+  <Project Path="Dist.Inventory.UI.csproj" />
   <Project Path="DialogueSystem.csproj" />
   <Project Path="DialogueSystemEditor.csproj" />
   <Project Path="UniRx.csproj" />
