@@ -27,6 +27,7 @@ public sealed class InventoryWindowResizeHandler : MonoBehaviour, IBeginDragHand
     Vector2 _startSize;
     Vector2 _startPosition;
     Vector2 _startPointerLocal;
+    Vector2 _startPivot;
     Vector2 _minSize;
     Vector2 _maxSize;
 
@@ -48,6 +49,7 @@ public sealed class InventoryWindowResizeHandler : MonoBehaviour, IBeginDragHand
 
         _startSize = _window.sizeDelta;
         _startPosition = _window.anchoredPosition;
+        _startPivot = _window.pivot;
 
         if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 _dragRoot,
@@ -75,7 +77,36 @@ public sealed class InventoryWindowResizeHandler : MonoBehaviour, IBeginDragHand
         Vector2 sizeChange = newSize - _startSize;
 
         _window.sizeDelta = newSize;
-        _window.anchoredPosition = _startPosition + sizeChange * 0.5f;
+        _window.anchoredPosition = _startPosition + ComputePositionDelta(sizeChange, _edge, _startPivot);
+    }
+
+    static Vector2 ComputePositionDelta(Vector2 sizeChange, WindowResizeEdge edge, Vector2 pivot)
+    {
+        bool dragLeft = edge == WindowResizeEdge.Left ||
+                        edge == WindowResizeEdge.TopLeft ||
+                        edge == WindowResizeEdge.BottomLeft;
+        bool dragRight = edge == WindowResizeEdge.Right ||
+                         edge == WindowResizeEdge.TopRight ||
+                         edge == WindowResizeEdge.BottomRight;
+        bool dragTop = edge == WindowResizeEdge.Top ||
+                       edge == WindowResizeEdge.TopLeft ||
+                       edge == WindowResizeEdge.TopRight;
+        bool dragBottom = edge == WindowResizeEdge.Bottom ||
+                          edge == WindowResizeEdge.BottomLeft ||
+                          edge == WindowResizeEdge.BottomRight;
+
+        Vector2 delta = Vector2.zero;
+        if (dragLeft && !dragRight)
+            delta.x = -sizeChange.x * (1f - pivot.x);
+        else if (dragRight && !dragLeft)
+            delta.x = sizeChange.x * pivot.x;
+
+        if (dragBottom && !dragTop)
+            delta.y = -sizeChange.y * (1f - pivot.y);
+        else if (dragTop && !dragBottom)
+            delta.y = sizeChange.y * pivot.y;
+
+        return delta;
     }
 
     static Vector2 ComputeRawSize(Vector2 startSize, Vector2 delta, WindowResizeEdge edge)
