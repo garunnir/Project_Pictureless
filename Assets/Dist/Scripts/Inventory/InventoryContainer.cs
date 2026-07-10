@@ -38,6 +38,28 @@ public sealed class InventoryContainer
 
     internal List<ItemStack> MutableStacks => _stacks;
 
+    public bool ContainsStackReference(ItemStack stack) =>
+        stack != null && _stacks.Contains(stack);
+
+    public bool TryAddStackReference(ItemStack stack)
+    {
+        if (stack?.Item == null || _stacks.Contains(stack))
+            return false;
+
+        _stacks.Add(stack);
+        return true;
+    }
+
+    public bool TryRemoveStackReference(ItemStack stack)
+    {
+        if (stack == null)
+            return false;
+
+        return _stacks.Remove(stack);
+    }
+
+    public void ClearStackReferences() => _stacks.Clear();
+
     public int AddItem(ItemDefinitionSO item, int count)
     {
         if (item == null || count <= 0)

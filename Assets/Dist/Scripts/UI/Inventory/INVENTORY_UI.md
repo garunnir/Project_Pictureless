@@ -183,7 +183,7 @@
 
 - `InventoryContainerRegistry`가 `ContainerId -> InventoryContainer`를 관리한다.
 
-- 시작 시 아이템 주입은 `InventoryStartupSeeder`로 수행한다 (`PlayerInventoryRuntime._seedDemoItemsOnStart` 기본값 `false` — 중복 시딩 방지).
+- 시작 시 아이템 주입·바닥 소형 아이템 스폰은 `InventoryRuntimeTestSetup`(런타임 테스트 전용)으로 수행한다 (`PlayerInventoryRuntime._seedDemoItemsOnStart` 기본값 `false` — 중복 시딩 방지).
 
 
 

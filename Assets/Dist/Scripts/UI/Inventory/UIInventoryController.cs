@@ -191,31 +191,10 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
             payload.Stacks.Count > 0 &&
             payload.Stacks[0]?.Item != null)
         {
-            Sprite icon = payload.Stacks[0].Item.Icon;
-            if (icon != null)
-                return icon;
+            return ItemVisualPresenter.GetDisplayIcon(payload.Stacks[0].Item);
         }
 
-        return GetEmptyDragIcon();
-    }
-
-    Sprite GetEmptyDragIcon()
-    {
-        if (_primaryWindow != null && _primaryWindow.IsVisible)
-        {
-            Sprite icon = _primaryWindow.ListView?.RowEmptyIconSprite;
-            if (icon != null)
-                return icon;
-        }
-
-        if (_lootWindow != null && _lootWindow.IsVisible)
-        {
-            Sprite icon = _lootWindow.ListView?.RowEmptyIconSprite;
-            if (icon != null)
-                return icon;
-        }
-
-        return _windowPrefab?.ListView?.RowEmptyIconSprite;
+        return ItemVisualPresenter.GetDefaultIcon();
     }
 
     public void HideDragGhost()
@@ -252,7 +231,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
             return;
         }
 
-        _dragGhost.EnsureReady(_uiCanvas, GetEmptyDragIcon());
+        _dragGhost.EnsureReady(_uiCanvas);
     }
 
     void ConfigureWindow(UIInventoryListWindow window)

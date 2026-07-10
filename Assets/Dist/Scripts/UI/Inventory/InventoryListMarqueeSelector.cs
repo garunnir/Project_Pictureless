@@ -42,6 +42,9 @@ public sealed class InventoryListMarqueeSelector : MonoBehaviour,
         if (_listView == null || _hostRect == null)
             return;
 
+        if (IsPointerOverRow(eventData))
+            return;
+
         if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 _hostRect, eventData.position, _uiCamera, out _startLocal))
             return;
@@ -93,6 +96,12 @@ public sealed class InventoryListMarqueeSelector : MonoBehaviour,
         Rect rect = host.rect;
         Vector2 pivot = host.pivot;
         return pivotLocal + new Vector2(rect.width * pivot.x, rect.height * pivot.y);
+    }
+
+    static bool IsPointerOverRow(PointerEventData eventData)
+    {
+        GameObject hit = eventData.pointerCurrentRaycast.gameObject;
+        return hit != null && hit.GetComponentInParent<UIItemListRow>() != null;
     }
 
     Rect GetScreenRect(Vector2 startLocal, Vector2 endLocal)

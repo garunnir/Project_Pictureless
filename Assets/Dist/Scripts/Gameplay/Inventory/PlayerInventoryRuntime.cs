@@ -2,6 +2,7 @@
 // PlayerInventoryRuntime — Session·Detector 소유 (게임플레이 진입점)
 // ============================================================
 
+using Garunnir.Runtime.Gameplay.Item;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -11,7 +12,6 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
 {
     [Required, SerializeField] PlayerInventoryHost _host;
     [Required, SerializeField] NearbyContainerDetector _detector;
-    [SerializeField] bool _seedDemoItemsOnStart = false;
 
     readonly LootProximityCoordinator _lootProximity = new();
 
@@ -31,12 +31,6 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
         EnsureReferences();
         _session = new InventorySession();
         _detector.Bind(_session, _lootProximity);
-    }
-
-    void Start()
-    {
-        if (_seedDemoItemsOnStart && _host?.Container != null)
-            InventoryDemoSeeder.SeedIfEmpty(_host.Container);
     }
 
     void OnEnable()
@@ -96,8 +90,13 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
 
     public void RefreshNearbyContainers() => _detector?.RefreshImmediate();
 
-    public bool IsWorldLootContainer(string instanceId) =>
-        _detector != null && _detector.IsManagedWorldContainer(instanceId);
+    public bool IsWorldLootContainer(string instanceId)
+    {
+        if (string.IsNullOrEmpty(instanceId))
+            return false;
+
+        return _detector != null && _detector.IsLootContainer(instanceId);
+    }
 
     public bool TryIncludeLootContainer(InventoryContainer container) =>
         _detector != null && _detector.TryIncludeManagedContainer(container);

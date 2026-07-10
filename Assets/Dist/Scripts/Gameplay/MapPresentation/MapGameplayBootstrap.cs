@@ -25,6 +25,7 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
 
         BindMapCollisionServices(_tileMapManager);
         BindWorldGridToContainers(worldGrid);
+        BindWorldGridToSmallItems(worldGrid);
     }
 
     static void BindWorldGridToCharacters(IWorldGrid worldGrid)
@@ -82,5 +83,18 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
 
         for (int i = 0; i < interactables.Length; i++)
             interactables[i].BindWorldGrid(worldGrid);
+    }
+
+    static void BindWorldGridToSmallItems(IWorldGrid worldGrid)
+    {
+        if (worldGrid == null)
+            return;
+
+        var items = FindObjectsByType<SmallItemObject>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        for (int i = 0; i < items.Length; i++)
+            items[i].BindWorldGrid(worldGrid);
     }
 }

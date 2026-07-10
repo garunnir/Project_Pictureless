@@ -4209,7 +4209,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.3882353}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -62531,6 +62531,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DistScript::NearbyContainerDetector
   _characterState: {fileID: 1383865919}
+  _floorLootDefinition: {fileID: 11400000, guid: e7f4a2b19c3d4e5f8a1b2c3d4e5f6071,
+    type: 2}
+  _smallItemPrefab: {fileID: 1001001001001001004, guid: d1e2f3a4b5c6478890a1b2c3d4e5f601,
+    type: 3}
   _radiusCells: 2
   _sameFloorOnly: 1
   _verticalToleranceCells: 0
@@ -62565,7 +62569,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::PlayerInventoryRuntime
   _host: {fileID: 1383865927}
   _detector: {fileID: 1383865926}
-  _seedDemoItemsOnStart: 0
 --- !u!1 &1384417763
 GameObject:
   m_ObjectHideFlags: 0
@@ -73860,7 +73863,7 @@ GameObject:
   - component: {fileID: 1565300405}
   - component: {fileID: 1565300406}
   m_Layer: 0
-  m_Name: InventoryStartupSeeder
+  m_Name: InventoryRuntimeTestSetup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -73875,7 +73878,7 @@ Transform:
   m_GameObject: {fileID: 1565300404}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -2, y: 1, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -73892,16 +73895,28 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 89300f368e035c44bb71794f89ef023a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: DistScript::InventoryStartupSeeder
+  m_EditorClassIdentifier: DistScript::InventoryRuntimeTestSetup
   _targetContainerId: player-body
-  _entries:
+  _containerEntries:
   - Item: {fileID: 11400000, guid: c6e995c2e47a77f4a9dfb37b979af057, type: 2}
     Count: 1
   - Item: {fileID: 11400000, guid: d73beeebfad9c6e4eab6a140e469c88e, type: 2}
     Count: 1
   - Item: {fileID: 11400000, guid: e7d6c5b4a39281706f5e4d3c2b1a0987, type: 2}
     Count: 1
+  _seedContainerOnStart: 1
   _useCatalogDefaultsWhenEmpty: 1
+  _spawnSmallItemsOnStart: 1
+  _smallItemPrefab: {fileID: 1001001001001001004, guid: d1e2f3a4b5c6478890a1b2c3d4e5f601,
+    type: 3}
+  _smallItemSpawnRoot: {fileID: 1565300405}
+  _smallItemSpawns:
+  - Item: {fileID: 11400000, guid: c6e995c2e47a77f4a9dfb37b979af057, type: 2}
+    Count: 1
+    LocalPosition: {x: 0.5, y: -1, z: 0}
+  - Item: {fileID: 11400000, guid: d73beeebfad9c6e4eab6a140e469c88e, type: 2}
+    Count: 1
+    LocalPosition: {x: 0, y: -1, z: 0.5}
   _runOnlyOnce: 1
 --- !u!1001 &1568401364
 PrefabInstance:

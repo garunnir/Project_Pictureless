@@ -48,10 +48,6 @@ public sealed class UIItemListView : MonoBehaviour
 
     public int ActiveRowCount => _activeRows.Count;
 
-    public Sprite RowEmptyIconSprite => _rowPrefab != null ? _rowPrefab.EmptyIconSprite : null;
-
-
-
     bool _selectionEventsWired;
 
 

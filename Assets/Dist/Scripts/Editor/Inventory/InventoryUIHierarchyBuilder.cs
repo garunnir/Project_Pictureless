@@ -12,7 +12,6 @@ static class InventoryUIHierarchyBuilder
 {
     internal const string PrefabFolder = "Assets/Dist/Visual/Prefabs/UIComponents/Inventory";
     internal const string DefaultUIFontPath = "Assets/Dist/Scripts/UI/Font/Katuri SDF.asset";
-    internal const string EmptyItemIconPath = "Assets/Dist/Visual/Sprites/Textures/UI/Inventory/ui_icon_empty.png";
 
     static readonly Color PanelColor = new(0.12f, 0.12f, 0.12f, 0.95f);
     static readonly Color RowColor = new(0.18f, 0.18f, 0.18f, 1f);
@@ -45,7 +44,6 @@ static class InventoryUIHierarchyBuilder
         var rowView = row.AddComponent<UIItemListRow>();
         SetReference(rowView, "_backgroundImage", row.GetComponent<Image>());
         SetReference(rowView, "_iconImage", icon);
-        SetReference(rowView, "_emptyIconSprite", LoadEmptyItemIcon());
         SetReference(rowView, "_categoryText", category);
         SetReference(rowView, "_nameText", name);
         SetReference(rowView, "_detailText", detail);
@@ -101,7 +99,7 @@ static class InventoryUIHierarchyBuilder
         label.raycastTarget = false;
 
         var ghost = go.AddComponent<UIInventoryDragGhost>();
-        ghost.Initialize(icon, label, rootCanvas, LoadEmptyItemIcon());
+        ghost.Initialize(icon, label, rootCanvas);
         go.SetActive(false);
         return ghost;
     }
@@ -371,19 +369,6 @@ static class InventoryUIHierarchyBuilder
             Debug.LogError($"[InventoryUIHierarchyBuilder] Default UI font not found: {DefaultUIFontPath}");
 
         return font;
-    }
-
-    static Sprite LoadEmptyItemIcon()
-    {
-        var sprites = AssetDatabase.LoadAllAssetsAtPath(EmptyItemIconPath);
-        for (int i = 0; i < sprites.Length; i++)
-        {
-            if (sprites[i] is Sprite sprite)
-                return sprite;
-        }
-
-        Debug.LogError($"[InventoryUIHierarchyBuilder] Empty item icon sprite not found: {EmptyItemIconPath}");
-        return null;
     }
 }
 #endif

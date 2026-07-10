@@ -4,6 +4,8 @@
 
 using System.Collections.Generic;
 using System.Text;
+using Garunnir.Runtime.Gameplay.Item;
+using IsoTilemap;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -13,22 +15,51 @@ public sealed class NearbyContainerDetector : MonoBehaviour
     const string LogPrefix = "[NearbyContainerDetector]";
 
     [Required, SerializeField] CharacterState _characterState;
+    [Required, SerializeField] ContainerDefinitionSO _floorLootDefinition;
+    [Required, SerializeField] SmallItemObject _smallItemPrefab;
     [SerializeField, Min(0)] int _radiusCells = 2;
     [SerializeField] bool _sameFloorOnly = true;
     [SerializeField, Min(0)] int _verticalToleranceCells = 0;
 
     readonly List<IInventoryContainerProvider> _scanResults = new();
     readonly List<InventoryContainer> _detectedContainersScratch = new();
+    readonly List<Vector3Int> _cellsInRangeScratch = new();
+    readonly List<SmallItemObject> _nearbySmallItemsScratch = new();
     readonly HashSet<string> _managedWorldContainerIds = new();
 
     InventorySession _session;
     LootProximityCoordinator _lootProximity;
+    FloorLootHost _floorLootHost;
+    IWorldGrid _cachedWorldGrid;
     bool _isActive;
 
     public void Bind(InventorySession session, LootProximityCoordinator lootProximity)
     {
         _session = session;
         _lootProximity = lootProximity;
+
+        _floorLootHost?.Dispose();
+        _floorLootHost = _floorLootDefinition != null
+            ? new FloorLootHost(
+                _floorLootDefinition,
+                _session,
+                _smallItemPrefab,
+                ResolveDropWorldPosition,
+                ResolveWorldGrid)
+            : null;
+    }
+
+    Vector3 ResolveDropWorldPosition() =>
+        _characterState != null ? _characterState.BodyWorldPoint : Vector3.zero;
+
+    IWorldGrid ResolveWorldGrid()
+    {
+        if (_cachedWorldGrid != null)
+            return _cachedWorldGrid;
+
+        var tileMapManager = FindFirstObjectByType<TileMapManager>();
+        _cachedWorldGrid = tileMapManager != null ? tileMapManager.WorldGrid : null;
+        return _cachedWorldGrid;
     }
 
     public void Activate()
@@ -37,6 +68,7 @@ public sealed class NearbyContainerDetector : MonoBehaviour
             return;
 
         _isActive = true;
+        _floorLootHost?.BeginContext();
         Subscribe();
         RefreshImmediate();
     }
@@ -49,6 +81,19 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         _isActive = false;
         Unsubscribe();
         RemoveManagedContainers();
+        _floorLootHost?.EndContext();
+    }
+
+    public bool IsLootContainer(string instanceId)
+    {
+        if (string.IsNullOrEmpty(instanceId))
+            return false;
+
+        if (_floorLootHost?.Container != null &&
+            instanceId == FloorLootHost.DefaultInstanceId)
+            return true;
+
+        return _managedWorldContainerIds.Contains(instanceId);
     }
 
     public void RefreshImmediate()
@@ -59,7 +104,12 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         Refresh(_characterState.ResolveCurrentGridCell());
     }
 
-    void OnDestroy() => Deactivate();
+    void OnDestroy()
+    {
+        Deactivate();
+        _floorLootHost?.Dispose();
+        _floorLootHost = null;
+    }
 
     void OnValidate() => EnsureReferences();
     void Reset() => EnsureReferences();
@@ -149,6 +199,8 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         foreach (string id in desiredIds)
             _managedWorldContainerIds.Add(id);
 
+        SyncFloorLoot(center);
+
         if (DebugLogController.InventoryProximityScanEnabled)
             LogScan(
                 center,
@@ -159,6 +211,37 @@ public sealed class NearbyContainerDetector : MonoBehaviour
                 staleIds.Count);
 
         PublishDetectedContainers();
+    }
+
+    void SyncFloorLoot(Vector3Int center)
+    {
+        if (_floorLootHost == null || !_floorLootHost.IsActive)
+            return;
+
+        EnumerateCellsInRange(center, _cellsInRangeScratch);
+        SmallItemRegistry.CollectInCells(_cellsInRangeScratch, _nearbySmallItemsScratch);
+        _floorLootHost.SyncFromNearbyItems(_nearbySmallItemsScratch);
+    }
+
+    void EnumerateCellsInRange(Vector3Int center, List<Vector3Int> buffer)
+    {
+        buffer.Clear();
+
+        int yMin = _sameFloorOnly ? center.y : center.y - Mathf.Max(0, _verticalToleranceCells);
+        int yMax = _sameFloorOnly ? center.y : center.y + Mathf.Max(0, _verticalToleranceCells);
+
+        for (int y = yMin; y <= yMax; y++)
+        {
+            for (int dx = -_radiusCells; dx <= _radiusCells; dx++)
+            {
+                for (int dz = -_radiusCells; dz <= _radiusCells; dz++)
+                {
+                    var cell = new Vector3Int(center.x + dx, y, center.z + dz);
+                    if (IsInScanRange(center, cell))
+                        buffer.Add(cell);
+                }
+            }
+        }
     }
 
     bool IsInScanRange(Vector3Int center, Vector3Int target)
@@ -270,6 +353,9 @@ public sealed class NearbyContainerDetector : MonoBehaviour
     void PublishDetectedContainers()
     {
         _detectedContainersScratch.Clear();
+
+        if (_floorLootHost is { IsActive: true, Container: not null })
+            _detectedContainersScratch.Add(_floorLootHost.Container);
 
         if (_session != null)
         {

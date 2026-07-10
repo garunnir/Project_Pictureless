@@ -12,19 +12,17 @@ public sealed class UIInventoryDragGhost : MonoBehaviour
     TMP_Text _countLabel;
     Canvas _rootCanvas;
     RectTransform _rect;
-    Sprite _emptyIconSprite;
 
-    public void Initialize(Image iconImage, TMP_Text countLabel, Canvas rootCanvas, Sprite emptyIconSprite)
+    public void Initialize(Image iconImage, TMP_Text countLabel, Canvas rootCanvas)
     {
         _iconImage = iconImage;
         _countLabel = countLabel;
         _rootCanvas = rootCanvas;
-        _emptyIconSprite = emptyIconSprite;
         _rect = transform as RectTransform;
         gameObject.SetActive(false);
     }
 
-    public void EnsureReady(Canvas rootCanvas, Sprite emptyIconSprite)
+    public void EnsureReady(Canvas rootCanvas)
     {
         if (_rect == null)
             _rect = transform as RectTransform;
@@ -39,12 +37,7 @@ public sealed class UIInventoryDragGhost : MonoBehaviour
             _rootCanvas = rootCanvas;
         else if (_rootCanvas == null)
             _rootCanvas = GetComponentInParent<Canvas>();
-
-        if (emptyIconSprite != null)
-            _emptyIconSprite = emptyIconSprite;
     }
-
-    public void SetEmptyIconSprite(Sprite emptyIconSprite) => _emptyIconSprite = emptyIconSprite;
 
     public void Show(Sprite icon, int stackCount, Vector2 screenPosition)
     {
@@ -53,7 +46,7 @@ public sealed class UIInventoryDragGhost : MonoBehaviour
 
         if (_iconImage != null)
         {
-            Sprite displayIcon = icon != null ? icon : _emptyIconSprite;
+            Sprite displayIcon = icon != null ? icon : ItemVisualPresenter.GetDefaultIcon();
             _iconImage.sprite = displayIcon;
             _iconImage.enabled = displayIcon != null;
         }

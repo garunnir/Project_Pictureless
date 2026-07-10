@@ -12,8 +12,13 @@ namespace Garunnir.Runtime.Gameplay.Item
     public sealed class ItemCatalogSO : UnityEngine.ScriptableObject
     {
         [SerializeField] ItemDefinitionSO[] _items = Array.Empty<ItemDefinitionSO>();
+        [SerializeField] Sprite _defaultItemIcon;
 
         public IReadOnlyList<ItemDefinitionSO> Items => _items;
+        public Sprite DefaultItemIcon => _defaultItemIcon;
+
+        public Sprite ResolveDisplayIcon(ItemDefinitionSO item) =>
+            item != null && item.Icon != null ? item.Icon : _defaultItemIcon;
 
         public ItemDefinitionSO GetByIndex(int index)
         {

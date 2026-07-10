@@ -10,6 +10,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public sealed class UIItemListRow : MonoBehaviour,
+    IPointerDownHandler,
     IBeginDragHandler,
     IDragHandler,
     IEndDragHandler
@@ -22,14 +23,11 @@ public sealed class UIItemListRow : MonoBehaviour,
     [SerializeField] TMP_Text _detailText;
     [SerializeField] Image _iconImage;
     [SerializeField] Image _backgroundImage;
-    [SerializeField] Sprite _emptyIconSprite;
 
     ItemStack _stack;
     InventoryContainer _ownerContainer;
     InventoryListSelection _selection;
     IInventoryItemDragHost _dragHost;
-
-    public Sprite EmptyIconSprite => _emptyIconSprite;
 
     public ItemStack Stack => _stack;
     public RectTransform RectTransform => transform as RectTransform;
@@ -77,12 +75,18 @@ public sealed class UIItemListRow : MonoBehaviour,
 
         if (_iconImage != null)
         {
-            Sprite icon = item.Icon != null ? item.Icon : _emptyIconSprite;
+            Sprite icon = ItemVisualPresenter.GetDisplayIcon(item);
             _iconImage.enabled = icon != null;
             _iconImage.sprite = icon;
         }
 
         RefreshSelectionVisual();
+    }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        // 부모 Viewport의 InventoryListMarqueeSelector.OnPointerDown(Selection.Clear) 전파 차단.
+        eventData.Use();
     }
 
     public void RefreshSelectionVisual()
