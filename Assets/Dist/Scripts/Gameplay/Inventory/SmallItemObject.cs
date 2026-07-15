@@ -1,15 +1,15 @@
 // ============================================================
-// SmallItemObject — ItemDefinitionSO의 월드 인스턴스 (1 GO = 1 ItemStack)
+// SmallItemObject — ItemData의 월드 인스턴스 (1 GO = 1 ItemStack)
 // ============================================================
 
-using Garunnir.Runtime.Gameplay.Item;
+using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
 public sealed class SmallItemObject : MonoBehaviour
 {
-    [Required, SerializeField] ItemDefinitionSO _definition;
+    [SerializeField] string _itemId;
     [SerializeField, Min(1)] int _count = 1;
     [SerializeField] SpriteRenderer _spriteRenderer;
 
@@ -20,12 +20,23 @@ public sealed class SmallItemObject : MonoBehaviour
 
     public ItemStack Stack => _stack;
     public Vector3Int OwnerCell => _ownerCell;
+    public string ItemId => _itemId;
 
-    public void Configure(ItemDefinitionSO definition, int count)
+    public void Configure(ItemData definition, int count)
     {
-        _definition = definition;
+        _itemId = definition?.id;
         _count = Mathf.Max(1, count);
-        _stack = _definition != null ? new ItemStack(_definition, _count) : null;
+        _stack = definition != null ? new ItemStack(definition, _count) : null;
+        ApplyIcon();
+    }
+
+    public void Configure(string itemId, int count)
+    {
+        _itemId = itemId;
+        _count = Mathf.Max(1, count);
+
+        ItemData item = ResolveItem(itemId);
+        _stack = item != null ? new ItemStack(item, _count) : null;
         ApplyIcon();
     }
 
@@ -34,7 +45,7 @@ public sealed class SmallItemObject : MonoBehaviour
         if (stack?.Item == null)
             return;
 
-        _definition = stack.Item;
+        _itemId = stack.ItemId;
         _count = stack.Count;
         _stack = stack;
         ApplyIcon();
@@ -45,7 +56,7 @@ public sealed class SmallItemObject : MonoBehaviour
         if (_worldGrid == worldGrid)
             return;
 
-        bool shouldRegister = isActiveAndEnabled && _definition != null && _stack != null;
+        bool shouldRegister = isActiveAndEnabled && !string.IsNullOrEmpty(_itemId) && _stack != null;
         if (shouldRegister && _ownerCellResolved)
             SmallItemRegistry.Unregister(this);
 
@@ -65,19 +76,23 @@ public sealed class SmallItemObject : MonoBehaviour
 
     void Awake()
     {
-        if (_definition == null)
+        if (string.IsNullOrEmpty(_itemId))
         {
-            Debug.LogWarning("[SmallItemObject] ItemDefinitionSO is not assigned.", this);
+            Debug.LogWarning("[SmallItemObject] ItemId is not assigned.", this);
             return;
         }
 
         if (_stack == null)
-            Configure(_definition, _count);
+        {
+            ItemData item = ResolveItem(_itemId);
+            if (item != null)
+                Configure(item, _count);
+        }
     }
 
     void OnEnable()
     {
-        if (_definition == null || _stack == null)
+        if (string.IsNullOrEmpty(_itemId) || _stack == null)
             return;
 
         ResolveOwnerCell();
@@ -88,10 +103,10 @@ public sealed class SmallItemObject : MonoBehaviour
 
     void ApplyIcon()
     {
-        if (_spriteRenderer == null || _definition == null)
+        if (_spriteRenderer == null || string.IsNullOrEmpty(_itemId))
             return;
 
-        _spriteRenderer.sprite = ItemVisualPresenter.GetDisplayIcon(_definition);
+        _spriteRenderer.sprite = ItemVisualPresenter.GetDisplayIcon(_itemId);
     }
 
     void ResolveOwnerCell()
@@ -108,14 +123,18 @@ public sealed class SmallItemObject : MonoBehaviour
             ? _worldGrid.WorldToCell(worldPos)
             : TileHelper.ConvertWorldToGrid(worldPos, 1f);
 
+    static ItemData ResolveItem(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId)) return null;
+        return GameplayData.GetItem(itemId);
+    }
+
 #if UNITY_EDITOR
     void OnValidate()
     {
         _count = Mathf.Max(1, _count);
         if (_spriteRenderer == null)
             TryGetComponent(out _spriteRenderer);
-
-        ApplyIcon();
     }
 #endif
 }

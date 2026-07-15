@@ -3,7 +3,7 @@
 // ============================================================
 
 using System;
-using Garunnir.Runtime.Gameplay.Item;
+using Garunnir.Runtime.Gameplay.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -90,16 +90,13 @@ public sealed class UIContainerSlot : MonoBehaviour,
         }
 
         gameObject.SetActive(true);
-        ContainerDefinitionSO def = container.Definition;
+        ContainerData def = container.Definition;
 
         if (_label != null)
             _label.text = UITextPresenter.GetContainerName(def);
 
         if (_iconImage != null)
-        {
-            _iconImage.sprite = def.Icon;
-            _iconImage.enabled = def.Icon != null;
-        }
+            _iconImage.enabled = false;
 
         if (_session != null &&
             _session.TryGetContainerItemStack(container, out InventoryContainer parent, out ItemStack stack))

@@ -408,7 +408,7 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         for (int i = 0; i < body.Stacks.Count; i++)
         {
             ItemStack stack = body.Stacks[i];
-            if (stack?.Item != null && stack.Item.IsContainer)
+            if (stack?.Item != null && stack.Item.is_container)
                 return true;
         }
 
@@ -438,7 +438,7 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             for (int i = 0; i < body.Stacks.Count; i++)
             {
                 ItemStack stack = body.Stacks[i];
-                if (stack?.Item == null || !stack.Item.IsContainer)
+                if (stack?.Item == null || !stack.Item.is_container)
                     continue;
 
                 if (!stack.TryEnsureNested(_nestedContainerPolicy) || stack.Nested == null)

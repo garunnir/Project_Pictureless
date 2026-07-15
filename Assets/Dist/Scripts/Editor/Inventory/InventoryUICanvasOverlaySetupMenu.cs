@@ -35,8 +35,16 @@ static class InventoryUICanvasOverlaySetupMenu
 
         canvasProperty.objectReferenceValue = canvas;
 
-        UIInventoryDragGhost dragGhost = EnsureDragGhost(canvas, serializedController);
-        GameObject scrollOverlay = EnsureScrollOverlay(canvas, serializedController);
+        UICanvasLayerHost layerHost = canvas.GetComponent<UICanvasLayerHost>();
+        if (layerHost != null)
+            layerHost.EditorSetupLayerHierarchy();
+
+        SerializedProperty layerHostProperty = serializedController.FindProperty("_layerHost");
+        if (layerHostProperty != null)
+            layerHostProperty.objectReferenceValue = layerHost;
+
+        UIInventoryDragGhost dragGhost = EnsureDragGhost(canvas, serializedController, layerHost);
+        GameObject scrollOverlay = EnsureScrollOverlay(canvas, serializedController, layerHost);
 
         serializedController.ApplyModifiedPropertiesWithoutUndo();
         EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
@@ -47,14 +55,18 @@ static class InventoryUICanvasOverlaySetupMenu
             controller);
     }
 
-    static UIInventoryDragGhost EnsureDragGhost(Canvas canvas, SerializedObject serializedController)
+    static UIInventoryDragGhost EnsureDragGhost(Canvas canvas, SerializedObject serializedController, UICanvasLayerHost layerHost)
     {
         SerializedProperty dragGhostProperty = serializedController.FindProperty("_dragGhost");
         UIInventoryDragGhost dragGhost = dragGhostProperty.objectReferenceValue as UIInventoryDragGhost;
 
         if (dragGhost == null)
         {
-            Transform existing = canvas.transform.Find("InventoryDragGhost");
+            Transform searchRoot = layerHost != null
+                ? layerHost.GetLayerRoot(UICanvasLayer.TopMost)
+                : canvas.transform;
+            Transform existing = searchRoot.Find("InventoryDragGhost")
+                                 ?? canvas.transform.Find("InventoryDragGhost");
             if (existing != null)
                 existing.TryGetComponent(out dragGhost);
         }
@@ -62,8 +74,10 @@ static class InventoryUICanvasOverlaySetupMenu
         if (dragGhost == null)
         {
             dragGhost = InventoryUIHierarchyBuilder.BuildDragGhostRoot(canvas);
-            dragGhost.transform.SetParent(canvas.transform, false);
-            dragGhost.transform.SetAsLastSibling();
+            Transform parent = layerHost != null
+                ? layerHost.GetLayerRoot(UICanvasLayer.TopMost)
+                : canvas.transform;
+            dragGhost.transform.SetParent(parent, false);
             Undo.RegisterCreatedObjectUndo(dragGhost.gameObject, "Create Inventory Drag Ghost");
         }
 
@@ -71,14 +85,18 @@ static class InventoryUICanvasOverlaySetupMenu
         return dragGhost;
     }
 
-    static GameObject EnsureScrollOverlay(Canvas canvas, SerializedObject serializedController)
+    static GameObject EnsureScrollOverlay(Canvas canvas, SerializedObject serializedController, UICanvasLayerHost layerHost)
     {
         SerializedProperty overlayProperty = serializedController.FindProperty("_scrollDragOverlay");
         GameObject overlay = overlayProperty.objectReferenceValue as GameObject;
 
         if (overlay == null)
         {
-            Transform existing = canvas.transform.Find("InventoryScrollDragOverlay");
+            Transform searchRoot = layerHost != null
+                ? layerHost.GetLayerRoot(UICanvasLayer.Overlay)
+                : canvas.transform;
+            Transform existing = searchRoot.Find("InventoryScrollDragOverlay")
+                                 ?? canvas.transform.Find("InventoryScrollDragOverlay");
             if (existing != null)
                 overlay = existing.gameObject;
         }
@@ -86,8 +104,10 @@ static class InventoryUICanvasOverlaySetupMenu
         if (overlay == null)
         {
             overlay = InventoryUIHierarchyBuilder.BuildScrollDragOverlayRoot();
-            overlay.transform.SetParent(canvas.transform, false);
-            overlay.transform.SetAsLastSibling();
+            Transform parent = layerHost != null
+                ? layerHost.GetLayerRoot(UICanvasLayer.Overlay)
+                : canvas.transform;
+            overlay.transform.SetParent(parent, false);
             Undo.RegisterCreatedObjectUndo(overlay, "Create Inventory Scroll Drag Overlay");
         }
 

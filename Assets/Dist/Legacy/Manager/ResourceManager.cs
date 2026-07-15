@@ -3,7 +3,7 @@
 // ============================================================
 
 using Garunnir;
-using Garunnir.Runtime.Gameplay.Item;
+using Garunnir.Runtime.Gameplay.Data;
 using Garunnir.Runtime.ScriptableObject;
 using PixelCrushers.DialogueSystem;
 using System;
@@ -189,23 +189,14 @@ public class ResourceManager : MonoBehaviour
     #endregion
     #region PreData
     [Header("PreData")]
-    [SerializeField] ItemCatalogSO itemCatalog;
     [SerializeField] SkillCollectionSO skillCollection;
-    public ItemCatalogSO GetItemCatalog() => itemCatalog;
     public SkillCollectionSO GetSkillData() => skillCollection;
     #endregion
 
     #region Utility
-    //웨폰 갖다줄 유틸리티 구성
-    /// <summary>
-    /// 엑터의 필드정보에서 실제 무기 데이터를 가져온다.
-    /// </summary>
-    /// <param name="actor">필드에 무기 넘버를 가지고있는 액터</param>
-    /// <returns></returns>
-    public ItemDefinitionSO GetWeapon(Actor actor)
+    public ItemData GetWeapon(Actor actor)
     {
-        int itemIndex = Field.LookupInt(actor.fields, ConstDataTable.Item.Weapon);
-        return itemIndex != -1 ? itemCatalog.GetByIndex(itemIndex) : null;
+        return GameplayActorItems.GetEquippedWeapon(actor);
     }
     public MapContainer GetMap(int idx)
     {

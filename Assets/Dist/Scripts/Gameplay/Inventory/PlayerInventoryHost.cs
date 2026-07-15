@@ -2,7 +2,7 @@
 // PlayerInventoryHost — 플레이어 몸통 인벤 (Detector 대상 아님, Host가 Session 등록)
 // ============================================================
 
-using Garunnir.Runtime.Gameplay.Item;
+using Garunnir.Runtime.Gameplay.Data;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -10,9 +10,10 @@ using UnityEngine;
 public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProvider
 {
     public const string DefaultInstanceId = "player-body";
+    public const string DefaultContainerDefId = "player_body";
 
     [Required, SerializeField] CharacterState _characterState;
-    [SerializeField] ContainerDefinitionSO _bodyDefinition;
+    [SerializeField] string _containerDefId = DefaultContainerDefId;
     [SerializeField] string _containerId = DefaultInstanceId;
     [SerializeField, Min(0f)] float _baseMaxWeight = 50f;
     [SerializeField, Min(0f)] float _baseMaxVolume = 30f;
@@ -27,9 +28,10 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
 
     void Awake()
     {
-        if (_bodyDefinition == null)
+        ContainerData containerDef = GameplayData.GetContainer(_containerDefId);
+        if (containerDef == null)
         {
-            Debug.LogWarning("[PlayerInventoryHost] ContainerDefinitionSO is not assigned.", this);
+            Debug.LogWarning($"[PlayerInventoryHost] Container definition '{_containerDefId}' not found in GameData.", this);
             return;
         }
 
@@ -37,9 +39,9 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
             () => _baseMaxWeight,
             () => _baseMaxVolume);
         string instanceId = string.IsNullOrWhiteSpace(_containerId) ? DefaultInstanceId : _containerId;
-        _container = InventoryContainer.Create(_bodyDefinition, _capacityPolicy, instanceId);
+        _container = InventoryContainer.Create(containerDef, _capacityPolicy, instanceId);
     }
-    
+
     void OnEnable() => InventoryContainerRegistry.Register(this);
     void OnDisable() => InventoryContainerRegistry.Unregister(this);
 

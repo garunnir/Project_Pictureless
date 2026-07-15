@@ -39,7 +39,6 @@ public sealed class UIContainerSlotDropZone : MonoBehaviour,
             payload.SourceSelection?.Clear();
 
         _slot.SetDropHover(false);
-        _window.SelectContainer(target);
     }
 
     public void OnPointerEnter(PointerEventData eventData)

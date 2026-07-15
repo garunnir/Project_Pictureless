@@ -4,7 +4,6 @@
 
 using System.Collections.Generic;
 using System.Text;
-using Garunnir.Runtime.Gameplay.Item;
 using IsoTilemap;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -15,7 +14,7 @@ public sealed class NearbyContainerDetector : MonoBehaviour
     const string LogPrefix = "[NearbyContainerDetector]";
 
     [Required, SerializeField] CharacterState _characterState;
-    [Required, SerializeField] ContainerDefinitionSO _floorLootDefinition;
+    [SerializeField] string _floorLootDefId = FloorLootHost.DefaultContainerDefId;
     [Required, SerializeField] SmallItemObject _smallItemPrefab;
     [SerializeField, Min(0)] int _radiusCells = 2;
     [SerializeField] bool _sameFloorOnly = true;
@@ -39,9 +38,9 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         _lootProximity = lootProximity;
 
         _floorLootHost?.Dispose();
-        _floorLootHost = _floorLootDefinition != null
+        _floorLootHost = !string.IsNullOrEmpty(_floorLootDefId)
             ? new FloorLootHost(
-                _floorLootDefinition,
+                _floorLootDefId,
                 _session,
                 _smallItemPrefab,
                 ResolveDropWorldPosition,

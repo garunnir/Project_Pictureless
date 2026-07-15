@@ -2,7 +2,7 @@
 // SmallItemSpawner — 소형 아이템 월드 스폰 공용 API (테스트·드롭)
 // ============================================================
 
-using Garunnir.Runtime.Gameplay.Item;
+using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 using UnityEngine;
 
@@ -10,7 +10,7 @@ public static class SmallItemSpawner
 {
     public static SmallItemObject Spawn(
         SmallItemObject prefab,
-        ItemDefinitionSO definition,
+        ItemData definition,
         int count,
         Vector3 worldPosition,
         IWorldGrid worldGrid = null,
@@ -51,7 +51,7 @@ public static class SmallItemSpawner
 
     public static SmallItemObject SpawnLocal(
         SmallItemObject prefab,
-        ItemDefinitionSO definition,
+        ItemData definition,
         int count,
         Transform parent,
         Vector3 localPosition,
@@ -69,7 +69,7 @@ public static class SmallItemSpawner
 
     static void PrepareInstance(
         SmallItemObject instance,
-        ItemDefinitionSO definition,
+        ItemData definition,
         int count,
         IWorldGrid worldGrid)
     {
@@ -77,7 +77,7 @@ public static class SmallItemSpawner
             return;
 
         instance.gameObject.SetActive(false);
-        instance.name = $"SmallItem_{definition.LocKey}";
+        instance.name = $"SmallItem_{definition.name}";
         instance.Configure(definition, count);
 
         if (worldGrid != null)
@@ -92,7 +92,7 @@ public static class SmallItemSpawner
             return;
 
         instance.gameObject.SetActive(false);
-        instance.name = $"SmallItem_{stack.Item.LocKey}";
+        instance.name = $"SmallItem_{stack.Item.name}";
         instance.BindStack(stack);
 
         if (worldGrid != null)

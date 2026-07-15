@@ -4,20 +4,20 @@
 
 using System;
 using System.Collections.Generic;
-using Garunnir.Runtime.Gameplay.Item;
+using Garunnir.Runtime.Gameplay.Data;
 
 public sealed class InventoryContainer
 {
     readonly List<ItemStack> _stacks = new();
 
     public string InstanceId { get; }
-    public ContainerDefinitionSO Definition { get; }
+    public ContainerData Definition { get; }
     public IReadOnlyList<ItemStack> Stacks => _stacks;
     public IContainerCapacityPolicy CapacityPolicy { get; }
 
     InventoryContainer(
         string instanceId,
-        ContainerDefinitionSO definition,
+        ContainerData definition,
         IContainerCapacityPolicy capacityPolicy)
     {
         InstanceId = instanceId ?? throw new ArgumentNullException(nameof(instanceId));
@@ -26,7 +26,7 @@ public sealed class InventoryContainer
     }
 
     public static InventoryContainer Create(
-        ContainerDefinitionSO definition,
+        ContainerData definition,
         IContainerCapacityPolicy capacityPolicy,
         string instanceId = null)
     {
@@ -60,7 +60,7 @@ public sealed class InventoryContainer
 
     public void ClearStackReferences() => _stacks.Clear();
 
-    public int AddItem(ItemDefinitionSO item, int count)
+    public int AddItem(ItemData item, int count)
     {
         if (item == null || count <= 0)
             return 0;
@@ -89,6 +89,75 @@ public sealed class InventoryContainer
         }
 
         return count;
+    }
+
+    public int AddItem(string itemId, int count)
+    {
+        ItemData item = GameplayData.GetItem(itemId);
+        return item != null ? AddItem(item, count) : 0;
+    }
+
+    public int CountItem(ItemData item)
+    {
+        if (item == null)
+            return 0;
+
+        int total = 0;
+        for (int i = 0; i < _stacks.Count; i++)
+        {
+            if (_stacks[i].Item == item)
+                total += _stacks[i].Count;
+        }
+
+        return total;
+    }
+
+    public int CountItem(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId))
+            return 0;
+
+        int total = 0;
+        for (int i = 0; i < _stacks.Count; i++)
+        {
+            if (_stacks[i].ItemId == itemId)
+                total += _stacks[i].Count;
+        }
+
+        return total;
+    }
+
+    public int RemoveItem(ItemData item, int count)
+    {
+        if (item == null || count <= 0)
+            return 0;
+
+        int remaining = count;
+        for (int i = _stacks.Count - 1; i >= 0 && remaining > 0; i--)
+        {
+            ItemStack stack = _stacks[i];
+            if (stack.Item != item)
+                continue;
+
+            if (stack.Count <= remaining)
+            {
+                remaining -= stack.Count;
+                _stacks.RemoveAt(i);
+            }
+            else
+            {
+                stack.SetCount(stack.Count - remaining);
+                remaining = 0;
+            }
+        }
+
+        return count - remaining;
+    }
+
+    public int RemoveItem(string itemId, int count)
+    {
+        ItemData item = GameplayData.GetItem(itemId);
+        return item != null ? RemoveItem(item, count) : 0;
     }
 
     public float GetTotalWeight()

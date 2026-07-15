@@ -2,8 +2,9 @@
 // UIItemListRow — 아이템 리스트 한 행 (바인딩 + 선택 + 드래그)
 // ============================================================
 
+using System;
 using System.Collections.Generic;
-using Garunnir.Runtime.Gameplay.Item;
+using Garunnir.Runtime.Gameplay.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -11,10 +12,13 @@ using UnityEngine.UI;
 
 public sealed class UIItemListRow : MonoBehaviour,
     IPointerDownHandler,
+    IPointerClickHandler,
     IBeginDragHandler,
     IDragHandler,
     IEndDragHandler
 {
+    public static event Action<ItemStack, InventoryContainer, Vector2> RightClicked;
+
     static readonly Color NormalColor = new(0.18f, 0.18f, 0.18f, 1f);
     static readonly Color SelectedColor = new(0.28f, 0.38f, 0.48f, 1f);
 
@@ -53,12 +57,12 @@ public sealed class UIItemListRow : MonoBehaviour,
         }
 
         gameObject.SetActive(true);
-        ItemDefinitionSO item = stack.Item;
+        ItemData item = stack.Item;
 
         if (_categoryText != null)
         {
             _categoryText.overflowMode = TextOverflowModes.Ellipsis;
-            _categoryText.text = item.Category.ToString();
+            _categoryText.text = item.category ?? "";
         }
 
         if (_nameText != null)
@@ -75,7 +79,7 @@ public sealed class UIItemListRow : MonoBehaviour,
 
         if (_iconImage != null)
         {
-            Sprite icon = ItemVisualPresenter.GetDisplayIcon(item);
+            Sprite icon = ItemVisualPresenter.GetDisplayIcon(item.id);
             _iconImage.enabled = icon != null;
             _iconImage.sprite = icon;
         }
@@ -85,8 +89,18 @@ public sealed class UIItemListRow : MonoBehaviour,
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        // 부모 Viewport의 InventoryListMarqueeSelector.OnPointerDown(Selection.Clear) 전파 차단.
         eventData.Use();
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button != PointerEventData.InputButton.Right)
+            return;
+
+        if (_stack?.Item == null || _ownerContainer == null)
+            return;
+
+        RightClicked?.Invoke(_stack, _ownerContainer, eventData.position);
     }
 
     public void RefreshSelectionVisual()

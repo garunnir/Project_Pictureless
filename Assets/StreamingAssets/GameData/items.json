@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "id": "consumable_egg",
+      "name": "계란",
+      "type": "COMESTIBLE",
+      "category": "food",
+      "weight_g": 100,
+      "volume_ml": 100,
+      "max_stack": 10
+    },
+    {
+      "id": "weapon_killing_sword",
+      "name": "죽이는 칼",
+      "type": "GENERIC",
+      "category": "weapons",
+      "weight_g": 1000,
+      "volume_ml": 1000,
+      "max_stack": 1
+    },
+    {
+      "id": "clothing_plain",
+      "name": "그냥 옷",
+      "type": "ARMOR",
+      "category": "clothing",
+      "weight_g": 1000,
+      "volume_ml": 1000,
+      "max_stack": 1
+    },
+    {
+      "id": "container_bag",
+      "name": "가방",
+      "type": "GENERIC",
+      "category": "container",
+      "weight_g": 2000,
+      "volume_ml": 3000,
+      "max_stack": 1,
+      "is_container": true,
+      "container_id": "bag_default"
+    }
+  ],
+  "containers": [
+    {"id": "bag_default", "name": "가방", "max_weight": 20.0, "max_volume": 15.0},
+    {"id": "floor_loot", "name": "바닥", "max_weight": 9999.0, "max_volume": 9999.0},
+    {"id": "crate", "name": "상자", "max_weight": 100.0, "max_volume": 80.0},
+    {"id": "player_body", "name": "인벤토리", "max_weight": 50.0, "max_volume": 30.0}
+  ]
+}

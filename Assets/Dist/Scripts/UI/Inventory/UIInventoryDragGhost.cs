@@ -54,7 +54,6 @@ public sealed class UIInventoryDragGhost : MonoBehaviour
         if (_countLabel != null)
             _countLabel.text = stackCount > 1 ? $"x{stackCount}" : string.Empty;
 
-        transform.SetAsLastSibling();
         gameObject.SetActive(true);
         SetScreenPosition(screenPosition);
     }

@@ -1,0 +1,16 @@
+{
+  "recipes": [
+    {
+      "id": "recipe_egg_to_clothing",
+      "result": "clothing_plain",
+      "category": "CC_ARMOR",
+      "skill_used": "",
+      "difficulty": 0,
+      "time_minutes": 5,
+      "result_count": 1,
+      "components": [
+        {"alternatives": [{"item": "consumable_egg", "count": 3}]}
+      ]
+    }
+  ]
+}

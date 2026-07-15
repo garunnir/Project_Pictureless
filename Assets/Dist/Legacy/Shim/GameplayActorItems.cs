@@ -1,23 +1,23 @@
 // ============================================================
-// GameplayActorItems — 레거시 Actor 필드 → ItemDefinitionSO shim
+// GameplayActorItems — 레거시 Actor 필드 → ItemData shim
 // ============================================================
 
 using Garunnir;
-using Garunnir.Runtime.Gameplay.Item;
+using Garunnir.Runtime.Gameplay.Data;
 using PixelCrushers.DialogueSystem;
 
 public static class GameplayActorItems
 {
-    public static ItemDefinitionSO GetEquippedWeapon(Actor actor)
+    public static ItemData GetEquippedWeapon(Actor actor)
     {
         if (actor == null)
             return null;
 
-        ItemCatalogSO catalog = GameplayData.ItemCatalog;
-        if (catalog == null)
+        GameDatabase db = GameplayData.GameItems;
+        if (db == null || db.Items.Count == 0)
             return null;
 
         int itemIndex = Field.LookupInt(actor.fields, ConstDataTable.Item.Weapon);
-        return itemIndex != -1 ? catalog.GetByIndex(itemIndex) : null;
+        return itemIndex >= 0 && itemIndex < db.Items.Count ? db.Items[itemIndex] : null;
     }
 }

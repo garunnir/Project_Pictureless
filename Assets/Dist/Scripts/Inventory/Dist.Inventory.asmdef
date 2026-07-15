@@ -2,7 +2,7 @@
     "name": "Dist.Inventory",
     "rootNamespace": "",
     "references": [
-        "Dist.Gameplay.Item"
+        "Dist.Gameplay.Data"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

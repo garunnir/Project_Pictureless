@@ -2,7 +2,6 @@
 // PlayerInventoryRuntime — Session·Detector 소유 (게임플레이 진입점)
 // ============================================================
 
-using Garunnir.Runtime.Gameplay.Item;
 using Sirenix.OdinInspector;
 using UnityEngine;
 

@@ -2,19 +2,15 @@
 // ItemVisualPresenter — 아이템 표시 아이콘 공통 진입점 (UI·월드 SSOT)
 // ============================================================
 
-using Garunnir.Runtime.Gameplay.Item;
 using UnityEngine;
 
 public static class ItemVisualPresenter
 {
-    public static Sprite GetDisplayIcon(ItemDefinitionSO item)
+    // TODO: Addressables/Resources 기반 아이콘 로딩 전략 결정 후 구현
+    public static Sprite GetDisplayIcon(string itemId)
     {
-        ItemCatalogSO catalog = GameplayData.ItemCatalog;
-        if (catalog != null)
-            return catalog.ResolveDisplayIcon(item);
-
-        return item != null ? item.Icon : null;
+        return null;
     }
 
-    public static Sprite GetDefaultIcon() => GameplayData.ItemCatalog?.DefaultItemIcon;
+    public static Sprite GetDefaultIcon() => null;
 }

@@ -5,7 +5,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Garunnir.Runtime.Gameplay.Item;
+using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -15,14 +15,14 @@ public sealed class InventoryRuntimeTestSetup : MonoBehaviour
     [Serializable]
     struct ContainerSeedEntry
     {
-        public ItemDefinitionSO Item;
+        public string ItemId;
         [Min(1)] public int Count;
     }
 
     [Serializable]
     struct SmallItemSpawnEntry
     {
-        public ItemDefinitionSO Item;
+        public string ItemId;
         [Min(1)] public int Count;
         public Vector3 LocalPosition;
     }
@@ -102,10 +102,17 @@ public sealed class InventoryRuntimeTestSetup : MonoBehaviour
         for (int i = 0; i < _containerEntries.Count; i++)
         {
             ContainerSeedEntry entry = _containerEntries[i];
-            if (entry.Item == null || entry.Count <= 0)
+            if (string.IsNullOrEmpty(entry.ItemId) || entry.Count <= 0)
                 continue;
 
-            changed |= container.AddItem(entry.Item, entry.Count) > 0;
+            ItemData item = ResolveItem(entry.ItemId);
+            if (item == null)
+            {
+                Debug.LogWarning($"[InventoryRuntimeTestSetup] Item '{entry.ItemId}' not found.", this);
+                continue;
+            }
+
+            changed |= container.AddItem(item, entry.Count) > 0;
         }
 
         if (!changed)
@@ -137,12 +144,16 @@ public sealed class InventoryRuntimeTestSetup : MonoBehaviour
         for (int i = 0; i < _smallItemSpawns.Count; i++)
         {
             SmallItemSpawnEntry entry = _smallItemSpawns[i];
-            if (entry.Item == null)
+            if (string.IsNullOrEmpty(entry.ItemId))
+                continue;
+
+            ItemData item = ResolveItem(entry.ItemId);
+            if (item == null)
                 continue;
 
             SmallItemObject instance = SmallItemSpawner.SpawnLocal(
                 _smallItemPrefab,
-                entry.Item,
+                item,
                 entry.Count,
                 root,
                 entry.LocalPosition,
@@ -160,6 +171,11 @@ public sealed class InventoryRuntimeTestSetup : MonoBehaviour
             PlayerInventoryRuntime.Active?.RefreshNearbyContainers();
             Debug.Log($"[InventoryRuntimeTestSetup] Spawned floor small items={spawnedCount}", this);
         }
+    }
+
+    static ItemData ResolveItem(string itemId)
+    {
+        return GameplayData.GetItem(itemId);
     }
 
     IWorldGrid ResolveWorldGrid()

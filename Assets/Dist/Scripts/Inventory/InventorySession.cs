@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using Garunnir.Runtime.Gameplay.Item;
 
 public sealed class InventorySession
 {
@@ -131,7 +130,7 @@ public sealed class InventorySession
             for (int s = 0; s < candidate.Stacks.Count; s++)
             {
                 ItemStack stack = candidate.Stacks[s];
-                if (stack?.Item == null || !stack.Item.IsContainer)
+                if (stack?.Item == null || !stack.Item.is_container)
                     continue;
 
                 if (stack.Nested == nestedContainer)
@@ -155,7 +154,7 @@ public sealed class InventorySession
         if (stack?.Item == null || target == null)
             return false;
 
-        if (!stack.Item.IsContainer || stack.Nested == null)
+        if (!stack.Item.is_container || stack.Nested == null)
             return true;
 
         return !IsContainerWithinHierarchy(target, stack.Nested);
@@ -172,7 +171,7 @@ public sealed class InventorySession
         for (int i = 0; i < outer.Stacks.Count; i++)
         {
             ItemStack stack = outer.Stacks[i];
-            if (stack?.Item == null || !stack.Item.IsContainer || stack.Nested == null)
+            if (stack?.Item == null || !stack.Item.is_container || stack.Nested == null)
                 continue;
 
             if (stack.Nested == inner || IsContainerWithinHierarchy(inner, stack.Nested))
@@ -236,7 +235,7 @@ public sealed class InventorySession
         for (int i = 0; i < container.Stacks.Count; i++)
         {
             ItemStack stack = container.Stacks[i];
-            if (stack?.Item == null || !stack.Item.IsContainer)
+            if (stack?.Item == null || !stack.Item.is_container)
                 continue;
 
             if (stack.Nested != null)
@@ -252,7 +251,7 @@ public sealed class InventorySession
         for (int i = 0; i < container.Stacks.Count; i++)
         {
             ItemStack stack = container.Stacks[i];
-            if (stack?.Item == null || !stack.Item.IsContainer)
+            if (stack?.Item == null || !stack.Item.is_container)
                 continue;
 
             stack.TryEnsureNested(_nestedContainerPolicy);

@@ -3,15 +3,16 @@
 // ============================================================
 
 using System;
-using Garunnir.Runtime.Gameplay.Item;
+using Garunnir.Runtime.Gameplay.Data;
 
 public sealed class ItemStack
 {
-    public ItemDefinitionSO Item { get; }
+    public ItemData Item { get; }
+    public string ItemId => Item?.id;
     public int Count { get; private set; }
     public InventoryContainer Nested { get; private set; }
 
-    public ItemStack(ItemDefinitionSO item, int count)
+    public ItemStack(ItemData item, int count)
     {
         Item = item ?? throw new ArgumentNullException(nameof(item));
         SetCount(count);
@@ -33,14 +34,18 @@ public sealed class ItemStack
 
     public bool TryEnsureNested(IContainerCapacityPolicy nestedPolicy)
     {
-        if (!Item.IsContainer || Item.NestedContainerDefinition == null)
+        if (!Item.is_container || string.IsNullOrEmpty(Item.container_id))
             return false;
 
         if (Nested != null)
             return true;
 
+        ContainerData containerDef = GameplayData.GetContainer(Item.container_id);
+        if (containerDef == null)
+            return false;
+
         Nested = InventoryContainer.Create(
-            Item.NestedContainerDefinition,
+            containerDef,
             nestedPolicy ?? new FixedContainerCapacityPolicy());
         return true;
     }

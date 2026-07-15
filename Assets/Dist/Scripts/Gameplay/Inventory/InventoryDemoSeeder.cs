@@ -2,7 +2,6 @@
 // InventoryDemoSeeder — 씬 테스트용 샘플 스택 주입
 // ============================================================
 
-using Garunnir.Runtime.Gameplay.Item;
 using UnityEngine;
 
 public static class InventoryDemoSeeder
@@ -12,16 +11,15 @@ public static class InventoryDemoSeeder
         if (container == null || container.Stacks.Count > 0)
             return;
 
-        ItemCatalogSO catalog = GameplayData.ItemCatalog;
-        if (catalog == null)
+        var db = GameplayData.GameItems;
+        if (db == null)
             return;
 
-        ItemDefinitionSO weapon = catalog.GetByIndex(0);
-        ItemDefinitionSO clothing = catalog.GetByIndex(1);
+        var items = db.Items;
+        if (items.Count < 2)
+            return;
 
-        if (weapon != null)
-            container.AddItem(weapon, 1);
-        if (clothing != null)
-            container.AddItem(clothing, 1);
+        container.AddItem(items[0], 1);
+        container.AddItem(items[1], 1);
     }
 }

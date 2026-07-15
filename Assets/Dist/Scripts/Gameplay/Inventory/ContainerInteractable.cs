@@ -5,7 +5,7 @@
 using System;
 using System.Security.Cryptography;
 using System.Text;
-using Garunnir.Runtime.Gameplay.Item;
+using Garunnir.Runtime.Gameplay.Data;
 using Interactions;
 using IsoTilemap;
 using UnityEngine;
@@ -15,7 +15,7 @@ public sealed class ContainerInteractable : Interactable, IInventoryContainerPro
 {
     const string LogPrefix = "[ContainerInteractable]";
 
-    [SerializeField] ContainerDefinitionSO _definition;
+    [SerializeField] string _containerDefId = "crate";
     [SerializeField] string _containerId;
     [SerializeField] bool _seedDemoItems = true;
     [SerializeField] TileView _tileView;
@@ -38,9 +38,10 @@ public sealed class ContainerInteractable : Interactable, IInventoryContainerPro
     {
         base.Awake();
 
-        if (_definition == null)
+        ContainerData containerDef = GameplayData.GetContainer(_containerDefId);
+        if (containerDef == null)
         {
-            Debug.LogWarning($"{LogPrefix} ContainerDefinitionSO is not assigned on {name}.", this);
+            Debug.LogWarning($"{LogPrefix} Container definition '{_containerDefId}' not found on {name}.", this);
             return;
         }
 
@@ -50,7 +51,7 @@ public sealed class ContainerInteractable : Interactable, IInventoryContainerPro
         _runtimeContainerId = ResolveRuntimeContainerId(_containerId);
 
         _container = InventoryContainer.Create(
-            _definition,
+            containerDef,
             new FixedContainerCapacityPolicy(),
             _runtimeContainerId);
 
@@ -193,4 +194,3 @@ public sealed class ContainerInteractable : Interactable, IInventoryContainerPro
     }
 #endif
 }
-

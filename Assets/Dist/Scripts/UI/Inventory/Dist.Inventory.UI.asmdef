@@ -1,24 +1,24 @@
-{
-    "name": "Dist.Inventory.UI",
-    "rootNamespace": "",
-    "references": [
-        "DistScript",
-        "Dist.Inventory",
-        "Dist.Map",
-        "Dist.Gameplay.Item",
-        "LeanPool",
-        "Unity.InputSystem",
-        "Unity.TextMeshPro"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [
-        "Sirenix.OdinInspector.Attributes.dll"
-    ],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
-}
+{
+    "name": "Dist.Inventory.UI",
+    "rootNamespace": "",
+    "references": [
+        "DistScript",
+        "Dist.Inventory",
+        "Dist.Map",
+        "Dist.Gameplay.Data",
+        "LeanPool",
+        "Unity.InputSystem",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+        "Sirenix.OdinInspector.Attributes.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

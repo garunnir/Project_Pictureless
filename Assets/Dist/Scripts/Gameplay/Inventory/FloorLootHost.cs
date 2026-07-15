@@ -3,13 +3,14 @@
 // ============================================================
 
 using System.Collections.Generic;
-using Garunnir.Runtime.Gameplay.Item;
+using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 using UnityEngine;
 
 public sealed class FloorLootHost
 {
     public const string DefaultInstanceId = "floor-loot";
+    public const string DefaultContainerDefId = "floor_loot";
 
     readonly InventoryContainer _container;
     readonly Dictionary<ItemStack, SmallItemObject> _stackToObject = new();
@@ -26,7 +27,7 @@ public sealed class FloorLootHost
     public bool IsActive => _isActive;
 
     public FloorLootHost(
-        ContainerDefinitionSO definition,
+        string containerDefId,
         InventorySession session,
         SmallItemObject smallItemPrefab = null,
         System.Func<Vector3> resolveDropWorldPosition = null,
@@ -37,14 +38,15 @@ public sealed class FloorLootHost
         _resolveDropWorldPosition = resolveDropWorldPosition;
         _resolveWorldGrid = resolveWorldGrid;
 
-        if (definition == null)
+        ContainerData containerDef = GameplayData.GetContainer(containerDefId);
+        if (containerDef == null)
         {
-            Debug.LogError("[FloorLootHost] ContainerDefinitionSO is not assigned.");
+            Debug.LogError($"[FloorLootHost] Container definition '{containerDefId}' not found.");
             return;
         }
 
         _container = InventoryContainer.Create(
-            definition,
+            containerDef,
             new FixedContainerCapacityPolicy(),
             DefaultInstanceId);
 
@@ -212,4 +214,3 @@ public sealed class FloorLootHost
         return false;
     }
 }
-

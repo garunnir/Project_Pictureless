@@ -4,7 +4,7 @@
     "references": [
         "DistScript",
         "Config",
-        "Dist.Gameplay.Item",
+        "Dist.Gameplay.Data",
         "DialogueSystem",
         "PixelCrushers",
         "GUID:174bc9f391f1b7f4292b3824c5019a21",
