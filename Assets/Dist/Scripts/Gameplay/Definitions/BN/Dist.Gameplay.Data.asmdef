@@ -1,7 +1,9 @@
 {
     "name": "Dist.Gameplay.Data",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "Config"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

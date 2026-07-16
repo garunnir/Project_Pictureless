@@ -2,6 +2,7 @@
     "name": "Editor",
     "rootNamespace": "",
     "references": [
+        "Config",
         "DistScript",
         "Dist.Map",
         "Dist.Inventory",

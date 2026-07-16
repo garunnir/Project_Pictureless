@@ -310,9 +310,9 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         if (_selectedContainer == null)
         {
             if (_weightText != null)
-                _weightText.text = "— kg";
+                _weightText.text = InventoryWindowLabels.EmptyWeight;
             if (_volumeText != null)
-                _volumeText.text = "— L";
+                _volumeText.text = InventoryWindowLabels.EmptyVolume;
             return;
         }
 

@@ -26,7 +26,7 @@ public sealed class UncraftContextAction : IContextMenuAction
     public string GetDisabledReason()
     {
         if (!CraftingService.CanUncraft(_recipe, _container))
-            return "분해 불가";
+            return ItemContextMenuLabels.UncraftBlocked;
 
         return null;
     }

@@ -449,7 +449,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         EnsureInventoryContext(runtime);
 
         _primaryWindow.gameObject.SetActive(true);
-        _primaryWindow.SetHeaderTitle("Inventory");
+        _primaryWindow.SetHeaderTitle(InventoryWindowLabels.PrimaryTitle);
         _primaryWindow.Initialize(runtime.Session, InventoryWindowMode.PlayerOnly, runtime.Host.Container);
         ConfigureWindow(_primaryWindow);
         _primaryWindow.RefreshListOnly();
@@ -616,7 +616,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         }
 
         _lootWindow.gameObject.SetActive(true);
-        _lootWindow.SetHeaderTitle("Loot");
+        _lootWindow.SetHeaderTitle(InventoryWindowLabels.LootTitle);
         _lootWindow.Initialize(runtime.Session, InventoryWindowMode.NearbyOnly, focus);
         ConfigureWindow(_lootWindow);
         _lootWindow.RefreshListOnly();

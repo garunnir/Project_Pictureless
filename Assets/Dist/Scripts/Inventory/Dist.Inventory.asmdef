@@ -2,6 +2,7 @@
     "name": "Dist.Inventory",
     "rootNamespace": "",
     "references": [
+        "Config",
         "Dist.Gameplay.Data"
     ],
     "includePlatforms": [],

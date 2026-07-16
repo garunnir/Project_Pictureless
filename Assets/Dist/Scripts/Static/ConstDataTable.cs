@@ -80,13 +80,16 @@ public class ConstDataTable
     {
 
     }
-    public class Tile
-    {
-        /// <summary>
-        /// category가 비어있는 타일의 기본 분류명
-        /// </summary>
-        public const string UncategorizedCategory = "기타";
-    }
+        public class Tile
+        {
+            const string KeyUncategorizedCategory = "Tile.UncategorizedCategory";
+
+            /// <summary>
+            /// category가 비어있는 타일의 기본 분류명
+            /// </summary>
+            public static string UncategorizedCategory =>
+                Loc.Get(KeyUncategorizedCategory, "기타");
+        }
     public class AssetPath
     {
         public class LocalizeTable
@@ -99,6 +102,10 @@ public class ConstDataTable
             /// 로컬라이징 대응 액터이름
             /// </summary>
             public const string ActorName = "Assets/Dist/Scripts/CustomDS/LocalizeActorName.asset";
+            /// <summary>
+            /// 신규 UI 키 테이블 Resources.Load 경로 (확장자 제외). Loc / LocalizationTable SSOT.
+            /// </summary>
+            public const string UI = "Localization/UI_ko";
         }
     }
 }

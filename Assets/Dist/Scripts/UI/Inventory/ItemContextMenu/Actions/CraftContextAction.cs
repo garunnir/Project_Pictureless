@@ -24,7 +24,7 @@ public sealed class CraftContextAction : IContextMenuAction
             return knowledge;
 
         if (!CraftingService.CanCraft(_recipe, _container))
-            return "재료·도구·스킬 부족";
+            return ItemContextMenuLabels.CraftBlocked;
 
         return null;
     }

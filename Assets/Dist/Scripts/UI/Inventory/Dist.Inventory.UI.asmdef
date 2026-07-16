@@ -2,6 +2,7 @@
     "name": "Dist.Inventory.UI",
     "rootNamespace": "",
     "references": [
+        "Config",
         "DistScript",
         "Dist.Inventory",
         "Dist.Map",

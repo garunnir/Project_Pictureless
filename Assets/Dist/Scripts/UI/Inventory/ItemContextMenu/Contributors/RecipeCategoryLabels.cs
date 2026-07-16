@@ -6,7 +6,9 @@ using System.Collections.Generic;
 
 public static class RecipeCategoryLabels
 {
-    static readonly Dictionary<string, string> Map = new()
+    const string KeyPrefix = "RecipeCategory.";
+
+    static readonly Dictionary<string, string> Fallbacks = new Dictionary<string, string>
     {
         { "CC_FOOD", "음식" },
         { "CC_DRINK", "음료" },
@@ -26,6 +28,7 @@ public static class RecipeCategoryLabels
         if (string.IsNullOrEmpty(id))
             return ItemContextMenuLabels.MiscGroup;
 
-        return Map.TryGetValue(id, out string label) ? label : id;
+        string fallback = Fallbacks.TryGetValue(id, out string label) ? label : id;
+        return Loc.Get(KeyPrefix + id, fallback);
     }
 }

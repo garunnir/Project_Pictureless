@@ -22,7 +22,7 @@ namespace Interactions
         {
             isOpen = !isOpen;
             _doorAnimator.SetBool("isOpen", isOpen);
-            hintText = isOpen ? "문 닫기" : "문 열기";
+            hintText = isOpen ? InteractionLabels.DoorClose : InteractionLabels.DoorOpen;
         }
 
         public override void OnFocus(GameObject interactor)

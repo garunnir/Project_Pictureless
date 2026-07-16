@@ -9,7 +9,7 @@ static class RecipeContextMenuText
     public static string FormatResultLabel(RecipeData recipe)
     {
         if (recipe == null || string.IsNullOrEmpty(recipe.result))
-            return "?";
+            return ItemContextMenuLabels.UnknownResult;
 
         ItemData resultItem = GameplayData.GetItem(recipe.result);
         string resultName = resultItem?.name ?? recipe.result;
