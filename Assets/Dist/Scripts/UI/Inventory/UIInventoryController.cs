@@ -111,10 +111,57 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
     void FinalizeItemDrag()
     {
         if (InventoryDragState.IsDragging)
+        {
+            TryDropActiveDragToFloorIfOutsideWindows();
             InventoryDragState.End();
+        }
 
         HideDragGhost();
         RefreshVisibleWindowsAfterDrag();
+    }
+
+    // 창 Rect 밖에서 놓으면 사이드바 floor-loot 탭 드롭과 동일 경로로 바닥 투하.
+    void TryDropActiveDragToFloorIfOutsideWindows()
+    {
+        if (!InventoryDragState.TryGetActive(out InventoryDragPayload payload))
+            return;
+
+        if (IsPointerOverAnyVisibleWindow())
+            return;
+
+        if (payload.SourceContainer == null || payload.Stacks == null || payload.Stacks.Count == 0)
+            return;
+
+        InventorySession session = _activeRuntime?.Session;
+        if (session == null || !TryGetFloorLootContainer(session, out InventoryContainer floor))
+            return;
+
+        if (payload.SourceContainer == floor)
+            return;
+
+        if (!session.MoveStacks(payload.SourceContainer, floor, payload.Stacks))
+            return;
+
+        if (payload.Kind == InventoryDragKind.Item)
+            payload.SourceSelection?.Clear();
+    }
+
+    static bool TryGetFloorLootContainer(InventorySession session, out InventoryContainer floor)
+    {
+        floor = null;
+
+        IReadOnlyList<InventoryContainer> sidebar = session.GetSidebarContainers();
+        for (int i = 0; i < sidebar.Count; i++)
+        {
+            InventoryContainer container = sidebar[i];
+            if (container != null && container.InstanceId == FloorLootHost.DefaultInstanceId)
+            {
+                floor = container;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     void RefreshVisibleWindowsAfterDrag()

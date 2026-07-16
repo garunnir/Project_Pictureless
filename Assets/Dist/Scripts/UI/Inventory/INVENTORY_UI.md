@@ -33,6 +33,7 @@
 - 드래그 수명주기(`Begin/Commit/Cancel`)는 단일 상태 소유자에서 종료한다.
 
 - `InventoryDragState.End()`는 `UIInventoryController.FinalizeItemDrag` / `CleanupIfNoWindowsOpen`에서만 호출한다. `OnDrop`은 이동·선택 해제만 수행하고, 종료는 `OnEndDrag` → `OnItemDragEnded` 한 경로로 모은다.
+- 창 Rect 밖에서 `EndDrag`하면 `FinalizeItemDrag`가 `floor-loot` 컨테이너로 `MoveStacks`한다 (사이드바 바닥 탭 드롭과 동일 판정). 창 안 비드롭존(헤더 등)은 기존대로 취소.
 
 - `LateUpdate`는 드래그 종료·고스트 위치가 아니라 창 위 포인터 캐시·Zoom/Aim 억제 전용이다.
 - 드래그 고스트 위치는 `OnBeginDrag` → `BeginDragGhost`, `OnDrag` → `UpdateDragGhostPosition` 이벤트 경로만 사용한다.
