@@ -68,7 +68,9 @@ public sealed class UIItemListRow : MonoBehaviour,
         if (_nameText != null)
         {
             _nameText.overflowMode = TextOverflowModes.Ellipsis;
-            _nameText.text = UITextPresenter.GetItemName(item);
+            _nameText.text = ItemDamageLabels.FormatName(
+                UITextPresenter.GetItemName(item),
+                stack.DamageLevel);
         }
 
         if (_detailText != null)

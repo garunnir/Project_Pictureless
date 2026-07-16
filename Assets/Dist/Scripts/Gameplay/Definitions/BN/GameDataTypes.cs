@@ -16,6 +16,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         public string _source;
         public List<MaterialData> materials;
         public List<QualityData> qualities;
+        public List<SkillData> skills;
         public List<ItemData> items;
         public List<ContainerData> containers;
     }
@@ -48,6 +49,11 @@ namespace Garunnir.Runtime.Gameplay.Data
         public List<QualityEntry> qualities;
         public string comestible_type;
 
+        // BOOK gating data (required_level/max_level are used for recipe knowledge)
+        public string book_skill;
+        public int book_required_level;
+        public int book_max_level;
+
         public float Weight => weight_g / 1000f;
         public float Volume => volume_ml / 1000f;
         public int MaxStack => max_stack > 0 ? max_stack : 1;
@@ -62,6 +68,13 @@ namespace Garunnir.Runtime.Gameplay.Data
 
     [Serializable]
     public sealed class QualityData
+    {
+        public string id;
+        public string name;
+    }
+
+    [Serializable]
+    public sealed class SkillData
     {
         public string id;
         public string name;

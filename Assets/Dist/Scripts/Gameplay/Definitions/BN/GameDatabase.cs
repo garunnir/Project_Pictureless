@@ -14,6 +14,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         public IReadOnlyList<MaterialData> Materials => _materials;
         public IReadOnlyList<QualityData> Qualities => _qualities;
         public IReadOnlyList<ContainerData> Containers => _containers;
+        public IReadOnlyList<SkillData> Skills => _skills;
 
         readonly List<ItemData> _items;
         readonly List<RecipeData> _recipes;
@@ -21,12 +22,15 @@ namespace Garunnir.Runtime.Gameplay.Data
         readonly List<MaterialData> _materials;
         readonly List<QualityData> _qualities;
         readonly List<ContainerData> _containers;
+        readonly List<SkillData> _skills;
 
         readonly Dictionary<string, ItemData> _itemById = new();
         readonly Dictionary<string, ContainerData> _containerById = new();
+        readonly Dictionary<string, SkillData> _skillById = new();
         readonly Dictionary<string, List<RecipeData>> _recipesByResult = new();
         readonly Dictionary<string, List<RecipeData>> _recipesByCategory = new();
         readonly Dictionary<string, List<RecipeData>> _recipesByIngredient = new();
+        readonly Dictionary<string, List<RecipeData>> _uncraftsByResult = new();
 
         public GameDatabase(ItemsFileRoot itemsRoot, RecipesFileRoot recipesRoot)
         {
@@ -34,6 +38,7 @@ namespace Garunnir.Runtime.Gameplay.Data
             _materials = itemsRoot?.materials ?? new List<MaterialData>();
             _qualities = itemsRoot?.qualities ?? new List<QualityData>();
             _containers = itemsRoot?.containers ?? new List<ContainerData>();
+            _skills = itemsRoot?.skills ?? new List<SkillData>();
             _recipes = recipesRoot?.recipes ?? new List<RecipeData>();
             _uncrafts = recipesRoot?.uncraft ?? new List<RecipeData>();
 
@@ -48,6 +53,12 @@ namespace Garunnir.Runtime.Gameplay.Data
                     _itemById[item.id] = item;
             }
 
+            foreach (SkillData skill in _skills)
+            {
+                if (!string.IsNullOrEmpty(skill?.id))
+                    _skillById[skill.id] = skill;
+            }
+
             foreach (ContainerData container in _containers)
             {
                 if (!string.IsNullOrEmpty(container.id))
@@ -56,6 +67,9 @@ namespace Garunnir.Runtime.Gameplay.Data
 
             foreach (RecipeData recipe in _recipes)
                 IndexRecipe(recipe);
+
+            foreach (RecipeData recipe in _uncrafts)
+                IndexUncraft(recipe);
         }
 
         void IndexRecipe(RecipeData recipe)
@@ -98,6 +112,15 @@ namespace Garunnir.Runtime.Gameplay.Data
             }
         }
 
+        void IndexUncraft(RecipeData recipe)
+        {
+            if (recipe == null || string.IsNullOrEmpty(recipe.result)) return;
+            if (!_uncraftsByResult.TryGetValue(recipe.result, out var list))
+                _uncraftsByResult[recipe.result] = list = new List<RecipeData>(1);
+            if (!list.Contains(recipe))
+                list.Add(recipe);
+        }
+
         public ItemData GetItem(string id)
         {
             if (string.IsNullOrEmpty(id)) return null;
@@ -128,6 +151,31 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (string.IsNullOrEmpty(id)) return null;
             _containerById.TryGetValue(id, out var container);
             return container;
+        }
+
+        public SkillData GetSkill(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return null;
+            _skillById.TryGetValue(id, out var skill);
+            return skill;
+        }
+
+        public List<RecipeData> GetUncraftForResult(string itemId)
+        {
+            if (string.IsNullOrEmpty(itemId)) return _emptyList;
+
+            if (_uncraftsByResult.TryGetValue(itemId, out var list) && list.Count > 0)
+                return list;
+
+            // reversible assembly fallback: if BN had no explicit uncraft entry,
+            // treat reversible recipe's components as disassembly output.
+            if (_recipesByResult.TryGetValue(itemId, out var assemblyCandidates))
+            {
+                var reversible = assemblyCandidates.FindAll(r => r != null && r.reversible);
+                return reversible.Count > 0 ? reversible : _emptyList;
+            }
+
+            return _emptyList;
         }
 
         static readonly List<RecipeData> _emptyList = new(0);

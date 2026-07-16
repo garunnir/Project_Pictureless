@@ -1,14 +1,15 @@
 // ============================================================
-// UIItemContextMenu — 아이템 우클릭 컨텍스트 메뉴 (합성 레시피 표시)
+// UIItemContextMenu — 아이템 우클릭 컨텍스트 메뉴 (합성·분해 레시피 표시)
 // ============================================================
 
 using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public sealed class UIItemContextMenu : MonoBehaviour
+public sealed class UIItemContextMenu : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] RectTransform _panel;
     [SerializeField] Transform _buttonContainer;
@@ -19,7 +20,15 @@ public sealed class UIItemContextMenu : MonoBehaviour
     InventoryContainer _sourceContainer;
     InventorySession _session;
     Canvas _rootCanvas;
+    ItemStack _clickedStack;
+    Image _rootRaycastImage;
     bool _isOpen;
+
+    void Awake()
+    {
+        TryGetComponent(out _rootRaycastImage);
+        SetRootRaycastEnabled(false);
+    }
 
     void OnEnable()
     {
@@ -33,18 +42,14 @@ public sealed class UIItemContextMenu : MonoBehaviour
 
     void Update()
     {
-        if (!_isOpen) return;
+        if (!_isOpen)
+            return;
 
-        if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
-        {
-            if (!RectTransformUtility.RectangleContainsScreenPoint(
-                    _panel, Input.mousePosition, UIPopupPositioner.ResolveCamera(_rootCanvas)))
-            {
-                Hide();
-            }
-        }
+        InputManager input = InputManager.Instance;
+        if (input == null)
+            return;
 
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (input.TryReadCancelPerformedThisFrame(out bool canceled) && canceled)
             Hide();
     }
 
@@ -54,51 +59,99 @@ public sealed class UIItemContextMenu : MonoBehaviour
         _rootCanvas = rootCanvas;
     }
 
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (!_isOpen)
+            return;
+
+        // 루트(전체 화면) 히트 = 패널 바깥 클릭 → 닫기.
+        // 패널/버튼은 자신 Graphic이 먼저 소비하므로 여기로 오지 않는다.
+        Hide();
+    }
+
     void OnItemRightClicked(ItemStack stack, InventoryContainer container, Vector2 screenPosition)
     {
         if (stack?.Item == null)
             return;
 
-        List<RecipeData> recipes = GameplayData.GetRecipesUsingIngredient(stack.ItemId);
-        if (recipes.Count == 0)
+        List<RecipeData> craftRecipes = GameplayData.GetRecipesUsingIngredient(stack.ItemId);
+        List<RecipeData> uncraftRecipes = GameplayData.GetUncraftForResult(stack.ItemId);
+
+        bool hasCraft = craftRecipes != null && craftRecipes.Count > 0;
+        bool hasUncraft = uncraftRecipes != null && uncraftRecipes.Count > 0;
+        if (!hasCraft && !hasUncraft)
         {
             Hide();
             return;
         }
 
         _sourceContainer = container;
-        Show(recipes, screenPosition);
+        _clickedStack = stack;
+        Show(craftRecipes, uncraftRecipes, screenPosition);
     }
 
-    void Show(List<RecipeData> recipes, Vector2 screenPosition)
+    void Show(List<RecipeData> craftRecipes, List<RecipeData> uncraftRecipes, Vector2 screenPosition)
     {
         ClearButtons();
 
-        for (int i = 0; i < recipes.Count; i++)
+        if (craftRecipes != null)
         {
-            RecipeData recipe = recipes[i];
-            if (string.IsNullOrEmpty(recipe?.result)) continue;
+            for (int i = 0; i < craftRecipes.Count; i++)
+            {
+                RecipeData recipe = craftRecipes[i];
+                if (string.IsNullOrEmpty(recipe?.result)) continue;
 
-            Button btn = Instantiate(_buttonPrefab, _buttonContainer);
-            btn.transform.localScale = Vector3.one;
-            btn.gameObject.SetActive(true);
+                Button btn = Instantiate(_buttonPrefab, _buttonContainer);
+                btn.transform.localScale = Vector3.one;
+                btn.gameObject.SetActive(true);
 
-            TMP_Text label = btn.GetComponentInChildren<TMP_Text>();
-            if (label != null)
-                label.text = FormatRecipeLabel(recipe);
+                string knowledgeFailure = RecipeKnowledge.GetFailureReason(recipe, _sourceContainer);
+                TMP_Text label = btn.GetComponentInChildren<TMP_Text>();
+                if (label != null)
+                {
+                    label.text = FormatRecipeLabel(recipe);
+                    if (!string.IsNullOrEmpty(knowledgeFailure))
+                        label.text = $"{label.text}\n{knowledgeFailure}";
+                }
 
-            bool canCraft = CraftingService.CanCraft(recipe, _sourceContainer);
-            btn.interactable = canCraft;
+                bool canCraft = CraftingService.CanCraft(recipe, _sourceContainer);
+                btn.interactable = canCraft && string.IsNullOrEmpty(knowledgeFailure);
 
-            RecipeData capturedRecipe = recipe;
-            btn.onClick.AddListener(() => OnRecipeClicked(capturedRecipe));
+                RecipeData capturedRecipe = recipe;
+                btn.onClick.AddListener(() => OnRecipeClicked(capturedRecipe, isUncraft: false));
 
-            _activeButtons.Add(btn);
+                _activeButtons.Add(btn);
+            }
+        }
+
+        if (uncraftRecipes != null)
+        {
+            for (int i = 0; i < uncraftRecipes.Count; i++)
+            {
+                RecipeData recipe = uncraftRecipes[i];
+                if (string.IsNullOrEmpty(recipe?.result)) continue;
+
+                Button btn = Instantiate(_buttonPrefab, _buttonContainer);
+                btn.transform.localScale = Vector3.one;
+                btn.gameObject.SetActive(true);
+
+                TMP_Text label = btn.GetComponentInChildren<TMP_Text>();
+                if (label != null)
+                    label.text = $"분해: {FormatRecipeLabel(recipe)}";
+
+                btn.interactable = CraftingService.CanUncraft(recipe, _sourceContainer);
+
+                RecipeData capturedRecipe = recipe;
+                btn.onClick.AddListener(() => OnRecipeClicked(capturedRecipe, isUncraft: true));
+
+                _activeButtons.Add(btn);
+            }
         }
 
         PositionAtScreenPoint(screenPosition);
         _panel.gameObject.SetActive(true);
         LayoutRebuilder.ForceRebuildLayoutImmediate(_panel);
+        SetRootRaycastEnabled(true);
         _isOpen = true;
     }
 
@@ -108,22 +161,43 @@ public sealed class UIItemContextMenu : MonoBehaviour
 
         ClearButtons();
         _panel.gameObject.SetActive(false);
+        SetRootRaycastEnabled(false);
         _sourceContainer = null;
+        _clickedStack = null;
         _isOpen = false;
     }
 
-    void OnRecipeClicked(RecipeData recipe)
+    void OnRecipeClicked(RecipeData recipe, bool isUncraft)
     {
         if (_sourceContainer == null || _session == null)
             return;
 
-        CraftingService.TryCraft(recipe, _sourceContainer, _session);
+        if (isUncraft)
+        {
+            if (_clickedStack == null)
+                return;
+            CraftingService.TryUncraft(recipe, _clickedStack, _sourceContainer, _session);
+        }
+        else
+        {
+            CraftingService.TryCraft(recipe, _sourceContainer, _session);
+        }
+
         Hide();
     }
 
     void PositionAtScreenPoint(Vector2 screenPosition)
     {
         UIPopupPositioner.PlaceAtScreenPoint(_panel, screenPosition, _rootCanvas);
+    }
+
+    void SetRootRaycastEnabled(bool enabled)
+    {
+        if (_rootRaycastImage == null)
+            TryGetComponent(out _rootRaycastImage);
+
+        if (_rootRaycastImage != null)
+            _rootRaycastImage.raycastTarget = enabled;
     }
 
     void ClearButtons()

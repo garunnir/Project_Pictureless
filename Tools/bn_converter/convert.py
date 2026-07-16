@@ -164,14 +164,24 @@ def get_item_name(entry: dict) -> str:
 def load_items(bn_path: Path) -> dict[str, dict]:
     """모든 아이템 정의를 읽고 copy-from 상속을 해소하여 id→data 맵 반환."""
     items_dir = bn_path / "data" / "json" / "items"
+    obsoletion_dir = bn_path / "data" / "json" / "obsoletion"
     print(f"[items] Loading from {items_dir} ...")
     raw = load_all_json(items_dir)
+    if obsoletion_dir.exists():
+        print(f"[items] Loading from {obsoletion_dir} ...")
+        raw.extend(load_all_json(obsoletion_dir))
 
     # 1차: type별 인덱스
     ITEM_TYPES = {
         "GENERIC", "COMESTIBLE", "ARMOR", "TOOL", "GUN", "AMMO",
         "BOOK", "MAGAZINE", "GUNMOD", "TOOL_ARMOR", "BIONIC_ITEM",
         "PET_ARMOR", "ENGINE",
+        # containers/tools that are used as targets by recipes
+        "CONTAINER",
+        "TOOLMOD",
+        # vehicle/obsolete entries that are still referenced by recipes/tools
+        "WHEEL",
+        "MIGRATION",
     }
     by_id: dict[str, dict] = {}
     abstracts: dict[str, dict] = {}
@@ -182,6 +192,11 @@ def load_items(bn_path: Path) -> dict[str, dict]:
             continue
         eid = entry.get("id") or entry.get("abstract")
         if not eid:
+            continue
+        if isinstance(eid, list):
+            # obsoletion 등에서 id/abstract가 list로 들어오는 경우가 있어 방어
+            eid = eid[0] if len(eid) > 0 and isinstance(eid[0], str) else None
+        if not isinstance(eid, str):
             continue
         if "abstract" in entry:
             abstracts[eid] = entry
@@ -226,9 +241,10 @@ def load_items(bn_path: Path) -> dict[str, dict]:
     return resolved
 
 
-def export_items(resolved: dict[str, dict]) -> list[dict]:
-    """정제된 아이템 리스트 생성."""
+def export_items_and_containers(resolved: dict[str, dict]) -> tuple[list[dict], list[dict]]:
+    """정제된 아이템 리스트 + CONTAINER 정의 생성."""
     items_out = []
+    containers_out = []
     for eid, entry in sorted(resolved.items()):
         materials = entry.get("material", [])
         if isinstance(materials, str):
@@ -242,6 +258,7 @@ def export_items(resolved: dict[str, dict]) -> list[dict]:
         if isinstance(cat, dict):
             cat = cat.get("id", "other")
 
+        item_type = entry.get("type", "GENERIC")
         comestible_type = entry.get("comestible_type", "")
         qualities = entry.get("qualities", [])
         qual_out = []
@@ -254,7 +271,7 @@ def export_items(resolved: dict[str, dict]) -> list[dict]:
         item = {
             "id": eid,
             "name": get_item_name(entry),
-            "type": entry.get("type", "GENERIC"),
+            "type": item_type,
             "category": cat,
             "weight_g": parse_weight_to_g(entry.get("weight", 0)),
             "volume_ml": parse_volume_to_ml(entry.get("volume", 0)),
@@ -264,8 +281,112 @@ def export_items(resolved: dict[str, dict]) -> list[dict]:
         }
         if comestible_type:
             item["comestible_type"] = comestible_type
+
+        # CONTAINER: nested inventory 용량 정의까지 items.json root로 함께 출력
+        if item_type == "CONTAINER":
+            # BN: containers.json에서 contains 값으로 용량(부피)을 제공
+            contains = entry.get("contains", entry.get("volume", 0))
+            max_volume_ml = parse_volume_to_ml(contains)
+            # BN 컨버터 스코프에서 max_weight는 근사한다(액체/일반 재료 1g/ml 가정).
+            max_weight_g = float(max_volume_ml)
+
+            item["is_container"] = True
+            item["container_id"] = eid
+            containers_out.append({
+                "id": eid,
+                "name": get_item_name(entry),
+                "max_weight": max_weight_g,
+                "max_volume": float(max_volume_ml),
+            })
+
+        # BOOK: 해당 책이 가리키는 skill/필요 레벨/상한 레벨 출력
+        if item_type == "BOOK":
+            item["book_skill"] = entry.get("skill", "")
+            item["book_required_level"] = entry.get("required_level", 0)
+            item["book_max_level"] = entry.get("max_level", 0)
+
         items_out.append(item)
-    return items_out
+    return items_out, containers_out
+
+
+# ── Requirement LIST expansion helpers ─────────────────────────
+
+MAX_LIST_EXPANSION_DEPTH = 6
+
+def _scale_component_count(base_count, multiplier):
+    try:
+        return int(base_count) * int(multiplier)
+    except Exception:
+        return base_count * multiplier
+
+
+def expand_component_requirement(req_id: str, count_multiplier: int, requirements: dict[str, dict], depth: int = 0) -> list[dict]:
+    """requirement가 {"item": <req_id>, "list": true}로 들어오는 경우를 alternatives로 전개."""
+    if depth > MAX_LIST_EXPANSION_DEPTH:
+        # circular/overly deep structures: stop expanding to keep converter stable
+        print(f"[WARN] LIST component expansion depth exceeded: {req_id}")
+        return [{"item": req_id, "count": count_multiplier}]
+
+    req = requirements.get(req_id)
+    if not req:
+        return [{"item": req_id, "count": count_multiplier}]
+
+    comps = req.get("components", []) or []
+    if not comps or not isinstance(comps, list):
+        return [{"item": req_id, "count": count_multiplier}]
+
+    # 현재 출력 스키마가 component-slot 단위 OR만 표현하므로 첫 슬롯만 사용
+    first_slot = comps[0] if isinstance(comps[0], list) else []
+    out: list[dict] = []
+    for alt in first_slot:
+        if not isinstance(alt, list) or len(alt) < 2:
+            continue
+        target_id = alt[0]
+        base_count = alt[1]
+        nested_multiplier = _scale_component_count(base_count, count_multiplier)
+        if len(alt) >= 3 and alt[2] == "LIST":
+            out.extend(expand_component_requirement(target_id, nested_multiplier, requirements, depth + 1))
+        else:
+            out.append({"item": target_id, "count": nested_multiplier})
+    return out
+
+
+def _scale_tool_charges(base_charges, multiplier):
+    # BN conventions: -1 means "unlimited/unknown" and should not be multiplied.
+    if isinstance(base_charges, (int, float)) and base_charges > 0:
+        return int(base_charges) * int(multiplier)
+    return base_charges
+
+
+def expand_tool_requirement(req_id: str, charges_multiplier: int, requirements: dict[str, dict], depth: int = 0) -> list[dict]:
+    """requirement가 tools alternatives에서 list 참조로 들어오는 경우 전개."""
+    if depth > MAX_LIST_EXPANSION_DEPTH:
+        print(f"[WARN] LIST tool expansion depth exceeded: {req_id}")
+        return [{"tool": req_id, "charges": charges_multiplier}]
+
+    req = requirements.get(req_id)
+    if not req:
+        return [{"tool": req_id, "charges": charges_multiplier}]
+
+    tools = req.get("tools", []) or []
+    if not tools or not isinstance(tools, list):
+        return [{"tool": req_id, "charges": charges_multiplier}]
+
+    # 현재 출력 스키마가 tool-slot 단위 OR만 표현하므로 첫 슬롯만 사용
+    first_slot = tools[0] if isinstance(tools[0], list) else []
+    out: list[dict] = []
+    for alt in first_slot:
+        if not isinstance(alt, list) or len(alt) < 2:
+            continue
+        target_id = alt[0]
+        base_charges = alt[1]
+        if len(alt) >= 3 and alt[2] == "LIST":
+            nested_multiplier = _scale_tool_charges(base_charges, charges_multiplier)
+            out.extend(expand_tool_requirement(target_id, nested_multiplier, requirements, depth + 1))
+        else:
+            scaled = _scale_tool_charges(base_charges, charges_multiplier)
+            out.append({"tool": target_id, "charges": scaled})
+    return out
 
 
 # ── Phase: Requirements ─────────────────────────────────────────────
@@ -325,6 +446,31 @@ def load_qualities(bn_path: Path) -> list[dict]:
             })
     print(f"[qualities] Loaded {len(quals)} tool qualities")
     return quals
+
+
+def load_skills(bn_path: Path) -> list[dict]:
+    skills_file = bn_path / "data" / "json" / "skills.json"
+    if not skills_file.exists():
+        return []
+    with open(skills_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    skills_out: list[dict] = []
+    if not isinstance(data, list):
+        return skills_out
+
+    for entry in data:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("type") != "skill":
+            continue
+        sid = entry.get("id", "")
+        name = entry.get("name", "")
+        if isinstance(name, dict):
+            name = name.get("str", "") or name.get("str_pl", "") or ""
+        skills_out.append({"id": sid, "name": str(name)})
+    print(f"[skills] Loaded {len(skills_out)} skills")
+    return skills_out
 
 
 # ── Phase: Recipes ──────────────────────────────────────────────────
@@ -410,11 +556,11 @@ def flatten_recipe(entry: dict, requirements: dict[str, dict],
                    is_uncraft: bool = False) -> dict:
     """단일 레시피를 정제 포맷으로 변환. using 참조를 인라인 전개."""
 
-    # components 정규화
-    components = normalize_components(entry.get("components", []))
+    # components 정규화 (LIST requirement 전개 포함)
+    components = normalize_components(entry.get("components", []), requirements)
 
-    # tools 정규화
-    tools = normalize_tools(entry.get("tools", []))
+    # tools 정규화 (LIST requirement 전개 포함)
+    tools = normalize_tools(entry.get("tools", []), requirements)
 
     # qualities 정규화
     qualities = []
@@ -438,10 +584,11 @@ def flatten_recipe(entry: dict, requirements: dict[str, dict],
                 if isinstance(alt, list) and len(alt) >= 2:
                     item_id = alt[0]
                     count = alt[1] * multiplier
-                    s = {"item": item_id, "count": count}
                     if len(alt) >= 3 and alt[2] == "LIST":
-                        s["list"] = True
-                    scaled_slot.append(s)
+                        # LIST alt 는 requirement id 이므로 alternatives로 재귀 전개
+                        scaled_slot.extend(expand_component_requirement(item_id, count, requirements))
+                    else:
+                        scaled_slot.append({"item": item_id, "count": count})
             if scaled_slot:
                 components.append({"alternatives": scaled_slot})
 
@@ -452,7 +599,10 @@ def flatten_recipe(entry: dict, requirements: dict[str, dict],
                 if isinstance(alt, list) and len(alt) >= 2:
                     tool_id = alt[0]
                     charges = alt[1] * multiplier if alt[1] > 0 else alt[1]
-                    scaled_slot.append({"tool": tool_id, "charges": charges})
+                    if len(alt) >= 3 and alt[2] == "LIST":
+                        scaled_slot.extend(expand_tool_requirement(tool_id, charges, requirements))
+                    else:
+                        scaled_slot.append({"tool": tool_id, "charges": charges})
             if scaled_slot:
                 tools.append({"alternatives": scaled_slot})
 
@@ -530,7 +680,7 @@ def flatten_recipe(entry: dict, requirements: dict[str, dict],
     return rec
 
 
-def normalize_components(comps: list) -> list[dict]:
+def normalize_components(comps: list, requirements: dict[str, dict]) -> list[dict]:
     """components 배열을 JsonUtility 호환 형태로 정규화.
     각 슬롯을 {"alternatives": [...]} 오브젝트로 감싼다."""
     result = []
@@ -540,16 +690,18 @@ def normalize_components(comps: list) -> list[dict]:
         alternatives = []
         for alt in slot:
             if isinstance(alt, list) and len(alt) >= 2:
-                entry = {"item": alt[0], "count": alt[1]}
+                item_id = alt[0]
+                count = alt[1]
                 if len(alt) >= 3 and alt[2] == "LIST":
-                    entry["list"] = True
-                alternatives.append(entry)
+                    alternatives.extend(expand_component_requirement(item_id, count, requirements))
+                else:
+                    alternatives.append({"item": item_id, "count": count})
         if alternatives:
             result.append({"alternatives": alternatives})
     return result
 
 
-def normalize_tools(tools: list) -> list[dict]:
+def normalize_tools(tools: list, requirements: dict[str, dict]) -> list[dict]:
     """tools 배열을 JsonUtility 호환 형태로 정규화.
     각 슬롯을 {"alternatives": [...]} 오브젝트로 감싼다."""
     result = []
@@ -559,10 +711,12 @@ def normalize_tools(tools: list) -> list[dict]:
         alternatives = []
         for alt in slot:
             if isinstance(alt, list) and len(alt) >= 2:
-                entry = {"tool": alt[0], "charges": alt[1]}
+                tool_id = alt[0]
+                charges = alt[1]
                 if len(alt) >= 3 and alt[2] == "LIST":
-                    entry["list"] = True
-                alternatives.append(entry)
+                    alternatives.extend(expand_tool_requirement(tool_id, charges, requirements))
+                else:
+                    alternatives.append({"tool": tool_id, "charges": charges})
         if alternatives:
             result.append({"alternatives": alternatives})
     return result
@@ -586,11 +740,14 @@ def main():
 
     # 1) Items
     resolved_items = load_items(bn_path)
-    items_out = export_items(resolved_items)
+    items_out, containers_out = export_items_and_containers(resolved_items)
 
     # 2) Materials & Qualities
     materials = load_materials(bn_path)
     qualities = load_qualities(bn_path)
+
+    # 2.5) Skills
+    skills_out = load_skills(bn_path)
 
     # 3) Requirements
     requirements = load_requirements(bn_path)
@@ -607,9 +764,11 @@ def main():
             "_source": "https://github.com/cataclysmbnteam/Cataclysm-BN",
             "materials": materials,
             "qualities": qualities,
+            "skills": skills_out,
             "items": items_out,
+            "containers": containers_out,
         }, f, ensure_ascii=False, indent=2)
-    print(f"\n[output] {items_file}  ({len(items_out)} items)")
+    print(f"\n[output] {items_file}  ({len(items_out)} items, {len(containers_out)} containers)")
 
     recipes_file = out_dir / "recipes.json"
     with open(recipes_file, "w", encoding="utf-8") as f:

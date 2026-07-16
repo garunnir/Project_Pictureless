@@ -29693,6 +29693,9 @@ MonoBehaviour:
   _target: 0
   _controller: {fileID: 525082052}
   _button: {fileID: 595498793}
+  _iconImage: {fileID: 595498794}
+  _closedColor: {r: 1, g: 1, b: 1, a: 0.55}
+  _openColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &595498793
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -73802,7 +73805,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::InventoryRuntimeTestSetup
   _targetContainerId: player-body
   _containerEntries:
-  - ItemId: 101_carpentry
+  - ItemId: knife_folding
     Count: 1
   - ItemId: 10gal_hat_custom
     Count: 1
@@ -96068,6 +96071,9 @@ MonoBehaviour:
   _target: 1
   _controller: {fileID: 525082052}
   _button: {fileID: 2023539888}
+  _iconImage: {fileID: 2023539889}
+  _closedColor: {r: 1, g: 1, b: 1, a: 0.55}
+  _openColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &2023539888
 MonoBehaviour:
   m_ObjectHideFlags: 0

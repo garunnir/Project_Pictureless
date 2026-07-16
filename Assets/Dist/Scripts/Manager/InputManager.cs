@@ -129,6 +129,35 @@ public class InputManager : SceneSingleton<InputManager>
         return false;
     }
 
+    /// <summary>포인터 primary press가 이 프레임에 눌렸는지.</summary>
+    public bool TryReadPointerPressedThisFrame(out bool pressed)
+    {
+        pressed = Pointer.current?.press.wasPressedThisFrame ?? false;
+        return Pointer.current != null;
+    }
+
+    /// <summary>포인터 primary press가 이 프레임에 떨어졌는지.</summary>
+    public bool TryReadPointerReleasedThisFrame(out bool released)
+    {
+        released = Pointer.current?.press.wasReleasedThisFrame ?? false;
+        return Pointer.current != null;
+    }
+
+    /// <summary>Cancel(Escape / UI Cancel)이 이 프레임에 수행됐는지.</summary>
+    public bool TryReadCancelPerformedThisFrame(out bool canceled)
+    {
+        canceled = false;
+
+        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            canceled = true;
+
+        if (!canceled && IsUiMenuInputActive && _actions != null &&
+            _actions.UI.Cancel.WasPerformedThisFrame())
+            canceled = true;
+
+        return true;
+    }
+
     void WireActionCallbacks()
     {
         _actions.Player.Move.performed += ForwardPlayerMovePerformed;

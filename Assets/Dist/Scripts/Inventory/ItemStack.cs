@@ -11,10 +11,19 @@ public sealed class ItemStack
     public string ItemId => Item?.id;
     public int Count { get; private set; }
     public InventoryContainer Nested { get; private set; }
+    public int DamageLevel { get; private set; }
 
     public ItemStack(ItemData item, int count)
     {
         Item = item ?? throw new ArgumentNullException(nameof(item));
+        DamageLevel = 0;
+        SetCount(count);
+    }
+
+    public ItemStack(ItemData item, int count, int damageLevel)
+    {
+        Item = item ?? throw new ArgumentNullException(nameof(item));
+        DamageLevel = Math.Max(0, damageLevel);
         SetCount(count);
     }
 

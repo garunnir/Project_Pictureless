@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 
-public sealed class InventoryContainer
+public sealed class InventoryContainer : IItemContainer
 {
     readonly List<ItemStack> _stacks = new();
 
@@ -62,14 +62,23 @@ public sealed class InventoryContainer
 
     public int AddItem(ItemData item, int count)
     {
+        return AddItem(item, count, 0);
+    }
+
+    public int AddItem(ItemData item, int count, int damageLevel)
+    {
         if (item == null || count <= 0)
             return 0;
 
+        damageLevel = Math.Max(0, damageLevel);
+
         int remaining = count;
+        int incomingDamage = damageLevel;
+
         for (int i = 0; i < _stacks.Count && remaining > 0; i++)
         {
             ItemStack existing = _stacks[i];
-            if (existing.Item != item)
+            if (existing.Item != item || existing.DamageLevel != incomingDamage)
                 continue;
 
             int space = item.MaxStack - existing.Count;
@@ -84,7 +93,7 @@ public sealed class InventoryContainer
         while (remaining > 0)
         {
             int chunk = Math.Min(item.MaxStack, remaining);
-            _stacks.Add(new ItemStack(item, chunk));
+            _stacks.Add(new ItemStack(item, chunk, incomingDamage));
             remaining -= chunk;
         }
 
