@@ -48,8 +48,7 @@ public sealed class UIContextMenuCascadePanel : MonoBehaviour, IPointerEnterHand
             _rows.Add(row);
         }
 
-        LayoutRebuilder.ForceRebuildLayoutImmediate(Root);
-        ApplyMaxHeight();
+        ApplyPreferredSize();
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -57,28 +56,59 @@ public sealed class UIContextMenuCascadePanel : MonoBehaviour, IPointerEnterHand
         _onPanelEnter?.Invoke(this);
     }
 
-    void ApplyMaxHeight()
+    void ApplyPreferredSize()
     {
-        if (_rowContainer == null)
-            return;
+        float contentWidth = ContextMenuStyle.MinPanelWidth - ContextMenuStyle.PanelPadding * 2f;
+        for (int i = 0; i < _rows.Count; i++)
+        {
+            UIContextMenuItemRow row = _rows[i];
+            if (row == null)
+                continue;
 
-        RectTransform content = _rowContainer as RectTransform;
-        if (content == null)
-            return;
+            contentWidth = Mathf.Max(contentWidth, row.MeasurePreferredWidth());
+        }
 
-        LayoutRebuilder.ForceRebuildLayoutImmediate(content);
-        float contentHeight = LayoutUtility.GetPreferredHeight(content);
-        float padded = contentHeight + ContextMenuStyle.PanelPadding * 2f;
-        float height = Mathf.Min(padded, ContextMenuStyle.PanelMaxHeight);
+        float width = Mathf.Clamp(
+            contentWidth + ContextMenuStyle.PanelPadding * 2f,
+            ContextMenuStyle.MinPanelWidth,
+            ContextMenuStyle.MaxPanelWidth);
+
+        RectTransform root = Root;
+        root.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
 
         if (TryGetComponent(out LayoutElement rootLe))
-            rootLe.preferredHeight = height;
+        {
+            rootLe.minWidth = ContextMenuStyle.MinPanelWidth;
+            rootLe.preferredWidth = width;
+        }
 
         ScrollRect scroll = GetComponentInChildren<ScrollRect>(true);
         if (scroll != null && scroll.TryGetComponent(out LayoutElement scrollLe))
         {
+            float innerW = width - ContextMenuStyle.PanelPadding * 2f;
+            scrollLe.preferredWidth = innerW;
+            scrollLe.minWidth = innerW;
+        }
+
+        if (_rowContainer is RectTransform content)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(root);
+
+        float contentHeight = _rowContainer is RectTransform c
+            ? LayoutUtility.GetPreferredHeight(c)
+            : ContextMenuStyle.RowHeight;
+        float padded = contentHeight + ContextMenuStyle.PanelPadding * 2f;
+        float height = Mathf.Min(padded, ContextMenuStyle.PanelMaxHeight);
+
+        root.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+        if (rootLe != null)
+            rootLe.preferredHeight = height;
+
+        if (scroll != null && scroll.TryGetComponent(out LayoutElement scrollLe2))
+        {
             float inner = Mathf.Min(contentHeight, ContextMenuStyle.PanelMaxHeight - ContextMenuStyle.PanelPadding * 2f);
-            scrollLe.preferredHeight = Mathf.Max(ContextMenuStyle.RowHeight, inner);
+            scrollLe2.preferredHeight = Mathf.Max(ContextMenuStyle.RowHeight, inner);
         }
     }
 

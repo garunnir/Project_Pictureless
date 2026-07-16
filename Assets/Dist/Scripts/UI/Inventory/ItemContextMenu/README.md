@@ -35,7 +35,8 @@
 
 ## UX SSOT
 
-타이밍·색·폭: `View/ContextMenuStyle.cs`
+타이밍·색·폭: `View/ContextMenuStyle.cs`  
+패널 폭은 Bind 시 행 라벨 최대 선호폭으로 `MinPanelWidth`~`MaxPanelWidth` clamp.
 
 ## Prefab
 

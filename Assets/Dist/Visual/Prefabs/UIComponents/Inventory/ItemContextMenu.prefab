@@ -187,7 +187,7 @@ MonoBehaviour:
   m_IgnoreLayout: 0
   m_MinWidth: -1
   m_MinHeight: 28
-  m_PreferredWidth: 192
+  m_PreferredWidth: 132
   m_PreferredHeight: 28
   m_FlexibleWidth: 1
   m_FlexibleHeight: -1
@@ -1004,7 +1004,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 28}
+  m_SizeDelta: {x: 140, y: 28}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &4249605288466058767
 CanvasRenderer:
@@ -1097,9 +1097,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
-  m_MinWidth: 200
+  m_MinWidth: 140
   m_MinHeight: -1
-  m_PreferredWidth: 200
+  m_PreferredWidth: 140
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1

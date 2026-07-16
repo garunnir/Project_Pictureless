@@ -47,9 +47,12 @@ public sealed class UIContextMenuItemRow : MonoBehaviour, IPointerEnterHandler, 
 
         if (_label != null)
         {
+            _label.textWrappingMode = TextWrappingModes.NoWrap;
+            _label.overflowMode = TextOverflowModes.Ellipsis;
+
             string text = entry?.Label ?? "";
             if (!_interactable && !string.IsNullOrEmpty(disabledReason))
-                text = $"{text}\n{disabledReason}";
+                text = $"{text} — {disabledReason}";
             _label.text = text;
             _label.color = _interactable ? Color.white : new Color(0.65f, 0.65f, 0.65f, 1f);
         }
@@ -62,6 +65,23 @@ public sealed class UIContextMenuItemRow : MonoBehaviour, IPointerEnterHandler, 
         }
 
         ApplyBackground(hovered: false);
+    }
+
+    /// <summary>랩/ellipsis 전 선호 폭 (패딩·쉐브론 포함).</summary>
+    public float MeasurePreferredWidth()
+    {
+        float labelW = 0f;
+        if (_label != null && !string.IsNullOrEmpty(_label.text))
+            labelW = _label.GetPreferredValues(_label.text).x;
+
+        float chevronW = 0f;
+        if (_chevron != null && _chevron.gameObject.activeSelf)
+            chevronW = ContextMenuStyle.ChevronWidth + ContextMenuStyle.RowLabelChevronGap;
+
+        return ContextMenuStyle.RowPaddingLeft
+            + labelW
+            + chevronW
+            + ContextMenuStyle.RowPaddingRight;
     }
 
     public void OnPointerEnter(PointerEventData eventData)

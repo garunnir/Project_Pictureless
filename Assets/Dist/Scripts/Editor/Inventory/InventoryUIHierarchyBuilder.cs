@@ -163,8 +163,12 @@ static class InventoryUIHierarchyBuilder
         rowRect.sizeDelta = new Vector2(0f, ContextMenuStyle.RowHeight);
 
         var h = rowGo.AddComponent<HorizontalLayoutGroup>();
-        h.padding = new RectOffset(6, 4, 2, 2);
-        h.spacing = 4f;
+        h.padding = new RectOffset(
+            (int)ContextMenuStyle.RowPaddingLeft,
+            (int)ContextMenuStyle.RowPaddingRight,
+            2,
+            2);
+        h.spacing = ContextMenuStyle.RowLabelChevronGap;
         h.childAlignment = TextAnchor.MiddleLeft;
         h.childControlWidth = true;
         h.childControlHeight = true;
@@ -200,7 +204,7 @@ static class InventoryUIHierarchyBuilder
         panelRect.anchorMin = new Vector2(0.5f, 0.5f);
         panelRect.anchorMax = new Vector2(0.5f, 0.5f);
         panelRect.pivot = new Vector2(0f, 1f);
-        panelRect.sizeDelta = new Vector2(ContextMenuStyle.PanelWidth, ContextMenuStyle.RowHeight);
+        panelRect.sizeDelta = new Vector2(ContextMenuStyle.MinPanelWidth, ContextMenuStyle.RowHeight);
 
         var layout = panelGo.AddComponent<VerticalLayoutGroup>();
         layout.padding = new RectOffset(
@@ -219,15 +223,15 @@ static class InventoryUIHierarchyBuilder
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
         var le = panelGo.AddComponent<LayoutElement>();
-        le.preferredWidth = ContextMenuStyle.PanelWidth;
-        le.minWidth = ContextMenuStyle.PanelWidth;
+        le.preferredWidth = ContextMenuStyle.MinPanelWidth;
+        le.minWidth = ContextMenuStyle.MinPanelWidth;
 
         // Scroll: 내용이 PanelMaxHeight를 넘기면 스크롤
         var scrollGo = CreateRect("Scroll", panelGo.transform, Color.clear);
         scrollGo.GetComponent<Image>().raycastTarget = false;
         var scrollRectTransform = scrollGo.GetComponent<RectTransform>();
         var scrollLe = scrollGo.AddComponent<LayoutElement>();
-        scrollLe.preferredWidth = ContextMenuStyle.PanelWidth - ContextMenuStyle.PanelPadding * 2f;
+        scrollLe.preferredWidth = ContextMenuStyle.MinPanelWidth - ContextMenuStyle.PanelPadding * 2f;
         scrollLe.flexibleWidth = 1f;
         scrollLe.minHeight = ContextMenuStyle.RowHeight;
         scrollLe.preferredHeight = ContextMenuStyle.RowHeight;
