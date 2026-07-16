@@ -1,5 +1,5 @@
 // ============================================================
-// InventoryUICanvasOverlaySetupMenu — UICanvas 드래그 고스트·오버레이 배선
+// InventoryUICanvasOverlaySetupMenu — Layer 그룹 + 일시 UI 프리팹 배선
 // ============================================================
 
 #if UNITY_EDITOR
@@ -11,6 +11,12 @@ using UnityEngine.UI;
 
 static class InventoryUICanvasOverlaySetupMenu
 {
+    const string PrefabFolder = InventoryUIHierarchyBuilder.PrefabFolder;
+    const string DragGhostPrefabPath = PrefabFolder + "/InventoryDragGhost.prefab";
+    const string ScrollOverlayPrefabPath = PrefabFolder + "/InventoryScrollDragOverlay.prefab";
+    const string ContextMenuPrefabPath = PrefabFolder + "/ItemContextMenu.prefab";
+    const string ContextMenuButtonPath = InventoryUIHierarchyBuilder.PrefabFolder + "/ContextMenuButton.prefab";
+
     [MenuItem("Dist/Inventory/Setup Canvas Overlays In Open Scene")]
     static void SetupCanvasOverlaysInOpenScene()
     {
@@ -36,83 +42,129 @@ static class InventoryUICanvasOverlaySetupMenu
         canvasProperty.objectReferenceValue = canvas;
 
         UICanvasLayerHost layerHost = canvas.GetComponent<UICanvasLayerHost>();
-        if (layerHost != null)
-            layerHost.EditorSetupLayerHierarchy();
+        if (layerHost == null)
+            layerHost = Undo.AddComponent<UICanvasLayerHost>(canvas.gameObject);
+
+        layerHost.EditorSetupLayerHierarchy();
 
         SerializedProperty layerHostProperty = serializedController.FindProperty("_layerHost");
         if (layerHostProperty != null)
             layerHostProperty.objectReferenceValue = layerHost;
 
-        UIInventoryDragGhost dragGhost = EnsureDragGhost(canvas, serializedController, layerHost);
-        GameObject scrollOverlay = EnsureScrollOverlay(canvas, serializedController, layerHost);
+        UIInventoryDragGhost dragGhostPrefab = EnsureDragGhostPrefab(canvas);
+        GameObject scrollOverlayPrefab = EnsureScrollOverlayPrefab();
+        UIItemContextMenu contextMenuPrefab = EnsureContextMenuPrefab();
+
+        SetObjectRef(serializedController, "_dragGhostPrefab", dragGhostPrefab);
+        SetObjectRef(serializedController, "_scrollDragOverlayPrefab", scrollOverlayPrefab);
+        SetObjectRef(serializedController, "_contextMenuPrefab", contextMenuPrefab);
+
+        // Runtime instances are spawned from prefabs — clear scene instance slots.
+        SetObjectRef(serializedController, "_dragGhost", null);
+        SetObjectRef(serializedController, "_scrollDragOverlay", null);
+        SetObjectRef(serializedController, "_contextMenu", null);
+
+        RemoveSceneEphemeralUi(canvas.transform);
 
         serializedController.ApplyModifiedPropertiesWithoutUndo();
         EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
 
         Debug.Log(
-            $"[InventoryUICanvasOverlaySetupMenu] Wired canvas overlays on '{canvas.name}' for '{controller.name}'. " +
-            $"dragGhost={(dragGhost != null ? dragGhost.name : "missing")}, overlay={(scrollOverlay != null ? scrollOverlay.name : "missing")}.",
+            $"[InventoryUICanvasOverlaySetupMenu] Wired layer host + ephemeral prefabs on '{canvas.name}' for '{controller.name}'.",
             controller);
     }
 
-    static UIInventoryDragGhost EnsureDragGhost(Canvas canvas, SerializedObject serializedController, UICanvasLayerHost layerHost)
+    static void SetObjectRef(SerializedObject so, string propertyName, Object value)
     {
-        SerializedProperty dragGhostProperty = serializedController.FindProperty("_dragGhost");
-        UIInventoryDragGhost dragGhost = dragGhostProperty.objectReferenceValue as UIInventoryDragGhost;
-
-        if (dragGhost == null)
+        SerializedProperty property = so.FindProperty(propertyName);
+        if (property == null)
         {
-            Transform searchRoot = layerHost != null
-                ? layerHost.GetLayerRoot(UICanvasLayer.TopMost)
-                : canvas.transform;
-            Transform existing = searchRoot.Find("InventoryDragGhost")
-                                 ?? canvas.transform.Find("InventoryDragGhost");
-            if (existing != null)
-                existing.TryGetComponent(out dragGhost);
+            Debug.LogError($"[InventoryUICanvasOverlaySetupMenu] Missing property '{propertyName}'.");
+            return;
         }
 
-        if (dragGhost == null)
-        {
-            dragGhost = InventoryUIHierarchyBuilder.BuildDragGhostRoot(canvas);
-            Transform parent = layerHost != null
-                ? layerHost.GetLayerRoot(UICanvasLayer.TopMost)
-                : canvas.transform;
-            dragGhost.transform.SetParent(parent, false);
-            Undo.RegisterCreatedObjectUndo(dragGhost.gameObject, "Create Inventory Drag Ghost");
-        }
-
-        dragGhostProperty.objectReferenceValue = dragGhost;
-        return dragGhost;
+        property.objectReferenceValue = value;
     }
 
-    static GameObject EnsureScrollOverlay(Canvas canvas, SerializedObject serializedController, UICanvasLayerHost layerHost)
+    static UIInventoryDragGhost EnsureDragGhostPrefab(Canvas canvas)
     {
-        SerializedProperty overlayProperty = serializedController.FindProperty("_scrollDragOverlay");
-        GameObject overlay = overlayProperty.objectReferenceValue as GameObject;
+        EnsurePrefabFolder();
+        // Rebuild so Image color/sprite match builder (alpha 0 / null sprite hide the ghost).
+        UIInventoryDragGhost built = InventoryUIHierarchyBuilder.BuildDragGhostRoot(canvas);
+        GameObject prefabRoot = PrefabUtility.SaveAsPrefabAsset(built.gameObject, DragGhostPrefabPath);
+        Object.DestroyImmediate(built.gameObject);
+        return prefabRoot != null ? prefabRoot.GetComponent<UIInventoryDragGhost>() : null;
+    }
 
-        if (overlay == null)
+    static GameObject EnsureScrollOverlayPrefab()
+    {
+        var existing = AssetDatabase.LoadAssetAtPath<GameObject>(ScrollOverlayPrefabPath);
+        if (existing != null)
+            return existing;
+
+        EnsurePrefabFolder();
+        GameObject built = InventoryUIHierarchyBuilder.BuildScrollDragOverlayRoot();
+        GameObject prefabRoot = PrefabUtility.SaveAsPrefabAsset(built, ScrollOverlayPrefabPath);
+        Object.DestroyImmediate(built);
+        return prefabRoot;
+    }
+
+    static UIItemContextMenu EnsureContextMenuPrefab()
+    {
+        var existing = AssetDatabase.LoadAssetAtPath<UIItemContextMenu>(ContextMenuPrefabPath);
+        if (existing != null)
+            return existing;
+
+        EnsurePrefabFolder();
+        Button buttonPrefab = AssetDatabase.LoadAssetAtPath<Button>(ContextMenuButtonPath);
+        UIItemContextMenu built = InventoryUIHierarchyBuilder.BuildContextMenuRoot(buttonPrefab);
+        GameObject prefabRoot = PrefabUtility.SaveAsPrefabAsset(built.gameObject, ContextMenuPrefabPath);
+        Object.DestroyImmediate(built.gameObject);
+        return prefabRoot.GetComponent<UIItemContextMenu>();
+    }
+
+    static void EnsurePrefabFolder()
+    {
+        if (!AssetDatabase.IsValidFolder(PrefabFolder))
         {
-            Transform searchRoot = layerHost != null
-                ? layerHost.GetLayerRoot(UICanvasLayer.Overlay)
-                : canvas.transform;
-            Transform existing = searchRoot.Find("InventoryScrollDragOverlay")
-                                 ?? canvas.transform.Find("InventoryScrollDragOverlay");
-            if (existing != null)
-                overlay = existing.gameObject;
+            Debug.LogError($"[InventoryUICanvasOverlaySetupMenu] Prefab folder missing: {PrefabFolder}");
         }
+    }
 
-        if (overlay == null)
+    static void RemoveSceneEphemeralUi(Transform canvasRoot)
+    {
+        string[] names =
         {
-            overlay = InventoryUIHierarchyBuilder.BuildScrollDragOverlayRoot();
-            Transform parent = layerHost != null
-                ? layerHost.GetLayerRoot(UICanvasLayer.Overlay)
-                : canvas.transform;
-            overlay.transform.SetParent(parent, false);
-            Undo.RegisterCreatedObjectUndo(overlay, "Create Inventory Scroll Drag Overlay");
-        }
+            "InventoryDragGhost",
+            "InventoryScrollDragOverlay",
+            "ItemContextMenu",
+        };
 
-        overlayProperty.objectReferenceValue = overlay;
-        return overlay;
+        for (int n = 0; n < names.Length; n++)
+            DestroyNamedRecursive(canvasRoot, names[n]);
+    }
+
+    static void DestroyNamedRecursive(Transform root, string objectName)
+    {
+        // Collect first to avoid modifying hierarchy while iterating.
+        var matches = new System.Collections.Generic.List<GameObject>();
+        CollectNamed(root, objectName, matches);
+        for (int i = 0; i < matches.Count; i++)
+        {
+            Undo.DestroyObjectImmediate(matches[i]);
+            Debug.Log($"[InventoryUICanvasOverlaySetupMenu] Removed scene ephemeral UI '{objectName}'.", root);
+        }
+    }
+
+    static void CollectNamed(Transform root, string objectName, System.Collections.Generic.List<GameObject> results)
+    {
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform child = root.GetChild(i);
+            if (child.name == objectName)
+                results.Add(child.gameObject);
+            CollectNamed(child, objectName, results);
+        }
     }
 }
 #endif

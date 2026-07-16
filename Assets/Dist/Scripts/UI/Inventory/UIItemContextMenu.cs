@@ -80,6 +80,7 @@ public sealed class UIItemContextMenu : MonoBehaviour
             if (string.IsNullOrEmpty(recipe?.result)) continue;
 
             Button btn = Instantiate(_buttonPrefab, _buttonContainer);
+            btn.transform.localScale = Vector3.one;
             btn.gameObject.SetActive(true);
 
             TMP_Text label = btn.GetComponentInChildren<TMP_Text>();
@@ -97,6 +98,7 @@ public sealed class UIItemContextMenu : MonoBehaviour
 
         PositionAtScreenPoint(screenPosition);
         _panel.gameObject.SetActive(true);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_panel);
         _isOpen = true;
     }
 

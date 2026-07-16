@@ -12,6 +12,8 @@ public static class InventoryWindowLayout
     public const float MaxCanvasWidthRatio = 0.75f;
     public const float MaxCanvasHeightRatio = 0.78f;
 
+    public static readonly Vector2 DefaultPrimaryWindowSize = new(80f, 80f);
+
     public static Vector2 GetMaxSize(Canvas canvas)
     {
         if (canvas == null)

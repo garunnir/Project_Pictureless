@@ -53,6 +53,14 @@ public sealed class ContainerTileViewRegistry
         return _tileIdByContainerInstanceId.TryGetValue(containerInstanceId, out presentationTileId);
     }
 
+    public bool TryGetViewByContainerInstanceId(string containerInstanceId, out TileView view)
+    {
+        view = null;
+        return TryGetPresentationTileId(containerInstanceId, out Guid tileId) &&
+               TryGetView(tileId, out view) &&
+               view != null;
+    }
+
     public void CollectTileIds(List<Guid> into)
     {
         if (into == null)

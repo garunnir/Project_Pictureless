@@ -1,0 +1,31 @@
+---
+description: 매직 넘버·복붙 경로 금지 — named const/프리팹/SO가 SSOT
+alwaysApply: true
+---
+
+# No Hardcoding
+
+## When
+값·경로·임계가 동작/레이아웃/식별에 영향을 줄 때.
+
+## MUST
+1. 넣기 전 프리팹·기존 상수·설정에 **이미 있는지** 확인
+2. 없으면 **이름 있는 SSOT** 1곳 두고 참조 (본문 raw 반복 금지)
+3. 기존 하드코딩 발견 → `00-rules-index.mdc` 알림
+
+## MUST NOT
+- 본문에 의미 있는 매직 숫자/문자열을 여러 곳에 복붙
+- UI chrome을 런타임 숫자로 덮어쓰기 → `ui-prefab-layout.mdc`
+- “임시” 매직을 그대로 머지
+
+## OK
+| OK | Condition |
+|----|-----------|
+| `const` / `static readonly` / enum | 한곳 SSOT |
+| `[SerializeField]` / SO / 프리팹 | Inspector·에셋이 진실원 |
+| `0`/`1`/`-1`, 길이 0 검사 | 관용적 |
+| clamp·epsilon | **가드**만 (SSOT 대체 아님) |
+| 테스트 fixture | 테스트 한정 |
+
+## See also
+`ui-prefab-layout.mdc` · `ui-font.mdc`

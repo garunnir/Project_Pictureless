@@ -13,6 +13,9 @@ using UnityEngine.UI;
 public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayController, IInventoryScrollDragHost, IInventoryItemDragHost
 {
     [Required, SerializeField] UIInventoryListWindow _windowPrefab;
+    [SerializeField] UIInventoryDragGhost _dragGhostPrefab;
+    [SerializeField] GameObject _scrollDragOverlayPrefab;
+    [SerializeField] UIItemContextMenu _contextMenuPrefab;
     [SerializeField] UIInventoryListWindow _primaryWindow;
     [SerializeField] UIInventoryListWindow _lootWindow;
     [SerializeField] Canvas _uiCanvas;
@@ -21,7 +24,9 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
     [SerializeField] GameObject _scrollDragOverlay;
     [SerializeField] UIItemContextMenu _contextMenu;
     [SerializeField] Vector2 _primaryWindowInitialPosition = new(-220f, 0f);
-    [SerializeField] Vector2 _lootWindowInitialPosition = new(220f, 0f);
+    [SerializeField] Vector2 _lootWindowInitialPosition = new(200f, 0f);
+    [SerializeField] InventoryWindowLauncher _primaryLauncher;
+    [SerializeField] InventoryWindowLauncher _lootLauncher;
 
     PlayerInventoryRuntime _activeRuntime;
     int _itemDragDepth;
@@ -45,6 +50,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         EnsureWindows();
         EnsureScrollDragOverlay();
         EnsureDragGhost();
+        EnsureContextMenu();
         WireScrollDragHandler(_primaryWindow);
         WireScrollDragHandler(_lootWindow);
 
@@ -52,6 +58,8 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
             _primaryWindow.gameObject.SetActive(false);
         if (_lootWindow != null)
             _lootWindow.gameObject.SetActive(false);
+
+        SyncLauncherVisuals();
     }
 
     void OnEnable() => PlayerInventoryRuntime.ActiveChanged += OnActivePlayerChanged;
@@ -202,10 +210,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
     public void HideDragGhost()
     {
         if (!_dragGhost)
-        {
-            _dragGhost = null;
             return;
-        }
 
         _dragGhost.Hide();
     }
@@ -216,32 +221,25 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         if (_uiCanvas == null)
             return;
 
-        if (!_dragGhost)
-            _dragGhost = GetComponentInChildren<UIInventoryDragGhost>(true);
-
-        if (!_dragGhost && _layerHost != null)
+        if (_dragGhost)
         {
-            Transform topMost = _layerHost.GetLayerRoot(UICanvasLayer.TopMost);
-            if (topMost.Find("InventoryDragGhost") is Transform layerChild &&
-                layerChild.TryGetComponent(out UIInventoryDragGhost layerGhost))
-                _dragGhost = layerGhost;
+            _dragGhost.EnsureReady(_uiCanvas);
+            return;
         }
 
-        if (!_dragGhost && _uiCanvas.transform.Find("InventoryDragGhost") is Transform existing &&
-            existing.TryGetComponent(out UIInventoryDragGhost found))
-        {
-            _dragGhost = found;
-        }
-
-        if (!_dragGhost)
+        if (_dragGhostPrefab == null)
         {
             Debug.LogError(
-                "[UIInventoryController] UIInventoryDragGhost is not assigned. Run Dist/Inventory/Setup Canvas Overlays In Open Scene.",
+                "[UIInventoryController] Drag ghost prefab is not assigned. Run Dist/Inventory/Setup Canvas Overlays In Open Scene.",
                 this);
             return;
         }
 
+        Transform parent = ResolveLayerRoot(UICanvasLayer.TopMost);
+        _dragGhost = Instantiate(_dragGhostPrefab, parent);
+        _dragGhost.name = "InventoryDragGhost";
         _dragGhost.EnsureReady(_uiCanvas);
+        _dragGhost.Hide();
     }
 
     void ConfigureWindow(UIInventoryListWindow window)
@@ -316,27 +314,45 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         if (_scrollDragOverlay != null || _uiCanvas == null)
             return;
 
-        if (_layerHost != null)
-        {
-            Transform overlayRoot = _layerHost.GetLayerRoot(UICanvasLayer.Overlay);
-            Transform layerChild = overlayRoot.Find("InventoryScrollDragOverlay");
-            if (layerChild != null)
-                _scrollDragOverlay = layerChild.gameObject;
-        }
-
-        if (_scrollDragOverlay == null)
-        {
-            Transform existing = _uiCanvas.transform.Find("InventoryScrollDragOverlay");
-            if (existing != null)
-                _scrollDragOverlay = existing.gameObject;
-        }
-
-        if (_scrollDragOverlay == null)
+        if (_scrollDragOverlayPrefab == null)
         {
             Debug.LogError(
-                "[UIInventoryController] InventoryScrollDragOverlay is not assigned. Run Dist/Inventory/Setup Canvas Overlays In Open Scene.",
+                "[UIInventoryController] Scroll drag overlay prefab is not assigned. Run Dist/Inventory/Setup Canvas Overlays In Open Scene.",
                 this);
+            return;
         }
+
+        Transform parent = ResolveLayerRoot(UICanvasLayer.Overlay);
+        _scrollDragOverlay = Instantiate(_scrollDragOverlayPrefab, parent);
+        _scrollDragOverlay.name = "InventoryScrollDragOverlay";
+        _scrollDragOverlay.SetActive(false);
+    }
+
+    void EnsureContextMenu()
+    {
+        if (_contextMenu != null || _uiCanvas == null)
+            return;
+
+        if (_contextMenuPrefab == null)
+        {
+            Debug.LogError(
+                "[UIInventoryController] Context menu prefab is not assigned. Run Dist/Inventory/Setup Canvas Overlays In Open Scene.",
+                this);
+            return;
+        }
+
+        Transform parent = ResolveLayerRoot(UICanvasLayer.ContextMenu);
+        _contextMenu = Instantiate(_contextMenuPrefab, parent);
+        _contextMenu.name = "ItemContextMenu";
+        _contextMenu.Hide();
+    }
+
+    Transform ResolveLayerRoot(UICanvasLayer layer)
+    {
+        if (_layerHost != null)
+            return _layerHost.GetLayerRoot(layer);
+
+        return _uiCanvas != null ? _uiCanvas.transform : transform;
     }
 
     void WireScrollDragHandler(UIInventoryListWindow window)
@@ -391,6 +407,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         ConfigureWindow(_primaryWindow);
         _primaryWindow.RefreshListOnly();
         _isPrimaryOpen = true;
+        SyncLauncherVisuals();
 
         int stackCount = runtime.Host.Container.Stacks.Count;
         Debug.Log(
@@ -407,6 +424,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
         SetWindowActive(_primaryWindow, false);
         _isPrimaryOpen = false;
+        SyncLauncherVisuals();
         TryEndInventoryContext();
         CleanupIfNoWindowsOpen();
     }
@@ -419,6 +437,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         _activeRuntime?.LootProximity?.ClearActive();
         SetWindowActive(_lootWindow, false);
         _isLootOpen = false;
+        SyncLauncherVisuals();
         TryEndInventoryContext();
         CleanupIfNoWindowsOpen();
     }
@@ -432,11 +451,20 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         _activeRuntime?.LootProximity?.ClearActive();
         _isPrimaryOpen = false;
         _isLootOpen = false;
+        SyncLauncherVisuals();
 
         if (wasOpen)
             TryEndInventoryContext();
 
         CleanupIfNoWindowsOpen();
+    }
+
+    void SyncLauncherVisuals()
+    {
+        if (_primaryLauncher != null)
+            _primaryLauncher.SetOpen(_isPrimaryOpen);
+        if (_lootLauncher != null)
+            _lootLauncher.SetOpen(_isLootOpen);
     }
 
     void CleanupIfNoWindowsOpen()
@@ -454,7 +482,6 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
         InventoryDragState.End();
         HideDragGhost();
-        _dragGhost = null;
         ClearMouseActionSuppressions();
     }
 
@@ -547,6 +574,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         ConfigureWindow(_lootWindow);
         _lootWindow.RefreshListOnly();
         _isLootOpen = true;
+        SyncLauncherVisuals();
     }
 
     void OnActivePlayerChanged(PlayerInventoryRuntime runtime)
@@ -588,6 +616,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
             _activeRuntime.Session.SidebarChanged += OnSessionChanged;
             _activeRuntime.Session.StacksChanged += OnInventoryDataChanged;
 
+            EnsureContextMenu();
             if (_contextMenu != null)
                 _contextMenu.Initialize(_activeRuntime.Session, _uiCanvas);
         }

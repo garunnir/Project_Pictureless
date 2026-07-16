@@ -39,6 +39,7 @@ public sealed class GameDataEditorWindow : EditorWindow
     Tab _lastTab;
     Source _lastSource;
     bool _dirty;
+    ItemIconCatalog _iconCatalog;
 
     static readonly string[] _recipeCategories =
     {
@@ -73,6 +74,7 @@ public sealed class GameDataEditorWindow : EditorWindow
             Path.Combine(bnPath, "recipes.json"));
 
         LoadCustomData();
+        _iconCatalog = EnsureIconCatalog();
         InvalidateFilter();
     }
 
@@ -364,6 +366,8 @@ public sealed class GameDataEditorWindow : EditorWindow
         if (!string.IsNullOrEmpty(item.comestible_type))
             ReadField("Comestible", item.comestible_type);
 
+        DrawItemIconSection(item);
+
         if (item.qualities is { Count: > 0 })
         {
             EditorGUILayout.Space(4);
@@ -405,6 +409,109 @@ public sealed class GameDataEditorWindow : EditorWindow
             if (GUILayout.Button("Copy to Custom", GUILayout.Width(120)))
                 CopyItemToCustom(item);
         }
+    }
+
+    void DrawItemIconSection(ItemData item)
+    {
+        if (item == null || string.IsNullOrEmpty(item.id))
+            return;
+
+        EditorGUILayout.Space(8);
+        EditorGUILayout.LabelField("Icon (ItemIconCatalog)", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "아이콘은 JSON이 아니라 ItemIconCatalog SO에 저장됩니다. BN/Custom 공통으로 itemId 매핑합니다.",
+            MessageType.None);
+
+        ItemIconCatalog catalog = EnsureIconCatalog();
+        if (catalog == null)
+        {
+            EditorGUILayout.HelpBox($"카탈로그를 만들 수 없습니다: {ItemIconCatalog.AssetPath}", MessageType.Error);
+            return;
+        }
+
+        EditorGUI.BeginChangeCheck();
+        Sprite assigned = catalog.GetAssignedIcon(item.id);
+        Sprite next = (Sprite)EditorGUILayout.ObjectField("Sprite", assigned, typeof(Sprite), false);
+        if (EditorGUI.EndChangeCheck())
+        {
+            catalog.SetIcon(item.id, next);
+            EditorUtility.SetDirty(catalog);
+            AssetDatabase.SaveAssets();
+            ItemVisualPresenter.InvalidateCache();
+            ItemVisualPresenter.BindCatalog(catalog);
+        }
+
+        Sprite resolved = catalog.Resolve(item.id);
+        if (resolved != null)
+        {
+            Rect preview = GUILayoutUtility.GetRect(64f, 64f, GUILayout.Width(64f), GUILayout.Height(64f));
+            DrawSpritePreview(preview, resolved);
+        }
+        else
+        {
+            EditorGUILayout.LabelField("(no icon / fallback missing)", EditorStyles.miniLabel);
+        }
+
+        if (GUILayout.Button("Select Catalog Asset", GUILayout.Width(160)))
+            Selection.activeObject = catalog;
+    }
+
+    static void DrawSpritePreview(Rect rect, Sprite sprite)
+    {
+        if (sprite == null || sprite.texture == null)
+            return;
+
+        Rect texRect = sprite.textureRect;
+        var uv = new Rect(
+            texRect.x / sprite.texture.width,
+            texRect.y / sprite.texture.height,
+            texRect.width / sprite.texture.width,
+            texRect.height / sprite.texture.height);
+        GUI.DrawTextureWithTexCoords(rect, sprite.texture, uv);
+    }
+
+    ItemIconCatalog EnsureIconCatalog()
+    {
+        if (_iconCatalog != null)
+            return _iconCatalog;
+
+        _iconCatalog = AssetDatabase.LoadAssetAtPath<ItemIconCatalog>(ItemIconCatalog.AssetPath);
+        if (_iconCatalog != null)
+        {
+            ItemVisualPresenter.BindCatalog(_iconCatalog);
+            return _iconCatalog;
+        }
+
+        string resourcesFolder = "Assets/Dist/Resources";
+        if (!AssetDatabase.IsValidFolder(resourcesFolder))
+        {
+            if (!AssetDatabase.IsValidFolder("Assets/Dist"))
+                AssetDatabase.CreateFolder("Assets", "Dist");
+            AssetDatabase.CreateFolder("Assets/Dist", "Resources");
+        }
+
+        _iconCatalog = ScriptableObject.CreateInstance<ItemIconCatalog>();
+        Sprite fallback = LoadEmptyIconSprite();
+        if (fallback != null)
+            _iconCatalog.SetDefaultIcon(fallback);
+
+        AssetDatabase.CreateAsset(_iconCatalog, ItemIconCatalog.AssetPath);
+        AssetDatabase.SaveAssets();
+        ItemVisualPresenter.BindCatalog(_iconCatalog);
+        Debug.Log($"[GameDataEditor] Created {ItemIconCatalog.AssetPath}");
+        return _iconCatalog;
+    }
+
+    static Sprite LoadEmptyIconSprite()
+    {
+        UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath(ItemVisualPresenter.DefaultIconAssetPath);
+        for (int i = 0; i < assets.Length; i++)
+        {
+            if (assets[i] is Sprite sprite)
+                return sprite;
+        }
+
+        return null;
     }
 
     void DrawRecipeDetail()

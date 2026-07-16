@@ -1,0 +1,110 @@
+#if UNITY_EDITOR
+using UnityEngine;
+
+// Single inventory UI chrome SSOT for bake (Primary + Loot windows share this layout).
+readonly struct InventoryUIPrefabStyleSpec
+{
+    public readonly Vector2 WindowSize;
+    public readonly float HeaderHeight;
+    public readonly float HeaderFontSize;
+    public readonly float SidebarWidth;
+    public readonly float ChromeMargin;
+    public readonly float RowHeight;
+    public readonly float RowIconSize;
+    public readonly float RowCategoryWidth;
+    public readonly float RowDetailWidth;
+    public readonly float RowFontCategory;
+    public readonly float RowFontName;
+    public readonly float RowFontDetail;
+    public readonly int RowPaddingH;
+    public readonly int RowPaddingV;
+    public readonly float RowSpacing;
+    public readonly float SlotHeight;
+    public readonly float SlotFontSize;
+    public readonly int SlotLabelInset;
+    public readonly float ContentSpacing;
+    public readonly int ContentPadding;
+    public readonly float SidebarSlotSpacing;
+    public readonly int SidebarSlotPadding;
+    public readonly float EdgeThickness;
+    public readonly float CornerSize;
+
+    public InventoryUIPrefabStyleSpec(
+        Vector2 windowSize,
+        float headerHeight,
+        float headerFontSize,
+        float sidebarWidth,
+        float chromeMargin,
+        float rowHeight,
+        float rowIconSize,
+        float rowCategoryWidth,
+        float rowDetailWidth,
+        float rowFontCategory,
+        float rowFontName,
+        float rowFontDetail,
+        int rowPaddingH,
+        int rowPaddingV,
+        float rowSpacing,
+        float slotHeight,
+        float slotFontSize,
+        int slotLabelInset,
+        float contentSpacing,
+        int contentPadding,
+        float sidebarSlotSpacing,
+        int sidebarSlotPadding,
+        float edgeThickness,
+        float cornerSize)
+    {
+        WindowSize = windowSize;
+        HeaderHeight = headerHeight;
+        HeaderFontSize = headerFontSize;
+        SidebarWidth = sidebarWidth;
+        ChromeMargin = chromeMargin;
+        RowHeight = rowHeight;
+        RowIconSize = rowIconSize;
+        RowCategoryWidth = rowCategoryWidth;
+        RowDetailWidth = rowDetailWidth;
+        RowFontCategory = rowFontCategory;
+        RowFontName = rowFontName;
+        RowFontDetail = rowFontDetail;
+        RowPaddingH = rowPaddingH;
+        RowPaddingV = rowPaddingV;
+        RowSpacing = rowSpacing;
+        SlotHeight = slotHeight;
+        SlotFontSize = slotFontSize;
+        SlotLabelInset = slotLabelInset;
+        ContentSpacing = contentSpacing;
+        ContentPadding = contentPadding;
+        SidebarSlotSpacing = sidebarSlotSpacing;
+        SidebarSlotPadding = sidebarSlotPadding;
+        EdgeThickness = edgeThickness;
+        CornerSize = cornerSize;
+    }
+
+    public static readonly InventoryUIPrefabStyleSpec Default = new(
+        windowSize: InventoryWindowLayout.DefaultPrimaryWindowSize,
+        headerHeight: InventoryWindowLayout.HeaderHeight,
+        headerFontSize: 14f,
+        sidebarWidth: 120f,
+        chromeMargin: 10f,
+        rowHeight: 36f,
+        rowIconSize: 32f,
+        rowCategoryWidth: 64f,
+        rowDetailWidth: 88f,
+        rowFontCategory: 14f,
+        rowFontName: 16f,
+        rowFontDetail: 14f,
+        rowPaddingH: 8,
+        rowPaddingV: 4,
+        rowSpacing: 8f,
+        slotHeight: 48f,
+        slotFontSize: 14f,
+        slotLabelInset: 6,
+        contentSpacing: 4f,
+        contentPadding: 4,
+        sidebarSlotSpacing: 6f,
+        sidebarSlotPadding: 4,
+        edgeThickness: 6f,
+        cornerSize: 10f);
+}
+#endif

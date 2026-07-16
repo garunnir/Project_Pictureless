@@ -1,22 +1,14 @@
+---
+description: 문서 수렴·Pending Batch 노트 (비규범, 일상 코딩 MUST 아님)
+alwaysApply: false
+---
+
 # Collaboration Convergence Notes (Optional)
 
-This document is optional and separate from mandatory development rules.
-Use it only when running document-convergence rounds.
+## When
+document-convergence 라운드·배치 머지 작업만. 일상 구현에는 적용하지 않음.
 
-## Scope
-- Convergence and batch-merge operation notes
-- Pending batch handling guidance
-- Short Form synchronization workflow notes
-
-## Frozen Operation (Moved from collaboration-rules.mdc)
-This document context may be in a frozen operating state. Outside an approved release window, direct edits to the main rules body are prohibited.
-New change requests should be collected as `Pending` items and must not be merged into the main body until batch approval is completed in an approved release window.
-
-## Optional Guidance
-1. In frozen state, convergence outputs can be recorded as `Pending Batch` proposals.
-2. Higher-priority runtime instructions may still be translated into proposals without immediate body merge.
-3. During release-window updates, review and synchronize any derived summary sections with the main body.
-
-## Non-Normative
-This file does not override `collaboration-rules.mdc`.
-If any conflict exists, follow `collaboration-rules.mdc`.
+## Notes
+- Frozen이면 메인 룰 본문 직접 수정 금지 → `Pending`로 수집, 승인 창에서만 반영
+- 이 파일은 `collaboration-rules.mdc` / `00-rules-index.mdc`를 **오버라이드하지 않음**
+- 충돌 시 규범 룰을 따른다

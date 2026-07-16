@@ -3,14 +3,100 @@
 // ============================================================
 
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public static class ItemVisualPresenter
 {
-    // TODO: Addressables/Resources 기반 아이콘 로딩 전략 결정 후 구현
+    public const string DefaultIconAssetPath =
+        "Assets/Dist/Visual/Sprites/Textures/UI/Inventory/ui_icon_empty.png";
+
+    static ItemIconCatalog _catalog;
+    static Sprite _fallbackIcon;
+    static bool _fallbackLoadAttempted;
+
+    public static ItemIconCatalog Catalog
+    {
+        get
+        {
+            if (_catalog == null)
+                _catalog = LoadCatalog();
+            return _catalog;
+        }
+    }
+
+    /// <summary>아이템별 아이콘. 카탈로그 미등록 시 기본 폴백.</summary>
     public static Sprite GetDisplayIcon(string itemId)
     {
+        ItemIconCatalog catalog = Catalog;
+        if (catalog != null)
+            return catalog.Resolve(itemId);
+
+        return GetDefaultIcon();
+    }
+
+    public static Sprite GetDefaultIcon()
+    {
+        ItemIconCatalog catalog = Catalog;
+        if (catalog != null && catalog.DefaultIcon != null)
+            return catalog.DefaultIcon;
+
+        return LoadFallbackIcon();
+    }
+
+    public static void BindCatalog(ItemIconCatalog catalog)
+    {
+        _catalog = catalog;
+        catalog?.RebuildCache();
+    }
+
+    public static void InvalidateCache()
+    {
+        _catalog = null;
+        _fallbackIcon = null;
+        _fallbackLoadAttempted = false;
+    }
+
+    static ItemIconCatalog LoadCatalog()
+    {
+        ItemIconCatalog fromResources = Resources.Load<ItemIconCatalog>(ItemIconCatalog.ResourcesLoadName);
+        if (fromResources != null)
+            return fromResources;
+
+#if UNITY_EDITOR
+        return AssetDatabase.LoadAssetAtPath<ItemIconCatalog>(ItemIconCatalog.AssetPath);
+#else
+        return null;
+#endif
+    }
+
+    static Sprite LoadFallbackIcon()
+    {
+        if (_fallbackIcon != null)
+            return _fallbackIcon;
+
+        if (_fallbackLoadAttempted)
+            return null;
+
+        _fallbackLoadAttempted = true;
+
+#if UNITY_EDITOR
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(DefaultIconAssetPath);
+        for (int i = 0; i < assets.Length; i++)
+        {
+            if (assets[i] is Sprite sprite)
+            {
+                _fallbackIcon = sprite;
+                return _fallbackIcon;
+            }
+        }
+#endif
+        Debug.LogError(
+            $"[ItemVisualPresenter] Default icon missing. Assign ItemIconCatalog.DefaultIcon or '{DefaultIconAssetPath}'.");
         return null;
     }
 
-    public static Sprite GetDefaultIcon() => null;
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetStatics() => InvalidateCache();
 }

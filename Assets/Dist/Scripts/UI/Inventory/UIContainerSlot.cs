@@ -96,7 +96,13 @@ public sealed class UIContainerSlot : MonoBehaviour,
             _label.text = UITextPresenter.GetContainerName(def);
 
         if (_iconImage != null)
-            _iconImage.enabled = false;
+        {
+            Sprite icon = ContainerVisualPresenter.GetDisplayIcon(container, _session);
+            _iconImage.sprite = icon;
+            _iconImage.enabled = icon != null;
+            if (icon != null)
+                _iconImage.color = Color.white;
+        }
 
         if (_session != null &&
             _session.TryGetContainerItemStack(container, out InventoryContainer parent, out ItemStack stack))

@@ -49,6 +49,8 @@ public sealed class UIInventoryDragGhost : MonoBehaviour
             Sprite displayIcon = icon != null ? icon : ItemVisualPresenter.GetDefaultIcon();
             _iconImage.sprite = displayIcon;
             _iconImage.enabled = displayIcon != null;
+            if (displayIcon != null)
+                _iconImage.color = Color.white;
         }
 
         if (_countLabel != null)

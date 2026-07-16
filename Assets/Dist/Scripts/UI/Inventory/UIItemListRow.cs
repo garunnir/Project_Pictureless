@@ -80,8 +80,10 @@ public sealed class UIItemListRow : MonoBehaviour,
         if (_iconImage != null)
         {
             Sprite icon = ItemVisualPresenter.GetDisplayIcon(item.id);
-            _iconImage.enabled = icon != null;
             _iconImage.sprite = icon;
+            _iconImage.enabled = icon != null;
+            if (icon != null)
+                _iconImage.color = Color.white;
         }
 
         RefreshSelectionVisual();

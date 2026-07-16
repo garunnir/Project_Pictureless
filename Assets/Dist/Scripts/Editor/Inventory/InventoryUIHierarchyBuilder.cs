@@ -20,26 +20,27 @@ static class InventoryUIHierarchyBuilder
 
     public static UIItemListRow BuildRowPrefabRoot()
     {
+        InventoryUIPrefabStyleSpec spec = InventoryUIPrefabStyleSpec.Default;
         var row = CreateRect("Grp_ItemListRow", null, RowColor);
         var rowRect = row.GetComponent<RectTransform>();
         rowRect.anchorMin = new Vector2(0f, 0.5f);
         rowRect.anchorMax = new Vector2(1f, 0.5f);
         rowRect.pivot = new Vector2(0.5f, 0.5f);
-        rowRect.sizeDelta = new Vector2(0f, 36f);
+        rowRect.sizeDelta = new Vector2(0f, spec.RowHeight);
         var layout = row.AddComponent<HorizontalLayoutGroup>();
-        layout.padding = new RectOffset(8, 8, 4, 4);
-        layout.spacing = 8f;
+        layout.padding = new RectOffset(spec.RowPaddingH, spec.RowPaddingH, spec.RowPaddingV, spec.RowPaddingV);
+        layout.spacing = spec.RowSpacing;
         layout.childAlignment = TextAnchor.MiddleLeft;
         layout.childControlWidth = true;
         layout.childControlHeight = true;
         layout.childForceExpandWidth = false;
         layout.childForceExpandHeight = false;
-        row.AddComponent<LayoutElement>().preferredHeight = 36f;
+        row.AddComponent<LayoutElement>().preferredHeight = spec.RowHeight;
 
-        Image icon = CreateIcon("Icon", row.transform, 32f);
-        var category = CreateTmp("Category", row.transform, 64f, 14);
-        var name = CreateTmp("Name", row.transform, 0f, 16, flexibleWidth: true);
-        var detail = CreateTmp("Detail", row.transform, 88f, 14);
+        Image icon = CreateIcon("Icon", row.transform, spec.RowIconSize);
+        var category = CreateTmp("Category", row.transform, spec.RowCategoryWidth, spec.RowFontCategory);
+        var name = CreateTmp("Name", row.transform, 0f, spec.RowFontName, flexibleWidth: true);
+        var detail = CreateTmp("Detail", row.transform, spec.RowDetailWidth, spec.RowFontDetail);
 
         var rowView = row.AddComponent<UIItemListRow>();
         SetReference(rowView, "_backgroundImage", row.GetComponent<Image>());
@@ -52,25 +53,36 @@ static class InventoryUIHierarchyBuilder
 
     public static UIContainerSlot BuildSlotPrefabRoot()
     {
+        InventoryUIPrefabStyleSpec spec = InventoryUIPrefabStyleSpec.Default;
         var slot = CreateRect("Grp_ContainerSlot", null, SlotColor);
-        slot.AddComponent<LayoutElement>().preferredHeight = 48f;
+        slot.AddComponent<LayoutElement>().preferredHeight = spec.SlotHeight;
         var button = slot.AddComponent<Button>();
         var highlight = CreateRect("Highlight", slot.transform, HighlightColor);
         Stretch(highlight.GetComponent<RectTransform>(), 0f, 0f, 0f, 0f);
         highlight.SetActive(false);
-        var label = CreateTmp("Label", slot.transform, 0f, 14);
-        Stretch(label.rectTransform, 6f, 6f, 6f, 6f);
+        float inset = spec.SlotLabelInset;
+        // Icon fills the slot (no layout group on slot) — sprite bound at runtime by UIContainerSlot.
+        var iconGo = CreateRect("Icon", slot.transform, Color.white);
+        Stretch(iconGo.GetComponent<RectTransform>(), inset, inset, inset, inset);
+        var icon = iconGo.GetComponent<Image>();
+        icon.raycastTarget = false;
+        icon.preserveAspect = true;
+        icon.enabled = false;
+        var label = CreateTmp("Label", slot.transform, 0f, spec.SlotFontSize);
+        Stretch(label.rectTransform, inset, inset, inset, inset);
 
         var slotView = slot.AddComponent<UIContainerSlot>();
         SetReference(slotView, "_button", button);
         SetReference(slotView, "_label", label);
+        SetReference(slotView, "_iconImage", icon);
         SetReference(slotView, "_highlight", highlight.GetComponent<Image>());
         return slotView;
     }
 
     public static UIInventoryDragGhost BuildDragGhostRoot(Canvas rootCanvas)
     {
-        var go = CreateRect("InventoryDragGhost", null, new Color(1f, 1f, 1f, 0f));
+        // Icon Image must be opaque white — transparent CreateRect color hides sprites.
+        var go = CreateRect("InventoryDragGhost", null, Color.white);
         var rect = go.GetComponent<RectTransform>();
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -80,6 +92,8 @@ static class InventoryUIHierarchyBuilder
         Image icon = go.GetComponent<Image>();
         icon.preserveAspect = true;
         icon.raycastTarget = false;
+        icon.sprite = ItemVisualPresenter.GetDefaultIcon();
+        icon.enabled = icon.sprite != null;
 
         var labelGo = new GameObject("Count", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
         labelGo.transform.SetParent(go.transform, false);
@@ -114,16 +128,69 @@ static class InventoryUIHierarchyBuilder
         return overlay;
     }
 
+    public static UIItemContextMenu BuildContextMenuRoot(Button buttonPrefab)
+    {
+        var root = CreateRect("ItemContextMenu", null, Color.clear);
+        var rootRect = root.GetComponent<RectTransform>();
+        Stretch(rootRect, 0f, 0f, 0f, 0f);
+        root.GetComponent<Image>().raycastTarget = false;
+
+        var panel = CreateRect("Panel", root.transform, new Color(0.12f, 0.12f, 0.12f, 0.95f));
+        var panelRect = panel.GetComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRect.pivot = new Vector2(0f, 1f);
+        panelRect.sizeDelta = new Vector2(180f, 40f);
+
+        var layout = panel.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(4, 4, 4, 4);
+        layout.spacing = 2f;
+        layout.childControlHeight = true;
+        layout.childControlWidth = true;
+        layout.childForceExpandHeight = false;
+        layout.childForceExpandWidth = true;
+        panel.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        var buttonContainer = panel.transform;
+        Button template = buttonPrefab;
+        if (template == null)
+        {
+            var btnGo = CreateRect("ButtonTemplate", buttonContainer, new Color(0.22f, 0.22f, 0.22f, 1f));
+            var layoutElement = btnGo.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 28f;
+            layoutElement.flexibleWidth = 1f;
+            template = btnGo.AddComponent<Button>();
+            template.targetGraphic = btnGo.GetComponent<Image>();
+            var label = CreateTmp("Label", btnGo.transform, 0f, 14, flexibleWidth: true);
+            Stretch(label.rectTransform, 6f, 6f, 2f, 2f);
+            btnGo.SetActive(false);
+        }
+        else if (template.GetComponent<LayoutElement>() == null)
+        {
+            var layoutElement = template.gameObject.AddComponent<LayoutElement>();
+            layoutElement.preferredHeight = 28f;
+            layoutElement.flexibleWidth = 1f;
+        }
+
+        var menu = root.AddComponent<UIItemContextMenu>();
+        SetReference(menu, "_panel", panelRect);
+        SetReference(menu, "_buttonContainer", buttonContainer);
+        SetReference(menu, "_buttonPrefab", template);
+        panel.SetActive(false);
+        return menu;
+    }
+
     public static UIInventoryListWindow BuildWindowRoot(
         UIItemListRow rowPrefab,
         UIContainerSlot slotPrefab)
     {
+        InventoryUIPrefabStyleSpec spec = InventoryUIPrefabStyleSpec.Default;
         var root = CreateRect("Grp_InventoryListWindow", null, PanelColor);
         var rootRect = root.GetComponent<RectTransform>();
         rootRect.anchorMin = new Vector2(0.5f, 0.5f);
         rootRect.anchorMax = new Vector2(0.5f, 0.5f);
         rootRect.pivot = new Vector2(0.5f, 0.5f);
-        rootRect.sizeDelta = new Vector2(480f, 360f);
+        rootRect.sizeDelta = spec.WindowSize;
         rootRect.anchoredPosition = Vector2.zero;
 
         var headerArea = CreateRect("Area_Header", root.transform, new Color(0.16f, 0.16f, 0.16f, 1f));
@@ -132,55 +199,56 @@ static class InventoryUIHierarchyBuilder
         headerRect.anchorMax = new Vector2(1f, 1f);
         headerRect.pivot = new Vector2(0.5f, 1f);
         headerRect.anchoredPosition = Vector2.zero;
-        headerRect.sizeDelta = new Vector2(0f, InventoryWindowLayout.HeaderHeight);
+        headerRect.sizeDelta = new Vector2(0f, spec.HeaderHeight);
         headerArea.AddComponent<InventoryWindowDragHandler>();
 
-        var headerTitle = CreateTmp("Txt_Title", headerArea.transform, 0f, 14);
+        var headerTitle = CreateTmp("Txt_Title", headerArea.transform, 0f, spec.HeaderFontSize);
         headerTitle.text = "Inventory";
         headerTitle.alignment = TextAlignmentOptions.MidlineLeft;
         headerTitle.raycastTarget = false;
-        Stretch(headerTitle.rectTransform, 10f, 10f, 0f, 0f);
+        Stretch(headerTitle.rectTransform, spec.ChromeMargin, spec.ChromeMargin, 0f, 0f);
 
+        float listTop = spec.HeaderHeight + spec.ChromeMargin;
+        // List right inset + sidebar Image raycast are owned by shared UIInventoryListWindow
+        // (ApplyModeLayout / EnsureSidebarRaycastTarget) for Primary and Loot windows alike.
         var listArea = CreateRect("Area_List", root.transform, new Color(0.1f, 0.1f, 0.1f, 1f));
         var listRect = listArea.GetComponent<RectTransform>();
-        Stretch(listRect, 10f, 10f, InventoryWindowLayout.HeaderHeight + 10f, 10f);
+        Stretch(listRect, spec.ChromeMargin, spec.ChromeMargin, listTop, spec.ChromeMargin);
 
         var sidebarArea = CreateRect("Area_Sidebar", root.transform, new Color(0.08f, 0.08f, 0.08f, 1f));
         var sidebarRect = sidebarArea.GetComponent<RectTransform>();
         sidebarRect.anchorMin = new Vector2(1f, 0f);
         sidebarRect.anchorMax = new Vector2(1f, 1f);
         sidebarRect.pivot = new Vector2(1f, 0.5f);
-        sidebarRect.offsetMin = new Vector2(-120f, 10f);
-        sidebarRect.offsetMax = new Vector2(-10f, -(InventoryWindowLayout.HeaderHeight + 10f));
+        sidebarRect.offsetMin = new Vector2(-spec.SidebarWidth, spec.ChromeMargin);
+        sidebarRect.offsetMax = new Vector2(-spec.ChromeMargin, -listTop);
 
-        const float edgeThickness = 6f;
-        const float cornerSize = 10f;
         var handleColor = new Color(1f, 1f, 1f, 0.02f);
 
         CreateResizeHandle(root.transform, "Area_ResizeHandle_Left", handleColor, WindowResizeEdge.Left,
             new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), Vector2.zero,
-            new Vector2(edgeThickness, 0f));
+            new Vector2(spec.EdgeThickness, 0f));
         CreateResizeHandle(root.transform, "Area_ResizeHandle_Right", handleColor, WindowResizeEdge.Right,
             new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f), Vector2.zero,
-            new Vector2(edgeThickness, 0f));
+            new Vector2(spec.EdgeThickness, 0f));
         CreateResizeHandle(root.transform, "Area_ResizeHandle_Top", handleColor, WindowResizeEdge.Top,
             new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), Vector2.zero,
-            new Vector2(0f, edgeThickness));
+            new Vector2(0f, spec.EdgeThickness));
         CreateResizeHandle(root.transform, "Area_ResizeHandle_Bottom", handleColor, WindowResizeEdge.Bottom,
             new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), Vector2.zero,
-            new Vector2(0f, edgeThickness));
+            new Vector2(0f, spec.EdgeThickness));
         CreateResizeHandle(root.transform, "Area_ResizeHandle_TopLeft", handleColor, WindowResizeEdge.TopLeft,
             new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), Vector2.zero,
-            new Vector2(cornerSize, cornerSize));
+            new Vector2(spec.CornerSize, spec.CornerSize));
         CreateResizeHandle(root.transform, "Area_ResizeHandle_TopRight", handleColor, WindowResizeEdge.TopRight,
             new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f), Vector2.zero,
-            new Vector2(cornerSize, cornerSize));
+            new Vector2(spec.CornerSize, spec.CornerSize));
         CreateResizeHandle(root.transform, "Area_ResizeHandle_BottomLeft", handleColor, WindowResizeEdge.BottomLeft,
             new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f), Vector2.zero,
-            new Vector2(cornerSize, cornerSize));
+            new Vector2(spec.CornerSize, spec.CornerSize));
         CreateResizeHandle(root.transform, "Area_ResizeHandle_BottomRight", handleColor, WindowResizeEdge.BottomRight,
             new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), Vector2.zero,
-            new Vector2(cornerSize, cornerSize));
+            new Vector2(spec.CornerSize, spec.CornerSize));
 
         UIItemListView listView = listArea.AddComponent<UIItemListView>();
         ScrollRect scroll = listArea.AddComponent<ScrollRect>();
@@ -201,8 +269,9 @@ static class InventoryUIHierarchyBuilder
         contentLayout.childControlWidth = true;
         contentLayout.childForceExpandWidth = true;
         contentLayout.childForceExpandHeight = false;
-        contentLayout.spacing = 4f;
-        contentLayout.padding = new RectOffset(4, 4, 4, 4);
+        contentLayout.spacing = spec.ContentSpacing;
+        int pad = spec.ContentPadding;
+        contentLayout.padding = new RectOffset(pad, pad, pad, pad);
         content.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         UIInventoryListDropZone dropZone = viewport.AddComponent<UIInventoryListDropZone>();
         InventoryListMarqueeSelector marquee = viewport.AddComponent<InventoryListMarqueeSelector>();
@@ -221,8 +290,9 @@ static class InventoryUIHierarchyBuilder
         var slotRoot = CreateRect("SlotRoot", sidebarArea.transform, Color.clear);
         Stretch(slotRoot.GetComponent<RectTransform>(), 0f, 0f, 0f, 0f);
         var slotLayout = slotRoot.AddComponent<VerticalLayoutGroup>();
-        slotLayout.spacing = 6f;
-        slotLayout.padding = new RectOffset(4, 4, 4, 4);
+        slotLayout.spacing = spec.SidebarSlotSpacing;
+        int slotPad = spec.SidebarSlotPadding;
+        slotLayout.padding = new RectOffset(slotPad, slotPad, slotPad, slotPad);
         slotLayout.childControlHeight = true;
         slotLayout.childForceExpandHeight = false;
         SetReference(sidebar, "_slotRoot", slotRoot.GetComponent<RectTransform>());

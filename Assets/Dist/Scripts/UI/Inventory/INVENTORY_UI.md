@@ -66,7 +66,8 @@
 
 - 프리팹 컴포넌트 배선은 프로젝트 공통 규칙(`.cursor/rules/collaboration-unity.mdc` §Prefab Component Wiring)을 따른다. 인벤 UI·월드 컨테이너 프리팹 모두 런타임 `AddComponent` 금지.
 
-- 두 창은 **독립 open/close** (`TogglePrimaryWindow`, `ToggleLootWindow`).
+- 두 창은 **독립 open/close** (`TogglePrimaryWindow`, `ToggleLootWindow`). 레이아웃 프리팹은 **하나** (`Grp_InventoryListWindow`) — Primary/Loot는 인스턴스·모드·제목만 다름.
+- `Area_InvInfo` (`Txt_Weight` / `Txt_Liter`): 선택 컨테이너 used/max 무게(kg)·부피(L).
 - 창 위치는 **상단 헤더 드래그**로 자유 이동, **8방향 리사이즈 핸들**(상·하·좌·우 + 4모서리)로 크기 조절 (`WindowResizeEdge`, `InventoryWindowResizeHandler`).
 - 크기 제한: 최소 320×240, 최대 Canvas의 75%×78% (`InventoryWindowLayout`).
 
@@ -96,7 +97,7 @@
 
 | `Grp_ItemListRow` | 아이템 행 (LeanPool) |
 
-| `Grp_ContainerSlot` | 사이드바 컨테이너 슬롯 |
+| `Grp_ContainerSlot` | 사이드바 컨테이너 슬롯 — 아이콘 SSOT는 `ContainerVisualPresenter` (월드 타일 thumbnail → provider SpriteRenderer → 중첩 가방은 item icon, `floor-loot`는 숨김) |
 
 | `Grp_InventoryDragGhost` | 드래그 고스트 (`UICanvas` 하위, bake 또는 `Setup Canvas Overlays In Open Scene`) |
 
@@ -106,7 +107,7 @@
 
 폰트: 텍스트가 있는 행/슬롯 프리팹 TMP는 `Katuri SDF` 사용.
 
-빈 아이콘 폴백: `UIItemListRow._emptyIconSprite` (`ui_icon_empty.png`).
+빈 아이콘 폴백: `ItemIconCatalog` (`Assets/Dist/Resources/ItemIconCatalog.asset`) → `ItemVisualPresenter`. 편집은 **Tools/Game Data Browser** 아이템 상세의 Icon 필드.
 
 프리팹 갱신: `Dist/Inventory/Bake UI Prefabs` (bake 시점 `AddComponent`는 허용 — 런타임 폴백 아님).
 
@@ -195,7 +196,7 @@
 
 
 
-- `InventoryWindowLauncher`를 `UICanvas` 하위 버튼에 부착한다.
+- `InventoryWindowLauncher`를 `UICanvas` 하위 버튼에 부착한다. 컨트롤러가 open 상태를 `SetOpen`으로 push → 아이콘 색(활성/비활성).
 
 - `LauncherTarget.Primary` → 플레이어창 토글
 

@@ -1,5 +1,5 @@
 // ============================================================
-// InventoryWindowLauncher — 인벤/루팅 창 아이콘 토글 버튼
+// InventoryWindowLauncher — 인벤/루팅 창 아이콘 토글 + open 시각
 // ============================================================
 
 using Sirenix.OdinInspector;
@@ -17,14 +17,24 @@ public sealed class InventoryWindowLauncher : MonoBehaviour
     [SerializeField] LauncherTarget _target = LauncherTarget.Primary;
     [Required, SerializeField] UIInventoryController _controller;
     [SerializeField] Button _button;
+    [SerializeField] Image _iconImage;
+    [SerializeField] Color _closedColor = new(1f, 1f, 1f, 0.55f);
+    [SerializeField] Color _openColor = new(1f, 1f, 1f, 1f);
+
+    bool _isOpen;
 
     void Awake()
     {
         if (_button == null)
             _button = GetComponent<Button>();
 
+        if (_iconImage == null && _button != null)
+            _iconImage = _button.targetGraphic as Image;
+
         if (_button != null)
             _button.onClick.AddListener(OnClicked);
+
+        SetOpen(false);
     }
 
     void OnDestroy()
@@ -37,9 +47,21 @@ public sealed class InventoryWindowLauncher : MonoBehaviour
     {
         if (_button == null)
             _button = GetComponent<Button>();
+
+        if (_iconImage == null && _button != null)
+            _iconImage = _button.targetGraphic as Image;
     }
 
     public void Bind(UIInventoryController controller) => _controller = controller;
+
+    public void SetOpen(bool open)
+    {
+        _isOpen = open;
+        if (_iconImage != null)
+            _iconImage.color = open ? _openColor : _closedColor;
+    }
+
+    public bool IsOpen => _isOpen;
 
     void OnClicked()
     {

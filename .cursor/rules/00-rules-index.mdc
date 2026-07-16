@@ -1,0 +1,48 @@
+---
+description: 룰 인덱스·우선순위·위반 시 알림 프로토콜 (최상위, 항상 적용)
+alwaysApply: true
+---
+
+# Rules Index (최상위)
+
+## Priority
+1. 이번 턴 사용자 지시(범위·완료조건·하지 말 것)
+2. 이 파일의 **위반 알림** 의무
+3. 아래 Always / Glob 룰
+4. `CLAUDE.md` · 활성 skill
+
+## Always apply
+| File | Concern |
+|------|---------|
+| `agent-scope.mdc` | 프로젝트 경로·규모·완료 검증 |
+| `collaboration-rules.mdc` | 모드 게이트·승인·Rule 1/3/4/5 |
+| `epistemic-labels.mdc` | 진단·원인 보고 라벨 |
+| `no-hardcoding.mdc` | 매직 넘버/복붙 SSOT |
+
+## Glob (해당 경로 작업 시)
+| File | Globs |
+|------|-------|
+| `collaboration-unity.mdc` | `Assets/**` |
+| `unity-stack.mdc` | `Assets/**` |
+| `urp-rendering.mdc` | `Assets/**` |
+| `ui-prefab-layout.mdc` | Dist UI 스크립트·UI 프리팹 |
+| `ui-font.mdc` | Dist UI 스크립트·UI 프리팹 |
+| `tile-chunk-streaming.mdc` | `Assets/Dist/Scripts/Map/**` |
+
+## Non-normative
+| File | Note |
+|------|------|
+| `collaboration-convergence-notes.mdc` | 문서 수렴 라운드 전용 — 일상 코딩 MUST 아님 |
+
+## Violation notify (MUST)
+어느 룰·`CLAUDE.md`·skill 위반을 발견하면(본인·기존·사용자 초안 포함) **즉시** 알린다.
+
+알림 형식:
+1. **룰** — 파일명/섹션
+2. **위치** — 경로·심볼
+3. **이유** — 한 문장
+4. **조치** — 수정 / 예외 승인 요청
+
+- 넣으려던 코드가 위반이면 **적용 전** 알림. 승인 없이 넣지 않는다.
+- 범위 밖 기존 위반은 알림(+제안)만; 임의 대규모 리팩터 금지.
+- 침묵·“나중에”·룰 이름 없는 모호한 지적 = 금지.

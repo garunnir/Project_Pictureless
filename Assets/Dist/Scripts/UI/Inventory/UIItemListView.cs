@@ -245,17 +245,39 @@ public sealed class UIItemListView : MonoBehaviour
 
 
 
-        rowRect.anchorMin = new Vector2(0f, 1f);
-
-        rowRect.anchorMax = new Vector2(1f, 1f);
-
-        rowRect.pivot = new Vector2(0.5f, 1f);
-
-        float height = rowRect.sizeDelta.y > 1f ? rowRect.sizeDelta.y : 36f;
-
-        rowRect.sizeDelta = new Vector2(0f, height);
-
         rowRect.localScale = Vector3.one;
+
+
+
+        float height = 0f;
+
+        if (rowRect.TryGetComponent(out LayoutElement layoutElement) && layoutElement.preferredHeight > 0f)
+
+            height = layoutElement.preferredHeight;
+
+        else if (rowRect.sizeDelta.y > 1f)
+
+            height = rowRect.sizeDelta.y;
+
+
+
+        if (height <= 1f)
+
+        {
+
+            Debug.LogWarning("[UIItemListView] Row prefab missing LayoutElement.preferredHeight / sizeDelta; layout may be wrong.", rowRect);
+
+            return;
+
+        }
+
+
+
+        Vector2 size = rowRect.sizeDelta;
+
+        size.y = height;
+
+        rowRect.sizeDelta = size;
 
     }
 

@@ -3,23 +3,29 @@
 // ============================================================
 
 using System;
+using System.Collections.Generic;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 [RequireComponent(typeof(Canvas))]
 public sealed class UICanvasLayerHost : MonoBehaviour
 {
     static readonly UICanvasLayer[] _allLayers = (UICanvasLayer[])Enum.GetValues(typeof(UICanvasLayer));
+
+    // Scene-resident groups only. Ephemeral UI (ghost/overlay/context) is prefab-spawned at runtime.
     static readonly (string name, UICanvasLayer layer)[] _migrationMap =
     {
-        ("Grp_StaticPopUp",              UICanvasLayer.Popup),
-        ("Grp_InstancePopup",            UICanvasLayer.Popup),
-        ("Grp_InventoryLaunchers",       UICanvasLayer.HUD),
-        ("ItemContextMenu",              UICanvasLayer.ContextMenu),
-        ("InventoryScrollDragOverlay",   UICanvasLayer.Overlay),
-        ("InventoryDragGhost",           UICanvasLayer.TopMost),
+        ("Grp_StaticPopUp",        UICanvasLayer.Popup),
+        ("Grp_InstancePopup",      UICanvasLayer.Popup),
+        ("Grp_InventoryLaunchers", UICanvasLayer.HUD),
     };
 
     readonly RectTransform[] _roots = new RectTransform[_allLayers.Length];
+
+    [ShowInInspector, ReadOnly, PropertyOrder(-10)]
+    [ListDrawerSettings(IsReadOnly = true, ShowFoldout = false, DraggableItems = false)]
+    [LabelText("Render Order (bottom → top)")]
+    List<string> LayerOrderPreview => BuildPreview();
 
     void Awake()
     {
@@ -112,7 +118,25 @@ public sealed class UICanvasLayerHost : MonoBehaviour
         rt.localScale = Vector3.one;
     }
 
+    List<string> BuildPreview()
+    {
+        var lines = new List<string>(_allLayers.Length);
+        for (int i = 0; i < _allLayers.Length; i++)
+        {
+            UICanvasLayer layer = _allLayers[i];
+            string rootName = $"Layer_{layer}";
+            RectTransform root = FindChildByName(rootName);
+            if (root != null)
+                lines.Add($"{(int)layer}  {layer,-12} {rootName} ✓ ({root.childCount} children)");
+            else
+                lines.Add($"{(int)layer}  {layer,-12} {rootName} ✗ (missing)");
+        }
+
+        return lines;
+    }
+
 #if UNITY_EDITOR
+    [Button("Setup Layer Hierarchy"), PropertyOrder(-5)]
     [ContextMenu("Setup Layer Hierarchy")]
     public void EditorSetupLayerHierarchy()
     {

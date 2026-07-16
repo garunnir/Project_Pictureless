@@ -1,0 +1,26 @@
+---
+description: Dist UI TMP는 Katuri SDF만 — Liberation Sans/미지정 금지
+globs: Assets/Dist/Scripts/UI/**/*,Assets/Dist/Visual/Prefabs/UIComponents/**/*,Assets/Dist/Scripts/Editor/Inventory/**/*
+alwaysApply: false
+---
+
+# UI Font SSOT
+
+## When
+Dist UI TMP·UI 프리팹·인벤 bake.
+
+## SSOT
+| What | Where |
+|------|--------|
+| Font asset | `Assets/Dist/Scripts/UI/Font/Katuri SDF.asset` |
+| Bake const | `InventoryUIHierarchyBuilder.DefaultUIFontPath` |
+
+Docs: `Assets/Dist/Scripts/UI/UI_Scripts.md` §Font
+
+## MUST
+- 신규/수정 프리팹·Instantiate 라벨·Editor 빌더 TMP `font` = **Katuri SDF**
+- 한글 깨짐 → Liberation Sans / font null 여부 먼저 확인
+
+## MUST NOT
+- Liberation Sans 또는 font 미지정
+- UI마다 임의 SDF 혼용 (localization 전용 교체 경로만 예외)

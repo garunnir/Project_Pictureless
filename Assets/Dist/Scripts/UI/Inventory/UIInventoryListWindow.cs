@@ -22,6 +22,8 @@ public sealed class UIInventoryListWindow : MonoBehaviour
     [SerializeField] RectTransform _sidebarArea;
     [SerializeField] InventoryWindowDragHandler _windowDragHandler;
     [SerializeField] TMP_Text _headerTitle;
+    [SerializeField] TMP_Text _weightText;
+    [SerializeField] TMP_Text _volumeText;
 
     InventorySession _session;
     InventoryContainer _selectedContainer;
@@ -212,6 +214,8 @@ public sealed class UIInventoryListWindow : MonoBehaviour
 
         if (_selectedContainer != null)
             SetActiveContainer(_selectedContainer);
+        else
+            RefreshCapacityInfo();
     }
 
     public void OnSessionChanged()
@@ -293,11 +297,34 @@ public sealed class UIInventoryListWindow : MonoBehaviour
     {
         _selectedContainer = container;
         ApplySidebarSelectionHighlight();
+        RefreshCapacityInfo();
 
         if (!refreshList || InventoryDragState.IsDragging)
             return;
 
         _listView?.Bind(container);
+    }
+
+    void RefreshCapacityInfo()
+    {
+        if (_selectedContainer == null)
+        {
+            if (_weightText != null)
+                _weightText.text = "— kg";
+            if (_volumeText != null)
+                _volumeText.text = "— L";
+            return;
+        }
+
+        float usedWeight = _selectedContainer.GetTotalWeight();
+        float usedVolume = _selectedContainer.GetTotalVolume();
+        float maxWeight = _selectedContainer.CapacityPolicy.GetMaxWeight(_selectedContainer);
+        float maxVolume = _selectedContainer.CapacityPolicy.GetMaxVolume(_selectedContainer);
+
+        if (_weightText != null)
+            _weightText.text = $"{usedWeight:0.##}/{maxWeight:0.##} kg";
+        if (_volumeText != null)
+            _volumeText.text = $"{usedVolume:0.##}/{maxVolume:0.##} L";
     }
 
     public void RefreshSidebarAndSelection()
@@ -390,9 +417,26 @@ public sealed class UIInventoryListWindow : MonoBehaviour
 
         if (_listArea != null)
         {
-            _listArea.offsetMax = new Vector2(showSidebar ? -120f : -10f, -(InventoryWindowLayout.HeaderHeight + 10f));
+            // Prefer prefab sidebar geometry over hardcoded 120 — loot chrome is narrower.
+            Vector2 offsetMax = _listArea.offsetMax;
+            offsetMax.x = -ResolveListRightInset(showSidebar);
+            _listArea.offsetMax = offsetMax;
             LayoutRebuilder.ForceRebuildLayoutImmediate(_listArea);
         }
+    }
+
+    float ResolveListRightInset(bool showSidebar)
+    {
+        if (_sidebarArea == null)
+        {
+            Debug.LogError("[UIInventoryListWindow] Sidebar area missing; cannot resolve list inset from prefab.", this);
+            return 0f;
+        }
+
+        // Right-anchored sidebar: offsetMin.x = -width, offsetMax.x = -chromeMargin.
+        return showSidebar
+            ? -_sidebarArea.offsetMin.x
+            : -_sidebarArea.offsetMax.x;
     }
 
     bool ShouldShowSidebar() =>

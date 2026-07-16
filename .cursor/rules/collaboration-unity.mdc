@@ -1,36 +1,30 @@
 ---
-description: Unity implementation rules for Assets scripts
+description: Assets 작업 시 Rule 2/6·프리팹 AddComponent 금지
 globs: Assets/**
 alwaysApply: false
 ---
 
-# Collaboration Rules — Unity (Assets)
+# Collaboration — Unity (Assets)
 
-Canonical stack: `docs/tech-stack.md` · auto-loaded via `unity-stack.mdc`.
+스택: `unity-stack.mdc` · `docs/tech-stack.md`. Rule 1/3/4/5: `collaboration-rules.mdc`.
 
-## Rule 2 — Mermaid
-Required when **any** applies: cross-class event/callback flow · UniTask **3+** async stages · new Manager/Service/system class.  
-Clarification-only turn (Rule 3): exempt; 1–2 sentence text flow is enough. If Mermaid cannot render, use text flow.
+## Rule 2 — Mermaid (MUST when)
+교차 클래스 이벤트/콜백 · UniTask 단계 ≥3 · 새 Manager/Service/시스템 클래스.  
+Rule 3 명확화 턴: 면제(1–2문장). Mermaid 불가 시 텍스트 흐름.
 
-## Rule 6 — Hot Path
-In `Update`/`FixedUpdate`/`LateUpdate`, physics callbacks, Jobs, or `ScriptableRenderPass.Execute` and URP render pipeline event callbacks: state **heap allocation** (closure·boxing·LINQ·string 포함) and CPU cost; for UniTask note allocation and `PlayerLoopTiming`.  
-Jobs (Burst): managed allocation prohibited — zero-alloc mandatory; verify unmanaged types.  
-If unverified: include `Unverified`, assumptions, expected risk, and how to verify.
+## Rule 6 — Hot path (MUST)
+`Update`/`FixedUpdate`/`LateUpdate` · physics · Jobs · `ScriptableRenderPass.Execute` / URP 콜백:  
+**힙 할당**(클로저·박싱·LINQ·string)과 CPU 비용을 명시. UniTask는 alloc + `PlayerLoopTiming`.  
+Burst Jobs: managed alloc 금지. 미검증 시 `Unverified` + 가정 + 검증법.
 
-## Prefab Component Wiring
+## Prefab AddComponent (MUST NOT)
+프리팹 인스턴스에 런타임 `AddComponent` 금지. 컴포넌트는 프리팹에 미리.  
+허용: Editor bake(`InventoryUIHierarchyBuilder` 등) · `new GameObject` 팩토리/풀 · `#if UNITY_EDITOR` 진단.  
+`TryGetComponent` 후 없으면 `AddComponent` 폴백 금지.  
+위반 발견 → `00-rules-index.mdc` 알림.
 
-**모든 프리팹**(월드·UI·캐릭터·가구 등 `Assets/**` 내 `.prefab`)에는 런타임 `AddComponent`로 MonoBehaviour를 붙이지 않는다.
+## Prefab layout / font
+UI chrome·TMP: `ui-prefab-layout.mdc`, `ui-font.mdc` (해당 glob).
 
-- 필요한 컴포넌트는 **프리팹 에셋에 미리 배치**한다.
-- 런타임 스크립트는 `[RequireComponent]` / `[SerializeField]` 참조 + Awake·OnEnable에서 `GetComponent` 캐시만 허용한다.
-- `TryGetComponent` 후 없으면 `AddComponent` 하는 **폴백 패턴 금지** (프리팹 미배치를 런타임에 메우지 않는다).
-- **예외** (프리팹 인스턴스가 아닌 경우만):
-  - Editor bake·프리팹 생성 스크립트 (`InventoryUIHierarchyBuilder` 등) — bake 시점 `AddComponent`는 허용
-  - 런타임 팩토리·풀·`new GameObject`로 **처음부터 동적 생성**하는 오브젝트
-  - `#if UNITY_EDITOR` / 디버그 전용 진단 스크립트
-- **에이전트 의무**: 코드 리뷰·구현·사용자 변경 검토 시, 프리팹 인스턴스 경로에서 `AddComponent`가 보이면 **반드시 위반으로 지적**한다. 사용자가 직접 작성한 코드도 예외 없음.
-
-## Pre-implementation Checklist (Agent only)
-
-Cover Rule 1 → Rule 5; add Rule 2 / Rule 6 when applicable.  
-Single-file changes with **no external references and no Inspector fields** may use concise prose instead of the full checklist.
+## Pre-impl checklist
+Rule 1→5 (+2/6 if applicable). 외부 참조·Inspector 없는 단일 파일은 짧은 산문 OK.

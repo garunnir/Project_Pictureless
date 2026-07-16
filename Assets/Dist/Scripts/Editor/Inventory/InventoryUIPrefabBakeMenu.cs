@@ -1,5 +1,5 @@
 // ============================================================
-// InventoryUIPrefabBakeMenu — 인벤 UI 프리팹 3종 베이크 메뉴
+// InventoryUIPrefabBakeMenu — 인벤 UI 프리팹 베이크 (단일 레이아웃)
 // ============================================================
 
 #if UNITY_EDITOR
@@ -26,11 +26,14 @@ static class InventoryUIPrefabBakeMenu
         UIContainerSlot slotPrefab = AssetDatabase.LoadAssetAtPath<UIContainerSlot>(SlotPath);
         if (rowPrefab == null || slotPrefab == null)
         {
-            Debug.LogError("[InventoryUIPrefabBakeMenu] Failed to load row/slot prefabs after save.");
+            Debug.LogError("[InventoryUIPrefabBakeMenu] Failed to load row/slot prefabs.");
+            Object.DestroyImmediate(rowRoot.gameObject);
+            Object.DestroyImmediate(slotRoot.gameObject);
             return;
         }
 
         UIInventoryListWindow windowRoot = InventoryUIHierarchyBuilder.BuildWindowRoot(rowPrefab, slotPrefab);
+        windowRoot.name = "Grp_InventoryListWindow";
         SavePrefab(windowRoot.gameObject, WindowPath);
 
         Object.DestroyImmediate(rowRoot.gameObject);
