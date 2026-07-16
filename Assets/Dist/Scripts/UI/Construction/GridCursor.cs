@@ -37,7 +37,10 @@ public class GridCursor : MonoBehaviour
         UpdateFromPointer();
         UpdateHoldRepeat();
 
-        if (Pointer.current?.press.wasPressedThisFrame ?? false)
+        InputManager input = InputManager.Instance;
+        if (input != null &&
+            input.TryReadPointerPressedThisFrame(out bool pressed) &&
+            pressed)
             TryPlace();
     }
 
@@ -45,10 +48,16 @@ public class GridCursor : MonoBehaviour
     // 움직이지 않으면 키보드 Navigate 입력이 우선된다.
     void UpdateFromPointer()
     {
-        if (Pointer.current == null) return;
-        if (Pointer.current.delta.ReadValue() == Vector2.zero) return;
+        InputManager input = InputManager.Instance;
+        if (input == null)
+            return;
 
-        Vector2 screenPos = Pointer.current.position.ReadValue();
+        if (!input.TryReadPointerDelta(out Vector2 delta) || delta == Vector2.zero)
+            return;
+
+        if (!input.TryReadPointerScreenPosition(out Vector2 screenPos))
+            return;
+
         Ray ray = _camera.ScreenPointToRay(screenPos);
         if (!GroundPlane.Raycast(ray, out float dist)) return;
 

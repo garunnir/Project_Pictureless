@@ -129,6 +129,17 @@ public class InputManager : SceneSingleton<InputManager>
         return false;
     }
 
+    /// <summary>포인터 이동량(이 프레임 delta). 디바이스 없으면 false.</summary>
+    public bool TryReadPointerDelta(out Vector2 delta)
+    {
+        delta = Vector2.zero;
+        if (Pointer.current == null)
+            return false;
+
+        delta = Pointer.current.delta.ReadValue();
+        return true;
+    }
+
     /// <summary>포인터 primary press가 이 프레임에 눌렸는지.</summary>
     public bool TryReadPointerPressedThisFrame(out bool pressed)
     {
@@ -333,7 +344,10 @@ public class InputManager : SceneSingleton<InputManager>
         base.OnDestroy();
     }
 
-    bool IsClike() => Pointer.current?.press.wasPressedThisFrame ?? false;
+    bool IsClike()
+    {
+        return TryReadPointerPressedThisFrame(out bool pressed) && pressed;
+    }
 
     public static RaycastHit RayCast() //todo 공통사용가능한 부위로 옮겨야함.
     {
