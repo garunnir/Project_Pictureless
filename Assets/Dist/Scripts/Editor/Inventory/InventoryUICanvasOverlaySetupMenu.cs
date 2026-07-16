@@ -111,16 +111,13 @@ static class InventoryUICanvasOverlaySetupMenu
 
     static UIItemContextMenu EnsureContextMenuPrefab()
     {
-        var existing = AssetDatabase.LoadAssetAtPath<UIItemContextMenu>(ContextMenuPrefabPath);
-        if (existing != null)
-            return existing;
-
         EnsurePrefabFolder();
+        // Rebuild so cascade panel/row templates match HierarchyBuilder.
         Button buttonPrefab = AssetDatabase.LoadAssetAtPath<Button>(ContextMenuButtonPath);
         UIItemContextMenu built = InventoryUIHierarchyBuilder.BuildContextMenuRoot(buttonPrefab);
         GameObject prefabRoot = PrefabUtility.SaveAsPrefabAsset(built.gameObject, ContextMenuPrefabPath);
         Object.DestroyImmediate(built.gameObject);
-        return prefabRoot.GetComponent<UIItemContextMenu>();
+        return prefabRoot != null ? prefabRoot.GetComponent<UIItemContextMenu>() : null;
     }
 
     static void EnsurePrefabFolder()

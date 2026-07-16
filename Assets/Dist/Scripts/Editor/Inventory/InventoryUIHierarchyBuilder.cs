@@ -130,54 +130,145 @@ static class InventoryUIHierarchyBuilder
 
     public static UIItemContextMenu BuildContextMenuRoot(Button buttonPrefab)
     {
+        // buttonPrefab는 레거시 시그니처 유지용. 캐스케이드는 내부 Row 템플릿을 쓴다.
+        _ = buttonPrefab;
+
         var root = CreateRect("ItemContextMenu", null, Color.clear);
         var rootRect = root.GetComponent<RectTransform>();
         Stretch(rootRect, 0f, 0f, 0f, 0f);
         root.GetComponent<Image>().raycastTarget = false;
 
-        var panel = CreateRect("Panel", root.transform, new Color(0.12f, 0.12f, 0.12f, 0.95f));
-        var panelRect = panel.GetComponent<RectTransform>();
+        var panelRootGo = CreateRect("PanelRoot", root.transform, Color.clear);
+        var panelRoot = panelRootGo.GetComponent<RectTransform>();
+        Stretch(panelRoot, 0f, 0f, 0f, 0f);
+        panelRootGo.GetComponent<Image>().raycastTarget = false;
+
+        UIContextMenuItemRow rowTemplate = BuildContextMenuRowTemplate(root.transform);
+        UIContextMenuCascadePanel panelTemplate = BuildContextMenuPanelTemplate(root.transform, rowTemplate);
+
+        var menu = root.AddComponent<UIItemContextMenu>();
+        SetReference(menu, "_panelRoot", panelRoot);
+        SetReference(menu, "_panelPrefab", panelTemplate);
+        SetReference(menu, "_rowPrefab", rowTemplate);
+        return menu;
+    }
+
+    static UIContextMenuItemRow BuildContextMenuRowTemplate(Transform parent)
+    {
+        var rowGo = CreateRect("RowTemplate", parent, ContextMenuStyle.RowColor);
+        var rowRect = rowGo.GetComponent<RectTransform>();
+        rowRect.anchorMin = new Vector2(0f, 1f);
+        rowRect.anchorMax = new Vector2(1f, 1f);
+        rowRect.pivot = new Vector2(0.5f, 1f);
+        rowRect.sizeDelta = new Vector2(0f, ContextMenuStyle.RowHeight);
+
+        var h = rowGo.AddComponent<HorizontalLayoutGroup>();
+        h.padding = new RectOffset(6, 4, 2, 2);
+        h.spacing = 4f;
+        h.childAlignment = TextAnchor.MiddleLeft;
+        h.childControlWidth = true;
+        h.childControlHeight = true;
+        h.childForceExpandWidth = false;
+        h.childForceExpandHeight = false;
+
+        var le = rowGo.AddComponent<LayoutElement>();
+        le.preferredHeight = ContextMenuStyle.RowHeight;
+        le.flexibleWidth = 1f;
+        le.minHeight = ContextMenuStyle.RowHeight;
+
+        var label = CreateTmp("Label", rowGo.transform, 0f, ContextMenuStyle.FontSize, flexibleWidth: true);
+        label.alignment = TextAlignmentOptions.MidlineLeft;
+        label.raycastTarget = false;
+
+        var chevron = CreateTmp("Chevron", rowGo.transform, ContextMenuStyle.ChevronWidth, ContextMenuStyle.FontSize);
+        chevron.text = ItemContextMenuLabels.SubmenuChevron;
+        chevron.alignment = TextAlignmentOptions.MidlineRight;
+        chevron.raycastTarget = false;
+
+        var row = rowGo.AddComponent<UIContextMenuItemRow>();
+        SetReference(row, "_background", rowGo.GetComponent<Image>());
+        SetReference(row, "_label", label);
+        SetReference(row, "_chevron", chevron);
+        rowGo.SetActive(false);
+        return row;
+    }
+
+    static UIContextMenuCascadePanel BuildContextMenuPanelTemplate(Transform parent, UIContextMenuItemRow rowTemplate)
+    {
+        var panelGo = CreateRect("PanelTemplate", parent, ContextMenuStyle.PanelColor);
+        var panelRect = panelGo.GetComponent<RectTransform>();
         panelRect.anchorMin = new Vector2(0.5f, 0.5f);
         panelRect.anchorMax = new Vector2(0.5f, 0.5f);
         panelRect.pivot = new Vector2(0f, 1f);
-        panelRect.sizeDelta = new Vector2(180f, 40f);
+        panelRect.sizeDelta = new Vector2(ContextMenuStyle.PanelWidth, ContextMenuStyle.RowHeight);
 
-        var layout = panel.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(4, 4, 4, 4);
-        layout.spacing = 2f;
+        var layout = panelGo.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(
+            (int)ContextMenuStyle.PanelPadding,
+            (int)ContextMenuStyle.PanelPadding,
+            (int)ContextMenuStyle.PanelPadding,
+            (int)ContextMenuStyle.PanelPadding);
+        layout.spacing = ContextMenuStyle.RowSpacing;
         layout.childControlHeight = true;
         layout.childControlWidth = true;
         layout.childForceExpandHeight = false;
         layout.childForceExpandWidth = true;
-        panel.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        var buttonContainer = panel.transform;
-        Button template = buttonPrefab;
-        if (template == null)
-        {
-            var btnGo = CreateRect("ButtonTemplate", buttonContainer, new Color(0.22f, 0.22f, 0.22f, 1f));
-            var layoutElement = btnGo.AddComponent<LayoutElement>();
-            layoutElement.preferredHeight = 28f;
-            layoutElement.flexibleWidth = 1f;
-            template = btnGo.AddComponent<Button>();
-            template.targetGraphic = btnGo.GetComponent<Image>();
-            var label = CreateTmp("Label", btnGo.transform, 0f, 14, flexibleWidth: true);
-            Stretch(label.rectTransform, 6f, 6f, 2f, 2f);
-            btnGo.SetActive(false);
-        }
-        else if (template.GetComponent<LayoutElement>() == null)
-        {
-            var layoutElement = template.gameObject.AddComponent<LayoutElement>();
-            layoutElement.preferredHeight = 28f;
-            layoutElement.flexibleWidth = 1f;
-        }
+        var fitter = panelGo.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        var menu = root.AddComponent<UIItemContextMenu>();
-        SetReference(menu, "_panel", panelRect);
-        SetReference(menu, "_buttonContainer", buttonContainer);
-        SetReference(menu, "_buttonPrefab", template);
-        panel.SetActive(false);
-        return menu;
+        var le = panelGo.AddComponent<LayoutElement>();
+        le.preferredWidth = ContextMenuStyle.PanelWidth;
+        le.minWidth = ContextMenuStyle.PanelWidth;
+
+        // Scroll: 내용이 PanelMaxHeight를 넘기면 스크롤
+        var scrollGo = CreateRect("Scroll", panelGo.transform, Color.clear);
+        scrollGo.GetComponent<Image>().raycastTarget = false;
+        var scrollRectTransform = scrollGo.GetComponent<RectTransform>();
+        var scrollLe = scrollGo.AddComponent<LayoutElement>();
+        scrollLe.preferredWidth = ContextMenuStyle.PanelWidth - ContextMenuStyle.PanelPadding * 2f;
+        scrollLe.flexibleWidth = 1f;
+        scrollLe.minHeight = ContextMenuStyle.RowHeight;
+        scrollLe.preferredHeight = ContextMenuStyle.RowHeight;
+
+        var viewport = CreateRect("Viewport", scrollGo.transform, Color.clear);
+        viewport.GetComponent<Image>().raycastTarget = true;
+        Stretch(viewport.GetComponent<RectTransform>(), 0f, 0f, 0f, 0f);
+        viewport.AddComponent<RectMask2D>();
+
+        var content = CreateRect("Content", viewport.transform, Color.clear);
+        content.GetComponent<Image>().raycastTarget = false;
+        var contentRect = content.GetComponent<RectTransform>();
+        contentRect.anchorMin = new Vector2(0f, 1f);
+        contentRect.anchorMax = new Vector2(1f, 1f);
+        contentRect.pivot = new Vector2(0.5f, 1f);
+        contentRect.sizeDelta = new Vector2(0f, 0f);
+
+        var contentLayout = content.AddComponent<VerticalLayoutGroup>();
+        contentLayout.spacing = ContextMenuStyle.RowSpacing;
+        contentLayout.childControlHeight = true;
+        contentLayout.childControlWidth = true;
+        contentLayout.childForceExpandHeight = false;
+        contentLayout.childForceExpandWidth = true;
+        var contentFitter = content.AddComponent<ContentSizeFitter>();
+        contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        var scroll = scrollGo.AddComponent<ScrollRect>();
+        scroll.viewport = viewport.GetComponent<RectTransform>();
+        scroll.content = contentRect;
+        scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+
+        // preferredHeight는 런타임 Bind 후 ContentSize로 자연 확장; 상한은 ContentSizeFitter 대신
+        // LayoutElement max를 쓰지 않고 호스트 Clamp만 사용. 스크롤 영역 높이는 Content 높이와 맞춤.
+        var panel = panelGo.AddComponent<UIContextMenuCascadePanel>();
+        SetReference(panel, "_root", panelRect);
+        SetReference(panel, "_rowContainer", content.transform);
+        SetReference(panel, "_rowPrefab", rowTemplate);
+        panelGo.SetActive(false);
+        return panel;
     }
 
     public static UIInventoryListWindow BuildWindowRoot(

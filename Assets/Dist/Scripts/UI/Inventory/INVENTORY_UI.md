@@ -227,4 +227,13 @@
 
 6. 용량 초과 시 이동 실패, 실패 드롭 시 드래그 상태/고스트 정상 정리
 
+---
+
+## 아이템 우클릭 컨텍스트 메뉴
+
+- 코드: `Assets/Dist/Scripts/UI/Inventory/ItemContextMenu/`
+- **사람용 사용법:** [`ItemContextMenu/사용방법.md`](ItemContextMenu/사용방법.md)
+- 기술 경계·항목 추가: [`ItemContextMenu/README.md`](ItemContextMenu/README.md)
+- 프리팹: `ItemContextMenu.prefab` (HierarchyBuilder bake). 메뉴 항목 추가는 Contributor/Action만 — UI 프리팹 변경 불필요.
+
 
