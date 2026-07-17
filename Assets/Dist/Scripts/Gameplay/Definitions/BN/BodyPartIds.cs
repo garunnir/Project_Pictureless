@@ -1,5 +1,5 @@
 // ============================================================
-// BodyPartIds — 신체 부위 ID / 메인 HP 매핑 SSOT (소유권 트리용)
+// BodyPartIds — 신체 부위 ID / 메인 컨디션 매핑 SSOT (소유권 트리용)
 // ============================================================
 
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ namespace Garunnir.Runtime.Gameplay.Data
 {
     public static class BodyPartIds
     {
-        // ── Main HP parts (UI rows) ───────────────────────────
+        // ── Main condition parts (UI) ─────────────────────────
         public const string Head = "head";
         public const string Torso = "torso";
         public const string ArmL = "arm_l";
@@ -30,12 +30,12 @@ namespace Garunnir.Runtime.Gameplay.Data
         public const string FingerThumbR = "finger_thumb_r";
         public const string FingerIndexR = "finger_index_r";
 
-        public static readonly string[] MainHpParts =
+        public static readonly string[] MainConditionParts =
         {
             Head, Torso, ArmL, ArmR, LegL, LegR
         };
 
-        static readonly Dictionary<string, string> MainHpOf = new()
+        static readonly Dictionary<string, string> MainConditionOf = new()
         {
             [Head] = Head,
             [Eyes] = Head,
@@ -55,26 +55,26 @@ namespace Garunnir.Runtime.Gameplay.Data
             [FootR] = LegR
         };
 
-        public static bool IsMainHpPart(string partId)
+        public static bool IsMainConditionPart(string partId)
         {
             if (string.IsNullOrEmpty(partId))
                 return false;
 
-            for (int i = 0; i < MainHpParts.Length; i++)
+            for (int i = 0; i < MainConditionParts.Length; i++)
             {
-                if (MainHpParts[i] == partId)
+                if (MainConditionParts[i] == partId)
                     return true;
             }
 
             return false;
         }
 
-        public static string GetMainHpPart(string partId)
+        public static string GetMainConditionPart(string partId)
         {
             if (string.IsNullOrEmpty(partId))
                 return null;
 
-            return MainHpOf.TryGetValue(partId, out string main) ? main : null;
+            return MainConditionOf.TryGetValue(partId, out string main) ? main : null;
         }
     }
 }

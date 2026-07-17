@@ -1,5 +1,5 @@
 // ============================================================
-// UIPlayerStatusBodyPartGraphic — 인체도 부위 HP 색상과 호버 입력
+// UIPlayerStatusBodyPartGraphic — 인체도 부위 컨디션 색상과 호버 입력
 // ============================================================
 
 using System;
@@ -33,7 +33,7 @@ public sealed class UIPlayerStatusBodyPartGraphic :
         _onExit = onExit;
     }
 
-    public void SetDisplay(int currentHp, int maxHp, bool present)
+    public void SetDisplay(int currentCondition, int maxCondition, bool present)
     {
         if (_partImage == null)
             return;
@@ -44,10 +44,13 @@ public sealed class UIPlayerStatusBodyPartGraphic :
         }
         else
         {
-            float hpRatio = maxHp > 0
-                ? Mathf.Clamp01((float)currentHp / maxHp)
+            float conditionRatio = maxCondition > 0
+                ? Mathf.Clamp01((float)currentCondition / maxCondition)
                 : 0f;
-            _displayColor = Color.Lerp(CriticalColor, HealthyColor, hpRatio);
+            _displayColor = Color.Lerp(
+                CriticalColor,
+                HealthyColor,
+                conditionRatio);
         }
 
         _partImage.color = _displayColor;

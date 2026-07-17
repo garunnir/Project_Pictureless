@@ -12,31 +12,33 @@ namespace Garunnir.Runtime.Gameplay.Data
         readonly List<BodyPartEffect> _effects = new();
 
         public string PartId { get; }
-        public bool HoldsHp { get; }
-        public int HpCur { get; private set; }
-        public int HpMax { get; private set; }
+        public bool HasCondition { get; }
+        public int ConditionCur { get; private set; }
+        public int ConditionMax { get; private set; }
 
         public IReadOnlyList<BodyPartNode> Children => _children;
         public IReadOnlyList<BodyPartEffect> Effects => _effects;
 
-        public BodyPartNode(string partId, bool holdsHp, int hpMax = 0)
+        public BodyPartNode(string partId, bool hasCondition, int conditionMax = 0)
         {
             PartId = partId;
-            HoldsHp = holdsHp;
-            if (holdsHp)
+            HasCondition = hasCondition;
+            if (hasCondition)
             {
-                HpMax = hpMax;
-                HpCur = hpMax;
+                ConditionMax = conditionMax;
+                ConditionCur = conditionMax;
             }
         }
 
-        public void SetHp(int current, int max)
+        public void SetCondition(int current, int max)
         {
-            if (!HoldsHp)
+            if (!HasCondition)
                 return;
 
-            HpMax = max < 0 ? 0 : max;
-            HpCur = current < 0 ? 0 : (current > HpMax ? HpMax : current);
+            ConditionMax = max < 0 ? 0 : max;
+            ConditionCur = current < 0
+                ? 0
+                : (current > ConditionMax ? ConditionMax : current);
         }
 
         public void AddChild(BodyPartNode child)

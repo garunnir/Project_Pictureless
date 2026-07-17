@@ -23,11 +23,11 @@ namespace Garunnir.Runtime.Gameplay.Data
         /// </summary>
         bool RemovePart(string partId);
 
-        int GetHpCur(string mainHpPartId);
+        int GetConditionCur(string mainConditionPartId);
 
-        int GetHpMax(string mainHpPartId);
+        int GetConditionMax(string mainConditionPartId);
 
-        void SetHp(string mainHpPartId, int current, int max);
+        void SetCondition(string mainConditionPartId, int current, int max);
 
         bool IsDeadState { get; }
 

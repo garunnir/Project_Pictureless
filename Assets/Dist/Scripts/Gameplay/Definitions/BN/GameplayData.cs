@@ -28,7 +28,7 @@ public static class GameplayData
 
     /// <summary>
     /// 신체 소유권 트리 SSOT.
-    /// 미주입 시에는 인간 기본 anatomy + STR 기반 부위 HP로 생성합니다.
+    /// 미주입 시에는 인간 기본 anatomy + STR 기반 부위 컨디션으로 생성합니다.
     /// </summary>
     public static IPlayerBody Body
     {

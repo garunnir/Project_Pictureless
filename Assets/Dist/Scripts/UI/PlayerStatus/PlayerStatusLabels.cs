@@ -12,11 +12,13 @@ public static class PlayerStatusLabels
     const string KeyDetailEffects = "PlayerStatus.DetailEffects";
     const string KeyNoEffects = "PlayerStatus.NoEffects";
     const string KeyLost = "PlayerStatus.Lost";
-    const string KeyHpFormat = "PlayerStatus.HpFormat";
+    const string KeyConditionFormat = "PlayerStatus.ConditionFormat";
     const string KeyVitalFormat = "PlayerStatus.VitalFormat";
     const string KeySkillFormat = "PlayerStatus.SkillFormat";
     const string KeyPartPrefix = "PlayerStatus.Part.";
     const string KeyVitalPrefix = "PlayerStatus.Vital.";
+    const string KeyVitalProsePrefix = "PlayerStatus.VitalProse.";
+    const string KeySkillPrefix = "PlayerStatus.Skill.";
     const string KeyEffectPrefix = "PlayerStatus.Effect.";
     const string KeyDebugSeverArmL = "PlayerStatus.DebugSeverArmL";
 
@@ -30,12 +32,33 @@ public static class PlayerStatusLabels
     public static string Lost => Loc.Get(KeyLost);
     public static string DebugSeverArmL => Loc.Get(KeyDebugSeverArmL);
 
-    public static string FormatHp(int cur, int max) => Loc.Format(KeyHpFormat, cur, max);
+    public static string FormatCondition(int cur, int max) =>
+        Loc.Format(KeyConditionFormat, cur, max);
 
     public static string FormatVital(int cur, int max) => Loc.Format(KeyVitalFormat, cur, max);
 
+    public static string FormatVitalProse(string vitalKey, int cur, int max)
+    {
+        string shortKey = PlayerStatusVitalDisplay.GetVitalShortKey(vitalKey);
+        if (string.IsNullOrEmpty(shortKey))
+            return string.Empty;
+
+        PlayerStatusVitalDisplay.VitalProseBand band =
+            PlayerStatusVitalDisplay.ResolveBand(cur, max);
+        string key = $"{KeyVitalProsePrefix}{shortKey}.{band}";
+        return Loc.TryGet(key, out string prose) ? prose : string.Empty;
+    }
+
     public static string FormatSkill(string skillId, int level) =>
-        Loc.Format(KeySkillFormat, skillId, level);
+        Loc.Format(KeySkillFormat, GetSkillName(skillId), level);
+
+    public static string GetSkillName(string skillId)
+    {
+        if (string.IsNullOrEmpty(skillId))
+            return string.Empty;
+
+        return Loc.TryGet(KeySkillPrefix + skillId, out string name) ? name : skillId;
+    }
 
     public static string GetPartName(string partId)
     {
@@ -50,10 +73,7 @@ public static class PlayerStatusLabels
         if (string.IsNullOrEmpty(vitalKey))
             return string.Empty;
 
-        string shortKey = vitalKey.StartsWith("Vital.", System.StringComparison.Ordinal)
-            ? vitalKey.Substring("Vital.".Length)
-            : vitalKey;
-
+        string shortKey = PlayerStatusVitalDisplay.GetVitalShortKey(vitalKey);
         return Loc.TryGet(KeyVitalPrefix + shortKey, out string name) ? name : vitalKey;
     }
 

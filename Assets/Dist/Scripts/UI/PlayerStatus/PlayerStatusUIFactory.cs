@@ -260,11 +260,15 @@ public static class PlayerStatusUIFactory
         fill.fillAmount = 1f;
         Stretch(fill.rectTransform, 0f, 0f, 0f, 0f);
 
-        TMP_Text hp = CreateTmp("Hp", row.transform, FontSizeBody, TextAlignmentOptions.MidlineRight);
-        hp.gameObject.AddComponent<LayoutElement>().preferredWidth = 72f;
+        TMP_Text condition = CreateTmp(
+            "Condition",
+            row.transform,
+            FontSizeBody,
+            TextAlignmentOptions.MidlineRight);
+        condition.gameObject.AddComponent<LayoutElement>().preferredWidth = 72f;
 
         UIPlayerStatusBodyPartRow view = row.AddComponent<UIPlayerStatusBodyPartRow>();
-        view.Wire(name, hp, fill, row.GetComponent<Image>());
+        view.Wire(name, condition, fill, row.GetComponent<Image>());
         return view;
     }
 

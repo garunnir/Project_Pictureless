@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerStatusUISetupMenu — Bake 프리팹 + 씬에 Controller/Launcher 설치
+// PlayerStatusUISetupMenu — 상태창 설치·로컬라이즈 병합·검증 메뉴
 // ============================================================
 
 #if UNITY_EDITOR
@@ -40,6 +40,186 @@ static class PlayerStatusUISetupMenu
             $"[PlayerStatus Cascade] hadHand={hadHand} hadFinger={hadFinger} effectsBefore={effectCountBefore} " +
             $"removed={removed} handGone={handGone} fingerGone={fingerGone} effectsAfter={effectCountAfter} " +
             $"headRemains={headRemains} => {(ok ? "PASS" : "FAIL")}";
+
+        if (ok)
+            Debug.Log(msg);
+        else
+            Debug.LogError(msg);
+    }
+
+    [MenuItem("Dist/PlayerStatus/Verify Vital Display (Edit Mode)")]
+    static void VerifyVitalDisplay()
+    {
+        bool nullStatsProse = !PlayerStatusVitalDisplay.CanShowNumericVitals(null);
+
+        var stats = new DefaultPlayerStats();
+        bool level0Prose = !PlayerStatusVitalDisplay.CanShowNumericVitals(stats);
+        stats.SetSkillLevel(
+            SkillIds.Survival,
+            PlayerStatusVitalDisplay.NumericVitalMinSkillLevel);
+        bool level2Numeric = PlayerStatusVitalDisplay.CanShowNumericVitals(stats);
+
+        string hungerProse = PlayerStatusLabels.FormatVitalProse(VitalKeys.Hunger, 30, 100);
+        bool proseNonEmpty = !string.IsNullOrEmpty(hungerProse);
+
+        string numericLine =
+            $"{PlayerStatusLabels.GetVitalName(VitalKeys.Hunger)}  " +
+            PlayerStatusLabels.FormatVital(82, 100);
+        bool numericHasFraction = numericLine.Contains("82") && numericLine.Contains("100");
+
+        bool ok = nullStatsProse && level0Prose && level2Numeric && proseNonEmpty && numericHasFraction;
+        string msg =
+            $"[PlayerStatus VitalDisplay] nullProse={nullStatsProse} lv0Prose={level0Prose} " +
+            $"lv2Numeric={level2Numeric} prose='{hungerProse}' numeric='{numericLine}' " +
+            $"=> {(ok ? "PASS" : "FAIL")}";
+
+        if (ok)
+            Debug.Log(msg);
+        else
+            Debug.LogError(msg);
+    }
+
+    [MenuItem("Dist/Debug/Verify Debug Input Mode (Play Mode)")]
+    static void VerifyDebugInputMode()
+    {
+        if (!EditorApplication.isPlaying)
+        {
+            Debug.LogError("[DebugInput] Verification requires Play Mode.");
+            return;
+        }
+
+        InputManager input = InputManager.Instance;
+        if (input == null)
+        {
+            Debug.LogError("[DebugInput] InputManager.Instance is null.");
+            return;
+        }
+
+        bool closedMoveEnabled = input.IsPlayerActionEnabled(PlayerAction.Move);
+        bool closedDebugInactive = !input.IsDebugInputActive;
+
+        using (input.AcquireDebugInput(typeof(PlayerStatusUISetupMenu)))
+        {
+            bool openMoveBlocked = !input.IsPlayerActionEnabled(PlayerAction.Move);
+            bool openDebugActive = input.IsDebugInputActive;
+            bool openGameplayBlocked = openMoveBlocked && openDebugActive;
+
+            IngameDebugConsole.DebugLogManager console = IngameDebugConsole.DebugLogManager.Instance;
+            if (console != null)
+            {
+                console.ShowLogWindow();
+                bool shownDebugActive = input.IsDebugInputActive;
+                console.HideLogWindow();
+                // Bridge may keep or release based on window; force-owned scope still holds.
+                bool afterHideStillOwned = input.IsDebugInputActive;
+                openGameplayBlocked = openGameplayBlocked && shownDebugActive && afterHideStillOwned;
+            }
+
+            bool okWhileHeld = closedMoveEnabled && closedDebugInactive && openGameplayBlocked;
+            if (!okWhileHeld)
+            {
+                Debug.LogError(
+                    $"[DebugInput] held FAIL closedMove={closedMoveEnabled} closedDebugOff={closedDebugInactive} " +
+                    $"openBlocked={openGameplayBlocked}");
+                return;
+            }
+        }
+
+        bool restoredMove = input.IsPlayerActionEnabled(PlayerAction.Move);
+        bool restoredDebugOff = !input.IsDebugInputActive;
+        bool ok = restoredMove && restoredDebugOff;
+        string msg =
+            $"[DebugInput] closedMove={closedMoveEnabled} openBlocked=True restoredMove={restoredMove} " +
+            $"restoredDebugOff={restoredDebugOff} => {(ok ? "PASS" : "FAIL")}";
+
+        if (ok)
+            Debug.Log(msg);
+        else
+            Debug.LogError(msg);
+    }
+
+    [MenuItem("Dist/Debug/Verify Player Commands (Play Mode)")]
+    static void VerifyPlayerCommands()
+    {
+        if (!EditorApplication.isPlaying)
+        {
+            Debug.LogError("[RuntimeDebugConsole] Verification requires Play Mode.");
+            return;
+        }
+
+        IPlayerStats stats = GameplayData.Stats;
+        IPlayerVitals vitals = GameplayData.Vitals;
+        bool consoleInstance = IngameDebugConsole.DebugLogManager.Instance != null;
+        int originalSkillLevel = stats.GetSkillLevel(SkillIds.Survival);
+        int originalHunger = vitals.GetCurrent(VitalKeys.Hunger);
+        int statsChangedCount = 0;
+        bool proseGate = false;
+        bool numericGate = false;
+        bool invalidLevelRejected = false;
+        bool invalidPracticeRejected = false;
+        bool vitalClamp = false;
+        bool vitalSet = false;
+        bool invalidVitalRejected = false;
+
+        void OnStatsChanged(string _) => statsChangedCount++;
+        stats.Changed += OnStatsChanged;
+
+        try
+        {
+            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
+                $"{PlayerSkillDebugCommands.SetCommand} {SkillIds.Survival} 0");
+            proseGate = !PlayerStatusVitalDisplay.CanShowNumericVitals(stats);
+
+            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
+                $"{PlayerSkillDebugCommands.SetCommand} {SkillIds.Survival} " +
+                PlayerStatusVitalDisplay.NumericVitalMinSkillLevel);
+            numericGate = PlayerStatusVitalDisplay.CanShowNumericVitals(stats);
+
+            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
+                $"{PlayerSkillDebugCommands.SetCommand} {SkillIds.Survival} -1");
+            invalidLevelRejected =
+                stats.GetSkillLevel(SkillIds.Survival) ==
+                PlayerStatusVitalDisplay.NumericVitalMinSkillLevel;
+
+            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
+                $"{PlayerSkillDebugCommands.PracticeCommand} {SkillIds.Survival} 0");
+            invalidPracticeRejected =
+                stats.GetSkillLevel(SkillIds.Survival) ==
+                PlayerStatusVitalDisplay.NumericVitalMinSkillLevel;
+
+            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
+                $"{PlayerSkillDebugCommands.PracticeCommand} {SkillIds.Survival} 100");
+            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
+                $"{PlayerVitalDebugCommands.SetCommand} HUNGER {int.MaxValue}");
+            vitalClamp =
+                vitals.GetCurrent(VitalKeys.Hunger) ==
+                vitals.GetMax(VitalKeys.Hunger);
+
+            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
+                $"{PlayerVitalDebugCommands.SetCommand} Hunger 30");
+            vitalSet = vitals.GetCurrent(VitalKeys.Hunger) == 30;
+
+            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
+                $"{PlayerVitalDebugCommands.SetCommand} unknown 20");
+            invalidVitalRejected = vitals.GetCurrent(VitalKeys.Hunger) == 30;
+        }
+        finally
+        {
+            stats.Changed -= OnStatsChanged;
+            stats.SetSkillLevel(SkillIds.Survival, originalSkillLevel);
+            vitals.SetCurrent(VitalKeys.Hunger, originalHunger);
+        }
+
+        bool notificationsRaised = statsChangedCount >= 3;
+        bool ok = consoleInstance && proseGate && numericGate &&
+                  invalidLevelRejected && invalidPracticeRejected &&
+                  vitalClamp && vitalSet && invalidVitalRejected &&
+                  notificationsRaised;
+        string msg =
+            $"[RuntimeDebugConsole] instance={consoleInstance} proseGate={proseGate} numericGate={numericGate} " +
+            $"invalidLevel={invalidLevelRejected} invalidPractice={invalidPracticeRejected} " +
+            $"vitalClamp={vitalClamp} vitalSet={vitalSet} invalidVital={invalidVitalRejected} " +
+            $"statsChanged={statsChangedCount} => {(ok ? "PASS" : "FAIL")}";
 
         if (ok)
             Debug.Log(msg);
@@ -214,7 +394,7 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.DetailEffects", "상태 이상");
         Put("PlayerStatus.NoEffects", "이상 없음");
         Put("PlayerStatus.Lost", "상실");
-        Put("PlayerStatus.HpFormat", "{0}/{1}");
+        Put("PlayerStatus.ConditionFormat", "{0}/{1}");
         Put("PlayerStatus.VitalFormat", "{0}/{1}");
         Put("PlayerStatus.SkillFormat", "{0}  Lv.{1}");
         Put("PlayerStatus.DebugSeverArmL", "절단(왼팔)");
@@ -239,6 +419,23 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.Vital.Hunger", "공복");
         Put("PlayerStatus.Vital.Thirst", "갈증");
         Put("PlayerStatus.Vital.Stamina", "스태미나");
+
+        Put("PlayerStatus.Skill.survival", "생존술");
+
+        Put("PlayerStatus.VitalProse.Hunger.Full", "배가 부르다");
+        Put("PlayerStatus.VitalProse.Hunger.Ok", "배가 든든하다");
+        Put("PlayerStatus.VitalProse.Hunger.Low", "배가 고프다");
+        Put("PlayerStatus.VitalProse.Hunger.Critical", "굶주리고 있다");
+
+        Put("PlayerStatus.VitalProse.Thirst.Full", "목이 충분히 축인다");
+        Put("PlayerStatus.VitalProse.Thirst.Ok", "목이 마르지 않았다");
+        Put("PlayerStatus.VitalProse.Thirst.Low", "목이 마르다");
+        Put("PlayerStatus.VitalProse.Thirst.Critical", "목이 타는 것 같다");
+
+        Put("PlayerStatus.VitalProse.Stamina.Full", "몸이 가볍다");
+        Put("PlayerStatus.VitalProse.Stamina.Ok", "아직 버틸 만하다");
+        Put("PlayerStatus.VitalProse.Stamina.Low", "몸이 무겁다");
+        Put("PlayerStatus.VitalProse.Stamina.Critical", "기진맥진하다");
 
         Put("PlayerStatus.Effect.bleed", "출혈");
         Put("PlayerStatus.Effect.fracture", "골절");

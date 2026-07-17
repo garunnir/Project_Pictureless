@@ -64,6 +64,8 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
             _body.Changed += Refresh;
         if (_vitals != null)
             _vitals.Changed += OnVitalChanged;
+        if (_stats != null)
+            _stats.Changed += OnStatsChanged;
 
         bool debugControlsEnabled = Debug.isDebugBuild;
         if (_debugSeverArmLButton != null)
@@ -87,6 +89,8 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
             _body.Changed -= Refresh;
         if (_vitals != null)
             _vitals.Changed -= OnVitalChanged;
+        if (_stats != null)
+            _stats.Changed -= OnStatsChanged;
         if (_debugSeverArmLButton != null)
             _debugSeverArmLButton.onClick.RemoveListener(OnDebugSeverArmL);
 
@@ -99,6 +103,11 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
     void OnDestroy() => Unbind();
 
     void OnVitalChanged(string _) => Refresh();
+    void OnStatsChanged(string _)
+    {
+        RefreshVitals();
+        RefreshSkills();
+    }
 
     void OnDebugSeverArmL()
     {
@@ -118,7 +127,7 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
                 _graphics.Add(existingGraphics[i]);
         }
 
-        string[] mains = BodyPartIds.MainHpParts;
+        string[] mains = BodyPartIds.MainConditionParts;
         if (_graphics.Count > 0)
         {
             for (int i = 0; i < _graphics.Count; i++)
@@ -132,7 +141,7 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
             return;
         }
 
-        // Recovery fallback for older prefabs that still contain HP rows.
+        // Row-view fallback for older prefabs without body-part graphics.
         if (_rows.Count == 0)
         {
             UIPlayerStatusBodyPartRow[] existing =
@@ -167,7 +176,7 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
         SetHeaderTitle(PlayerStatusLabels.Title);
         EnsurePartViews();
 
-        string[] mains = BodyPartIds.MainHpParts;
+        string[] mains = BodyPartIds.MainConditionParts;
         for (int i = 0; i < _graphics.Count; i++)
         {
             string partId = _graphics[i].PartId;
@@ -175,8 +184,8 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
                 continue;
 
             bool present = _body != null && _body.Has(partId);
-            int cur = present ? _body.GetHpCur(partId) : 0;
-            int max = present ? _body.GetHpMax(partId) : 0;
+            int cur = present ? _body.GetConditionCur(partId) : 0;
+            int max = present ? _body.GetConditionMax(partId) : 0;
             _graphics[i].SetDisplay(cur, max, present);
         }
 
@@ -184,8 +193,8 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
         {
             string partId = mains[i];
             bool present = _body != null && _body.Has(partId);
-            int cur = present ? _body.GetHpCur(partId) : 0;
-            int max = present ? _body.GetHpMax(partId) : 0;
+            int cur = present ? _body.GetConditionCur(partId) : 0;
+            int max = present ? _body.GetConditionMax(partId) : 0;
             _rows[i].SetDisplay(PlayerStatusLabels.GetPartName(partId), cur, max, present);
         }
 
@@ -204,6 +213,7 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
             return;
         }
 
+        bool showNumeric = PlayerStatusVitalDisplay.CanShowNumericVitals(_stats);
         var lines = new List<string>(VitalKeys.All.Length + 1)
         {
             PlayerStatusLabels.VitalsSection
@@ -212,9 +222,19 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
         for (int i = 0; i < VitalKeys.All.Length; i++)
         {
             string key = VitalKeys.All[i];
-            lines.Add(
-                $"{PlayerStatusLabels.GetVitalName(key)}  " +
-                PlayerStatusLabels.FormatVital(_vitals.GetCurrent(key), _vitals.GetMax(key)));
+            int cur = _vitals.GetCurrent(key);
+            int max = _vitals.GetMax(key);
+
+            if (showNumeric)
+            {
+                lines.Add(
+                    $"{PlayerStatusLabels.GetVitalName(key)}  " +
+                    PlayerStatusLabels.FormatVital(cur, max));
+            }
+            else
+            {
+                lines.Add(PlayerStatusLabels.FormatVitalProse(key, cur, max));
+            }
         }
 
         _vitalsText.text = string.Join("\n", lines);

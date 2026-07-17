@@ -9,8 +9,8 @@ namespace Garunnir.Runtime.Gameplay.Data
 {
     public sealed class PlayerBody : IPlayerBody
     {
-        public const int BaseHp = 60;
-        public const int HpPerStr = 3;
+        public const int BaseCondition = 60;
+        public const int ConditionPerStr = 3;
 
         readonly List<BodyPartNode> _roots = new();
 
@@ -22,9 +22,11 @@ namespace Garunnir.Runtime.Gameplay.Data
         {
             get
             {
-                if (!TryGet(BodyPartIds.Head, out BodyPartNode head) || head.HpCur <= 0)
+                if (!TryGet(BodyPartIds.Head, out BodyPartNode head) ||
+                    head.ConditionCur <= 0)
                     return true;
-                if (!TryGet(BodyPartIds.Torso, out BodyPartNode torso) || torso.HpCur <= 0)
+                if (!TryGet(BodyPartIds.Torso, out BodyPartNode torso) ||
+                    torso.ConditionCur <= 0)
                     return true;
                 return false;
             }
@@ -32,35 +34,35 @@ namespace Garunnir.Runtime.Gameplay.Data
 
         public static PlayerBody CreateHumanDefault(int strength)
         {
-            int hpMax = BaseHp + strength * HpPerStr;
+            int conditionMax = BaseCondition + strength * ConditionPerStr;
             var body = new PlayerBody();
 
-            BodyPartNode head = new(BodyPartIds.Head, true, hpMax);
+            BodyPartNode head = new(BodyPartIds.Head, true, conditionMax);
             head.AddChild(new BodyPartNode(BodyPartIds.Eyes, false));
             head.AddChild(new BodyPartNode(BodyPartIds.Mouth, false));
             body._roots.Add(head);
 
-            body._roots.Add(new BodyPartNode(BodyPartIds.Torso, true, hpMax));
+            body._roots.Add(new BodyPartNode(BodyPartIds.Torso, true, conditionMax));
 
-            BodyPartNode armL = new(BodyPartIds.ArmL, true, hpMax);
+            BodyPartNode armL = new(BodyPartIds.ArmL, true, conditionMax);
             BodyPartNode handL = new(BodyPartIds.HandL, false);
             handL.AddChild(new BodyPartNode(BodyPartIds.FingerThumbL, false));
             handL.AddChild(new BodyPartNode(BodyPartIds.FingerIndexL, false));
             armL.AddChild(handL);
             body._roots.Add(armL);
 
-            BodyPartNode armR = new(BodyPartIds.ArmR, true, hpMax);
+            BodyPartNode armR = new(BodyPartIds.ArmR, true, conditionMax);
             BodyPartNode handR = new(BodyPartIds.HandR, false);
             handR.AddChild(new BodyPartNode(BodyPartIds.FingerThumbR, false));
             handR.AddChild(new BodyPartNode(BodyPartIds.FingerIndexR, false));
             armR.AddChild(handR);
             body._roots.Add(armR);
 
-            BodyPartNode legL = new(BodyPartIds.LegL, true, hpMax);
+            BodyPartNode legL = new(BodyPartIds.LegL, true, conditionMax);
             legL.AddChild(new BodyPartNode(BodyPartIds.FootL, false));
             body._roots.Add(legL);
 
-            BodyPartNode legR = new(BodyPartIds.LegR, true, hpMax);
+            BodyPartNode legR = new(BodyPartIds.LegR, true, conditionMax);
             legR.AddChild(new BodyPartNode(BodyPartIds.FootR, false));
             body._roots.Add(legR);
 
@@ -121,26 +123,29 @@ namespace Garunnir.Runtime.Gameplay.Data
             return false;
         }
 
-        public int GetHpCur(string mainHpPartId)
+        public int GetConditionCur(string mainConditionPartId)
         {
-            if (!TryGet(mainHpPartId, out BodyPartNode node) || !node.HoldsHp)
+            if (!TryGet(mainConditionPartId, out BodyPartNode node) ||
+                !node.HasCondition)
                 return 0;
-            return node.HpCur;
+            return node.ConditionCur;
         }
 
-        public int GetHpMax(string mainHpPartId)
+        public int GetConditionMax(string mainConditionPartId)
         {
-            if (!TryGet(mainHpPartId, out BodyPartNode node) || !node.HoldsHp)
+            if (!TryGet(mainConditionPartId, out BodyPartNode node) ||
+                !node.HasCondition)
                 return 0;
-            return node.HpMax;
+            return node.ConditionMax;
         }
 
-        public void SetHp(string mainHpPartId, int current, int max)
+        public void SetCondition(string mainConditionPartId, int current, int max)
         {
-            if (!TryGet(mainHpPartId, out BodyPartNode node) || !node.HoldsHp)
+            if (!TryGet(mainConditionPartId, out BodyPartNode node) ||
+                !node.HasCondition)
                 return;
 
-            node.SetHp(current, max);
+            node.SetCondition(current, max);
             Changed?.Invoke();
         }
 

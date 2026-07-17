@@ -30,7 +30,12 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
 
         if (!body.TryGet(mainPartId, out BodyPartNode node))
         {
-            _bodyText.text = $"{PlayerStatusLabels.GetPartName(mainPartId)}\n{PlayerStatusLabels.Lost}";
+            if (_bodyText != null)
+            {
+                _bodyText.text =
+                    $"{PlayerStatusLabels.GetPartName(mainPartId)}\n" +
+                    PlayerStatusLabels.Lost;
+            }
             gameObject.SetActive(true);
             return;
         }
@@ -39,10 +44,13 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
         _builder.Append(PlayerStatusLabels.DetailHeader);
         _builder.Append('\n');
         _builder.Append(PlayerStatusLabels.GetPartName(node.PartId));
-        if (node.HoldsHp)
+        if (node.HasCondition)
         {
             _builder.Append("  ");
-            _builder.Append(PlayerStatusLabels.FormatHp(node.HpCur, node.HpMax));
+            _builder.Append(
+                PlayerStatusLabels.FormatCondition(
+                    node.ConditionCur,
+                    node.ConditionMax));
         }
 
         _builder.Append("\n\n");

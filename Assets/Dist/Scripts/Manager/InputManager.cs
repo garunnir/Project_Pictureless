@@ -3,6 +3,7 @@
 // ============================================================
 // [A] UiMenu 입력  : AcquireUiMenuInput — 건설 등. Player 맵 OFF, UI 맵 ON.
 // [B] PlayerAction : SuppressPlayerAction — 인벤 창 위 등. Zoom/Aim만 끔, Move는 유지.
+// [C] Debug 입력   : AcquireDebugInput — 콘솔. Player OFF, UI+Debug ON.
 // 소비: Player* / Ui* 이벤트 또는 TryRead* — Actions 직접 접근 금지.
 
 using System;
@@ -18,10 +19,13 @@ public class InputManager : SceneSingleton<InputManager>
     InputAction _statusToggle;
 
     public bool IsUiMenuInputActive => _uiMenuInputOwners.Count > 0;
+    public bool IsDebugInputActive => _debugInputOwners.Count > 0;
 
     readonly HashSet<object> _uiMenuInputOwners = new();
+    readonly HashSet<object> _debugInputOwners = new();
     readonly Dictionary<PlayerAction, HashSet<object>> _suppressedActions = new();
-    bool _uiMenuInputApplied;
+    bool _gameplayBlockedApplied;
+    bool _debugMapApplied;
 
     public event Action<InputAction.CallbackContext> PlayerMovePerformed;
     public event Action<InputAction.CallbackContext> PlayerMoveCanceled;
@@ -50,6 +54,7 @@ public class InputManager : SceneSingleton<InputManager>
         _statusToggle.performed += ForwardPlayerStatusTogglePerformed;
         _actions.Player.Enable();
         _statusToggle.Enable();
+        _actions.Debug.Disable();
     }
 
     public IDisposable AcquireUiMenuInput(object owner)
@@ -60,6 +65,16 @@ public class InputManager : SceneSingleton<InputManager>
         _uiMenuInputOwners.Add(owner);
         ApplyActionMaps();
         return new UiMenuInputScope(this, owner);
+    }
+
+    public IDisposable AcquireDebugInput(object owner)
+    {
+        if (owner == null)
+            throw new ArgumentNullException(nameof(owner));
+
+        _debugInputOwners.Add(owner);
+        ApplyActionMaps();
+        return new DebugInputScope(this, owner);
     }
 
     public void SuppressPlayerAction(PlayerAction action, object owner, bool suppress)
@@ -80,11 +95,13 @@ public class InputManager : SceneSingleton<InputManager>
 
     public bool IsPlayerActionEnabled(PlayerAction action)
     {
-        if (IsUiMenuInputActive)
+        if (IsGameplayBlocked)
             return false;
 
         return !_suppressedActions.TryGetValue(action, out HashSet<object> owners) || owners.Count == 0;
     }
+
+    bool IsGameplayBlocked => IsDebugInputActive || IsUiMenuInputActive;
 
     public bool TryReadZoomScroll(out float scrollY)
     {
@@ -277,7 +294,7 @@ public class InputManager : SceneSingleton<InputManager>
 
     void ForwardPlayerInventoryTogglePerformed(InputAction.CallbackContext ctx)
     {
-        if (IsUiMenuInputActive)
+        if (IsGameplayBlocked)
             return;
 
         PlayerInventoryTogglePerformed?.Invoke(ctx);
@@ -285,7 +302,7 @@ public class InputManager : SceneSingleton<InputManager>
 
     void ForwardPlayerStatusTogglePerformed(InputAction.CallbackContext ctx)
     {
-        if (IsUiMenuInputActive)
+        if (IsGameplayBlocked)
             return;
 
         PlayerStatusTogglePerformed?.Invoke(ctx);
@@ -331,14 +348,25 @@ public class InputManager : SceneSingleton<InputManager>
         ApplyActionMaps();
     }
 
-    void ApplyActionMaps()
+    void ReleaseDebugInput(object owner)
     {
-        bool uiMenu = IsUiMenuInputActive;
-        if (uiMenu == _uiMenuInputApplied)
+        if (owner == null || !_debugInputOwners.Remove(owner))
             return;
 
-        _uiMenuInputApplied = uiMenu;
-        if (uiMenu)
+        ApplyActionMaps();
+    }
+
+    void ApplyActionMaps()
+    {
+        bool gameplayBlocked = IsGameplayBlocked;
+        bool debugMap = IsDebugInputActive;
+        if (gameplayBlocked == _gameplayBlockedApplied && debugMap == _debugMapApplied)
+            return;
+
+        _gameplayBlockedApplied = gameplayBlocked;
+        _debugMapApplied = debugMap;
+
+        if (gameplayBlocked)
         {
             _actions.Player.Disable();
             _statusToggle?.Disable();
@@ -350,6 +378,11 @@ public class InputManager : SceneSingleton<InputManager>
             _actions.Player.Enable();
             _statusToggle?.Enable();
         }
+
+        if (debugMap)
+            _actions.Debug.Enable();
+        else
+            _actions.Debug.Disable();
     }
 
     protected override void OnDestroy()
@@ -401,6 +434,28 @@ public class InputManager : SceneSingleton<InputManager>
 
             _disposed = true;
             _manager?.ReleaseUiMenuInput(_owner);
+        }
+    }
+
+    sealed class DebugInputScope : IDisposable
+    {
+        readonly InputManager _manager;
+        readonly object _owner;
+        bool _disposed;
+
+        public DebugInputScope(InputManager manager, object owner)
+        {
+            _manager = manager;
+            _owner = owner;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            _manager?.ReleaseDebugInput(_owner);
         }
     }
 }

@@ -24,6 +24,8 @@ namespace Garunnir.Runtime.Gameplay.Data
             [StatKeys.Cha] = DefaultAbility
         };
 
+        public event Action<string> Changed;
+
         public int GetSkillLevel(string skillId)
         {
             if (string.IsNullOrEmpty(skillId))
@@ -32,13 +34,23 @@ namespace Garunnir.Runtime.Gameplay.Data
             return _skillLevels.TryGetValue(skillId, out int lv) ? lv : 0;
         }
 
+        public void SetSkillLevel(string skillId, int level)
+        {
+            if (string.IsNullOrEmpty(skillId))
+                return;
+
+            int clampedLevel = Math.Max(0, level);
+            _skillLevels[skillId] = clampedLevel;
+            Changed?.Invoke(skillId);
+        }
+
         public void AddPractice(string skillId, int xp)
         {
             if (string.IsNullOrEmpty(skillId) || xp <= 0)
                 return;
 
             int level = GetSkillLevel(skillId);
-            int currentXp = _skillXp.TryGetValue(skillId, out int stored) ? stored : 0;
+            long currentXp = _skillXp.TryGetValue(skillId, out int stored) ? stored : 0;
             currentXp += xp;
 
             // BN 근사: required_exercise(nextLevel) = 100 × nextLevel^2
@@ -54,7 +66,8 @@ namespace Garunnir.Runtime.Gameplay.Data
             }
 
             _skillLevels[skillId] = level;
-            _skillXp[skillId] = currentXp;
+            _skillXp[skillId] = (int)Math.Min(currentXp, int.MaxValue);
+            Changed?.Invoke(skillId);
         }
 
         public int GetStat(string statKey)

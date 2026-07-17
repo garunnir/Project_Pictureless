@@ -1,17 +1,19 @@
 // ============================================================
-// UIPlayerStatusBodyPartRow — 메인 부위 HP 행 + 호버 상세 트리거
+// UIPlayerStatusBodyPartRow — 메인 부위 컨디션 행 + 호버 상세 트리거
 // ============================================================
 
 using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public sealed class UIPlayerStatusBodyPartRow : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] TMP_Text _nameText;
-    [SerializeField] TMP_Text _hpText;
+    [FormerlySerializedAs("_hpText")]
+    [SerializeField] TMP_Text _conditionText;
     [SerializeField] Image _fillImage;
     [SerializeField] Image _background;
 
@@ -35,8 +37,8 @@ public sealed class UIPlayerStatusBodyPartRow : MonoBehaviour, IPointerEnterHand
 
         if (!present)
         {
-            if (_hpText != null)
-                _hpText.text = PlayerStatusLabels.Lost;
+            if (_conditionText != null)
+                _conditionText.text = PlayerStatusLabels.Lost;
             if (_fillImage != null)
                 _fillImage.fillAmount = 0f;
             if (_background != null)
@@ -44,8 +46,8 @@ public sealed class UIPlayerStatusBodyPartRow : MonoBehaviour, IPointerEnterHand
             return;
         }
 
-        if (_hpText != null)
-            _hpText.text = PlayerStatusLabels.FormatHp(cur, max);
+        if (_conditionText != null)
+            _conditionText.text = PlayerStatusLabels.FormatCondition(cur, max);
         if (_fillImage != null)
             _fillImage.fillAmount = max > 0 ? Mathf.Clamp01((float)cur / max) : 0f;
         if (_background != null)
@@ -62,12 +64,12 @@ public sealed class UIPlayerStatusBodyPartRow : MonoBehaviour, IPointerEnterHand
 
     public void Wire(
         TMP_Text nameText,
-        TMP_Text hpText,
+        TMP_Text conditionText,
         Image fillImage,
         Image background)
     {
         _nameText = nameText;
-        _hpText = hpText;
+        _conditionText = conditionText;
         _fillImage = fillImage;
         _background = background;
     }

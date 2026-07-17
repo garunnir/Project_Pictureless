@@ -119,7 +119,7 @@ MonoBehaviour:
     text: "\uC774\uC0C1 \uC5C6\uC74C"
   - key: PlayerStatus.Lost
     text: "\uC0C1\uC2E4"
-  - key: PlayerStatus.HpFormat
+  - key: PlayerStatus.ConditionFormat
     text: '{0}/{1}'
   - key: PlayerStatus.VitalFormat
     text: '{0}/{1}'
@@ -165,6 +165,32 @@ MonoBehaviour:
     text: "\uAC08\uC99D"
   - key: PlayerStatus.Vital.Stamina
     text: "\uC2A4\uD0DC\uBBF8\uB098"
+  - key: PlayerStatus.Skill.survival
+    text: "\uC0DD\uC874\uC220"
+  - key: PlayerStatus.VitalProse.Hunger.Full
+    text: "\uBC30\uAC00 \uBD80\uB974\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Ok
+    text: "\uBC30\uAC00 \uB4E0\uB4EC\uD558\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Low
+    text: "\uBC30\uAC00 \uACE0\uD504\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Critical
+    text: "\uAD70\uC8FC\uB9AC\uACE0 \uC788\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.Full
+    text: "\uBAA9\uC774 \uCDA9\uBD84\uD788 \uCD95\uC778\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.Ok
+    text: "\uBAA9\uC774 \uB9C8\uB974\uC9C0 \uC54A\uC558\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.Low
+    text: "\uBAA9\uC774 \uB9C8\uB974\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.Critical
+    text: "\uBAA9\uC774 \uD0C0\uB294 \uAC83 \uAC19\uB2E4"
+  - key: PlayerStatus.VitalProse.Stamina.Full
+    text: "\uBAB8\uC774 \uAC00\uBCBD\uB2E4"
+  - key: PlayerStatus.VitalProse.Stamina.Ok
+    text: "\uC544\uC9C1 \uBC84\uD2F8 \uB9CC\uD558\uB2E4"
+  - key: PlayerStatus.VitalProse.Stamina.Low
+    text: "\uBAB8\uC774 \uBB34\uAC81\uB2E4"
+  - key: PlayerStatus.VitalProse.Stamina.Critical
+    text: "\uAE30\uC9C4\uB9E5\uC9C4\uD558\uB2E4"
   - key: PlayerStatus.Effect.bleed
     text: "\uCD9C\uD608"
   - key: PlayerStatus.Effect.fracture
