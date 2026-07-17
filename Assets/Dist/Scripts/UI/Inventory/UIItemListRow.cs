@@ -62,7 +62,7 @@ public sealed class UIItemListRow : MonoBehaviour,
         if (_categoryText != null)
         {
             _categoryText.overflowMode = TextOverflowModes.Ellipsis;
-            _categoryText.text = item.category ?? "";
+            _categoryText.text = InventoryWindowLabels.GetItemCategory(item.category);
         }
 
         if (_nameText != null)
@@ -76,7 +76,10 @@ public sealed class UIItemListRow : MonoBehaviour,
         if (_detailText != null)
         {
             _detailText.overflowMode = TextOverflowModes.Ellipsis;
-            _detailText.text = $"x{stack.Count}  {stack.TotalWeight:0.##}kg  {stack.TotalVolume:0.##}L";
+            _detailText.text = InventoryWindowLabels.FormatStackDetail(
+                stack.Count,
+                stack.TotalWeight,
+                stack.TotalVolume);
         }
 
         if (_iconImage != null)

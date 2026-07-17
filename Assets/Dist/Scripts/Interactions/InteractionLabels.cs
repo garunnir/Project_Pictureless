@@ -4,9 +4,11 @@
 
 public static class InteractionLabels
 {
-    const string KeyDoorOpen = "Interaction.DoorOpen";
-    const string KeyDoorClose = "Interaction.DoorClose";
+    public const string KeyDoorOpen = "Interaction.DoorOpen";
+    public const string KeyDoorClose = "Interaction.DoorClose";
+    public const string KeyInteractKey = "Interaction.Key";
 
-    public static string DoorOpen => Loc.Get(KeyDoorOpen, "문 열기");
-    public static string DoorClose => Loc.Get(KeyDoorClose, "문 닫기");
+    public static string DoorOpen => Loc.Get(KeyDoorOpen);
+    public static string DoorClose => Loc.Get(KeyDoorClose);
+    public static string InteractKey => Loc.Get(KeyInteractKey);
 }

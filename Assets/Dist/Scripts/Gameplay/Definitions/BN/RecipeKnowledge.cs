@@ -14,7 +14,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         public static string GetFailureReason(RecipeData recipe, IItemContainer container)
         {
             if (recipe == null || string.IsNullOrEmpty(recipe.result))
-                return Loc.Get("RecipeKnowledge.Invalid", "Invalid recipe");
+                return Loc.Get("RecipeKnowledge.Invalid");
 
             int playerSkillLv = !string.IsNullOrEmpty(recipe.skill_used)
                 ? GameplayData.Stats.GetSkillLevel(recipe.skill_used)
@@ -41,15 +41,15 @@ namespace Garunnir.Runtime.Gameplay.Data
             }
 
             if (hasAuto)
-                return Loc.Format("RecipeKnowledge.SkillRequired", "스킬 lv{0} 필요", recipe.difficulty);
+                return Loc.Format("RecipeKnowledge.SkillRequired", recipe.difficulty);
 
-            return Loc.Get("RecipeKnowledge.Locked", "Locked");
+            return Loc.Get("RecipeKnowledge.Locked");
         }
 
         static string TryResolveBookReason(RecipeData recipe, IItemContainer container, int playerSkillLv)
         {
             if (container == null || recipe.book_learn == null)
-                return Loc.Get("RecipeKnowledge.BookRequired", "책 필요");
+                return Loc.Get("RecipeKnowledge.BookRequired");
 
             bool sawBookEntry = false;
 
@@ -72,12 +72,12 @@ namespace Garunnir.Runtime.Gameplay.Data
                 if (playerSkillLv >= requiredSkillLevel)
                     return null;
 
-                return Loc.Format("RecipeKnowledge.SkillRequired", "스킬 lv{0} 필요", requiredSkillLevel);
+                return Loc.Format("RecipeKnowledge.SkillRequired", requiredSkillLevel);
             }
 
             return sawBookEntry
-                ? Loc.Get("RecipeKnowledge.BookRequired", "책 필요")
-                : Loc.Get("RecipeKnowledge.Locked", "Locked");
+                ? Loc.Get("RecipeKnowledge.BookRequired")
+                : Loc.Get("RecipeKnowledge.Locked");
         }
     }
 }

@@ -257,8 +257,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8639b159acfa724db9b2e6a7e7c8da1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::ContainerInteractable
-  displayName: "\uC0C1\uC790"
-  hintText: "E: \uB8E8\uD305"
+  displayName: Interaction.Crate.DisplayName
+  hintText: Interaction.Crate.Hint
   _definition: {fileID: 11400000, guid: 430732fd920486a4394a3d2a6806978a, type: 2}
   _containerId: world-WorldContainer_Crate_A
   _seedDemoItems: 1

@@ -290,8 +290,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf2aeb6e357b1294b8716354a3375be2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::Interactions.DoorInteractable
-  displayName: "\uBB38 \uC5F4\uAE30"
-  hintText: "\uBB38 \uC5F4\uAE30"
+  displayName: Interaction.Door.DisplayName
+  hintText: Interaction.DoorOpen
   _outlineSpriteRenderer: {fileID: 0}
   isOpen: 0
 --- !u!95 &811257846255588917

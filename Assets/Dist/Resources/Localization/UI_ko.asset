@@ -27,6 +27,8 @@ MonoBehaviour:
     text: "\uBD84\uD574 \uBD88\uAC00"
   - key: ItemContextMenu.UnknownResult
     text: "?"
+  - key: ItemContextMenu.SubmenuChevron
+    text: "\u25B6"
   - key: RecipeCategory.CC_FOOD
     text: "\uC74C\uC2DD"
   - key: RecipeCategory.CC_DRINK
@@ -57,6 +59,8 @@ MonoBehaviour:
     text: "\uC2EC\uD558\uAC8C \uC190\uC0C1\uB428"
   - key: ItemDamage.4
     text: "\uAC70\uC758 \uD30C\uAD34\uB428"
+  - key: ItemDamage.NameFormat
+    text: "{0} ({1})"
   - key: RecipeKnowledge.Invalid
     text: Invalid recipe
   - key: RecipeKnowledge.SkillRequired
@@ -65,6 +69,8 @@ MonoBehaviour:
     text: "\uCC45 \uD544\uC694"
   - key: RecipeKnowledge.Locked
     text: Locked
+  - key: Recipe.ResultCountFormat
+    text: "{0} x{1}"
   - key: Inventory.PrimaryTitle
     text: Inventory
   - key: Inventory.LootTitle
@@ -73,9 +79,27 @@ MonoBehaviour:
     text: "\u2014 kg"
   - key: Inventory.EmptyVolume
     text: "\u2014 L"
+  - key: Inventory.WeightCapacity
+    text: "{0:0.##}/{1:0.##} kg"
+  - key: Inventory.VolumeCapacity
+    text: "{0:0.##}/{1:0.##} L"
+  - key: Inventory.StackDetail
+    text: "x{0}  {1:0.##}kg  {2:0.##}L"
+  - key: Inventory.StackCount
+    text: "x{0}"
   - key: Interaction.DoorOpen
     text: "\uBB38 \uC5F4\uAE30"
   - key: Interaction.DoorClose
     text: "\uBB38 \uB2EB\uAE30"
+  - key: Interaction.Door.DisplayName
+    text: "\uBB38"
+  - key: Interaction.Crate.DisplayName
+    text: "\uC0C1\uC790"
+  - key: Interaction.Crate.Hint
+    text: "\uB8E8\uD305"
+  - key: Interaction.Key
+    text: E
   - key: Tile.UncategorizedCategory
     text: "\uAE30\uD0C0"
+  - key: UI.SelectBtn.ObjectNamePrefix
+    text: "\uC120\uD0DD{0}"

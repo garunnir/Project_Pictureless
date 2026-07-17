@@ -88,7 +88,7 @@ public class ConstDataTable
             /// category가 비어있는 타일의 기본 분류명
             /// </summary>
             public static string UncategorizedCategory =>
-                Loc.Get(KeyUncategorizedCategory, "기타");
+                Loc.Get(KeyUncategorizedCategory);
         }
     public class AssetPath
     {

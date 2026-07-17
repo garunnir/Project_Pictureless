@@ -298,7 +298,7 @@ static class InventoryUIHierarchyBuilder
         headerArea.AddComponent<InventoryWindowDragHandler>();
 
         var headerTitle = CreateTmp("Txt_Title", headerArea.transform, 0f, spec.HeaderFontSize);
-        headerTitle.text = "Inventory";
+        headerTitle.text = InventoryWindowLabels.PrimaryTitle;
         headerTitle.alignment = TextAlignmentOptions.MidlineLeft;
         headerTitle.raycastTarget = false;
         Stretch(headerTitle.rectTransform, spec.ChromeMargin, spec.ChromeMargin, 0f, 0f);

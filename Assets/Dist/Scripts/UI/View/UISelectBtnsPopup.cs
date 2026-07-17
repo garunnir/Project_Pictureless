@@ -30,7 +30,7 @@ public class UISelectBtnsPopup : UI
         foreach (string selection in selections)
         {
             var obj=LeanPool.Spawn(btnTemplet,transform.parent);
-            obj.name = "선택"+selection;
+            obj.name = UISelectBtnsLabels.FormatObjectName(selection);
             activatedbuttons.Add(obj);
         }
         return activatedbuttons;
@@ -38,10 +38,10 @@ public class UISelectBtnsPopup : UI
     public Button CreateBtns(string selection)
     {
         var obj = LeanPool.Spawn(btnTemplet, transform);
-        obj.name = "선택" + selection;
+        obj.name = UISelectBtnsLabels.FormatObjectName(selection);
         activatedbuttons.Add(obj);
         var tmp =obj.GetComponentInChildren<TextMeshProUGUI>();
-        if(tmp != null) { tmp.text = selection; }
+        if(tmp != null) { tmp.text = UISelectBtnsLabels.GetSelectionLabel(selection); }
         return obj;
     }
     public void ClearAll()

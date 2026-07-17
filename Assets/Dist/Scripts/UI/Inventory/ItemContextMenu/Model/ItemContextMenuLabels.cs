@@ -11,13 +11,14 @@ public static class ItemContextMenuLabels
     const string KeyCraftBlocked = "ItemContextMenu.CraftBlocked";
     const string KeyUncraftBlocked = "ItemContextMenu.UncraftBlocked";
     const string KeyUnknownResult = "ItemContextMenu.UnknownResult";
+    const string KeySubmenuChevron = "ItemContextMenu.SubmenuChevron";
 
-    public static string Craft => Loc.Get(KeyCraft, "제작");
-    public static string Uncraft => Loc.Get(KeyUncraft, "분해");
-    public static string MiscGroup => Loc.Get(KeyMiscGroup, "기타");
-    public static string UncraftPrefix => Loc.Get(KeyUncraftPrefix, "분해: ");
-    public static string CraftBlocked => Loc.Get(KeyCraftBlocked, "재료·도구·스킬 부족");
-    public static string UncraftBlocked => Loc.Get(KeyUncraftBlocked, "분해 불가");
-    public static string UnknownResult => Loc.Get(KeyUnknownResult, "?");
-    public const string SubmenuChevron = "▶";
+    public static string Craft => Loc.Get(KeyCraft);
+    public static string Uncraft => Loc.Get(KeyUncraft);
+    public static string MiscGroup => Loc.Get(KeyMiscGroup);
+    public static string UncraftPrefix => Loc.Get(KeyUncraftPrefix);
+    public static string CraftBlocked => Loc.Get(KeyCraftBlocked);
+    public static string UncraftBlocked => Loc.Get(KeyUncraftBlocked);
+    public static string UnknownResult => Loc.Get(KeyUnknownResult);
+    public static string SubmenuChevron => Loc.Get(KeySubmenuChevron);
 }

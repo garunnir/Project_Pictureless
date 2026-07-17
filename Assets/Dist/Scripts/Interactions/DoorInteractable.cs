@@ -11,6 +11,8 @@ namespace Interactions
         {
             base.Awake();
             _doorAnimator = GetComponent<Animator>();
+            if (string.IsNullOrEmpty(hintText))
+                hintText = isOpen ? InteractionLabels.KeyDoorClose : InteractionLabels.KeyDoorOpen;
         }
         public override bool CanInteract(GameObject interactor)
         {
@@ -22,7 +24,7 @@ namespace Interactions
         {
             isOpen = !isOpen;
             _doorAnimator.SetBool("isOpen", isOpen);
-            hintText = isOpen ? InteractionLabels.DoorClose : InteractionLabels.DoorOpen;
+            hintText = isOpen ? InteractionLabels.KeyDoorClose : InteractionLabels.KeyDoorOpen;
         }
 
         public override void OnFocus(GameObject interactor)

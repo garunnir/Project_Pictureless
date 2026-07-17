@@ -51,8 +51,11 @@ public abstract class Interactable : MonoBehaviour, IInteractable
         _focusVisual?.OnUnfocusVisual(interactor);
     }
 
-    public string DisplayName => displayName;
-    public string HintText => hintText;
+    public string DisplayName =>
+        string.IsNullOrEmpty(displayName) ? string.Empty : Loc.Get(displayName);
+
+    public string HintText =>
+        string.IsNullOrEmpty(hintText) ? string.Empty : Loc.Get(hintText);
 }
 
 }

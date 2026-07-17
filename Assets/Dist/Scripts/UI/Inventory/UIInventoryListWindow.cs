@@ -322,9 +322,9 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         float maxVolume = _selectedContainer.CapacityPolicy.GetMaxVolume(_selectedContainer);
 
         if (_weightText != null)
-            _weightText.text = $"{usedWeight:0.##}/{maxWeight:0.##} kg";
+            _weightText.text = InventoryWindowLabels.FormatWeightCapacity(usedWeight, maxWeight);
         if (_volumeText != null)
-            _volumeText.text = $"{usedVolume:0.##}/{maxVolume:0.##} L";
+            _volumeText.text = InventoryWindowLabels.FormatVolumeCapacity(usedVolume, maxVolume);
     }
 
     public void RefreshSidebarAndSelection()
