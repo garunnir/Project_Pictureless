@@ -11,7 +11,7 @@ using UnityEngine.UI;
 public sealed class UIPlayerStatusWindow : MonoBehaviour
 {
     [SerializeField] TMP_Text _headerTitle;
-    [SerializeField] RectTransform _bodyPartRowsRoot;
+    [SerializeField] RectTransform _bodyPartViewsRoot;
     [SerializeField] TMP_Text _vitalsText;
     [SerializeField] TMP_Text _skillsText;
     [SerializeField] Button _debugSeverArmLButton;
@@ -19,6 +19,7 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
     [SerializeField] UIPlayerStatusDetailPanel _detailPanel;
     [SerializeField] UIWindowDragHandler _windowDragHandler;
 
+    readonly List<UIPlayerStatusBodyPartGraphic> _graphics = new(6);
     readonly List<UIPlayerStatusBodyPartRow> _rows = new(6);
 
     IPlayerBody _body;
@@ -64,16 +65,19 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
         if (_vitals != null)
             _vitals.Changed += OnVitalChanged;
 
+        bool debugControlsEnabled = Debug.isDebugBuild;
         if (_debugSeverArmLButton != null)
         {
+            _debugSeverArmLButton.gameObject.SetActive(debugControlsEnabled);
             _debugSeverArmLButton.onClick.RemoveListener(OnDebugSeverArmL);
-            _debugSeverArmLButton.onClick.AddListener(OnDebugSeverArmL);
+            if (debugControlsEnabled)
+                _debugSeverArmLButton.onClick.AddListener(OnDebugSeverArmL);
         }
 
-        if (_debugSeverArmLLabel != null)
+        if (_debugSeverArmLLabel != null && debugControlsEnabled)
             _debugSeverArmLLabel.text = PlayerStatusLabels.DebugSeverArmL;
 
-        EnsureRows();
+        EnsurePartViews();
         Refresh();
     }
 
@@ -101,47 +105,81 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
         _body?.RemovePart(BodyPartIds.ArmL);
     }
 
-    void EnsureRows()
+    void EnsurePartViews()
     {
-        if (_bodyPartRowsRoot == null)
+        if (_bodyPartViewsRoot == null)
             return;
 
-        if (_rows.Count > 0)
-            return;
-
-        UIPlayerStatusBodyPartRow[] existing =
-            _bodyPartRowsRoot.GetComponentsInChildren<UIPlayerStatusBodyPartRow>(true);
-        for (int i = 0; i < existing.Length; i++)
-            _rows.Add(existing[i]);
+        if (_graphics.Count == 0)
+        {
+            UIPlayerStatusBodyPartGraphic[] existingGraphics =
+                _bodyPartViewsRoot.GetComponentsInChildren<UIPlayerStatusBodyPartGraphic>(true);
+            for (int i = 0; i < existingGraphics.Length; i++)
+                _graphics.Add(existingGraphics[i]);
+        }
 
         string[] mains = BodyPartIds.MainHpParts;
+        if (_graphics.Count > 0)
+        {
+            for (int i = 0; i < _graphics.Count; i++)
+            {
+                string partId = _graphics[i].PartId;
+                if (string.IsNullOrEmpty(partId))
+                    continue;
+
+                _graphics[i].Bind(partId, OnPartHover, OnPartExit);
+            }
+            return;
+        }
+
+        // Recovery fallback for older prefabs that still contain HP rows.
+        if (_rows.Count == 0)
+        {
+            UIPlayerStatusBodyPartRow[] existing =
+                _bodyPartViewsRoot.GetComponentsInChildren<UIPlayerStatusBodyPartRow>(true);
+            for (int i = 0; i < existing.Length; i++)
+                _rows.Add(existing[i]);
+        }
+
         while (_rows.Count < mains.Length)
         {
-            UIPlayerStatusBodyPartRow row = PlayerStatusUIFactory.CreateBodyPartRow(_bodyPartRowsRoot);
+            UIPlayerStatusBodyPartRow row =
+                PlayerStatusUIFactory.CreateBodyPartRow(_bodyPartViewsRoot);
             _rows.Add(row);
         }
 
         for (int i = 0; i < mains.Length && i < _rows.Count; i++)
-            _rows[i].Bind(mains[i], OnRowHover, OnRowExit);
+            _rows[i].Bind(mains[i], OnPartHover, OnPartExit);
     }
 
-    void OnRowHover(string partId)
+    void OnPartHover(string partId)
     {
         if (_detailPanel == null || _body == null)
             return;
 
-        Vector2 tipPos = new(220f, 40f);
-        _detailPanel.ShowForPart(_body, partId, tipPos);
+        _detailPanel.ShowForPart(_body, partId);
     }
 
-    void OnRowExit() => _detailPanel?.Hide();
+    void OnPartExit() => _detailPanel?.Hide();
 
     public void Refresh()
     {
         SetHeaderTitle(PlayerStatusLabels.Title);
-        EnsureRows();
+        EnsurePartViews();
 
         string[] mains = BodyPartIds.MainHpParts;
+        for (int i = 0; i < _graphics.Count; i++)
+        {
+            string partId = _graphics[i].PartId;
+            if (string.IsNullOrEmpty(partId))
+                continue;
+
+            bool present = _body != null && _body.Has(partId);
+            int cur = present ? _body.GetHpCur(partId) : 0;
+            int max = present ? _body.GetHpMax(partId) : 0;
+            _graphics[i].SetDisplay(cur, max, present);
+        }
+
         for (int i = 0; i < _rows.Count && i < mains.Length; i++)
         {
             string partId = mains[i];
@@ -210,7 +248,7 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
 
     public void Wire(
         TMP_Text headerTitle,
-        RectTransform bodyPartRowsRoot,
+        RectTransform bodyPartViewsRoot,
         TMP_Text vitalsText,
         TMP_Text skillsText,
         Button debugSeverArmLButton,
@@ -219,7 +257,7 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
         UIWindowDragHandler dragHandler)
     {
         _headerTitle = headerTitle;
-        _bodyPartRowsRoot = bodyPartRowsRoot;
+        _bodyPartViewsRoot = bodyPartViewsRoot;
         _vitalsText = vitalsText;
         _skillsText = skillsText;
         _debugSeverArmLButton = debugSeverArmLButton;

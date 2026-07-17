@@ -11,7 +11,6 @@ using UnityEngine;
 public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
 {
     [SerializeField] TMP_Text _bodyText;
-    [SerializeField] RectTransform _rect;
 
     readonly StringBuilder _builder = new(256);
     readonly List<BodyPartEffect> _effectBuffer = new(16);
@@ -21,7 +20,7 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    public void ShowForPart(IPlayerBody body, string mainPartId, Vector2 anchoredPosition)
+    public void ShowForPart(IPlayerBody body, string mainPartId)
     {
         if (body == null || string.IsNullOrEmpty(mainPartId))
         {
@@ -33,8 +32,6 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
         {
             _bodyText.text = $"{PlayerStatusLabels.GetPartName(mainPartId)}\n{PlayerStatusLabels.Lost}";
             gameObject.SetActive(true);
-            if (_rect != null)
-                _rect.anchoredPosition = anchoredPosition;
             return;
         }
 
@@ -83,8 +80,6 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
             _bodyText.text = _builder.ToString();
 
         gameObject.SetActive(true);
-        if (_rect != null)
-            _rect.anchoredPosition = anchoredPosition;
     }
 
     void AppendSubtree(BodyPartNode node, int depth)
@@ -117,9 +112,8 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
         }
     }
 
-    public void Wire(TMP_Text bodyText, RectTransform rect)
+    public void Wire(TMP_Text bodyText)
     {
         _bodyText = bodyText;
-        _rect = rect;
     }
 }

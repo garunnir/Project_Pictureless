@@ -2,6 +2,7 @@
 // PlayerStatusUIFactory — 상태창 UI 계층 런타임/에디터 공통 생성
 // ============================================================
 
+using Garunnir.Runtime.Gameplay.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,9 +10,18 @@ using UnityEngine.UI;
 public static class PlayerStatusUIFactory
 {
     public const string DefaultUIFontPath = "Assets/Dist/Scripts/UI/Font/Katuri SDF.asset";
+    const string BodyPartSpriteFolder =
+        "Assets/Dist/Visual/Sprites/UI/PlayerStatus/";
+    const string HeadSpritePath = BodyPartSpriteFolder + "PlayerStatus_Head.png";
+    const string TorsoSpritePath = BodyPartSpriteFolder + "PlayerStatus_Torso.png";
+    const string ArmLSpritePath = BodyPartSpriteFolder + "PlayerStatus_ArmL.png";
+    const string ArmRSpritePath = BodyPartSpriteFolder + "PlayerStatus_ArmR.png";
+    const string LegLSpritePath = BodyPartSpriteFolder + "PlayerStatus_LegL.png";
+    const string LegRSpritePath = BodyPartSpriteFolder + "PlayerStatus_LegR.png";
 
     public static readonly Vector2 WindowSize = new(360f, 480f);
     public static readonly Vector2 DetailSize = new(240f, 320f);
+    static readonly Vector2 BodyDiagramSize = new(147f, 220f);
     public const float RowHeight = 28f;
     public const float HeaderHeight = 32f;
     public const float ResizeEdgeThickness = 8f;
@@ -25,6 +35,46 @@ public static class PlayerStatusUIFactory
     static readonly Color FillBgColor = new(0.08f, 0.08f, 0.08f, 1f);
     static readonly Color DetailColor = new(0.1f, 0.12f, 0.16f, 0.98f);
     static readonly Color ResizeHandleColor = new(1f, 1f, 1f, 0.02f);
+
+    static readonly BodyPartGraphicSpec[] BodyPartGraphicSpecs =
+    {
+        new(
+            BodyPartIds.Torso,
+            "Img_Torso",
+            TorsoSpritePath,
+            new Vector2(0.35f, 0.35f),
+            new Vector2(0.65f, 0.74f)),
+        new(
+            BodyPartIds.LegR,
+            "Img_LegR",
+            LegRSpritePath,
+            new Vector2(0.24f, 0.01f),
+            new Vector2(0.48f, 0.35f)),
+        new(
+            BodyPartIds.LegL,
+            "Img_LegL",
+            LegLSpritePath,
+            new Vector2(0.52f, 0.01f),
+            new Vector2(0.76f, 0.35f)),
+        new(
+            BodyPartIds.ArmR,
+            "Img_ArmR",
+            ArmRSpritePath,
+            new Vector2(0.12f, 0.42f),
+            new Vector2(0.34f, 0.74f)),
+        new(
+            BodyPartIds.ArmL,
+            "Img_ArmL",
+            ArmLSpritePath,
+            new Vector2(0.66f, 0.42f),
+            new Vector2(0.88f, 0.74f)),
+        new(
+            BodyPartIds.Head,
+            "Img_Head",
+            HeadSpritePath,
+            new Vector2(0.36f, 0.78f),
+            new Vector2(0.64f, 0.99f))
+    };
 
     public static UIPlayerStatusWindow CreateWindowRoot()
     {
@@ -55,19 +105,7 @@ public static class PlayerStatusUIFactory
         TMP_Text title = CreateTmp("Title", header.transform, FontSizeHeader, TextAlignmentOptions.MidlineLeft);
         Stretch(title.rectTransform, 8f, 8f, 4f, 4f);
 
-        GameObject rowsRootGo = CreateRect("BodyPartRows", content, Color.clear);
-        rowsRootGo.GetComponent<Image>().raycastTarget = false;
-        rowsRootGo.AddComponent<LayoutElement>().preferredHeight = RowHeight * 6f + 8f;
-        VerticalLayoutGroup rowsLayout = rowsRootGo.AddComponent<VerticalLayoutGroup>();
-        rowsLayout.spacing = 4f;
-        rowsLayout.childControlWidth = true;
-        rowsLayout.childControlHeight = true;
-        rowsLayout.childForceExpandWidth = true;
-        rowsLayout.childForceExpandHeight = false;
-        RectTransform rowsRoot = rowsRootGo.GetComponent<RectTransform>();
-
-        for (int i = 0; i < 6; i++)
-            CreateBodyPartRow(rowsRoot);
+        RectTransform bodyDiagramRoot = CreateBodyPartDiagram(content);
 
         TMP_Text vitals = CreateTmpBlock("Vitals", content, 72f);
         TMP_Text skills = CreateTmpBlock("Skills", content, 72f);
@@ -86,7 +124,7 @@ public static class PlayerStatusUIFactory
         UIPlayerStatusWindow window = root.AddComponent<UIPlayerStatusWindow>();
         window.Wire(
             title,
-            rowsRoot,
+            bodyDiagramRoot,
             vitals,
             skills,
             debugBtn,
@@ -96,6 +134,56 @@ public static class PlayerStatusUIFactory
 
         detail.Hide();
         return window;
+    }
+
+    static RectTransform CreateBodyPartDiagram(Transform parent)
+    {
+        GameObject area = CreateRect("Area_BodyDiagram", parent, Color.clear);
+        area.GetComponent<Image>().raycastTarget = false;
+        area.AddComponent<LayoutElement>().preferredHeight = BodyDiagramSize.y;
+
+        var canvasGo = new GameObject("BodyDiagramCanvas", typeof(RectTransform));
+        canvasGo.transform.SetParent(area.transform, false);
+        canvasGo.layer = LayerMask.NameToLayer("UI");
+        RectTransform canvas = canvasGo.GetComponent<RectTransform>();
+        canvas.anchorMin = new Vector2(0.5f, 0.5f);
+        canvas.anchorMax = new Vector2(0.5f, 0.5f);
+        canvas.pivot = new Vector2(0.5f, 0.5f);
+        canvas.anchoredPosition = Vector2.zero;
+        canvas.sizeDelta = BodyDiagramSize;
+
+        for (int i = 0; i < BodyPartGraphicSpecs.Length; i++)
+            CreateBodyPartGraphic(canvas, BodyPartGraphicSpecs[i]);
+
+        return area.GetComponent<RectTransform>();
+    }
+
+    static void CreateBodyPartGraphic(
+        RectTransform canvas,
+        BodyPartGraphicSpec spec)
+    {
+        GameObject visualGo = CreateRect(spec.VisualName, canvas, Color.white);
+        Image visual = visualGo.GetComponent<Image>();
+        visual.sprite = LoadBodyPartSprite(spec.SpritePath);
+        visual.preserveAspect = true;
+        visual.raycastTarget = false;
+        Stretch(visual.rectTransform, 0f, 0f, 0f, 0f);
+
+        GameObject hitGo = CreateRect(
+            spec.VisualName.Replace("Img_", "Hit_"),
+            canvas,
+            Color.clear);
+        Image hitImage = hitGo.GetComponent<Image>();
+        hitImage.raycastTarget = true;
+        RectTransform hitRect = hitGo.GetComponent<RectTransform>();
+        hitRect.anchorMin = spec.HitAnchorMin;
+        hitRect.anchorMax = spec.HitAnchorMax;
+        hitRect.offsetMin = Vector2.zero;
+        hitRect.offsetMax = Vector2.zero;
+
+        UIPlayerStatusBodyPartGraphic graphic =
+            hitGo.AddComponent<UIPlayerStatusBodyPartGraphic>();
+        graphic.Wire(visual, spec.PartId);
     }
 
     static void CreateResizeHandles(Transform root)
@@ -196,7 +284,7 @@ public static class PlayerStatusUIFactory
         body.overflowMode = TextOverflowModes.Overflow;
 
         UIPlayerStatusDetailPanel view = panel.AddComponent<UIPlayerStatusDetailPanel>();
-        view.Wire(body, rect);
+        view.Wire(body);
         return view;
     }
 
@@ -252,5 +340,40 @@ public static class PlayerStatusUIFactory
 #else
         return TMP_Settings.defaultFontAsset;
 #endif
+    }
+
+    static Sprite LoadBodyPartSprite(string path)
+    {
+#if UNITY_EDITOR
+        Sprite sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        if (sprite == null)
+            Debug.LogError($"[PlayerStatusUIFactory] Body-part sprite not found: {path}");
+        return sprite;
+#else
+        return null;
+#endif
+    }
+
+    readonly struct BodyPartGraphicSpec
+    {
+        public readonly string PartId;
+        public readonly string VisualName;
+        public readonly string SpritePath;
+        public readonly Vector2 HitAnchorMin;
+        public readonly Vector2 HitAnchorMax;
+
+        public BodyPartGraphicSpec(
+            string partId,
+            string visualName,
+            string spritePath,
+            Vector2 hitAnchorMin,
+            Vector2 hitAnchorMax)
+        {
+            PartId = partId;
+            VisualName = visualName;
+            SpritePath = spritePath;
+            HitAnchorMin = hitAnchorMin;
+            HitAnchorMax = hitAnchorMax;
+        }
     }
 }

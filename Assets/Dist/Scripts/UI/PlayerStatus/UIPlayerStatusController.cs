@@ -8,7 +8,7 @@ using UnityEngine.InputSystem;
 
 public sealed class UIPlayerStatusController : MonoBehaviour
 {
-    [SerializeField] UIPlayerStatusWindow _windowPrefab;
+    [SerializeField, Required] UIPlayerStatusWindow _windowPrefab;
     [SerializeField] UIPlayerStatusWindow _window;
     [SerializeField] Canvas _uiCanvas;
     [SerializeField] UICanvasLayerHost _layerHost;
@@ -112,10 +112,15 @@ public sealed class UIPlayerStatusController : MonoBehaviour
             ? _layerHost.GetLayerRoot(UICanvasLayer.Window)
             : _uiCanvas.transform;
 
-        if (_windowPrefab != null)
-            _window = Instantiate(_windowPrefab, windowRoot);
-        else
-            _window = PlayerStatusUIFactory.CreateWindowRoot();
+        if (_windowPrefab == null)
+        {
+            Debug.LogError(
+                "[UIPlayerStatusController] Window prefab is not assigned.",
+                this);
+            return;
+        }
+
+        _window = Instantiate(_windowPrefab, windowRoot);
 
         if (_window.transform.parent != windowRoot)
             _window.transform.SetParent(windowRoot, false);
