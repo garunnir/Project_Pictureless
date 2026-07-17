@@ -20,7 +20,7 @@ public sealed class UIInventoryListWindow : MonoBehaviour
     [Required, SerializeField] UIContainerSidebar _sidebar;
     [SerializeField] RectTransform _listArea;
     [SerializeField] RectTransform _sidebarArea;
-    [SerializeField] InventoryWindowDragHandler _windowDragHandler;
+    [SerializeField] UIWindowDragHandler _windowDragHandler;
     [SerializeField] TMP_Text _headerTitle;
     [SerializeField] TMP_Text _weightText;
     [SerializeField] TMP_Text _volumeText;
@@ -50,12 +50,12 @@ public sealed class UIInventoryListWindow : MonoBehaviour
     public void ConfigureWindowChrome(Canvas rootCanvas, Vector2 minSize, Vector2 maxSize)
     {
         if (_windowDragHandler == null)
-            _windowDragHandler = GetComponentInChildren<InventoryWindowDragHandler>(true);
+            _windowDragHandler = GetComponentInChildren<UIWindowDragHandler>(true);
 
         _windowDragHandler?.Initialize(WindowRect, rootCanvas);
 
-        InventoryWindowResizeHandler[] resizeHandlers =
-            GetComponentsInChildren<InventoryWindowResizeHandler>(true);
+        UIWindowResizeHandler[] resizeHandlers =
+            GetComponentsInChildren<UIWindowResizeHandler>(true);
         for (int i = 0; i < resizeHandlers.Length; i++)
             resizeHandlers[i].Initialize(WindowRect, rootCanvas, minSize, maxSize);
 

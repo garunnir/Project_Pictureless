@@ -22,11 +22,11 @@ MonoBehaviour:
   - key: ItemContextMenu.UncraftPrefix
     text: "\uBD84\uD574: "
   - key: ItemContextMenu.CraftBlocked
-    text: "\uC7AC\uB8CC\u00B7\uB3C4\uAD6C\u00B7\uC2A4\uD0AC \uBD80\uC871"
+    text: "\uC7AC\uB8CC\xB7\uB3C4\uAD6C\xB7\uC2A4\uD0AC \uBD80\uC871"
   - key: ItemContextMenu.UncraftBlocked
     text: "\uBD84\uD574 \uBD88\uAC00"
   - key: ItemContextMenu.UnknownResult
-    text: "?"
+    text: '?'
   - key: ItemContextMenu.SubmenuChevron
     text: "\u25B6"
   - key: RecipeCategory.CC_FOOD
@@ -60,7 +60,7 @@ MonoBehaviour:
   - key: ItemDamage.4
     text: "\uAC70\uC758 \uD30C\uAD34\uB428"
   - key: ItemDamage.NameFormat
-    text: "{0} ({1})"
+    text: '{0} ({1})'
   - key: RecipeKnowledge.Invalid
     text: Invalid recipe
   - key: RecipeKnowledge.SkillRequired
@@ -70,7 +70,7 @@ MonoBehaviour:
   - key: RecipeKnowledge.Locked
     text: Locked
   - key: Recipe.ResultCountFormat
-    text: "{0} x{1}"
+    text: '{0} x{1}'
   - key: Inventory.PrimaryTitle
     text: Inventory
   - key: Inventory.LootTitle
@@ -80,13 +80,13 @@ MonoBehaviour:
   - key: Inventory.EmptyVolume
     text: "\u2014 L"
   - key: Inventory.WeightCapacity
-    text: "{0:0.##}/{1:0.##} kg"
+    text: '{0:0.##}/{1:0.##} kg'
   - key: Inventory.VolumeCapacity
-    text: "{0:0.##}/{1:0.##} L"
+    text: '{0:0.##}/{1:0.##} L'
   - key: Inventory.StackDetail
-    text: "x{0}  {1:0.##}kg  {2:0.##}L"
+    text: x{0}  {1:0.##}kg  {2:0.##}L
   - key: Inventory.StackCount
-    text: "x{0}"
+    text: x{0}
   - key: Interaction.DoorOpen
     text: "\uBB38 \uC5F4\uAE30"
   - key: Interaction.DoorClose
@@ -103,3 +103,71 @@ MonoBehaviour:
     text: "\uAE30\uD0C0"
   - key: UI.SelectBtn.ObjectNamePrefix
     text: "\uC120\uD0DD{0}"
+  - key: PlayerStatus.Title
+    text: "\uC0C1\uD0DC"
+  - key: PlayerStatus.VitalsSection
+    text: "\uC0DD\uC874"
+  - key: PlayerStatus.SkillsSection
+    text: "\uC2A4\uD0AC"
+  - key: PlayerStatus.DetailHeader
+    text: "\uBD80\uC704 \uC0C1\uC138"
+  - key: PlayerStatus.DetailSubparts
+    text: "\uC138\uBD80 \uBD80\uC704"
+  - key: PlayerStatus.DetailEffects
+    text: "\uC0C1\uD0DC \uC774\uC0C1"
+  - key: PlayerStatus.NoEffects
+    text: "\uC774\uC0C1 \uC5C6\uC74C"
+  - key: PlayerStatus.Lost
+    text: "\uC0C1\uC2E4"
+  - key: PlayerStatus.HpFormat
+    text: '{0}/{1}'
+  - key: PlayerStatus.VitalFormat
+    text: '{0}/{1}'
+  - key: PlayerStatus.SkillFormat
+    text: '{0}  Lv.{1}'
+  - key: PlayerStatus.DebugSeverArmL
+    text: "\uC808\uB2E8(\uC67C\uD314)"
+  - key: PlayerStatus.Part.head
+    text: "\uBA38\uB9AC"
+  - key: PlayerStatus.Part.torso
+    text: "\uBAB8\uD1B5"
+  - key: PlayerStatus.Part.arm_l
+    text: "\uC67C\uD314"
+  - key: PlayerStatus.Part.arm_r
+    text: "\uC624\uB978\uD314"
+  - key: PlayerStatus.Part.leg_l
+    text: "\uC67C\uB2E4\uB9AC"
+  - key: PlayerStatus.Part.leg_r
+    text: "\uC624\uB978\uB2E4\uB9AC"
+  - key: PlayerStatus.Part.eyes
+    text: "\uB208"
+  - key: PlayerStatus.Part.mouth
+    text: "\uC785"
+  - key: PlayerStatus.Part.hand_l
+    text: "\uC67C\uC190"
+  - key: PlayerStatus.Part.hand_r
+    text: "\uC624\uB978\uC190"
+  - key: PlayerStatus.Part.foot_l
+    text: "\uC67C\uBC1C"
+  - key: PlayerStatus.Part.foot_r
+    text: "\uC624\uB978\uBC1C"
+  - key: PlayerStatus.Part.finger_thumb_l
+    text: "\uC67C\uC5C4\uC9C0"
+  - key: PlayerStatus.Part.finger_index_l
+    text: "\uC67C\uAC80\uC9C0"
+  - key: PlayerStatus.Part.finger_thumb_r
+    text: "\uC624\uB978\uC5C4\uC9C0"
+  - key: PlayerStatus.Part.finger_index_r
+    text: "\uC624\uB978\uAC80\uC9C0"
+  - key: PlayerStatus.Vital.Hunger
+    text: "\uACF5\uBCF5"
+  - key: PlayerStatus.Vital.Thirst
+    text: "\uAC08\uC99D"
+  - key: PlayerStatus.Vital.Stamina
+    text: "\uC2A4\uD0DC\uBBF8\uB098"
+  - key: PlayerStatus.Effect.bleed
+    text: "\uCD9C\uD608"
+  - key: PlayerStatus.Effect.fracture
+    text: "\uACE8\uC808"
+  - key: PlayerStatus.Effect.infected
+    text: "\uAC10\uC5FC"

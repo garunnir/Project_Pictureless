@@ -1,11 +1,11 @@
 // ============================================================
-// InventoryWindowDragHandler — 인벤 창 상단 드래그 이동
+// UIWindowDragHandler — 오버레이 창 헤더 드래그 이동 (공용)
 // ============================================================
 
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public sealed class InventoryWindowDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
+public sealed class UIWindowDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
 {
     RectTransform _window;
     RectTransform _dragRoot;

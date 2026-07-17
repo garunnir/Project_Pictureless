@@ -1,5 +1,5 @@
 // ============================================================
-// InventoryWindowResizeHandler — 인벤 창 8방향 크기 조절
+// UIWindowResizeHandler — 오버레이 창 8방향 크기 조절 (공용)
 // ============================================================
 
 using UnityEngine;
@@ -17,7 +17,7 @@ public enum WindowResizeEdge
     BottomRight
 }
 
-public sealed class InventoryWindowResizeHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
+public sealed class UIWindowResizeHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
 {
     [SerializeField] WindowResizeEdge _edge = WindowResizeEdge.BottomRight;
 
@@ -32,6 +32,8 @@ public sealed class InventoryWindowResizeHandler : MonoBehaviour, IBeginDragHand
     Vector2 _maxSize;
 
     public WindowResizeEdge Edge => _edge;
+
+    public void SetEdge(WindowResizeEdge edge) => _edge = edge;
 
     public void Initialize(RectTransform window, Canvas canvas, Vector2 minSize, Vector2 maxSize)
     {

@@ -8,6 +8,8 @@ using Garunnir.Runtime.Gameplay.Data;
 public static class GameplayData
 {
     static IPlayerStats _stats;
+    static IPlayerBody _body;
+    static IPlayerVitals _vitals;
 
     /// <summary>
     /// 플레이어 스킬/스탯 SSOT.
@@ -22,6 +24,35 @@ public static class GameplayData
             return _stats;
         }
         set => _stats = value;
+    }
+
+    /// <summary>
+    /// 신체 소유권 트리 SSOT.
+    /// 미주입 시에는 인간 기본 anatomy + STR 기반 부위 HP로 생성합니다.
+    /// </summary>
+    public static IPlayerBody Body
+    {
+        get
+        {
+            if (_body == null)
+                _body = PlayerBody.CreateHumanDefault(Stats.GetStat(StatKeys.Str));
+            return _body;
+        }
+        set => _body = value;
+    }
+
+    /// <summary>
+    /// 전역 바이탈(공복/갈증/스태미나) SSOT.
+    /// </summary>
+    public static IPlayerVitals Vitals
+    {
+        get
+        {
+            if (_vitals == null)
+                _vitals = new DefaultPlayerVitals();
+            return _vitals;
+        }
+        set => _vitals = value;
     }
 
     /// <summary>프로젝트 커스텀 데이터 (편집 가능)</summary>

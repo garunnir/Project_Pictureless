@@ -15,6 +15,7 @@ public class InputManager : SceneSingleton<InputManager>
     public static Func<bool> click;
 
     InputActions _actions;
+    InputAction _statusToggle;
 
     public bool IsUiMenuInputActive => _uiMenuInputOwners.Count > 0;
 
@@ -31,6 +32,7 @@ public class InputManager : SceneSingleton<InputManager>
     public event Action<InputAction.CallbackContext> PlayerLookAtCanceled;
     public event Action<InputAction.CallbackContext> PlayerInteractPerformed;
     public event Action<InputAction.CallbackContext> PlayerInventoryTogglePerformed;
+    public event Action<InputAction.CallbackContext> PlayerStatusTogglePerformed;
 
     public event Action<InputAction.CallbackContext> UiNavigateStarted;
     public event Action<InputAction.CallbackContext> UiNavigateCanceled;
@@ -43,7 +45,11 @@ public class InputManager : SceneSingleton<InputManager>
         click = IsClike;
         _actions = new InputActions();
         WireActionCallbacks();
+        // StatusToggle is in InputActions.inputactions; until codegen refresh, bind C here.
+        _statusToggle = new InputAction("StatusToggle", InputActionType.Button, "<Keyboard>/c");
+        _statusToggle.performed += ForwardPlayerStatusTogglePerformed;
         _actions.Player.Enable();
+        _statusToggle.Enable();
     }
 
     public IDisposable AcquireUiMenuInput(object owner)
@@ -277,6 +283,14 @@ public class InputManager : SceneSingleton<InputManager>
         PlayerInventoryTogglePerformed?.Invoke(ctx);
     }
 
+    void ForwardPlayerStatusTogglePerformed(InputAction.CallbackContext ctx)
+    {
+        if (IsUiMenuInputActive)
+            return;
+
+        PlayerStatusTogglePerformed?.Invoke(ctx);
+    }
+
     void ForwardUiNavigateStarted(InputAction.CallbackContext ctx)
     {
         if (!IsUiMenuInputActive)
@@ -327,18 +341,28 @@ public class InputManager : SceneSingleton<InputManager>
         if (uiMenu)
         {
             _actions.Player.Disable();
+            _statusToggle?.Disable();
             _actions.UI.Enable();
         }
         else
         {
             _actions.UI.Disable();
             _actions.Player.Enable();
+            _statusToggle?.Enable();
         }
     }
 
     protected override void OnDestroy()
     {
         UnwireActionCallbacks();
+        if (_statusToggle != null)
+        {
+            _statusToggle.performed -= ForwardPlayerStatusTogglePerformed;
+            _statusToggle.Disable();
+            _statusToggle.Dispose();
+            _statusToggle = null;
+        }
+
         _actions?.Dispose();
         _actions = null;
         base.OnDestroy();

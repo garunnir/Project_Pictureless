@@ -295,7 +295,7 @@ static class InventoryUIHierarchyBuilder
         headerRect.pivot = new Vector2(0.5f, 1f);
         headerRect.anchoredPosition = Vector2.zero;
         headerRect.sizeDelta = new Vector2(0f, spec.HeaderHeight);
-        headerArea.AddComponent<InventoryWindowDragHandler>();
+        headerArea.AddComponent<UIWindowDragHandler>();
 
         var headerTitle = CreateTmp("Txt_Title", headerArea.transform, 0f, spec.HeaderFontSize);
         headerTitle.text = InventoryWindowLabels.PrimaryTitle;
@@ -398,7 +398,7 @@ static class InventoryUIHierarchyBuilder
         SetReference(window, "_sidebar", sidebar);
         SetReference(window, "_listArea", listRect);
         SetReference(window, "_sidebarArea", sidebarRect);
-        SetReference(window, "_windowDragHandler", headerArea.GetComponent<InventoryWindowDragHandler>());
+        SetReference(window, "_windowDragHandler", headerArea.GetComponent<UIWindowDragHandler>());
         SetReference(window, "_headerTitle", headerTitle);
         return window;
     }
@@ -434,7 +434,7 @@ static class InventoryUIHierarchyBuilder
         rect.anchoredPosition = anchoredPosition;
         rect.sizeDelta = sizeDelta;
 
-        InventoryWindowResizeHandler resizeHandler = handle.AddComponent<InventoryWindowResizeHandler>();
+        UIWindowResizeHandler resizeHandler = handle.AddComponent<UIWindowResizeHandler>();
         SetEnumReference(resizeHandler, "_edge", edge);
     }
 

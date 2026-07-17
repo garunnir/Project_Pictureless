@@ -9,14 +9,19 @@ namespace Garunnir.Runtime.Gameplay.Data
 {
     public sealed class DefaultPlayerStats : IPlayerStats
     {
-        const int DefaultInt = 8;
-    const int SkillExerciseBase = 100;
+        const int DefaultAbility = 8;
+        const int SkillExerciseBase = 100;
 
         readonly Dictionary<string, int> _skillLevels = new(StringComparer.Ordinal);
         readonly Dictionary<string, int> _skillXp = new(StringComparer.Ordinal);
         readonly Dictionary<string, int> _stats = new(StringComparer.Ordinal)
         {
-            [StatKeys.Int] = DefaultInt
+            [StatKeys.Str] = DefaultAbility,
+            [StatKeys.Con] = DefaultAbility,
+            [StatKeys.Dex] = DefaultAbility,
+            [StatKeys.Int] = DefaultAbility,
+            [StatKeys.Wis] = DefaultAbility,
+            [StatKeys.Cha] = DefaultAbility
         };
 
         public int GetSkillLevel(string skillId)
@@ -36,9 +41,7 @@ namespace Garunnir.Runtime.Gameplay.Data
             int currentXp = _skillXp.TryGetValue(skillId, out int stored) ? stored : 0;
             currentXp += xp;
 
-            // BN 기준(근사):
-            // required_exercise(nextLevel) = 100 × nextLevel^2
-            // 누적 xp가 임계를 넘으면 레벨업하고 사용한 xp는 차감.
+            // BN 근사: required_exercise(nextLevel) = 100 × nextLevel^2
             while (true)
             {
                 int nextLevel = level + 1;
@@ -62,14 +65,14 @@ namespace Garunnir.Runtime.Gameplay.Data
             return _stats.TryGetValue(statKey, out int val) ? val : 0;
         }
 
+        public IReadOnlyCollection<string> GetKnownSkillIds() => _skillLevels.Keys;
+
         static int RequiredXp(int level)
         {
-            // level: 다음 레벨(= 현재 level+1)
-            // BN 기준: 100 * (current_level+1)^2
             double v = SkillExerciseBase * level * (double)level;
-            if (v > int.MaxValue) return int.MaxValue;
+            if (v > int.MaxValue)
+                return int.MaxValue;
             return (int)v;
         }
     }
 }
-

@@ -244,9 +244,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1079368567375301122}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 505424cf1bb534943b67a038c086d0ca, type: 3}
+  m_Script: {fileID: 11500000, guid: c640cd045aeccfe41a6370449ebbf992, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dist.Inventory.UI::InventoryWindowResizeHandler
+  m_EditorClassIdentifier: DistScript::UIWindowResizeHandler
   _edge: 5
 --- !u!1 &1170382809633390405
 GameObject:
@@ -648,9 +648,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2085343038968711544}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 505424cf1bb534943b67a038c086d0ca, type: 3}
+  m_Script: {fileID: 11500000, guid: c640cd045aeccfe41a6370449ebbf992, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dist.Inventory.UI::InventoryWindowResizeHandler
+  m_EditorClassIdentifier: DistScript::UIWindowResizeHandler
   _edge: 4
 --- !u!1 &2572933177022379610
 GameObject:
@@ -739,9 +739,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2572933177022379610}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ab09646d2fc987042875fc2d0911a3dc, type: 3}
+  m_Script: {fileID: 11500000, guid: 23726a11818c96541bb3df31f54ff861, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dist.Inventory.UI::InventoryWindowDragHandler
+  m_EditorClassIdentifier: DistScript::UIWindowDragHandler
 --- !u!1 &3265819733620697172
 GameObject:
   m_ObjectHideFlags: 0
@@ -929,9 +929,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 4018799533340483641}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 505424cf1bb534943b67a038c086d0ca, type: 3}
+  m_Script: {fileID: 11500000, guid: c640cd045aeccfe41a6370449ebbf992, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dist.Inventory.UI::InventoryWindowResizeHandler
+  m_EditorClassIdentifier: DistScript::UIWindowResizeHandler
   _edge: 6
 --- !u!1 &4540664278158854403
 GameObject:
@@ -1177,9 +1177,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6325530202127638046}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 505424cf1bb534943b67a038c086d0ca, type: 3}
+  m_Script: {fileID: 11500000, guid: c640cd045aeccfe41a6370449ebbf992, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dist.Inventory.UI::InventoryWindowResizeHandler
+  m_EditorClassIdentifier: DistScript::UIWindowResizeHandler
   _edge: 7
 --- !u!1 &6715543058842169568
 GameObject:
@@ -1266,9 +1266,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6715543058842169568}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 505424cf1bb534943b67a038c086d0ca, type: 3}
+  m_Script: {fileID: 11500000, guid: c640cd045aeccfe41a6370449ebbf992, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dist.Inventory.UI::InventoryWindowResizeHandler
+  m_EditorClassIdentifier: DistScript::UIWindowResizeHandler
   _edge: 0
 --- !u!1 &6916433761645257844
 GameObject:
@@ -1355,9 +1355,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6916433761645257844}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 505424cf1bb534943b67a038c086d0ca, type: 3}
+  m_Script: {fileID: 11500000, guid: c640cd045aeccfe41a6370449ebbf992, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dist.Inventory.UI::InventoryWindowResizeHandler
+  m_EditorClassIdentifier: DistScript::UIWindowResizeHandler
   _edge: 2
 --- !u!1 &6931320193775199843
 GameObject:
@@ -1481,9 +1481,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 7016817921024133610}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 505424cf1bb534943b67a038c086d0ca, type: 3}
+  m_Script: {fileID: 11500000, guid: c640cd045aeccfe41a6370449ebbf992, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dist.Inventory.UI::InventoryWindowResizeHandler
+  m_EditorClassIdentifier: DistScript::UIWindowResizeHandler
   _edge: 3
 --- !u!1 &7441223684874090871
 GameObject:
@@ -2061,7 +2061,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 9198713096527283679}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 505424cf1bb534943b67a038c086d0ca, type: 3}
+  m_Script: {fileID: 11500000, guid: c640cd045aeccfe41a6370449ebbf992, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dist.Inventory.UI::InventoryWindowResizeHandler
+  m_EditorClassIdentifier: DistScript::UIWindowResizeHandler
   _edge: 1
