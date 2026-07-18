@@ -208,25 +208,25 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         if (_session == null)
             return;
 
-        // Nested bag tabs are derived from stacks. Sync / ApplyModeLayout must not run while
-        // a tab drag is active (Destroy or SetActive(false) skips OnEndDrag → ghost stuck).
+        // Nested bag tabs are derived from stacks (PlayerOnly: body, NearbyOnly: floor-loot).
+        // Sync / ApplyModeLayout must not run while a tab drag is active
+        // (Destroy or SetActive(false) skips OnEndDrag → ghost stuck).
         bool deferSidebarChrome = InventoryDragState.IsDragging;
 
-        if (_mode == InventoryWindowMode.PlayerOnly)
+        if (_mode == InventoryWindowMode.PlayerOnly && _selectedContainer == null)
         {
-            if (_selectedContainer == null)
-            {
-                InventoryContainer resolved = ResolvePlayerContainer();
-                if (resolved != null)
-                    SetActiveContainer(resolved, refreshList: false);
-            }
+            InventoryContainer resolved = ResolvePlayerContainer();
+            if (resolved != null)
+                SetActiveContainer(resolved, refreshList: false);
+        }
 
-            if (!deferSidebarChrome)
-            {
+        if (!deferSidebarChrome)
+        {
+            if (_mode == InventoryWindowMode.PlayerOnly)
                 ApplyModeLayout();
-                EnsureSelectedContainerForSidebar();
-                RefreshSidebarAndSelection();
-            }
+
+            EnsureSelectedContainerForSidebar();
+            RefreshSidebarAndSelection();
         }
 
         if (_selectedContainer != null)
@@ -496,23 +496,13 @@ public sealed class UIInventoryListWindow : MonoBehaviour
                 return _filteredSidebar;
 
             _filteredSidebar.Add(body);
-            for (int i = 0; i < body.Stacks.Count; i++)
-            {
-                ItemStack stack = body.Stacks[i];
-                if (stack?.Item == null || !stack.Item.is_container)
-                    continue;
-
-                if (!stack.TryEnsureNested(_nestedContainerPolicy) || stack.Nested == null)
-                    continue;
-
-                _filteredSidebar.Add(stack.Nested);
-            }
-
+            AppendNestedContainerTabs(body);
             return _filteredSidebar;
         }
 
         IReadOnlyList<InventoryContainer> all = _session.GetSidebarContainers();
         PlayerInventoryRuntime runtime = PlayerInventoryRuntime.Active;
+        InventoryContainer floorLoot = null;
         for (int i = 0; i < all.Count; i++)
         {
             InventoryContainer container = all[i];
@@ -526,9 +516,61 @@ public sealed class UIInventoryListWindow : MonoBehaviour
                 continue;
 
             _filteredSidebar.Add(container);
+            if (container.InstanceId == FloorLootHost.DefaultInstanceId)
+                floorLoot = container;
         }
 
+        if (floorLoot != null)
+            AppendFloorNestedLootTabs(floorLoot, runtime);
+
         return _filteredSidebar;
+    }
+
+    void AppendNestedContainerTabs(InventoryContainer parent)
+    {
+        if (parent == null)
+            return;
+
+        for (int i = 0; i < parent.Stacks.Count; i++)
+        {
+            ItemStack stack = parent.Stacks[i];
+            if (stack?.Item == null || !stack.Item.is_container)
+                continue;
+
+            if (!stack.TryEnsureNested(_nestedContainerPolicy) || stack.Nested == null)
+                continue;
+
+            string nestedId = stack.Nested.InstanceId;
+            if (string.IsNullOrEmpty(nestedId) || ContainsSidebarContainer(_filteredSidebar, nestedId))
+                continue;
+
+            _filteredSidebar.Add(stack.Nested);
+        }
+    }
+
+    void AppendFloorNestedLootTabs(InventoryContainer floorLoot, PlayerInventoryRuntime runtime)
+    {
+        if (floorLoot == null)
+            return;
+
+        for (int i = 0; i < floorLoot.Stacks.Count; i++)
+        {
+            ItemStack stack = floorLoot.Stacks[i];
+            if (stack?.Item == null || !stack.Item.is_container)
+                continue;
+
+            if (!stack.TryEnsureNested(_nestedContainerPolicy) || stack.Nested == null)
+                continue;
+
+            string nestedId = stack.Nested.InstanceId;
+            if (string.IsNullOrEmpty(nestedId) || ContainsSidebarContainer(_filteredSidebar, nestedId))
+                continue;
+
+            if (runtime != null && !runtime.IsWorldLootContainer(nestedId))
+                continue;
+
+            _filteredSidebar.Add(stack.Nested);
+        }
     }
 
     static bool ContainsSidebarContainer(IReadOnlyList<InventoryContainer> sidebar, string instanceId)

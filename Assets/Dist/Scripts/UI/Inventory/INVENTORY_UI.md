@@ -55,7 +55,7 @@
 
   - `PlayerOnly`: 플레이어 컨테이너(`player-body`) 단일 리스트. 중첩 가방 탭이 있으면 사이드바 표시, 없으면 숨김.
 
-  - `NearbyOnly`: `NearbyContainerDetector`가 등록한 주변 컨테이너 전체를 사이드탭으로 표시 (플레이어 제외). `TrackLootContainer` 없음 — 반경 스캔만 사용.
+  - `NearbyOnly`: `NearbyContainerDetector`가 등록한 주변 컨테이너 전체를 사이드탭으로 표시 (플레이어 제외). `TrackLootContainer` 없음 — 반경 스캔만 사용. 바닥 `floor-loot` 안 휴대 컨테이너(Nested)는 Detector가 managed 월드 루트로 promote하고, 사이드바 탭은 PlayerOnly body 유도와 같이 floor 스택에서 유도한다.
   - 감지 SSOT: 컨테이너 후보 판정은 `InventoryContainerRegistry` provider 목록 + `CharacterState.ResolveGridCell`(WorldGrid 기준) 단일 경로를 사용한다. `ContainerGridRegistry`는 Nearby 판단 경로에서 사용하지 않는다.
 
 - 월드 컨테이너 표현은 **TilePresentationSystem** 단일 진입점 → `TileViewPresentationApplier`. UI는 Applier를 직접 호출하지 않는다.
@@ -150,7 +150,8 @@
 
 - 데이터 갱신: `InventorySession` 이벤트별 갱신 범위 분리
   - `StacksChanged` → `UIInventoryController.OnInventoryDataChanged()` → `UIInventoryListWindow.OnStacksChanged()`  
-    - PlayerOnly: 중첩 가방 탭은 스택에서 유도 → `EnsureSelectedContainerForSidebar` + `RefreshSidebarAndSelection` + 리스트 Bind  
+    - PlayerOnly / NearbyOnly: 중첩 가방 탭은 스택에서 유도 → `EnsureSelectedContainerForSidebar` + `RefreshSidebarAndSelection` + 리스트 Bind  
+    - NearbyOnly도 동일 (floor-loot Nested 탭). 이전에는 PlayerOnly만 사이드바 Sync → 간이 이동 후 루트 탭이 stale.
   - `SidebarChanged` → `UIInventoryController.OnSessionChanged()` → `OnSidebarChanged` / `OnStacksChanged`
   - **드래그 중** (`InventoryDragState.IsDragging`): `OnSidebarChanged`·`OnStacksChanged` 모두 사이드바 `Sync` / `ApplyModeLayout`(show·hide) 보류 — 소스 슬롯 Destroy·비활성으로 `OnEndDrag` 유실·고스트 잔류 방지. 슬롯 `OnDisable`이 드래그 중이면 `OnItemDragEnded` 안전망. 종료 후 `RefreshVisibleWindowsAfterDrag` → `OnStacksChanged`로 일괄 반영.
   - 탭 클릭 / 컨테이너 선택 → `SetActiveContainer` / 리스트 Bind

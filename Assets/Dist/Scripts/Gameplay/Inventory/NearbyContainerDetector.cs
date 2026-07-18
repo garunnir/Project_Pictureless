@@ -25,12 +25,14 @@ public sealed class NearbyContainerDetector : MonoBehaviour
     readonly List<Vector3Int> _cellsInRangeScratch = new();
     readonly List<SmallItemObject> _nearbySmallItemsScratch = new();
     readonly HashSet<string> _managedWorldContainerIds = new();
+    readonly FixedContainerCapacityPolicy _nestedContainerPolicy = new();
 
     InventorySession _session;
     LootProximityCoordinator _lootProximity;
     FloorLootHost _floorLootHost;
     IWorldGrid _cachedWorldGrid;
     bool _isActive;
+    bool _isRefreshing;
 
     public void Bind(InventorySession session, LootProximityCoordinator lootProximity)
     {
@@ -118,9 +120,19 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         if (!_characterState) TryGetComponent(out _characterState);
     }
 
-    void Subscribe() => _characterState.GridPosChanged += OnGridPosChanged;
+    void Subscribe()
+    {
+        _characterState.GridPosChanged += OnGridPosChanged;
+        if (_session != null)
+            _session.StacksChanged += OnStacksChanged;
+    }
 
-    void Unsubscribe() => _characterState.GridPosChanged -= OnGridPosChanged;
+    void Unsubscribe()
+    {
+        _characterState.GridPosChanged -= OnGridPosChanged;
+        if (_session != null)
+            _session.StacksChanged -= OnStacksChanged;
+    }
 
     void OnGridPosChanged(Vector3Int gridPos)
     {
@@ -130,11 +142,32 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         Refresh(gridPos);
     }
 
-    void Refresh(Vector3Int center)
+    void OnStacksChanged()
     {
-        if (_session == null || _characterState == null)
+        if (!_isActive || _isRefreshing)
             return;
 
+        RefreshImmediate();
+    }
+
+    void Refresh(Vector3Int center)
+    {
+        if (_session == null || _characterState == null || _isRefreshing)
+            return;
+
+        _isRefreshing = true;
+        try
+        {
+            RefreshCore(center);
+        }
+        finally
+        {
+            _isRefreshing = false;
+        }
+    }
+
+    void RefreshCore(Vector3Int center)
+    {
         IReadOnlyList<IInventoryContainerProvider> providers = InventoryContainerRegistry.GetProvidersSnapshot();
         _scanResults.Clear();
 
@@ -184,6 +217,9 @@ public sealed class NearbyContainerDetector : MonoBehaviour
             _session.TryAddSidebarContainer(container);
         }
 
+        SyncFloorLoot(center);
+        PromoteFloorNestedContainers(desiredIds);
+
         var staleIds = new List<string>();
         foreach (string managedId in _managedWorldContainerIds)
         {
@@ -197,8 +233,6 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         _managedWorldContainerIds.Clear();
         foreach (string id in desiredIds)
             _managedWorldContainerIds.Add(id);
-
-        SyncFloorLoot(center);
 
         if (DebugLogController.InventoryProximityScanEnabled)
             LogScan(
@@ -220,6 +254,34 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         EnumerateCellsInRange(center, _cellsInRangeScratch);
         SmallItemRegistry.CollectInCells(_cellsInRangeScratch, _nearbySmallItemsScratch);
         _floorLootHost.SyncFromNearbyItems(_nearbySmallItemsScratch);
+    }
+
+    /// <summary>
+    /// floor-loot 안 휴대 컨테이너(Nested)를 managed 월드 루트로 올린다.
+    /// session 사이드바에는 넣지 않는다 (PurgeNestedFromSidebar와 충돌 방지).
+    /// </summary>
+    void PromoteFloorNestedContainers(HashSet<string> desiredIds)
+    {
+        InventoryContainer floor = _floorLootHost is { IsActive: true } ? _floorLootHost.Container : null;
+        if (floor == null || desiredIds == null)
+            return;
+
+        IReadOnlyList<ItemStack> stacks = floor.Stacks;
+        for (int i = 0; i < stacks.Count; i++)
+        {
+            ItemStack stack = stacks[i];
+            if (stack?.Item == null || !stack.Item.is_container)
+                continue;
+
+            if (!stack.TryEnsureNested(_nestedContainerPolicy) || stack.Nested == null)
+                continue;
+
+            string nestedId = stack.Nested.InstanceId;
+            if (string.IsNullOrEmpty(nestedId))
+                continue;
+
+            desiredIds.Add(nestedId);
+        }
     }
 
     void EnumerateCellsInRange(Vector3Int center, List<Vector3Int> buffer)
@@ -371,11 +433,53 @@ public sealed class NearbyContainerDetector : MonoBehaviour
                 if (candidate.InstanceId == PlayerInventoryHost.DefaultInstanceId)
                     continue;
 
+                if (candidate.InstanceId == FloorLootHost.DefaultInstanceId)
+                    continue;
+
                 _detectedContainersScratch.Add(candidate);
             }
         }
 
+        AppendFloorNestedToDetected();
+
         _lootProximity?.NotifyDetectedContainers(_detectedContainersScratch);
+    }
+
+    void AppendFloorNestedToDetected()
+    {
+        InventoryContainer floor = _floorLootHost is { IsActive: true } ? _floorLootHost.Container : null;
+        if (floor == null)
+            return;
+
+        IReadOnlyList<ItemStack> stacks = floor.Stacks;
+        for (int i = 0; i < stacks.Count; i++)
+        {
+            ItemStack stack = stacks[i];
+            InventoryContainer nested = stack?.Nested;
+            if (nested == null)
+                continue;
+
+            string nestedId = nested.InstanceId;
+            if (string.IsNullOrEmpty(nestedId) || !_managedWorldContainerIds.Contains(nestedId))
+                continue;
+
+            if (ContainsDetectedContainer(nestedId))
+                continue;
+
+            _detectedContainersScratch.Add(nested);
+        }
+    }
+
+    bool ContainsDetectedContainer(string instanceId)
+    {
+        for (int i = 0; i < _detectedContainersScratch.Count; i++)
+        {
+            InventoryContainer candidate = _detectedContainersScratch[i];
+            if (candidate != null && candidate.InstanceId == instanceId)
+                return true;
+        }
+
+        return false;
     }
 
     void RemoveManagedContainers()
