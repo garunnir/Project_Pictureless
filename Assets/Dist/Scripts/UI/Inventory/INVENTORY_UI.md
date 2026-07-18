@@ -61,7 +61,9 @@
 - 월드 컨테이너 표현은 **TilePresentationSystem** 단일 진입점 → `TileViewPresentationApplier`. UI는 Applier를 직접 호출하지 않는다.
 - 루팅 파이프라인: `NearbyContainerDetector` → `LootProximityCoordinator` 이벤트 → `{ TilePresentationSystem, UIInventoryController }` 각각 구독. 컨테이너 TileView는 `EmphasisBlend`(살짝 밝게).
 - `NearbyOnly`: 사이드탭이 없으면 아이템 리스트도 비움. 활성 탭 1개만 월드 하이라이트.
-- 사이드탭 표현: `Normal` / `Selected` / `Dragging`. 중첩 가방 탭은 드래그 소스, 모든 탭은 드롭 타겟.
+- 사이드탭 표현: `Normal` / `Selected` / `Dragging`. 중첩 가방 탭은 드래그 소스(컨테이너째), 고정 컨테이너 탭(`player-body` / `floor-loot` / 월드)은 내용물 전체 드래그(스택 순차 이동, 중량·부피 초과 시 중단). 모든 탭은 드롭 타겟.
+- Pending: 물건 이동 시 중량·부피에 따른 소요 시간(지금은 즉시 이전).
+- `Area_List`·`Area_Sidebar`(`SlotRoot`)는 세로 스크롤바(`Scrollbar_Vertical`, AutoHideAndExpandViewport)를 프리팹에 내장한다. 창 전체 rebake 금지 — `Dist/Inventory/Patch Window Scrollbars`로만 패치 (`Area_InvInfo` 보존). 사이드바는 `InventorySidebarScrollRect`(탭 DnD 중 스크롤 드래그 무시); 사이드바 Viewport에는 `InventoryScrollDragHandler` 없음.
 - 컨테이너 상호작용은 `Interactable`의 레거시 스프라이트 아웃라인을 사용하지 않는다. 포커스 시각효과는 타입별 전용 컴포넌트(`SpriteOutlineFocusVisual` 등)로 분리한다.
 - `ContainerInteractable`는 런타임 `containerId` 충돌 시 자동으로 고유 suffix를 부여해 레지스트리 충돌을 방지한다.
 
@@ -147,9 +149,15 @@
 - 드롭 처리: `UIInventoryListDropZone` (`IDropHandler`) → `InventorySession.MoveStacks(...)`
 
 - 데이터 갱신: `InventorySession` 이벤트별 갱신 범위 분리
-  - `StacksChanged` → `UIInventoryController.OnInventoryDataChanged()` → `UIInventoryListWindow.OnStacksChanged()` → `RefreshListOnly()`
-  - `SidebarChanged` → `UIInventoryController.OnSessionChanged()` → `UIInventoryListWindow.OnSidebarChanged()` → `RefreshSidebarAndSelection()` (사이드바 `Sync` diff, 슬롯 add/remove만)
-  - 탭 클릭 / 컨테이너 선택 → `RefreshListOnly()`
+  - `StacksChanged` → `UIInventoryController.OnInventoryDataChanged()` → `UIInventoryListWindow.OnStacksChanged()`  
+    - PlayerOnly: 중첩 가방 탭은 스택에서 유도 → `EnsureSelectedContainerForSidebar` + `RefreshSidebarAndSelection` + 리스트 Bind  
+  - `SidebarChanged` → `UIInventoryController.OnSessionChanged()` → `OnSidebarChanged` / `OnStacksChanged`
+  - **드래그 중** (`InventoryDragState.IsDragging`): `OnSidebarChanged`·`OnStacksChanged` 모두 사이드바 `Sync` / `ApplyModeLayout`(show·hide) 보류 — 소스 슬롯 Destroy·비활성으로 `OnEndDrag` 유실·고스트 잔류 방지. 슬롯 `OnDisable`이 드래그 중이면 `OnItemDragEnded` 안전망. 종료 후 `RefreshVisibleWindowsAfterDrag` → `OnStacksChanged`로 일괄 반영.
+  - 탭 클릭 / 컨테이너 선택 → `SetActiveContainer` / 리스트 Bind
+- `SetActiveContainer`: 드래그 중에는 리스트 `Bind` 생략. 종료 후 `OnStacksChanged`가 Bind.
+- `InventoryDragDrop`: `ContainerTab`은 Source(부모)==리스트 타깃(body)이어도 early-out하지 않음(`MoveStacks` from==to가 no-op). Item/ContainerContents만 Source==target early-out.
+- 사이드 탭 이동: 간이(중첩) = 컨테이너째 `MoveStacks`; 고정 탭 = 내용물 `MoveStacksSequentiallyUntilFull`(용량 초과 시 중단). Pending: 중량·부피 소요 시간.
+- `ConfigureDragAndDrop`: 리스트 Configure 후 `RefreshSidebarAndSelection`으로 탭 슬롯에 `IInventoryItemDragHost` 재바인딩. (`Initialize`가 `ConfigureWindow`보다 먼저라 첫 Sync 시점 `_dragHost`가 null — Primary만 재이벤트 없으면 탭 드래그 불가, Loot는 Nearby 갱신으로 Sync가 다시 돌 수 있어 비대칭이 났음.)
 - `UIItemListView.Bind` 직후 `LayoutRebuilder.ForceRebuildLayoutImmediate` + `Canvas.ForceUpdateCanvases()`로 동적 행 레이아웃 갱신
 - `UIInventoryController.LateUpdate`: 포인터가 창 위에 있는지 캐시 후 변경 시에만 `SuppressPlayerAction` 호출
 

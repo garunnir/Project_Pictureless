@@ -28,6 +28,9 @@ readonly struct InventoryUIPrefabStyleSpec
     public readonly int SidebarSlotPadding;
     public readonly float EdgeThickness;
     public readonly float CornerSize;
+    public readonly float ScrollbarWidth;
+    public readonly Color ScrollbarTrackColor;
+    public readonly Color ScrollbarHandleColor;
 
     public InventoryUIPrefabStyleSpec(
         Vector2 windowSize,
@@ -53,7 +56,10 @@ readonly struct InventoryUIPrefabStyleSpec
         float sidebarSlotSpacing,
         int sidebarSlotPadding,
         float edgeThickness,
-        float cornerSize)
+        float cornerSize,
+        float scrollbarWidth,
+        Color scrollbarTrackColor,
+        Color scrollbarHandleColor)
     {
         WindowSize = windowSize;
         HeaderHeight = headerHeight;
@@ -79,6 +85,9 @@ readonly struct InventoryUIPrefabStyleSpec
         SidebarSlotPadding = sidebarSlotPadding;
         EdgeThickness = edgeThickness;
         CornerSize = cornerSize;
+        ScrollbarWidth = scrollbarWidth;
+        ScrollbarTrackColor = scrollbarTrackColor;
+        ScrollbarHandleColor = scrollbarHandleColor;
     }
 
     public static readonly InventoryUIPrefabStyleSpec Default = new(
@@ -105,6 +114,9 @@ readonly struct InventoryUIPrefabStyleSpec
         sidebarSlotSpacing: 6f,
         sidebarSlotPadding: 4,
         edgeThickness: 6f,
-        cornerSize: 10f);
+        cornerSize: 10f,
+        scrollbarWidth: 8f,
+        scrollbarTrackColor: new Color(0.12f, 0.12f, 0.12f, 0.85f),
+        scrollbarHandleColor: new Color(0.42f, 0.42f, 0.42f, 0.95f));
 }
 #endif

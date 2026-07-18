@@ -139,11 +139,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         if (payload.SourceContainer == floor)
             return;
 
-        if (!session.MoveStacks(payload.SourceContainer, floor, payload.Stacks))
-            return;
-
-        if (payload.Kind == InventoryDragKind.Item)
-            payload.SourceSelection?.Clear();
+        InventoryDragDrop.TryApplyTo(session, floor);
     }
 
     static bool TryGetFloorLootContainer(InventorySession session, out InventoryContainer floor)
@@ -166,16 +162,18 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
     void RefreshVisibleWindowsAfterDrag()
     {
+        // InventoryDragState.End() already ran — full stack-derived UI refresh (sidebar + list).
+        // Do not use RefreshListOnly here: nested bag tabs come from stacks (same SSOT as OnStacksChanged).
         if (_primaryWindow && _primaryWindow.IsVisible)
         {
             _primaryWindow.ClearSidebarDropHovers();
-            _primaryWindow.RefreshListOnly();
+            _primaryWindow.OnStacksChanged();
         }
 
         if (_lootWindow && _lootWindow.IsVisible)
         {
             _lootWindow.ClearSidebarDropHovers();
-            _lootWindow.RefreshListOnly();
+            _lootWindow.OnStacksChanged();
         }
     }
 
@@ -407,11 +405,16 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         if (window == null)
             return;
 
-        InventoryScrollDragHandler handler = window.GetComponentInChildren<InventoryScrollDragHandler>(true);
-        if (handler == null)
+        InventoryScrollDragHandler[] handlers =
+            window.GetComponentsInChildren<InventoryScrollDragHandler>(true);
+        if (handlers == null || handlers.Length == 0)
+        {
             Debug.LogError("[UIInventoryController] InventoryScrollDragHandler missing on inventory window prefab.", window);
+            return;
+        }
 
-        handler?.Bind(this);
+        for (int i = 0; i < handlers.Length; i++)
+            handlers[i].Bind(this);
     }
 
     public void ToggleInventory() => TogglePrimaryWindow();

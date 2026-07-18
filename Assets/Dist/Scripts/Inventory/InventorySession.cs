@@ -104,6 +104,54 @@ public sealed class InventorySession
         return true;
     }
 
+    /// <summary>
+    /// 스택을 앞에서부터 하나씩 옮긴다. 다음 스택을 넣을 수 없으면 중단하고 이미 옮긴 분은 유지한다.
+    /// </summary>
+    public int MoveStacksSequentiallyUntilFull(
+        InventoryContainer from,
+        InventoryContainer to,
+        IReadOnlyList<ItemStack> stacks)
+    {
+        if (from == null || to == null || stacks == null || stacks.Count == 0)
+            return 0;
+
+        if (from == to)
+            return 0;
+
+        int moved = 0;
+        float maxWeight = to.CapacityPolicy.GetMaxWeight(to);
+        float maxVolume = to.CapacityPolicy.GetMaxVolume(to);
+
+        for (int i = 0; i < stacks.Count; i++)
+        {
+            ItemStack stack = stacks[i];
+            if (stack == null || !from.MutableStacks.Contains(stack))
+                break;
+
+            if (!CanPlaceStackInContainer(stack, to))
+                break;
+
+            if (!to.CapacityPolicy.CanAccept(to, stack))
+                break;
+
+            float nextWeight = to.GetTotalWeight() + stack.TotalWeight;
+            float nextVolume = to.GetTotalVolume() + stack.TotalVolume;
+            if (nextWeight > maxWeight + 0.0001f || nextVolume > maxVolume + 0.0001f)
+                break;
+
+            TransferStack(from, to, stack);
+            moved++;
+        }
+
+        if (moved > 0)
+        {
+            RefreshNestedContainers();
+            NotifyStacksChanged();
+        }
+
+        return moved;
+    }
+
     public void NotifyExternalStacksChanged()
     {
         RefreshNestedContainers();

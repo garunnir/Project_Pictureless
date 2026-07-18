@@ -370,7 +370,7 @@ static class InventoryUIHierarchyBuilder
         UIItemListView listView = listArea.AddComponent<UIItemListView>();
         ScrollRect scroll = listArea.AddComponent<ScrollRect>();
         var viewport = CreateRect("Viewport", listArea.transform, new Color(1f, 1f, 1f, 0f));
-        Stretch(viewport.GetComponent<RectTransform>(), 0f, 0f, 0f, 0f);
+        Stretch(viewport.GetComponent<RectTransform>(), 0f, spec.ScrollbarWidth, 0f, 0f);
         Image viewportImage = viewport.GetComponent<Image>();
         viewportImage.raycastTarget = true;
         viewport.gameObject.AddComponent<RectMask2D>();
@@ -394,25 +394,39 @@ static class InventoryUIHierarchyBuilder
         InventoryListMarqueeSelector marquee = viewport.AddComponent<InventoryListMarqueeSelector>();
         RectTransform marqueeRect = CreateMarqueeSelectionRect(viewport.transform);
         SetReference(marquee, "_selectionRect", marqueeRect);
-        scroll.viewport = viewport.GetComponent<RectTransform>();
-        scroll.content = contentRect;
-        scroll.horizontal = false;
-        scroll.vertical = true;
-        scroll.movementType = ScrollRect.MovementType.Clamped;
+        Scrollbar listScrollbar = CreateVerticalScrollbar(listArea.transform, spec);
+        WireVerticalScrollRect(scroll, viewport.GetComponent<RectTransform>(), contentRect, listScrollbar);
         viewport.AddComponent<InventoryScrollDragHandler>();
         SetReference(listView, "_contentRoot", contentRect);
         SetReference(listView, "_rowPrefab", rowPrefab);
 
         UIContainerSidebar sidebar = sidebarArea.AddComponent<UIContainerSidebar>();
-        var slotRoot = CreateRect("SlotRoot", sidebarArea.transform, Color.clear);
-        Stretch(slotRoot.GetComponent<RectTransform>(), 0f, 0f, 0f, 0f);
+        InventorySidebarScrollRect sidebarScroll = sidebarArea.AddComponent<InventorySidebarScrollRect>();
+        var sidebarViewport = CreateRect("Viewport", sidebarArea.transform, new Color(1f, 1f, 1f, 0f));
+        Stretch(sidebarViewport.GetComponent<RectTransform>(), 0f, spec.ScrollbarWidth, 0f, 0f);
+        Image sidebarViewportImage = sidebarViewport.GetComponent<Image>();
+        sidebarViewportImage.raycastTarget = true;
+        sidebarViewport.AddComponent<RectMask2D>();
+
+        var slotRoot = CreateRect("SlotRoot", sidebarViewport.transform, Color.clear);
+        var slotRootRect = slotRoot.GetComponent<RectTransform>();
+        slotRootRect.anchorMin = new Vector2(0f, 1f);
+        slotRootRect.anchorMax = new Vector2(1f, 1f);
+        slotRootRect.pivot = new Vector2(0.5f, 1f);
+        slotRootRect.anchoredPosition = Vector2.zero;
+        slotRootRect.sizeDelta = new Vector2(0f, 0f);
         var slotLayout = slotRoot.AddComponent<VerticalLayoutGroup>();
         slotLayout.spacing = spec.SidebarSlotSpacing;
         int slotPad = spec.SidebarSlotPadding;
         slotLayout.padding = new RectOffset(slotPad, slotPad, slotPad, slotPad);
         slotLayout.childControlHeight = true;
+        slotLayout.childControlWidth = true;
+        slotLayout.childForceExpandWidth = true;
         slotLayout.childForceExpandHeight = false;
-        SetReference(sidebar, "_slotRoot", slotRoot.GetComponent<RectTransform>());
+        slotRoot.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        Scrollbar sidebarScrollbar = CreateVerticalScrollbar(sidebarArea.transform, spec);
+        WireVerticalScrollRect(sidebarScroll, sidebarViewport.GetComponent<RectTransform>(), slotRootRect, sidebarScrollbar);
+        SetReference(sidebar, "_slotRoot", slotRootRect);
         SetReference(sidebar, "_slotPrefab", slotPrefab);
 
         var window = root.AddComponent<UIInventoryListWindow>();
@@ -425,6 +439,151 @@ static class InventoryUIHierarchyBuilder
         return window;
     }
 
+    /// <summary>
+    /// Patches scrollbars onto an existing window prefab root without rebuilding chrome
+    /// (preserves Area_InvInfo and other hand-authored children).
+    /// </summary>
+    public static void PatchExistingWindowScrollbars(GameObject windowRoot)
+    {
+        if (windowRoot == null)
+            throw new System.ArgumentNullException(nameof(windowRoot));
+
+        InventoryUIPrefabStyleSpec spec = InventoryUIPrefabStyleSpec.Default;
+        Transform listArea = windowRoot.transform.Find("Area_List");
+        Transform sidebarArea = windowRoot.transform.Find("Area_Sidebar");
+        if (listArea == null || sidebarArea == null)
+        {
+            Debug.LogError("[InventoryUIHierarchyBuilder] Area_List/Area_Sidebar missing; cannot patch scrollbars.", windowRoot);
+            return;
+        }
+
+        PatchListAreaScrollbars(listArea, spec);
+        PatchSidebarScrollbars(sidebarArea, spec);
+    }
+
+    static void PatchListAreaScrollbars(Transform listArea, InventoryUIPrefabStyleSpec spec)
+    {
+        if (!listArea.TryGetComponent(out ScrollRect scroll))
+        {
+            Debug.LogError("[InventoryUIHierarchyBuilder] ScrollRect missing on Area_List.", listArea);
+            return;
+        }
+
+        RectTransform viewport = scroll.viewport;
+        RectTransform content = scroll.content;
+        if (viewport == null || content == null)
+        {
+            Debug.LogError("[InventoryUIHierarchyBuilder] Area_List ScrollRect viewport/content missing.", listArea);
+            return;
+        }
+
+        Scrollbar scrollbar = FindChildScrollbar(listArea);
+        if (scrollbar == null)
+            scrollbar = CreateVerticalScrollbar(listArea, spec);
+
+        Stretch(viewport, 0f, spec.ScrollbarWidth, 0f, 0f);
+        WireVerticalScrollRect(scroll, viewport, content, scrollbar);
+
+        if (viewport.GetComponent<InventoryScrollDragHandler>() == null)
+            viewport.gameObject.AddComponent<InventoryScrollDragHandler>();
+    }
+
+    static void PatchSidebarScrollbars(Transform sidebarArea, InventoryUIPrefabStyleSpec spec)
+    {
+        Transform slotRootTf = sidebarArea.Find("SlotRoot");
+        RectTransform slotRootRect = null;
+        if (slotRootTf != null)
+            slotRootRect = slotRootTf as RectTransform;
+        else
+        {
+            Transform nested = sidebarArea.Find("Viewport/SlotRoot");
+            if (nested != null)
+                slotRootRect = nested as RectTransform;
+        }
+
+        if (slotRootRect == null)
+        {
+            Debug.LogError("[InventoryUIHierarchyBuilder] SlotRoot missing under Area_Sidebar.", sidebarArea);
+            return;
+        }
+
+        InventorySidebarScrollRect sidebarScroll = EnsureSidebarScrollRect(sidebarArea.gameObject);
+
+        Transform viewportTf = sidebarArea.Find("Viewport");
+        RectTransform viewportRect;
+        if (viewportTf == null)
+        {
+            var viewportGo = CreateRect("Viewport", sidebarArea, new Color(1f, 1f, 1f, 0f));
+            viewportRect = viewportGo.GetComponent<RectTransform>();
+            Stretch(viewportRect, 0f, spec.ScrollbarWidth, 0f, 0f);
+            viewportGo.GetComponent<Image>().raycastTarget = true;
+            viewportGo.AddComponent<RectMask2D>();
+        }
+        else
+        {
+            viewportRect = viewportTf as RectTransform;
+            Stretch(viewportRect, 0f, spec.ScrollbarWidth, 0f, 0f);
+            if (viewportRect.GetComponent<RectMask2D>() == null)
+                viewportRect.gameObject.AddComponent<RectMask2D>();
+            InventoryScrollDragHandler[] handlers =
+                viewportRect.GetComponents<InventoryScrollDragHandler>();
+            for (int i = 0; i < handlers.Length; i++)
+                Object.DestroyImmediate(handlers[i]);
+            if (viewportRect.TryGetComponent(out Image vpImage))
+            {
+                vpImage.color = new Color(1f, 1f, 1f, 0f);
+                vpImage.raycastTarget = true;
+            }
+        }
+
+        if (slotRootRect.parent != viewportRect)
+            slotRootRect.SetParent(viewportRect, false);
+
+        slotRootRect.anchorMin = new Vector2(0f, 1f);
+        slotRootRect.anchorMax = new Vector2(1f, 1f);
+        slotRootRect.pivot = new Vector2(0.5f, 1f);
+        slotRootRect.anchoredPosition = Vector2.zero;
+        slotRootRect.sizeDelta = new Vector2(0f, 0f);
+
+        if (slotRootRect.TryGetComponent(out VerticalLayoutGroup slotLayout))
+        {
+            slotLayout.childControlWidth = true;
+            slotLayout.childForceExpandWidth = true;
+            slotLayout.childForceExpandHeight = false;
+        }
+
+        if (!slotRootRect.TryGetComponent(out ContentSizeFitter fitter))
+            fitter = slotRootRect.gameObject.AddComponent<ContentSizeFitter>();
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        Scrollbar scrollbar = FindChildScrollbar(sidebarArea);
+        if (scrollbar == null)
+            scrollbar = CreateVerticalScrollbar(sidebarArea, spec);
+
+        WireVerticalScrollRect(sidebarScroll, viewportRect, slotRootRect, scrollbar);
+
+        if (sidebarArea.TryGetComponent(out UIContainerSidebar sidebar))
+            SetReference(sidebar, "_slotRoot", slotRootRect);
+    }
+
+    static InventorySidebarScrollRect EnsureSidebarScrollRect(GameObject sidebarGo)
+    {
+        if (sidebarGo.TryGetComponent(out InventorySidebarScrollRect existing))
+            return existing;
+
+        // Plain ScrollRect cannot become a subclass in-place — replace and rewire later.
+        if (sidebarGo.TryGetComponent(out ScrollRect plain) && plain is not InventorySidebarScrollRect)
+            Object.DestroyImmediate(plain);
+
+        return sidebarGo.AddComponent<InventorySidebarScrollRect>();
+    }
+
+    static Scrollbar FindChildScrollbar(Transform parent)
+    {
+        Transform existing = parent.Find("Scrollbar_Vertical");
+        return existing != null ? existing.GetComponent<Scrollbar>() : null;
+    }
+
     static RectTransform CreateMarqueeSelectionRect(Transform parent)
     {
         var go = CreateRect("MarqueeSelection", parent, new Color(0.35f, 0.55f, 0.85f, 0.25f));
@@ -435,6 +594,50 @@ static class InventoryUIHierarchyBuilder
         go.GetComponent<Image>().raycastTarget = false;
         go.SetActive(false);
         return rect;
+    }
+
+    static void WireVerticalScrollRect(
+        ScrollRect scroll,
+        RectTransform viewport,
+        RectTransform content,
+        Scrollbar verticalScrollbar)
+    {
+        scroll.viewport = viewport;
+        scroll.content = content;
+        scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.verticalScrollbar = verticalScrollbar;
+        scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+        scroll.verticalScrollbarSpacing = 0f;
+        scroll.horizontalScrollbar = null;
+    }
+
+    static Scrollbar CreateVerticalScrollbar(Transform parent, InventoryUIPrefabStyleSpec spec)
+    {
+        var root = CreateRect("Scrollbar_Vertical", parent, spec.ScrollbarTrackColor);
+        var rootRect = root.GetComponent<RectTransform>();
+        rootRect.anchorMin = new Vector2(1f, 0f);
+        rootRect.anchorMax = new Vector2(1f, 1f);
+        rootRect.pivot = new Vector2(1f, 0.5f);
+        rootRect.anchoredPosition = Vector2.zero;
+        rootRect.sizeDelta = new Vector2(spec.ScrollbarWidth, 0f);
+
+        var slidingArea = CreateRect("Sliding Area", root.transform, Color.clear);
+        slidingArea.GetComponent<Image>().raycastTarget = false;
+        Stretch(slidingArea.GetComponent<RectTransform>(), 0f, 0f, 0f, 0f);
+
+        var handle = CreateRect("Handle", slidingArea.transform, spec.ScrollbarHandleColor);
+        Stretch(handle.GetComponent<RectTransform>(), 0f, 0f, 0f, 0f);
+        Image handleImage = handle.GetComponent<Image>();
+        handleImage.raycastTarget = true;
+
+        Scrollbar scrollbar = root.AddComponent<Scrollbar>();
+        scrollbar.direction = Scrollbar.Direction.BottomToTop;
+        scrollbar.handleRect = handle.GetComponent<RectTransform>();
+        scrollbar.targetGraphic = handleImage;
+        scrollbar.transition = Selectable.Transition.None;
+        return scrollbar;
     }
 
     static void CreateResizeHandle(

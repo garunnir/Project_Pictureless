@@ -22,27 +22,26 @@ static class InventoryUIPrefabBakeMenu
         SavePrefab(rowRoot.gameObject, RowPath);
         SavePrefab(slotRoot.gameObject, SlotPath);
 
-        UIItemListRow rowPrefab = AssetDatabase.LoadAssetAtPath<UIItemListRow>(RowPath);
-        UIContainerSlot slotPrefab = AssetDatabase.LoadAssetAtPath<UIContainerSlot>(SlotPath);
-        if (rowPrefab == null || slotPrefab == null)
-        {
-            Debug.LogError("[InventoryUIPrefabBakeMenu] Failed to load row/slot prefabs.");
-            Object.DestroyImmediate(rowRoot.gameObject);
-            Object.DestroyImmediate(slotRoot.gameObject);
-            return;
-        }
-
-        UIInventoryListWindow windowRoot = InventoryUIHierarchyBuilder.BuildWindowRoot(rowPrefab, slotPrefab);
-        windowRoot.name = "Grp_InventoryListWindow";
-        SavePrefab(windowRoot.gameObject, WindowPath);
-
         Object.DestroyImmediate(rowRoot.gameObject);
         Object.DestroyImmediate(slotRoot.gameObject);
-        Object.DestroyImmediate(windowRoot.gameObject);
+
+        // Do NOT rebuild Grp_InventoryListWindow from scratch — that wipes Area_InvInfo
+        // and other hand-authored chrome. Scrollbars: Dist/Inventory/Patch Window Scrollbars.
+        if (AssetDatabase.LoadAssetAtPath<GameObject>(WindowPath) == null)
+        {
+            Debug.LogWarning(
+                $"[InventoryUIPrefabBakeMenu] Window prefab missing at {WindowPath}. " +
+                "Create via BuildWindowRoot once, then use Patch Window Scrollbars.");
+        }
+        else
+        {
+            Debug.Log(
+                "[InventoryUIPrefabBakeMenu] Row/slot baked. Window left untouched " +
+                "(use Dist/Inventory/Patch Window Scrollbars for scrollbars).");
+        }
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log($"[InventoryUIPrefabBakeMenu] Saved prefabs under {InventoryUIHierarchyBuilder.PrefabFolder}.");
     }
 
     static void EnsureFolder()

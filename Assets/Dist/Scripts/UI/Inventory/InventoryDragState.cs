@@ -8,6 +8,8 @@ public enum InventoryDragKind
 {
     Item,
     ContainerTab,
+    /// <summary>고정 컨테이너 탭: 컨테이너 제외 내용물 전체 (순차 이동).</summary>
+    ContainerContents,
 }
 
 public sealed class InventoryDragPayload
@@ -68,6 +70,31 @@ public static class InventoryDragState
             SourceContainer = parentContainer,
             SourceSelection = null,
             Stacks = new[] { containerStack },
+        };
+    }
+
+    public static void BeginContainerContents(InventoryContainer sourceContainer)
+    {
+        if (sourceContainer?.Stacks == null || sourceContainer.Stacks.Count == 0)
+            return;
+
+        var snapshot = new List<ItemStack>(sourceContainer.Stacks.Count);
+        for (int i = 0; i < sourceContainer.Stacks.Count; i++)
+        {
+            ItemStack stack = sourceContainer.Stacks[i];
+            if (stack != null)
+                snapshot.Add(stack);
+        }
+
+        if (snapshot.Count == 0)
+            return;
+
+        _active = new InventoryDragPayload
+        {
+            Kind = InventoryDragKind.ContainerContents,
+            SourceContainer = sourceContainer,
+            SourceSelection = null,
+            Stacks = snapshot,
         };
     }
 

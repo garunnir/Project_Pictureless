@@ -131,6 +131,10 @@ public sealed class UIInventoryListWindow : MonoBehaviour
 
         if (_selectedContainer != null)
             SetActiveContainer(_selectedContainer);
+
+        // Initialize runs before ConfigureWindow and Syncs slots with null _dragHost.
+        // Re-bind sidebar so tab DnD gets the host (same for Primary and Loot).
+        RefreshSidebarAndSelection();
     }
 
     void EnsureSidebarRaycastTarget()
@@ -181,6 +185,10 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         if (_session == null)
             return;
 
+        // Sync/layout can destroy or deactivate the drag-source slot — defer until EndDrag.
+        if (InventoryDragState.IsDragging)
+            return;
+
         EnsureSelectedContainerForSidebar();
         RefreshSidebarAndSelection();
     }
@@ -191,13 +199,18 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             return;
 
         SetActiveContainer(container);
-        RefreshSidebarAndSelection();
+        if (!InventoryDragState.IsDragging)
+            RefreshSidebarAndSelection();
     }
 
     public void OnStacksChanged()
     {
         if (_session == null)
             return;
+
+        // Nested bag tabs are derived from stacks. Sync / ApplyModeLayout must not run while
+        // a tab drag is active (Destroy or SetActive(false) skips OnEndDrag → ghost stuck).
+        bool deferSidebarChrome = InventoryDragState.IsDragging;
 
         if (_mode == InventoryWindowMode.PlayerOnly)
         {
@@ -208,8 +221,12 @@ public sealed class UIInventoryListWindow : MonoBehaviour
                     SetActiveContainer(resolved, refreshList: false);
             }
 
-            ApplyModeLayout();
-            RefreshSidebarAndSelection();
+            if (!deferSidebarChrome)
+            {
+                ApplyModeLayout();
+                EnsureSelectedContainerForSidebar();
+                RefreshSidebarAndSelection();
+            }
         }
 
         if (_selectedContainer != null)

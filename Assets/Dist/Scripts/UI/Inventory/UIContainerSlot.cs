@@ -3,6 +3,7 @@
 // ============================================================
 
 using System;
+using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 using TMPro;
 using UnityEngine;
@@ -40,7 +41,7 @@ public sealed class UIContainerSlot : MonoBehaviour,
     IInventoryItemDragHost _dragHost;
     UIInventoryListWindow _window;
     InventorySession _session;
-    bool _isDraggable;
+    bool _canMoveContainerAsStack;
     bool _isDropHover;
     ContainerSlotVisualState _visualState = ContainerSlotVisualState.Normal;
     bool _isSelected;
@@ -63,6 +64,22 @@ public sealed class UIContainerSlot : MonoBehaviour,
             _button.onClick.RemoveListener(OnClick);
     }
 
+    void OnDisable()
+    {
+        // Sidebar Sync / ApplyModeLayout may deactivate or destroy this slot mid-drag.
+        if (_visualState != ContainerSlotVisualState.Dragging)
+            return;
+
+        _visualState = _isSelected
+            ? ContainerSlotVisualState.Selected
+            : ContainerSlotVisualState.Normal;
+
+        if (_dragHost == null)
+            return;
+
+        _dragHost.OnItemDragEnded();
+    }
+
     public void Bind(
         InventoryContainer container,
         bool selected,
@@ -76,7 +93,7 @@ public sealed class UIContainerSlot : MonoBehaviour,
         _dragHost = dragHost;
         _window = window;
         _session = session;
-        _isDraggable = false;
+        _canMoveContainerAsStack = false;
         _dragParentContainer = null;
         _dragContainerStack = null;
 
@@ -107,7 +124,7 @@ public sealed class UIContainerSlot : MonoBehaviour,
         if (_session != null &&
             _session.TryGetContainerItemStack(container, out InventoryContainer parent, out ItemStack stack))
         {
-            _isDraggable = true;
+            _canMoveContainerAsStack = true;
             _dragParentContainer = parent;
             _dragContainerStack = stack;
         }
@@ -137,16 +154,39 @@ public sealed class UIContainerSlot : MonoBehaviour,
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (!_isDraggable ||
-            _dragParentContainer == null ||
-            _dragContainerStack == null ||
-            _dragHost == null)
+        if (_dragHost == null || _container == null)
             return;
 
-        InventoryDragState.BeginContainerTab(_dragParentContainer, _dragContainerStack);
+        if (_canMoveContainerAsStack &&
+            _dragParentContainer != null &&
+            _dragContainerStack != null)
+        {
+            InventoryDragState.BeginContainerTab(_dragParentContainer, _dragContainerStack);
+            SetVisualState(ContainerSlotVisualState.Dragging);
+            _dragHost.OnItemDragStarted();
+            _dragHost.BeginDragGhost(eventData.position, 1);
+            eventData.Use();
+            return;
+        }
+
+        IReadOnlyList<ItemStack> contents = _container.Stacks;
+        if (contents == null || contents.Count == 0)
+            return;
+
+        InventoryDragState.BeginContainerContents(_container);
+        if (!InventoryDragState.IsDragging)
+            return;
+
+        int ghostCount = 0;
+        for (int i = 0; i < contents.Count; i++)
+        {
+            if (contents[i] != null)
+                ghostCount++;
+        }
+
         SetVisualState(ContainerSlotVisualState.Dragging);
         _dragHost.OnItemDragStarted();
-        _dragHost.BeginDragGhost(eventData.position, 1);
+        _dragHost.BeginDragGhost(eventData.position, ghostCount);
         eventData.Use();
     }
 
