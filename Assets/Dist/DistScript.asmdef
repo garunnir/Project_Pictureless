@@ -7,6 +7,7 @@
         "Dist.Inventory",
         "Dist.Gameplay.Data",
         "Dist.Visual",
+        "Dist.UI.ContextMenu",
         "IngameDebugConsole.Runtime",
         "GUID:4307f53044263cf4b835bd812fc161a4",
         "GUID:ba8c092d026123a418fb4bfb797a7bd8",

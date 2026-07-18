@@ -27,5 +27,6 @@ namespace IsoTilemap
     {
         void SetLootHighlight(Guid presentationTileId, bool highlighted);
         void ClearLootHighlight();
+        bool IsLootHighlightActive(Guid presentationTileId);
     }
 }

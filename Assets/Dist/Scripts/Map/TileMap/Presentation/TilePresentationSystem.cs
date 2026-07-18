@@ -40,6 +40,9 @@ public sealed class TilePresentationSystem : MonoBehaviour, ITileLootHighlightSi
 
     public void ClearLootHighlight() => ClearLootContainerHighlight();
 
+    public bool IsLootHighlightActive(Guid presentationTileId) =>
+        presentationTileId != Guid.Empty && _activeLootTileId == presentationTileId;
+
     public void SetLootContainerHighlight(Guid presentationTileId, bool highlighted)
     {
         if (_applier == null || presentationTileId == Guid.Empty)

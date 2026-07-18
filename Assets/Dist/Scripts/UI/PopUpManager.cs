@@ -24,7 +24,7 @@ namespace UIManagement
 
     private void HandlePopupRequest(UIPopupType type, object data)
     {
-        ShowPopup(type, (Interactable)data);
+        ShowPopup(type, data as IInteractable);
     }
     
     public void ShowPopup(UIPopupType type, IInteractable data = null)
@@ -42,9 +42,8 @@ namespace UIManagement
     }
     private void ShowInteractionHint(IInteractable data)
     {
-        // 상호작용 힌트 UI 처리
         if (data == null) return;
-        _interactionCommandUI.Show(InteractionLabels.InteractKey, (data as Interactable).HintText);
+        _interactionCommandUI.Show(InteractionLabels.InteractKey, data.HintText);
         _currentOwner = data;
     }
     public T Get<T>() where T : UI

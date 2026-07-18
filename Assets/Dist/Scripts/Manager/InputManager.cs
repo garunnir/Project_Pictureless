@@ -26,14 +26,19 @@ public class InputManager : SceneSingleton<InputManager>
     readonly Dictionary<PlayerAction, HashSet<object>> _suppressedActions = new();
     bool _gameplayBlockedApplied;
     bool _debugMapApplied;
+    /// <summary>LookAt Hold(duration) performed가 한 번이라도 왔는지. 임계는 InputActions SSOT.</summary>
+    bool _lookAtHoldPerformed;
 
     public event Action<InputAction.CallbackContext> PlayerMovePerformed;
     public event Action<InputAction.CallbackContext> PlayerMoveCanceled;
     public event Action<InputAction.CallbackContext> PlayerRunPerformed;
     public event Action<InputAction.CallbackContext> PlayerRunCanceled;
-    public event Action<InputAction.CallbackContext> PlayerLookAtStarted;
+    /// <summary>LookAt Hold performed — RMB 홀드 확정(조준 시작).</summary>
     public event Action<InputAction.CallbackContext> PlayerLookAtPerformed;
+    /// <summary>LookAt canceled — RMB 릴리즈(조준 종료).</summary>
     public event Action<InputAction.CallbackContext> PlayerLookAtCanceled;
+    /// <summary>LookAt이 Hold 확정 없이 canceled — RMB 짧은 탭(컨텍스트 메뉴).</summary>
+    public event Action<InputAction.CallbackContext> PlayerLookAtTapPerformed;
     public event Action<InputAction.CallbackContext> PlayerInteractPerformed;
     public event Action<InputAction.CallbackContext> PlayerInventoryTogglePerformed;
     public event Action<InputAction.CallbackContext> PlayerStatusTogglePerformed;
@@ -198,7 +203,6 @@ public class InputManager : SceneSingleton<InputManager>
         _actions.Player.Move.canceled += ForwardPlayerMoveCanceled;
         _actions.Player.Run.performed += ForwardPlayerRunPerformed;
         _actions.Player.Run.canceled += ForwardPlayerRunCanceled;
-        _actions.Player.LookAt.started += ForwardPlayerLookAtStarted;
         _actions.Player.LookAt.performed += ForwardPlayerLookAtPerformed;
         _actions.Player.LookAt.canceled += ForwardPlayerLookAtCanceled;
         _actions.Player.Interaction.performed += ForwardPlayerInteractPerformed;
@@ -219,7 +223,6 @@ public class InputManager : SceneSingleton<InputManager>
         _actions.Player.Move.canceled -= ForwardPlayerMoveCanceled;
         _actions.Player.Run.performed -= ForwardPlayerRunPerformed;
         _actions.Player.Run.canceled -= ForwardPlayerRunCanceled;
-        _actions.Player.LookAt.started -= ForwardPlayerLookAtStarted;
         _actions.Player.LookAt.performed -= ForwardPlayerLookAtPerformed;
         _actions.Player.LookAt.canceled -= ForwardPlayerLookAtCanceled;
         _actions.Player.Interaction.performed -= ForwardPlayerInteractPerformed;
@@ -263,16 +266,11 @@ public class InputManager : SceneSingleton<InputManager>
         PlayerRunCanceled?.Invoke(ctx);
     }
 
-    void ForwardPlayerLookAtStarted(InputAction.CallbackContext ctx)
-    {
-        if (!IsPlayerActionEnabled(PlayerAction.Aim))
-            return;
-
-        PlayerLookAtStarted?.Invoke(ctx);
-    }
-
     void ForwardPlayerLookAtPerformed(InputAction.CallbackContext ctx)
     {
+        // Hold 확정 자체는 Aim suppress와 무관하게 기록(짧은 탭 오인 방지).
+        _lookAtHoldPerformed = true;
+
         if (!IsPlayerActionEnabled(PlayerAction.Aim))
             return;
 
@@ -281,7 +279,14 @@ public class InputManager : SceneSingleton<InputManager>
 
     void ForwardPlayerLookAtCanceled(InputAction.CallbackContext ctx)
     {
+        bool wasHold = _lookAtHoldPerformed;
+        _lookAtHoldPerformed = false;
+
         PlayerLookAtCanceled?.Invoke(ctx);
+
+        // Hold(duration) 미확정 릴리즈 = 탭. 임계는 InputActions LookAt Hold SSOT.
+        if (!wasHold && IsPlayerActionEnabled(PlayerAction.Aim))
+            PlayerLookAtTapPerformed?.Invoke(ctx);
     }
 
     void ForwardPlayerInteractPerformed(InputAction.CallbackContext ctx)

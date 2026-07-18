@@ -127,7 +127,7 @@ namespace UnityEngine.InputSystem
                     ""id"": ""d1e2f3a4-b5c6-7890-def0-123456789012"",
                     ""expectedControlType"": """",
                     ""processors"": """",
-                    ""interactions"": """",
+                    ""interactions"": ""Hold(duration=0.2)"",
                     ""initialStateCheck"": false
                 },
                 {

@@ -11,8 +11,6 @@ public static class ItemContextMenuLabels
     const string KeyCraftBlocked = "ItemContextMenu.CraftBlocked";
     const string KeyUncraftBlocked = "ItemContextMenu.UncraftBlocked";
     const string KeyUnknownResult = "ItemContextMenu.UnknownResult";
-    const string KeySubmenuChevron = "ItemContextMenu.SubmenuChevron";
-
     public static string Craft => Loc.Get(KeyCraft);
     public static string Uncraft => Loc.Get(KeyUncraft);
     public static string MiscGroup => Loc.Get(KeyMiscGroup);
@@ -20,5 +18,5 @@ public static class ItemContextMenuLabels
     public static string CraftBlocked => Loc.Get(KeyCraftBlocked);
     public static string UncraftBlocked => Loc.Get(KeyUncraftBlocked);
     public static string UnknownResult => Loc.Get(KeyUnknownResult);
-    public static string SubmenuChevron => Loc.Get(KeySubmenuChevron);
+    public static string SubmenuChevron => ContextMenuChromeLabels.SubmenuChevron;
 }

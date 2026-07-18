@@ -9,6 +9,7 @@ using Sirenix.OdinInspector;
 [RequireComponent(typeof(PlayerInputDirectionAnim))]
 [RequireComponent(typeof(PlayerInteractionController))]
 [RequireComponent(typeof(PlayerAimController))]
+[RequireComponent(typeof(TileObjectPointerController))]
 public class PlayerController : MonoBehaviour, IPlayControllable
 {
     [Title("References")]
@@ -16,6 +17,7 @@ public class PlayerController : MonoBehaviour, IPlayControllable
     [Required, SerializeField] private PlayerInputDirectionAnim _directionAnim;
     [Required, SerializeField] private PlayerInteractionController _interaction;
     [Required, SerializeField] private PlayerAimController _aimController;
+    [SerializeField] private TileObjectPointerController _tileObjectPointer;
 
     public CharacterState State => _state;
     public PlayerInputDirectionAnim DirectionAnim => _directionAnim;
@@ -30,6 +32,7 @@ public class PlayerController : MonoBehaviour, IPlayControllable
     private void Awake()
     {
         EnsureReferences();
+        EnsureRuntimeComponents();
         _movable = GetComponent<IMovable>();
     }
 
@@ -49,12 +52,23 @@ public class PlayerController : MonoBehaviour, IPlayControllable
         if (!_directionAnim) TryGetComponent(out _directionAnim);
         if (!_interaction) TryGetComponent(out _interaction);
         if (!_aimController) TryGetComponent(out _aimController);
+        if (!_tileObjectPointer) TryGetComponent(out _tileObjectPointer);
         if (_movable == null) TryGetComponent(out _movable);
+    }
+
+    void EnsureRuntimeComponents()
+    {
+        if (_tileObjectPointer == null)
+        {
+            if (!TryGetComponent(out _tileObjectPointer))
+                _tileObjectPointer = gameObject.AddComponent<TileObjectPointerController>();
+        }
     }
 
     public void SetControlEnabled(bool enabled)
     {
         _movable?.SetControllEnabled(enabled);
         _aimController?.SetEnabled(enabled);
+        _tileObjectPointer?.SetEnabled(enabled);
     }
 }

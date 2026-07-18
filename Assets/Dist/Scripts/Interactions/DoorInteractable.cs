@@ -1,44 +1,36 @@
+// ============================================================
+// DoorInteractable — 문 열림 상태·Animator 토글 (액션은 Catalog)
+// ============================================================
+
 using UnityEngine;
+
 namespace Interactions
 {
     [RequireComponent(typeof(Animator))]
-    public class DoorInteractable : Interactable
+    [RequireComponent(typeof(TileObjectInteractionTarget))]
+    public class DoorInteractable : MonoBehaviour
     {
-        [SerializeField] private bool isOpen = false;
-        private Animator _doorAnimator;
+        [SerializeField] bool isOpen;
 
-        protected override void Awake()
+        Animator _doorAnimator;
+
+        public bool IsOpen => isOpen;
+
+        public string ToggleActionLabel =>
+            isOpen ? InteractionLabels.DoorClose : InteractionLabels.DoorOpen;
+
+        void Awake()
         {
-            base.Awake();
             _doorAnimator = GetComponent<Animator>();
-            if (string.IsNullOrEmpty(hintText))
-                hintText = isOpen ? InteractionLabels.KeyDoorClose : InteractionLabels.KeyDoorOpen;
-        }
-        public override bool CanInteract(GameObject interactor)
-        {
-            // 예: 키 체크, 잠금 상태 체크 등
-            return true;
+            if (_doorAnimator != null)
+                _doorAnimator.SetBool("isOpen", isOpen);
         }
 
-        public override void Interact(GameObject interactor)
+        public void Toggle()
         {
             isOpen = !isOpen;
-            _doorAnimator.SetBool("isOpen", isOpen);
-            hintText = isOpen ? InteractionLabels.KeyDoorClose : InteractionLabels.KeyDoorOpen;
-        }
-
-        public override void OnFocus(GameObject interactor)
-        {
-            base.OnFocus(interactor);
-            // 아웃라인키거나, "E: 문 열기" 텍스트 요청
-        }
-
-        public override void OnUnfocus(GameObject interactor)
-        {
-            base.OnUnfocus(interactor);
-            // 아웃라인 끄기 등
+            if (_doorAnimator != null)
+                _doorAnimator.SetBool("isOpen", isOpen);
         }
     }
-
 }
-

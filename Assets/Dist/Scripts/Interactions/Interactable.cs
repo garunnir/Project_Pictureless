@@ -10,6 +10,8 @@ public interface IInteractableFocusVisual
 public interface IInteractable
 {
     Transform InteractTransform { get; } // UI용 위치 등
+    /// <summary>빠른 상호작용(E) 힌트 문구. 없으면 빈 문자열.</summary>
+    string HintText { get; }
     bool CanInteract(GameObject interactor);
     void Interact(GameObject interactor);
     void OnFocus(GameObject interactor);   // 조준 시작

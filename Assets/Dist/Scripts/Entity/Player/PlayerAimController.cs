@@ -21,6 +21,7 @@ public class PlayerAimController : MonoBehaviour
     private CharacterState _characterState;
     private MapTopologyLineCast _topologyLineCast;
     private bool _isAiming;
+    private bool _connected;
 
     public float CastOriginYOffset => _castOriginYOffset;
     public float SphereRadius => _sphereRadius;
@@ -42,29 +43,42 @@ public class PlayerAimController : MonoBehaviour
     void ConnectController()
     {
         InputManager input = InputManager.Instance;
-        input.PlayerLookAtStarted += OnLookAt;
-        input.PlayerLookAtPerformed += OnLookAt;
+        if (input == null || _connected)
+            return;
+
+        input.PlayerLookAtPerformed += OnLookAtHoldPerformed;
         input.PlayerLookAtCanceled += OnLookAtCanceled;
+        _connected = true;
     }
 
     void DisconnectController()
     {
         InputManager input = InputManager.Instance;
-        if (input == null)
-            return;
+        if (input != null && _connected)
+        {
+            input.PlayerLookAtPerformed -= OnLookAtHoldPerformed;
+            input.PlayerLookAtCanceled -= OnLookAtCanceled;
+        }
 
-        input.PlayerLookAtStarted -= OnLookAt;
-        input.PlayerLookAtPerformed -= OnLookAt;
-        input.PlayerLookAtCanceled -= OnLookAtCanceled;
+        _connected = false;
+
+        if (_isAiming)
+        {
+            _isAiming = false;
+            _characterState.ClearAim();
+        }
     }
 
-    void OnLookAt(InputAction.CallbackContext context)
+    void OnLookAtHoldPerformed(InputAction.CallbackContext context)
     {
         _isAiming = true;
     }
 
     void OnLookAtCanceled(InputAction.CallbackContext context)
     {
+        if (!_isAiming)
+            return;
+
         _isAiming = false;
         _characterState.ClearAim();
     }
@@ -76,7 +90,6 @@ public class PlayerAimController : MonoBehaviour
 
         Camera cam = _refCam != null ? _refCam : Camera.main;
         Vector3 origin = transform.position + Vector3.up * _castOriginYOffset;
-
 
         if (!ScreenRaycaster.TryGetMouseWorldPosition(cam, transform.position.y, out Vector3 mousePlanePos)) return;
 
@@ -112,8 +125,6 @@ public class PlayerAimController : MonoBehaviour
         sightFlat.y = 0f;
         if (sightFlat.sqrMagnitude < 1e-4f) return;
         _characterState.SetAimDir(sightFlat.normalized, aimPoint, sightFlat.magnitude);
-
-
     }
 
     void OnDrawGizmos()

@@ -153,6 +153,28 @@ static class InventoryUIHierarchyBuilder
         return menu;
     }
 
+    public static UIContextMenuHost BuildTileObjectContextMenuRoot()
+    {
+        var root = CreateRect("TileObjectContextMenu", null, Color.clear);
+        var rootRect = root.GetComponent<RectTransform>();
+        Stretch(rootRect, 0f, 0f, 0f, 0f);
+        root.GetComponent<Image>().raycastTarget = false;
+
+        var panelRootGo = CreateRect("PanelRoot", root.transform, Color.clear);
+        var panelRoot = panelRootGo.GetComponent<RectTransform>();
+        Stretch(panelRoot, 0f, 0f, 0f, 0f);
+        panelRootGo.GetComponent<Image>().raycastTarget = false;
+
+        UIContextMenuItemRow rowTemplate = BuildContextMenuRowTemplate(root.transform);
+        UIContextMenuCascadePanel panelTemplate = BuildContextMenuPanelTemplate(root.transform, rowTemplate);
+
+        var menu = root.AddComponent<UIContextMenuHost>();
+        SetReference(menu, "_panelRoot", panelRoot);
+        SetReference(menu, "_panelPrefab", panelTemplate);
+        SetReference(menu, "_rowPrefab", rowTemplate);
+        return menu;
+    }
+
     static UIContextMenuItemRow BuildContextMenuRowTemplate(Transform parent)
     {
         var rowGo = CreateRect("RowTemplate", parent, ContextMenuStyle.RowColor);

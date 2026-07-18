@@ -32,11 +32,13 @@ public sealed class UIItemContextMenu : MonoBehaviour, IPointerClickHandler
     void OnEnable()
     {
         UIItemListRow.RightClicked += OnItemRightClicked;
+        ContextMenuHostEvents.HideRequested += Hide;
     }
 
     void OnDisable()
     {
         UIItemListRow.RightClicked -= OnItemRightClicked;
+        ContextMenuHostEvents.HideRequested -= Hide;
         Hide();
     }
 
@@ -84,6 +86,7 @@ public sealed class UIItemContextMenu : MonoBehaviour, IPointerClickHandler
             return;
         }
 
+        ContextMenuHostEvents.RequestHide();
         Show(model, screenPosition);
     }
 

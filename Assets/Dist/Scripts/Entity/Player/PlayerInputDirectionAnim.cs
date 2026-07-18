@@ -1,20 +1,19 @@
+// ============================================================
+// PlayerInputDirectionAnim — facing 방향을 SpriteSwap 또는 Animator 파라미터로 반영
+// ============================================================
 using UnityEngine;
-using System.Collections.Generic;
-using UnityEngine.InputSystem;
-using UnityEditorInternal;
 
 /// <summary>
-/// Maps player input direction to an animation.
+/// Maps player facing direction to an animation.
 /// Two modes supported:
 /// - SpriteSwap: assign eight directional sprite sequences (8-way) and it will cycle frames.
-/// - Animator: set parameters on an Animator (int "Direction" and bool "Moving") so a Mecanim controller can drive animations.
-///
-/// Input comes from the classic Input axes (Horizontal, Vertical). Uses raw axes so direction is crisp.
+/// - Animator: set parameters on an Animator (floats DirX/DirY and optional bool) so a Mecanim controller can drive animations.
 /// </summary>
 [RequireComponent(typeof(CharacterState))]
 public class PlayerInputDirectionAnim : MonoBehaviour
 {
     public enum Mode { SpriteSwap, Animator }
+
     [Header("General")]
     public Mode mode = Mode.SpriteSwap;
     [Tooltip("Minimum squared magnitude of input to consider 'moving'")]
@@ -24,11 +23,10 @@ public class PlayerInputDirectionAnim : MonoBehaviour
 
     [Header("Animator Mode")]
     public Animator animator;
-
     public string paramDirX = "DirX";
-
     public string paramDirY = "DirY";
-    public string paramMoving = "Moving";
+    [Tooltip("비우면 bool 파라미터를 쓰지 않는다. Player.controller는 Moving이 없고 IsRun만 있다.")]
+    public string paramMoving = "";
 
     [Header("SpriteSwap Mode (8 directions)")]
     public SpriteRenderer spriteRenderer;
@@ -41,106 +39,138 @@ public class PlayerInputDirectionAnim : MonoBehaviour
     [Tooltip("Order: 0 = East (0°), 1 = NorthEast (45°), 2 = North (90°), 3 = NorthWest (135°), 4 = West (180°), 5 = SouthWest (225°), 6 = South (270°), 7 = SouthEast (315°)")]
     public DirectionFrames[] directionFrames = new DirectionFrames[8];
 
-    // runtime
-    int currentDirection = 0; // 0..7
-    float animTimer = 0f;
+    int currentDirection;
+    float animTimer;
     CharacterState _characterState;
+
+    int _hashDirX;
+    int _hashDirY;
+    int _hashMoving;
+    bool _hasDirX;
+    bool _hasDirY;
+    bool _hasMoving;
 
     void Awake()
     {
         _characterState = GetComponentInParent<CharacterState>();
-        if (_characterState == null) _characterState = GetComponent<CharacterState>();
+        if (_characterState == null)
+            _characterState = GetComponent<CharacterState>();
+
+        CacheAnimatorParameters();
     }
 
     void Reset()
     {
-        // try to auto-assign common components
-        if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-        if (animator == null) animator = GetComponent<Animator>();
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        if (animator == null)
+            animator = GetComponent<Animator>();
+    }
+
+    void OnValidate()
+    {
+        if (animator != null)
+            CacheAnimatorParameters();
     }
 
     void Update()
     {
         Vector3 dir3 = Quaternion.Euler(0f, angleOffset, 0f) * _characterState.GetFacingDir();
-        Vector2 dir = new Vector2(dir3.x, dir3.z); // 3D 이동방향은 XZ 평면 → Y는 항상 0
+        Vector2 dir = new Vector2(dir3.x, dir3.z);
         bool moving = dir.sqrMagnitude > moveThreshold;
 
         if (mode == Mode.Animator)
-        {
             UpdateAnimator(dir, moving);
-        }
         else
-        {
             UpdateSpriteSwap(dir, moving);
+    }
+
+    void CacheAnimatorParameters()
+    {
+        _hasDirX = false;
+        _hasDirY = false;
+        _hasMoving = false;
+
+        if (animator == null || animator.runtimeAnimatorController == null)
+            return;
+
+        _hashDirX = Animator.StringToHash(paramDirX);
+        _hashDirY = Animator.StringToHash(paramDirY);
+        _hashMoving = string.IsNullOrEmpty(paramMoving)
+            ? 0
+            : Animator.StringToHash(paramMoving);
+
+        AnimatorControllerParameter[] parameters = animator.parameters;
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            int nameHash = parameters[i].nameHash;
+            if (!string.IsNullOrEmpty(paramDirX) && nameHash == _hashDirX)
+                _hasDirX = true;
+            if (!string.IsNullOrEmpty(paramDirY) && nameHash == _hashDirY)
+                _hasDirY = true;
+            if (!string.IsNullOrEmpty(paramMoving) && nameHash == _hashMoving)
+                _hasMoving = true;
         }
     }
 
     void UpdateAnimator(Vector2 input, bool moving)
     {
-        if (animator == null) return;
-        if (!string.IsNullOrEmpty(paramDirX))
+        if (animator == null)
+            return;
+
+        if (moving)
         {
-            if (moving)
-            {
-                animator.SetFloat(paramDirX, input.x);
-                animator.SetFloat(paramDirY, input.y);
-            }
-            else
-            {
-
-            }
+            if (_hasDirX)
+                animator.SetFloat(_hashDirX, input.x);
+            if (_hasDirY)
+                animator.SetFloat(_hashDirY, input.y);
         }
-        if (!string.IsNullOrEmpty(paramMoving))
-        {
-            int MovingHash = Animator.StringToHash(paramMoving);
 
-
-            animator.SetBool(MovingHash, moving);
-        }
+        if (_hasMoving)
+            animator.SetBool(_hashMoving, moving);
     }
 
     void UpdateSpriteSwap(Vector2 input, bool moving)
     {
-        if (spriteRenderer == null) return;
-        if (directionFrames == null || directionFrames.Length != 8) return;
+        if (spriteRenderer == null)
+            return;
+        if (directionFrames == null || directionFrames.Length != 8)
+            return;
 
-        int dir = moving ? AngleTo8Dir(input) : currentDirection; // keep last facing when idle
+        int dir = moving ? AngleTo8Dir(input) : currentDirection;
 
         if (dir != currentDirection)
         {
             currentDirection = dir;
-            animTimer = 0f; // restart frame on direction change
+            animTimer = 0f;
         }
 
-        var frames = (directionFrames[currentDirection] != null) ? directionFrames[currentDirection].frames : null;
+        Sprite[] frames = directionFrames[currentDirection] != null
+            ? directionFrames[currentDirection].frames
+            : null;
         if (frames == null || frames.Length == 0)
-        {
-            // nothing assigned for this direction
             return;
-        }
 
         if (!moving)
         {
-            // idle: show first frame
             spriteRenderer.sprite = frames[0];
             return;
         }
 
         animTimer += Time.deltaTime;
         int frameIdx = Mathf.FloorToInt(animTimer * fps) % frames.Length;
-        if (frameIdx < 0) frameIdx = 0;
+        if (frameIdx < 0)
+            frameIdx = 0;
         spriteRenderer.sprite = frames[frameIdx];
     }
 
-    // Convert a 2D input vector to an 8-way direction index (0..7)
-    // Sector layout: 0 = East (0°), increments counter-clockwise every 45°
     int AngleTo8Dir(Vector2 v)
     {
-        if (v.sqrMagnitude < 1e-6f) return currentDirection;
-        float angle = Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg; // -180..180 (0 = +X)
-        if (angle < 0) angle += 360f; // 0..360
-        // map angle to 0..7 (each sector = 45°)
-        int idx = Mathf.RoundToInt(angle / 45f) % 8;
-        return idx;
+        if (v.sqrMagnitude < 1e-6f)
+            return currentDirection;
+        float angle = Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg;
+        if (angle < 0f)
+            angle += 360f;
+        return Mathf.RoundToInt(angle / 45f) % 8;
     }
 }

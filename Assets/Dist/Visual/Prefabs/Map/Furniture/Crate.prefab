@@ -219,6 +219,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 551125349126247287, guid: 860884360b6c90e408b0da8f700e74cf,
         type: 3}
       insertIndex: -1
+      addedObject: {fileID: 6234510987654321098}
+    - targetCorrespondingSourceObject: {fileID: 551125349126247287, guid: 860884360b6c90e408b0da8f700e74cf,
+        type: 3}
+      insertIndex: -1
       addedObject: {fileID: 7123456789012345678}
   m_SourcePrefab: {fileID: 100100000, guid: 860884360b6c90e408b0da8f700e74cf, type: 3}
 --- !u!4 &189952667950941491 stripped
@@ -257,11 +261,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8639b159acfa724db9b2e6a7e7c8da1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::ContainerInteractable
-  displayName: Interaction.Crate.DisplayName
-  hintText: Interaction.Crate.Hint
-  _definition: {fileID: 11400000, guid: 430732fd920486a4394a3d2a6806978a, type: 2}
+  _containerDefId: crate
   _containerId: world-WorldContainer_Crate_A
   _seedDemoItems: 1
+  _tileView: {fileID: 587810853183129758}
+--- !u!114 &6234510987654321098
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2711088364153094299}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e6a3c1d4f0b5a8c9d2e3f4a5b6c7d8e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::TileObjectInteractionTarget
   _tileView: {fileID: 587810853183129758}
 --- !u!114 &7123456789012345678
 MonoBehaviour:

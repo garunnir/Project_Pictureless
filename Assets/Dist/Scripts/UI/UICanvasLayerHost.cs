@@ -33,6 +33,19 @@ public sealed class UICanvasLayerHost : MonoBehaviour
         AutoMigrateOrphanedChildren();
     }
 
+    void OnEnable()
+    {
+        UIContextMenuHost.TryResolveParent = ResolveContextMenuParent;
+    }
+
+    void OnDisable()
+    {
+        if (UIContextMenuHost.TryResolveParent == ResolveContextMenuParent)
+            UIContextMenuHost.TryResolveParent = null;
+    }
+
+    Transform ResolveContextMenuParent() => GetLayerRoot(UICanvasLayer.ContextMenu);
+
     public Transform GetLayerRoot(UICanvasLayer layer)
     {
         int idx = (int)layer;

@@ -24,7 +24,17 @@ namespace IsoTilemap
 
             var colliders = view.GetComponentsInChildren<Collider>(true);
             for (int i = 0; i < colliders.Length; i++)
-                colliders[i].enabled = role == TileCollisionRole.WalkableOnly;
+            {
+                Collider collider = colliders[i];
+                if (role == TileCollisionRole.WalkableOnly)
+                {
+                    collider.enabled = true;
+                    continue;
+                }
+
+                // LogicalOnly: 솔리드는 끄고(이동 물리 비간섭), 트리거는 유지(포인터 피킹).
+                collider.enabled = collider.isTrigger;
+            }
         }
     }
 }

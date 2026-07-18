@@ -1,17 +1,17 @@
 // ============================================================
-// ContainerInteractable — 월드 컨테이너 상호작용 + provider
+// ContainerInteractable — 월드 컨테이너 provider (액션은 Catalog)
 // ============================================================
 
 using System;
 using System.Security.Cryptography;
 using System.Text;
 using Garunnir.Runtime.Gameplay.Data;
-using Interactions;
 using IsoTilemap;
 using UnityEngine;
 
 [RequireComponent(typeof(ContainerTileViewRegistrar))]
-public sealed class ContainerInteractable : Interactable, IInventoryContainerProvider
+[RequireComponent(typeof(TileObjectInteractionTarget))]
+public sealed class ContainerInteractable : MonoBehaviour, IInventoryContainerProvider
 {
     const string LogPrefix = "[ContainerInteractable]";
 
@@ -34,10 +34,10 @@ public sealed class ContainerInteractable : Interactable, IInventoryContainerPro
     public TileView TileView => _tileView;
     public Guid PresentationTileId => ResolvePresentationTileId();
 
-    protected override void Awake()
-    {
-        base.Awake();
+    public string OpenLootActionLabel => InteractionLabels.OpenContainer;
 
+    void Awake()
+    {
         ContainerData containerDef = GameplayData.GetContainer(_containerDefId);
         if (containerDef == null)
         {
@@ -63,6 +63,9 @@ public sealed class ContainerInteractable : Interactable, IInventoryContainerPro
 
         EnsureWorldGrid();
         SyncTileViewGrid();
+
+        TileObjectInteractionTarget target = GetComponent<TileObjectInteractionTarget>();
+        target?.BindTileView(_tileView);
     }
 
     void Start()
@@ -96,7 +99,7 @@ public sealed class ContainerInteractable : Interactable, IInventoryContainerPro
         SyncTileViewGrid();
     }
 
-    public override void Interact(GameObject interactor)
+    public void OpenLoot()
     {
         if (UIOverlayRouter.Instance != null)
         {
@@ -104,7 +107,7 @@ public sealed class ContainerInteractable : Interactable, IInventoryContainerPro
             return;
         }
 
-        Debug.Log($"{LogPrefix} Interact {displayName} ({_container?.InstanceId}) — UIOverlayRouter missing", this);
+        Debug.Log($"{LogPrefix} OpenLoot ({_container?.InstanceId}) — UIOverlayRouter missing", this);
     }
 
     Guid ResolvePresentationTileId()

@@ -61,7 +61,7 @@ public sealed class UIContextMenuItemRow : MonoBehaviour, IPointerEnterHandler, 
         {
             _chevron.gameObject.SetActive(hasChildren);
             if (hasChildren)
-                _chevron.text = ItemContextMenuLabels.SubmenuChevron;
+                _chevron.text = ContextMenuChromeLabels.SubmenuChevron;
         }
 
         ApplyBackground(hovered: false);

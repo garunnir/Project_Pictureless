@@ -252,6 +252,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6690318263963990580, guid: 93c4a4e7dc627e34887fef4af4ed0fb7,
         type: 3}
       insertIndex: -1
+      addedObject: {fileID: 6123409876543210987}
+    - targetCorrespondingSourceObject: {fileID: 6690318263963990580, guid: 93c4a4e7dc627e34887fef4af4ed0fb7,
+        type: 3}
+      insertIndex: -1
       addedObject: {fileID: 811257846255588917}
     - targetCorrespondingSourceObject: {fileID: 3475909334637767399, guid: 93c4a4e7dc627e34887fef4af4ed0fb7,
         type: 3}
@@ -290,10 +294,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf2aeb6e357b1294b8716354a3375be2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::Interactions.DoorInteractable
-  displayName: Interaction.Door.DisplayName
-  hintText: Interaction.DoorOpen
-  _outlineSpriteRenderer: {fileID: 0}
   isOpen: 0
+--- !u!114 &6123409876543210987
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2502377816984249760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e6a3c1d4f0b5a8c9d2e3f4a5b6c7d8e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::TileObjectInteractionTarget
+  _tileView: {fileID: 0}
 --- !u!95 &811257846255588917
 Animator:
   serializedVersion: 7

@@ -7,6 +7,7 @@
         "Dist.Inventory",
         "Dist.Map",
         "Dist.Gameplay.Data",
+        "Dist.UI.ContextMenu",
         "LeanPool",
         "Unity.InputSystem",
         "Unity.TextMeshPro"
