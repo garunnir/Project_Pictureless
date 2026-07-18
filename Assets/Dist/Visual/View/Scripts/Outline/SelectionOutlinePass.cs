@@ -7,9 +7,12 @@ using UnityEngine.Rendering.Universal;
 // ============================================================
 // SelectionOutlinePass
 // URP 17 (Unity 6) RenderGraph API 기반 외곽선 합성 패스.
-// 1) Mask Pass : 지정된 RenderingLayer 비트가 켜진 렌더러만 단색으로 R8 RT에 렌더
+// 1) Mask Pass : RenderingLayer 매칭 렌더러를 overrideShader로 R8에 알파 실루엣 기록
 // 2) Composite Pass : 카메라 컬러 + 마스크를 읽어 임시 컬러 RT에 외곽선 합성
 // 3) CopyBack Pass  : 임시 컬러 RT를 카메라 컬러로 복사
+//
+// Hot path: 마스크는 선택 오브젝트 프래그만(+텍스처 1샘플·clip). 풀스크린 합성은 기존과 동일.
+// overrideShader는 해당 Draw에서 SRP Batcher 미사용(선택 소수 전제).
 // ============================================================
 public class SelectionOutlinePass : ScriptableRenderPass
 {
@@ -31,15 +34,15 @@ public class SelectionOutlinePass : ScriptableRenderPass
         new ShaderTagId("SRPDefaultUnlit"),
     };
 
-    private readonly Material _maskMaterial;
+    private readonly Shader _maskShader;
     private readonly Material _outlineMaterial;
     private readonly uint _renderingLayerMask;
     private readonly Color _outlineColor;
     private readonly int _thicknessPx;
 
-    public SelectionOutlinePass(Material maskMaterial, Material outlineMaterial, uint renderingLayerMask, Color outlineColor, int thicknessPx)
+    public SelectionOutlinePass(Shader maskShader, Material outlineMaterial, uint renderingLayerMask, Color outlineColor, int thicknessPx)
     {
-        _maskMaterial = maskMaterial;
+        _maskShader = maskShader;
         _outlineMaterial = outlineMaterial;
         _renderingLayerMask = renderingLayerMask;
         _outlineColor = outlineColor;
@@ -67,7 +70,7 @@ public class SelectionOutlinePass : ScriptableRenderPass
 
     public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
     {
-        if (_maskMaterial == null || _outlineMaterial == null) return;
+        if (_maskShader == null || _outlineMaterial == null) return;
         if (_renderingLayerMask == 0u) return;
 
         UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
@@ -111,8 +114,9 @@ public class SelectionOutlinePass : ScriptableRenderPass
             {
                 drawSettings.SetShaderPassName(i, s_DefaultShaderTagIds[i]);
             }
-            drawSettings.overrideMaterial = _maskMaterial;
-            drawSettings.overrideMaterialPassIndex = 0;
+            // overrideMaterial은 원본 _MainTex/UV를 잃음 → overrideShader로 프로퍼티 유지 + 알파 clip
+            drawSettings.overrideShader = _maskShader;
+            drawSettings.overrideShaderPassIndex = 0;
 
             var listParams = new RendererListParams(renderingData.cullResults, drawSettings, filterSettings);
             passData.rendererList = renderGraph.CreateRendererList(listParams);

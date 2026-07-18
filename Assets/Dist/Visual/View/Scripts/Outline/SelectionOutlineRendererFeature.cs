@@ -2,15 +2,11 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 // ============================================================
 // SelectionOutlineRendererFeature
 // URP RendererFeature: SelectionLayerConfig가 가리키는 RenderingLayer 비트로 표시된
-// 렌더러를 화면공간 외곽선으로 그린다. 머티리얼 인스턴스화/머티리얼 스왑 없이
-// 오브젝트별 토글이 가능하여 SRP Batcher와 호환된다.
+// 렌더러를 화면공간 외곽선으로 그린다. 머티리얼 스왑 없이 비트 토글만 사용.
+// 마스크 Draw는 overrideShader(원본 프로퍼티 유지·알파 실루엣).
 // ============================================================
 public class SelectionOutlineRendererFeature : ScriptableRendererFeature
 {
@@ -21,7 +17,6 @@ public class SelectionOutlineRendererFeature : ScriptableRendererFeature
     [SerializeField, Range(1, 8)] private int _outlineThicknessPx = 2;
     [SerializeField] private RenderPassEvent _passEvent = RenderPassEvent.AfterRenderingTransparents;
 
-    private Material _maskMaterial;
     private Material _outlineMaterial;
     private SelectionOutlinePass _pass;
 
@@ -34,11 +29,11 @@ public class SelectionOutlineRendererFeature : ScriptableRendererFeature
             return;
         }
 
-        _maskMaterial = CoreUtils.CreateEngineMaterial(_maskShader);
+        // 마스크는 overrideShader로 원본 머티리얼 프로퍼티(_MainTex, UV 워프, _Cutoff)를 유지한다.
         _outlineMaterial = CoreUtils.CreateEngineMaterial(_outlineShader);
 
         _pass = new SelectionOutlinePass(
-            _maskMaterial,
+            _maskShader,
             _outlineMaterial,
             _layerConfig.RenderingLayerMask,
             _outlineColor,
@@ -66,11 +61,6 @@ public class SelectionOutlineRendererFeature : ScriptableRendererFeature
 
     private void DisposeMaterials()
     {
-        if (_maskMaterial != null)
-        {
-            CoreUtils.Destroy(_maskMaterial);
-            _maskMaterial = null;
-        }
         if (_outlineMaterial != null)
         {
             CoreUtils.Destroy(_outlineMaterial);
