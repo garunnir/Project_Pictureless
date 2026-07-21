@@ -14,6 +14,7 @@ public sealed class UIInventoryItemDetailPanel : MonoBehaviour
 
     [SerializeField] RectTransform _rect;
     [SerializeField] TMP_Text _nameLine;
+    [SerializeField] TMP_Text _descriptionLine;
     [SerializeField] TMP_Text _categoryLine;
     [SerializeField] TMP_Text _typeLine;
     [SerializeField] TMP_Text _countLine;
@@ -101,12 +102,19 @@ public sealed class UIInventoryItemDetailPanel : MonoBehaviour
         ItemData item = stack.Item;
 
         SetRow(_nameLine, InventoryItemDetailLabels.FormatName(stack), alwaysShow: true);
+        SetOptionalRow(
+            _descriptionLine,
+            InventoryItemDetailLabels.TryFormatDescription(item, out string description),
+            description);
         SetOptionalRow(_categoryLine, InventoryItemDetailLabels.TryFormatCategory(item, out string category), category);
         SetOptionalRow(_typeLine, InventoryItemDetailLabels.TryFormatType(item, out string type), type);
         SetRow(_countLine, InventoryItemDetailLabels.FormatCount(stack.Count), alwaysShow: true);
         SetRow(_weightLine, InventoryItemDetailLabels.FormatWeight(stack), alwaysShow: true);
         SetRow(_volumeLine, InventoryItemDetailLabels.FormatVolume(stack), alwaysShow: true);
-        SetRow(_durabilityLine, InventoryItemDetailLabels.FormatDurability(stack.DamageLevel), alwaysShow: true);
+        SetOptionalRow(
+            _durabilityLine,
+            InventoryItemDetailLabels.TryFormatDurability(stack, out string durability),
+            durability);
         SetOptionalRow(
             _containerCapacityLine,
             InventoryItemDetailLabels.TryFormatContainerCapacity(item, out string capacity),

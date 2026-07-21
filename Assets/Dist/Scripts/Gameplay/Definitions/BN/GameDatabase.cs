@@ -27,6 +27,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         readonly Dictionary<string, ItemData> _itemById = new();
         readonly Dictionary<string, ContainerData> _containerById = new();
         readonly Dictionary<string, SkillData> _skillById = new();
+        readonly Dictionary<string, MaterialData> _materialById = new();
         readonly Dictionary<string, List<RecipeData>> _recipesByResult = new();
         readonly Dictionary<string, List<RecipeData>> _recipesByCategory = new();
         readonly Dictionary<string, List<RecipeData>> _recipesByIngredient = new();
@@ -57,6 +58,12 @@ namespace Garunnir.Runtime.Gameplay.Data
             {
                 if (!string.IsNullOrEmpty(skill?.id))
                     _skillById[skill.id] = skill;
+            }
+
+            foreach (MaterialData material in _materials)
+            {
+                if (!string.IsNullOrEmpty(material?.id))
+                    _materialById[material.id] = material;
             }
 
             foreach (ContainerData container in _containers)
@@ -158,6 +165,13 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (string.IsNullOrEmpty(id)) return null;
             _skillById.TryGetValue(id, out var skill);
             return skill;
+        }
+
+        public MaterialData GetMaterial(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return null;
+            _materialById.TryGetValue(id, out var material);
+            return material;
         }
 
         public List<RecipeData> GetUncraftForResult(string itemId)

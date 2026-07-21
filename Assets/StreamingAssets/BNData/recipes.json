@@ -2828,6 +2828,16 @@
           "book": "book_icef",
           "level": 5
         }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "cooking",
+          "level": 5
+        },
+        {
+          "skill": "fabrication",
+          "level": 5
+        }
       ]
     },
     {
@@ -25149,6 +25159,12 @@
           "book": "pocket_survival",
           "level": 2
         }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "tailor",
+          "level": 5
+        }
       ]
     },
     {
@@ -26544,6 +26560,12 @@
         {
           "book": "tailor_portfolio",
           "level": 2
+        }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "tailor",
+          "level": 4
         }
       ]
     },
@@ -32053,6 +32075,12 @@
           "book": "tailor_portfolio",
           "level": 3
         }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "tailor",
+          "level": 7
+        }
       ]
     },
     {
@@ -36485,6 +36513,12 @@
         {
           "book": "manual_tailor",
           "level": 2
+        }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "tailor",
+          "level": 4
         }
       ]
     },
@@ -41305,6 +41339,12 @@
         {
           "book": "tailor_portfolio",
           "level": 2
+        }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "tailor",
+          "level": 4
         }
       ]
     },
@@ -66420,6 +66460,12 @@
           "book": "advanced_electronics",
           "level": 1
         }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "electronics",
+          "level": 3
+        }
       ]
     },
     {
@@ -67112,6 +67158,16 @@
         {
           "book": "advanced_electronics",
           "level": 3
+        }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "electronics",
+          "level": 4
+        },
+        {
+          "skill": "mechanics",
+          "level": 2
         }
       ]
     },
@@ -72710,6 +72766,12 @@
           "book": "mag_electronics",
           "level": 1
         }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "electronics",
+          "level": 2
+        }
       ]
     },
     {
@@ -76956,6 +77018,12 @@
           "book": "manual_electronics",
           "level": 1
         }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "electronics",
+          "level": 2
+        }
       ]
     },
     {
@@ -80240,6 +80308,16 @@
         {
           "book": "textbook_carpentry",
           "level": 5
+        }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "mechanics",
+          "level": 5
+        },
+        {
+          "skill": "electronics",
+          "level": 3
         }
       ]
     },
@@ -83623,6 +83701,12 @@
           "book": "winemaking_beginner",
           "level": 2
         }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "cooking",
+          "level": 8
+        }
       ]
     },
     {
@@ -84373,6 +84457,12 @@
         {
           "book": "brewing_cookbook",
           "level": 4
+        }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "cooking",
+          "level": 7
         }
       ]
     },
@@ -113072,6 +113162,12 @@
           "book": "cookbook",
           "level": 4
         }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "cooking",
+          "level": 5
+        }
       ]
     },
     {
@@ -113156,6 +113252,12 @@
         {
           "book": "cookbook_indian",
           "level": 1
+        }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "cooking",
+          "level": 4
         }
       ]
     },
@@ -152305,6 +152407,12 @@
           "book": "textbook_mechanics",
           "level": 5
         }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "fabrication",
+          "level": 6
+        }
       ]
     },
     {
@@ -162000,6 +162108,16 @@
           "book": "textbook_carpentry",
           "level": 5
         }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "mechanics",
+          "level": 5
+        },
+        {
+          "skill": "electronics",
+          "level": 3
+        }
       ]
     },
     {
@@ -165374,6 +165492,16 @@
         {
           "book": "welding_book",
           "level": 1
+        }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "mechanics",
+          "level": 3
+        },
+        {
+          "skill": "electronics",
+          "level": 2
         }
       ]
     },
@@ -174363,6 +174491,16 @@
         {
           "book": "brewing_cookbook",
           "level": 3
+        }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "fabrication",
+          "level": 4
+        },
+        {
+          "skill": "cooking",
+          "level": 5
         }
       ]
     },
@@ -194596,6 +194734,16 @@
           "level": 3
         }
       ],
+      "autolearn_skills": [
+        {
+          "skill": "fabrication",
+          "level": 5
+        },
+        {
+          "skill": "gun",
+          "level": 2
+        }
+      ],
       "byproducts": [
         {
           "item": "scrap",
@@ -194673,6 +194821,16 @@
         {
           "book": "recipe_bullets",
           "level": 3
+        }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "fabrication",
+          "level": 5
+        },
+        {
+          "skill": "gun",
+          "level": 2
         }
       ],
       "byproducts": [
@@ -194754,6 +194912,16 @@
           "level": 3
         }
       ],
+      "autolearn_skills": [
+        {
+          "skill": "fabrication",
+          "level": 5
+        },
+        {
+          "skill": "gun",
+          "level": 2
+        }
+      ],
       "byproducts": [
         {
           "item": "scrap",
@@ -194827,6 +194995,16 @@
         {
           "book": "recipe_bullets",
           "level": 4
+        }
+      ],
+      "autolearn_skills": [
+        {
+          "skill": "fabrication",
+          "level": 6
+        },
+        {
+          "skill": "gun",
+          "level": 2
         }
       ],
       "byproducts": [

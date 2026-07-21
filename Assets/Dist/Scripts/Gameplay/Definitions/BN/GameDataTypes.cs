@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Garunnir.Runtime.Gameplay.Data
 {
-    // ── Root wrappers (JsonUtility 최상위) ──────────────────────
+    // ── Root wrappers (Newtonsoft JSON) ─────────────────────────
 
     [Serializable]
     public sealed class ItemsFileRoot
@@ -54,6 +54,26 @@ namespace Garunnir.Runtime.Gameplay.Data
         public int book_required_level;
         public int book_max_level;
 
+        // ── Game detail (BN bake, 통합 ItemData) ─────────────────
+        public string description;
+        public string subcategory;
+        public bool has_durability;
+        public string repairs_like;
+        public int repair_difficulty;
+        public int bashing;
+        public int cutting;
+        public int to_hit;
+        public List<string> weapon_category;
+        public List<string> techniques;
+        public ArmorDetailData armor;
+        public GunDetailData gun;
+        public ToolDetailData tool;
+        public ComestibleDetailData comestible;
+        public AmmoDetailData ammo;
+        public MagazineDetailData magazine;
+        public BookDetailData book;
+        public ContainerDetailData container_detail;
+
         public float Weight => weight_g / 1000f;
         public float Volume => volume_ml / 1000f;
         public int MaxStack => max_stack > 0 ? max_stack : 1;
@@ -64,6 +84,13 @@ namespace Garunnir.Runtime.Gameplay.Data
     {
         public string id;
         public string name;
+        public int bash_resist;
+        public int cut_resist;
+        public int bullet_resist;
+        public int acid_resist;
+        public int fire_resist;
+        public int chip_resist;
+        public float density;
     }
 
     [Serializable]
@@ -114,6 +141,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         public float time_minutes;
         public bool reversible;
         public bool autolearn;
+        public List<SkillReq> autolearn_skills;
         public int result_count;
         public List<QualityEntry> qualities_required;
         public List<ToolSlot> tools;
@@ -121,6 +149,11 @@ namespace Garunnir.Runtime.Gameplay.Data
         public bool is_uncraft;
         public List<BookLearn> book_learn;
         public List<Byproduct> byproducts;
+        public List<ProficiencyReq> proficiencies;
+        public string activity_level;
+        public int morale_modifier;
+        public bool hot_result;
+        public bool dehydrating;
     }
 
     [Serializable]
@@ -142,6 +175,9 @@ namespace Garunnir.Runtime.Gameplay.Data
         public string item;
         public int count;
         public bool list;
+        public bool container;
+        public bool filthy;
+        public bool liquid;
     }
 
     [Serializable]

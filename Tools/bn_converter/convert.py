@@ -182,6 +182,7 @@ def load_items(bn_path: Path) -> dict[str, dict]:
         # vehicle/obsolete entries that are still referenced by recipes/tools
         "WHEEL",
         "MIGRATION",
+        "BATTERY",
     }
     by_id: dict[str, dict] = {}
     abstracts: dict[str, dict] = {}
@@ -239,6 +240,235 @@ def load_items(bn_path: Path) -> dict[str, dict]:
 
     print(f"[items] Resolved {len(resolved)} items ({len(abstracts)} abstracts skipped)")
     return resolved
+
+
+def get_item_description(entry: dict) -> str:
+    description = entry.get("description", "")
+    if isinstance(description, dict):
+        return str(description.get("str", "") or "")
+    return str(description or "")
+
+
+DURABLE_ITEM_TYPES = frozenset({
+    "ARMOR", "TOOL", "GUN", "TOOL_ARMOR", "GUNMOD", "MAGAZINE",
+    "ENGINE", "WHEEL", "PET_ARMOR", "BIONIC_ITEM",
+})
+
+
+def compute_has_durability(entry: dict, item_type: str) -> bool:
+    if entry.get("armor_data") or entry.get("gun_data"):
+        return True
+    return item_type in DURABLE_ITEM_TYPES
+
+
+def _int_or_zero(value) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _float_or_zero(value) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def export_armor_detail(entry: dict, item_type: str) -> dict | None:
+    source = entry.get("armor_data")
+    if item_type in ("ARMOR", "TOOL_ARMOR", "PET_ARMOR"):
+        source = entry if source is None else {**entry, **source}
+    if not source:
+        return None
+
+    armor = {}
+    covers = source.get("covers")
+    if covers:
+        armor["covers"] = covers if isinstance(covers, list) else [covers]
+    for key in (
+        "coverage", "encumbrance", "max_encumbrance", "warmth", "storage",
+        "environmental_protection", "material_thickness",
+    ):
+        if key in source:
+            armor[key] = _int_or_zero(source.get(key))
+    if "power_armor" in source:
+        armor["power_armor"] = bool(source.get("power_armor"))
+    return armor or None
+
+
+def export_gun_detail(entry: dict, item_type: str) -> dict | None:
+    source = entry.get("gun_data")
+    if item_type == "GUN":
+        source = entry if source is None else {**entry, **source}
+    if not source:
+        return None
+
+    gun = {}
+    if source.get("skill"):
+        gun["skill"] = str(source.get("skill"))
+    ammo = source.get("ammo")
+    if ammo:
+        gun["ammo"] = ammo if isinstance(ammo, list) else [ammo]
+    for key in (
+        "ranged_damage", "range", "dispersion", "recoil", "durability",
+        "clip_size", "reload", "burst",
+    ):
+        if key in source:
+            gun[key] = _int_or_zero(source.get(key))
+    return gun or None
+
+
+def export_tool_detail(entry: dict, item_type: str) -> dict | None:
+    if item_type not in ("TOOL", "TOOL_ARMOR", "GUNMOD", "TOOLMOD", "BIONIC_ITEM", "ENGINE"):
+        return None
+
+    tool = {}
+    for key in ("max_charges", "initial_charges", "charges_per_use", "turns_per_charge"):
+        if key in entry:
+            tool[key] = _int_or_zero(entry.get(key))
+    ammo = entry.get("ammo")
+    if ammo:
+        tool["ammo"] = ammo if isinstance(ammo, list) else [ammo]
+    if entry.get("revert_to"):
+        tool["revert_to"] = str(entry.get("revert_to"))
+    return tool or None
+
+
+def export_comestible_detail(entry: dict, item_type: str) -> dict | None:
+    if item_type != "COMESTIBLE":
+        return None
+
+    comestible = {}
+    for key in ("calories", "quench", "fun", "healthy", "stim", "charges"):
+        if key in entry:
+            comestible[key] = _int_or_zero(entry.get(key))
+    if entry.get("spoils_in") is not None:
+        comestible["spoils_in_minutes"] = parse_time_to_minutes(entry.get("spoils_in"))
+    if entry.get("addiction_type"):
+        comestible["addiction_type"] = str(entry.get("addiction_type"))
+    return comestible or None
+
+
+def export_ammo_detail(entry: dict, item_type: str) -> dict | None:
+    if item_type != "AMMO":
+        return None
+
+    ammo = {}
+    if entry.get("ammo_type"):
+        ammo["ammo_type"] = str(entry.get("ammo_type"))
+    for key in ("damage", "pierce", "range", "dispersion", "recoil", "count"):
+        if key in entry:
+            ammo[key] = _int_or_zero(entry.get(key))
+    return ammo or None
+
+
+def export_magazine_detail(entry: dict, item_type: str) -> dict | None:
+    if item_type != "MAGAZINE":
+        return None
+
+    magazine = {}
+    ammo_type = entry.get("ammo_type")
+    if ammo_type:
+        magazine["ammo_type"] = ammo_type if isinstance(ammo_type, list) else [ammo_type]
+    for key in ("capacity", "reliability", "reload_time"):
+        if key in entry:
+            magazine[key] = _int_or_zero(entry.get(key))
+    if entry.get("default_ammo"):
+        magazine["default_ammo"] = str(entry.get("default_ammo"))
+    return magazine or None
+
+
+def export_book_detail(entry: dict, item_type: str) -> dict | None:
+    source = entry.get("book_data")
+    if item_type == "BOOK":
+        source = entry if source is None else {**entry, **source}
+    if not source:
+        return None
+
+    book = {}
+    for key in ("intelligence", "fun", "chapters"):
+        if key in source:
+            book[key] = _int_or_zero(source.get(key))
+    if source.get("time") is not None:
+        book["read_time_minutes"] = parse_time_to_minutes(source.get("time"))
+    return book or None
+
+
+def export_container_detail(entry: dict, item_type: str) -> dict | None:
+    source = entry.get("container_data")
+    if item_type == "CONTAINER":
+        source = entry if source is None else {**entry, **source}
+    if not source:
+        return None
+
+    detail = {}
+    for key in ("seals", "watertight", "preserves"):
+        if key in source:
+            detail[key] = bool(source.get(key))
+    return detail or None
+
+
+def export_item_game_detail(entry: dict, item_type: str) -> dict:
+    detail: dict[str, Any] = {}
+
+    description = get_item_description(entry)
+    if description:
+        detail["description"] = description
+
+    subcategory = entry.get("subcategory", "")
+    if subcategory:
+        detail["subcategory"] = str(subcategory)
+
+    stack_size = entry.get("stack_size", entry.get("count", 0))
+    if stack_size:
+        detail["max_stack"] = _int_or_zero(stack_size)
+
+    detail["has_durability"] = compute_has_durability(entry, item_type)
+
+    if entry.get("repairs_like"):
+        detail["repairs_like"] = str(entry.get("repairs_like"))
+    if entry.get("repair_difficulty") is not None:
+        detail["repair_difficulty"] = _int_or_zero(entry.get("repair_difficulty"))
+
+    for key in ("bashing", "cutting", "to_hit"):
+        if key in entry:
+            detail[key] = _int_or_zero(entry.get(key))
+
+    weapon_category = entry.get("weapon_category")
+    if weapon_category:
+        detail["weapon_category"] = weapon_category if isinstance(weapon_category, list) else [weapon_category]
+
+    techniques = entry.get("techniques")
+    if techniques:
+        detail["techniques"] = techniques if isinstance(techniques, list) else [techniques]
+
+    armor = export_armor_detail(entry, item_type)
+    if armor:
+        detail["armor"] = armor
+    gun = export_gun_detail(entry, item_type)
+    if gun:
+        detail["gun"] = gun
+    tool = export_tool_detail(entry, item_type)
+    if tool:
+        detail["tool"] = tool
+    comestible = export_comestible_detail(entry, item_type)
+    if comestible:
+        detail["comestible"] = comestible
+    ammo = export_ammo_detail(entry, item_type)
+    if ammo:
+        detail["ammo"] = ammo
+    magazine = export_magazine_detail(entry, item_type)
+    if magazine:
+        detail["magazine"] = magazine
+    book = export_book_detail(entry, item_type)
+    if book:
+        detail["book"] = book
+    container_detail = export_container_detail(entry, item_type)
+    if container_detail:
+        detail["container_detail"] = container_detail
+
+    return detail
 
 
 def export_items_and_containers(resolved: dict[str, dict]) -> tuple[list[dict], list[dict]]:
@@ -305,6 +535,7 @@ def export_items_and_containers(resolved: dict[str, dict]) -> tuple[list[dict], 
             item["book_required_level"] = entry.get("required_level", 0)
             item["book_max_level"] = entry.get("max_level", 0)
 
+        item.update(export_item_game_detail(entry, item_type))
         items_out.append(item)
     return items_out, containers_out
 
@@ -423,6 +654,13 @@ def load_materials(bn_path: Path) -> list[dict]:
             mats.append({
                 "id": entry.get("id", ""),
                 "name": name,
+                "bash_resist": _int_or_zero(entry.get("bash_resist")),
+                "cut_resist": _int_or_zero(entry.get("cut_resist")),
+                "bullet_resist": _int_or_zero(entry.get("bullet_resist")),
+                "acid_resist": _int_or_zero(entry.get("acid_resist")),
+                "fire_resist": _int_or_zero(entry.get("fire_resist")),
+                "chip_resist": _int_or_zero(entry.get("chip_resist")),
+                "density": _float_or_zero(entry.get("density")),
             })
     print(f"[materials] Loaded {len(mats)} materials")
     return mats
@@ -671,6 +909,42 @@ def flatten_recipe(entry: dict, requirements: dict[str, dict],
     if book_learn:
         rec["book_learn"] = book_learn
 
+    if autolearn_skills:
+        parsed_autolearn = []
+        for skill_entry in autolearn_skills:
+            if isinstance(skill_entry, list) and len(skill_entry) >= 2:
+                parsed_autolearn.append({"skill": skill_entry[0], "level": skill_entry[1]})
+            elif isinstance(skill_entry, str):
+                parsed_autolearn.append({"skill": skill_entry, "level": 0})
+        if parsed_autolearn:
+            rec["autolearn_skills"] = parsed_autolearn
+
+    proficiencies_out = []
+    for prof in entry.get("proficiencies", []) or []:
+        if isinstance(prof, dict):
+            proficiencies_out.append({
+                "proficiency": prof.get("proficiency", prof.get("id", "")),
+                "required": bool(prof.get("required", False)),
+                "time_multiplier": _float_or_zero(prof.get("time_multiplier", 1.0)),
+            })
+        elif isinstance(prof, str):
+            proficiencies_out.append({
+                "proficiency": prof,
+                "required": False,
+                "time_multiplier": 1.0,
+            })
+    if proficiencies_out:
+        rec["proficiencies"] = proficiencies_out
+
+    if entry.get("activity_level"):
+        rec["activity_level"] = str(entry.get("activity_level"))
+    if entry.get("morale_modifier") is not None:
+        rec["morale_modifier"] = _int_or_zero(entry.get("morale_modifier"))
+    if entry.get("hot_result"):
+        rec["hot_result"] = True
+    if entry.get("dehydrating"):
+        rec["dehydrating"] = True
+
     if entry.get("byproducts"):
         rec["byproducts"] = [
             {"item": bp[0], "count": bp[1] if len(bp) > 1 else 1}
@@ -678,6 +952,18 @@ def flatten_recipe(entry: dict, requirements: dict[str, dict],
         ]
 
     return rec
+
+
+def parse_component_alt(item_id: str, count, flags: list | None = None) -> dict:
+    alt = {"item": item_id, "count": count}
+    for flag in flags or []:
+        if flag == "CONTAINER":
+            alt["container"] = True
+        elif flag == "FILTHY":
+            alt["filthy"] = True
+        elif flag == "LIQUID":
+            alt["liquid"] = True
+    return alt
 
 
 def normalize_components(comps: list, requirements: dict[str, dict]) -> list[dict]:
@@ -692,10 +978,11 @@ def normalize_components(comps: list, requirements: dict[str, dict]) -> list[dic
             if isinstance(alt, list) and len(alt) >= 2:
                 item_id = alt[0]
                 count = alt[1]
-                if len(alt) >= 3 and alt[2] == "LIST":
+                extra_flags = list(alt[2:]) if len(alt) > 2 else []
+                if extra_flags and extra_flags[0] == "LIST":
                     alternatives.extend(expand_component_requirement(item_id, count, requirements))
                 else:
-                    alternatives.append({"item": item_id, "count": count})
+                    alternatives.append(parse_component_alt(item_id, count, extra_flags))
         if alternatives:
             result.append({"alternatives": alternatives})
     return result

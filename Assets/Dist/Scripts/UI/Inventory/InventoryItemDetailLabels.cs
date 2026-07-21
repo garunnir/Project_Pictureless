@@ -68,6 +68,29 @@ public static class InventoryItemDetailLabels
         return Loc.Format(KeyVolume, stack.TotalVolume);
     }
 
+    public static bool TryFormatDescription(ItemData item, out string text)
+    {
+        text = null;
+        if (item == null || string.IsNullOrWhiteSpace(item.description))
+            return false;
+
+        text = item.description.Trim();
+        return true;
+    }
+
+    public static bool TryFormatDurability(ItemStack stack, out string text)
+    {
+        text = null;
+        if (stack?.Item == null)
+            return false;
+
+        if (!ItemDurabilityRules.ShouldShowDurability(stack.Item, stack.DamageLevel))
+            return false;
+
+        text = FormatDurability(stack.DamageLevel);
+        return true;
+    }
+
     public static string FormatDurability(int damageLevel)
     {
         string status = damageLevel <= 0
@@ -110,7 +133,10 @@ public static class InventoryItemDetailLabels
             if (builder.Length > 0)
                 builder.Append(", ");
 
-            builder.Append(materialId);
+            MaterialData material = GameplayData.GetMaterial(materialId);
+            builder.Append(material != null && !string.IsNullOrEmpty(material.name)
+                ? material.name
+                : materialId);
         }
 
         if (builder.Length == 0)

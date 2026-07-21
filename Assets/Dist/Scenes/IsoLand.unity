@@ -26763,6 +26763,8 @@ MonoBehaviour:
     type: 3}
   _contextMenuPrefab: {fileID: 919155482675174259, guid: 0ad45b6309042dc43b1858d843399223,
     type: 3}
+  _itemDetailPanelPrefab: {fileID: 3261716347118538803, guid: 8c18559cb3c62b64e9918d5374d1cc5a,
+    type: 3}
   _primaryWindow: {fileID: 0}
   _lootWindow: {fileID: 0}
   _uiCanvas: {fileID: 715630606}
@@ -26770,6 +26772,7 @@ MonoBehaviour:
   _dragGhost: {fileID: 0}
   _scrollDragOverlay: {fileID: 0}
   _contextMenu: {fileID: 0}
+  _itemDetailPanel: {fileID: 0}
   _primaryWindowInitialPosition: {x: -220, y: 0}
   _lootWindowInitialPosition: {x: 200, y: 0}
   _primaryLauncher: {fileID: 595498792}

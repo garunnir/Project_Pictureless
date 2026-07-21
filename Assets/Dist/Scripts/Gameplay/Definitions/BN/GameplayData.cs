@@ -73,6 +73,11 @@ public static class GameplayData
         return GameItems?.GetContainer(id) ?? RefData?.GetContainer(id);
     }
 
+    public static MaterialData GetMaterial(string id)
+    {
+        return GameItems?.GetMaterial(id) ?? RefData?.GetMaterial(id);
+    }
+
     public static List<RecipeData> GetRecipesForResult(string resultId)
     {
         var list = GameItems?.GetRecipesForResult(resultId);

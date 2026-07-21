@@ -2,7 +2,8 @@
     "name": "Dist.Gameplay.Data",
     "rootNamespace": "",
     "references": [
-        "Config"
+        "Config",
+        "Unity.Newtonsoft.Json"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

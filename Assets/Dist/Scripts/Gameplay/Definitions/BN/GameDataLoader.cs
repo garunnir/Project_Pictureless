@@ -57,14 +57,14 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (File.Exists(itemsPath))
             {
                 string json = File.ReadAllText(itemsPath);
-                itemsRoot = JsonUtility.FromJson<ItemsFileRoot>(json);
+                itemsRoot = GameDataJson.Deserialize<ItemsFileRoot>(json);
                 Debug.Log($"[GameDataLoader:{tag}] items: {itemsRoot?.items?.Count ?? 0}");
             }
 
             if (File.Exists(recipesPath))
             {
                 string json = File.ReadAllText(recipesPath);
-                recipesRoot = JsonUtility.FromJson<RecipesFileRoot>(json);
+                recipesRoot = GameDataJson.Deserialize<RecipesFileRoot>(json);
                 Debug.Log($"[GameDataLoader:{tag}] recipes: {recipesRoot?.recipes?.Count ?? 0}");
             }
 
@@ -91,13 +91,13 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (!string.IsNullOrEmpty(itemsJsonPath) && File.Exists(itemsJsonPath))
             {
                 string json = File.ReadAllText(itemsJsonPath);
-                itemsRoot = JsonUtility.FromJson<ItemsFileRoot>(json);
+                itemsRoot = GameDataJson.Deserialize<ItemsFileRoot>(json);
             }
 
             if (!string.IsNullOrEmpty(recipesJsonPath) && File.Exists(recipesJsonPath))
             {
                 string json = File.ReadAllText(recipesJsonPath);
-                recipesRoot = JsonUtility.FromJson<RecipesFileRoot>(json);
+                recipesRoot = GameDataJson.Deserialize<RecipesFileRoot>(json);
             }
 
             return new GameDatabase(itemsRoot, recipesRoot);

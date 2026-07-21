@@ -87,7 +87,7 @@ public sealed class GameDataEditorWindow : EditorWindow
         if (File.Exists(itemsPath))
         {
             string json = File.ReadAllText(itemsPath);
-            _customItemsRoot = JsonUtility.FromJson<ItemsFileRoot>(json);
+            _customItemsRoot = GameDataJson.Deserialize<ItemsFileRoot>(json);
         }
         else
         {
@@ -103,7 +103,7 @@ public sealed class GameDataEditorWindow : EditorWindow
         if (File.Exists(recipesPath))
         {
             string json = File.ReadAllText(recipesPath);
-            _customRecipesRoot = JsonUtility.FromJson<RecipesFileRoot>(json);
+            _customRecipesRoot = GameDataJson.Deserialize<RecipesFileRoot>(json);
         }
         else
         {
@@ -365,6 +365,24 @@ public sealed class GameDataEditorWindow : EditorWindow
 
         if (!string.IsNullOrEmpty(item.comestible_type))
             ReadField("Comestible", item.comestible_type);
+
+        if (!string.IsNullOrEmpty(item.description))
+        {
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField("Description", EditorStyles.miniBoldLabel);
+            EditorGUILayout.LabelField(item.description, EditorStyles.wordWrappedLabel);
+        }
+
+        ReadField("Has durability", item.has_durability ? "yes" : "no");
+
+        if (item.armor != null)
+            ReadField("Armor encumbrance", item.armor.encumbrance.ToString());
+        if (item.gun != null && item.gun.durability > 0)
+            ReadField("Gun durability", item.gun.durability.ToString());
+        if (item.tool != null && item.tool.max_charges > 0)
+            ReadField("Tool charges", $"{item.tool.initial_charges}/{item.tool.max_charges}");
+        if (item.comestible != null && item.comestible.calories != 0)
+            ReadField("Calories", item.comestible.calories.ToString());
 
         DrawItemIconSection(item);
 
@@ -742,7 +760,7 @@ public sealed class GameDataEditorWindow : EditorWindow
 
     void CopyItemToCustom(ItemData src)
     {
-        var copy = JsonUtility.FromJson<ItemData>(JsonUtility.ToJson(src));
+        var copy = GameDataJson.Clone(src);
         copy.id = $"{src.id}_custom";
         _customItemsRoot.items.Add(copy);
         RebuildCustomDb();
@@ -753,7 +771,7 @@ public sealed class GameDataEditorWindow : EditorWindow
 
     void CopyRecipeToCustom(RecipeData src)
     {
-        var copy = JsonUtility.FromJson<RecipeData>(JsonUtility.ToJson(src));
+        var copy = GameDataJson.Clone(src);
         copy.id = $"{src.id}_custom";
         _customRecipesRoot.recipes.Add(copy);
         RebuildCustomDb();
@@ -775,10 +793,10 @@ public sealed class GameDataEditorWindow : EditorWindow
         string gamePath = GameDataLoader.GetGameDataPath();
         Directory.CreateDirectory(gamePath);
 
-        string itemsJson = JsonUtility.ToJson(_customItemsRoot, true);
+        string itemsJson = GameDataJson.Serialize(_customItemsRoot);
         File.WriteAllText(Path.Combine(gamePath, "items.json"), itemsJson);
 
-        string recipesJson = JsonUtility.ToJson(_customRecipesRoot, true);
+        string recipesJson = GameDataJson.Serialize(_customRecipesRoot);
         File.WriteAllText(Path.Combine(gamePath, "recipes.json"), recipesJson);
 
         _dirty = false;

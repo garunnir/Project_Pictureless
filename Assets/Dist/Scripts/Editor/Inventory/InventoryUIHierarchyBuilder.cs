@@ -161,6 +161,7 @@ static class InventoryUIHierarchyBuilder
         layout.childForceExpandHeight = false;
 
         TMP_Text nameLine = CreateDetailLine("Line_Name", root.transform, nameFontSize, bold: true);
+        TMP_Text descriptionLine = CreateDetailLine("Line_Description", root.transform, bodyFontSize);
         TMP_Text categoryLine = CreateDetailLine("Line_Category", root.transform, bodyFontSize);
         TMP_Text typeLine = CreateDetailLine("Line_Type", root.transform, bodyFontSize);
         TMP_Text countLine = CreateDetailLine("Line_Count", root.transform, bodyFontSize);
@@ -173,6 +174,7 @@ static class InventoryUIHierarchyBuilder
         var panel = root.AddComponent<UIInventoryItemDetailPanel>();
         SetReference(panel, "_rect", rect);
         SetReference(panel, "_nameLine", nameLine);
+        SetReference(panel, "_descriptionLine", descriptionLine);
         SetReference(panel, "_categoryLine", categoryLine);
         SetReference(panel, "_typeLine", typeLine);
         SetReference(panel, "_countLine", countLine);
