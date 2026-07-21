@@ -340,6 +340,8 @@ public sealed class GameDataEditorWindow : EditorWindow
             EditIntField("Weight (g)", ref item.weight_g);
             EditIntField("Volume (ml)", ref item.volume_ml);
 
+            GameDataEditorDetailDrawers.DrawItemDetailEditable(item, MarkDirty);
+
             EditorGUILayout.Space(4);
             if (GUILayout.Button("Delete Item", GUILayout.Width(100)))
             {
@@ -360,33 +362,18 @@ public sealed class GameDataEditorWindow : EditorWindow
             ReadField("Volume", $"{item.volume_ml} ml");
         }
 
-        if (item.materials is { Count: > 0 })
+        if (item.materials is { Count: > 0 } && !IsCustom)
             ReadField("Materials", string.Join(", ", item.materials));
 
-        if (!string.IsNullOrEmpty(item.comestible_type))
-            ReadField("Comestible", item.comestible_type);
+        if (!string.IsNullOrEmpty(item.comestible_type) && !IsCustom)
+            ReadField("Comestible type", item.comestible_type);
 
-        if (!string.IsNullOrEmpty(item.description))
-        {
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField("Description", EditorStyles.miniBoldLabel);
-            EditorGUILayout.LabelField(item.description, EditorStyles.wordWrappedLabel);
-        }
-
-        ReadField("Has durability", item.has_durability ? "yes" : "no");
-
-        if (item.armor != null)
-            ReadField("Armor encumbrance", item.armor.encumbrance.ToString());
-        if (item.gun != null && item.gun.durability > 0)
-            ReadField("Gun durability", item.gun.durability.ToString());
-        if (item.tool != null && item.tool.max_charges > 0)
-            ReadField("Tool charges", $"{item.tool.initial_charges}/{item.tool.max_charges}");
-        if (item.comestible != null && item.comestible.calories != 0)
-            ReadField("Calories", item.comestible.calories.ToString());
+        if (!IsCustom)
+            GameDataEditorDetailDrawers.DrawItemDetailReadOnly(item);
 
         DrawItemIconSection(item);
 
-        if (item.qualities is { Count: > 0 })
+        if (!IsCustom && item.qualities is { Count: > 0 })
         {
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField("Qualities", EditorStyles.miniBoldLabel);
@@ -394,7 +381,7 @@ public sealed class GameDataEditorWindow : EditorWindow
                 EditorGUILayout.LabelField($"  {q.id} lv{q.level}");
         }
 
-        if (item.flags is { Count: > 0 })
+        if (!IsCustom && item.flags is { Count: > 0 })
         {
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField("Flags", EditorStyles.miniBoldLabel);
@@ -557,6 +544,7 @@ public sealed class GameDataEditorWindow : EditorWindow
             if (auto != recipe.autolearn) { recipe.autolearn = auto; _dirty = true; }
 
             DrawEditableComponents(recipe);
+            GameDataEditorDetailDrawers.DrawRecipeDetailEditable(recipe, MarkDirty);
 
             EditorGUILayout.Space(4);
             if (GUILayout.Button("Delete Recipe", GUILayout.Width(120)))
@@ -582,9 +570,10 @@ public sealed class GameDataEditorWindow : EditorWindow
             ReadField("Result Count", recipe.result_count.ToString());
             ReadField("Reversible", recipe.reversible.ToString());
             ReadField("Autolearn", recipe.autolearn.ToString());
+            GameDataEditorDetailDrawers.DrawRecipeDetailReadOnly(recipe);
         }
 
-        if (recipe.skills_required is { Count: > 0 })
+        if (!IsCustom && recipe.skills_required is { Count: > 0 })
         {
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField("Required Skills", EditorStyles.miniBoldLabel);
@@ -592,7 +581,7 @@ public sealed class GameDataEditorWindow : EditorWindow
                 EditorGUILayout.LabelField($"  {sr.skill} lv{sr.level}");
         }
 
-        if (recipe.qualities_required is { Count: > 0 })
+        if (!IsCustom && recipe.qualities_required is { Count: > 0 })
         {
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField("Required Qualities", EditorStyles.miniBoldLabel);
@@ -600,7 +589,7 @@ public sealed class GameDataEditorWindow : EditorWindow
                 EditorGUILayout.LabelField($"  {q.id} lv{q.level}");
         }
 
-        if (recipe.tools is { Count: > 0 })
+        if (!IsCustom && recipe.tools is { Count: > 0 })
         {
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField("Tools", EditorStyles.miniBoldLabel);
@@ -629,7 +618,7 @@ public sealed class GameDataEditorWindow : EditorWindow
             }
         }
 
-        if (recipe.byproducts is { Count: > 0 })
+        if (!IsCustom && recipe.byproducts is { Count: > 0 })
         {
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField("Byproducts", EditorStyles.miniBoldLabel);
@@ -687,6 +676,12 @@ public sealed class GameDataEditorWindow : EditorWindow
                 removeSlot = i;
 
             EditorGUILayout.EndHorizontal();
+
+            if (slot.alternatives.Count > 0)
+            {
+                for (int j = 0; j < slot.alternatives.Count; j++)
+                    GameDataEditorDetailDrawers.DrawEditableComponentFlags(slot.alternatives[j], MarkDirty);
+            }
 
             if (removeAlt >= 0) { slot.alternatives.RemoveAt(removeAlt); _dirty = true; }
         }
@@ -785,6 +780,8 @@ public sealed class GameDataEditorWindow : EditorWindow
         _customDb = new GameDatabase(_customItemsRoot, _customRecipesRoot);
         InvalidateFilter();
     }
+
+    void MarkDirty() => _dirty = true;
 
     // ── Save ───────────────────────────────────────────────────
 
