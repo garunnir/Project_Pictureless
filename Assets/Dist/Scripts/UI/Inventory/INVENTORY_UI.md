@@ -147,6 +147,7 @@
 - 드래그 시작: `UIItemListRow` (`IBeginDragHandler`)
 
 - 드롭 처리: `UIInventoryListDropZone` (`IDropHandler`) → `InventorySession.MoveStacks(...)`
+- 리스트 행 더블클릭: 플레이어·루트 창이 **둘 다 열려 있을 때** 반대편 창 활성 탭으로 `InventoryDragDrop.TryQuickTransferBetweenWindows` → `MoveStacks` (드래그 후 반대 리스트 드롭과 동일). 선택에 클릭 스택이 없으면 단일 스택, 있으면 선택 전체.
 
 - 데이터 갱신: `InventorySession` 이벤트별 갱신 범위 분리
   - `StacksChanged` → `UIInventoryController.OnInventoryDataChanged()` → `UIInventoryListWindow.OnStacksChanged()`  

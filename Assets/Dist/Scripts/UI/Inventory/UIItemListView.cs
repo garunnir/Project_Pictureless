@@ -136,7 +136,7 @@ public sealed class UIItemListView : MonoBehaviour
 
             ApplyRowLayout(row.RectTransform);
 
-            row.Bind(container.Stacks[i], container, _selection, _dragHost);
+            row.Bind(container.Stacks[i], container, _selection, _dragHost, this);
 
             _activeRows.Add(row);
 

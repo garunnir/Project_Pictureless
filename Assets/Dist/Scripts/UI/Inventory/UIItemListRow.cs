@@ -18,6 +18,7 @@ public sealed class UIItemListRow : MonoBehaviour,
     IEndDragHandler
 {
     public static event Action<ItemStack, InventoryContainer, Vector2> RightClicked;
+    public static event Action<ItemStack, InventoryContainer, UIItemListView> DoubleClicked;
 
     static readonly Color NormalColor = new(0.18f, 0.18f, 0.18f, 1f);
     static readonly Color SelectedColor = new(0.28f, 0.38f, 0.48f, 1f);
@@ -32,6 +33,7 @@ public sealed class UIItemListRow : MonoBehaviour,
     InventoryContainer _ownerContainer;
     InventoryListSelection _selection;
     IInventoryItemDragHost _dragHost;
+    UIItemListView _listView;
 
     public ItemStack Stack => _stack;
     public RectTransform RectTransform => transform as RectTransform;
@@ -40,12 +42,14 @@ public sealed class UIItemListRow : MonoBehaviour,
         ItemStack stack,
         InventoryContainer ownerContainer,
         InventoryListSelection selection,
-        IInventoryItemDragHost dragHost)
+        IInventoryItemDragHost dragHost,
+        UIItemListView listView)
     {
         _stack = stack;
         _ownerContainer = ownerContainer;
         _selection = selection;
         _dragHost = dragHost;
+        _listView = listView;
 
         if (_backgroundImage == null)
             TryGetComponent(out _backgroundImage);
@@ -101,10 +105,17 @@ public sealed class UIItemListRow : MonoBehaviour,
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.button != PointerEventData.InputButton.Right)
+        if (_stack?.Item == null || _ownerContainer == null)
             return;
 
-        if (_stack?.Item == null || _ownerContainer == null)
+        if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            if (eventData.clickCount == 2 && !InventoryDragState.IsDragging && _listView != null)
+                DoubleClicked?.Invoke(_stack, _ownerContainer, _listView);
+            return;
+        }
+
+        if (eventData.button != PointerEventData.InputButton.Right)
             return;
 
         RightClicked?.Invoke(_stack, _ownerContainer, eventData.position);

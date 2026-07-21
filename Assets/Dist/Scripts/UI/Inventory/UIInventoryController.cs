@@ -60,6 +60,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
             _lootWindow.gameObject.SetActive(false);
 
         SyncLauncherVisuals();
+        UIItemListRow.DoubleClicked += OnItemDoubleClicked;
     }
 
     void OnEnable() => PlayerInventoryRuntime.ActiveChanged += OnActivePlayerChanged;
@@ -79,10 +80,27 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
     void OnDestroy()
     {
+        UIItemListRow.DoubleClicked -= OnItemDoubleClicked;
+
         if (InputManager.Instance != null)
             InputManager.Instance.PlayerInventoryTogglePerformed -= OnInventoryTogglePerformed;
 
         CloseAllWindows();
+    }
+
+    void OnItemDoubleClicked(ItemStack stack, InventoryContainer sourceContainer, UIItemListView sourceListView)
+    {
+        InventorySession session = _activeRuntime?.Session;
+        if (session == null)
+            return;
+
+        InventoryDragDrop.TryQuickTransferBetweenWindows(
+            session,
+            _primaryWindow,
+            _lootWindow,
+            sourceListView,
+            stack,
+            sourceContainer);
     }
 
     void OnInventoryTogglePerformed(InputAction.CallbackContext context)

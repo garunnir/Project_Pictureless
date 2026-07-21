@@ -2,6 +2,8 @@
 // InventoryDragDrop — 활성 드래그 페이로드를 대상 컨테이너로 적용
 // ============================================================
 
+using System.Collections.Generic;
+
 public static class InventoryDragDrop
 {
     public static bool TryApplyTo(InventorySession session, InventoryContainer target)
@@ -22,19 +24,83 @@ public static class InventoryDragDrop
             payload.SourceContainer == target)
             return false;
 
-        bool moved;
         if (payload.Kind == InventoryDragKind.ContainerContents)
-            moved = session.MoveStacksSequentiallyUntilFull(
+        {
+            bool moved = session.MoveStacksSequentiallyUntilFull(
                 payload.SourceContainer, target, payload.Stacks) > 0;
-        else
-            moved = session.MoveStacks(payload.SourceContainer, target, payload.Stacks);
-
-        if (!moved)
-            return false;
+            return moved;
+        }
 
         if (payload.Kind == InventoryDragKind.Item)
-            payload.SourceSelection?.Clear();
+        {
+            return TryMoveItemStacks(
+                session,
+                payload.SourceContainer,
+                target,
+                payload.Stacks,
+                payload.SourceSelection);
+        }
 
+        return session.MoveStacks(payload.SourceContainer, target, payload.Stacks);
+    }
+
+    public static bool TryMoveItemStacks(
+        InventorySession session,
+        InventoryContainer from,
+        InventoryContainer to,
+        IReadOnlyList<ItemStack> stacks,
+        InventoryListSelection sourceSelection = null)
+    {
+        if (session == null || from == null || to == null || stacks == null || stacks.Count == 0)
+            return false;
+
+        if (from == to)
+            return false;
+
+        if (!session.MoveStacks(from, to, stacks))
+            return false;
+
+        sourceSelection?.Clear();
         return true;
+    }
+
+    public static bool TryQuickTransferBetweenWindows(
+        InventorySession session,
+        UIInventoryListWindow primaryWindow,
+        UIInventoryListWindow lootWindow,
+        UIItemListView sourceListView,
+        ItemStack stack,
+        InventoryContainer sourceContainer)
+    {
+        if (session == null || stack == null || sourceContainer == null || sourceListView == null)
+            return false;
+
+        if (primaryWindow == null || lootWindow == null)
+            return false;
+
+        if (!primaryWindow.IsVisible || !lootWindow.IsVisible)
+            return false;
+
+        UIInventoryListWindow peerWindow;
+        if (sourceListView == primaryWindow.ListView)
+            peerWindow = lootWindow;
+        else if (sourceListView == lootWindow.ListView)
+            peerWindow = primaryWindow;
+        else
+            return false;
+
+        InventoryContainer target = peerWindow.SelectedContainer;
+        if (target == null || sourceContainer == target)
+            return false;
+
+        InventoryListSelection selection = sourceListView.Selection;
+        if (selection == null)
+            return false;
+
+        if (!selection.IsSelected(stack))
+            selection.SetSingle(stack);
+
+        IReadOnlyList<ItemStack> stacks = selection.GetSelectedStacks();
+        return TryMoveItemStacks(session, sourceContainer, target, stacks, selection);
     }
 }
