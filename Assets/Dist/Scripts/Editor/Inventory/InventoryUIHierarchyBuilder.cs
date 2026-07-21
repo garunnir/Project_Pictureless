@@ -128,6 +128,83 @@ static class InventoryUIHierarchyBuilder
         return overlay;
     }
 
+    public static UIInventoryItemDetailPanel BuildItemDetailPanelRoot(Canvas rootCanvas)
+    {
+        const float panelWidth = 240f;
+        const int padding = 8;
+        const float lineSpacing = 2f;
+        const float nameFontSize = 14f;
+        const float bodyFontSize = 12f;
+        var detailColor = new Color(0.1f, 0.12f, 0.16f, 0.98f);
+
+        var root = CreateRect("InventoryItemDetailPanel", null, detailColor);
+        var rect = root.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0f, 1f);
+        rect.sizeDelta = new Vector2(panelWidth, 120f);
+
+        Image background = root.GetComponent<Image>();
+        background.raycastTarget = false;
+
+        var fitter = root.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        var layout = root.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(padding, padding, padding, padding);
+        layout.spacing = lineSpacing;
+        layout.childAlignment = TextAnchor.UpperLeft;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+
+        TMP_Text nameLine = CreateDetailLine("Line_Name", root.transform, nameFontSize, bold: true);
+        TMP_Text categoryLine = CreateDetailLine("Line_Category", root.transform, bodyFontSize);
+        TMP_Text typeLine = CreateDetailLine("Line_Type", root.transform, bodyFontSize);
+        TMP_Text countLine = CreateDetailLine("Line_Count", root.transform, bodyFontSize);
+        TMP_Text weightLine = CreateDetailLine("Line_Weight", root.transform, bodyFontSize);
+        TMP_Text volumeLine = CreateDetailLine("Line_Volume", root.transform, bodyFontSize);
+        TMP_Text durabilityLine = CreateDetailLine("Line_Durability", root.transform, bodyFontSize);
+        TMP_Text containerCapacityLine = CreateDetailLine("Line_ContainerCapacity", root.transform, bodyFontSize);
+        TMP_Text materialsLine = CreateDetailLine("Line_Materials", root.transform, bodyFontSize);
+
+        var panel = root.AddComponent<UIInventoryItemDetailPanel>();
+        SetReference(panel, "_rect", rect);
+        SetReference(panel, "_nameLine", nameLine);
+        SetReference(panel, "_categoryLine", categoryLine);
+        SetReference(panel, "_typeLine", typeLine);
+        SetReference(panel, "_countLine", countLine);
+        SetReference(panel, "_weightLine", weightLine);
+        SetReference(panel, "_volumeLine", volumeLine);
+        SetReference(panel, "_durabilityLine", durabilityLine);
+        SetReference(panel, "_containerCapacityLine", containerCapacityLine);
+        SetReference(panel, "_materialsLine", materialsLine);
+
+        panel.Initialize(rootCanvas);
+        root.SetActive(false);
+        return panel;
+    }
+
+    static TMP_Text CreateDetailLine(string name, Transform parent, float fontSize, bool bold = false)
+    {
+        var go = CreateRect(name, parent, Color.clear);
+        go.GetComponent<Image>().raycastTarget = false;
+        var layout = go.AddComponent<LayoutElement>();
+        layout.minHeight = fontSize + 4f;
+        layout.preferredHeight = fontSize + 4f;
+
+        TMP_Text text = CreateTmp(name + "_Text", go.transform, 0f, fontSize, flexibleWidth: true);
+        Stretch(text.rectTransform, 0f, 0f, 0f, 0f);
+        text.enableWordWrapping = true;
+        text.overflowMode = TextOverflowModes.Overflow;
+        text.raycastTarget = false;
+        if (bold)
+            text.fontStyle = FontStyles.Bold;
+        return text;
+    }
+
     public static UIItemContextMenu BuildContextMenuRoot(Button buttonPrefab)
     {
         // buttonPrefab는 레거시 시그니처 유지용. 캐스케이드는 내부 Row 템플릿을 쓴다.

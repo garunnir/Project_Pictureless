@@ -434,7 +434,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bcc861fc63a615c44852326e145f42be, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dist.Inventory.UI::UIContextMenuItemRow
+  m_EditorClassIdentifier: Dist.UI.ContextMenu::UIContextMenuItemRow
   _background: {fileID: 8234372271217012184}
   _label: {fileID: 3412956391506517927}
   _chevron: {fileID: 6022120993793791081}
@@ -1115,7 +1115,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4fad0c270f261194b950d509722d0702, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dist.Inventory.UI::UIContextMenuCascadePanel
+  m_EditorClassIdentifier: Dist.UI.ContextMenu::UIContextMenuCascadePanel
   _root: {fileID: 772817210574993630}
   _rowContainer: {fileID: 7787080700560100644}
   _rowPrefab: {fileID: 4882975618185783563}

@@ -15,6 +15,7 @@ static class InventoryUICanvasOverlaySetupMenu
     const string DragGhostPrefabPath = PrefabFolder + "/InventoryDragGhost.prefab";
     const string ScrollOverlayPrefabPath = PrefabFolder + "/InventoryScrollDragOverlay.prefab";
     const string ContextMenuPrefabPath = PrefabFolder + "/ItemContextMenu.prefab";
+    const string ItemDetailPanelPrefabPath = PrefabFolder + "/InventoryItemDetailPanel.prefab";
     const string ContextMenuButtonPath = InventoryUIHierarchyBuilder.PrefabFolder + "/ContextMenuButton.prefab";
 
     [MenuItem("Dist/Inventory/Setup Canvas Overlays In Open Scene")]
@@ -54,15 +55,18 @@ static class InventoryUICanvasOverlaySetupMenu
         UIInventoryDragGhost dragGhostPrefab = EnsureDragGhostPrefab(canvas);
         GameObject scrollOverlayPrefab = EnsureScrollOverlayPrefab();
         UIItemContextMenu contextMenuPrefab = EnsureContextMenuPrefab();
+        UIInventoryItemDetailPanel itemDetailPanelPrefab = EnsureItemDetailPanelPrefab(canvas);
 
         SetObjectRef(serializedController, "_dragGhostPrefab", dragGhostPrefab);
         SetObjectRef(serializedController, "_scrollDragOverlayPrefab", scrollOverlayPrefab);
         SetObjectRef(serializedController, "_contextMenuPrefab", contextMenuPrefab);
+        SetObjectRef(serializedController, "_itemDetailPanelPrefab", itemDetailPanelPrefab);
 
         // Runtime instances are spawned from prefabs — clear scene instance slots.
         SetObjectRef(serializedController, "_dragGhost", null);
         SetObjectRef(serializedController, "_scrollDragOverlay", null);
         SetObjectRef(serializedController, "_contextMenu", null);
+        SetObjectRef(serializedController, "_itemDetailPanel", null);
 
         RemoveSceneEphemeralUi(canvas.transform);
 
@@ -120,6 +124,15 @@ static class InventoryUICanvasOverlaySetupMenu
         return prefabRoot != null ? prefabRoot.GetComponent<UIItemContextMenu>() : null;
     }
 
+    static UIInventoryItemDetailPanel EnsureItemDetailPanelPrefab(Canvas canvas)
+    {
+        EnsurePrefabFolder();
+        UIInventoryItemDetailPanel built = InventoryUIHierarchyBuilder.BuildItemDetailPanelRoot(canvas);
+        GameObject prefabRoot = PrefabUtility.SaveAsPrefabAsset(built.gameObject, ItemDetailPanelPrefabPath);
+        Object.DestroyImmediate(built.gameObject);
+        return prefabRoot != null ? prefabRoot.GetComponent<UIInventoryItemDetailPanel>() : null;
+    }
+
     static void EnsurePrefabFolder()
     {
         if (!AssetDatabase.IsValidFolder(PrefabFolder))
@@ -135,6 +148,7 @@ static class InventoryUICanvasOverlaySetupMenu
             "InventoryDragGhost",
             "InventoryScrollDragOverlay",
             "ItemContextMenu",
+            "InventoryItemDetailPanel",
         };
 
         for (int n = 0; n < names.Length; n++)

@@ -13,11 +13,15 @@ using UnityEngine.UI;
 public sealed class UIItemListRow : MonoBehaviour,
     IPointerDownHandler,
     IPointerClickHandler,
+    IPointerEnterHandler,
+    IPointerExitHandler,
     IBeginDragHandler,
     IDragHandler,
     IEndDragHandler
 {
     public static event Action<ItemStack, InventoryContainer, Vector2> RightClicked;
+    public static event Action<ItemStack, Vector2> Hovered;
+    public static event Action HoverEnded;
     public static event Action<ItemStack, InventoryContainer, UIItemListView> DoubleClicked;
 
     static readonly Color NormalColor = new(0.18f, 0.18f, 0.18f, 1f);
@@ -120,6 +124,16 @@ public sealed class UIItemListRow : MonoBehaviour,
 
         RightClicked?.Invoke(_stack, _ownerContainer, eventData.position);
     }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (InventoryDragState.IsDragging || _stack?.Item == null)
+            return;
+
+        Hovered?.Invoke(_stack, eventData.position);
+    }
+
+    public void OnPointerExit(PointerEventData eventData) => HoverEnded?.Invoke();
 
     public void RefreshSelectionVisual()
     {

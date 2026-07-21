@@ -16,6 +16,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
     [SerializeField] UIInventoryDragGhost _dragGhostPrefab;
     [SerializeField] GameObject _scrollDragOverlayPrefab;
     [SerializeField] UIItemContextMenu _contextMenuPrefab;
+    [SerializeField] UIInventoryItemDetailPanel _itemDetailPanelPrefab;
     [SerializeField] UIInventoryListWindow _primaryWindow;
     [SerializeField] UIInventoryListWindow _lootWindow;
     [SerializeField] Canvas _uiCanvas;
@@ -23,6 +24,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
     [SerializeField] UIInventoryDragGhost _dragGhost;
     [SerializeField] GameObject _scrollDragOverlay;
     [SerializeField] UIItemContextMenu _contextMenu;
+    [SerializeField] UIInventoryItemDetailPanel _itemDetailPanel;
     [SerializeField] Vector2 _primaryWindowInitialPosition = new(-220f, 0f);
     [SerializeField] Vector2 _lootWindowInitialPosition = new(200f, 0f);
     [SerializeField] InventoryWindowLauncher _primaryLauncher;
@@ -61,6 +63,9 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
         SyncLauncherVisuals();
         UIItemListRow.DoubleClicked += OnItemDoubleClicked;
+        UIItemListRow.Hovered += OnItemHovered;
+        UIItemListRow.HoverEnded += OnItemHoverEnded;
+        UIItemListRow.RightClicked += OnItemRightClickedHideDetail;
     }
 
     void OnEnable() => PlayerInventoryRuntime.ActiveChanged += OnActivePlayerChanged;
@@ -81,12 +86,31 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
     void OnDestroy()
     {
         UIItemListRow.DoubleClicked -= OnItemDoubleClicked;
+        UIItemListRow.Hovered -= OnItemHovered;
+        UIItemListRow.HoverEnded -= OnItemHoverEnded;
+        UIItemListRow.RightClicked -= OnItemRightClickedHideDetail;
 
         if (InputManager.Instance != null)
             InputManager.Instance.PlayerInventoryTogglePerformed -= OnInventoryTogglePerformed;
 
         CloseAllWindows();
     }
+
+    void OnItemRightClickedHideDetail(ItemStack _, InventoryContainer __, Vector2 ___) =>
+        HideItemDetailPanel();
+
+    void OnItemHovered(ItemStack stack, Vector2 screenPosition)
+    {
+        if (!IsAnyWindowOpen || InventoryDragState.IsDragging)
+            return;
+
+        EnsureItemDetailPanel();
+        _itemDetailPanel?.Show(stack, screenPosition);
+    }
+
+    void OnItemHoverEnded() => HideItemDetailPanel();
+
+    void HideItemDetailPanel() => _itemDetailPanel?.Hide();
 
     void OnItemDoubleClicked(ItemStack stack, InventoryContainer sourceContainer, UIItemListView sourceListView)
     {
@@ -124,6 +148,9 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
             _itemDragDepth > 0 || _scrollDragDepth > 0 || IsPointerOverAnyVisibleWindow();
         if (!_hasCachedSuppressState || suppressMouseActions != _cachedSuppressMouseActions)
             ApplyMouseActionSuppression(suppressMouseActions);
+
+        if (_itemDetailPanel != null && _itemDetailPanel.IsVisible && IsAnyWindowOpen && Mouse.current != null)
+            _itemDetailPanel.SetScreenPosition(Mouse.current.position.ReadValue());
     }
 
     void FinalizeItemDrag()
@@ -228,6 +255,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
     public void OnItemDragStarted()
     {
+        HideItemDetailPanel();
         _itemDragDepth++;
     }
 
@@ -410,6 +438,26 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         _contextMenu.Hide();
     }
 
+    void EnsureItemDetailPanel()
+    {
+        if (_itemDetailPanel != null || _uiCanvas == null)
+            return;
+
+        if (_itemDetailPanelPrefab == null)
+        {
+            Debug.LogError(
+                "[UIInventoryController] Item detail panel prefab is not assigned. Run Dist/Inventory/Setup Canvas Overlays In Open Scene.",
+                this);
+            return;
+        }
+
+        Transform parent = ResolveLayerRoot(UICanvasLayer.Overlay);
+        _itemDetailPanel = Instantiate(_itemDetailPanelPrefab, parent);
+        _itemDetailPanel.name = "InventoryItemDetailPanel";
+        _itemDetailPanel.Initialize(_uiCanvas);
+        _itemDetailPanel.Hide();
+    }
+
     Transform ResolveLayerRoot(UICanvasLayer layer)
     {
         if (_layerHost != null)
@@ -547,6 +595,8 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
         if (_contextMenu != null)
             _contextMenu.Hide();
+
+        HideItemDetailPanel();
 
         InventoryDragState.End();
         HideDragGhost();

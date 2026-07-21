@@ -106,6 +106,8 @@
 
 | `InventoryScrollDragOverlay` | 스크롤/드래그 중 전체 캔버스 레이캐스트 차단 (`UICanvas` 하위) |
 
+| `InventoryItemDetailPanel` | 리스트 행 호버 상세 보조창 (`UICanvas` Overlay, `Setup Canvas Overlays In Open Scene`) |
+
 
 
 폰트: 텍스트가 있는 행/슬롯 프리팹 TMP는 `Katuri SDF` 사용.
@@ -148,6 +150,7 @@
 
 - 드롭 처리: `UIInventoryListDropZone` (`IDropHandler`) → `InventorySession.MoveStacks(...)`
 - 리스트 행 더블클릭: 플레이어·루트 창이 **둘 다 열려 있을 때** 반대편 창 활성 탭으로 `InventoryDragDrop.TryQuickTransferBetweenWindows` → `MoveStacks` (드래그 후 반대 리스트 드롭과 동일). 선택에 클릭 스택이 없으면 단일 스택, 있으면 선택 전체.
+- 리스트 행 호버 보조창: `UIItemListRow.Hovered` → `UIInventoryItemDetailPanel` (`UICanvasLayer.Overlay`). **VerticalLayoutGroup** 행별 표시 — 분류·유형·수납·재질 등 아이템에 따라 `SetActive`로 행 추가/제거. 내구도는 `ItemStack.DamageLevel` + `InventoryItemDetailLabels` SSOT. 숨김: exit·드래그 시작·창 닫힘·우클릭 메뉴. `raycastTarget=false`.
 
 - 데이터 갱신: `InventorySession` 이벤트별 갱신 범위 분리
   - `StacksChanged` → `UIInventoryController.OnInventoryDataChanged()` → `UIInventoryListWindow.OnStacksChanged()`  

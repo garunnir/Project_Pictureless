@@ -87,6 +87,24 @@ MonoBehaviour:
     text: x{0}  {1:0.##}kg  {2:0.##}L
   - key: Inventory.StackCount
     text: x{0}
+  - key: Inventory.ItemDetail.Category
+    text: "\uBD84\uB958: {0}"
+  - key: Inventory.ItemDetail.Type
+    text: "\uC720\uD615: {0}"
+  - key: Inventory.ItemDetail.Count
+    text: "\uC218\uB7C9: x{0}"
+  - key: Inventory.ItemDetail.Weight
+    text: "\uBB34\uAC8C: {0:0.##} kg (\uCD1D {1:0.##} kg)"
+  - key: Inventory.ItemDetail.Volume
+    text: "\uBD80\uD53C: {0:0.##} L"
+  - key: Inventory.ItemDetail.Durability
+    text: "\uB0B4\uAD6C\uB3C4: {0}"
+  - key: Inventory.ItemDetail.DurabilityPristine
+    text: "\uBB34\uC190\uC0C1"
+  - key: Inventory.ItemDetail.ContainerCapacity
+    text: "\uC218\uB0A9: \uCD5C\uB300 {0:0.##} kg, {1:0.##} L"
+  - key: Inventory.ItemDetail.Materials
+    text: "\uC7AC\uC9C8: {0}"
   - key: Interaction.DoorOpen
     text: "\uBB38 \uC5F4\uAE30"
   - key: Interaction.DoorClose
