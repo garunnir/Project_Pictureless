@@ -118,6 +118,8 @@
 
 캔버스 오버레이 배선: `Dist/Inventory/Setup Canvas Overlays In Open Scene` (IsoLand 등 씬 1회 실행).
 
+**유의사항 (이주/하이브리드):** uGUI와 UI Toolkit 등 **다른 UI 경로를 한 화면에 섞거나** 리스트만 갈아끼울 때, 변경 전 동작 패리티 없이 표급하지 말 것. 반쯤 켠 채 증상별 재현으로 메우지 말 것 — `.cursor/rules/migration-parity.mdc`, `.claude/checklists/migration-parity.md`.
+
 ### 월드 컨테이너 프리팹 (인벤 관련)
 
 
