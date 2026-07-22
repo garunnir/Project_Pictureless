@@ -15,6 +15,11 @@ public static class InventoryWindowLabels
     const string KeyStackWeightUnit = "Inventory.StackWeightUnit";
     const string KeyStackVolumeValue = "Inventory.StackVolumeValue";
     const string KeyStackVolumeUnit = "Inventory.StackVolumeUnit";
+    const string KeyColumnCategory = "Inventory.Column.Category";
+    const string KeyColumnName = "Inventory.Column.Name";
+    const string KeyColumnCount = "Inventory.Column.Count";
+    const string KeyColumnWeight = "Inventory.Column.Weight";
+    const string KeyColumnVolume = "Inventory.Column.Volume";
     const string KeyItemCategoryPrefix = "ItemCategory.";
 
     public static string PrimaryTitle => Loc.Get(KeyPrimaryTitle);
@@ -23,6 +28,11 @@ public static class InventoryWindowLabels
     public static string EmptyVolume => Loc.Get(KeyEmptyVolume);
     public static string StackWeightUnit => Loc.Get(KeyStackWeightUnit);
     public static string StackVolumeUnit => Loc.Get(KeyStackVolumeUnit);
+    public static string ColumnCategory => Loc.Get(KeyColumnCategory);
+    public static string ColumnName => Loc.Get(KeyColumnName);
+    public static string ColumnCount => Loc.Get(KeyColumnCount);
+    public static string ColumnWeight => Loc.Get(KeyColumnWeight);
+    public static string ColumnVolume => Loc.Get(KeyColumnVolume);
 
     public static string FormatWeightCapacity(float used, float max) =>
         Loc.Format(KeyWeightCapacity, used, max);

@@ -96,9 +96,9 @@
 
 |--------|------|
 
-| `Grp_InventoryListWindow` | 리스트 + 사이드바 창 (상단 드래그 헤더 포함) |
+| `Grp_InventoryListWindow` | 리스트 + 사이드바 창 (상단 드래그 헤더 포함). `Area_List/Viewport/Area_ColumnHeader` sticky 헤더 클릭으로 뷰 전용 정렬 (`UIItemListColumnHeader` → `UIItemListView.SetSort`). 컨테이너 스택 순서는 불변. |
 
-| `Grp_ItemListRow` | 아이템 행 (LeanPool). 컬럼: Icon | Category | Name(flex) | Count | WeightValue | WeightUnit(kg) | VolumeValue | VolumeUnit(L) |
+| `Grp_ItemListRow` | 아이템 행 (LeanPool). 컬럼: Icon | Category | Name(flex) | Count | WeightValue | WeightUnit(kg) | VolumeValue | VolumeUnit(L). 폭 SSOT: `InventoryListColumnLayout`. |
 
 | `Grp_ContainerSlot` | 사이드바 컨테이너 슬롯 — 아이콘 SSOT는 `ContainerVisualPresenter` (월드 타일 thumbnail → provider SpriteRenderer → 중첩 가방은 item icon, `floor-loot`는 숨김) |
 
@@ -114,7 +114,7 @@
 
 빈 아이콘 폴백: `ItemIconCatalog` (`Assets/Dist/Resources/ItemIconCatalog.asset`) → `ItemVisualPresenter`. 편집은 **Tools/Game Data Browser** 아이템 상세의 Icon 필드.
 
-프리팹 갱신: 행만 `Dist/Inventory/Rebuild Item List Row Prefab`. 행+슬롯 `Dist/Inventory/Bake UI Prefabs` (bake 시점 `AddComponent`는 허용 — 런타임 폴백 아님).
+프리팹 갱신: 행만 `Dist/Inventory/Rebuild Item List Row Prefab`. 행+슬롯 `Dist/Inventory/Bake UI Prefabs` (bake 시점 `AddComponent`는 허용 — 런타임 폴백 아님). 기존 창에 컬럼 헤더만: `Dist/Inventory/Patch Window Column Header`. 열 폭·행간격·패딩 SSOT 에셋 반영: `Dist/Inventory/Sync List Column Layout` (`Resources/Inventory/InventoryListColumnLayoutSettings`).
 
 캔버스 오버레이 배선: `Dist/Inventory/Setup Canvas Overlays In Open Scene` (IsoLand 등 씬 1회 실행).
 

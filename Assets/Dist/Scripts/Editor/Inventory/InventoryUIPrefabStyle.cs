@@ -2,7 +2,7 @@
 using UnityEngine;
 
 // Single inventory UI chrome SSOT for bake (Primary + Loot windows share this layout).
-// Row column widths match hand-authored Grp_ItemListRow (inspected Jul 2026).
+// Row column widths come from InventoryListColumnLayout (runtime SSOT).
 readonly struct InventoryUIPrefabStyleSpec
 {
     public readonly Vector2 WindowSize;
@@ -103,31 +103,31 @@ readonly struct InventoryUIPrefabStyleSpec
         ScrollbarHandleColor = scrollbarHandleColor;
     }
 
-    public static readonly InventoryUIPrefabStyleSpec Default = new(
+    public static InventoryUIPrefabStyleSpec Default => new(
         windowSize: InventoryWindowLayout.DefaultPrimaryWindowSize,
         headerHeight: InventoryWindowLayout.HeaderHeight,
         headerFontSize: 14f,
         sidebarWidth: 120f,
         chromeMargin: 10f,
-        rowHeight: 36f,
-        rowIconSize: 32f,
-        rowCategoryWidth: 100f,
-        rowCountWidth: 28f,
-        rowWeightValueWidth: 40f,
-        rowWeightUnitWidth: 22f,
-        rowVolumeValueWidth: 40f,
-        rowVolumeUnitWidth: 18f,
-        rowFontCategory: 14f,
-        rowFontName: 16f,
-        rowFontDetail: 14f,
-        rowPaddingH: 8,
-        rowPaddingV: 2,
-        rowSpacing: 4f,
+        rowHeight: InventoryListColumnLayout.RowHeight,
+        rowIconSize: InventoryListColumnLayout.IconSize,
+        rowCategoryWidth: InventoryListColumnLayout.CategoryWidth,
+        rowCountWidth: InventoryListColumnLayout.CountWidth,
+        rowWeightValueWidth: InventoryListColumnLayout.WeightValueWidth,
+        rowWeightUnitWidth: InventoryListColumnLayout.WeightUnitWidth,
+        rowVolumeValueWidth: InventoryListColumnLayout.VolumeValueWidth,
+        rowVolumeUnitWidth: InventoryListColumnLayout.VolumeUnitWidth,
+        rowFontCategory: InventoryListColumnLayout.FontCategory,
+        rowFontName: InventoryListColumnLayout.FontName,
+        rowFontDetail: InventoryListColumnLayout.FontDetail,
+        rowPaddingH: InventoryListColumnLayout.RowPaddingH,
+        rowPaddingV: InventoryListColumnLayout.RowPaddingV,
+        rowSpacing: InventoryListColumnLayout.RowSpacing,
         slotHeight: 48f,
         slotFontSize: 14f,
         slotLabelInset: 6,
-        contentSpacing: 4f,
-        contentPadding: 4,
+        contentSpacing: InventoryListColumnLayout.RowSpacing,
+        contentPadding: InventoryListColumnLayout.ContentPadding,
         sidebarSlotSpacing: 6f,
         sidebarSlotPadding: 4,
         edgeThickness: 6f,

@@ -93,6 +93,16 @@ MonoBehaviour:
     text: '{0:0.##}'
   - key: Inventory.StackVolumeUnit
     text: L
+  - key: Inventory.Column.Category
+    text: "\uBD84\uB958"
+  - key: Inventory.Column.Name
+    text: "\uC774\uB984"
+  - key: Inventory.Column.Count
+    text: "\uC218\uB7C9"
+  - key: Inventory.Column.Weight
+    text: "\uBB34\uAC8C"
+  - key: Inventory.Column.Volume
+    text: "\uBD80\uD53C"
   - key: Inventory.ItemDetail.Category
     text: "\uBD84\uB958: {0}"
   - key: Inventory.ItemDetail.Type

@@ -68,6 +68,9 @@ static class InventoryUIHierarchyBuilder
         SetReference(rowView, "_weightUnitText", weightUnit);
         SetReference(rowView, "_volumeValueText", volumeValue);
         SetReference(rowView, "_volumeUnitText", volumeUnit);
+
+        InventoryListColumnLayoutSettings settings = InventoryListColumnLayoutSettingsUtility.LoadOrCreateSettings();
+        InventoryListColumnLayoutSettingsUtility.EnsureLineLayout(row.transform, settings, dataRow: true);
         return rowView;
     }
 
@@ -560,6 +563,223 @@ static class InventoryUIHierarchyBuilder
         PatchSidebarScrollbars(sidebarArea, spec);
     }
 
+    /// <summary>
+    /// Adds Area_ColumnHeader under Area_List and insets Viewport top. Does not rebuild window chrome.
+    /// Run after Patch Window Scrollbars if both are needed (scrollbar patch resets viewport top).
+    /// </summary>
+    public static void PatchExistingWindowColumnHeader(GameObject windowRoot)
+    {
+        if (windowRoot == null)
+            throw new System.ArgumentNullException(nameof(windowRoot));
+
+        InventoryUIPrefabStyleSpec spec = InventoryUIPrefabStyleSpec.Default;
+        Transform listArea = windowRoot.transform.Find("Area_List");
+        if (listArea == null)
+        {
+            Debug.LogError("[InventoryUIHierarchyBuilder] Area_List missing; cannot patch column header.", windowRoot);
+            return;
+        }
+
+        if (!listArea.TryGetComponent(out UIItemListView listView))
+        {
+            Debug.LogError("[InventoryUIHierarchyBuilder] UIItemListView missing on Area_List.", listArea);
+            return;
+        }
+
+        if (!listArea.TryGetComponent(out ScrollRect scroll) || scroll.viewport == null)
+        {
+            Debug.LogError("[InventoryUIHierarchyBuilder] ScrollRect viewport missing on Area_List.", listArea);
+            return;
+        }
+
+        Transform existing = listArea.Find("Area_ColumnHeader");
+        if (existing == null && scroll.viewport != null)
+            existing = scroll.viewport.Find("Area_ColumnHeader");
+        if (existing != null)
+            Object.DestroyImmediate(existing.gameObject);
+
+        // Sticky under Viewport so header + rows share the same layout width.
+        UIItemListColumnHeader header = BuildColumnHeaderRoot(scroll.viewport, listView, spec);
+        ApplyStickyColumnHeaderLayout(scroll, spec);
+
+        SetReference(listView, "_columnHeader", header);
+    }
+
+    /// <summary>
+    /// Syncs sticky header + Content pad + header LineLayout from Settings (no full rebake).
+    /// </summary>
+    public static void PatchExistingWindowListColumnLayout(
+        GameObject windowRoot,
+        InventoryListColumnLayoutSettings settings)
+    {
+        if (windowRoot == null)
+            throw new System.ArgumentNullException(nameof(windowRoot));
+        if (settings == null)
+            throw new System.ArgumentNullException(nameof(settings));
+
+        InventoryListColumnLayoutSettings.SetCachedDefault(settings);
+        InventoryUIPrefabStyleSpec spec = InventoryUIPrefabStyleSpec.Default;
+
+        Transform listArea = windowRoot.transform.Find("Area_List");
+        if (listArea == null)
+        {
+            Debug.LogError("[InventoryUIHierarchyBuilder] Area_List missing; cannot sync column layout.", windowRoot);
+            return;
+        }
+
+        if (!listArea.TryGetComponent(out ScrollRect scroll) || scroll.viewport == null || scroll.content == null)
+        {
+            Debug.LogError("[InventoryUIHierarchyBuilder] ScrollRect viewport/content missing on Area_List.", listArea);
+            return;
+        }
+
+        Transform headerTf = scroll.viewport.Find("Area_ColumnHeader");
+        if (headerTf == null)
+            headerTf = listArea.Find("Area_ColumnHeader");
+        if (headerTf == null)
+        {
+            Debug.LogError(
+                "[InventoryUIHierarchyBuilder] Area_ColumnHeader missing; run Patch Window Column Header first.",
+                listArea);
+            return;
+        }
+
+        if (headerTf.parent != scroll.viewport)
+            headerTf.SetParent(scroll.viewport, false);
+
+        ApplyStickyColumnHeaderLayout(scroll, spec);
+        InventoryListColumnLayoutSettingsUtility.EnsureLineLayout(headerTf, settings, dataRow: false);
+    }
+
+    /// <summary>
+    /// Sticky Area_ColumnHeader inside Viewport; Content top pad reserves header height.
+    /// </summary>
+    static void ApplyStickyColumnHeaderLayout(ScrollRect scroll, InventoryUIPrefabStyleSpec spec)
+    {
+        RectTransform viewport = scroll.viewport;
+        RectTransform content = scroll.content;
+        Stretch(viewport, 0f, spec.ScrollbarWidth, 0f, 0f);
+        viewport.pivot = new Vector2(0.5f, 0.5f);
+        scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+
+        Transform headerTf = viewport.Find("Area_ColumnHeader");
+        if (headerTf != null)
+        {
+            var headerRect = (RectTransform)headerTf;
+            headerRect.anchorMin = new Vector2(0f, 1f);
+            headerRect.anchorMax = new Vector2(1f, 1f);
+            headerRect.pivot = new Vector2(0.5f, 1f);
+            headerRect.offsetMin = new Vector2(0f, -InventoryListColumnLayout.ColumnHeaderHeight);
+            headerRect.offsetMax = Vector2.zero;
+            // Draw above Content so clicks hit header buttons.
+            headerTf.SetSiblingIndex(content.GetSiblingIndex() + 1);
+        }
+
+        if (content.TryGetComponent(out VerticalLayoutGroup contentLayout))
+        {
+            int pad = InventoryListColumnLayout.ContentPadding;
+            contentLayout.padding = new RectOffset(
+                pad,
+                pad,
+                InventoryListColumnLayout.ContentPaddingTopWithStickyHeader,
+                pad);
+        }
+    }
+
+    public static UIItemListColumnHeader BuildColumnHeaderRoot(
+        Transform listArea,
+        UIItemListView listView,
+        InventoryUIPrefabStyleSpec spec)
+    {
+        var headerGo = CreateRect("Area_ColumnHeader", listArea, new Color(0.14f, 0.14f, 0.14f, 1f));
+        var headerRect = headerGo.GetComponent<RectTransform>();
+        headerRect.anchorMin = new Vector2(0f, 1f);
+        headerRect.anchorMax = new Vector2(1f, 1f);
+        headerRect.pivot = new Vector2(0.5f, 1f);
+        headerRect.offsetMin = new Vector2(0f, -InventoryListColumnLayout.ColumnHeaderHeight);
+        headerRect.offsetMax = Vector2.zero;
+
+        var layout = headerGo.AddComponent<HorizontalLayoutGroup>();
+        // Same horizontal inset as Content pad + row pad.
+        int padH = InventoryListColumnLayout.ListInsetHorizontal;
+        layout.padding = new RectOffset(padH, padH, spec.RowPaddingV, spec.RowPaddingV);
+        layout.spacing = spec.RowSpacing;
+        layout.childAlignment = TextAnchor.MiddleLeft;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = false;
+        layout.childForceExpandHeight = false;
+        headerGo.AddComponent<LayoutElement>().preferredHeight = InventoryListColumnLayout.ColumnHeaderHeight;
+
+        CreateHeaderSpacer(headerGo.transform, spec.RowIconSize);
+
+        TMP_Text category = CreateHeaderCell(
+            "Category", headerGo.transform, spec.RowCategoryWidth, InventoryListColumnLayout.FontHeader,
+            TextAlignmentOptions.MidlineLeft, out Button categoryButton);
+        TMP_Text name = CreateHeaderCell(
+            "Name", headerGo.transform, 0f, InventoryListColumnLayout.FontHeader,
+            TextAlignmentOptions.MidlineLeft, out Button nameButton, flexibleWidth: true);
+        TMP_Text count = CreateHeaderCell(
+            "Count", headerGo.transform, spec.RowCountWidth, InventoryListColumnLayout.FontHeader,
+            TextAlignmentOptions.MidlineRight, out Button countButton);
+        TMP_Text weightValue = CreateHeaderCell(
+            "WeightValue", headerGo.transform, spec.RowWeightValueWidth, InventoryListColumnLayout.FontHeader,
+            TextAlignmentOptions.MidlineRight, out Button weightButton);
+        TMP_Text weightUnit = CreateTmp(
+            "WeightUnit", headerGo.transform, spec.RowWeightUnitWidth, InventoryListColumnLayout.FontHeader,
+            alignment: TextAlignmentOptions.MidlineLeft);
+        TMP_Text volumeValue = CreateHeaderCell(
+            "VolumeValue", headerGo.transform, spec.RowVolumeValueWidth, InventoryListColumnLayout.FontHeader,
+            TextAlignmentOptions.MidlineRight, out Button volumeButton);
+        TMP_Text volumeUnit = CreateTmp(
+            "VolumeUnit", headerGo.transform, spec.RowVolumeUnitWidth, InventoryListColumnLayout.FontHeader,
+            alignment: TextAlignmentOptions.MidlineLeft);
+
+        var header = headerGo.AddComponent<UIItemListColumnHeader>();
+        SetReference(header, "_listView", listView);
+        SetReference(header, "_categoryLabel", category);
+        SetReference(header, "_nameLabel", name);
+        SetReference(header, "_countLabel", count);
+        SetReference(header, "_weightValueLabel", weightValue);
+        SetReference(header, "_weightUnitLabel", weightUnit);
+        SetReference(header, "_volumeValueLabel", volumeValue);
+        SetReference(header, "_volumeUnitLabel", volumeUnit);
+        SetReference(header, "_categoryButton", categoryButton);
+        SetReference(header, "_nameButton", nameButton);
+        SetReference(header, "_countButton", countButton);
+        SetReference(header, "_weightButton", weightButton);
+        SetReference(header, "_volumeButton", volumeButton);
+        return header;
+    }
+
+    static void CreateHeaderSpacer(Transform parent, float size)
+    {
+        var go = CreateRect("IconSpacer", parent, Color.clear);
+        go.GetComponent<Image>().raycastTarget = false;
+        var layout = go.AddComponent<LayoutElement>();
+        layout.preferredWidth = size;
+        layout.preferredHeight = size;
+        layout.minWidth = size;
+        layout.minHeight = size;
+    }
+
+    static TMP_Text CreateHeaderCell(
+        string name,
+        Transform parent,
+        float width,
+        float fontSize,
+        TextAlignmentOptions alignment,
+        out Button button,
+        bool flexibleWidth = false)
+    {
+        TMP_Text text = CreateTmp(name, parent, width, fontSize, flexibleWidth, alignment);
+        text.raycastTarget = true;
+        button = text.gameObject.AddComponent<Button>();
+        button.targetGraphic = text;
+        button.transition = Selectable.Transition.None;
+        return text;
+    }
+
     static void PatchListAreaScrollbars(Transform listArea, InventoryUIPrefabStyleSpec spec)
     {
         if (!listArea.TryGetComponent(out ScrollRect scroll))
@@ -707,7 +927,8 @@ static class InventoryUIHierarchyBuilder
         scroll.vertical = true;
         scroll.movementType = ScrollRect.MovementType.Clamped;
         scroll.verticalScrollbar = verticalScrollbar;
-        scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+        // AutoHideAndExpandViewport resizes Viewport at runtime and covers Area_ColumnHeader.
+        scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
         scroll.verticalScrollbarSpacing = 0f;
         scroll.horizontalScrollbar = null;
     }
