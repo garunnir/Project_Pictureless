@@ -32,7 +32,7 @@ namespace Garunnir.Runtime.Gameplay.Data
             }
         }
 
-        public static PlayerBody CreateHumanDefault(int strength)
+        public static PlayerBody CreateHumanDefault(int strength, bool prototypeSeed = true)
         {
             int conditionMax = BaseCondition + strength * ConditionPerStr;
             var body = new PlayerBody();
@@ -65,6 +65,9 @@ namespace Garunnir.Runtime.Gameplay.Data
             BodyPartNode legR = new(BodyPartIds.LegR, true, conditionMax);
             legR.AddChild(new BodyPartNode(BodyPartIds.FootR, false));
             body._roots.Add(legR);
+
+            if (!prototypeSeed)
+                return body;
 
             // Prototype seed: show something in the hover detail panel.
             if (body.TryGet(BodyPartIds.HandL, out BodyPartNode seededHand))

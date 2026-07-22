@@ -16,6 +16,7 @@ public sealed class UIPlayerStatusController : MonoBehaviour
     [SerializeField] Vector2 _windowInitialPosition = new(220f, 40f);
 
     bool _isOpen;
+    PlayerStatusViewModel _viewModel;
 
     void Awake()
     {
@@ -24,6 +25,13 @@ public sealed class UIPlayerStatusController : MonoBehaviour
         if (_window != null)
             _window.gameObject.SetActive(false);
         SyncLauncher();
+
+        if (!PlayerStatusUIBridge.TryResolve(out _viewModel))
+        {
+            Debug.LogError(
+                "[UIPlayerStatusController] PlayerStatusUIBridge not found in scene.",
+                this);
+        }
     }
 
     void Start()
@@ -63,12 +71,12 @@ public sealed class UIPlayerStatusController : MonoBehaviour
             return;
 
         EnsureWindow();
-        if (_window == null)
+        if (_window == null || _viewModel == null)
             return;
 
         _window.gameObject.SetActive(true);
         _window.ConfigureChrome(_uiCanvas);
-        _window.Initialize(GameplayData.Body, GameplayData.Vitals, GameplayData.Stats);
+        _window.Initialize(_viewModel);
         _isOpen = true;
         SyncLauncher();
     }

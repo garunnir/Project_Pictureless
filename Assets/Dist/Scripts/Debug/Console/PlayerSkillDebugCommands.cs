@@ -46,7 +46,32 @@ public static class PlayerSkillDebugCommands
             return "ERROR: xp must be greater than 0";
 
         GameplayData.Stats.AddPractice(skillId, xp);
-        return GetLevel(skillId);
+        return $"{GetLevel(skillId)} (potential {GameplayData.Stats.GetPotential(skillId)}%)";
+    }
+
+    public const string PotentialGetCommand = "player.skill.potential.get";
+    public const string PotentialSetCommand = "player.skill.potential.set";
+
+    [ConsoleMethod(PotentialGetCommand, "Returns a skill's potential %", "skillId"), Preserve]
+    public static string GetPotential(string skillId)
+    {
+        skillId = skillId?.Trim();
+        if (string.IsNullOrEmpty(skillId))
+            return "ERROR: skillId is required";
+
+        int potential = GameplayData.Stats.GetPotential(skillId);
+        return $"{skillId} potential {potential}%";
+    }
+
+    [ConsoleMethod(PotentialSetCommand, "Sets a skill's potential %", "skillId", "value"), Preserve]
+    public static string SetPotential(string skillId, int value)
+    {
+        skillId = skillId?.Trim();
+        if (string.IsNullOrEmpty(skillId))
+            return "ERROR: skillId is required";
+
+        GameplayData.Stats.SetPotential(skillId, value);
+        return GetPotential(skillId);
     }
 }
 #endif

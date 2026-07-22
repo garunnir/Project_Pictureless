@@ -17,5 +17,10 @@ namespace Garunnir.Runtime.Gameplay.Data
         void AddPractice(string skillId, int xp);
         int GetStat(string statKey);
         IReadOnlyCollection<string> GetKnownSkillIds();
+
+        /// <summary>스킬의 잠재력(%)을 반환합니다. 미설정 시 100.</summary>
+        int GetPotential(string skillId);
+        void SetPotential(string skillId, int value);
+        void ModifyPotential(string skillId, int delta);
     }
 }

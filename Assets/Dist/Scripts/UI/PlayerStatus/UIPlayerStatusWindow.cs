@@ -22,9 +22,7 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
     readonly List<UIPlayerStatusBodyPartGraphic> _graphics = new(6);
     readonly List<UIPlayerStatusBodyPartRow> _rows = new(6);
 
-    IPlayerBody _body;
-    IPlayerVitals _vitals;
-    IPlayerStats _stats;
+    PlayerStatusViewModel _viewModel;
 
     public bool IsVisible => gameObject.activeSelf;
     public RectTransform WindowRect => transform as RectTransform;
@@ -53,19 +51,13 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
             _headerTitle.text = title;
     }
 
-    public void Initialize(IPlayerBody body, IPlayerVitals vitals, IPlayerStats stats)
+    public void Initialize(PlayerStatusViewModel viewModel)
     {
         Unbind();
-        _body = body;
-        _vitals = vitals;
-        _stats = stats;
+        _viewModel = viewModel;
 
-        if (_body != null)
-            _body.Changed += Refresh;
-        if (_vitals != null)
-            _vitals.Changed += OnVitalChanged;
-        if (_stats != null)
-            _stats.Changed += OnStatsChanged;
+        if (_viewModel != null)
+            _viewModel.Changed += Refresh;
 
         bool debugControlsEnabled = Debug.isDebugBuild;
         if (_debugSeverArmLButton != null)
@@ -85,33 +77,20 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
 
     public void Unbind()
     {
-        if (_body != null)
-            _body.Changed -= Refresh;
-        if (_vitals != null)
-            _vitals.Changed -= OnVitalChanged;
-        if (_stats != null)
-            _stats.Changed -= OnStatsChanged;
+        if (_viewModel != null)
+            _viewModel.Changed -= Refresh;
         if (_debugSeverArmLButton != null)
             _debugSeverArmLButton.onClick.RemoveListener(OnDebugSeverArmL);
 
-        _body = null;
-        _vitals = null;
-        _stats = null;
+        _viewModel = null;
         _detailPanel?.Hide();
     }
 
     void OnDestroy() => Unbind();
 
-    void OnVitalChanged(string _) => Refresh();
-    void OnStatsChanged(string _)
-    {
-        RefreshVitals();
-        RefreshSkills();
-    }
-
     void OnDebugSeverArmL()
     {
-        _body?.RemovePart(BodyPartIds.ArmL);
+        _viewModel?.Body?.RemovePart(BodyPartIds.ArmL);
     }
 
     void EnsurePartViews()
@@ -141,7 +120,6 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
             return;
         }
 
-        // Row-view fallback for older prefabs without body-part graphics.
         if (_rows.Count == 0)
         {
             UIPlayerStatusBodyPartRow[] existing =
@@ -163,19 +141,24 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
 
     void OnPartHover(string partId)
     {
-        if (_detailPanel == null || _body == null)
+        IPlayerBody body = _viewModel?.Body;
+        if (_detailPanel == null || body == null)
             return;
 
-        _detailPanel.ShowForPart(_body, partId);
+        _detailPanel.ShowForPart(body, partId);
     }
 
     void OnPartExit() => _detailPanel?.Hide();
 
     public void Refresh()
     {
+        if (_viewModel == null)
+            return;
+
         SetHeaderTitle(PlayerStatusLabels.Title);
         EnsurePartViews();
 
+        IPlayerBody body = _viewModel.Body;
         string[] mains = BodyPartIds.MainConditionParts;
         for (int i = 0; i < _graphics.Count; i++)
         {
@@ -183,18 +166,18 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
             if (string.IsNullOrEmpty(partId))
                 continue;
 
-            bool present = _body != null && _body.Has(partId);
-            int cur = present ? _body.GetConditionCur(partId) : 0;
-            int max = present ? _body.GetConditionMax(partId) : 0;
+            bool present = body != null && body.Has(partId);
+            int cur = present ? body.GetConditionCur(partId) : 0;
+            int max = present ? body.GetConditionMax(partId) : 0;
             _graphics[i].SetDisplay(cur, max, present);
         }
 
         for (int i = 0; i < _rows.Count && i < mains.Length; i++)
         {
             string partId = mains[i];
-            bool present = _body != null && _body.Has(partId);
-            int cur = present ? _body.GetConditionCur(partId) : 0;
-            int max = present ? _body.GetConditionMax(partId) : 0;
+            bool present = body != null && body.Has(partId);
+            int cur = present ? body.GetConditionCur(partId) : 0;
+            int max = present ? body.GetConditionMax(partId) : 0;
             _rows[i].SetDisplay(PlayerStatusLabels.GetPartName(partId), cur, max, present);
         }
 
@@ -207,13 +190,14 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
         if (_vitalsText == null)
             return;
 
-        if (_vitals == null)
+        IPlayerVitals vitals = _viewModel?.Vitals;
+        if (vitals == null)
         {
             _vitalsText.text = string.Empty;
             return;
         }
 
-        bool showNumeric = PlayerStatusVitalDisplay.CanShowNumericVitals(_stats);
+        bool showNumeric = _viewModel.CanShowNumericVitals;
         var lines = new List<string>(VitalKeys.All.Length + 1)
         {
             PlayerStatusLabels.VitalsSection
@@ -222,8 +206,8 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
         for (int i = 0; i < VitalKeys.All.Length; i++)
         {
             string key = VitalKeys.All[i];
-            int cur = _vitals.GetCurrent(key);
-            int max = _vitals.GetMax(key);
+            int cur = vitals.GetCurrent(key);
+            int max = vitals.GetMax(key);
 
             if (showNumeric)
             {
@@ -245,14 +229,15 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
         if (_skillsText == null)
             return;
 
-        if (_stats == null)
+        IPlayerStats stats = _viewModel?.Stats;
+        if (stats == null)
         {
             _skillsText.text = string.Empty;
             return;
         }
 
         var lines = new List<string> { PlayerStatusLabels.SkillsSection };
-        IReadOnlyCollection<string> skills = _stats.GetKnownSkillIds();
+        IReadOnlyCollection<string> skills = stats.GetKnownSkillIds();
         if (skills == null || skills.Count == 0)
         {
             lines.Add("—");
@@ -260,7 +245,7 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
         else
         {
             foreach (string skillId in skills)
-                lines.Add(PlayerStatusLabels.FormatSkill(skillId, _stats.GetSkillLevel(skillId)));
+                lines.Add(PlayerStatusLabels.FormatSkill(skillId, stats.GetSkillLevel(skillId)));
         }
 
         _skillsText.text = string.Join("\n", lines);

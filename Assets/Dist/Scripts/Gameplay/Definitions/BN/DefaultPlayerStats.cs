@@ -11,9 +11,14 @@ namespace Garunnir.Runtime.Gameplay.Data
     {
         const int DefaultAbility = 8;
         const int SkillExerciseBase = 100;
+        const int DefaultPotential = 100;
+        const int MinPotential = 1;
+        const int MaxPotential = 400;
+        const float PotentialDecayRate = 0.9f;
 
         readonly Dictionary<string, int> _skillLevels = new(StringComparer.Ordinal);
         readonly Dictionary<string, int> _skillXp = new(StringComparer.Ordinal);
+        readonly Dictionary<string, int> _potentials = new(StringComparer.Ordinal);
         readonly Dictionary<string, int> _stats = new(StringComparer.Ordinal)
         {
             [StatKeys.Str] = DefaultAbility,
@@ -50,10 +55,15 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return;
 
             int level = GetSkillLevel(skillId);
-            long currentXp = _skillXp.TryGetValue(skillId, out int stored) ? stored : 0;
-            currentXp += xp;
+            int potential = GetPotential(skillId);
 
-            // BN 근사: required_exercise(nextLevel) = 100 × nextLevel^2
+            int actualXp = xp * potential / (100 + level * 15);
+            if (actualXp <= 0)
+                actualXp = 1;
+
+            long currentXp = _skillXp.TryGetValue(skillId, out int stored) ? stored : 0;
+            currentXp += actualXp;
+
             while (true)
             {
                 int nextLevel = level + 1;
@@ -63,6 +73,10 @@ namespace Garunnir.Runtime.Gameplay.Data
 
                 currentXp -= required;
                 level = nextLevel;
+
+                _potentials[skillId] = Math.Clamp(
+                    (int)(GetPotential(skillId) * PotentialDecayRate),
+                    MinPotential, MaxPotential);
             }
 
             _skillLevels[skillId] = level;
@@ -79,6 +93,30 @@ namespace Garunnir.Runtime.Gameplay.Data
         }
 
         public IReadOnlyCollection<string> GetKnownSkillIds() => _skillLevels.Keys;
+
+        public int GetPotential(string skillId)
+        {
+            if (string.IsNullOrEmpty(skillId))
+                return DefaultPotential;
+            return _potentials.TryGetValue(skillId, out int val) ? val : DefaultPotential;
+        }
+
+        public void SetPotential(string skillId, int value)
+        {
+            if (string.IsNullOrEmpty(skillId))
+                return;
+            _potentials[skillId] = Math.Clamp(value, MinPotential, MaxPotential);
+            Changed?.Invoke(skillId);
+        }
+
+        public void ModifyPotential(string skillId, int delta)
+        {
+            if (string.IsNullOrEmpty(skillId) || delta == 0)
+                return;
+            int current = GetPotential(skillId);
+            _potentials[skillId] = Math.Clamp(current + delta, MinPotential, MaxPotential);
+            Changed?.Invoke(skillId);
+        }
 
         static int RequiredXp(int level)
         {

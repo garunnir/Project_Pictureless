@@ -14,6 +14,12 @@ static class PlayerStatusUISetupMenu
 {
     const string PrefabFolder = "Assets/Dist/Visual/Prefabs/UIComponents/PlayerStatus";
     const string WindowPrefabPath = PrefabFolder + "/Grp_PlayerStatusWindow.prefab";
+    const string SummaryPrefabPath = PrefabFolder + "/Grp_PlayerStatusSummary.prefab";
+    const string MoodSpriteFolder = "Assets/Dist/Visual/Sprites/UI/PlayerStatus/Mood";
+    const string MoodCatalogAssetPath =
+        "Assets/Dist/SOData/Gameplay/PlayerStatus/PlayerStatusMoodIconCatalog.asset";
+    const string SoGameplayFolder = "Assets/Dist/SOData/Gameplay";
+    const string SoPlayerStatusFolder = SoGameplayFolder + "/PlayerStatus";
 
     [MenuItem("Dist/PlayerStatus/Verify Ownership Cascade (Edit Mode)")]
     static void VerifyOwnershipCascade()
@@ -227,6 +233,109 @@ static class PlayerStatusUISetupMenu
             Debug.LogError(msg);
     }
 
+    [MenuItem("Dist/PlayerStatus/Verify Mood Entries (Edit Mode)")]
+    static void VerifyMoodEntries()
+    {
+        var vitals = new DefaultPlayerVitals();
+        var cleanBody = PlayerBody.CreateHumanDefault(8, prototypeSeed: false);
+
+        var normal = new System.Collections.Generic.List<MoodEntry>();
+        PlayerStatusMoodEntries.Collect(cleanBody, vitals, normal);
+        bool emptyWhenNormal = normal.Count == 0;
+
+        vitals.SetCurrent(VitalKeys.Hunger, 30);
+        var lowHunger = new System.Collections.Generic.List<MoodEntry>();
+        PlayerStatusMoodEntries.Collect(cleanBody, vitals, lowHunger);
+        bool hasHungerLow = lowHunger.Exists(e =>
+            e.IconId == MoodIconId.Hunger &&
+            e.Polarity == MoodPolarity.Negative &&
+            Mathf.Approximately(e.Intensity, PlayerStatusMoodVisuals.VitalLowIntensity));
+
+        vitals.SetCurrent(VitalKeys.Hunger, 10);
+        var criticalHunger = new System.Collections.Generic.List<MoodEntry>();
+        PlayerStatusMoodEntries.Collect(cleanBody, vitals, criticalHunger);
+        bool hasHungerCritical = criticalHunger.Exists(e =>
+            e.IconId == MoodIconId.Hunger &&
+            Mathf.Approximately(e.Intensity, PlayerStatusMoodVisuals.VitalCriticalIntensity));
+
+        var seededBody = PlayerBody.CreateHumanDefault(8);
+        var seeded = new System.Collections.Generic.List<MoodEntry>();
+        PlayerStatusMoodEntries.Collect(seededBody, vitals, seeded);
+        bool hasBleed = seeded.Exists(e => e.IconId == MoodIconId.Bleed);
+        bool hasPositiveCatalog = PlayerStatusMoodEffectCatalog.TryGet(
+            BodyPartEffectIds.Regenerating,
+            out MoodIconId regenIcon,
+            out MoodPolarity regenPolarity) &&
+            regenIcon == MoodIconId.Regenerating &&
+            regenPolarity == MoodPolarity.Positive;
+
+        Color lowBack = PlayerStatusMoodVisuals.ResolveBackColor(MoodPolarity.Negative, 0.5f);
+        Color criticalBack = PlayerStatusMoodVisuals.ResolveBackColor(MoodPolarity.Negative, 1f);
+        Color goodBack = PlayerStatusMoodVisuals.ResolveBackColor(MoodPolarity.Positive, 1f);
+        Color neutralBack = PlayerStatusMoodVisuals.ResolveBackColor(MoodPolarity.Neutral, 0f);
+        bool tintOk = criticalBack.g < lowBack.g &&
+                      goodBack.r < neutralBack.r &&
+                      criticalBack.b < lowBack.b;
+
+        bool vmPathOk = false;
+        var vmVitals = new DefaultPlayerVitals();
+        var vmCheck = new System.Collections.Generic.List<MoodEntry>();
+        var viewModel = new PlayerStatusViewModel();
+        viewModel.Bind(cleanBody, vmVitals, new DefaultPlayerStats());
+        PlayerStatusMoodEntries.Collect(cleanBody, vmVitals, vmCheck);
+        vmPathOk = vmCheck.Count == 0 && viewModel.MoodEntries.Count == vmCheck.Count;
+
+        vmVitals.SetCurrent(VitalKeys.Hunger, 10);
+        PlayerStatusMoodEntries.Collect(cleanBody, vmVitals, vmCheck);
+        bool vmHasCriticalHunger = false;
+        for (int i = 0; i < viewModel.MoodEntries.Count; i++)
+        {
+            if (viewModel.MoodEntries[i].IconId == MoodIconId.Hunger)
+                vmHasCriticalHunger = true;
+        }
+
+        vmPathOk &= vmCheck.Count == viewModel.MoodEntries.Count && vmHasCriticalHunger;
+        viewModel.Unbind();
+
+        bool ok = emptyWhenNormal && hasHungerLow && hasHungerCritical && hasBleed &&
+                  hasPositiveCatalog && tintOk && vmPathOk;
+        string msg =
+            $"[PlayerStatus Mood] emptyNormal={emptyWhenNormal} hungerLow={hasHungerLow} " +
+            $"hungerCritical={hasHungerCritical} bleed={hasBleed} positiveCatalog={hasPositiveCatalog} " +
+            $"tintOk={tintOk} vmPathOk={vmPathOk} => {(ok ? "PASS" : "FAIL")}";
+
+        if (ok)
+            Debug.Log(msg);
+        else
+            Debug.LogError(msg);
+    }
+
+    [MenuItem("Dist/PlayerStatus/Ensure Mood Assets")]
+    static void EnsureMoodAssetsMenu()
+    {
+        EnsureMoodAssets();
+        Debug.Log("[PlayerStatusUISetupMenu] Ensure Mood Assets complete.");
+    }
+
+    [MenuItem("Dist/PlayerStatus/Bake Summary HUD Prefab")]
+    static void BakeSummaryPrefab()
+    {
+        EnsureFolder();
+        EnsureMoodAssets();
+        UIPlayerStatusSummaryPanel built = PlayerStatusUIFactory.CreateSummaryRoot();
+        PrefabUtility.SaveAsPrefabAsset(built.gameObject, SummaryPrefabPath, out bool success);
+        Object.DestroyImmediate(built.gameObject);
+        if (!success)
+        {
+            Debug.LogError($"[PlayerStatusUISetupMenu] Failed to save {SummaryPrefabPath}");
+            return;
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log($"[PlayerStatusUISetupMenu] Saved {SummaryPrefabPath}");
+    }
+
     [MenuItem("Dist/PlayerStatus/Bake UI Prefab")]
     static void BakePrefab()
     {
@@ -259,6 +368,8 @@ static class PlayerStatusUISetupMenu
         if (layerHost == null)
             layerHost = Undo.AddComponent<UICanvasLayerHost>(canvas.gameObject);
         layerHost.EditorSetupLayerHierarchy();
+
+        EnsureBridge(canvas);
 
         InputManager inputManager = Object.FindAnyObjectByType<InputManager>();
         Transform systemRoot = inputManager != null ? inputManager.transform.parent : null;
@@ -305,11 +416,285 @@ static class PlayerStatusUISetupMenu
 
         PlayerStatusWindowLauncher launcher = EnsureHudLauncher(layerHost, controller);
         so.FindProperty("_launcher").objectReferenceValue = launcher;
+
+        UIPlayerStatusSummaryController summaryController =
+            EnsureSummaryController(systemRoot, canvas, layerHost);
         so.ApplyModifiedPropertiesWithoutUndo();
+
+        SerializedObject summarySo = new(summaryController);
+        UIPlayerStatusSummaryPanel summaryPrefab =
+            AssetDatabase.LoadAssetAtPath<UIPlayerStatusSummaryPanel>(SummaryPrefabPath);
+        if (summaryPrefab == null)
+        {
+            BakeSummaryPrefab();
+            summaryPrefab = AssetDatabase.LoadAssetAtPath<UIPlayerStatusSummaryPanel>(SummaryPrefabPath);
+        }
+
+        summarySo.FindProperty("_panelPrefab").objectReferenceValue = summaryPrefab;
+        summarySo.FindProperty("_uiCanvas").objectReferenceValue = canvas;
+        summarySo.FindProperty("_layerHost").objectReferenceValue = layerHost;
+        summarySo.FindProperty("_panel").objectReferenceValue = null;
+        summarySo.ApplyModifiedPropertiesWithoutUndo();
 
         MergeLocalizationKeys();
         EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
-        Debug.Log("[PlayerStatusUISetupMenu] Controller + HUD launcher wired.", controller);
+        Debug.Log("[PlayerStatusUISetupMenu] Controller + summary HUD wired.", controller);
+    }
+
+    static PlayerStatusUIBridge EnsureBridge(Canvas canvas)
+    {
+        PlayerStatusUIBridge bridge = canvas.GetComponent<PlayerStatusUIBridge>();
+        if (bridge == null)
+            bridge = Undo.AddComponent<PlayerStatusUIBridge>(canvas.gameObject);
+        return bridge;
+    }
+
+    static UIPlayerStatusSummaryController EnsureSummaryController(
+        Transform systemRoot,
+        Canvas canvas,
+        UICanvasLayerHost layerHost)
+    {
+        UIPlayerStatusSummaryController controller =
+            Object.FindAnyObjectByType<UIPlayerStatusSummaryController>();
+        if (controller == null)
+        {
+            GameObject go = new("PlayerStatusSummaryController");
+            Undo.RegisterCreatedObjectUndo(go, "Create PlayerStatusSummaryController");
+            go.transform.SetParent(systemRoot, false);
+            controller = Undo.AddComponent<UIPlayerStatusSummaryController>(go);
+        }
+        else if (controller.transform.parent != systemRoot)
+        {
+            Undo.SetTransformParent(controller.transform, systemRoot, "Move Summary Controller");
+            controller.transform.localPosition = Vector3.zero;
+            controller.transform.localRotation = Quaternion.identity;
+            controller.transform.localScale = Vector3.one;
+        }
+
+        return controller;
+    }
+
+    // Legacy vitals/body-effect icons (MoodIconId 0–7) — keep order stable for serialization.
+    static readonly (MoodIconId Id, string FileName)[] LegacyMoodCatalogEntries =
+    {
+        (MoodIconId.Hunger, "Mood_Hunger.png"),
+        (MoodIconId.Thirst, "Mood_Thirst.png"),
+        (MoodIconId.Stamina, "Mood_Stamina.png"),
+        (MoodIconId.Bleed, "Mood_Bleed.png"),
+        (MoodIconId.Fracture, "Mood_Fracture.png"),
+        (MoodIconId.Infected, "Mood_Infected.png"),
+        (MoodIconId.Regenerating, "Mood_Regenerating.png"),
+        (MoodIconId.Adrenaline, "Mood_Adrenaline.png"),
+    };
+
+    // Appended MoodIconId values — file Mood_<Name>.png matches enum member name.
+    static readonly MoodIconId[] ExtendedMoodIconIds =
+    {
+        MoodIconId.GoodMood,
+        MoodIconId.Happy,
+        MoodIconId.VeryHappy,
+        MoodIconId.Stable,
+        MoodIconId.SlightlyHappy,
+        MoodIconId.Neutral,
+        MoodIconId.SlightlySad,
+        MoodIconId.Sad,
+        MoodIconId.VerySad,
+        MoodIconId.Depressed,
+        MoodIconId.Stressed,
+        MoodIconId.SeverelyStressed,
+        MoodIconId.Fear,
+        MoodIconId.ExtremeFear,
+        MoodIconId.Angry,
+        MoodIconId.Furious,
+        MoodIconId.Tired,
+        MoodIconId.VeryTired,
+        MoodIconId.NeedRest,
+        MoodIconId.WellRested,
+        MoodIconId.Hungry,
+        MoodIconId.VeryHungry,
+        MoodIconId.Fed,
+        MoodIconId.Full,
+        MoodIconId.Thirsty,
+        MoodIconId.VeryThirsty,
+        MoodIconId.ThirstQuenched,
+        MoodIconId.Discomfort,
+        MoodIconId.Pain,
+        MoodIconId.SeverePain,
+        MoodIconId.Injured,
+        MoodIconId.SeverelyInjured,
+        MoodIconId.Sick,
+        MoodIconId.SeverelySick,
+        MoodIconId.LowImmunity,
+        MoodIconId.Recovering,
+        MoodIconId.Pale,
+        MoodIconId.Overheated,
+        MoodIconId.Hypothermia,
+        MoodIconId.Comfortable,
+        MoodIconId.Dirty,
+        MoodIconId.VeryDirty,
+        MoodIconId.NeedShower,
+        MoodIconId.Attractive,
+        MoodIconId.Warm,
+        MoodIconId.TooHot,
+        MoodIconId.TooCold,
+        MoodIconId.Dark,
+        MoodIconId.Lonely,
+        MoodIconId.Bored,
+        MoodIconId.Idle,
+        MoodIconId.PleasantConversation,
+        MoodIconId.GoodMeal,
+        MoodIconId.RestArea,
+        MoodIconId.SuitableEnvironment,
+        MoodIconId.NatureFriendly,
+        MoodIconId.Inspired,
+        MoodIconId.Motivated,
+        MoodIconId.SkillUp,
+        MoodIconId.RelationshipImproved,
+        MoodIconId.Loved,
+        MoodIconId.MarriedEngaged,
+        MoodIconId.Trust,
+        MoodIconId.Respect,
+    };
+
+    static void EnsureMoodAssets()
+    {
+        EnsureSoFolder();
+        if (!AssetDatabase.IsValidFolder(MoodSpriteFolder))
+        {
+            if (!AssetDatabase.IsValidFolder("Assets/Dist/Visual/Sprites/UI/PlayerStatus"))
+                AssetDatabase.CreateFolder("Assets/Dist/Visual/Sprites/UI", "PlayerStatus");
+            AssetDatabase.CreateFolder("Assets/Dist/Visual/Sprites/UI/PlayerStatus", "Mood");
+        }
+
+        EnsureCircleSprite(MoodSpriteFolder + "/Mood_Back.png", 64, Color.white, filled: true);
+        for (int i = 0; i < LegacyMoodCatalogEntries.Length; i++)
+            EnsureCircleSprite(
+                MoodSpriteFolder + "/" + LegacyMoodCatalogEntries[i].FileName,
+                48,
+                Color.white,
+                filled: false);
+
+        for (int i = 0; i < ExtendedMoodIconIds.Length; i++)
+        {
+            string fileName = "Mood_" + ExtendedMoodIconIds[i] + ".png";
+            EnsureCircleSprite(MoodSpriteFolder + "/" + fileName, 48, Color.white, filled: false);
+        }
+
+        AssetDatabase.Refresh();
+        AssetDatabase.SaveAssets();
+
+        PlayerStatusMoodIconCatalog catalog =
+            AssetDatabase.LoadAssetAtPath<PlayerStatusMoodIconCatalog>(MoodCatalogAssetPath);
+        if (catalog == null)
+        {
+            catalog = ScriptableObject.CreateInstance<PlayerStatusMoodIconCatalog>();
+            AssetDatabase.CreateAsset(catalog, MoodCatalogAssetPath);
+        }
+
+        SerializedObject catalogSo = new(catalog);
+        catalogSo.FindProperty("_backPlate").objectReferenceValue =
+            AssetDatabase.LoadAssetAtPath<Sprite>(MoodSpriteFolder + "/Mood_Back.png");
+
+        SerializedProperty entries = catalogSo.FindProperty("_entries");
+        int totalCount = LegacyMoodCatalogEntries.Length + ExtendedMoodIconIds.Length;
+        entries.arraySize = totalCount;
+
+        for (int i = 0; i < LegacyMoodCatalogEntries.Length; i++)
+        {
+            SetCatalogEntry(
+                entries,
+                i,
+                LegacyMoodCatalogEntries[i].Id,
+                LegacyMoodCatalogEntries[i].FileName);
+        }
+
+        for (int i = 0; i < ExtendedMoodIconIds.Length; i++)
+        {
+            MoodIconId iconId = ExtendedMoodIconIds[i];
+            SetCatalogEntry(
+                entries,
+                LegacyMoodCatalogEntries.Length + i,
+                iconId,
+                "Mood_" + iconId + ".png");
+        }
+
+        catalogSo.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(catalog);
+        AssetDatabase.SaveAssets();
+    }
+
+    static void SetCatalogEntry(SerializedProperty entries, int index, MoodIconId iconId, string fileName)
+    {
+        SerializedProperty entry = entries.GetArrayElementAtIndex(index);
+        entry.FindPropertyRelative("IconId").enumValueIndex = (int)iconId;
+        entry.FindPropertyRelative("FrontSprite").objectReferenceValue =
+            AssetDatabase.LoadAssetAtPath<Sprite>(MoodSpriteFolder + "/" + fileName);
+    }
+
+    static void EnsureCircleSprite(string assetPath, int size, Color color, bool filled)
+    {
+        bool exists = System.IO.File.Exists(assetPath);
+        if (exists)
+        {
+            EnsureSpriteImportSettings(assetPath);
+            if (AssetDatabase.LoadAssetAtPath<Sprite>(assetPath) != null)
+                return;
+        }
+
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false)
+        {
+            filterMode = FilterMode.Bilinear,
+            wrapMode = TextureWrapMode.Clamp
+        };
+
+        float center = (size - 1) * 0.5f;
+        float outer = size * 0.45f;
+        float inner = size * 0.28f;
+        float outerSq = outer * outer;
+        float innerSq = inner * inner;
+
+        Color32 c = color;
+        Color32 clear = new(0, 0, 0, 0);
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dx = x - center;
+                float dy = y - center;
+                float distSq = dx * dx + dy * dy;
+                bool draw = filled ? distSq <= outerSq : distSq <= outerSq && distSq >= innerSq;
+                tex.SetPixel(x, y, draw ? c : clear);
+            }
+        }
+
+        tex.Apply();
+        System.IO.File.WriteAllBytes(assetPath, tex.EncodeToPNG());
+        Object.DestroyImmediate(tex);
+        EnsureSpriteImportSettings(assetPath);
+    }
+
+    static void EnsureSpriteImportSettings(string assetPath)
+    {
+        AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+        var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+        if (importer == null)
+            return;
+
+        importer.textureType = TextureImporterType.Sprite;
+        importer.spriteImportMode = SpriteImportMode.Single;
+        importer.spritePixelsPerUnit = 100f;
+        importer.alphaIsTransparency = true;
+        importer.SaveAndReimport();
+    }
+
+    static void EnsureSoFolder()
+    {
+        if (!AssetDatabase.IsValidFolder("Assets/Dist/SOData"))
+            AssetDatabase.CreateFolder("Assets/Dist", "SOData");
+        if (!AssetDatabase.IsValidFolder(SoGameplayFolder))
+            AssetDatabase.CreateFolder("Assets/Dist/SOData", "Gameplay");
+        if (!AssetDatabase.IsValidFolder(SoPlayerStatusFolder))
+            AssetDatabase.CreateFolder(SoGameplayFolder, "PlayerStatus");
     }
 
     [MenuItem("Dist/PlayerStatus/Merge Localization Keys Into UI_ko")]
@@ -440,6 +825,8 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.Effect.bleed", "출혈");
         Put("PlayerStatus.Effect.fracture", "골절");
         Put("PlayerStatus.Effect.infected", "감염");
+        Put("PlayerStatus.Effect.regenerating", "재생 중");
+        Put("PlayerStatus.Effect.adrenaline", "아드레날린");
 
         var list = new System.Collections.Generic.List<LocalizationTable.Entry>(map.Count);
         foreach (var kv in map)

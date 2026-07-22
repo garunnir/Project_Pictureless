@@ -24,5 +24,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         public const string Bleed = "bleed";
         public const string Fracture = "fracture";
         public const string Infected = "infected";
+        public const string Regenerating = "regenerating";
+        public const string Adrenaline = "adrenaline";
     }
 }

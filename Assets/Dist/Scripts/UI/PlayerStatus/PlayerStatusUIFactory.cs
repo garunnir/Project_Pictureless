@@ -3,6 +3,7 @@
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,8 +19,16 @@ public static class PlayerStatusUIFactory
     const string ArmRSpritePath = BodyPartSpriteFolder + "PlayerStatus_ArmR.png";
     const string LegLSpritePath = BodyPartSpriteFolder + "PlayerStatus_LegL.png";
     const string LegRSpritePath = BodyPartSpriteFolder + "PlayerStatus_LegR.png";
+    const string MoodSpriteFolder = "Assets/Dist/Visual/Sprites/UI/PlayerStatus/Mood/";
+    const string MoodBackSpritePath = MoodSpriteFolder + "Mood_Back.png";
+    const string MoodCatalogAssetPath =
+        "Assets/Dist/SOData/Gameplay/PlayerStatus/PlayerStatusMoodIconCatalog.asset";
 
+    public static readonly Vector2 SummaryPanelSize = new(240f, 40f);
     public static readonly Vector2 WindowSize = new(360f, 480f);
+    public static readonly Vector2 MoodSlotSize = new(32f, 32f);
+    public const float MoodSlotSpacing = 4f;
+    public const float MoodFrontInset = 4f;
     public static readonly Vector2 DetailSize = new(240f, 320f);
     static readonly Vector2 BodyDiagramSize = new(147f, 220f);
     public const float RowHeight = 28f;
@@ -134,6 +143,90 @@ public static class PlayerStatusUIFactory
 
         detail.Hide();
         return window;
+    }
+
+    public static UIPlayerStatusSummaryPanel CreateSummaryRoot()
+    {
+        GameObject root = CreateRect("Grp_PlayerStatusSummary", null, Color.clear);
+        root.GetComponent<Image>().raycastTarget = false;
+        RectTransform rootRect = root.GetComponent<RectTransform>();
+        rootRect.anchorMin = new Vector2(1f, 1f);
+        rootRect.anchorMax = new Vector2(1f, 1f);
+        rootRect.pivot = new Vector2(1f, 1f);
+        rootRect.anchoredPosition = new Vector2(-12f, -12f);
+        rootRect.sizeDelta = SummaryPanelSize;
+
+        GameObject slotRootGo = CreateRect("SlotRoot", root.transform, Color.clear);
+        slotRootGo.GetComponent<Image>().raycastTarget = false;
+        RectTransform slotRoot = slotRootGo.GetComponent<RectTransform>();
+        Stretch(slotRoot, 0f, 0f, 0f, 0f);
+        HorizontalLayoutGroup hlg = slotRootGo.AddComponent<HorizontalLayoutGroup>();
+        hlg.spacing = MoodSlotSpacing;
+        hlg.childAlignment = TextAnchor.MiddleRight;
+        hlg.childControlWidth = false;
+        hlg.childControlHeight = false;
+        hlg.childForceExpandWidth = false;
+        hlg.childForceExpandHeight = false;
+
+        UIPlayerStatusMoodIconSlot slotPrefab = CreateMoodIconSlot(slotRoot, "SlotTemplate");
+        slotPrefab.gameObject.SetActive(false);
+
+        GameObject tooltipGo = CreateRect("Tooltip", root.transform, new Color(0.08f, 0.08f, 0.08f, 0.95f));
+        RectTransform tooltipRect = tooltipGo.GetComponent<RectTransform>();
+        tooltipRect.anchorMin = new Vector2(1f, 1f);
+        tooltipRect.anchorMax = new Vector2(1f, 1f);
+        tooltipRect.pivot = new Vector2(1f, 0f);
+        tooltipRect.sizeDelta = new Vector2(180f, 28f);
+        tooltipRect.anchoredPosition = new Vector2(0f, 8f);
+        tooltipGo.SetActive(false);
+
+        TMP_Text tooltipText = CreateTmp("Text", tooltipGo.transform, FontSizeBody, TextAlignmentOptions.Center);
+        Stretch(tooltipText.rectTransform, 6f, 6f, 4f, 4f);
+        tooltipText.enableWordWrapping = true;
+
+        UIPlayerStatusSummaryPanel panel = root.AddComponent<UIPlayerStatusSummaryPanel>();
+        panel.Wire(
+            slotRoot,
+            slotPrefab,
+            LoadMoodCatalog(),
+            tooltipRect,
+            tooltipText);
+
+        root.SetActive(false);
+        return panel;
+    }
+
+    static UIPlayerStatusMoodIconSlot CreateMoodIconSlot(Transform parent, string name)
+    {
+        GameObject slotGo = CreateRect(name, parent, Color.clear);
+        slotGo.GetComponent<Image>().raycastTarget = true;
+        LayoutElement layout = slotGo.AddComponent<LayoutElement>();
+        layout.preferredWidth = MoodSlotSize.x;
+        layout.preferredHeight = MoodSlotSize.y;
+
+        GameObject shakeGo = CreateRect("ShakeRoot", slotGo.transform, Color.clear);
+        shakeGo.GetComponent<Image>().raycastTarget = false;
+        RectTransform shakeRoot = shakeGo.GetComponent<RectTransform>();
+        Stretch(shakeRoot, 0f, 0f, 0f, 0f);
+
+        Image back = CreateRect("Img_Back", shakeRoot, Color.white).GetComponent<Image>();
+        back.raycastTarget = false;
+        back.preserveAspect = true;
+        Stretch(back.rectTransform, 0f, 0f, 0f, 0f);
+
+        Image front = CreateRect("Img_Front", shakeRoot, Color.white).GetComponent<Image>();
+        front.raycastTarget = false;
+        front.preserveAspect = true;
+        Stretch(
+            front.rectTransform,
+            MoodFrontInset,
+            MoodFrontInset,
+            MoodFrontInset,
+            MoodFrontInset);
+
+        UIPlayerStatusMoodIconSlot slot = slotGo.AddComponent<UIPlayerStatusMoodIconSlot>();
+        slot.Wire(back, front, shakeRoot);
+        return slot;
     }
 
     static RectTransform CreateBodyPartDiagram(Transform parent)
@@ -353,6 +446,15 @@ public static class PlayerStatusUIFactory
         if (sprite == null)
             Debug.LogError($"[PlayerStatusUIFactory] Body-part sprite not found: {path}");
         return sprite;
+#else
+        return null;
+#endif
+    }
+
+    static PlayerStatusMoodIconCatalog LoadMoodCatalog()
+    {
+#if UNITY_EDITOR
+        return UnityEditor.AssetDatabase.LoadAssetAtPath<PlayerStatusMoodIconCatalog>(MoodCatalogAssetPath);
 #else
         return null;
 #endif
