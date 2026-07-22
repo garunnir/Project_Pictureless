@@ -20,6 +20,8 @@ static class InventoryUIHierarchyBuilder
 
     public static UIItemListRow BuildRowPrefabRoot()
     {
+        // Layout SSOT: Grp_ItemListRow hand layout (HLG pad 8/8/2/2, spacing 4, category 100, icon wrapper 32)
+        // + count / weight value+unit / volume value+unit columns.
         InventoryUIPrefabStyleSpec spec = InventoryUIPrefabStyleSpec.Default;
         var row = CreateRect("Grp_ItemListRow", null, RowColor);
         var rowRect = row.GetComponent<RectTransform>();
@@ -37,17 +39,35 @@ static class InventoryUIHierarchyBuilder
         layout.childForceExpandHeight = false;
         row.AddComponent<LayoutElement>().preferredHeight = spec.RowHeight;
 
-        Image icon = CreateIcon("Icon", row.transform, spec.RowIconSize);
+        Image icon = CreateRowIcon(row.transform, spec.RowIconSize);
         var category = CreateTmp("Category", row.transform, spec.RowCategoryWidth, spec.RowFontCategory);
         var name = CreateTmp("Name", row.transform, 0f, spec.RowFontName, flexibleWidth: true);
-        var detail = CreateTmp("Detail", row.transform, spec.RowDetailWidth, spec.RowFontDetail);
+        var count = CreateTmp(
+            "Count", row.transform, spec.RowCountWidth, spec.RowFontDetail,
+            alignment: TextAlignmentOptions.MidlineRight);
+        var weightValue = CreateTmp(
+            "WeightValue", row.transform, spec.RowWeightValueWidth, spec.RowFontDetail,
+            alignment: TextAlignmentOptions.MidlineRight);
+        var weightUnit = CreateTmp(
+            "WeightUnit", row.transform, spec.RowWeightUnitWidth, spec.RowFontDetail,
+            alignment: TextAlignmentOptions.MidlineLeft);
+        var volumeValue = CreateTmp(
+            "VolumeValue", row.transform, spec.RowVolumeValueWidth, spec.RowFontDetail,
+            alignment: TextAlignmentOptions.MidlineRight);
+        var volumeUnit = CreateTmp(
+            "VolumeUnit", row.transform, spec.RowVolumeUnitWidth, spec.RowFontDetail,
+            alignment: TextAlignmentOptions.MidlineLeft);
 
         var rowView = row.AddComponent<UIItemListRow>();
         SetReference(rowView, "_backgroundImage", row.GetComponent<Image>());
         SetReference(rowView, "_iconImage", icon);
         SetReference(rowView, "_categoryText", category);
         SetReference(rowView, "_nameText", name);
-        SetReference(rowView, "_detailText", detail);
+        SetReference(rowView, "_countText", count);
+        SetReference(rowView, "_weightValueText", weightValue);
+        SetReference(rowView, "_weightUnitText", weightUnit);
+        SetReference(rowView, "_volumeValueText", volumeValue);
+        SetReference(rowView, "_volumeUnitText", volumeUnit);
         return rowView;
     }
 
@@ -752,7 +772,13 @@ static class InventoryUIHierarchyBuilder
         return go;
     }
 
-    static TMP_Text CreateTmp(string name, Transform parent, float width, float fontSize, bool flexibleWidth = false)
+    static TMP_Text CreateTmp(
+        string name,
+        Transform parent,
+        float width,
+        float fontSize,
+        bool flexibleWidth = false,
+        TextAlignmentOptions alignment = TextAlignmentOptions.MidlineLeft)
     {
         var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
         go.transform.SetParent(parent, false);
@@ -761,9 +787,10 @@ static class InventoryUIHierarchyBuilder
         text.font = LoadDefaultFont();
         text.fontSize = fontSize;
         text.color = Color.white;
-        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.alignment = alignment;
         text.overflowMode = TextOverflowModes.Ellipsis;
         text.enableWordWrapping = false;
+        text.raycastTarget = false;
 
         var layout = go.AddComponent<LayoutElement>();
         if (flexibleWidth)
@@ -777,6 +804,24 @@ static class InventoryUIHierarchyBuilder
         }
 
         return text;
+    }
+
+    static Image CreateRowIcon(Transform parent, float size)
+    {
+        var wrapper = CreateRect("IconWarpper", parent, Color.clear);
+        wrapper.GetComponent<Image>().raycastTarget = false;
+        var wrapperLayout = wrapper.AddComponent<LayoutElement>();
+        wrapperLayout.preferredWidth = size;
+        wrapperLayout.preferredHeight = size;
+        wrapperLayout.minWidth = size;
+        wrapperLayout.minHeight = size;
+
+        var iconGo = CreateRect("Icon", wrapper.transform, new Color(0.25f, 0.25f, 0.25f, 1f));
+        Stretch(iconGo.GetComponent<RectTransform>(), 0f, 0f, 0f, 0f);
+        Image icon = iconGo.GetComponent<Image>();
+        icon.preserveAspect = true;
+        icon.raycastTarget = false;
+        return icon;
     }
 
     static Image CreateIcon(string name, Transform parent, float size)

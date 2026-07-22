@@ -29,7 +29,11 @@ public sealed class UIItemListRow : MonoBehaviour,
 
     [SerializeField] TMP_Text _categoryText;
     [SerializeField] TMP_Text _nameText;
-    [SerializeField] TMP_Text _detailText;
+    [SerializeField] TMP_Text _countText;
+    [SerializeField] TMP_Text _weightValueText;
+    [SerializeField] TMP_Text _weightUnitText;
+    [SerializeField] TMP_Text _volumeValueText;
+    [SerializeField] TMP_Text _volumeUnitText;
     [SerializeField] Image _iconImage;
     [SerializeField] Image _backgroundImage;
 
@@ -68,27 +72,29 @@ public sealed class UIItemListRow : MonoBehaviour,
         ItemData item = stack.Item;
 
         if (_categoryText != null)
-        {
-            _categoryText.overflowMode = TextOverflowModes.Ellipsis;
             _categoryText.text = InventoryWindowLabels.GetItemCategory(item.category);
-        }
 
         if (_nameText != null)
         {
-            _nameText.overflowMode = TextOverflowModes.Ellipsis;
             _nameText.text = ItemDamageLabels.FormatName(
                 UITextPresenter.GetItemName(item),
                 stack.DamageLevel);
         }
 
-        if (_detailText != null)
-        {
-            _detailText.overflowMode = TextOverflowModes.Ellipsis;
-            _detailText.text = InventoryWindowLabels.FormatStackDetail(
-                stack.Count,
-                stack.TotalWeight,
-                stack.TotalVolume);
-        }
+        if (_countText != null)
+            _countText.text = InventoryWindowLabels.FormatStackCount(stack.Count);
+
+        if (_weightValueText != null)
+            _weightValueText.text = InventoryWindowLabels.FormatStackWeightValue(stack.TotalWeight);
+
+        if (_weightUnitText != null)
+            _weightUnitText.text = InventoryWindowLabels.StackWeightUnit;
+
+        if (_volumeValueText != null)
+            _volumeValueText.text = InventoryWindowLabels.FormatStackVolumeValue(stack.TotalVolume);
+
+        if (_volumeUnitText != null)
+            _volumeUnitText.text = InventoryWindowLabels.StackVolumeUnit;
 
         if (_iconImage != null)
         {

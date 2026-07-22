@@ -2,6 +2,7 @@
 using UnityEngine;
 
 // Single inventory UI chrome SSOT for bake (Primary + Loot windows share this layout).
+// Row column widths match hand-authored Grp_ItemListRow (inspected Jul 2026).
 readonly struct InventoryUIPrefabStyleSpec
 {
     public readonly Vector2 WindowSize;
@@ -12,7 +13,11 @@ readonly struct InventoryUIPrefabStyleSpec
     public readonly float RowHeight;
     public readonly float RowIconSize;
     public readonly float RowCategoryWidth;
-    public readonly float RowDetailWidth;
+    public readonly float RowCountWidth;
+    public readonly float RowWeightValueWidth;
+    public readonly float RowWeightUnitWidth;
+    public readonly float RowVolumeValueWidth;
+    public readonly float RowVolumeUnitWidth;
     public readonly float RowFontCategory;
     public readonly float RowFontName;
     public readonly float RowFontDetail;
@@ -41,7 +46,11 @@ readonly struct InventoryUIPrefabStyleSpec
         float rowHeight,
         float rowIconSize,
         float rowCategoryWidth,
-        float rowDetailWidth,
+        float rowCountWidth,
+        float rowWeightValueWidth,
+        float rowWeightUnitWidth,
+        float rowVolumeValueWidth,
+        float rowVolumeUnitWidth,
         float rowFontCategory,
         float rowFontName,
         float rowFontDetail,
@@ -69,7 +78,11 @@ readonly struct InventoryUIPrefabStyleSpec
         RowHeight = rowHeight;
         RowIconSize = rowIconSize;
         RowCategoryWidth = rowCategoryWidth;
-        RowDetailWidth = rowDetailWidth;
+        RowCountWidth = rowCountWidth;
+        RowWeightValueWidth = rowWeightValueWidth;
+        RowWeightUnitWidth = rowWeightUnitWidth;
+        RowVolumeValueWidth = rowVolumeValueWidth;
+        RowVolumeUnitWidth = rowVolumeUnitWidth;
         RowFontCategory = rowFontCategory;
         RowFontName = rowFontName;
         RowFontDetail = rowFontDetail;
@@ -98,14 +111,18 @@ readonly struct InventoryUIPrefabStyleSpec
         chromeMargin: 10f,
         rowHeight: 36f,
         rowIconSize: 32f,
-        rowCategoryWidth: 64f,
-        rowDetailWidth: 88f,
+        rowCategoryWidth: 100f,
+        rowCountWidth: 28f,
+        rowWeightValueWidth: 40f,
+        rowWeightUnitWidth: 22f,
+        rowVolumeValueWidth: 40f,
+        rowVolumeUnitWidth: 18f,
         rowFontCategory: 14f,
         rowFontName: 16f,
         rowFontDetail: 14f,
         rowPaddingH: 8,
-        rowPaddingV: 4,
-        rowSpacing: 8f,
+        rowPaddingV: 2,
+        rowSpacing: 4f,
         slotHeight: 48f,
         slotFontSize: 14f,
         slotLabelInset: 6,

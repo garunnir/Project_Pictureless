@@ -98,7 +98,7 @@
 
 | `Grp_InventoryListWindow` | 리스트 + 사이드바 창 (상단 드래그 헤더 포함) |
 
-| `Grp_ItemListRow` | 아이템 행 (LeanPool) |
+| `Grp_ItemListRow` | 아이템 행 (LeanPool). 컬럼: Icon | Category | Name(flex) | Count | WeightValue | WeightUnit(kg) | VolumeValue | VolumeUnit(L) |
 
 | `Grp_ContainerSlot` | 사이드바 컨테이너 슬롯 — 아이콘 SSOT는 `ContainerVisualPresenter` (월드 타일 thumbnail → provider SpriteRenderer → 중첩 가방은 item icon, `floor-loot`는 숨김) |
 
@@ -114,7 +114,7 @@
 
 빈 아이콘 폴백: `ItemIconCatalog` (`Assets/Dist/Resources/ItemIconCatalog.asset`) → `ItemVisualPresenter`. 편집은 **Tools/Game Data Browser** 아이템 상세의 Icon 필드.
 
-프리팹 갱신: `Dist/Inventory/Bake UI Prefabs` (bake 시점 `AddComponent`는 허용 — 런타임 폴백 아님).
+프리팹 갱신: 행만 `Dist/Inventory/Rebuild Item List Row Prefab`. 행+슬롯 `Dist/Inventory/Bake UI Prefabs` (bake 시점 `AddComponent`는 허용 — 런타임 폴백 아님).
 
 캔버스 오버레이 배선: `Dist/Inventory/Setup Canvas Overlays In Open Scene` (IsoLand 등 씬 1회 실행).
 

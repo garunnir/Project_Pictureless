@@ -33,8 +33,10 @@ public sealed class InventoryListMarqueeSelector : MonoBehaviour,
             : null;
 
         Image image = GetComponent<Image>();
-        if (image != null)
-            image.raycastTarget = true;
+        if (image == null)
+            Debug.LogError("[InventoryListMarqueeSelector] Image missing on prefab.", this);
+        else if (!image.raycastTarget)
+            Debug.LogError("[InventoryListMarqueeSelector] Image.raycastTarget must be true on prefab.", this);
     }
 
     public void OnPointerDown(PointerEventData eventData)

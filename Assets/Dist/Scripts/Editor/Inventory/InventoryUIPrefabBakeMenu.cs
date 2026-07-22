@@ -44,6 +44,21 @@ static class InventoryUIPrefabBakeMenu
         AssetDatabase.Refresh();
     }
 
+    /// <summary>
+    /// Rebuilds only Grp_ItemListRow from BuildRowPrefabRoot (does not run full Bake UI Prefabs).
+    /// </summary>
+    [MenuItem("Dist/Inventory/Rebuild Item List Row Prefab")]
+    static void RebuildItemListRowPrefab()
+    {
+        EnsureFolder();
+        UIItemListRow rowRoot = InventoryUIHierarchyBuilder.BuildRowPrefabRoot();
+        SavePrefab(rowRoot.gameObject, RowPath);
+        Object.DestroyImmediate(rowRoot.gameObject);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log($"[InventoryUIPrefabBakeMenu] Rebuilt row prefab only: {RowPath}");
+    }
+
     static void EnsureFolder()
     {
         if (!AssetDatabase.IsValidFolder("Assets/Dist/Visual/Prefabs/UIComponents"))

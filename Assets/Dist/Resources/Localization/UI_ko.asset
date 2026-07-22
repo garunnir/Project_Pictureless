@@ -83,10 +83,16 @@ MonoBehaviour:
     text: '{0:0.##}/{1:0.##} kg'
   - key: Inventory.VolumeCapacity
     text: '{0:0.##}/{1:0.##} L'
-  - key: Inventory.StackDetail
-    text: x{0}  {1:0.##}kg  {2:0.##}L
   - key: Inventory.StackCount
     text: x{0}
+  - key: Inventory.StackWeightValue
+    text: '{0:0.##}'
+  - key: Inventory.StackWeightUnit
+    text: kg
+  - key: Inventory.StackVolumeValue
+    text: '{0:0.##}'
+  - key: Inventory.StackVolumeUnit
+    text: L
   - key: Inventory.ItemDetail.Category
     text: "\uBD84\uB958: {0}"
   - key: Inventory.ItemDetail.Type

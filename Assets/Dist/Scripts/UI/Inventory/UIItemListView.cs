@@ -134,7 +134,9 @@ public sealed class UIItemListView : MonoBehaviour
 
 
 
-            ApplyRowLayout(row.RectTransform);
+            // Pool 손상 복구만 — sizeDelta/LayoutElement 등 프리팹 레이아웃은 덮지 않음.
+            if (row.RectTransform != null)
+                row.RectTransform.localScale = Vector3.one;
 
             row.Bind(container.Stacks[i], container, _selection, _dragHost, this);
 
@@ -178,106 +180,14 @@ public sealed class UIItemListView : MonoBehaviour
 
 
 
-        Mask stencilMask = viewport.GetComponent<Mask>();
-
-        if (stencilMask != null)
-
-            stencilMask.enabled = false;
-
-
-
         if (viewport.GetComponent<RectMask2D>() == null)
             Debug.LogError("[UIItemListView] RectMask2D missing on scroll viewport prefab.", viewport);
 
-
-
-        Image viewportImage = viewport.GetComponent<Image>();
-
-        if (viewportImage != null)
-
-        {
-
-            viewportImage.color = new Color(1f, 1f, 1f, 0f);
-
-            viewportImage.raycastTarget = true;
-
-        }
-
-
-
+        // Prefab chrome (Mask, Image, ScrollRect options) is SSOT — do not overwrite at runtime.
         if (_scrollRect == null)
-
             _scrollRect = GetComponent<ScrollRect>();
 
-
-
-        if (_scrollRect != null)
-
-        {
-
-            _scrollRect.viewport = viewport;
-
-            _scrollRect.content = _contentRoot;
-
-            _scrollRect.horizontal = false;
-
-            _scrollRect.vertical = true;
-
-            _scrollRect.movementType = ScrollRect.MovementType.Clamped;
-
-        }
-
-
-
         _viewportConfigured = true;
-
-    }
-
-
-
-    static void ApplyRowLayout(RectTransform rowRect)
-
-    {
-
-        if (rowRect == null)
-
-            return;
-
-
-
-        rowRect.localScale = Vector3.one;
-
-
-
-        float height = 0f;
-
-        if (rowRect.TryGetComponent(out LayoutElement layoutElement) && layoutElement.preferredHeight > 0f)
-
-            height = layoutElement.preferredHeight;
-
-        else if (rowRect.sizeDelta.y > 1f)
-
-            height = rowRect.sizeDelta.y;
-
-
-
-        if (height <= 1f)
-
-        {
-
-            Debug.LogWarning("[UIItemListView] Row prefab missing LayoutElement.preferredHeight / sizeDelta; layout may be wrong.", rowRect);
-
-            return;
-
-        }
-
-
-
-        Vector2 size = rowRect.sizeDelta;
-
-        size.y = height;
-
-        rowRect.sizeDelta = size;
 
     }
 

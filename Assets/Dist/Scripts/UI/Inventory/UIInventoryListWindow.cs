@@ -113,14 +113,9 @@ public sealed class UIInventoryListWindow : MonoBehaviour
                     }
                 }
 
-                if (!viewport.TryGetComponent(out Image viewportImage))
+                if (!viewport.TryGetComponent(out Image _))
                 {
                     Debug.LogError("[UIInventoryListWindow] Image missing on viewport prefab.", viewport);
-                }
-                else
-                {
-                    viewportImage.color = new Color(0f, 0f, 0f, 0f);
-                    viewportImage.raycastTarget = true;
                 }
             }
 
@@ -148,8 +143,8 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             return;
         }
 
-        image.color = new Color(0f, 0f, 0f, 0f);
-        image.raycastTarget = true;
+        if (!image.raycastTarget)
+            Debug.LogError("[UIInventoryListWindow] Sidebar Image.raycastTarget must be true on prefab.", _sidebarArea);
     }
 
     static RectTransform FindMarqueeRect(RectTransform parent)
