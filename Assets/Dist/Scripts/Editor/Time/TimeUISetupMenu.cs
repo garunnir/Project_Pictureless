@@ -1,5 +1,5 @@
 // ============================================================
-// TimeUISetupMenu — 시계 HUD bake·씬 배선·Play 검증 메뉴
+// TimeUISetupMenu — 시계 HUD 씬 배선·Play 검증 메뉴
 // ============================================================
 
 #if UNITY_EDITOR
@@ -16,24 +16,6 @@ static class TimeUISetupMenu
     const string SoTimeFolder = SoGameplayFolder + "/Time";
     const string SettingsAssetPath = SoTimeFolder + "/WorldClockSettings.asset";
     const string PauseTestKey = "verify_world_pause";
-
-    [MenuItem("Dist/Time/Bake Time Display Prefab")]
-    static void BakeDisplayPrefab()
-    {
-        EnsurePrefabFolder();
-        UITimeDisplayPanel built = TimeUIFactory.CreateDisplayRoot();
-        PrefabUtility.SaveAsPrefabAsset(built.gameObject, DisplayPrefabPath, out bool success);
-        Object.DestroyImmediate(built.gameObject);
-        if (!success)
-        {
-            Debug.LogError($"[TimeUISetupMenu] Failed to save {DisplayPrefabPath}");
-            return;
-        }
-
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
-        Debug.Log($"[TimeUISetupMenu] Saved {DisplayPrefabPath}");
-    }
 
     [MenuItem("Dist/Time/Ensure World Clock Settings Asset")]
     static void EnsureSettingsAssetMenu()
@@ -103,8 +85,10 @@ static class TimeUISetupMenu
             AssetDatabase.LoadAssetAtPath<UITimeDisplayPanel>(DisplayPrefabPath);
         if (prefab == null)
         {
-            BakeDisplayPrefab();
-            prefab = AssetDatabase.LoadAssetAtPath<UITimeDisplayPanel>(DisplayPrefabPath);
+            Debug.LogError(
+                $"[TimeUISetupMenu] Prefab missing: {DisplayPrefabPath}. " +
+                "Hand-author or restore the prefab — do not full-bake over layout.");
+            return;
         }
 
         SerializedObject controllerSo = new(controller);
@@ -225,14 +209,6 @@ static class TimeUISetupMenu
         if (component == null)
             component = Undo.AddComponent<T>(go);
         return component;
-    }
-
-    static void EnsurePrefabFolder()
-    {
-        if (!AssetDatabase.IsValidFolder("Assets/Dist/Visual/Prefabs/UIComponents"))
-            AssetDatabase.CreateFolder("Assets/Dist/Visual/Prefabs", "UIComponents");
-        if (!AssetDatabase.IsValidFolder(PrefabFolder))
-            AssetDatabase.CreateFolder("Assets/Dist/Visual/Prefabs/UIComponents", "Time");
     }
 
     static Canvas ResolveUiCanvas()

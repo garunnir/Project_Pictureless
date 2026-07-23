@@ -7,13 +7,13 @@ alwaysApply: false
 # UI Font SSOT
 
 ## When
-Dist UI TMP·UI 프리팹·인벤 bake.
+Dist UI TMP·UI 프리팹·인벤 Editor 빌더/패치.
 
 ## SSOT
 | What | Where |
 |------|--------|
 | Font asset | `Assets/Dist/Scripts/UI/Font/Katuri SDF.asset` |
-| Bake const | `InventoryUIHierarchyBuilder.DefaultUIFontPath` |
+| Builder const | `InventoryUIHierarchyBuilder.DefaultUIFontPath` |
 
 Docs: `Assets/Dist/Scripts/UI/UI_Scripts.md` §Font
 

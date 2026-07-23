@@ -7,8 +7,8 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// 창 루트에 1개. 기본 비활성(옵트인).
-/// 켜면 자식 <see cref="UIWindowResizeHandler"/>와 (선택) 드래그 헤더를
-/// 포인터 근접 시에만 가시·히트한다. Inventory/Status는 미부착 시 기존 UX 유지.
+/// 켜면 직렬화된 리사이즈 핸들·드래그 헤더를 포인터 근접 시에만 가시·히트한다.
+/// Inventory/Status는 미부착 시 기존 UX 유지.
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class UIWindowResizeProximity : MonoBehaviour
@@ -23,10 +23,10 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
     [SerializeField] float _proximityPadding = DefaultProximityPadding;
 
     [SerializeField] UIWindowDragHandler _dragHeader;
+    [SerializeField] UIWindowResizeHandler[] _handlers;
 
     RectTransform _window;
     Canvas _canvas;
-    UIWindowResizeHandler[] _handlers;
     bool _initialized;
     bool _headerProximityActive = true;
     bool _resizeHandlesActive = true;
@@ -38,10 +38,17 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
         _window = window;
         _canvas = canvas;
         _proximityPadding = Mathf.Max(0f, proximityPadding);
-        _handlers = GetComponentsInChildren<UIWindowResizeHandler>(true);
-        if (_dragHeader == null)
-            _dragHeader = GetComponentInChildren<UIWindowDragHandler>(true);
         _initialized = true;
+
+        if (_dragHeader == null)
+            Debug.LogError(
+                "[UIWindowResizeProximity] Drag header not assigned.",
+                this);
+        if (_handlers == null || _handlers.Length == 0)
+            Debug.LogError(
+                "[UIWindowResizeProximity] Resize handlers not assigned.",
+                this);
+
         if (!_enabled)
             return;
 
@@ -50,6 +57,9 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
 
     public void SetDragHeader(UIWindowDragHandler dragHeader) =>
         _dragHeader = dragHeader;
+
+    public void SetResizeHandlers(UIWindowResizeHandler[] handlers) =>
+        _handlers = handlers;
 
     /// <summary>옵트인. false면 LateUpdate 중단(기존 상시 히트 UX).</summary>
     public void SetProximityEnabled(bool enabled)
@@ -77,7 +87,6 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
     public void SetResizeHandlesActive(bool active)
     {
         _resizeHandlesActive = active;
-        EnsureHandlers();
         if (!active)
             HideResizeHandlesOnly();
     }
@@ -86,8 +95,6 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
     {
         if (!_enabled || !_initialized || _window == null)
             return;
-
-        EnsureHandlers();
 
         if (_headerProximityActive && _dragHeader != null && _dragHeader.IsDragging)
         {
@@ -178,7 +185,6 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
 
     void HideResizeHandlesOnly()
     {
-        EnsureHandlers();
         if (_handlers == null)
             return;
 
@@ -187,14 +193,6 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
             if (_handlers[i] != null)
                 _handlers[i].SetVisualActive(false);
         }
-    }
-
-    void EnsureHandlers()
-    {
-        if (_handlers == null || _handlers.Length == 0)
-            _handlers = GetComponentsInChildren<UIWindowResizeHandler>(true);
-        if (_dragHeader == null)
-            _dragHeader = GetComponentInChildren<UIWindowDragHandler>(true);
     }
 
     bool TryGetPointerLocal(out Vector2 local)

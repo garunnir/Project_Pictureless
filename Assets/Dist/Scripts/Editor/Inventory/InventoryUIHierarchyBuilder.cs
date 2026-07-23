@@ -444,31 +444,33 @@ static class InventoryUIHierarchyBuilder
 
         var handleColor = new Color(1f, 1f, 1f, 0.02f);
 
-        CreateResizeHandle(root.transform, "Area_ResizeHandle_Left", handleColor, WindowResizeEdge.Left,
-            new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), Vector2.zero,
-            new Vector2(spec.EdgeThickness, 0f));
-        CreateResizeHandle(root.transform, "Area_ResizeHandle_Right", handleColor, WindowResizeEdge.Right,
-            new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f), Vector2.zero,
-            new Vector2(spec.EdgeThickness, 0f));
-        CreateResizeHandle(root.transform, "Area_ResizeHandle_Top", handleColor, WindowResizeEdge.Top,
-            new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), Vector2.zero,
-            new Vector2(0f, spec.EdgeThickness));
-        CreateResizeHandle(root.transform, "Area_ResizeHandle_Bottom", handleColor, WindowResizeEdge.Bottom,
-            new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), Vector2.zero,
-            new Vector2(0f, spec.EdgeThickness));
-        CreateResizeHandle(root.transform, "Area_ResizeHandle_TopLeft", handleColor, WindowResizeEdge.TopLeft,
-            new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), Vector2.zero,
-            new Vector2(spec.CornerSize, spec.CornerSize));
-        CreateResizeHandle(root.transform, "Area_ResizeHandle_TopRight", handleColor, WindowResizeEdge.TopRight,
-            new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f), Vector2.zero,
-            new Vector2(spec.CornerSize, spec.CornerSize));
-        CreateResizeHandle(root.transform, "Area_ResizeHandle_BottomLeft", handleColor, WindowResizeEdge.BottomLeft,
-            new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f), Vector2.zero,
-            new Vector2(spec.CornerSize, spec.CornerSize));
-        CreateResizeHandle(root.transform, "Area_ResizeHandle_BottomRight", handleColor, WindowResizeEdge.BottomRight,
-            new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), Vector2.zero,
-            new Vector2(spec.CornerSize, spec.CornerSize));
-
+        UIWindowResizeHandler[] resizeHandlers =
+        {
+            CreateResizeHandle(root.transform, "Area_ResizeHandle_Left", handleColor, WindowResizeEdge.Left,
+                new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), Vector2.zero,
+                new Vector2(spec.EdgeThickness, 0f)),
+            CreateResizeHandle(root.transform, "Area_ResizeHandle_Right", handleColor, WindowResizeEdge.Right,
+                new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f), Vector2.zero,
+                new Vector2(spec.EdgeThickness, 0f)),
+            CreateResizeHandle(root.transform, "Area_ResizeHandle_Top", handleColor, WindowResizeEdge.Top,
+                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), Vector2.zero,
+                new Vector2(0f, spec.EdgeThickness)),
+            CreateResizeHandle(root.transform, "Area_ResizeHandle_Bottom", handleColor, WindowResizeEdge.Bottom,
+                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), Vector2.zero,
+                new Vector2(0f, spec.EdgeThickness)),
+            CreateResizeHandle(root.transform, "Area_ResizeHandle_TopLeft", handleColor, WindowResizeEdge.TopLeft,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), Vector2.zero,
+                new Vector2(spec.CornerSize, spec.CornerSize)),
+            CreateResizeHandle(root.transform, "Area_ResizeHandle_TopRight", handleColor, WindowResizeEdge.TopRight,
+                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f), Vector2.zero,
+                new Vector2(spec.CornerSize, spec.CornerSize)),
+            CreateResizeHandle(root.transform, "Area_ResizeHandle_BottomLeft", handleColor, WindowResizeEdge.BottomLeft,
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f), Vector2.zero,
+                new Vector2(spec.CornerSize, spec.CornerSize)),
+            CreateResizeHandle(root.transform, "Area_ResizeHandle_BottomRight", handleColor, WindowResizeEdge.BottomRight,
+                new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), Vector2.zero,
+                new Vector2(spec.CornerSize, spec.CornerSize)),
+        };
         UIItemListView listView = listArea.AddComponent<UIItemListView>();
         ScrollRect scroll = listArea.AddComponent<ScrollRect>();
         var viewport = CreateRect("Viewport", listArea.transform, new Color(1f, 1f, 1f, 0f));
@@ -537,8 +539,43 @@ static class InventoryUIHierarchyBuilder
         SetReference(window, "_listArea", listRect);
         SetReference(window, "_sidebarArea", sidebarRect);
         SetReference(window, "_windowDragHandler", headerArea.GetComponent<UIWindowDragHandler>());
+        SetObjectReferenceArray(window, "_resizeHandlers", resizeHandlers);
         SetReference(window, "_headerTitle", headerTitle);
         return window;
+    }
+
+    /// <summary>
+    /// 기존 창 프리팹에 리사이즈 핸들 배열만 배선 (계층 재생성 없음).
+    /// </summary>
+    public static void PatchExistingWindowResizeHandlers(GameObject windowRoot)
+    {
+        if (windowRoot == null)
+            return;
+
+        UIInventoryListWindow window = windowRoot.GetComponent<UIInventoryListWindow>();
+        if (window == null)
+        {
+            Debug.LogError(
+                "[InventoryUIHierarchyBuilder] UIInventoryListWindow missing; cannot patch resize handlers.",
+                windowRoot);
+            return;
+        }
+
+        UIWindowResizeHandler[] handlers =
+            windowRoot.GetComponentsInChildren<UIWindowResizeHandler>(true);
+        if (handlers == null || handlers.Length == 0)
+        {
+            Debug.LogError(
+                "[InventoryUIHierarchyBuilder] No UIWindowResizeHandler children; cannot patch.",
+                windowRoot);
+            return;
+        }
+
+        SetObjectReferenceArray(window, "_resizeHandlers", handlers);
+
+        UIWindowDragHandler drag = windowRoot.GetComponentInChildren<UIWindowDragHandler>(true);
+        if (drag != null)
+            SetReference(window, "_windowDragHandler", drag);
     }
 
     /// <summary>
@@ -960,7 +997,7 @@ static class InventoryUIHierarchyBuilder
         return scrollbar;
     }
 
-    static void CreateResizeHandle(
+    static UIWindowResizeHandler CreateResizeHandle(
         Transform parent,
         string name,
         Color color,
@@ -981,6 +1018,7 @@ static class InventoryUIHierarchyBuilder
 
         UIWindowResizeHandler resizeHandler = handle.AddComponent<UIWindowResizeHandler>();
         SetEnumReference(resizeHandler, "_edge", edge);
+        return resizeHandler;
     }
 
     static GameObject CreateRect(string name, Transform parent, Color color)
@@ -1094,6 +1132,27 @@ static class InventoryUIHierarchyBuilder
         }
 
         property.objectReferenceValue = value;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    static void SetObjectReferenceArray(Object target, string propertyName, Object[] values)
+    {
+        var serialized = new SerializedObject(target);
+        SerializedProperty property = serialized.FindProperty(propertyName);
+        if (property == null || !property.isArray)
+        {
+            Debug.LogError(
+                $"[InventoryUIHierarchyBuilder] Missing array property '{propertyName}' on {target.GetType().Name}.");
+            return;
+        }
+
+        property.arraySize = values != null ? values.Length : 0;
+        if (values != null)
+        {
+            for (int i = 0; i < values.Length; i++)
+                property.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
+        }
+
         serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 

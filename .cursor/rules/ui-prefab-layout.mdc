@@ -7,7 +7,7 @@ alwaysApply: false
 # UI Prefab Layout SSOT
 
 ## When
-Dist UI 스크립트·UIComponents 프리팹·인벤 Editor bake.
+Dist UI 스크립트·UIComponents 프리팹·인벤 Editor 패치.
 
 ## MUST
 - `RectTransform` / `LayoutElement` / LayoutGroup 패딩·spacing = **프리팹 값**
@@ -21,10 +21,10 @@ Dist UI 스크립트·UIComponents 프리팹·인벤 Editor bake.
 | 넣을 곳 | 예 |
 |---------|-----|
 | **공용 런타임** | 모드·사이드바 on/off·inset·raycast (`ApplyModeLayout`, `EnsureSidebarRaycastTarget`) |
-| **단일 프리팹 / bake** | chrome 수치·트리·row/slot (`InventoryUIPrefabStyleSpec.Default`) |
+| **단일 프리팹** | chrome 수치·트리·row/slot (손수 또는 일회 bake 후 스크립트 삭제 — `ui-prefab-bake.mdc`) |
 
 - Prefab Mode ≈ Play를 맞추려다 공용 경로를 깨지 말 것
-- Loot 전용 compact 프리팹 / bake style **재도입 금지** (사용자 명시 요청 없으면)
+- Loot 전용 compact 프리팹 **재도입 금지** (사용자 명시 요청 없으면)
 
 ## MUST NOT
 ```csharp
@@ -42,4 +42,4 @@ offsetMax.x = -ResolveListRightInset(showSidebar); // sidebar offsetMin/Max
 - open 시 `SetHeaderTitle` (Inventory / Loot) — 동일 프리팹, 다른 라벨
 
 ## See also
-`no-hardcoding.mdc` · `INVENTORY_UI.md`
+`no-hardcoding.mdc` · `ui-prefab-bake.mdc` · `INVENTORY_UI.md`

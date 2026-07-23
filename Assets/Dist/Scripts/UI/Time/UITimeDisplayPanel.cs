@@ -12,6 +12,7 @@ public sealed class UITimeDisplayPanel : MonoBehaviour
     [Header("Window Chrome")]
     [SerializeField] UIWindowDragHandler _dragHandler;
     [SerializeField] UIWindowResizeProximity _resizeProximity;
+    [SerializeField] UIWindowResizeHandler[] _resizeHandlers;
 
     TimeViewModel _viewModel;
 
@@ -20,11 +21,13 @@ public sealed class UITimeDisplayPanel : MonoBehaviour
     public void Wire(
         TMP_Text timeText,
         UIWindowDragHandler dragHandler,
-        UIWindowResizeProximity resizeProximity)
+        UIWindowResizeProximity resizeProximity,
+        UIWindowResizeHandler[] resizeHandlers)
     {
         _timeText = timeText;
         _dragHandler = dragHandler;
         _resizeProximity = resizeProximity;
+        _resizeHandlers = resizeHandlers;
     }
 
     public void BindViewModel(TimeViewModel viewModel) => _viewModel = viewModel;
@@ -35,25 +38,34 @@ public sealed class UITimeDisplayPanel : MonoBehaviour
         bool enableResize)
     {
         RectTransform window = WindowRect;
+
         if (_dragHandler == null)
-            _dragHandler = GetComponentInChildren<UIWindowDragHandler>(true);
+            Debug.LogError("[UITimeDisplayPanel] Drag handler not assigned.", this);
         if (_resizeProximity == null)
-            _resizeProximity = GetComponent<UIWindowResizeProximity>();
+            Debug.LogError("[UITimeDisplayPanel] Resize proximity not assigned.", this);
+        if (_resizeHandlers == null || _resizeHandlers.Length == 0)
+            Debug.LogError("[UITimeDisplayPanel] Resize handlers not assigned.", this);
 
         _dragHandler?.Initialize(window, rootCanvas);
 
-        UIWindowResizeHandler[] resizeHandlers =
-            GetComponentsInChildren<UIWindowResizeHandler>(true);
-        for (int i = 0; i < resizeHandlers.Length; i++)
-            resizeHandlers[i].Initialize(
-                window,
-                rootCanvas,
-                TimeUIFactory.MinPanelSize,
-                TimeUIFactory.MaxPanelSize);
+        if (_resizeHandlers != null)
+        {
+            for (int i = 0; i < _resizeHandlers.Length; i++)
+            {
+                if (_resizeHandlers[i] == null)
+                    continue;
+                _resizeHandlers[i].Initialize(
+                    window,
+                    rootCanvas,
+                    TimeUIFactory.MinPanelSize,
+                    TimeUIFactory.MaxPanelSize);
+            }
+        }
 
         if (_resizeProximity != null)
         {
             _resizeProximity.SetDragHeader(_dragHandler);
+            _resizeProximity.SetResizeHandlers(_resizeHandlers);
             _resizeProximity.Initialize(
                 window,
                 rootCanvas,
@@ -62,15 +74,10 @@ public sealed class UITimeDisplayPanel : MonoBehaviour
             _resizeProximity.SetHeaderProximityActive(enableDragHeader);
             _resizeProximity.SetResizeHandlesActive(enableResize);
         }
-        else
+        else if (_resizeHandlers != null && !enableResize)
         {
-            if (!enableDragHeader)
-                _dragHandler?.SetVisualActive(false);
-            if (!enableResize)
-            {
-                for (int i = 0; i < resizeHandlers.Length; i++)
-                    resizeHandlers[i].SetVisualActive(false);
-            }
+            for (int i = 0; i < _resizeHandlers.Length; i++)
+                _resizeHandlers[i]?.SetVisualActive(false);
         }
     }
 

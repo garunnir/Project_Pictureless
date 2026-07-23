@@ -114,7 +114,7 @@
 
 빈 아이콘 폴백: `ItemIconCatalog` (`Assets/Dist/Resources/ItemIconCatalog.asset`) → `ItemVisualPresenter`. 편집은 **Tools/Game Data Browser** 아이템 상세의 Icon 필드.
 
-프리팹 갱신: 행만 `Dist/Inventory/Rebuild Item List Row Prefab`. 행+슬롯 `Dist/Inventory/Bake UI Prefabs` (bake 시점 `AddComponent`는 허용 — 런타임 폴백 아님). 기존 창에 컬럼 헤더만: `Dist/Inventory/Patch Window Column Header`. 열 폭·행간격·패딩 SSOT 에셋 반영: `Dist/Inventory/Sync List Column Layout` (`Resources/Inventory/InventoryListColumnLayoutSettings`).
+프리팹 갱신: full bake 메뉴는 두지 않음 (`.cursor/rules/ui-prefab-bake.mdc`). 기존 창에 컬럼 헤더만: `Dist/Inventory/Patch Window Column Header`. 열 폭·행간격·패딩 SSOT 에셋 반영: `Dist/Inventory/Sync List Column Layout` (`Resources/Inventory/InventoryListColumnLayoutSettings`). 리사이즈 핸들 배선: `Dist/Inventory/Patch Window Resize Handlers`.
 
 캔버스 오버레이 배선: `Dist/Inventory/Setup Canvas Overlays In Open Scene` (IsoLand 등 씬 1회 실행).
 

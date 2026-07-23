@@ -19,6 +19,7 @@ alwaysApply: true
 | `epistemic-labels.mdc` | 진단·원인 보고 라벨 |
 | `no-hardcoding.mdc` | 매직 넘버/복붙 SSOT |
 | `migration-parity.mdc` | 경로 교체·하이브리드 — 패리티 선확보, 사용자 재현 뺑뺑이 금지 |
+| `ui-prefab-bake.mdc` | UI 프리팹 full bake는 일회성 — 베이크 후 스크립트 삭제 |
 
 ## Glob (해당 경로 작업 시)
 | File | Globs |

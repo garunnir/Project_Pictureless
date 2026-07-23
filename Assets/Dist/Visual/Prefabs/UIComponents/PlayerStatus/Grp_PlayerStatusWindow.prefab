@@ -2405,6 +2405,15 @@ MonoBehaviour:
   _debugSeverArmLLabel: {fileID: 3049083468004087135}
   _detailPanel: {fileID: 7829094984377011113}
   _windowDragHandler: {fileID: 2509950413569935741}
+  _resizeHandlers:
+  - {fileID: 551146547163983195}
+  - {fileID: 2113949993271248088}
+  - {fileID: 3742371738432824580}
+  - {fileID: 9138383648277114809}
+  - {fileID: 3877395922298204856}
+  - {fileID: 7216137007359034209}
+  - {fileID: 6285806568891602685}
+  - {fileID: 5552169411996328972}
 --- !u!1 &6301278821313056100
 GameObject:
   m_ObjectHideFlags: 0

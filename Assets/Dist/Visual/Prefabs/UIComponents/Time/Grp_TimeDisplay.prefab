@@ -815,6 +815,15 @@ MonoBehaviour:
   _enabled: 0
   _proximityPadding: 12
   _dragHeader: {fileID: 49721670887073846}
+  _handlers:
+  - {fileID: 2904903450909473693}
+  - {fileID: 1818173252827637514}
+  - {fileID: 933351905853110340}
+  - {fileID: 4586187350345665007}
+  - {fileID: 9201375613644438320}
+  - {fileID: 1805922572898744193}
+  - {fileID: 8684579747138449573}
+  - {fileID: 5006097264636305295}
 --- !u!114 &8005262074887871860
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -830,6 +839,15 @@ MonoBehaviour:
   _timeText: {fileID: 5852524464012422149}
   _dragHandler: {fileID: 49721670887073846}
   _resizeProximity: {fileID: 1596398038779288839}
+  _resizeHandlers:
+  - {fileID: 2904903450909473693}
+  - {fileID: 1818173252827637514}
+  - {fileID: 933351905853110340}
+  - {fileID: 4586187350345665007}
+  - {fileID: 9201375613644438320}
+  - {fileID: 1805922572898744193}
+  - {fileID: 8684579747138449573}
+  - {fileID: 5006097264636305295}
 --- !u!1 &6838530803855892768
 GameObject:
   m_ObjectHideFlags: 0

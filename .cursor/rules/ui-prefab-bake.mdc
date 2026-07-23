@@ -1,0 +1,33 @@
+---
+description: UI 프리팹 전체 베이크는 일회성 — 베이크 후 스크립트 삭제 (손수 레이아웃 덮어쓰기 방지)
+alwaysApply: true
+---
+
+# Prefab Bake Scripts (일회성)
+
+## When
+에디터로 UI/HUD 프리팹을 **통째 생성·재생성**(full bake / Rebuild from factory)할 때.
+
+## Why
+영구 Bake 메뉴는 손수 맞춘 레이아웃을 덮어쓴다 (2026-07 PlayerStatus `Bake UI Prefab` 사고).
+
+## MUST
+1. Full bake는 **임시** 스크립트/메뉴만 허용 (승인된 일회 작업).
+2. 베이크 **성공 확인 직후** 해당 bake 스크립트·메뉴를 **삭제**한다 (`.cs` + `.meta`).
+3. Setup/씬 배선은 기존 프리팹을 **로드만** 한다. 없으면 LogError — **자동 bake 금지**.
+4. 레이아웃 유지 수정은 **Patch**(필드 배선·스크롤바·열 sync 등)만 상시 유지.
+
+## MUST NOT
+- `Dist/*/Bake * Prefab(s)` 같은 **상시** full-bake 메뉴를 레포에 남기기
+- Setup이 프리팹 없을 때 factory로 재생성
+- 손수 레이아웃 프리팹을 factory `SaveAsPrefabAsset`으로 덮기 (명시 예외·승인 없으면)
+
+## OK (예외 — 상시 유지 가능)
+| OK | Condition |
+|----|-----------|
+| Patch 메뉴 | 기존 계층 유지, SerializeField·부분 geometry만 |
+| Overlay Setup | 고스트/컨텍스트 등 ephemeral 프리팹 Ensure (창 본체 full bake 아님) |
+| 일회 bake | 사용자 승인 + 베이크 후 **즉시 삭제** |
+
+## See also
+`ui-prefab-layout.mdc` · `00-rules-index.mdc`

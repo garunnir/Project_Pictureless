@@ -247,9 +247,9 @@ UI.cs 상속, ContentSizeFitter 필수
 
 **기본값 (필수):** Dist UI의 모든 `TextMeshProUGUI`는 **Katuri SDF**를 폰트 에셋으로 사용한다. TMP 기본값(Liberation Sans)이나 미지정은 사용하지 않는다.
 
-- 신규 UI 프리팹·베이크 스크립트: 위 경로의 `Katuri SDF.asset` 참조
+- 신규 UI 프리팹·일회 bake(후 삭제) 스크립트: 위 경로의 `Katuri SDF.asset` 참조
 - 인벤 UI (`Visual/Prefabs/UIComponents/Inventory/`): `Grp_ItemListRow`, `Grp_ContainerSlot`의 TMP가 Katuri SDF를 참조
-- 에디터 베이크: `Dist/Inventory/Bake UI Prefabs` → `InventoryUIHierarchyBuilder.DefaultUIFontPath` 사용
+- Editor 빌더 상수: `InventoryUIHierarchyBuilder.DefaultUIFontPath` (Patch/빌더용 — 상시 full bake 메뉴 없음)
 
 **효용:** UIVerticalView, UISender 등에서 `UILocalizationManager.localizedFonts`를 통해 언어별 TMP 폰트로 사용됨. 신규 UI도 동일 폰트를 기본으로 맞춘다.
 

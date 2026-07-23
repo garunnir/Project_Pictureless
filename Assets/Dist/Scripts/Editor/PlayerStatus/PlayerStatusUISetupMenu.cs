@@ -317,41 +317,66 @@ static class PlayerStatusUISetupMenu
         Debug.Log("[PlayerStatusUISetupMenu] Ensure Mood Assets complete.");
     }
 
-    [MenuItem("Dist/PlayerStatus/Bake Summary HUD Prefab")]
-    static void BakeSummaryPrefab()
+    /// <summary>
+    /// 계층/레이아웃은 유지하고 리사이즈 핸들 SerializeField만 배선.
+    /// </summary>
+    [MenuItem("Dist/PlayerStatus/Patch Window Resize Handlers")]
+    static void PatchWindowResizeHandlers()
     {
-        EnsureFolder();
-        EnsureMoodAssets();
-        UIPlayerStatusSummaryPanel built = PlayerStatusUIFactory.CreateSummaryRoot();
-        PrefabUtility.SaveAsPrefabAsset(built.gameObject, SummaryPrefabPath, out bool success);
-        Object.DestroyImmediate(built.gameObject);
-        if (!success)
+        GameObject root = PrefabUtility.LoadPrefabContents(WindowPrefabPath);
+        if (root == null)
         {
-            Debug.LogError($"[PlayerStatusUISetupMenu] Failed to save {SummaryPrefabPath}");
+            Debug.LogError($"[PlayerStatusUISetupMenu] Failed to load: {WindowPrefabPath}");
             return;
+        }
+
+        try
+        {
+            UIPlayerStatusWindow window = root.GetComponent<UIPlayerStatusWindow>();
+            if (window == null)
+            {
+                Debug.LogError(
+                    "[PlayerStatusUISetupMenu] UIPlayerStatusWindow missing; cannot patch.",
+                    root);
+                return;
+            }
+
+            UIWindowResizeHandler[] handlers =
+                root.GetComponentsInChildren<UIWindowResizeHandler>(true);
+            if (handlers == null || handlers.Length == 0)
+            {
+                Debug.LogError(
+                    "[PlayerStatusUISetupMenu] No UIWindowResizeHandler children; cannot patch.",
+                    root);
+                return;
+            }
+
+            var so = new SerializedObject(window);
+            SerializedProperty prop = so.FindProperty("_resizeHandlers");
+            if (prop == null || !prop.isArray)
+            {
+                Debug.LogError(
+                    "[PlayerStatusUISetupMenu] Missing _resizeHandlers on UIPlayerStatusWindow.",
+                    window);
+                return;
+            }
+
+            prop.arraySize = handlers.Length;
+            for (int i = 0; i < handlers.Length; i++)
+                prop.GetArrayElementAtIndex(i).objectReferenceValue = handlers[i];
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            PrefabUtility.SaveAsPrefabAsset(root, WindowPrefabPath);
+            Debug.Log(
+                $"[PlayerStatusUISetupMenu] Wired _resizeHandlers on {WindowPrefabPath} (layout preserved).");
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
         }
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log($"[PlayerStatusUISetupMenu] Saved {SummaryPrefabPath}");
-    }
-
-    [MenuItem("Dist/PlayerStatus/Bake UI Prefab")]
-    static void BakePrefab()
-    {
-        EnsureFolder();
-        UIPlayerStatusWindow built = PlayerStatusUIFactory.CreateWindowRoot();
-        PrefabUtility.SaveAsPrefabAsset(built.gameObject, WindowPrefabPath, out bool success);
-        Object.DestroyImmediate(built.gameObject);
-        if (!success)
-        {
-            Debug.LogError($"[PlayerStatusUISetupMenu] Failed to save {WindowPrefabPath}");
-            return;
-        }
-
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
-        Debug.Log($"[PlayerStatusUISetupMenu] Saved {WindowPrefabPath}");
     }
 
     [MenuItem("Dist/PlayerStatus/Setup Canvas In Open Scene")]
@@ -407,8 +432,10 @@ static class PlayerStatusUISetupMenu
             AssetDatabase.LoadAssetAtPath<UIPlayerStatusWindow>(WindowPrefabPath);
         if (prefab == null)
         {
-            BakePrefab();
-            prefab = AssetDatabase.LoadAssetAtPath<UIPlayerStatusWindow>(WindowPrefabPath);
+            Debug.LogError(
+                $"[PlayerStatusUISetupMenu] Prefab missing: {WindowPrefabPath}. " +
+                "Hand-author or restore the prefab — do not full-bake over layout.");
+            return;
         }
 
         so.FindProperty("_windowPrefab").objectReferenceValue = prefab;
@@ -426,8 +453,10 @@ static class PlayerStatusUISetupMenu
             AssetDatabase.LoadAssetAtPath<UIPlayerStatusSummaryPanel>(SummaryPrefabPath);
         if (summaryPrefab == null)
         {
-            BakeSummaryPrefab();
-            summaryPrefab = AssetDatabase.LoadAssetAtPath<UIPlayerStatusSummaryPanel>(SummaryPrefabPath);
+            Debug.LogError(
+                $"[PlayerStatusUISetupMenu] Prefab missing: {SummaryPrefabPath}. " +
+                "Hand-author or restore the prefab — do not full-bake over layout.");
+            return;
         }
 
         summarySo.FindProperty("_panelPrefab").objectReferenceValue = summaryPrefab;

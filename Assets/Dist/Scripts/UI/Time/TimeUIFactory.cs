@@ -63,44 +63,48 @@ public static class TimeUIFactory
         Stretch(timeText.rectTransform, 8f, 8f, HeaderHeight + 2f, 4f);
         timeText.text = TimeDisplayFormat.Format(1, 0, 0);
 
-        CreateResizeHandles(root.transform);
+        UIWindowResizeHandler[] resizeHandlers = CreateResizeHandles(root.transform);
         UIWindowResizeProximity proximity = root.AddComponent<UIWindowResizeProximity>();
         proximity.SetDragHeader(dragHandler);
+        proximity.SetResizeHandlers(resizeHandlers);
 
         UITimeDisplayPanel panel = root.AddComponent<UITimeDisplayPanel>();
-        panel.Wire(timeText, dragHandler, proximity);
+        panel.Wire(timeText, dragHandler, proximity, resizeHandlers);
         return panel;
     }
 
-    static void CreateResizeHandles(Transform root)
+    static UIWindowResizeHandler[] CreateResizeHandles(Transform root)
     {
-        CreateResizeHandle(root, "Area_ResizeHandle_Left", WindowResizeEdge.Left,
-            new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f),
-            new Vector2(ResizeEdgeThickness, 0f));
-        CreateResizeHandle(root, "Area_ResizeHandle_Right", WindowResizeEdge.Right,
-            new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f),
-            new Vector2(ResizeEdgeThickness, 0f));
-        CreateResizeHandle(root, "Area_ResizeHandle_Top", WindowResizeEdge.Top,
-            new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
-            new Vector2(0f, ResizeEdgeThickness));
-        CreateResizeHandle(root, "Area_ResizeHandle_Bottom", WindowResizeEdge.Bottom,
-            new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f),
-            new Vector2(0f, ResizeEdgeThickness));
-        CreateResizeHandle(root, "Area_ResizeHandle_TopLeft", WindowResizeEdge.TopLeft,
-            new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-            new Vector2(ResizeCornerSize, ResizeCornerSize));
-        CreateResizeHandle(root, "Area_ResizeHandle_TopRight", WindowResizeEdge.TopRight,
-            new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
-            new Vector2(ResizeCornerSize, ResizeCornerSize));
-        CreateResizeHandle(root, "Area_ResizeHandle_BottomLeft", WindowResizeEdge.BottomLeft,
-            new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-            new Vector2(ResizeCornerSize, ResizeCornerSize));
-        CreateResizeHandle(root, "Area_ResizeHandle_BottomRight", WindowResizeEdge.BottomRight,
-            new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
-            new Vector2(ResizeCornerSize, ResizeCornerSize));
+        return new[]
+        {
+            CreateResizeHandle(root, "Area_ResizeHandle_Left", WindowResizeEdge.Left,
+                new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f),
+                new Vector2(ResizeEdgeThickness, 0f)),
+            CreateResizeHandle(root, "Area_ResizeHandle_Right", WindowResizeEdge.Right,
+                new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f),
+                new Vector2(ResizeEdgeThickness, 0f)),
+            CreateResizeHandle(root, "Area_ResizeHandle_Top", WindowResizeEdge.Top,
+                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, ResizeEdgeThickness)),
+            CreateResizeHandle(root, "Area_ResizeHandle_Bottom", WindowResizeEdge.Bottom,
+                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0f, ResizeEdgeThickness)),
+            CreateResizeHandle(root, "Area_ResizeHandle_TopLeft", WindowResizeEdge.TopLeft,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(ResizeCornerSize, ResizeCornerSize)),
+            CreateResizeHandle(root, "Area_ResizeHandle_TopRight", WindowResizeEdge.TopRight,
+                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
+                new Vector2(ResizeCornerSize, ResizeCornerSize)),
+            CreateResizeHandle(root, "Area_ResizeHandle_BottomLeft", WindowResizeEdge.BottomLeft,
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(ResizeCornerSize, ResizeCornerSize)),
+            CreateResizeHandle(root, "Area_ResizeHandle_BottomRight", WindowResizeEdge.BottomRight,
+                new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(ResizeCornerSize, ResizeCornerSize)),
+        };
     }
 
-    static void CreateResizeHandle(
+    static UIWindowResizeHandler CreateResizeHandle(
         Transform parent,
         string name,
         WindowResizeEdge edge,
@@ -126,6 +130,7 @@ public static class TimeUIFactory
         UIWindowResizeHandler resizeHandler = handle.AddComponent<UIWindowResizeHandler>();
         resizeHandler.SetEdge(edge);
         resizeHandler.SetRevealedAlpha(UIWindowResizeHandler.DefaultRevealedAlpha);
+        return resizeHandler;
     }
 
     static GameObject CreateRect(string name, Transform parent, Color color)
