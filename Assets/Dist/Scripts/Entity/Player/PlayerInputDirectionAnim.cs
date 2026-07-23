@@ -157,7 +157,7 @@ public class PlayerInputDirectionAnim : MonoBehaviour
             return;
         }
 
-        animTimer += Time.deltaTime;
+        animTimer += TimeScaleService.Delta(TimeScaleChannel.Player);
         int frameIdx = Mathf.FloorToInt(animTimer * fps) % frames.Length;
         if (frameIdx < 0)
             frameIdx = 0;

@@ -59,7 +59,7 @@ public class CameraFollowTargetDriver : MonoBehaviour
             ref _smoothedVelocity,
             _positionSmoothTime,
             _maxSpeed,
-            Time.deltaTime);
+            TimeScaleService.Delta(TimeScaleChannel.Player));
     }
 
     public void SetTarget(Transform target, CharacterState state)

@@ -18,6 +18,7 @@ This skill provides best practices for writing clean, performant Unity C# script
 - ScriptableObject questions → read `references/scriptableobjects.md`
 - Performance or optimization → read `references/performance.md`
 - Input, keyboard, mouse, controller, InputAction, PlayerInput → read `references/input.md`
+- Game time, day clock, time scale, pause/speed, bullet time, WorldClock, TimeScaleService → read `docs/time/TIME.md` and follow `.cursor/rules/game-time.mdc`
 
 ## Core Rules
 

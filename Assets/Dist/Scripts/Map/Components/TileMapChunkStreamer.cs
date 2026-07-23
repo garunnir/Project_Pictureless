@@ -236,7 +236,7 @@ public class TileMapChunkStreamer : MonoBehaviour
 
 
 
-        float now = Time.time;
+        float now = TimeScaleService.TimeNow(TimeScaleChannel.Realtime);
 
         foreach (Vector2Int chunk in _visualizer.LoadedChunks)
 

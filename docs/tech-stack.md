@@ -22,3 +22,10 @@
 * `.asmdef` present → assembly name = root namespace
 * No `.asmdef` → infer `ProjectName.FeatureName` from context; one conservative default + confirm if conflict
 * New namespace or assembly requires prior approval
+
+## Game Time (Dist)
+
+* **SSOT:** `TimeScaleService` (채널 배율) + `WorldClock` (하루·시각). Detail: [`docs/time/TIME.md`](time/TIME.md)
+* **PROHIBITED as Dist gameplay SSOT:** Unity `Time.timeScale` (불릿타임·채널 분리와 충돌)
+* **Channels:** `Realtime` | `World` | `Player` — 소비는 `GetDelta(channel)`. 배속은 Push/Pop 곱셈 스택
+* **Pending:** 불릿타임 콘텐츠·저장·낮밤 라이팅. Dist Scripts 시뮬 `Time.deltaTime` 경로는 채널 연동됨 — `docs/time/TIME.md` Consumer 표

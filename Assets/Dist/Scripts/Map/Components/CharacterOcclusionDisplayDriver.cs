@@ -31,7 +31,9 @@ public sealed class CharacterOcclusionDisplayDriver : MonoBehaviour
         if (_applier == null)
             return;
 
-        _applier.TickCharacterOcclusionDisplay(_occlusionSmoothSpeed, Time.deltaTime);
+        _applier.TickCharacterOcclusionDisplay(
+            _occlusionSmoothSpeed,
+            TimeScaleService.Delta(TimeScaleChannel.World));
     }
 
     void OnDestroy() => Shutdown();

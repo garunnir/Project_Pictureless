@@ -73,10 +73,11 @@ public class GridCursor : MonoBehaviour
     {
         if (_heldDir == Vector2.zero) return;
 
-        _holdTimer += Time.deltaTime;
+        float dt = TimeScaleService.Delta(TimeScaleChannel.Realtime);
+        _holdTimer += dt;
         if (_holdTimer < HOLD_THRESHOLD) return;
 
-        _repeatTimer += Time.deltaTime;
+        _repeatTimer += dt;
         if (_repeatTimer >= REPEAT_INTERVAL)
         {
             MoveCursor(_heldDir);

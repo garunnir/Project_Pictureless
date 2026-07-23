@@ -181,7 +181,7 @@ public class PlayerMovement : MonoBehaviour, IMovable
 
     void FixedUpdate()
     {
-        float dt = Time.fixedDeltaTime;
+        float dt = TimeScaleService.FixedDelta(TimeScaleChannel.Player);
         Vector3 oldPos = _rb.position;
         float feetOffset = CharacterFeetPose.GetFeetOffset(transform);
 

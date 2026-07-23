@@ -11,7 +11,9 @@ public class PlayerBillboard : MonoBehaviour
 
     void LateUpdate()
     {
-        if(Time.time < nextT) return; nextT = Time.time + updateInterval;
+        float now = TimeScaleService.TimeNow(TimeScaleChannel.Player);
+        if (now < nextT) return;
+        nextT = now + updateInterval;
 
         float yaw = cam.transform.eulerAngles.y;
         if (Mathf.Abs(Mathf.DeltaAngle(lastYaw, yaw)) < yawThresholdDeg) return;

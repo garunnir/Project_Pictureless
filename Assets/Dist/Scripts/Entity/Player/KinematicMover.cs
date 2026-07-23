@@ -56,7 +56,7 @@ public class KinematicMover
         _currentVelocity = _moveDir.normalized * clampedSpeed;
     }
 
-    // 반환값: 이번 FixedUpdate에서 이동할 Vector3 (Time.fixedDeltaTime 이미 반영)
+    // 반환값: 이번 FixedUpdate에서 이동할 Vector3 (호출측 dt = Player FixedDelta 이미 반영)
     public Vector3 CalcDesiredMove(
         float baseSpeed,
         float sprintMultiplier,

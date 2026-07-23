@@ -1,0 +1,36 @@
+---
+description: Dist 게임 시간·배속·하루 시계 — TimeScaleService/WorldClock SSOT, Time.timeScale 금지
+globs: Assets/Dist/Scripts/Gameplay/Time/**/*,Assets/Dist/Scripts/Static/Time/**/*,Assets/Dist/Scripts/UI/Time/**/*,Assets/Dist/Scripts/Editor/Time/**/*,Assets/Dist/SOData/Gameplay/Time/**/*,docs/time/**/*
+alwaysApply: false
+---
+
+# Game Time
+
+## When
+게임 시계·하루·배속·일시정지·불릿타임·`Time.deltaTime`을 **시뮬 배속**으로 쓸 때.  
+(위 globs 밖이라도 해당 주제면 이 룰 + `docs/time/TIME.md`를 먼저 읽는다.)
+
+## Detail
+`docs/time/TIME.md`
+
+## MUST
+1. 배속/정지는 **`TimeScaleService`** Push/Pop (채널별 곱셈 스택). 키로 소유권 분리
+2. 하루·시각은 **`WorldClock`** (+ `WorldClockSettings` SO)
+3. 시뮬 delta: `Delta(World)` / `Delta(Player)` / `FixedDelta` (FixedUpdate) / UI는 `Delta(Realtime)` 또는 `WaitForSecondsRealtime`
+4. 신규·수정 시간 로직은 채널 API만. `Time.deltaTime`·`fixedDeltaTime`을 배속 SSOT로 쓰지 말 것
+
+## MUST NOT
+- Dist 게임플레이 SSOT로 Unity **`Time.timeScale`** 사용 (불릿타임·채널 분리 붕괴)
+- Pixel Crushers `GameTime` / `DialogueTime`을 Dist 시계 SSOT로 채택
+- 배속을 단일 float에 덮어쓰기 (Push/Pop 없이)
+- `deltaTime` 경로 대량 교체·표급을 migration-parity 없이 진행
+
+## Channels
+| Channel | Use |
+|---------|-----|
+| `Realtime` | 항상 1 — UI 연출 |
+| `World` | NPC·환경·WorldClock |
+| `Player` | 플레이어 (불릿타임 면제 가능) |
+
+## See also
+`docs/tech-stack.md` · `migration-parity.mdc` · `docs/time/TIME.md`

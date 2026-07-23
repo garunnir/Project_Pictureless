@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27490f77318b1d84c92b731c7f79b362, type: 3}
+  m_Name: WorldClockSettings
+  m_EditorClassIdentifier: DistScript::WorldClockSettings
+  _minutesPerDay: 1440
+  _startingDayIndex: 1
+  _startingMinuteOfDay: 0
+  _worldMinutesPerRealtimeSecond: 1
+  _dawnStartMinute: 300
+  _dayStartMinute: 420
+  _duskStartMinute: 1080
+  _nightStartMinute: 1200

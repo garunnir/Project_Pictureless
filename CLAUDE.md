@@ -87,3 +87,13 @@ Keep these files up to date during long tasks:
 | `.claude/memory/progress.md` | Checklist of completed and remaining steps |
 
 When context gets long or a new session starts → read these files first.
+
+## Domain docs (LLM entry)
+
+Stack: `docs/tech-stack.md`. Feature SSOT when touching that area:
+
+| Topic | Doc | Rule |
+|-------|-----|------|
+| Game time / scale / day clock | `docs/time/TIME.md` | `.cursor/rules/game-time.mdc` |
+
+**Before** writing or changing pause, speed, bullet-time, day/clock, or sim `deltaTime` ownership → read `docs/time/TIME.md` first.

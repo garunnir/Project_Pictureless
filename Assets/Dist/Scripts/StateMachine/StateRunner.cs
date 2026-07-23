@@ -11,7 +11,7 @@ public class StateRunner : SceneSingleton<StateRunner>
 {
     IFrameState _state;
 
-    void Update() => _state?.Tick(Time.deltaTime);
+    void Update() => _state?.Tick(TimeScaleService.Delta(TimeScaleChannel.World));
 
     public void ChangeState(IFrameState next)
     {
