@@ -45,7 +45,7 @@ static class TimeUISetupMenu
     [MenuItem("Dist/Time/Setup Canvas In Open Scene")]
     static void SetupCanvasInOpenScene()
     {
-        Canvas canvas = Object.FindAnyObjectByType<Canvas>();
+        Canvas canvas = ResolveUiCanvas();
         if (canvas == null)
         {
             Debug.LogError("[TimeUISetupMenu] Canvas not found.");
@@ -233,6 +233,32 @@ static class TimeUISetupMenu
             AssetDatabase.CreateFolder("Assets/Dist/Visual/Prefabs", "UIComponents");
         if (!AssetDatabase.IsValidFolder(PrefabFolder))
             AssetDatabase.CreateFolder("Assets/Dist/Visual/Prefabs/UIComponents", "Time");
+    }
+
+    static Canvas ResolveUiCanvas()
+    {
+        PlayerStatusUIBridge bridge = Object.FindAnyObjectByType<PlayerStatusUIBridge>();
+        if (bridge != null)
+        {
+            Canvas fromBridge = bridge.GetComponent<Canvas>();
+            if (fromBridge != null)
+                return fromBridge;
+        }
+
+        Canvas[] canvases = Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+        for (int i = 0; i < canvases.Length; i++)
+        {
+            Canvas c = canvases[i];
+            if (c == null)
+                continue;
+            if (c.GetComponent<UICanvasLayerHost>() == null)
+                continue;
+            if (c.name.IndexOf("Debug", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                continue;
+            return c;
+        }
+
+        return Object.FindAnyObjectByType<Canvas>();
     }
 
     static void EnsureSoFolder()

@@ -161,6 +161,7 @@ TimeUIBridge (Canvas)
 - 앵커: **상단 중앙** (Summary 우상단·런처 좌상단과 충돌 회피)
 - 표시 포맷 SSOT: `TimeDisplayFormat.DayTimePattern` → `Day {0}  {1:00}:{2:00}`
 - TMP 폰트: Katuri SDF (`TimeUIFactory.DefaultUIFontPath`)
+- 창 크롬: Controller `Enable Drag Header` / `Enable Resize`(둘 다 기본 on) → `Area_Header`+`UIWindowDragHandler`(창 근처 시 표시) · 공용 `UIWindowResizeProximity`(가장자리 근접 시 핸들). Inventory는 proximity 미사용(상시 투명 히트)
 
 ---
 

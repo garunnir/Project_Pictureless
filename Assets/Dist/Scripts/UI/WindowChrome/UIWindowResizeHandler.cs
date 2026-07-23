@@ -4,6 +4,7 @@
 
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public enum WindowResizeEdge
 {
@@ -17,8 +18,14 @@ public enum WindowResizeEdge
     BottomRight
 }
 
-public sealed class UIWindowResizeHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
+public sealed class UIWindowResizeHandler :
+    MonoBehaviour,
+    IBeginDragHandler,
+    IDragHandler,
+    IEndDragHandler
 {
+    public const float DefaultRevealedAlpha = 0.35f;
+
     [SerializeField] WindowResizeEdge _edge = WindowResizeEdge.BottomRight;
 
     RectTransform _window;
@@ -30,8 +37,14 @@ public sealed class UIWindowResizeHandler : MonoBehaviour, IBeginDragHandler, ID
     Vector2 _startPivot;
     Vector2 _minSize;
     Vector2 _maxSize;
+    CanvasGroup _canvasGroup;
+    Image _image;
+    Color _baseImageColor;
+    bool _hasBaseImageColor;
+    float _revealedAlpha = DefaultRevealedAlpha;
 
     public WindowResizeEdge Edge => _edge;
+    public bool IsDragging { get; private set; }
 
     public void SetEdge(WindowResizeEdge edge) => _edge = edge;
 
@@ -42,13 +55,44 @@ public sealed class UIWindowResizeHandler : MonoBehaviour, IBeginDragHandler, ID
         _dragRoot = window != null ? window.parent as RectTransform : null;
         _minSize = minSize;
         _maxSize = maxSize;
+        CacheVisuals();
     }
+
+    /// <summary>
+    /// 근접 리빌용. CanvasGroup이 있으면 alpha/blocksRaycasts, 없으면 Image alpha·raycast.
+    /// </summary>
+    public void SetVisualActive(bool active)
+    {
+        CacheVisuals();
+        if (_canvasGroup != null)
+        {
+            _canvasGroup.alpha = active ? 1f : 0f;
+            _canvasGroup.blocksRaycasts = active;
+            _canvasGroup.interactable = active;
+        }
+
+        if (_image != null)
+        {
+            if (_canvasGroup == null)
+            {
+                Color c = _hasBaseImageColor ? _baseImageColor : _image.color;
+                c.a = active ? Mathf.Max(_revealedAlpha, c.a) : 0f;
+                _image.color = c;
+            }
+
+            _image.raycastTarget = active;
+        }
+    }
+
+    public void SetRevealedAlpha(float alpha) =>
+        _revealedAlpha = Mathf.Clamp01(alpha);
 
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (_window == null || _dragRoot == null)
             return;
 
+        IsDragging = true;
         _startSize = _window.sizeDelta;
         _startPosition = _window.anchoredPosition;
         _startPivot = _window.pivot;
@@ -80,6 +124,23 @@ public sealed class UIWindowResizeHandler : MonoBehaviour, IBeginDragHandler, ID
 
         _window.sizeDelta = newSize;
         _window.anchoredPosition = _startPosition + ComputePositionDelta(sizeChange, _edge, _startPivot);
+    }
+
+    public void OnEndDrag(PointerEventData eventData) => IsDragging = false;
+
+    void OnDisable() => IsDragging = false;
+
+    void CacheVisuals()
+    {
+        if (_canvasGroup == null)
+            _canvasGroup = GetComponent<CanvasGroup>();
+        if (_image == null)
+            _image = GetComponent<Image>();
+        if (_image != null && !_hasBaseImageColor)
+        {
+            _baseImageColor = _image.color;
+            _hasBaseImageColor = true;
+        }
     }
 
     static Vector2 ComputePositionDelta(Vector2 sizeChange, WindowResizeEdge edge, Vector2 pivot)

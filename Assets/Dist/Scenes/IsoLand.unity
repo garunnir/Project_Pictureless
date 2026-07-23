@@ -92654,10 +92654,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DistScript::UITimeDisplayController
   _panel: {fileID: 0}
-  _layerHost: {fileID: 689861368}
+  _layerHost: {fileID: 715630608}
   _panelPrefab: {fileID: 8005262074887871860, guid: 927a9c1ca5c02034abb14469b031a006,
     type: 3}
-  _uiCanvas: {fileID: 689861365}
+  _uiCanvas: {fileID: 715630606}
+  _enableDragHeader: 1
+  _enableResize: 1
 --- !u!213 &1926395435
 Sprite:
   m_ObjectHideFlags: 0

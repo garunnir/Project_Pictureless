@@ -11,6 +11,13 @@ public sealed class UITimeDisplayController : MonoBehaviour
     [SerializeField] UITimeDisplayPanel _panelPrefab;
     [SerializeField] Canvas _uiCanvas;
 
+    [Header("Window Chrome")]
+    [Tooltip("켜면 창 근처 시 Area_Header가 나타나고 드래그로 이동합니다.")]
+    [SerializeField] bool _enableDragHeader = true;
+
+    [Tooltip("켜면 가장자리 근접 시 리사이즈 핸들이 나타납니다.")]
+    [SerializeField] bool _enableResize = true;
+
     TimeViewModel _viewModel;
 
     void Awake()
@@ -25,7 +32,11 @@ public sealed class UITimeDisplayController : MonoBehaviour
         }
 
         if (_panel != null)
+        {
             _panel.BindViewModel(_viewModel);
+            EnsureReferences();
+            _panel.ConfigureWindowChrome(_uiCanvas, _enableDragHeader, _enableResize);
+        }
 
         _viewModel.Changed += OnChanged;
         Refresh();
