@@ -76,11 +76,10 @@ public sealed class SmallItemObject : MonoBehaviour
 
     void Awake()
     {
+        // 스폰 경로는 Configure/BindStack 후 활성화되므로 여기선 조용히 스킵.
+        // 씬 배치 누락은 Start에서만 경고한다.
         if (string.IsNullOrEmpty(_itemId))
-        {
-            Debug.LogWarning("[SmallItemObject] ItemId is not assigned.", this);
             return;
-        }
 
         if (_stack == null)
         {
@@ -88,6 +87,12 @@ public sealed class SmallItemObject : MonoBehaviour
             if (item != null)
                 Configure(item, _count);
         }
+    }
+
+    void Start()
+    {
+        if (string.IsNullOrEmpty(_itemId))
+            Debug.LogWarning("[SmallItemObject] ItemId is not assigned.", this);
     }
 
     void OnEnable()

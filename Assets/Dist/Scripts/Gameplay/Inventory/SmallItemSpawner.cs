@@ -21,10 +21,7 @@ public static class SmallItemSpawner
             return null;
 
         Quaternion spawnRotation = rotation ?? Quaternion.identity;
-        SmallItemObject instance = parent != null
-            ? Object.Instantiate(prefab, worldPosition, spawnRotation, parent)
-            : Object.Instantiate(prefab, worldPosition, spawnRotation);
-
+        SmallItemObject instance = InstantiateInactive(prefab, worldPosition, spawnRotation, parent);
         PrepareInstance(instance, definition, count, worldGrid);
         return instance;
     }
@@ -41,10 +38,7 @@ public static class SmallItemSpawner
             return null;
 
         Quaternion spawnRotation = rotation ?? Quaternion.identity;
-        SmallItemObject instance = parent != null
-            ? Object.Instantiate(prefab, worldPosition, spawnRotation, parent)
-            : Object.Instantiate(prefab, worldPosition, spawnRotation);
-
+        SmallItemObject instance = InstantiateInactive(prefab, worldPosition, spawnRotation, parent);
         PrepareInstance(instance, stack, worldGrid);
         return instance;
     }
@@ -60,10 +54,32 @@ public static class SmallItemSpawner
         if (prefab == null || definition == null || count < 1 || parent == null)
             return null;
 
-        SmallItemObject instance = Object.Instantiate(prefab, parent);
+        SmallItemObject instance = InstantiateInactive(prefab, Vector3.zero, Quaternion.identity, parent);
         instance.transform.localPosition = localPosition;
         instance.transform.localRotation = Quaternion.identity;
         PrepareInstance(instance, definition, count, worldGrid);
+        return instance;
+    }
+
+    // 활성 템플릿이면 잠시 비활성 후 Instantiate → Awake가 Configure 전에 돌지 않음.
+    static SmallItemObject InstantiateInactive(
+        SmallItemObject prefab,
+        Vector3 worldPosition,
+        Quaternion rotation,
+        Transform parent)
+    {
+        GameObject template = prefab.gameObject;
+        bool wasActive = template.activeSelf;
+        if (wasActive)
+            template.SetActive(false);
+
+        SmallItemObject instance = parent != null
+            ? Object.Instantiate(prefab, worldPosition, rotation, parent)
+            : Object.Instantiate(prefab, worldPosition, rotation);
+
+        if (wasActive)
+            template.SetActive(true);
+
         return instance;
     }
 
@@ -76,7 +92,6 @@ public static class SmallItemSpawner
         if (instance == null)
             return;
 
-        instance.gameObject.SetActive(false);
         instance.name = $"SmallItem_{definition.name}";
         instance.Configure(definition, count);
 
@@ -91,7 +106,6 @@ public static class SmallItemSpawner
         if (instance == null)
             return;
 
-        instance.gameObject.SetActive(false);
         instance.name = $"SmallItem_{stack.Item.name}";
         instance.BindStack(stack);
 

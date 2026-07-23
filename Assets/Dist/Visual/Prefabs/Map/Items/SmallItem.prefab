@@ -17,7 +17,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1001001001001001002
 Transform:
   m_ObjectHideFlags: 0
@@ -104,6 +104,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a4e1f9c2b8d4e6a9f0c1d2e3b4a5c6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::SmallItemObject
-  _definition: {fileID: 11400000, guid: c6e995c2e47a77f4a9dfb37b979af057, type: 2}
+  _itemId: 
   _count: 1
   _spriteRenderer: {fileID: 1001001001001001003}
