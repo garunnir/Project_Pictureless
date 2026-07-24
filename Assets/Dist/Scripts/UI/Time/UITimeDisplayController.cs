@@ -7,8 +7,6 @@ using UnityEngine;
 public sealed class UITimeDisplayController : MonoBehaviour
 {
     [SerializeField] UITimeDisplayPanel _panel;
-    [SerializeField] UICanvasLayerHost _layerHost;
-    [SerializeField] UITimeDisplayPanel _panelPrefab;
     [SerializeField] Canvas _uiCanvas;
 
     [Header("Window Chrome")]
@@ -22,7 +20,15 @@ public sealed class UITimeDisplayController : MonoBehaviour
 
     void Awake()
     {
-        EnsurePanel();
+        if (_panel == null)
+        {
+            Debug.LogError(
+                "[UITimeDisplayController] _panel is not assigned. " +
+                "Run Dist/Time/Setup Canvas In Open Scene to place HUD in the scene.",
+                this);
+            return;
+        }
+
         if (!TimeUIBridge.TryResolve(out _viewModel))
         {
             Debug.LogError(
@@ -31,12 +37,11 @@ public sealed class UITimeDisplayController : MonoBehaviour
             return;
         }
 
-        if (_panel != null)
-        {
-            _panel.BindViewModel(_viewModel);
-            EnsureReferences();
-            _panel.ConfigureWindowChrome(_uiCanvas, _enableDragHeader, _enableResize);
-        }
+        if (_uiCanvas == null)
+            _uiCanvas = FindAnyObjectByType<Canvas>();
+
+        _panel.BindViewModel(_viewModel);
+        _panel.ConfigureWindowChrome(_uiCanvas, _enableDragHeader, _enableResize);
 
         _viewModel.Changed += OnChanged;
         Refresh();
@@ -55,31 +60,4 @@ public sealed class UITimeDisplayController : MonoBehaviour
         if (_panel != null)
             _panel.Refresh();
     }
-
-    void EnsurePanel()
-    {
-        if (_panel != null)
-            return;
-
-        EnsureReferences();
-        if (_panelPrefab == null || _uiCanvas == null)
-            return;
-
-        Transform hudRoot = _layerHost != null
-            ? _layerHost.GetLayerRoot(UICanvasLayer.HUD)
-            : _uiCanvas.transform;
-
-        _panel = Instantiate(_panelPrefab, hudRoot);
-        _panel.name = "Grp_TimeDisplay";
-    }
-
-    void EnsureReferences()
-    {
-        if (_uiCanvas == null)
-            _uiCanvas = FindAnyObjectByType<Canvas>();
-        if (_layerHost == null && _uiCanvas != null)
-            _layerHost = _uiCanvas.GetComponent<UICanvasLayerHost>();
-    }
-
-    public void SetPanelPrefab(UITimeDisplayPanel prefab) => _panelPrefab = prefab;
 }

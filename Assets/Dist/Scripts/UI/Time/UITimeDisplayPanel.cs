@@ -47,6 +47,8 @@ public sealed class UITimeDisplayPanel : MonoBehaviour
             Debug.LogError("[UITimeDisplayPanel] Resize handlers not assigned.", this);
 
         _dragHandler?.Initialize(window, rootCanvas);
+        _dragHandler?.SetProximityPadding(TimeUIFactory.ResizeProximityPadding);
+        _dragHandler?.SetProximityRevealEnabled(enableDragHeader);
 
         if (_resizeHandlers != null)
         {
@@ -70,8 +72,7 @@ public sealed class UITimeDisplayPanel : MonoBehaviour
                 window,
                 rootCanvas,
                 TimeUIFactory.ResizeProximityPadding);
-            _resizeProximity.SetProximityEnabled(enableDragHeader || enableResize);
-            _resizeProximity.SetHeaderProximityActive(enableDragHeader);
+            _resizeProximity.SetProximityEnabled(enableResize);
             _resizeProximity.SetResizeHandlesActive(enableResize);
         }
         else if (_resizeHandlers != null && !enableResize)

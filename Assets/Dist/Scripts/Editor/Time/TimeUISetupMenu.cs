@@ -91,19 +91,67 @@ static class TimeUISetupMenu
             return;
         }
 
+        UITimeDisplayPanel panel = EnsureHudPrefabInstance(
+            layerHost,
+            prefab,
+            "Grp_TimeDisplay");
+        if (panel == null)
+            return;
+
         SerializedObject controllerSo = new(controller);
-        controllerSo.FindProperty("_panelPrefab").objectReferenceValue = prefab;
+        controllerSo.FindProperty("_panel").objectReferenceValue = panel;
         controllerSo.FindProperty("_uiCanvas").objectReferenceValue = canvas;
-        controllerSo.FindProperty("_layerHost").objectReferenceValue = layerHost;
-        controllerSo.FindProperty("_panel").objectReferenceValue = null;
         controllerSo.ApplyModifiedPropertiesWithoutUndo();
 
         EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
         Debug.Log(
-            "[TimeUISetupMenu] TimeScaleService + WorldClock + Time HUD wired.",
-            controller);
+            "[TimeUISetupMenu] TimeScaleService + WorldClock + Time HUD scene instance wired.",
+            panel);
         _ = scaleService;
         _ = bridge;
+    }
+
+    static T EnsureHudPrefabInstance<T>(
+        UICanvasLayerHost layerHost,
+        T prefab,
+        string instanceName) where T : Component
+    {
+        Transform hud = layerHost.GetLayerRoot(UICanvasLayer.HUD);
+        Transform existing = hud.Find(instanceName);
+        if (existing != null)
+        {
+            T panel = existing.GetComponent<T>();
+            if (panel != null)
+                return panel;
+
+            Debug.LogError(
+                $"[TimeUISetupMenu] '{instanceName}' under HUD lacks {typeof(T).Name}.",
+                existing);
+            return null;
+        }
+
+        T underHud = hud.GetComponentInChildren<T>(true);
+        if (underHud != null)
+        {
+            underHud.gameObject.name = instanceName;
+            return underHud;
+        }
+
+        GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab.gameObject, hud);
+        if (instance == null)
+        {
+            Debug.LogError(
+                $"[TimeUISetupMenu] PrefabUtility.InstantiatePrefab failed for {instanceName}.",
+                prefab);
+            return null;
+        }
+
+        Undo.RegisterCreatedObjectUndo(instance, $"Place {instanceName}");
+        instance.name = instanceName;
+        Debug.Log(
+            $"[TimeUISetupMenu] Placed HUD instance '{instanceName}' under {hud.name}.",
+            instance);
+        return instance.GetComponent<T>();
     }
 
     [MenuItem("Dist/Time/Verify Clock Advance (Play Mode)")]

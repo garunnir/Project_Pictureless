@@ -445,10 +445,9 @@ static class PlayerStatusUISetupMenu
         so.FindProperty("_launcher").objectReferenceValue = launcher;
 
         UIPlayerStatusSummaryController summaryController =
-            EnsureSummaryController(systemRoot, canvas, layerHost);
+            EnsureSummaryController(systemRoot);
         so.ApplyModifiedPropertiesWithoutUndo();
 
-        SerializedObject summarySo = new(summaryController);
         UIPlayerStatusSummaryPanel summaryPrefab =
             AssetDatabase.LoadAssetAtPath<UIPlayerStatusSummaryPanel>(SummaryPrefabPath);
         if (summaryPrefab == null)
@@ -459,15 +458,27 @@ static class PlayerStatusUISetupMenu
             return;
         }
 
-        summarySo.FindProperty("_panelPrefab").objectReferenceValue = summaryPrefab;
-        summarySo.FindProperty("_uiCanvas").objectReferenceValue = canvas;
-        summarySo.FindProperty("_layerHost").objectReferenceValue = layerHost;
-        summarySo.FindProperty("_panel").objectReferenceValue = null;
+        UIPlayerStatusSummaryPanel summaryPanel = EnsureHudPrefabInstance(
+            layerHost,
+            summaryPrefab,
+            "Grp_PlayerStatusSummary");
+        if (summaryPanel == null)
+            return;
+
+        // Prefab root starts inactive (empty mood strip); enable for Edit Mode layout.
+        if (!summaryPanel.gameObject.activeSelf)
+            Undo.RecordObject(summaryPanel.gameObject, "Activate summary HUD");
+        summaryPanel.gameObject.SetActive(true);
+
+        SerializedObject summarySo = new(summaryController);
+        summarySo.FindProperty("_panel").objectReferenceValue = summaryPanel;
         summarySo.ApplyModifiedPropertiesWithoutUndo();
 
         MergeLocalizationKeys();
         EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
-        Debug.Log("[PlayerStatusUISetupMenu] Controller + summary HUD wired.", controller);
+        Debug.Log(
+            "[PlayerStatusUISetupMenu] Controller + summary HUD scene instance wired.",
+            summaryPanel);
     }
 
     static PlayerStatusUIBridge EnsureBridge(Canvas canvas)
@@ -478,10 +489,7 @@ static class PlayerStatusUISetupMenu
         return bridge;
     }
 
-    static UIPlayerStatusSummaryController EnsureSummaryController(
-        Transform systemRoot,
-        Canvas canvas,
-        UICanvasLayerHost layerHost)
+    static UIPlayerStatusSummaryController EnsureSummaryController(Transform systemRoot)
     {
         UIPlayerStatusSummaryController controller =
             Object.FindAnyObjectByType<UIPlayerStatusSummaryController>();
@@ -501,6 +509,49 @@ static class PlayerStatusUISetupMenu
         }
 
         return controller;
+    }
+
+    static T EnsureHudPrefabInstance<T>(
+        UICanvasLayerHost layerHost,
+        T prefab,
+        string instanceName) where T : Component
+    {
+        Transform hud = layerHost.GetLayerRoot(UICanvasLayer.HUD);
+        Transform existing = hud.Find(instanceName);
+        if (existing != null)
+        {
+            T panel = existing.GetComponent<T>();
+            if (panel != null)
+                return panel;
+
+            Debug.LogError(
+                $"[PlayerStatusUISetupMenu] '{instanceName}' under HUD lacks {typeof(T).Name}.",
+                existing);
+            return null;
+        }
+
+        T underHud = hud.GetComponentInChildren<T>(true);
+        if (underHud != null)
+        {
+            underHud.gameObject.name = instanceName;
+            return underHud;
+        }
+
+        GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab.gameObject, hud);
+        if (instance == null)
+        {
+            Debug.LogError(
+                $"[PlayerStatusUISetupMenu] PrefabUtility.InstantiatePrefab failed for {instanceName}.",
+                prefab);
+            return null;
+        }
+
+        Undo.RegisterCreatedObjectUndo(instance, $"Place {instanceName}");
+        instance.name = instanceName;
+        Debug.Log(
+            $"[PlayerStatusUISetupMenu] Placed HUD instance '{instanceName}' under {hud.name}.",
+            instance);
+        return instance.GetComponent<T>();
     }
 
     // Legacy vitals/body-effect icons (MoodIconId 0–7) — keep order stable for serialization.

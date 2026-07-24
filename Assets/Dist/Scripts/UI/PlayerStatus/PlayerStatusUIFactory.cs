@@ -110,7 +110,8 @@ public static class PlayerStatusUIFactory
 
         GameObject header = CreateRect("Header", content, new Color(0.16f, 0.16f, 0.16f, 1f));
         header.AddComponent<LayoutElement>().preferredHeight = HeaderHeight;
-        header.AddComponent<UIWindowDragHandler>();
+        UIWindowDragHandler dragHandler = header.AddComponent<UIWindowDragHandler>();
+        dragHandler.Initialize(root.GetComponent<RectTransform>(), null);
         TMP_Text title = CreateTmp("Title", header.transform, FontSizeHeader, TextAlignmentOptions.MidlineLeft);
         Stretch(title.rectTransform, 8f, 8f, 4f, 4f);
 
@@ -139,7 +140,7 @@ public static class PlayerStatusUIFactory
             debugBtn,
             debugLabel,
             detail,
-            header.GetComponent<UIWindowDragHandler>(),
+            dragHandler,
             resizeHandlers);
 
         detail.Hide();

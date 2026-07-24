@@ -53,7 +53,10 @@ public static class TimeUIFactory
         headerGo.GetComponent<Image>().raycastTarget = false;
 
         UIWindowDragHandler dragHandler = headerGo.AddComponent<UIWindowDragHandler>();
+        dragHandler.Initialize(rootRect, null);
         dragHandler.SetRevealedAlpha(UIWindowDragHandler.DefaultRevealedAlpha);
+        dragHandler.SetProximityPadding(ResizeProximityPadding);
+        dragHandler.SetProximityRevealEnabled(true);
 
         TMP_Text timeText = CreateTmp(
             "Txt_Time",

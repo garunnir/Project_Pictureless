@@ -1,5 +1,5 @@
 // ============================================================
-// UIWindowResizeProximity — 창 가장자리/헤더 근접 시 크롬 표시 (공용, 옵트인)
+// UIWindowResizeProximity — 창 가장자리 근접 시 리사이즈 핸들 표시 (공용, 옵트인)
 // ============================================================
 
 using UnityEngine;
@@ -7,28 +7,29 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// 창 루트에 1개. 기본 비활성(옵트인).
-/// 켜면 직렬화된 리사이즈 핸들·드래그 헤더를 포인터 근접 시에만 가시·히트한다.
-/// Inventory/Status는 미부착 시 기존 UX 유지.
+/// 리사이즈 핸들 근접 리빌만 담당. 헤더 나타남/사라짐은 UIWindowDragHandler 자체 옵션.
+/// 선택적으로 DragHeader를 받아: 헤더 드래그 중 핸들 숨김, 리사이즈 중 헤더 억제.
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class UIWindowResizeProximity : MonoBehaviour
 {
-    public const float DefaultProximityPadding = 12f;
+    public const float DefaultProximityPadding = UIWindowDragHandler.DefaultProximityPadding;
 
     [Header("Proximity Reveal (opt-in)")]
     [Tooltip("false = 핸들 상시 히트(Inventory/Status). true = 근접 시에만 표시.")]
     [SerializeField] bool _enabled;
 
-    [Tooltip("창 Rect 가장자리·헤더 판정 거리(로컬 px).")]
+    [Tooltip("창 Rect 가장자리 판정 거리(로컬 px).")]
     [SerializeField] float _proximityPadding = DefaultProximityPadding;
 
+    [Tooltip("선택. 헤더 드래그 중 리사이즈 핸들 숨김 / 리사이즈 중 헤더 억제용.")]
     [SerializeField] UIWindowDragHandler _dragHeader;
+
     [SerializeField] UIWindowResizeHandler[] _handlers;
 
     RectTransform _window;
     Canvas _canvas;
     bool _initialized;
-    bool _headerProximityActive = true;
     bool _resizeHandlesActive = true;
 
     public bool IsProximityEnabled => _enabled;
@@ -40,10 +41,6 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
         _proximityPadding = Mathf.Max(0f, proximityPadding);
         _initialized = true;
 
-        if (_dragHeader == null)
-            Debug.LogError(
-                "[UIWindowResizeProximity] Drag header not assigned.",
-                this);
         if (_handlers == null || _handlers.Length == 0)
             Debug.LogError(
                 "[UIWindowResizeProximity] Resize handlers not assigned.",
@@ -52,7 +49,8 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
         if (!_enabled)
             return;
 
-        HideChrome();
+        HideResizeHandlesOnly();
+        SyncHeaderSuppress(false);
     }
 
     public void SetDragHeader(UIWindowDragHandler dragHeader) =>
@@ -70,20 +68,16 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
             return;
 
         if (!_enabled)
+        {
+            SyncHeaderSuppress(false);
             return;
+        }
 
-        HideChrome();
+        HideResizeHandlesOnly();
+        SyncHeaderSuppress(false);
     }
 
-    /// <summary>드래그 헤더 근접 표시 ON/OFF. false면 헤더 숨김(드래그 불가).</summary>
-    public void SetHeaderProximityActive(bool active)
-    {
-        _headerProximityActive = active;
-        if (!active)
-            SetHeaderVisible(false);
-    }
-
-    /// <summary>리사이즈 핸들만 ON/OFF. false여도 드래그 헤더 근접 표시는 유지.</summary>
+    /// <summary>리사이즈 핸들만 ON/OFF.</summary>
     public void SetResizeHandlesActive(bool active)
     {
         _resizeHandlesActive = active;
@@ -91,23 +85,24 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
             HideResizeHandlesOnly();
     }
 
+    void OnDisable() => SyncHeaderSuppress(false);
+
     void LateUpdate()
     {
         if (!_enabled || !_initialized || _window == null)
             return;
 
-        if (_headerProximityActive && _dragHeader != null && _dragHeader.IsDragging)
+        if (_dragHeader != null && _dragHeader.IsDragging)
         {
-            SetHeaderVisible(true);
-            if (_resizeHandlesActive)
-                HideResizeHandlesOnly();
+            HideResizeHandlesOnly();
+            SyncHeaderSuppress(false);
             return;
         }
 
         UIWindowResizeHandler dragging = FindDragging();
         if (dragging != null)
         {
-            SetHeaderVisible(false);
+            SyncHeaderSuppress(true);
             if (_resizeHandlesActive)
                 ApplyResizeReveal(dragging.Edge);
             else
@@ -115,20 +110,7 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
             return;
         }
 
-        if (!TryGetPointerLocal(out Vector2 local))
-        {
-            HideChrome();
-            return;
-        }
-
-        bool nearWindow = IsNearOrInsideWindow(local);
-        bool nearEdge = TryResolveNearEdge(local, out WindowResizeEdge edge);
-        bool nearTop = IsNearTop(local);
-
-        if (_headerProximityActive)
-            SetHeaderVisible(nearWindow || nearTop);
-        else
-            SetHeaderVisible(false);
+        SyncHeaderSuppress(false);
 
         if (!_resizeHandlesActive)
         {
@@ -136,10 +118,22 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
             return;
         }
 
-        if (nearEdge)
+        if (!TryGetPointerLocal(out Vector2 local))
+        {
+            HideResizeHandlesOnly();
+            return;
+        }
+
+        if (TryResolveNearEdge(local, out WindowResizeEdge edge))
             ApplyResizeReveal(edge);
         else
             HideResizeHandlesOnly();
+    }
+
+    void SyncHeaderSuppress(bool suppressed)
+    {
+        if (_dragHeader != null)
+            _dragHeader.SetProximitySuppressed(suppressed);
     }
 
     UIWindowResizeHandler FindDragging()
@@ -169,18 +163,6 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
                 continue;
             h.SetVisualActive(h.Edge == edge);
         }
-    }
-
-    void SetHeaderVisible(bool visible)
-    {
-        if (_dragHeader != null)
-            _dragHeader.SetVisualActive(visible);
-    }
-
-    void HideChrome()
-    {
-        SetHeaderVisible(false);
-        HideResizeHandlesOnly();
     }
 
     void HideResizeHandlesOnly()
@@ -215,15 +197,6 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
                local.x <= r.xMax + pad &&
                local.y >= r.yMin - pad &&
                local.y <= r.yMax + pad;
-    }
-
-    bool IsNearTop(Vector2 local)
-    {
-        Rect r = _window.rect;
-        float pad = _proximityPadding;
-        if (!IsNearOrInsideWindow(local))
-            return false;
-        return Mathf.Abs(local.y - r.yMax) <= pad;
     }
 
     bool TryResolveNearEdge(Vector2 local, out WindowResizeEdge edge)

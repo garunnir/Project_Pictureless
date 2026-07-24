@@ -713,6 +713,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23726a11818c96541bb3df31f54ff861, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::UIWindowDragHandler
+  _window: {fileID: 7418530968314198246}
+  _canvas: {fileID: 0}
+  _proximityReveal: 0
+  _proximityPadding: 12
 --- !u!1 &5610776231620736787
 GameObject:
   m_ObjectHideFlags: 0
@@ -1038,7 +1042,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2

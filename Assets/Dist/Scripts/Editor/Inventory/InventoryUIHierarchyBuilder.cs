@@ -419,7 +419,8 @@ static class InventoryUIHierarchyBuilder
         headerRect.pivot = new Vector2(0.5f, 1f);
         headerRect.anchoredPosition = Vector2.zero;
         headerRect.sizeDelta = new Vector2(0f, spec.HeaderHeight);
-        headerArea.AddComponent<UIWindowDragHandler>();
+        UIWindowDragHandler dragHandler = headerArea.AddComponent<UIWindowDragHandler>();
+        dragHandler.Initialize(rootRect, null);
 
         var headerTitle = CreateTmp("Txt_Title", headerArea.transform, 0f, spec.HeaderFontSize);
         headerTitle.text = InventoryWindowLabels.PrimaryTitle;
@@ -538,7 +539,7 @@ static class InventoryUIHierarchyBuilder
         SetReference(window, "_sidebar", sidebar);
         SetReference(window, "_listArea", listRect);
         SetReference(window, "_sidebarArea", sidebarRect);
-        SetReference(window, "_windowDragHandler", headerArea.GetComponent<UIWindowDragHandler>());
+        SetReference(window, "_windowDragHandler", dragHandler);
         SetObjectReferenceArray(window, "_resizeHandlers", resizeHandlers);
         SetReference(window, "_headerTitle", headerTitle);
         return window;
@@ -575,7 +576,10 @@ static class InventoryUIHierarchyBuilder
 
         UIWindowDragHandler drag = windowRoot.GetComponentInChildren<UIWindowDragHandler>(true);
         if (drag != null)
+        {
             SetReference(window, "_windowDragHandler", drag);
+            SetReference(drag, "_window", windowRoot.transform as RectTransform);
+        }
     }
 
     /// <summary>
