@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerStatusViewModel — Body/Vitals/Stats 참조 + 요약 무드 파생 상태
+// PlayerStatusViewModel ??Body/Vitals/Stats 참조 + ?�약 무드 ?�생 ?�태
 // ============================================================
 
 using System;
@@ -8,7 +8,7 @@ using Garunnir.Runtime.Gameplay.Data;
 
 public sealed class PlayerStatusViewModel
 {
-    IPlayerBody _body;
+    ICharacterBody _body;
     IPlayerVitals _vitals;
     IPlayerStats _stats;
 
@@ -17,7 +17,7 @@ public sealed class PlayerStatusViewModel
     public event Action Changed;
     public event Action MoodChanged;
 
-    public IPlayerBody Body => _body;
+    public ICharacterBody Body => _body;
     public IPlayerVitals Vitals => _vitals;
     public IPlayerStats Stats => _stats;
     public IReadOnlyList<MoodEntry> MoodEntries => _moodEntries;
@@ -25,7 +25,7 @@ public sealed class PlayerStatusViewModel
     public bool CanShowNumericVitals =>
         PlayerStatusVitalDisplay.CanShowNumericVitals(_stats);
 
-    public void Bind(IPlayerBody body, IPlayerVitals vitals, IPlayerStats stats)
+    public void Bind(ICharacterBody body, IPlayerVitals vitals, IPlayerStats stats)
     {
         Unbind();
         _body = body;

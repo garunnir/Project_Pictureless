@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerStatusMoodEntries — 상태 요약 HUD 표시 대상 수집
+// PlayerStatusMoodEntries ???�태 ?�약 HUD ?�시 ?�???�집
 // ============================================================
 
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ namespace Garunnir.Runtime.Gameplay.Data
 {
     public static class PlayerStatusMoodEntries
     {
-        public static void Collect(IPlayerBody body, IPlayerVitals vitals, List<MoodEntry> into)
+        public static void Collect(ICharacterBody body, IPlayerVitals vitals, List<MoodEntry> into)
         {
             if (into == null)
                 return;
@@ -50,7 +50,7 @@ namespace Garunnir.Runtime.Gameplay.Data
             }
         }
 
-        static void CollectBodyEffects(IPlayerBody body, List<MoodEntry> into)
+        static void CollectBodyEffects(ICharacterBody body, List<MoodEntry> into)
         {
             var bestIntensity = new Dictionary<MoodIconId, float>();
             var polarities = new Dictionary<MoodIconId, MoodPolarity>();

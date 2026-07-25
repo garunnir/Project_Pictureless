@@ -24,7 +24,7 @@ static class PlayerStatusUISetupMenu
     [MenuItem("Dist/PlayerStatus/Verify Ownership Cascade (Edit Mode)")]
     static void VerifyOwnershipCascade()
     {
-        var body = PlayerBody.CreateHumanDefault(8);
+        var body = CharacterBody.CreateHumanDefault(8);
         bool hadHand = body.Has(BodyPartIds.HandL);
         bool hadFinger = body.Has(BodyPartIds.FingerIndexL);
         var effects = new System.Collections.Generic.List<BodyPartEffect>();
@@ -237,7 +237,7 @@ static class PlayerStatusUISetupMenu
     static void VerifyMoodEntries()
     {
         var vitals = new DefaultPlayerVitals();
-        var cleanBody = PlayerBody.CreateHumanDefault(8, prototypeSeed: false);
+        var cleanBody = CharacterBody.CreateHumanDefault(8, prototypeSeed: false);
 
         var normal = new System.Collections.Generic.List<MoodEntry>();
         PlayerStatusMoodEntries.Collect(cleanBody, vitals, normal);
@@ -258,7 +258,7 @@ static class PlayerStatusUISetupMenu
             e.IconId == MoodIconId.Hunger &&
             Mathf.Approximately(e.Intensity, PlayerStatusMoodVisuals.VitalCriticalIntensity));
 
-        var seededBody = PlayerBody.CreateHumanDefault(8);
+        var seededBody = CharacterBody.CreateHumanDefault(8);
         var seeded = new System.Collections.Generic.List<MoodEntry>();
         PlayerStatusMoodEntries.Collect(seededBody, vitals, seeded);
         bool hasBleed = seeded.Exists(e => e.IconId == MoodIconId.Bleed);

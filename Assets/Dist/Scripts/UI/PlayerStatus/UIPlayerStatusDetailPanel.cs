@@ -1,5 +1,5 @@
 // ============================================================
-// UIPlayerStatusDetailPanel — 메인 부위 호버 시 세부 anatomy·효과 보조 설명
+// UIPlayerStatusDetailPanel ??메인 부???�버 ???��? anatomy·?�과 보조 ?�명
 // ============================================================
 
 using System.Collections.Generic;
@@ -20,7 +20,7 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    public void ShowForPart(IPlayerBody body, string mainPartId)
+    public void ShowForPart(ICharacterBody body, string mainPartId)
     {
         if (body == null || string.IsNullOrEmpty(mainPartId))
         {

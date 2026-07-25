@@ -11,6 +11,7 @@ public sealed class NpcMovement : MonoBehaviour, ICharacterLocomotion
 {
     [Header("Movement")]
     [SerializeField, Min(0f)] float _moveSpeed = 3f;
+    [SerializeField] MovementStyle _activeStyle;
 
     [Header("Collision")]
     [SerializeField, Min(0f)] float _climbAllowance =
@@ -46,6 +47,10 @@ public sealed class NpcMovement : MonoBehaviour, ICharacterLocomotion
 
     public bool IsStuck => _locomotion != null && _locomotion.IsStuck;
     public float CurrentSpeed => _mover != null ? _mover.CurrentSpeed : 0f;
+    public MovementStyle ActiveStyle => _activeStyle;
+
+    float EffectiveMoveSpeed =>
+        _activeStyle != null ? _activeStyle.MoveSpeed : _moveSpeed;
 
     void Awake()
     {
@@ -83,7 +88,7 @@ public sealed class NpcMovement : MonoBehaviour, ICharacterLocomotion
     void FixedUpdate()
     {
         float deltaTime = TimeScaleService.FixedDelta(TimeScaleChannel.World);
-        Vector3 desiredMove = _mover.CalcConstantSpeedMove(_moveSpeed, deltaTime);
+        Vector3 desiredMove = _mover.CalcConstantSpeedMove(EffectiveMoveSpeed, deltaTime);
 
         if (_hasTravelLimit &&
             desiredMove.sqrMagnitude >
@@ -120,6 +125,13 @@ public sealed class NpcMovement : MonoBehaviour, ICharacterLocomotion
 
     public void SetSpeed(float metersPerSecond) =>
         _moveSpeed = Mathf.Max(0f, metersPerSecond);
+
+    public void SetActiveMovementStyle(MovementStyle style)
+    {
+        _activeStyle = style;
+        if (style != null)
+            _moveSpeed = Mathf.Max(0f, style.MoveSpeed);
+    }
 
     public void SetTravelLimit(float maxDistance)
     {

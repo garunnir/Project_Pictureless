@@ -1,38 +1,128 @@
 // ============================================================
-// CharacterSkillsHost — 캐릭터(플레이어·NPC) 숙련 인스턴스 보유 컴포넌트
+// CharacterSkillsHost ? ???? ??�Defeat ?? (BodyHost? ??)
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
 [DisallowMultipleComponent]
+[RequireComponent(typeof(CharacterBodyHost))]
 public sealed class CharacterSkillsHost : MonoBehaviour
 {
-    DefaultCharacterSkills _skills;
+    [SerializeField] bool _useGameplayDataSkills;
+
+    CharacterBodyHost _bodyHost;
+    DefaultCharacterSkills _ownedSkills;
+    ICharacterSkills _skills;
+    BodySkillModifierAggregator _bodyAggregator;
+    DefaultCharacterDefeat _ownedDefeat;
     ICharacterDefeat _defeat;
 
-    /// <summary>지연 생성. 카탈로그(skills.json) 시드, 없으면 코드 기본값.</summary>
     public ICharacterSkills Skills
     {
         get
         {
-            if (_skills == null)
-                _skills = SkillCatalog.CreateSeededSkills();
+            EnsureSkills();
             return _skills;
         }
     }
 
-    /// <summary>
-    /// 최종 사망/패배 판정. NPC 바디 모델 부재로 현재는 스탯 붕괴만 입력된다
-    /// (바디 연결 시 생성자 인자에 IPlayerBody 추가).
-    /// </summary>
     public ICharacterDefeat Defeat
     {
         get
         {
-            if (_defeat == null)
-                _defeat = new DefaultCharacterDefeat(null, Skills);
+            EnsureDefeat();
             return _defeat;
         }
+    }
+
+    void Awake()
+    {
+        _bodyHost = GetComponent<CharacterBodyHost>();
+        EnsureSkills();
+        BindBodyToSkills();
+        EnsureDefeat();
+    }
+
+    void OnEnable()
+    {
+        ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
+        if (body != null)
+            body.Changed += OnBodyChanged;
+    }
+
+    void OnDisable()
+    {
+        ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
+        if (body != null)
+            body.Changed -= OnBodyChanged;
+    }
+
+    void OnDestroy()
+    {
+        if (_bodyAggregator != null && _skills != null)
+            _skills.RemoveModifierSource(_bodyAggregator);
+        _ownedDefeat?.Dispose();
+    }
+
+    void EnsureSkills()
+    {
+        if (_skills != null)
+            return;
+
+        if (_useGameplayDataSkills)
+        {
+            _skills = GameplayData.CharacterSkills;
+            return;
+        }
+
+        _ownedSkills = SkillCatalog.CreateSeededSkills();
+        _skills = _ownedSkills;
+    }
+
+    void BindBodyToSkills()
+    {
+        if (_skills == null || _bodyHost == null)
+            return;
+
+        ICharacterBody body = _bodyHost.Body;
+        if (body == null)
+            return;
+
+        if (_bodyAggregator != null)
+        {
+            _skills.RemoveModifierSource(_bodyAggregator);
+            _bodyAggregator = null;
+        }
+
+        _bodyAggregator = new BodySkillModifierAggregator(body);
+        _skills.AddModifierSource(_bodyAggregator);
+        _skills.Refresh();
+
+        if (_useGameplayDataSkills &&
+            GameplayData.Stats is DefaultPlayerStats dps)
+        {
+            dps.BindBody(body);
+        }
+    }
+
+    void EnsureDefeat()
+    {
+        if (_defeat != null)
+            return;
+
+        if (_useGameplayDataSkills)
+        {
+            _defeat = GameplayData.Defeat;
+            return;
+        }
+
+        _ownedDefeat = new DefaultCharacterDefeat(_bodyHost != null ? _bodyHost.Body : null, Skills);
+        _defeat = _ownedDefeat;
+    }
+
+    void OnBodyChanged()
+    {
+        _skills?.Refresh();
     }
 }

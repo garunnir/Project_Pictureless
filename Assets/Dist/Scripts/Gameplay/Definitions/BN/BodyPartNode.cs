@@ -76,5 +76,36 @@ namespace Garunnir.Runtime.Gameplay.Data
         }
 
         public void ClearEffects() => _effects.Clear();
+
+        /// <summary>유한 효과 초를 줄이고 만료를 제거. 변경 시 true.</summary>
+        public bool TickEffectDurations(float deltaSeconds)
+        {
+            if (deltaSeconds <= 0f || _effects.Count == 0)
+                return false;
+
+            bool changed = false;
+            for (int i = _effects.Count - 1; i >= 0; i--)
+            {
+                BodyPartEffect effect = _effects[i];
+                if (effect.IsPermanent)
+                    continue;
+
+                float remaining = effect.RemainingSeconds - deltaSeconds;
+                if (remaining <= 0f)
+                {
+                    _effects.RemoveAt(i);
+                    changed = true;
+                    continue;
+                }
+
+                _effects[i] = new BodyPartEffect(
+                    effect.EffectId,
+                    effect.Intensity,
+                    remaining);
+                changed = true;
+            }
+
+            return changed;
+        }
     }
 }

@@ -17,6 +17,11 @@ public class InputManager : SceneSingleton<InputManager>
 
     InputActions _actions;
     InputAction _statusToggle;
+    InputAction _combatCycle;
+    InputAction _combatAttack;
+    InputAction _combatSelectSwing;
+    InputAction _combatSelectStab;
+    InputAction _combatSelectTrigger;
 
     public bool IsUiMenuInputActive => _uiMenuInputOwners.Count > 0;
     public bool IsDebugInputActive => _debugInputOwners.Count > 0;
@@ -42,6 +47,11 @@ public class InputManager : SceneSingleton<InputManager>
     public event Action<InputAction.CallbackContext> PlayerInteractPerformed;
     public event Action<InputAction.CallbackContext> PlayerInventoryTogglePerformed;
     public event Action<InputAction.CallbackContext> PlayerStatusTogglePerformed;
+    public event Action<InputAction.CallbackContext> PlayerCombatCyclePerformed;
+    public event Action<InputAction.CallbackContext> PlayerCombatAttackPerformed;
+    public event Action<InputAction.CallbackContext> PlayerCombatSelectSwingPerformed;
+    public event Action<InputAction.CallbackContext> PlayerCombatSelectStabPerformed;
+    public event Action<InputAction.CallbackContext> PlayerCombatSelectTriggerPerformed;
 
     public event Action<InputAction.CallbackContext> UiNavigateStarted;
     public event Action<InputAction.CallbackContext> UiNavigateCanceled;
@@ -54,11 +64,22 @@ public class InputManager : SceneSingleton<InputManager>
         click = IsClike;
         _actions = new InputActions();
         WireActionCallbacks();
-        // StatusToggle is in InputActions.inputactions; until codegen refresh, bind C here.
+        // StatusToggle / Combat — inputactions codegen 갱신 전 런타임 바인드.
         _statusToggle = new InputAction("StatusToggle", InputActionType.Button, "<Keyboard>/c");
         _statusToggle.performed += ForwardPlayerStatusTogglePerformed;
+        _combatCycle = new InputAction("CombatCycle", InputActionType.Button, "<Keyboard>/q");
+        _combatCycle.performed += ForwardPlayerCombatCyclePerformed;
+        // 조준(RMB Hold) 중 LMB 시전. Interact는 E라 충돌 없음.
+        _combatAttack = new InputAction("CombatAttack", InputActionType.Button, "<Mouse>/leftButton");
+        _combatAttack.performed += ForwardPlayerCombatAttackPerformed;
+        _combatSelectSwing = new InputAction("CombatSelectSwing", InputActionType.Button, "<Keyboard>/1");
+        _combatSelectSwing.performed += ForwardPlayerCombatSelectSwingPerformed;
+        _combatSelectStab = new InputAction("CombatSelectStab", InputActionType.Button, "<Keyboard>/2");
+        _combatSelectStab.performed += ForwardPlayerCombatSelectStabPerformed;
+        _combatSelectTrigger = new InputAction("CombatSelectTrigger", InputActionType.Button, "<Keyboard>/3");
+        _combatSelectTrigger.performed += ForwardPlayerCombatSelectTriggerPerformed;
         _actions.Player.Enable();
-        _statusToggle.Enable();
+        EnableCombatRuntimeActions();
         _actions.Debug.Disable();
     }
 
@@ -313,6 +334,50 @@ public class InputManager : SceneSingleton<InputManager>
         PlayerStatusTogglePerformed?.Invoke(ctx);
     }
 
+    void ForwardPlayerCombatCyclePerformed(InputAction.CallbackContext ctx)
+    {
+        if (IsGameplayBlocked)
+            return;
+
+        PlayerCombatCyclePerformed?.Invoke(ctx);
+    }
+
+    void ForwardPlayerCombatAttackPerformed(InputAction.CallbackContext ctx)
+    {
+        if (IsGameplayBlocked)
+            return;
+
+        // 조준이 막힌 상태(인벤 창 위 등)에서는 클릭 시전 금지.
+        if (!IsPlayerActionEnabled(PlayerAction.Aim))
+            return;
+
+        PlayerCombatAttackPerformed?.Invoke(ctx);
+    }
+
+    void ForwardPlayerCombatSelectSwingPerformed(InputAction.CallbackContext ctx)
+    {
+        if (IsGameplayBlocked)
+            return;
+
+        PlayerCombatSelectSwingPerformed?.Invoke(ctx);
+    }
+
+    void ForwardPlayerCombatSelectStabPerformed(InputAction.CallbackContext ctx)
+    {
+        if (IsGameplayBlocked)
+            return;
+
+        PlayerCombatSelectStabPerformed?.Invoke(ctx);
+    }
+
+    void ForwardPlayerCombatSelectTriggerPerformed(InputAction.CallbackContext ctx)
+    {
+        if (IsGameplayBlocked)
+            return;
+
+        PlayerCombatSelectTriggerPerformed?.Invoke(ctx);
+    }
+
     void ForwardUiNavigateStarted(InputAction.CallbackContext ctx)
     {
         if (!IsUiMenuInputActive)
@@ -374,14 +439,14 @@ public class InputManager : SceneSingleton<InputManager>
         if (gameplayBlocked)
         {
             _actions.Player.Disable();
-            _statusToggle?.Disable();
+            DisableCombatRuntimeActions();
             _actions.UI.Enable();
         }
         else
         {
             _actions.UI.Disable();
             _actions.Player.Enable();
-            _statusToggle?.Enable();
+            EnableCombatRuntimeActions();
         }
 
         if (debugMap)
@@ -390,20 +455,52 @@ public class InputManager : SceneSingleton<InputManager>
             _actions.Debug.Disable();
     }
 
+    void EnableCombatRuntimeActions()
+    {
+        _statusToggle?.Enable();
+        _combatCycle?.Enable();
+        _combatAttack?.Enable();
+        _combatSelectSwing?.Enable();
+        _combatSelectStab?.Enable();
+        _combatSelectTrigger?.Enable();
+    }
+
+    void DisableCombatRuntimeActions()
+    {
+        _statusToggle?.Disable();
+        _combatCycle?.Disable();
+        _combatAttack?.Disable();
+        _combatSelectSwing?.Disable();
+        _combatSelectStab?.Disable();
+        _combatSelectTrigger?.Disable();
+    }
+
     protected override void OnDestroy()
     {
         UnwireActionCallbacks();
-        if (_statusToggle != null)
-        {
-            _statusToggle.performed -= ForwardPlayerStatusTogglePerformed;
-            _statusToggle.Disable();
-            _statusToggle.Dispose();
-            _statusToggle = null;
-        }
+        DisposeRuntimeAction(ref _statusToggle, ForwardPlayerStatusTogglePerformed);
+        DisposeRuntimeAction(ref _combatCycle, ForwardPlayerCombatCyclePerformed);
+        DisposeRuntimeAction(ref _combatAttack, ForwardPlayerCombatAttackPerformed);
+        DisposeRuntimeAction(ref _combatSelectSwing, ForwardPlayerCombatSelectSwingPerformed);
+        DisposeRuntimeAction(ref _combatSelectStab, ForwardPlayerCombatSelectStabPerformed);
+        DisposeRuntimeAction(ref _combatSelectTrigger, ForwardPlayerCombatSelectTriggerPerformed);
 
         _actions?.Dispose();
         _actions = null;
         base.OnDestroy();
+    }
+
+    static void DisposeRuntimeAction(
+        ref InputAction action,
+        System.Action<InputAction.CallbackContext> handler)
+    {
+        if (action == null)
+            return;
+
+        action.performed -= handler;
+        action.Disable();
+        action.Dispose();
+        action = null;
     }
 
     bool IsClike()

@@ -1,5 +1,5 @@
 // ============================================================
-// IPlayerBody — 신체 소유권 트리 계약 (ID 조회, 단일 노드 제거)
+// ICharacterBody — 신체 소유권 트리 계약 (플레이어·NPC 공용)
 // ============================================================
 
 using System;
@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Garunnir.Runtime.Gameplay.Data
 {
-    public interface IPlayerBody
+    public interface ICharacterBody
     {
         event Action Changed;
 
@@ -19,7 +19,7 @@ namespace Garunnir.Runtime.Gameplay.Data
 
         /// <summary>
         /// 부모 컬렉션에서 해당 노드만 제거한다.
-        /// 하위 부위·부착 효과는 소유권으로 함께 도달 불가가 된다 (연쇄 순회 삭제 없음).
+        /// 하위 부위·부착 효과는 소유권으로 함께 도달 불가가 된다.
         /// </summary>
         bool RemovePart(string partId);
 
@@ -28,6 +28,13 @@ namespace Garunnir.Runtime.Gameplay.Data
         int GetConditionMax(string mainConditionPartId);
 
         void SetCondition(string mainConditionPartId, int current, int max);
+
+        bool AddEffect(string partId, BodyPartEffect effect);
+
+        bool ClearEffectsOn(string partId);
+
+        /// <summary>유한 효과 RemainingSeconds를 줄이고 만료분을 제거. 변경 시 true.</summary>
+        bool TickEffectDurations(float deltaSeconds);
 
         bool IsDeadState { get; }
 

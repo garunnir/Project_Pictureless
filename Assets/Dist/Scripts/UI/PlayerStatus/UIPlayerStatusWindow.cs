@@ -1,5 +1,5 @@
 // ============================================================
-// UIPlayerStatusWindow — 메인 6부위 + 전역 바이탈 + 스킬 + 상세 패널
+// UIPlayerStatusWindow ??메인 6부??+ ?�역 바이??+ ?�킬 + ?�세 ?�널
 // ============================================================
 
 using System.Collections.Generic;
@@ -150,7 +150,7 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
 
     void OnPartHover(string partId)
     {
-        IPlayerBody body = _viewModel?.Body;
+        ICharacterBody body = _viewModel?.Body;
         if (_detailPanel == null || body == null)
             return;
 
@@ -167,7 +167,7 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
         SetHeaderTitle(PlayerStatusLabels.Title);
         EnsurePartViews();
 
-        IPlayerBody body = _viewModel.Body;
+        ICharacterBody body = _viewModel.Body;
         string[] mains = BodyPartIds.MainConditionParts;
         for (int i = 0; i < _graphics.Count; i++)
         {
@@ -249,7 +249,7 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
         IReadOnlyCollection<string> skills = stats.GetKnownSkillIds();
         if (skills == null || skills.Count == 0)
         {
-            lines.Add("—");
+            lines.Add("(none)");
         }
         else
         {

@@ -1,5 +1,5 @@
 // ============================================================
-// BodySkillModifierAggregator — 부위 효과 전수 합산 → Refresh 소스 1개
+// BodySkillModifierAggregator ??부???�과 ?�수 ?�산 ??Refresh ?�스 1�?
 // ============================================================
 
 using System;
@@ -8,16 +8,16 @@ using System.Collections.Generic;
 namespace Garunnir.Runtime.Gameplay.Data
 {
     /// <summary>
-    /// 부위마다 효과를 보유하고, Elona식 버프/Refresh에 넣기 전 신체에서 한 번 합산한다.
-    /// 동일 effectId는 intensity 합산 후 카탈로그 delta에 곱한다.
+    /// 부?�마???�과�?보유?�고, Elona??버프/Refresh???�기 ???�체?�서 ??�??�산?�다.
+    /// ?�일 effectId??intensity ?�산 ??카탈로그 delta??곱한??
     /// </summary>
     public sealed class BodySkillModifierAggregator : ISkillModifierSource
     {
-        readonly IPlayerBody _body;
+        readonly ICharacterBody _body;
         readonly List<BodyPartEffect> _scratch = new(32);
         readonly Dictionary<string, int> _intensityByEffect = new(StringComparer.Ordinal);
 
-        public BodySkillModifierAggregator(IPlayerBody body)
+        public BodySkillModifierAggregator(ICharacterBody body)
         {
             _body = body ?? throw new ArgumentNullException(nameof(body));
         }

@@ -1,20 +1,20 @@
 // ============================================================
-// GameplayData — 게임플레이 데이터 SSOT (커스텀 우선 → 참조 fallback)
+// GameplayData ? ????? ??? SSOT (??? ?? ? ?? fallback)
 // ============================================================
 
 using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
+using UnityEngine;
 
 public static class GameplayData
 {
     static IPlayerStats _stats;
-    static IPlayerBody _body;
+    static ICharacterBody _body;
     static IPlayerVitals _vitals;
-    static ICharacterDefeat _defeat;
+    static DefaultCharacterDefeat _defeat;
 
     /// <summary>
-    /// 플레이어 스킬/스탯 편의 접근 (인스턴스 모델; NPC는 각자 ICharacterSkills).
-    /// 미주입 시에는 DefaultPlayerStats(인메모리)로 동작합니다.
+    /// ???? ??/?? ?? ?? (???? ??; NPC? ?? ICharacterSkills).
     /// </summary>
     public static IPlayerStats Stats
     {
@@ -24,26 +24,30 @@ public static class GameplayData
                 _stats = new DefaultPlayerStats();
             return _stats;
         }
-        set => _stats = value;
+        set
+        {
+            _stats = value;
+            InvalidateDefeat();
+        }
     }
 
-    /// <summary>신규 숙련 API. Stats가 DefaultPlayerStats일 때만 유효.</summary>
+    /// <summary>?? ?? API. Stats? DefaultPlayerStats? ?? ??.</summary>
     public static ICharacterSkills CharacterSkills =>
         Stats is DefaultPlayerStats dps ? dps.Skills : null;
 
     /// <summary>
-    /// 신체 소유권 트리 SSOT.
-    /// 미주입 시에는 인간 기본 anatomy + STR 기반 부위 컨디션으로 생성합니다.
+    /// ?? ??? ?? SSOT.
     /// </summary>
-    public static IPlayerBody Body
+    public static ICharacterBody Body
     {
         get
         {
             if (_body == null)
             {
-                _body = PlayerBody.CreateHumanDefault(Stats.GetStat(AttributeIds.Str));
+                _body = CharacterBody.CreateHumanDefault(Stats.GetStat(AttributeIds.Str));
                 if (_stats is DefaultPlayerStats dps)
                     dps.BindBody(_body);
+                InvalidateDefeat();
             }
 
             return _body;
@@ -53,11 +57,12 @@ public static class GameplayData
             _body = value;
             if (_stats is DefaultPlayerStats dps)
                 dps.BindBody(_body);
+            InvalidateDefeat();
         }
     }
 
     /// <summary>
-    /// 전역 바이탈(공복/갈증/스태미나) SSOT.
+    /// ?? ???(??/??/????) SSOT.
     /// </summary>
     public static IPlayerVitals Vitals
     {
@@ -71,7 +76,7 @@ public static class GameplayData
     }
 
     /// <summary>
-    /// 플레이어 최종 사망/패배 판정 (Body ∨ Skills). 소비처는 이것만 본다.
+    /// ???? ?? ??/?? ?? (Body ? Skills).
     /// </summary>
     public static ICharacterDefeat Defeat
     {
@@ -81,16 +86,21 @@ public static class GameplayData
                 _defeat = new DefaultCharacterDefeat(Body, CharacterSkills);
             return _defeat;
         }
-        set => _defeat = value;
+        set
+        {
+            InvalidateDefeat();
+            if (value is DefaultCharacterDefeat concrete)
+                _defeat = concrete;
+            else if (value != null)
+                Debug.LogWarning("[GameplayData] Defeat setter expects DefaultCharacterDefeat; ignored.");
+        }
     }
 
-    /// <summary>프로젝트 커스텀 데이터 (편집 가능)</summary>
+    /// <summary>???? ??? ??? (?? ??)</summary>
     public static GameDatabase GameItems => GameDataLoader.GameData;
 
-    /// <summary>참조 데이터 (CC BY-SA 3.0, 읽기 전용)</summary>
+    /// <summary>?? ??? (CC BY-SA 3.0, ?? ??)</summary>
     public static GameDatabase RefData => GameDataLoader.RefData;
-
-    // ── SSOT resolve: 커스텀 → 참조 순서로 검색 ─────────────
 
     public static ItemData GetItem(string id)
     {
@@ -131,6 +141,12 @@ public static class GameplayData
     public static void ClearCache()
     {
         GameDataLoader.Unload();
+    }
+
+    static void InvalidateDefeat()
+    {
+        _defeat?.Dispose();
+        _defeat = null;
     }
 
     static readonly List<RecipeData> _emptyRecipes = new(0);

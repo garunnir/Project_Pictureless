@@ -1,5 +1,5 @@
 // ============================================================
-// DefaultPlayerStats — IPlayerStats 어댑터 (ICharacterSkills 래핑)
+// DefaultPlayerStats ??IPlayerStats ?�댑??(ICharacterSkills ?�핑)
 // ============================================================
 
 using System;
@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace Garunnir.Runtime.Gameplay.Data
 {
     /// <summary>
-    /// 기존 소비처 패리티용. 신규 코드는 <see cref="Skills"/> / <see cref="ICharacterSkills"/>를 사용.
+    /// 기존 ?�비�??�리?�용. ?�규 코드??<see cref="Skills"/> / <see cref="ICharacterSkills"/>�??�용.
     /// </summary>
     public sealed class DefaultPlayerStats : IPlayerStats
     {
@@ -31,9 +31,9 @@ namespace Garunnir.Runtime.Gameplay.Data
         public event Action<string> Changed;
 
         /// <summary>
-        /// 신체 합산 소스를 연결하고 Refresh한다. 바디 Changed 시 재호출은 호스트 책임.
+        /// ?�체 ?�산 ?�스�??�결?�고 Refresh?�다. 바디 Changed ???�호출�? ?�스??책임.
         /// </summary>
-        public void BindBody(IPlayerBody body)
+        public void BindBody(ICharacterBody body)
         {
             if (_bodyAggregator != null)
             {

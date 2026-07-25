@@ -1,5 +1,5 @@
 // ============================================================
-// DefaultCharacterDefeat — Body·Skills 구독 후 IsDefeated 래치
+// DefaultCharacterDefeat ??Body·Skills 구독 ??IsDefeated ?�치
 // ============================================================
 
 using System;
@@ -7,12 +7,12 @@ using System;
 namespace Garunnir.Runtime.Gameplay.Data
 {
     /// <summary>
-    /// 사망은 종결 상태다: 한 번 IsDefeated가 되면 <see cref="Revive"/> 전까지 유지(래치).
-    /// 재평가는 Body.Changed / Skills.Refreshed·Collapsed 이벤트에서만 (hot-path 폴링 없음).
+    /// ?�망?� 종결 ?�태?? ??�?IsDefeated가 ?�면 <see cref="Revive"/> ?�까지 ?��?(?�치).
+    /// ?�평가??Body.Changed / Skills.Refreshed·Collapsed ?�벤?�에?�만 (hot-path ?�링 ?�음).
     /// </summary>
     public sealed class DefaultCharacterDefeat : ICharacterDefeat, IDisposable
     {
-        readonly IPlayerBody _body;
+        readonly ICharacterBody _body;
         readonly ICharacterSkills _skills;
 
         public event Action Changed;
@@ -20,7 +20,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         public bool IsDefeated { get; private set; }
         public DefeatCause Cause { get; private set; }
 
-        public DefaultCharacterDefeat(IPlayerBody body, ICharacterSkills skills)
+        public DefaultCharacterDefeat(ICharacterBody body, ICharacterSkills skills)
         {
             _body = body;
             _skills = skills;

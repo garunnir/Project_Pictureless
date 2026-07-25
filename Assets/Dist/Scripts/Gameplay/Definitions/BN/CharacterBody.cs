@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerBody — 인간 anatomy 소유권 트리 런타임
+// CharacterBody — 인간 anatomy 소유권 트리 런타임 (플레이어·NPC 공용)
 // ============================================================
 
 using System;
@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Garunnir.Runtime.Gameplay.Data
 {
-    public sealed class PlayerBody : IPlayerBody
+    public sealed class CharacterBody : ICharacterBody
     {
         public const int BaseCondition = 60;
         public const int ConditionPerStr = 3;
@@ -32,10 +32,10 @@ namespace Garunnir.Runtime.Gameplay.Data
             }
         }
 
-        public static PlayerBody CreateHumanDefault(int strength, bool prototypeSeed = true)
+        public static CharacterBody CreateHumanDefault(int strength, bool prototypeSeed = true)
         {
             int conditionMax = BaseCondition + strength * ConditionPerStr;
-            var body = new PlayerBody();
+            var body = new CharacterBody();
 
             BodyPartNode head = new(BodyPartIds.Head, true, conditionMax);
             head.AddChild(new BodyPartNode(BodyPartIds.Eyes, false));
@@ -69,15 +69,14 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (!prototypeSeed)
                 return body;
 
-            // Prototype seed: show something in the hover detail panel.
             if (body.TryGet(BodyPartIds.HandL, out BodyPartNode seededHand))
             {
-                seededHand.AddEffect(new BodyPartEffect(BodyPartEffectIds.Bleed, 1, 12));
-                seededHand.AddEffect(new BodyPartEffect(BodyPartEffectIds.Infected, 1, -1));
+                seededHand.AddEffect(new BodyPartEffect(BodyPartEffectIds.Bleed, 1, 12f));
+                seededHand.AddEffect(new BodyPartEffect(BodyPartEffectIds.Infected, 1, -1f));
             }
 
             if (body.TryGet(BodyPartIds.FingerIndexL, out BodyPartNode seededFinger))
-                seededFinger.AddEffect(new BodyPartEffect(BodyPartEffectIds.Fracture, 1, -1));
+                seededFinger.AddEffect(new BodyPartEffect(BodyPartEffectIds.Fracture, 1, -1f));
 
             return body;
         }
@@ -152,12 +151,65 @@ namespace Garunnir.Runtime.Gameplay.Data
             Changed?.Invoke();
         }
 
+        public bool AddEffect(string partId, BodyPartEffect effect)
+        {
+            if (!TryGet(partId, out BodyPartNode node))
+                return false;
+
+            node.AddEffect(effect);
+            Changed?.Invoke();
+            return true;
+        }
+
+        public bool ClearEffectsOn(string partId)
+        {
+            if (!TryGet(partId, out BodyPartNode node))
+                return false;
+
+            if (node.Effects.Count == 0)
+                return false;
+
+            node.ClearEffects();
+            Changed?.Invoke();
+            return true;
+        }
+
+        public bool TickEffectDurations(float deltaSeconds)
+        {
+            if (deltaSeconds <= 0f)
+                return false;
+
+            bool changed = false;
+            for (int i = 0; i < _roots.Count; i++)
+            {
+                if (TickNode(_roots[i], deltaSeconds))
+                    changed = true;
+            }
+
+            if (changed)
+                Changed?.Invoke();
+            return changed;
+        }
+
         public void CollectEffectsUnder(string partId, List<BodyPartEffect> into, bool includeDescendants)
         {
             if (into == null || !TryGet(partId, out BodyPartNode root))
                 return;
 
             AppendEffects(root, into, includeDescendants);
+        }
+
+        static bool TickNode(BodyPartNode node, float deltaSeconds)
+        {
+            bool changed = node.TickEffectDurations(deltaSeconds);
+            IReadOnlyList<BodyPartNode> children = node.Children;
+            for (int i = 0; i < children.Count; i++)
+            {
+                if (TickNode(children[i], deltaSeconds))
+                    changed = true;
+            }
+
+            return changed;
         }
 
         static void AppendEffects(BodyPartNode node, List<BodyPartEffect> into, bool includeDescendants)
