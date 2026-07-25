@@ -211,9 +211,6 @@ flowchart LR
 - **TileMapData.cs** (클래스: TileHelper) — `WorldToGrid` / `GridToWorld` 변환
 - **IsoTileMap.cs** — ⚠️ 레거시, 현재 미사용
 
-### Debug
-- **Debug/DebugTileRunner.cs** — BFS 기즈모 콜백 홀더 (`IFrameState`)
-
 ---
 
 ## 레이어 설계 원칙

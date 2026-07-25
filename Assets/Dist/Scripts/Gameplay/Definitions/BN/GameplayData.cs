@@ -10,9 +10,10 @@ public static class GameplayData
     static IPlayerStats _stats;
     static IPlayerBody _body;
     static IPlayerVitals _vitals;
+    static ICharacterDefeat _defeat;
 
     /// <summary>
-    /// 플레이어 스킬/스탯 SSOT.
+    /// 플레이어 스킬/스탯 편의 접근 (인스턴스 모델; NPC는 각자 ICharacterSkills).
     /// 미주입 시에는 DefaultPlayerStats(인메모리)로 동작합니다.
     /// </summary>
     public static IPlayerStats Stats
@@ -26,6 +27,10 @@ public static class GameplayData
         set => _stats = value;
     }
 
+    /// <summary>신규 숙련 API. Stats가 DefaultPlayerStats일 때만 유효.</summary>
+    public static ICharacterSkills CharacterSkills =>
+        Stats is DefaultPlayerStats dps ? dps.Skills : null;
+
     /// <summary>
     /// 신체 소유권 트리 SSOT.
     /// 미주입 시에는 인간 기본 anatomy + STR 기반 부위 컨디션으로 생성합니다.
@@ -35,10 +40,20 @@ public static class GameplayData
         get
         {
             if (_body == null)
-                _body = PlayerBody.CreateHumanDefault(Stats.GetStat(StatKeys.Str));
+            {
+                _body = PlayerBody.CreateHumanDefault(Stats.GetStat(AttributeIds.Str));
+                if (_stats is DefaultPlayerStats dps)
+                    dps.BindBody(_body);
+            }
+
             return _body;
         }
-        set => _body = value;
+        set
+        {
+            _body = value;
+            if (_stats is DefaultPlayerStats dps)
+                dps.BindBody(_body);
+        }
     }
 
     /// <summary>
@@ -53,6 +68,20 @@ public static class GameplayData
             return _vitals;
         }
         set => _vitals = value;
+    }
+
+    /// <summary>
+    /// 플레이어 최종 사망/패배 판정 (Body ∨ Skills). 소비처는 이것만 본다.
+    /// </summary>
+    public static ICharacterDefeat Defeat
+    {
+        get
+        {
+            if (_defeat == null)
+                _defeat = new DefaultCharacterDefeat(Body, CharacterSkills);
+            return _defeat;
+        }
+        set => _defeat = value;
     }
 
     /// <summary>프로젝트 커스텀 데이터 (편집 가능)</summary>

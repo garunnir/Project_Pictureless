@@ -1,0 +1,11 @@
+{
+  "skills": [
+    { "id": "str", "kind": "attribute", "initial_level": 8, "initial_potential": 100 },
+    { "id": "con", "kind": "attribute", "initial_level": 8, "initial_potential": 100 },
+    { "id": "dex", "kind": "attribute", "initial_level": 8, "initial_potential": 100 },
+    { "id": "int", "kind": "attribute", "initial_level": 8, "initial_potential": 100 },
+    { "id": "wis", "kind": "attribute", "initial_level": 8, "initial_potential": 100 },
+    { "id": "cha", "kind": "attribute", "initial_level": 8, "initial_potential": 100 },
+    { "id": "survival", "kind": "skill", "initial_level": 0, "initial_potential": 100 }
+  ]
+}

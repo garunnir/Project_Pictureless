@@ -32,6 +32,9 @@ public sealed class PlayerStatusViewModel
         _vitals = vitals;
         _stats = stats;
 
+        if (_stats is DefaultPlayerStats dps)
+            dps.BindBody(_body);
+
         if (_body != null)
             _body.Changed += OnBodyChanged;
         if (_vitals != null)
@@ -61,6 +64,9 @@ public sealed class PlayerStatusViewModel
 
     void OnBodyChanged()
     {
+        if (_stats is DefaultPlayerStats dps)
+            dps.Skills.Refresh();
+
         RebuildMoodEntries();
         Changed?.Invoke();
         MoodChanged?.Invoke();

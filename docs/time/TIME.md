@@ -196,12 +196,11 @@ IsoLand에는 Setup이 적용·저장되어 있다. Full bake 정책: `.cursor/r
 | 스크립트 | 채널 | API |
 |----------|------|-----|
 | `PlayerMovement` | Player | `FixedDelta` (`fixedDeltaTime * scale`, max clamp) |
-| `PlayerInputDirectionAnim` | Player | `Delta` |
+| `CharacterFacingAnim` | Player (기본) / World (NPC) | `Delta` |
 | `PlayerBillboard` | Player | `TimeNow` |
 | `CameraFollowTargetDriver` | Player | `Delta` |
 | `CharacterOcclusionDisplayDriver` | World | `Delta` |
 | `TileMapChunkStreamer` (unload hysteresis) | Realtime | `TimeNow` |
-| `StateRunner` | World | `Delta` |
 | `GridCursor` (hold/repeat) | Realtime | `Delta` |
 | Context menus | Realtime | `WaitForSecondsRealtime` (기존) |
 

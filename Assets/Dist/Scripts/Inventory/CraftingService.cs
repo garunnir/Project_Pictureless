@@ -257,7 +257,7 @@ public static class CraftingService
         int skillLevel = string.IsNullOrEmpty(recipe.skill_used)
             ? 0
             : GameplayData.Stats.GetSkillLevel(recipe.skill_used);
-        int intCur = GameplayData.Stats.GetStat(StatKeys.Int);
+        int intCur = GameplayData.Stats.GetStat(AttributeIds.Int);
 
         int skillDice = SkillDiceBase + skillLevel * SkillDicePerLevel; // 2 + 3*level + level
         int skillSides = SkillDiceSidesBase + intCur;

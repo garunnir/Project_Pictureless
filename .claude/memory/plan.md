@@ -1,27 +1,33 @@
 # Task Plan
 
 ## Goal
-Build a Unity tile pipeline using MVC architecture that cleanly separates tile data, rendering, and control logic.
-The pipeline should be extensible, testable, and easy to maintain as new tile types or behaviors are added.
+Elona식 단일 숙련 테이블 (능력치=스킬 행) + Base/Buffed Refresh + 신체 효과 합산 소스.
 
-## Design Decisions
-- **MVC over monolithic scripts**: Keeps data (Model), display (View), and logic (Controller) independently changeable
-- **Pure C# Models**: No MonoBehaviour in the Model layer to ensure testability and remove Unity lifecycle dependency
-- **Unidirectional data flow**: View never accesses Model directly — all updates go through Controller via events/callbacks
-- **Event-driven communication**: Loose coupling between layers using C# events or Actions (specify which)
-- **Explicit approval before structural changes**: Prevents unintentional architecture violations during development
+## Design Decisions (locked 2026-07-25)
+- 단일 테이블, 능력치 행 상시 시드 (`AttributeIds`)
+- Base/Buffed + Refresh (Reset→가산→클램프)
+- JSON 프로토 DTO (`SkillDef`) — 로더 연결은 후속; 런타임은 코드 시드
+- 바이탈 분리; 스탯에 cur/max 없음
+- 연습: Elona (1000 XP/레벨, 잠재력 공식)
+- Buffed≤0 능력치 → Collapsed (스톤수프)
+- 레벨 다운: `ModifyBaseLevel`
+- NPC도 동일 `ICharacterSkills` 인스턴스 모델
+- UI 통지: `Refreshed` 일괄 (`IPlayerStats.Changed`는 어댑터 브리지)
+- 부위 효과 → `BodySkillModifierAggregator` 1회 합산 → Refresh 소스
 
 ## Steps
-- [x] Model 레이어 핵심 구조 정의 (TileMapModel, IMapModel, TileData)
-- [x] Controller 로직 구현 (TileMapController — MarkDirty/FlushDirty 패턴)
-- [x] View 레이어 구현 (TileMapVisualizer — Build/Bind/RefreshCell)
-- [x] 레이어 간 이벤트 연결 (`OnRuntimeDataChanged` → View 구독)
-- [x] MVC 경계 준수 검증 및 컴파일 에러 수정 (2026-02-26)
-- [x] `TileMapSession` 제거 — 세션 래퍼 레이어 플래튼, `TileMapLoader.Model`로 통합 (2026-02-26)
-- [ ] 각 레이어 독립 테스트 (관심사 분리 확인)
+- [x] BuffableStat / SkillEntry / SkillGrowth / AttributeIds / SkillDef
+- [x] ICharacterSkills + DefaultCharacterSkills + modifier/body aggregate
+- [x] DefaultPlayerStats 어댑터 + GameplayData/ViewModel 배선
+- [x] SkillCatalog(JSON 로더) — DefaultPlayerStats/CharacterSkillsHost 시드
+- [x] 소비처 이주 (GameplayData Str, CraftingService Int) + StatKeys 삭제 (VitalKeys.cs 분리)
+- [x] CharacterSkillsHost 컴포넌트 (NPC/플레이어 프리팹 부착용 — 배선은 프리팹 작업 시)
+- [x] Defeat 레이어: ICharacterDefeat + DefaultCharacterDefeat (Body∨Skills OR, 래치+Revive)
+      GameplayData.Defeat / CharacterSkillsHost.Defeat 노출
 
-## Out of Scope
-- No editor tooling or custom Inspector windows (unless explicitly requested)
-- No procedural map generation logic at this stage
-- No cross-layer dependency exceptions — MVC boundaries are non-negotiable
-- No refactoring of existing code unless it directly blocks current task progress
+## Out of Scope (this slice)
+- 장비 modifier 소스
+- 세이브 직렬화
+- 부위 컨디션 max↔STR 재계산 정책
+- Defeat → 실제 게임오버/AI 정지 소비 (판정 레이어만; 소비처 배선 후속)
+- NPC 바디 모델 (Defeat는 현재 NPC에서 StatCollapse만)

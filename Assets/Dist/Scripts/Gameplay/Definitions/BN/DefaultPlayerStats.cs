@@ -1,5 +1,5 @@
 // ============================================================
-// DefaultPlayerStats — 인메모리 기본 스킬/스탯 구현
+// DefaultPlayerStats — IPlayerStats 어댑터 (ICharacterSkills 래핑)
 // ============================================================
 
 using System;
@@ -7,123 +7,72 @@ using System.Collections.Generic;
 
 namespace Garunnir.Runtime.Gameplay.Data
 {
+    /// <summary>
+    /// 기존 소비처 패리티용. 신규 코드는 <see cref="Skills"/> / <see cref="ICharacterSkills"/>를 사용.
+    /// </summary>
     public sealed class DefaultPlayerStats : IPlayerStats
     {
-        const int DefaultAbility = 8;
-        const int SkillExerciseBase = 100;
-        const int DefaultPotential = 100;
-        const int MinPotential = 1;
-        const int MaxPotential = 400;
-        const float PotentialDecayRate = 0.9f;
+        readonly DefaultCharacterSkills _skills;
+        BodySkillModifierAggregator _bodyAggregator;
 
-        readonly Dictionary<string, int> _skillLevels = new(StringComparer.Ordinal);
-        readonly Dictionary<string, int> _skillXp = new(StringComparer.Ordinal);
-        readonly Dictionary<string, int> _potentials = new(StringComparer.Ordinal);
-        readonly Dictionary<string, int> _stats = new(StringComparer.Ordinal)
+        public DefaultPlayerStats()
+            : this(SkillCatalog.CreateSeededSkills())
         {
-            [StatKeys.Str] = DefaultAbility,
-            [StatKeys.Con] = DefaultAbility,
-            [StatKeys.Dex] = DefaultAbility,
-            [StatKeys.Int] = DefaultAbility,
-            [StatKeys.Wis] = DefaultAbility,
-            [StatKeys.Cha] = DefaultAbility
-        };
+        }
+
+        public DefaultPlayerStats(DefaultCharacterSkills skills)
+        {
+            _skills = skills ?? throw new ArgumentNullException(nameof(skills));
+            _skills.Refreshed += OnSkillsRefreshed;
+        }
+
+        public ICharacterSkills Skills => _skills;
 
         public event Action<string> Changed;
 
-        public int GetSkillLevel(string skillId)
+        /// <summary>
+        /// 신체 합산 소스를 연결하고 Refresh한다. 바디 Changed 시 재호출은 호스트 책임.
+        /// </summary>
+        public void BindBody(IPlayerBody body)
         {
-            if (string.IsNullOrEmpty(skillId))
-                return 0;
-
-            return _skillLevels.TryGetValue(skillId, out int lv) ? lv : 0;
-        }
-
-        public void SetSkillLevel(string skillId, int level)
-        {
-            if (string.IsNullOrEmpty(skillId))
-                return;
-
-            int clampedLevel = Math.Max(0, level);
-            _skillLevels[skillId] = clampedLevel;
-            Changed?.Invoke(skillId);
-        }
-
-        public void AddPractice(string skillId, int xp)
-        {
-            if (string.IsNullOrEmpty(skillId) || xp <= 0)
-                return;
-
-            int level = GetSkillLevel(skillId);
-            int potential = GetPotential(skillId);
-
-            int actualXp = xp * potential / (100 + level * 15);
-            if (actualXp <= 0)
-                actualXp = 1;
-
-            long currentXp = _skillXp.TryGetValue(skillId, out int stored) ? stored : 0;
-            currentXp += actualXp;
-
-            while (true)
+            if (_bodyAggregator != null)
             {
-                int nextLevel = level + 1;
-                int required = RequiredXp(nextLevel);
-                if (currentXp < required)
-                    break;
-
-                currentXp -= required;
-                level = nextLevel;
-
-                _potentials[skillId] = Math.Clamp(
-                    (int)(GetPotential(skillId) * PotentialDecayRate),
-                    MinPotential, MaxPotential);
+                _skills.RemoveModifierSource(_bodyAggregator);
+                _bodyAggregator = null;
             }
 
-            _skillLevels[skillId] = level;
-            _skillXp[skillId] = (int)Math.Min(currentXp, int.MaxValue);
-            Changed?.Invoke(skillId);
-        }
-
-        public int GetStat(string statKey)
-        {
-            if (string.IsNullOrEmpty(statKey))
-                return 0;
-
-            return _stats.TryGetValue(statKey, out int val) ? val : 0;
-        }
-
-        public IReadOnlyCollection<string> GetKnownSkillIds() => _skillLevels.Keys;
-
-        public int GetPotential(string skillId)
-        {
-            if (string.IsNullOrEmpty(skillId))
-                return DefaultPotential;
-            return _potentials.TryGetValue(skillId, out int val) ? val : DefaultPotential;
-        }
-
-        public void SetPotential(string skillId, int value)
-        {
-            if (string.IsNullOrEmpty(skillId))
+            if (body == null)
+            {
+                _skills.Refresh();
                 return;
-            _potentials[skillId] = Math.Clamp(value, MinPotential, MaxPotential);
-            Changed?.Invoke(skillId);
+            }
+
+            _bodyAggregator = new BodySkillModifierAggregator(body);
+            _skills.AddModifierSource(_bodyAggregator);
+            _skills.Refresh();
         }
 
-        public void ModifyPotential(string skillId, int delta)
-        {
-            if (string.IsNullOrEmpty(skillId) || delta == 0)
-                return;
-            int current = GetPotential(skillId);
-            _potentials[skillId] = Math.Clamp(current + delta, MinPotential, MaxPotential);
-            Changed?.Invoke(skillId);
-        }
+        public int GetSkillLevel(string skillId) => _skills.Level(skillId);
 
-        static int RequiredXp(int level)
-        {
-            double v = SkillExerciseBase * level * (double)level;
-            if (v > int.MaxValue)
-                return int.MaxValue;
-            return (int)v;
-        }
+        public void SetSkillLevel(string skillId, int level) =>
+            _skills.SetBaseLevel(skillId, level);
+
+        public void AddPractice(string skillId, int xp) =>
+            _skills.AddPractice(skillId, xp);
+
+        public int GetStat(string statKey) =>
+            string.IsNullOrEmpty(statKey) ? 0 : _skills.Level(statKey);
+
+        public IReadOnlyCollection<string> GetKnownSkillIds() => _skills.GetKnownSkillIds();
+
+        public int GetPotential(string skillId) => _skills.Potential(skillId);
+
+        public void SetPotential(string skillId, int value) =>
+            _skills.SetPotential(skillId, value);
+
+        public void ModifyPotential(string skillId, int delta) =>
+            _skills.ModifyPotential(skillId, delta);
+
+        void OnSkillsRefreshed() => Changed?.Invoke(string.Empty);
     }
 }
