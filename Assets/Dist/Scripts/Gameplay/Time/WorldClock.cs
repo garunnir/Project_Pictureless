@@ -45,6 +45,17 @@ public sealed class WorldClock : SceneSingleton<WorldClock>
         }
     }
 
+    /// <summary>하루 진행도 [0, 1). MinuteOfDay + 분 미만 accumulator.</summary>
+    public float DayNormalized
+    {
+        get
+        {
+            int minutesPerDay = GetMinutesPerDay();
+            float t = (_minuteOfDay + _minuteAccumulator) / minutesPerDay;
+            return t < 1f ? Mathf.Max(0f, t) : 0f;
+        }
+    }
+
     protected override void Awake()
     {
         base.Awake();

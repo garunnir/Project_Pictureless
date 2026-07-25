@@ -6,7 +6,7 @@ using Interactions;
 using Sirenix.OdinInspector;
 
 [RequireComponent(typeof(CharacterState))]
-[RequireComponent(typeof(PlayerInputDirectionAnim))]
+[RequireComponent(typeof(CharacterFacingAnim))]
 [RequireComponent(typeof(PlayerInteractionController))]
 [RequireComponent(typeof(PlayerAimController))]
 [RequireComponent(typeof(TileObjectPointerController))]
@@ -14,13 +14,13 @@ public class PlayerController : MonoBehaviour, IPlayControllable
 {
     [Title("References")]
     [Required, SerializeField] private CharacterState _state;
-    [Required, SerializeField] private PlayerInputDirectionAnim _directionAnim;
+    [Required, SerializeField] private CharacterFacingAnim _directionAnim;
     [Required, SerializeField] private PlayerInteractionController _interaction;
     [Required, SerializeField] private PlayerAimController _aimController;
     [SerializeField] private TileObjectPointerController _tileObjectPointer;
 
     public CharacterState State => _state;
-    public PlayerInputDirectionAnim DirectionAnim => _directionAnim;
+    public CharacterFacingAnim DirectionAnim => _directionAnim;
     public PlayerInteractionController Interaction => _interaction;
 
     [ShowInInspector, ReadOnly]

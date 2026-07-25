@@ -25,7 +25,15 @@ public class KinematicMover
 
     public void SetInput(Vector2 input, Camera camera)
     {
-        _moveDir = CameraRelativeInput(input, camera);
+        SetWorldDirection(CameraRelativeInput(input, camera));
+    }
+
+    public void SetWorldDirection(Vector3 worldDirection)
+    {
+        Vector3 flatDirection = new Vector3(worldDirection.x, 0f, worldDirection.z);
+        _moveDir = flatDirection.sqrMagnitude > 1f
+            ? flatDirection.normalized
+            : flatDirection;
     }
 
     public void SetSprinting(bool value) => _isSprinting = value;
@@ -107,6 +115,23 @@ public class KinematicMover
             : targetVelocity;
 
         return _currentVelocity * dt;
+    }
+
+    public Vector3 CalcConstantSpeedMove(float speed, float deltaTime)
+    {
+        float clampedSpeed = Mathf.Max(0f, speed);
+        if (_moveDir.sqrMagnitude <= Mathf.Epsilon ||
+            clampedSpeed <= Mathf.Epsilon ||
+            deltaTime <= 0f)
+        {
+            _currentVelocity = Vector3.zero;
+            IsInertiaActive = false;
+            return Vector3.zero;
+        }
+
+        _currentVelocity = _moveDir.normalized * clampedSpeed;
+        IsInertiaActive = false;
+        return _currentVelocity * deltaTime;
     }
 
     // desired: 이동하고 싶은 벡터

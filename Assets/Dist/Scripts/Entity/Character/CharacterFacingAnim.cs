@@ -1,21 +1,24 @@
 // ============================================================
-// PlayerInputDirectionAnim — facing 방향을 SpriteSwap 또는 Animator 파라미터로 반영
+// CharacterFacingAnim — CharacterState의 facing 방향을 SpriteSwap/Animator로 반영 (시간 채널 SSOT)
 // ============================================================
 using UnityEngine;
 
 /// <summary>
-/// Maps player facing direction to an animation.
+/// Drives a character facing animation from <see cref="CharacterState.GetFacingDir"/>.
 /// Two modes supported:
 /// - SpriteSwap: assign eight directional sprite sequences (8-way) and it will cycle frames.
 /// - Animator: set parameters on an Animator (floats DirX/DirY and optional bool) so a Mecanim controller can drive animations.
+/// Animation time advances via <see cref="TimeScaleService"/> channel, never Unity wall-clock.
 /// </summary>
 [RequireComponent(typeof(CharacterState))]
-public class PlayerInputDirectionAnim : MonoBehaviour
+public class CharacterFacingAnim : MonoBehaviour
 {
     public enum Mode { SpriteSwap, Animator }
 
     [Header("General")]
     public Mode mode = Mode.SpriteSwap;
+    [Tooltip("애니 진행에 사용할 시간 채널. 플레이어=Player, NPC·환경=World.")]
+    [SerializeField] private TimeScaleChannel _timeChannel = TimeScaleChannel.Player;
     [Tooltip("Minimum squared magnitude of input to consider 'moving'")]
     public float moveThreshold = 0.01f;
     [Tooltip("방향 판정 기준 회전 오프셋 (도). 카메라/스프라이트 정렬 보정용")]
@@ -42,6 +45,7 @@ public class PlayerInputDirectionAnim : MonoBehaviour
     int currentDirection;
     float animTimer;
     CharacterState _characterState;
+    bool _animatorManualControl;
 
     int _hashDirX;
     int _hashDirY;
@@ -57,6 +61,7 @@ public class PlayerInputDirectionAnim : MonoBehaviour
             _characterState = GetComponent<CharacterState>();
 
         CacheAnimatorParameters();
+        TakeAnimatorManualControl();
     }
 
     void Reset()
@@ -113,10 +118,24 @@ public class PlayerInputDirectionAnim : MonoBehaviour
         }
     }
 
+    // Animator를 수동 갱신으로 전환한다. Unity 자동 틱(wall-clock)을 끄고
+    // Update에서 채널 delta로만 진행시켜 배속·정지 SSOT를 지킨다.
+    void TakeAnimatorManualControl()
+    {
+        if (mode != Mode.Animator || animator == null)
+            return;
+
+        animator.enabled = false;
+        _animatorManualControl = true;
+    }
+
     void UpdateAnimator(Vector2 input, bool moving)
     {
         if (animator == null)
             return;
+
+        if (!_animatorManualControl)
+            TakeAnimatorManualControl();
 
         if (moving)
         {
@@ -128,6 +147,8 @@ public class PlayerInputDirectionAnim : MonoBehaviour
 
         if (_hasMoving)
             animator.SetBool(_hashMoving, moving);
+
+        animator.Update(TimeScaleService.Delta(_timeChannel));
     }
 
     void UpdateSpriteSwap(Vector2 input, bool moving)
@@ -157,7 +178,7 @@ public class PlayerInputDirectionAnim : MonoBehaviour
             return;
         }
 
-        animTimer += TimeScaleService.Delta(TimeScaleChannel.Player);
+        animTimer += TimeScaleService.Delta(_timeChannel);
         int frameIdx = Mathf.FloorToInt(animTimer * fps) % frames.Length;
         if (frameIdx < 0)
             frameIdx = 0;

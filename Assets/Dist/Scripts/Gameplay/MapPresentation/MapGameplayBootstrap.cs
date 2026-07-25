@@ -47,11 +47,8 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         if (services == null)
             return;
 
-        var movements = FindObjectsByType<PlayerMovement>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None);
-        for (int i = 0; i < movements.Length; i++)
-            movements[i].BindMapCollision(services);
+        BindCharacterLocomotions<PlayerMovement>(services);
+        BindCharacterLocomotions<NpcMovement>(services);
 
         var aimControllers = FindObjectsByType<PlayerAimController>(
             FindObjectsInactive.Include,
@@ -70,6 +67,17 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
 
             raycasters[i].BindMapCollision(services.LineCast, state);
         }
+    }
+
+    static void BindCharacterLocomotions<T>(MapCollisionServices services)
+        where T : MonoBehaviour, ICharacterLocomotion
+    {
+        var locomotions = FindObjectsByType<T>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        for (int i = 0; i < locomotions.Length; i++)
+            locomotions[i].BindMapCollision(services);
     }
 
     static void BindWorldGridToContainers(IWorldGrid worldGrid)

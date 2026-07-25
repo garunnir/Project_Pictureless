@@ -14,7 +14,7 @@ public interface IPlayerMovementDebug
 }
 
 [RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider), typeof(CharacterState))]
-public class PlayerMovement : MonoBehaviour, IMovable
+public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
 {
     [Header("Movement")]
     [SerializeField] private float _moveSpeed = 5f;
@@ -36,54 +36,77 @@ public class PlayerMovement : MonoBehaviour, IMovable
     [SerializeField] private float _runEnterBoost = 1.5f;
 
     [Header("Collision")]
-    [SerializeField] private float _climbAllowance = 0.3f;
-    [SerializeField] private float _baseSkin = 0.02f;
+    [SerializeField] private float _climbAllowance =
+        CharacterLocomotionDefaults.ClimbAllowance;
+    [SerializeField] private float _baseSkin =
+        CharacterLocomotionDefaults.BaseSkin;
     [Tooltip("WalkableOnly 소품·경사 등 Physics 충돌 레이어")]
-    [SerializeField] private LayerMask _collisionMask = ~0;
+    [SerializeField] private LayerMask _collisionMask =
+        CharacterLocomotionDefaults.AllCollisionLayers;
     [SerializeField] private QueryTriggerInteraction _triggerInteraction = QueryTriggerInteraction.Ignore;
     [Tooltip("논리 낙하 중력 (useGravity 대신 사용)")]
-    [SerializeField] private float _logicalGravity = -9.81f;
+    [SerializeField] private float _logicalGravity =
+        CharacterLocomotionDefaults.LogicalGravity;
     [Tooltip("topology 벽 셀 끼임 탈출 push 속도")]
-    [SerializeField] private float _topologyPushSpeed = 4f;
+    [SerializeField] private float _topologyPushSpeed =
+        CharacterLocomotionDefaults.TopologyPushSpeed;
     [Tooltip("같은 FixedUpdate 내 topology 탈출 push 최대 반복")]
-    [SerializeField] private int _topologyPushMaxIter = 4;
+    [SerializeField] private int _topologyPushMaxIter =
+        CharacterLocomotionDefaults.TopologyPushMaxIterations;
 
     [SerializeField,ReadOnly] private Vector2 _moveDir;
     Rigidbody _rb;
     CapsuleCollider _capsule;
     CharacterState _characterState;
     KinematicMover _mover;
+    CharacterLocomotion _locomotion;
+    MapCollisionServices _pendingMapCollision;
     bool _pendingInitialVelocity;
     [SerializeField] private MonoBehaviour _debugControllerBehaviour;
     IPlayerMovementDebug _debugController;
-    MapCollisionServices _mapCollision;
-    MapTopologyDepenetration.Tracker _gridStuckTracker;
-    float _verticalVelocity;
 
-    RaycastHit[] _hits = new RaycastHit[8];
-
-    // Gizmo 전용 캐시
-    int _lastHitCount;
-    Vector3 _lastP1, _lastDesiredMove;
+    readonly RaycastHit[] _hits =
+        new RaycastHit[CharacterLocomotionDefaults.HitBufferSize];
 
     public CapsuleCollider Capsule => _capsule;
     public RaycastHit[] Hits => _hits;
-    public int LastHitCount => _lastHitCount;
-    public Vector3 LastP1 => _lastP1;
-    public Vector3 LastDesiredMove => _lastDesiredMove;
+    public int LastHitCount => _locomotion != null ? _locomotion.LastHitCount : 0;
+    public Vector3 LastP1 =>
+        _locomotion != null ? _locomotion.LastCapsulePoint : Vector3.zero;
+    public Vector3 LastDesiredMove =>
+        _locomotion != null ? _locomotion.LastDesiredMove : Vector3.zero;
     public float BaseSkin => _baseSkin;
     public int LastNearestIndex => _mover != null ? _mover.LastNearestIndex : -1;
     public Vector3 LastSlide => _mover != null ? _mover.LastSlide : Vector3.zero;
     public bool IsSprinting => _mover != null && _mover.IsSprinting;
     public bool IsInertiaActive => _mover != null && _mover.IsInertiaActive;
     public float CurrentSpeed => _mover != null ? _mover.CurrentSpeed : 0f;
+    public bool IsStuck => _locomotion != null && _locomotion.IsStuck;
     public float InitialVelocity
     {
         get => _initialVelocity;
         set => _initialVelocity = Mathf.Max(-1f, value);
     }
 
-    public void BindMapCollision(MapCollisionServices services) => _mapCollision = services;
+    public void BindMapCollision(MapCollisionServices services)
+    {
+        _pendingMapCollision = services;
+        _locomotion?.BindMapCollision(services);
+    }
+
+    public void SetDesiredWorldDir(Vector3 worldDirXZ)
+    {
+        if (_mover == null)
+            return;
+
+        _mover.SetWorldDirection(worldDirXZ);
+        _characterState?.SetMoveDir(_mover.WorldMoveDir);
+    }
+
+    public void SetSpeed(float metersPerSecond)
+    {
+        _moveSpeed = Mathf.Max(0f, metersPerSecond);
+    }
 
     public void SetControllEnabled(bool enabled)
     {
@@ -118,6 +141,22 @@ public class PlayerMovement : MonoBehaviour, IMovable
             CollisionMask      = _collisionMask,
             TriggerInteraction = _triggerInteraction,
         };
+
+        _locomotion = new CharacterLocomotion(
+            _rb,
+            _capsule,
+            transform,
+            _characterState,
+            _mover,
+            _hits,
+            _climbAllowance,
+            _baseSkin,
+            _collisionMask,
+            _triggerInteraction,
+            _logicalGravity,
+            _topologyPushSpeed,
+            _topologyPushMaxIter);
+        _locomotion.BindMapCollision(_pendingMapCollision);
     }
 
     void ConnectController()
@@ -182,26 +221,14 @@ public class PlayerMovement : MonoBehaviour, IMovable
     void FixedUpdate()
     {
         float dt = TimeScaleService.FixedDelta(TimeScaleChannel.Player);
-        Vector3 oldPos = _rb.position;
-        float feetOffset = CharacterFeetPose.GetFeetOffset(transform);
-
         Vector3 desiredMove = CalcDesiredMove(dt);
-        bool physicsStuck = ResolvePhysicsHorizontal(desiredMove, out Vector3 horizontalDelta);
+        Vector3 horizontalDelta = _locomotion.Move(desiredMove, dt);
 
-        Vector3 newPos = ApplyTopologyHorizontal(oldPos, feetOffset, horizontalDelta);
+        if (_locomotion.LastHitCount > 0 &&
+            horizontalDelta.sqrMagnitude > Mathf.Epsilon)
+            _moveDir = horizontalDelta.normalized;
 
-        float cellSize = _mapCollision != null ? _mapCollision.Query.CellSize : 1f;
-        MapCollisionGrid.FeetCell feetCell = MapCollisionGrid.ResolveFeetCell(newPos, feetOffset, cellSize);
-        ApplyLogicalVertical(ref newPos, feetOffset, dt, ref feetCell);
-
-        MapTopologyDepenetration.PushOutResult topologyPush =
-            ResolveGridStuck(ref newPos, feetOffset, ref feetCell, dt);
-
-        LogStuckIfNeeded(physicsStuck, topologyPush);
-
-        _rb.MovePosition(newPos);
-        _rb.linearVelocity = Vector3.zero;
-        _characterState.UpdateGridPos(transform.position);
+        LogMovementDiagnostics();
     }
 
     Vector3 CalcDesiredMove(float dt)
@@ -213,111 +240,25 @@ public class PlayerMovement : MonoBehaviour, IMovable
             _customBaseSpeed,
             _inertiaEnableThreshold,
             _runMaxSpeed);
-        _lastDesiredMove = desiredMove;
         return desiredMove;
     }
 
-    /// <returns>physics stuck 여부</returns>
-    bool ResolvePhysicsHorizontal(Vector3 desiredMove, out Vector3 horizontalDelta)
+    void LogMovementDiagnostics()
     {
-        horizontalDelta = Vector3.zero;
-        if (desiredMove.sqrMagnitude <= Mathf.Epsilon)
+        if (_locomotion.LastPhysicsStuck)
         {
-            _lastHitCount = 0;
-            return false;
+            _debugController?.LogPlayerStuck();
+            return;
         }
 
-        Vector3 worldCenter = transform.TransformPoint(_capsule.center);
-        Vector3 up = transform.up;
-        float halfHeight = Mathf.Max(0f, (_capsule.height * 0.5f) - _capsule.radius);
-        Vector3 p1 = worldCenter + up * halfHeight;
-        Vector3 p2 = worldCenter - up * (halfHeight - _climbAllowance);
-        float radius = _capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
-
-        int hitCount = Physics.CapsuleCastNonAlloc(
-            p1, p2, radius, desiredMove.normalized,
-            _hits, desiredMove.magnitude + _baseSkin, _collisionMask, _triggerInteraction);
-
-        _lastP1 = p1;
-        _lastHitCount = hitCount;
-
-        if (hitCount == 0)
-        {
-            horizontalDelta = desiredMove;
-            return false;
-        }
-
-        horizontalDelta = _mover.ResolveMove(desiredMove, p1, p2, radius, _hits, hitCount, _capsule);
-        if (horizontalDelta.sqrMagnitude <= Mathf.Epsilon)
-            return true;
-
-        if (_mover.LastSlide.sqrMagnitude > 0f)
+        if (_locomotion.LastHitCount > 0 &&
+            _mover.LastSlide.sqrMagnitude > 0f)
             _debugController?.LogPlayerSliding(_mover.LastSlide.sqrMagnitude);
 
-        _moveDir = horizontalDelta.normalized;
-        return false;
-    }
-
-    Vector3 ApplyTopologyHorizontal(Vector3 oldPos, float feetOffset, Vector3 horizontalDelta)
-    {
-        if (_mapCollision == null || horizontalDelta.sqrMagnitude <= Mathf.Epsilon)
-            return oldPos + horizontalDelta;
-
-        Vector3 feetWorld = CharacterFeetPose.GetFeetWorld(oldPos, feetOffset);
-        Vector3 topologyDelta = _mapCollision.CollisionResolver.ClampHorizontal(feetWorld, horizontalDelta);
-        return oldPos + topologyDelta;
-    }
-
-    MapTopologyDepenetration.PushOutResult ResolveGridStuck(
-        ref Vector3 bodyPos,
-        float feetOffset,
-        ref MapCollisionGrid.FeetCell feetCell,
-        float dt)
-    {
-        if (_mapCollision == null)
-            return MapTopologyDepenetration.PushOutResult.None;
-
-        return _mapCollision.Depenetration.TryResolveGridStuck(
-            ref bodyPos,
-            feetOffset,
-            ref feetCell,
-            ref _gridStuckTracker,
-            _topologyPushSpeed,
-            _topologyPushMaxIter,
-            dt);
-    }
-
-    void LogStuckIfNeeded(bool physicsStuck, MapTopologyDepenetration.PushOutResult topologyPush)
-    {
-        // Physics: 소품·경사 등 CapsuleCast 완전 막힘
-        if (physicsStuck)
-        {
-            _debugController?.LogPlayerStuck();
-            return;
-        }
-
-        // Topology: 통행 불가 그리드 탈출 push 후에도 blocked 그리드에 남음
+        MapTopologyDepenetration.PushOutResult topologyPush =
+            _locomotion.LastTopologyPush;
         if (topologyPush.WasBlocking && topologyPush.StillBlocking)
             _debugController?.LogPlayerStuck();
-    }
-
-    void ApplyLogicalVertical(
-        ref Vector3 worldPos,
-        float feetOffset,
-        float deltaTime,
-        ref MapCollisionGrid.FeetCell feetCell)
-    {
-        if (_mapCollision == null)
-            return;
-
-        _mapCollision.FloorSupport.ApplyVertical(
-            ref worldPos,
-            ref _verticalVelocity,
-            deltaTime,
-            feetOffset,
-            ref feetCell,
-            ref _gridStuckTracker,
-            _logicalGravity);
     }
 
     private float GetEffectiveInitialVelocity()
@@ -325,7 +266,7 @@ public class PlayerMovement : MonoBehaviour, IMovable
         if (_initialVelocity > 0f)
             return _initialVelocity;
 
-        return _customBaseSpeed;
+        return Mathf.Max(_customBaseSpeed, _moveSpeed);
     }
 
     private void NormalizeSpeedThresholds()

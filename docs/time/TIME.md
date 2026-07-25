@@ -114,6 +114,7 @@ TimeScaleService.Instance.Pop("bullet_time");  // 해당 키 전부 제거
 | `DayIndex` | 인게임 일수 |
 | `MinuteOfDay` | 하루 내 분 (int, SSOT) |
 | `HourOfDay` / `MinuteOfHour` | 표시용 파생 (하루를 24등분) |
+| `DayNormalized` | 하루 진행도 `[0, 1)` (분 + accumulator, 연출용) |
 | `Period` | `Dawn` / `Day` / `Dusk` / `Night` |
 
 이벤트: `MinuteChanged`, `DayChanged`, `PeriodChanged`.
@@ -237,5 +238,8 @@ var clock = WorldClock.Instance;
 int day = clock.DayIndex;
 int hour = clock.HourOfDay;
 int minute = clock.MinuteOfHour;
+float day01 = clock.DayNormalized; // [0, 1) 연출/회전체
 DayPeriod period = clock.Period;
 ```
+
+씬 HUD 바늘 등: `WorldClockNormalizedRotatorBinder`가 `DayNormalized` → `UINormalizedRotator.SetNormalized` (LateUpdate).
