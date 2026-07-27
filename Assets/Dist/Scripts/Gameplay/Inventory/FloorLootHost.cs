@@ -124,12 +124,15 @@ public sealed class FloorLootHost
             changed |= _container.TryAddStackReference(stack);
 
         if (changed)
-            _session.NotifyExternalStacksChanged();
+            _session.NotifyExternalStacksChanged(_container);
     }
 
-    void OnStacksChanged()
+    void OnStacksChanged(InventoryStacksChangeSet changeSet)
     {
-        if (_container == null)
+        if (_container == null || changeSet == null)
+            return;
+
+        if (!changeSet.FullRefresh && !changeSet.Contains(_container))
             return;
 
         SpawnWorldObjectsForOrphanStacks();

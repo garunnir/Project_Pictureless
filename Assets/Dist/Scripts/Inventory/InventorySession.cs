@@ -12,8 +12,11 @@ public sealed class InventorySession
     readonly HashSet<string> _managedNestedIds = new();
     readonly FixedContainerCapacityPolicy _nestedContainerPolicy = new();
 
+    readonly List<InventoryContainer> _pendingChangedContainers = new();
+    bool _pendingSidebarAffected;
+
     public event Action SidebarChanged;
-    public event Action StacksChanged;
+    public event Action<InventoryStacksChangeSet> StacksChanged;
 
     public IReadOnlyList<InventoryContainer> GetSidebarContainers() => _sidebarContainers;
 
@@ -109,7 +112,10 @@ public sealed class InventorySession
 
         from.NotifyContentsChanged();
         to.NotifyContentsChanged();
+        MarkContainerChanged(from);
+        MarkContainerChanged(to);
         RefreshNestedContainers();
+        MarkSidebarAffected();
         NotifyStacksChanged();
         return true;
     }
@@ -165,18 +171,32 @@ public sealed class InventorySession
         {
             from.NotifyContentsChanged();
             to.NotifyContentsChanged();
+            MarkContainerChanged(from);
+            MarkContainerChanged(to);
             RefreshNestedContainers();
+            MarkSidebarAffected();
             NotifyStacksChanged();
         }
 
         return moved;
     }
 
-    public void NotifyExternalStacksChanged()
+    public void NotifyExternalStacksChanged(params InventoryContainer[] containers)
     {
         RefreshNestedContainers();
-        for (int i = 0; i < _sidebarContainers.Count; i++)
-            _sidebarContainers[i]?.NotifyContentsChanged();
+
+        if (containers == null || containers.Length == 0)
+        {
+            for (int i = 0; i < _sidebarContainers.Count; i++)
+                MarkContainerChanged(_sidebarContainers[i]);
+        }
+        else
+        {
+            for (int i = 0; i < containers.Length; i++)
+                MarkContainerChanged(containers[i]);
+        }
+
+        MarkSidebarAffected();
         NotifyStacksChanged();
     }
 
@@ -233,7 +253,36 @@ public sealed class InventorySession
 
     void NotifySidebarChanged() => SidebarChanged?.Invoke();
 
-    void NotifyStacksChanged() => StacksChanged?.Invoke();
+    void MarkContainerChanged(InventoryContainer container)
+    {
+        if (container == null)
+            return;
+
+        for (int i = 0; i < _pendingChangedContainers.Count; i++)
+        {
+            if (_pendingChangedContainers[i] == container)
+                return;
+        }
+
+        _pendingChangedContainers.Add(container);
+    }
+
+    void MarkSidebarAffected() => _pendingSidebarAffected = true;
+
+    void NotifyStacksChanged()
+    {
+        if (_pendingChangedContainers.Count == 0 && !_pendingSidebarAffected)
+            return;
+
+        InventoryStacksChangeSet changeSet = InventoryStacksChangeSet.Create(
+            _pendingChangedContainers,
+            _pendingSidebarAffected);
+
+        _pendingChangedContainers.Clear();
+        _pendingSidebarAffected = false;
+
+        StacksChanged?.Invoke(changeSet);
+    }
 
     static bool CanPlaceStackInContainer(ItemStack stack, InventoryContainer target)
     {

@@ -17,11 +17,13 @@ public sealed class UIItemListView : MonoBehaviour
     readonly InventoryListSelection _selection = new();
     readonly List<UIItemListRow> _activeRows = new();
     readonly List<ItemStack> _orderedStacks = new();
+    readonly Dictionary<ItemStack, UIItemListRow> _rowsByStack = new();
 
     InventorySession _session;
     IInventoryItemDragHost _dragHost;
     ScrollRect _scrollRect;
     InventoryContainer _boundContainer;
+    int _appliedContentVersion = -1;
     bool _viewportConfigured;
     bool _selectionEventsWired;
 
@@ -73,22 +75,50 @@ public sealed class UIItemListView : MonoBehaviour
         _columnHeader?.RefreshSortVisual(_sortKey, _sortAscending);
 
         if (_boundContainer != null)
-            Bind(_boundContainer);
+            Bind(_boundContainer, force: true, resetScroll: true);
     }
 
-    public void Bind(InventoryContainer container)
+    public void Bind(InventoryContainer container) =>
+        Bind(container, force: false, resetScroll: false);
+
+    void Bind(InventoryContainer container, bool force, bool resetScroll)
     {
         EnsureScrollViewport();
-        ClearRows();
-        _boundContainer = container;
 
         if (container == null || _rowPrefab == null || _contentRoot == null)
         {
-            Debug.LogWarning("[UIItemListView] Bind skipped: missing container or references.", this);
+            ClearRows();
+            _boundContainer = null;
+            _appliedContentVersion = -1;
             _columnHeader?.RefreshSortVisual(_sortKey, _sortAscending);
             return;
         }
 
+        bool containerChanged = _boundContainer != container;
+        if (!force &&
+            !containerChanged &&
+            container.ContentVersion == _appliedContentVersion)
+            return;
+
+        _boundContainer = container;
+        bool resetScrollPosition = resetScroll || containerChanged;
+
+        BuildOrderedStacks(container);
+
+        bool structureChanged = SyncRows(container, resetScrollPosition);
+        _appliedContentVersion = container.ContentVersion;
+
+        _columnHeader?.RefreshSortVisual(_sortKey, _sortAscending);
+
+        if (structureChanged)
+            RebuildLayout();
+
+        if (resetScrollPosition)
+            ResetScrollTop();
+    }
+
+    void BuildOrderedStacks(InventoryContainer container)
+    {
         _orderedStacks.Clear();
         IReadOnlyList<ItemStack> stacks = container.Stacks;
         for (int i = 0; i < stacks.Count; i++)
@@ -96,27 +126,107 @@ public sealed class UIItemListView : MonoBehaviour
 
         if (_sortKey != ItemListSortKey.None)
             _orderedStacks.Sort(new ItemListStackComparer(_sortKey, _sortAscending));
+    }
+
+    bool SyncRows(InventoryContainer container, bool pruneSelection)
+    {
+        var desired = new HashSet<ItemStack>();
+        for (int i = 0; i < _orderedStacks.Count; i++)
+        {
+            if (_orderedStacks[i] != null)
+                desired.Add(_orderedStacks[i]);
+        }
+
+        bool structureChanged = false;
+
+        var removeStacks = new List<ItemStack>();
+        foreach (KeyValuePair<ItemStack, UIItemListRow> entry in _rowsByStack)
+        {
+            if (!desired.Contains(entry.Key))
+                removeStacks.Add(entry.Key);
+        }
+
+        for (int i = 0; i < removeStacks.Count; i++)
+        {
+            RemoveRow(removeStacks[i], pruneSelection);
+            structureChanged = true;
+        }
 
         for (int i = 0; i < _orderedStacks.Count; i++)
         {
-            UIItemListRow row = LeanPool.Spawn(_rowPrefab, _contentRoot);
-            if (row == null)
-            {
-                Debug.LogError("[UIItemListView] LeanPool.Spawn returned null row.", this);
+            ItemStack stack = _orderedStacks[i];
+            if (stack == null)
                 continue;
+
+            if (!_rowsByStack.TryGetValue(stack, out UIItemListRow row) || row == null)
+            {
+                row = SpawnRow(container, stack);
+                if (row == null)
+                    continue;
+
+                _rowsByStack[stack] = row;
+                structureChanged = true;
             }
+            else
+            {
+                row.Bind(stack, container, _selection, _dragHost, this);
+            }
+        }
 
-            // Pool 손상 복구만 — sizeDelta/LayoutElement 등 프리팹 레이아웃은 덮지 않음.
-            if (row.RectTransform != null)
-                row.RectTransform.localScale = Vector3.one;
+        structureChanged |= ReorderActiveRows();
+        return structureChanged;
+    }
 
-            row.Bind(_orderedStacks[i], container, _selection, _dragHost, this);
+    UIItemListRow SpawnRow(InventoryContainer container, ItemStack stack)
+    {
+        UIItemListRow row = LeanPool.Spawn(_rowPrefab, _contentRoot);
+        if (row == null)
+        {
+            Debug.LogError("[UIItemListView] LeanPool.Spawn returned null row.", this);
+            return null;
+        }
+
+        if (row.RectTransform != null)
+            row.RectTransform.localScale = Vector3.one;
+
+        row.Bind(stack, container, _selection, _dragHost, this);
+        return row;
+    }
+
+    void RemoveRow(ItemStack stack, bool pruneSelection)
+    {
+        if (!_rowsByStack.TryGetValue(stack, out UIItemListRow row))
+            return;
+
+        _rowsByStack.Remove(stack);
+        _activeRows.Remove(row);
+
+        if (pruneSelection && _selection.IsSelected(stack))
+            _selection.Remove(stack);
+
+        if (row != null)
+            LeanPool.Despawn(row.gameObject);
+    }
+
+    bool ReorderActiveRows()
+    {
+        bool orderChanged = false;
+
+        _activeRows.Clear();
+        for (int i = 0; i < _orderedStacks.Count; i++)
+        {
+            ItemStack stack = _orderedStacks[i];
+            if (stack == null || !_rowsByStack.TryGetValue(stack, out UIItemListRow row) || row == null)
+                continue;
+
+            if (row.transform.GetSiblingIndex() != i)
+                orderChanged = true;
+
+            row.transform.SetSiblingIndex(i);
             _activeRows.Add(row);
         }
 
-        _columnHeader?.RefreshSortVisual(_sortKey, _sortAscending);
-        RebuildLayout();
-        ResetScrollTop();
+        return orderChanged;
     }
 
     void EnsureScrollViewport()
@@ -131,7 +241,6 @@ public sealed class UIItemListView : MonoBehaviour
         if (viewport.GetComponent<RectMask2D>() == null)
             Debug.LogError("[UIItemListView] RectMask2D missing on scroll viewport prefab.", viewport);
 
-        // Prefab chrome (Mask, Image, ScrollRect options) is SSOT — do not overwrite at runtime.
         if (_scrollRect == null)
             _scrollRect = GetComponent<ScrollRect>();
 
@@ -223,5 +332,9 @@ public sealed class UIItemListView : MonoBehaviour
         }
 
         _activeRows.Clear();
+        _rowsByStack.Clear();
+        _orderedStacks.Clear();
+        _boundContainer = null;
+        _appliedContentVersion = -1;
     }
 }

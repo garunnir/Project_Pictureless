@@ -119,7 +119,7 @@ public sealed class InventoryRuntimeTestSetup : MonoBehaviour
             return;
 
         PlayerInventoryRuntime runtime = PlayerInventoryRuntime.Active;
-        runtime?.Session?.NotifyExternalStacksChanged();
+        runtime?.Session?.NotifyExternalStacksChanged(container);
 
         Debug.Log(
             $"[InventoryRuntimeTestSetup] Seeded '{_targetContainerId}' stacks={container.Stacks.Count}",

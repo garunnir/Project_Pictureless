@@ -207,18 +207,16 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
     void RefreshVisibleWindowsAfterDrag()
     {
-        // InventoryDragState.End() already ran — full stack-derived UI refresh (sidebar + list).
-        // Do not use RefreshListOnly here: nested bag tabs come from stacks (same SSOT as OnStacksChanged).
         if (_primaryWindow && _primaryWindow.IsVisible)
         {
             _primaryWindow.ClearSidebarDropHovers();
-            _primaryWindow.OnStacksChanged();
+            _primaryWindow.SyncDeferredAfterDrag();
         }
 
         if (_lootWindow && _lootWindow.IsVisible)
         {
             _lootWindow.ClearSidebarDropHovers();
-            _lootWindow.OnStacksChanged();
+            _lootWindow.SyncDeferredAfterDrag();
         }
     }
 
@@ -784,18 +782,18 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
             _lootWindow.OnSidebarChanged();
     }
 
-    void OnInventoryDataChanged()
+    void OnInventoryDataChanged(InventoryStacksChangeSet changeSet)
     {
         if (_primaryWindow && _primaryWindow.IsVisible)
-            _primaryWindow.OnStacksChanged();
+            _primaryWindow.SyncFromChangeSet(changeSet);
 
         if (_lootWindow && _lootWindow.IsVisible)
-            _lootWindow.OnStacksChanged();
+            _lootWindow.SyncFromChangeSet(changeSet);
     }
 
     void RefreshVisibleWindows()
     {
         OnSessionChanged();
-        OnInventoryDataChanged();
+        OnInventoryDataChanged(InventoryStacksChangeSet.Full);
     }
 }

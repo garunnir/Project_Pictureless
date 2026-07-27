@@ -156,18 +156,17 @@
 
 - 게임 데이터: `BNData/`(참조) + `GameData/`(커스텀) 듀얼. `GameDataLoader` + `GameDataJson`(Newtonsoft). `ItemData`에 BN 게임 디테일 통합(description·armor·gun·tool·comestible 등). `GameplayData.GetItem` / `GetMaterial` — 커스텀 우선 → 참조 fallback. BN 재생성: `python Tools/bn_converter/convert.py --bn-path <Cataclysm-BN> --output Assets/StreamingAssets/BNData`.
 
-- 데이터 갱신: `InventorySession` 이벤트별 갱신 범위 분리
-  - `StacksChanged` → `UIInventoryController.OnInventoryDataChanged()` → `UIInventoryListWindow.OnStacksChanged()`  
-    - PlayerOnly / NearbyOnly: 중첩 가방 탭은 스택에서 유도 → `EnsureSelectedContainerForSidebar` + `RefreshSidebarAndSelection` + 리스트 Bind  
-    - NearbyOnly도 동일 (floor-loot Nested 탭). 이전에는 PlayerOnly만 사이드바 Sync → 간이 이동 후 루트 탭이 stale.
-  - `SidebarChanged` → `UIInventoryController.OnSessionChanged()` → `OnSidebarChanged` / `OnStacksChanged`
-  - **드래그 중** (`InventoryDragState.IsDragging`): `OnSidebarChanged`·`OnStacksChanged` 모두 사이드바 `Sync` / `ApplyModeLayout`(show·hide) 보류 — 소스 슬롯 Destroy·비활성으로 `OnEndDrag` 유실·고스트 잔류 방지. 슬롯 `OnDisable`이 드래그 중이면 `OnItemDragEnded` 안전망. 종료 후 `RefreshVisibleWindowsAfterDrag` → `OnStacksChanged`로 일괄 반영.
-  - 탭 클릭 / 컨테이너 선택 → `SetActiveContainer` / 리스트 Bind
-- `SetActiveContainer`: 드래그 중에는 리스트 `Bind` 생략. 종료 후 `OnStacksChanged`가 Bind.
+- 데이터 갱신: `InventorySession`이 `InventoryStacksChangeSet`(변경 컨테이너 + `SidebarAffected`)을 발행. 무 payload `StacksChanged` 금지.
+  - `InventoryContainer.ContentVersion` — `NotifyContentsChanged`마다 증가.
+  - `StacksChanged(changeSet)` → `UIInventoryController.OnInventoryDataChanged` → `UIInventoryListWindow.SyncFromChangeSet` — 창 관심 컨테이너만 List/Sidebar/Capacity 갱신.
+  - `SidebarChanged` → `OnSessionChanged` → `SyncFromChangeSet(Full)` + 사이드바 Sync.
+  - **드래그 중**: 사이드바 `Sync` / `ApplyModeLayout` 보류. `OnDrop`→`MoveStacks`는 드래그 중이라 리스트 `Bind`도 생략. 종료 후 `RefreshVisibleWindowsAfterDrag` → `SyncDeferredAfterDrag`(사이드바 + 선택 컨테이너 리스트 Bind).
+  - 탭 클릭 / 컨테이너 선택 → `SetActiveContainer` / 리스트 `Bind`(version skip + 증분 Sync).
+- `SetActiveContainer`: 드래그 중 리스트 Bind 생략.
 - `InventoryDragDrop`: `ContainerTab`은 Source(부모)==리스트 타깃(body)이어도 early-out하지 않음(`MoveStacks` from==to가 no-op). Item/ContainerContents만 Source==target early-out.
 - 사이드 탭 이동: 간이(중첩) = 컨테이너째 `MoveStacks`; 고정 탭 = 내용물 `MoveStacksSequentiallyUntilFull`(용량 초과 시 중단). Pending: 중량·부피 소요 시간.
-- `ConfigureDragAndDrop`: 리스트 Configure 후 `RefreshSidebarAndSelection`으로 탭 슬롯에 `IInventoryItemDragHost` 재바인딩. (`Initialize`가 `ConfigureWindow`보다 먼저라 첫 Sync 시점 `_dragHost`가 null — Primary만 재이벤트 없으면 탭 드래그 불가, Loot는 Nearby 갱신으로 Sync가 다시 돌 수 있어 비대칭이 났음.)
-- `UIItemListView.Bind` 직후 `LayoutRebuilder.ForceRebuildLayoutImmediate` + `Canvas.ForceUpdateCanvases()`로 동적 행 레이아웃 갱신
+- `ConfigureDragAndDrop`: 뷰포트 DnD 배선만. 리스트/사이드바 Bind는 `Initialize`·`SyncFromChangeSet` SSOT.
+- `UIItemListView`: `ItemStack` 참조 증분 Sync(LeanPool). 구조 변경 시에만 `ForceRebuildLayoutImmediate`.
 - `UIInventoryController.LateUpdate`: 포인터가 창 위에 있는지 캐시 후 변경 시에만 `SuppressPlayerAction` 호출
 
 

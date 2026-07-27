@@ -57,4 +57,12 @@ public sealed class InventoryListSelection
 
         return _scratch;
     }
+
+    public void Remove(ItemStack stack)
+    {
+        if (stack == null || !_selected.Remove(stack))
+            return;
+
+        SelectionChanged?.Invoke();
+    }
 }

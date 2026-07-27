@@ -197,24 +197,31 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             RefreshSidebarAndSelection();
     }
 
-    public void OnStacksChanged()
+    public void OnStacksChanged() => SyncFromChangeSet(InventoryStacksChangeSet.Full);
+
+    public void SyncFromChangeSet(InventoryStacksChangeSet changeSet)
     {
-        if (_session == null)
+        if (_session == null || changeSet == null)
             return;
 
-        // Nested bag tabs are derived from stacks (PlayerOnly: body, NearbyOnly: floor-loot).
-        // Sync / ApplyModeLayout must not run while a tab drag is active
-        // (Destroy or SetActive(false) skips OnEndDrag → ghost stuck).
+        if (!changeSet.FullRefresh && !changeSet.SidebarAffected && !AffectsThisWindow(changeSet))
+            return;
+
         bool deferSidebarChrome = InventoryDragState.IsDragging;
 
         if (_mode == InventoryWindowMode.PlayerOnly && _selectedContainer == null)
         {
             InventoryContainer resolved = ResolvePlayerContainer();
-            if (resolved != null)
+            if (resolved != null &&
+                (changeSet.FullRefresh || changeSet.Contains(resolved)))
                 SetActiveContainer(resolved, refreshList: false);
         }
 
-        if (!deferSidebarChrome)
+        bool refreshSidebar = changeSet.FullRefresh ||
+                              changeSet.SidebarAffected ||
+                              SidebarSourcesChanged(changeSet);
+
+        if (!deferSidebarChrome && refreshSidebar)
         {
             if (_mode == InventoryWindowMode.PlayerOnly)
                 ApplyModeLayout();
@@ -223,16 +230,75 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             RefreshSidebarAndSelection();
         }
 
+        bool refreshList = changeSet.FullRefresh ||
+                           (_selectedContainer != null && changeSet.Contains(_selectedContainer));
+
+        if (refreshList && _selectedContainer != null)
+            SetActiveContainer(_selectedContainer);
+        else if (changeSet.FullRefresh ||
+                 (_selectedContainer != null && changeSet.Contains(_selectedContainer)))
+            RefreshCapacityInfo();
+    }
+
+    public void SyncDeferredAfterDrag()
+    {
+        if (_session == null || InventoryDragState.IsDragging)
+            return;
+
+        if (_mode == InventoryWindowMode.PlayerOnly)
+            ApplyModeLayout();
+
+        EnsureSelectedContainerForSidebar();
+        RefreshSidebarAndSelection();
+
+        // MoveStacks fires during OnDrop while IsDragging — list Bind was skipped; flush here.
         if (_selectedContainer != null)
             SetActiveContainer(_selectedContainer);
-        else
-            RefreshCapacityInfo();
+    }
+
+    bool AffectsThisWindow(InventoryStacksChangeSet changeSet)
+    {
+        if (changeSet.FullRefresh)
+            return true;
+
+        if (_selectedContainer != null && changeSet.Contains(_selectedContainer))
+            return true;
+
+        return SidebarSourcesChanged(changeSet);
+    }
+
+    bool SidebarSourcesChanged(InventoryStacksChangeSet changeSet)
+    {
+        if (changeSet.FullRefresh || changeSet.SidebarAffected)
+            return true;
+
+        if (_mode == InventoryWindowMode.PlayerOnly)
+        {
+            InventoryContainer body = GetPlayerBodyContainer();
+            return body != null && changeSet.Contains(body);
+        }
+
+        for (int i = 0; i < changeSet.ChangedContainers.Count; i++)
+        {
+            InventoryContainer container = changeSet.ChangedContainers[i];
+            if (container == null)
+                continue;
+
+            if (container.InstanceId == FloorLootHost.DefaultInstanceId)
+                return true;
+
+            PlayerInventoryRuntime runtime = PlayerInventoryRuntime.Active;
+            if (runtime != null && runtime.IsWorldLootContainer(container.InstanceId))
+                return true;
+        }
+
+        return false;
     }
 
     public void OnSessionChanged()
     {
         OnSidebarChanged();
-        OnStacksChanged();
+        SyncFromChangeSet(InventoryStacksChangeSet.Full);
     }
 
     public bool AddContainer(InventoryContainer container) =>

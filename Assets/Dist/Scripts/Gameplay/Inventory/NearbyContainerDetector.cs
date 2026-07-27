@@ -142,12 +142,39 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         Refresh(gridPos);
     }
 
-    void OnStacksChanged()
+    void OnStacksChanged(InventoryStacksChangeSet changeSet)
     {
-        if (!_isActive || _isRefreshing)
+        if (!_isActive || _isRefreshing || changeSet == null)
+            return;
+
+        if (!ShouldRefreshForStacksChange(changeSet))
             return;
 
         RefreshImmediate();
+    }
+
+    bool ShouldRefreshForStacksChange(InventoryStacksChangeSet changeSet)
+    {
+        if (changeSet.FullRefresh)
+            return true;
+
+        if (changeSet.ContainsInstanceId(FloorLootHost.DefaultInstanceId))
+            return true;
+
+        if (!changeSet.SidebarAffected)
+            return false;
+
+        for (int i = 0; i < changeSet.ChangedContainers.Count; i++)
+        {
+            InventoryContainer container = changeSet.ChangedContainers[i];
+            if (container == null)
+                continue;
+
+            if (_managedWorldContainerIds.Contains(container.InstanceId))
+                return true;
+        }
+
+        return false;
     }
 
     void Refresh(Vector3Int center)

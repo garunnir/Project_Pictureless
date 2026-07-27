@@ -14,6 +14,7 @@ public sealed class InventoryContainer : IItemContainer
     public ContainerData Definition { get; }
     public IReadOnlyList<ItemStack> Stacks => _stacks;
     public IContainerCapacityPolicy CapacityPolicy { get; }
+    public int ContentVersion { get; private set; }
 
     public event Action ContentsChanged;
 
@@ -40,7 +41,11 @@ public sealed class InventoryContainer : IItemContainer
 
     internal List<ItemStack> MutableStacks => _stacks;
 
-    public void NotifyContentsChanged() => ContentsChanged?.Invoke();
+    public void NotifyContentsChanged()
+    {
+        ContentVersion++;
+        ContentsChanged?.Invoke();
+    }
 
     public bool ContainsStackReference(ItemStack stack) =>
         stack != null && _stacks.Contains(stack);

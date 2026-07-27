@@ -183,7 +183,7 @@ public static class CraftingService
             GameplayData.Stats.AddPractice(recipe.skill_used, practiceXp);
         }
 
-        session?.NotifyExternalStacksChanged();
+        session?.NotifyExternalStacksChanged(container);
         return true;
     }
 
@@ -302,7 +302,7 @@ public static class CraftingService
                 GameplayData.Stats.AddPractice(recipe.skill_used, practiceXp);
         }
 
-        session?.NotifyExternalStacksChanged();
+        session?.NotifyExternalStacksChanged(container);
         return true;
     }
 
