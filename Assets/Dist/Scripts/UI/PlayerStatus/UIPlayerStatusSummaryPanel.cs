@@ -61,7 +61,13 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
             MoodEntry entry = entries[i];
             Sprite front = null;
             if (_iconCatalog != null)
-                _iconCatalog.TryGetFront(entry.IconId, out front);
+            {
+                if (!_iconCatalog.TryGetFront(entry.IconId, out front) &&
+                    entry.IconId != MoodIconId.Discomfort)
+                {
+                    _iconCatalog.TryGetFront(MoodIconId.Discomfort, out front);
+                }
+            }
 
             slot.Apply(entry, front);
             slot.SetVisible(true);
