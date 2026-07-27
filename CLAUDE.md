@@ -10,7 +10,7 @@
 ## Workflow
 
 ### Before Starting Any Task
-1. Read the relevant skill file from `.claude/skills/` if available
+1. Read the relevant skill file from `.claude/skills/` when creating or modifying Unity scripts — skip for docs-only, config, or single-line fixes
 2. If the task is complex (>30 min estimated), write a plan first and wait for approval
 3. Break large tasks into small, verifiable steps
 
@@ -20,15 +20,21 @@
 - Keep track of every file you touch
 
 ### After Completing Any Task
-- Read `.claude/checklists/post-task.md` and verify every item
 - List all files created or modified
 - If something feels uncertain, flag it explicitly
+- **post-task checklist** (`.claude/checklists/post-task.md`):
+  - **Skip** (token/속도 우선): ≤2 files, net ≤40 lines, typo/comment/format, handoff 구현만
+  - **Required**: ≥3 files, public API·직렬화·새 타입/파이프라인, migration-parity 해당
 
 ---
 
 ## Agent Roles
 
-When the task involves writing substantial code, run these agents in order after completing the work:
+**Token trade-off:** QA/Test/Review 3연속은 품질↑·토큰↑. 아래 기준으로만 실행.
+
+When the task involves **substantial** code (≥3 files or new public API), run these agents in order after completing the work:
+
+**Skip** QA/Test/Review when: ≤2 files, net ≤40 lines, 또는 handoff에 명시된 좁은 패치만.
 
 ### QA Agent
 ```

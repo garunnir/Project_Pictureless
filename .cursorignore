@@ -1,0 +1,9 @@
+# Unity generated / cache - reduce git status and indexing noise
+Library/
+Temp/
+Logs/
+obj/
+Build/
+Builds/
+UserSettings/
+MemoryCaptures/
