@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerStatusViewModel ??Body/Vitals/Stats 참조 + ?�약 무드 ?�생 ?�태
+// PlayerStatusViewModel ? Body/Vitals/Stats ?? + ?? ?? ?? ??
 // ============================================================
 
 using System;
@@ -42,6 +42,9 @@ public sealed class PlayerStatusViewModel
         if (_stats != null)
             _stats.Changed += OnStatsChanged;
 
+        PlayerEncumbranceHost.StageChanged += OnEncumbranceChanged;
+        PlayerEncumbranceHost.ActiveChanged += OnEncumbranceChanged;
+
         RebuildMoodEntries();
         Changed?.Invoke();
         MoodChanged?.Invoke();
@@ -55,6 +58,9 @@ public sealed class PlayerStatusViewModel
             _vitals.Changed -= OnVitalsChanged;
         if (_stats != null)
             _stats.Changed -= OnStatsChanged;
+
+        PlayerEncumbranceHost.StageChanged -= OnEncumbranceChanged;
+        PlayerEncumbranceHost.ActiveChanged -= OnEncumbranceChanged;
 
         _body = null;
         _vitals = null;
@@ -81,6 +87,18 @@ public sealed class PlayerStatusViewModel
 
     void OnStatsChanged(string _) => Changed?.Invoke();
 
-    void RebuildMoodEntries() =>
-        PlayerStatusMoodEntries.Collect(_body, _vitals, _moodEntries);
+    void OnEncumbranceChanged()
+    {
+        RebuildMoodEntries();
+        MoodChanged?.Invoke();
+        Changed?.Invoke();
+    }
+
+    void RebuildMoodEntries()
+    {
+        PlayerEncumbranceStage stage = PlayerEncumbranceHost.Active != null
+            ? PlayerEncumbranceHost.Active.Stage
+            : PlayerEncumbranceStage.None;
+        PlayerStatusMoodEntries.Collect(_body, _vitals, stage, _moodEntries);
+    }
 }

@@ -10,6 +10,15 @@ namespace Garunnir.Runtime.Gameplay.Data
     {
         public static void Collect(ICharacterBody body, IPlayerVitals vitals, List<MoodEntry> into)
         {
+            Collect(body, vitals, PlayerEncumbranceStage.None, into);
+        }
+
+        public static void Collect(
+            ICharacterBody body,
+            IPlayerVitals vitals,
+            PlayerEncumbranceStage encumbranceStage,
+            List<MoodEntry> into)
+        {
             if (into == null)
                 return;
 
@@ -20,6 +29,20 @@ namespace Garunnir.Runtime.Gameplay.Data
 
             if (body != null)
                 CollectBodyEffects(body, into);
+
+            CollectEncumbrance(encumbranceStage, into);
+        }
+
+        static void CollectEncumbrance(PlayerEncumbranceStage stage, List<MoodEntry> into)
+        {
+            if (stage == PlayerEncumbranceStage.None)
+                return;
+
+            into.Add(new MoodEntry(
+                MoodIconId.Overencumbered,
+                MoodPolarity.Negative,
+                PlayerEncumbrance.GetMoodIntensity(stage),
+                PlayerStatusLabels.GetEncumbranceTooltip(stage)));
         }
 
         static void CollectVitals(IPlayerVitals vitals, List<MoodEntry> into)

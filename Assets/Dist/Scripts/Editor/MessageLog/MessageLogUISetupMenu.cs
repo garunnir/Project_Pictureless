@@ -55,13 +55,16 @@ static class MessageLogUISetupMenu
             layerHost = Undo.AddComponent<UICanvasLayerHost>(canvas.gameObject);
         layerHost.EditorSetupLayerHierarchy();
 
-        InputManager inputManager = Object.FindAnyObjectByType<InputManager>();
-        Transform systemRoot = inputManager != null ? inputManager.transform.parent : null;
+        Transform systemRoot = SystemHierarchySetup.ResolveSystemRoot();
         if (systemRoot == null)
         {
             Debug.LogError("[MessageLogUISetupMenu] InputManager parent (System root) not found.");
             return;
         }
+
+        Transform msgRoot = SystemHierarchySetup.EnsureCategory(
+            systemRoot,
+            SystemHierarchySetup.Msg);
 
         MessageLogUIBridge bridge = canvas.GetComponent<MessageLogUIBridge>();
         if (bridge == null)
@@ -73,8 +76,32 @@ static class MessageLogUISetupMenu
         {
             GameObject sinkGo = new("MessageLogPlayerCombatSink");
             Undo.RegisterCreatedObjectUndo(sinkGo, "Create MessageLogPlayerCombatSink");
-            sinkGo.transform.SetParent(systemRoot, false);
+            sinkGo.transform.SetParent(msgRoot, false);
             Undo.AddComponent<MessageLogPlayerCombatSink>(sinkGo);
+        }
+        else
+        {
+            SystemHierarchySetup.EnsureChildUnder(
+                msgRoot,
+                sink.transform,
+                "Move MessageLogPlayerCombatSink Under System/Msg");
+        }
+
+        MessageLogPlayerEncumbranceSink encumbranceSink =
+            Object.FindAnyObjectByType<MessageLogPlayerEncumbranceSink>();
+        if (encumbranceSink == null)
+        {
+            GameObject encGo = new("MessageLogPlayerEncumbranceSink");
+            Undo.RegisterCreatedObjectUndo(encGo, "Create MessageLogPlayerEncumbranceSink");
+            encGo.transform.SetParent(msgRoot, false);
+            Undo.AddComponent<MessageLogPlayerEncumbranceSink>(encGo);
+        }
+        else
+        {
+            SystemHierarchySetup.EnsureChildUnder(
+                msgRoot,
+                encumbranceSink.transform,
+                "Move MessageLogPlayerEncumbranceSink Under System/Msg");
         }
 
         UIMessageLogController controller =
@@ -83,8 +110,15 @@ static class MessageLogUISetupMenu
         {
             GameObject go = new("MessageLogDisplayController");
             Undo.RegisterCreatedObjectUndo(go, "Create MessageLogDisplayController");
-            go.transform.SetParent(systemRoot, false);
+            go.transform.SetParent(msgRoot, false);
             controller = Undo.AddComponent<UIMessageLogController>(go);
+        }
+        else
+        {
+            SystemHierarchySetup.EnsureChildUnder(
+                msgRoot,
+                controller.transform,
+                "Move MessageLogDisplayController Under System/Msg");
         }
 
         UIMessageLogPanel prefab =
@@ -142,6 +176,7 @@ static class MessageLogUISetupMenu
         Put("msg.combat.player_hit", "{0}에 {1}의 피해를 입었다.");
         Put("msg.status.defeat_body", "치명상을 입고 쓰러졌다.");
         Put("msg.status.defeat_collapse", "정신이 무너져 쓰러졌다.");
+        Put("msg.status.encumbrance_immobile", "너무 무거워서 움직일 수 없다.");
 
         var list = new List<LocalizationTable.Entry>(map.Count);
         foreach (KeyValuePair<string, string> kv in map)

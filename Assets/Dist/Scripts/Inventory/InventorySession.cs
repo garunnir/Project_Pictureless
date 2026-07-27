@@ -76,6 +76,8 @@ public sealed class InventorySession
         float pendingVolume = 0f;
         float maxWeight = to.CapacityPolicy.GetMaxWeight(to);
         float maxVolume = to.CapacityPolicy.GetMaxVolume(to);
+        bool hardWeight = to.CapacityPolicy.EnforcesHardWeightLimit;
+        bool hardVolume = to.CapacityPolicy.EnforcesHardVolumeLimit;
 
         for (int i = 0; i < stacks.Count; i++)
         {
@@ -88,7 +90,13 @@ public sealed class InventorySession
 
             float nextWeight = to.GetTotalWeight() + pendingWeight + stack.TotalWeight;
             float nextVolume = to.GetTotalVolume() + pendingVolume + stack.TotalVolume;
-            if (nextWeight > maxWeight + 0.0001f || nextVolume > maxVolume + 0.0001f)
+            if (ExceedsHardCapacity(
+                    hardWeight,
+                    hardVolume,
+                    nextWeight,
+                    nextVolume,
+                    maxWeight,
+                    maxVolume))
                 return false;
 
             pending.Add(stack);
@@ -99,6 +107,8 @@ public sealed class InventorySession
         for (int i = 0; i < pending.Count; i++)
             TransferStack(from, to, pending[i]);
 
+        from.NotifyContentsChanged();
+        to.NotifyContentsChanged();
         RefreshNestedContainers();
         NotifyStacksChanged();
         return true;
@@ -121,6 +131,8 @@ public sealed class InventorySession
         int moved = 0;
         float maxWeight = to.CapacityPolicy.GetMaxWeight(to);
         float maxVolume = to.CapacityPolicy.GetMaxVolume(to);
+        bool hardWeight = to.CapacityPolicy.EnforcesHardWeightLimit;
+        bool hardVolume = to.CapacityPolicy.EnforcesHardVolumeLimit;
 
         for (int i = 0; i < stacks.Count; i++)
         {
@@ -136,7 +148,13 @@ public sealed class InventorySession
 
             float nextWeight = to.GetTotalWeight() + stack.TotalWeight;
             float nextVolume = to.GetTotalVolume() + stack.TotalVolume;
-            if (nextWeight > maxWeight + 0.0001f || nextVolume > maxVolume + 0.0001f)
+            if (ExceedsHardCapacity(
+                    hardWeight,
+                    hardVolume,
+                    nextWeight,
+                    nextVolume,
+                    maxWeight,
+                    maxVolume))
                 break;
 
             TransferStack(from, to, stack);
@@ -145,6 +163,8 @@ public sealed class InventorySession
 
         if (moved > 0)
         {
+            from.NotifyContentsChanged();
+            to.NotifyContentsChanged();
             RefreshNestedContainers();
             NotifyStacksChanged();
         }
@@ -155,7 +175,25 @@ public sealed class InventorySession
     public void NotifyExternalStacksChanged()
     {
         RefreshNestedContainers();
+        for (int i = 0; i < _sidebarContainers.Count; i++)
+            _sidebarContainers[i]?.NotifyContentsChanged();
         NotifyStacksChanged();
+    }
+
+    static bool ExceedsHardCapacity(
+        bool hardWeight,
+        bool hardVolume,
+        float nextWeight,
+        float nextVolume,
+        float maxWeight,
+        float maxVolume)
+    {
+        const float epsilon = FixedContainerCapacityPolicy.Epsilon;
+        if (hardWeight && nextWeight > maxWeight + epsilon)
+            return true;
+        if (hardVolume && nextVolume > maxVolume + epsilon)
+            return true;
+        return false;
     }
 
     public bool TryGetContainerItemStack(

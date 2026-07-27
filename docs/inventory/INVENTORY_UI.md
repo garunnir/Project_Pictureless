@@ -186,12 +186,24 @@
 
 ### 용량 검증
 
-
-
 - 다중 이동은 개별 `CanAccept`만으로 판단하지 않는다.
-
 - `InventorySession.MoveStacks(...)`에서 합산 무게/부피를 누적 계산해 검증한다.
+- **하드 차원은 policy 플래그로 결정**한다 (`IContainerCapacityPolicy.EnforcesHardWeightLimit` / `EnforcesHardVolumeLimit`).
+  - 상자·가방 등 `FixedContainerCapacityPolicy`: 무게·부피 모두 hard.
+  - 플레이어 몸통 `PlayerCarryCapacityPolicy`: **무게 soft**(초과 적재 허용), **부피만 hard**.
+- `GetMaxWeight`는 거절 한도가 아니라 **감당 가능 한도**(UI·과적 비율·추후 스킬 가산) SSOT다.
 
+### 과적(Encumbrance)
+
+- `PlayerEncumbranceHost`가 몸통 `used/max` 비율로 단계(None/Light/Medium/Heavy/Extreme)를 평가한다.
+- Light~Heavy: 이동 감속·스탯 delta·상태 HUD 디버프 아이콘. **메시지 로그 없음**.
+- Extreme: 이동 불가 + 디버프 아이콘 + `GameplayMessageLog` (`msg.status.encumbrance_immobile`, 이동 시도 시 Extreme 구간 1회).
+- 부피 soft / 정리정돈 스킬 한도 상승은 **미구현**. provider 훅(`PlayerInventoryHost` Func)만 유지.
+- BN `armor.encumbrance`와는 별개(착용 레이어 부담 데이터).
+
+### 용량 UI
+
+- `Area_InvInfo` `Txt_Weight`: `used/max`. `used > max`이면 `InventoryCapacityVisuals.OverweightColor` (정상 색은 프리팹 기본값 유지).
 
 
 ### 런타임 조회/시딩

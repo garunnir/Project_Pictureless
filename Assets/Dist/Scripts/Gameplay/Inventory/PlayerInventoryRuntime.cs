@@ -7,6 +7,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(PlayerInventoryHost))]
 [RequireComponent(typeof(NearbyContainerDetector))]
+[RequireComponent(typeof(PlayerEncumbranceHost))]
 public sealed class PlayerInventoryRuntime : MonoBehaviour
 {
     [Required, SerializeField] PlayerInventoryHost _host;

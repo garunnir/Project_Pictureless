@@ -15,6 +15,8 @@ public sealed class InventoryContainer : IItemContainer
     public IReadOnlyList<ItemStack> Stacks => _stacks;
     public IContainerCapacityPolicy CapacityPolicy { get; }
 
+    public event Action ContentsChanged;
+
     InventoryContainer(
         string instanceId,
         ContainerData definition,
@@ -38,6 +40,8 @@ public sealed class InventoryContainer : IItemContainer
 
     internal List<ItemStack> MutableStacks => _stacks;
 
+    public void NotifyContentsChanged() => ContentsChanged?.Invoke();
+
     public bool ContainsStackReference(ItemStack stack) =>
         stack != null && _stacks.Contains(stack);
 
@@ -47,6 +51,7 @@ public sealed class InventoryContainer : IItemContainer
             return false;
 
         _stacks.Add(stack);
+        NotifyContentsChanged();
         return true;
     }
 
@@ -55,10 +60,21 @@ public sealed class InventoryContainer : IItemContainer
         if (stack == null)
             return false;
 
-        return _stacks.Remove(stack);
+        if (!_stacks.Remove(stack))
+            return false;
+
+        NotifyContentsChanged();
+        return true;
     }
 
-    public void ClearStackReferences() => _stacks.Clear();
+    public void ClearStackReferences()
+    {
+        if (_stacks.Count == 0)
+            return;
+
+        _stacks.Clear();
+        NotifyContentsChanged();
+    }
 
     public int AddItem(ItemData item, int count)
     {
@@ -97,6 +113,7 @@ public sealed class InventoryContainer : IItemContainer
             remaining -= chunk;
         }
 
+        NotifyContentsChanged();
         return count;
     }
 
@@ -160,7 +177,11 @@ public sealed class InventoryContainer : IItemContainer
             }
         }
 
-        return count - remaining;
+        int removed = count - remaining;
+        if (removed > 0)
+            NotifyContentsChanged();
+
+        return removed;
     }
 
     public int RemoveItem(string itemId, int count)

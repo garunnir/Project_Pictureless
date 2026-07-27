@@ -28,13 +28,16 @@ static class CombatActionUISetupMenu
             layerHost = Undo.AddComponent<UICanvasLayerHost>(canvas.gameObject);
         layerHost.EditorSetupLayerHierarchy();
 
-        InputManager inputManager = Object.FindAnyObjectByType<InputManager>();
-        Transform systemRoot = inputManager != null ? inputManager.transform.parent : null;
+        Transform systemRoot = SystemHierarchySetup.ResolveSystemRoot();
         if (systemRoot == null)
         {
             Debug.LogError("[CombatActionUISetupMenu] InputManager parent (System root) not found.");
             return;
         }
+
+        Transform combatRoot = SystemHierarchySetup.EnsureCategory(
+            systemRoot,
+            SystemHierarchySetup.Combat);
 
         CombatActionUIBridge bridge = canvas.GetComponent<CombatActionUIBridge>();
         if (bridge == null)
@@ -46,8 +49,15 @@ static class CombatActionUISetupMenu
         {
             GameObject go = new("CombatActionDisplayController");
             Undo.RegisterCreatedObjectUndo(go, "Create CombatActionDisplayController");
-            go.transform.SetParent(systemRoot, false);
+            go.transform.SetParent(combatRoot, false);
             controller = Undo.AddComponent<UICombatActionController>(go);
+        }
+        else
+        {
+            SystemHierarchySetup.EnsureChildUnder(
+                combatRoot,
+                controller.transform,
+                "Move CombatActionDisplayController Under System/Combat");
         }
 
         UICombatActionPanel prefab =

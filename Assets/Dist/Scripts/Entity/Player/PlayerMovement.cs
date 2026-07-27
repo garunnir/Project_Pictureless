@@ -68,6 +68,12 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
     readonly RaycastHit[] _hits =
         new RaycastHit[CharacterLocomotionDefaults.HitBufferSize];
 
+    float _encumbranceSpeedMultiplier = 1f;
+    bool _encumbranceBlocksSprint;
+    bool _encumbranceBlocksMovement;
+
+    public static event System.Action AnyImmobileMoveAttempted;
+
     public CapsuleCollider Capsule => _capsule;
     public RaycastHit[] Hits => _hits;
     public int LastHitCount => _locomotion != null ? _locomotion.LastHitCount : 0;
@@ -99,6 +105,16 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
         if (_mover == null)
             return;
 
+        if (_encumbranceBlocksMovement)
+        {
+            if (worldDirXZ.sqrMagnitude > Mathf.Epsilon)
+                AnyImmobileMoveAttempted?.Invoke();
+
+            _mover.SetWorldDirection(Vector3.zero);
+            _characterState?.SetMoveDir(Vector3.zero);
+            return;
+        }
+
         _mover.SetWorldDirection(worldDirXZ);
         _characterState?.SetMoveDir(_mover.WorldMoveDir);
     }
@@ -106,6 +122,28 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
     public void SetSpeed(float metersPerSecond)
     {
         _moveSpeed = Mathf.Max(0f, metersPerSecond);
+    }
+
+    public void SetEncumbranceMovement(
+        float speedMultiplier,
+        bool blocksSprint,
+        bool blocksMovement)
+    {
+        _encumbranceSpeedMultiplier = Mathf.Max(0f, speedMultiplier);
+        _encumbranceBlocksSprint = blocksSprint;
+        _encumbranceBlocksMovement = blocksMovement;
+
+        if (_mover == null)
+            return;
+
+        if (blocksSprint || blocksMovement)
+            _mover.SetSprinting(false);
+
+        if (blocksMovement)
+        {
+            _mover.SetInput(Vector2.zero, _refCam);
+            _characterState?.SetMoveDir(Vector3.zero);
+        }
     }
 
     public void SetControllEnabled(bool enabled)
@@ -185,7 +223,18 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
     }
     public void OnMove(InputAction.CallbackContext context)
     {
-        Vector2 inputDir=context.ReadValue<Vector2>();
+        Vector2 inputDir = context.ReadValue<Vector2>();
+        if (_encumbranceBlocksMovement)
+        {
+            if (inputDir.sqrMagnitude > Mathf.Epsilon)
+                AnyImmobileMoveAttempted?.Invoke();
+
+            _mover.SetInput(Vector2.zero, _refCam);
+            _characterState.SetMoveDir(Vector3.zero);
+            _characterState.UpdateGridPos(transform.position);
+            return;
+        }
+
         _mover.SetInput(inputDir, _refCam);
 
         if (_pendingInitialVelocity && inputDir.sqrMagnitude > Mathf.Epsilon)
@@ -201,6 +250,12 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
 
     public void OnRun(InputAction.CallbackContext context)
     {
+        if (_encumbranceBlocksSprint || _encumbranceBlocksMovement)
+        {
+            _mover.SetSprinting(false);
+            return;
+        }
+
         bool wasSprinting = _mover.IsSprinting;
         bool isRun = context.ReadValue<float>() > 0.5f;
         _mover.SetSprinting(isRun);
@@ -233,9 +288,14 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
 
     Vector3 CalcDesiredMove(float dt)
     {
+        if (_encumbranceBlocksMovement || _encumbranceSpeedMultiplier <= 0f)
+            return Vector3.zero;
+
+        float moveSpeed = _moveSpeed * _encumbranceSpeedMultiplier;
+        float sprintMultiplier = _encumbranceBlocksSprint ? 1f : _sprintMultiplier;
         Vector3 desiredMove = _mover.CalcDesiredMove(
-            _moveSpeed,
-            _sprintMultiplier,
+            moveSpeed,
+            sprintMultiplier,
             dt,
             _customBaseSpeed,
             _inertiaEnableThreshold,

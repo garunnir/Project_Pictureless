@@ -171,7 +171,7 @@ TimeUIBridge (Canvas)
 | 메뉴 | 역할 |
 |------|------|
 | `Dist/Time/Patch Display Resize Handles` | 구 `Area_ResizeHandle_*` 제거 + `UIWindowResizeHandles`/Proximity 부착 |
-| `Dist/Time/Setup Canvas In Open Scene` | System 루트에 Service/Clock, Canvas에 Bridge, HUD Controller 배선 (기존 `Grp_TimeDisplay` 로드만 — full bake 없음) |
+| `Dist/Time/Setup Canvas In Open Scene` | `System/Time`에 Service/Clock/Controller, Canvas에 Bridge, HUD 배선 (기존 `Hud_TimeDisplay` 로드만 — full bake 없음) |
 | `Dist/Time/Verify Channel Math (Edit Mode)` | Period·포맷 검증 |
 | `Dist/Time/Verify Clock Advance (Play Mode)` | 진행 / World=0 정지 / 불릿 채널 분리 검증 |
 

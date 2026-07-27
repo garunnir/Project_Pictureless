@@ -36,6 +36,7 @@ Elona / Cataclysm DDA식 **상시·비차단** 텍스트 피드. 플레이어에
 ```text
 CharacterAttacker.AnyAttackResolved ──┐
 GameplayData.Defeat.Changed ──────────┼─► MessageLogPlayerCombatSink
+PlayerMovement.AnyImmobileMoveAttempted ► MessageLogPlayerEncumbranceSink
                                       ▼
                               GameplayMessageLog (ring buffer)
                                       │
@@ -67,10 +68,12 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 |------|------|------------------------|
 | 피격 | `Target.Body == GameplayData.Body` 이고 hit | Combat / Normal |
 | 패배 | `Defeat.Changed`에서 패배 **진입** | Status / Critical |
+| 과적 Extreme 이동 시도 | `PlayerEncumbranceHost.Stage == Extreme` 이고 이동 입력 | Status / Normal |
 
-**남기지 않음**: miss, 플레이어→적 공격, NPC↔NPC, 출혈 틱, 바이탈 소량.
+**남기지 않음**: miss, 플레이어→적 공격, NPC↔NPC, 출혈 틱, 바이탈 소량, **Light~Heavy 과적**(상태 HUD 아이콘만).
 
 플레이어 판정: `ReferenceEquals(body, GameplayData.Body)` (`NpcSenses`와 동일).
+과적 Extreme 로그: Extreme 구간당 이동 시도 **1회** (`MessageLogPlayerEncumbranceSink`).
 
 ---
 
@@ -81,6 +84,7 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 | `msg.combat.player_hit` | `{0}에 {1}의 피해를 입었다.` |
 | `msg.status.defeat_body` | `치명상을 입고 쓰러졌다.` |
 | `msg.status.defeat_collapse` | `정신이 무너져 쓰러졌다.` |
+| `msg.status.encumbrance_immobile` | `너무 무거워서 움직일 수 없다.` |
 
 부위 표시: 기존 `PlayerStatus.Part.{id}`.
 
@@ -93,7 +97,7 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 1. `Dist/MessageLog/Create Hud_MessageLog Prefab If Missing` (없을 때만 생성; 레이아웃 덮어쓰기 금지)
 2. `Dist/MessageLog/Setup Message Log HUD In Open Scene`
    - Canvas: `MessageLogUIBridge`
-   - System: `MessageLogPlayerCombatSink`, `UIMessageLogController`
+   - `System/Msg`: `MessageLogPlayerCombatSink`, `MessageLogPlayerEncumbranceSink`, `UIMessageLogController`
    - `Layer_HUD`: `Hud_MessageLog` 인스턴스
 
 레이아웃 Rect·폰트 크기는 프리팹 SSOT (`MessageLogUIFactory` 초기값 / 손수 조정). 런타임 덮어쓰기 금지.

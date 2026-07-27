@@ -378,8 +378,7 @@ static class PlayerStatusUISetupMenu
 
         EnsureBridge(canvas);
 
-        InputManager inputManager = Object.FindAnyObjectByType<InputManager>();
-        Transform systemRoot = inputManager != null ? inputManager.transform.parent : null;
+        Transform systemRoot = SystemHierarchySetup.ResolveSystemRoot();
         if (systemRoot == null)
         {
             Debug.LogError(
@@ -387,23 +386,24 @@ static class PlayerStatusUISetupMenu
             return;
         }
 
+        Transform playerStatusRoot = SystemHierarchySetup.EnsureCategory(
+            systemRoot,
+            SystemHierarchySetup.PlayerStatus);
+
         UIPlayerStatusController controller = Object.FindAnyObjectByType<UIPlayerStatusController>();
         if (controller == null)
         {
             GameObject go = new("PlayerStatusController");
             Undo.RegisterCreatedObjectUndo(go, "Create PlayerStatusController");
-            go.transform.SetParent(systemRoot, false);
+            go.transform.SetParent(playerStatusRoot, false);
             controller = Undo.AddComponent<UIPlayerStatusController>(go);
         }
-        else if (controller.transform.parent != systemRoot)
+        else
         {
-            Undo.SetTransformParent(
+            SystemHierarchySetup.EnsureChildUnder(
+                playerStatusRoot,
                 controller.transform,
-                systemRoot,
-                "Move PlayerStatusController Under System");
-            controller.transform.localPosition = Vector3.zero;
-            controller.transform.localRotation = Quaternion.identity;
-            controller.transform.localScale = Vector3.one;
+                "Move PlayerStatusController Under System/PlayerStatus");
         }
 
         SerializedObject so = new(controller);
@@ -427,7 +427,7 @@ static class PlayerStatusUISetupMenu
         so.FindProperty("_launcher").objectReferenceValue = launcher;
 
         UIPlayerStatusSummaryController summaryController =
-            EnsureSummaryController(systemRoot);
+            EnsureSummaryController(playerStatusRoot);
         so.ApplyModifiedPropertiesWithoutUndo();
 
         UIPlayerStatusSummaryPanel summaryPrefab =
@@ -471,7 +471,7 @@ static class PlayerStatusUISetupMenu
         return bridge;
     }
 
-    static UIPlayerStatusSummaryController EnsureSummaryController(Transform systemRoot)
+    static UIPlayerStatusSummaryController EnsureSummaryController(Transform playerStatusRoot)
     {
         UIPlayerStatusSummaryController controller =
             Object.FindAnyObjectByType<UIPlayerStatusSummaryController>();
@@ -479,15 +479,15 @@ static class PlayerStatusUISetupMenu
         {
             GameObject go = new("PlayerStatusSummaryController");
             Undo.RegisterCreatedObjectUndo(go, "Create PlayerStatusSummaryController");
-            go.transform.SetParent(systemRoot, false);
+            go.transform.SetParent(playerStatusRoot, false);
             controller = Undo.AddComponent<UIPlayerStatusSummaryController>(go);
         }
-        else if (controller.transform.parent != systemRoot)
+        else
         {
-            Undo.SetTransformParent(controller.transform, systemRoot, "Move Summary Controller");
-            controller.transform.localPosition = Vector3.zero;
-            controller.transform.localRotation = Quaternion.identity;
-            controller.transform.localScale = Vector3.one;
+            SystemHierarchySetup.EnsureChildUnder(
+                playerStatusRoot,
+                controller.transform,
+                "Move Summary Controller Under System/PlayerStatus");
         }
 
         return controller;
@@ -616,6 +616,7 @@ static class PlayerStatusUISetupMenu
         MoodIconId.MarriedEngaged,
         MoodIconId.Trust,
         MoodIconId.Respect,
+        MoodIconId.Overencumbered,
     };
 
     static void EnsureMoodAssets()
@@ -889,6 +890,12 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.Effect.infected", "감염");
         Put("PlayerStatus.Effect.regenerating", "재생 중");
         Put("PlayerStatus.Effect.adrenaline", "아드레날린");
+
+        Put("PlayerStatus.Mood.Overencumbered", "과적");
+        Put("PlayerStatus.Mood.Overencumbered.Light", "짐이 조금 무겁다");
+        Put("PlayerStatus.Mood.Overencumbered.Medium", "짐이 무겁다");
+        Put("PlayerStatus.Mood.Overencumbered.Heavy", "짐이 너무 무겁다");
+        Put("PlayerStatus.Mood.Overencumbered.Extreme", "움직일 수 없을 만큼 무겁다");
 
         var list = new System.Collections.Generic.List<LocalizationTable.Entry>(map.Count);
         foreach (var kv in map)

@@ -84,4 +84,18 @@ public static class PlayerStatusLabels
 
         return Loc.TryGet(KeyEffectPrefix + effectId, out string name) ? name : effectId;
     }
+
+    public static string GetEncumbranceTooltip(PlayerEncumbranceStage stage)
+    {
+        if (stage == PlayerEncumbranceStage.None)
+            return string.Empty;
+
+        string key = "PlayerStatus.Mood.Overencumbered." + stage;
+        if (Loc.TryGet(key, out string text))
+            return text;
+
+        return Loc.TryGet("PlayerStatus.Mood.Overencumbered", out string fallback)
+            ? fallback
+            : string.Empty;
+    }
 }

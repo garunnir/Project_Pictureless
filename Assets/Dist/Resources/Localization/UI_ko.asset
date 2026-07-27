@@ -241,3 +241,15 @@ MonoBehaviour:
     text: "\uCE58\uBA85\uC0C1\uC744 \uC785\uACE0 \uC4F0\uB7EC\uC84C\uB2E4."
   - key: msg.status.defeat_collapse
     text: "\uC815\uC2E0\uC774 \uBB34\uB108\uC838 \uC4F0\uB7EC\uC84C\uB2E4."
+  - key: msg.status.encumbrance_immobile
+    text: "\uB108\uBB34 \uBB34\uAC70\uC6CC\uC11C \uC6C0\uC9C1\uC77C \uC218 \uC5C6\uB2E4."
+  - key: PlayerStatus.Mood.Overencumbered
+    text: "\uACFC\uC801"
+  - key: PlayerStatus.Mood.Overencumbered.Light
+    text: "\uC9D0\uC774 \uC870\uAE08 \uBB34\uAC81\uB2E4"
+  - key: PlayerStatus.Mood.Overencumbered.Medium
+    text: "\uC9D0\uC774 \uBB34\uAC81\uB2E4"
+  - key: PlayerStatus.Mood.Overencumbered.Heavy
+    text: "\uC9D0\uC774 \uB108\uBB34 \uBB34\uAC81\uB2E4"
+  - key: PlayerStatus.Mood.Overencumbered.Extreme
+    text: "\uC6C0\uC9C1\uC77C \uC218 \uC5C6\uC744 \uB9CC\uD07C \uBB34\uAC81\uB2E4"

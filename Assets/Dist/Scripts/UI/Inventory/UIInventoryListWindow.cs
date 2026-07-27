@@ -30,6 +30,8 @@ public sealed class UIInventoryListWindow : MonoBehaviour
     InventoryWindowMode _mode = InventoryWindowMode.NearbyOnly;
     IInventoryItemDragHost _dragHost;
     bool _dragConfigured;
+    Color _weightTextDefaultColor = Color.white;
+    bool _weightTextColorCached;
 
     readonly List<InventoryContainer> _filteredSidebar = new();
     readonly FixedContainerCapacityPolicy _nestedContainerPolicy = new();
@@ -322,10 +324,15 @@ public sealed class UIInventoryListWindow : MonoBehaviour
 
     void RefreshCapacityInfo()
     {
+        CacheWeightTextDefaultColor();
+
         if (_selectedContainer == null)
         {
             if (_weightText != null)
+            {
                 _weightText.text = InventoryWindowLabels.EmptyWeight;
+                _weightText.color = _weightTextDefaultColor;
+            }
             if (_volumeText != null)
                 _volumeText.text = InventoryWindowLabels.EmptyVolume;
             return;
@@ -337,9 +344,24 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         float maxVolume = _selectedContainer.CapacityPolicy.GetMaxVolume(_selectedContainer);
 
         if (_weightText != null)
+        {
             _weightText.text = InventoryWindowLabels.FormatWeightCapacity(usedWeight, maxWeight);
+            bool overweight = usedWeight > maxWeight + FixedContainerCapacityPolicy.Epsilon;
+            _weightText.color = overweight
+                ? InventoryCapacityVisuals.OverweightColor
+                : _weightTextDefaultColor;
+        }
         if (_volumeText != null)
             _volumeText.text = InventoryWindowLabels.FormatVolumeCapacity(usedVolume, maxVolume);
+    }
+
+    void CacheWeightTextDefaultColor()
+    {
+        if (_weightTextColorCached || _weightText == null)
+            return;
+
+        _weightTextDefaultColor = _weightText.color;
+        _weightTextColorCached = true;
     }
 
     public void RefreshSidebarAndSelection()

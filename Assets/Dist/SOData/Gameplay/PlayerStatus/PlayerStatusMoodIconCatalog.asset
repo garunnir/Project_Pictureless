@@ -158,3 +158,5 @@ MonoBehaviour:
     FrontSprite: {fileID: 21300000, guid: e39ea6e17499c7e4aa33e05f88d7b8ec, type: 3}
   - IconId: 71
     FrontSprite: {fileID: 21300000, guid: 2312d0ed1d6defc48a5ad63fa598f9a8, type: 3}
+  - IconId: 72
+    FrontSprite: {fileID: 21300000, guid: 5aeb57ec5eab070408c39c07933df8a2, type: 3}

@@ -105,19 +105,22 @@ static class TimeUISetupMenu
             layerHost = Undo.AddComponent<UICanvasLayerHost>(canvas.gameObject);
         layerHost.EditorSetupLayerHierarchy();
 
-        InputManager inputManager = Object.FindAnyObjectByType<InputManager>();
-        Transform systemRoot = inputManager != null ? inputManager.transform.parent : null;
+        Transform systemRoot = SystemHierarchySetup.ResolveSystemRoot();
         if (systemRoot == null)
         {
             Debug.LogError("[TimeUISetupMenu] InputManager parent (System root) not found.");
             return;
         }
 
+        Transform timeRoot = SystemHierarchySetup.EnsureCategory(
+            systemRoot,
+            SystemHierarchySetup.Time);
+
         WorldClockSettings settings = EnsureSettingsAsset();
         TimeScaleService scaleService = EnsureComponentOnChild<TimeScaleService>(
-            systemRoot,
+            timeRoot,
             "TimeScaleService");
-        WorldClock clock = EnsureComponentOnChild<WorldClock>(systemRoot, "WorldClock");
+        WorldClock clock = EnsureComponentOnChild<WorldClock>(timeRoot, "WorldClock");
 
         SerializedObject clockSo = new(clock);
         clockSo.FindProperty("_settings").objectReferenceValue = settings;
@@ -133,18 +136,15 @@ static class TimeUISetupMenu
         {
             GameObject go = new("TimeDisplayController");
             Undo.RegisterCreatedObjectUndo(go, "Create TimeDisplayController");
-            go.transform.SetParent(systemRoot, false);
+            go.transform.SetParent(timeRoot, false);
             controller = Undo.AddComponent<UITimeDisplayController>(go);
         }
-        else if (controller.transform.parent != systemRoot)
+        else
         {
-            Undo.SetTransformParent(
+            SystemHierarchySetup.EnsureChildUnder(
+                timeRoot,
                 controller.transform,
-                systemRoot,
-                "Move TimeDisplayController Under System");
-            controller.transform.localPosition = Vector3.zero;
-            controller.transform.localRotation = Quaternion.identity;
-            controller.transform.localScale = Vector3.one;
+                "Move TimeDisplayController Under System/Time");
         }
 
         UITimeDisplayPanel prefab =

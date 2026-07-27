@@ -4,7 +4,10 @@
 
 public sealed class FixedContainerCapacityPolicy : IContainerCapacityPolicy
 {
-    const float Epsilon = 0.0001f;
+    public const float Epsilon = 0.0001f;
+
+    public bool EnforcesHardWeightLimit => true;
+    public bool EnforcesHardVolumeLimit => true;
 
     public float GetMaxWeight(InventoryContainer container)
     {
@@ -30,13 +33,13 @@ public sealed class FixedContainerCapacityPolicy : IContainerCapacityPolicy
         return HasWeightRoom(target, incoming) && HasVolumeRoom(target, incoming);
     }
 
-    static bool HasWeightRoom(InventoryContainer target, ItemStack incoming)
+    public static bool HasWeightRoom(InventoryContainer target, ItemStack incoming)
     {
         float maxWeight = target.CapacityPolicy.GetMaxWeight(target);
         return target.GetTotalWeight() + incoming.TotalWeight <= maxWeight + Epsilon;
     }
 
-    static bool HasVolumeRoom(InventoryContainer target, ItemStack incoming)
+    public static bool HasVolumeRoom(InventoryContainer target, ItemStack incoming)
     {
         float maxVolume = target.CapacityPolicy.GetMaxVolume(target);
         return target.GetTotalVolume() + incoming.TotalVolume <= maxVolume + Epsilon;
