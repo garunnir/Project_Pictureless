@@ -39,6 +39,9 @@ public sealed class CharacterAttacker : MonoBehaviour
     /// <summary>실제로 시전된 공격(Performed/Miss)의 판정 결과. 연출 계층이 구독한다.</summary>
     public event Action<AttackOutcome> AttackResolved;
 
+    /// <summary>모든 CharacterAttacker Resolve 공통 훅 (메시지 로그 등).</summary>
+    public static event Action<AttackOutcome> AnyAttackResolved;
+
     public WeaponProfile Weapon => _weapon;
     public WeaponActionMask AvailableActions { get; private set; }
     public WeaponAction SelectedAction => _selectedAction;
@@ -279,7 +282,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         Vector3 origin,
         Vector3 impact)
     {
-        AttackResolved?.Invoke(new AttackOutcome(
+        var outcome = new AttackOutcome(
             action,
             entry.resolveMode,
             result,
@@ -287,7 +290,9 @@ public sealed class CharacterAttacker : MonoBehaviour
             aimedPartId,
             damage,
             origin,
-            impact));
+            impact);
+        AttackResolved?.Invoke(outcome);
+        AnyAttackResolved?.Invoke(outcome);
         return result;
     }
 

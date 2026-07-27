@@ -24,6 +24,72 @@ static class TimeUISetupMenu
         Debug.Log($"[TimeUISetupMenu] Settings ready: {AssetDatabase.GetAssetPath(settings)}", settings);
     }
 
+    /// <summary>
+    /// 구 핸들 자식 제거 후 UIWindowResizeHandles + Proximity 배선.
+    /// </summary>
+    [MenuItem("Dist/Time/Patch Display Resize Handles")]
+    static void PatchDisplayResizeHandles()
+    {
+        GameObject root = PrefabUtility.LoadPrefabContents(DisplayPrefabPath);
+        if (root == null)
+        {
+            Debug.LogError($"[TimeUISetupMenu] Failed to load: {DisplayPrefabPath}");
+            return;
+        }
+
+        try
+        {
+            UIWindowResizeHandles host = UIWindowResizeHandlesPrefabPatch.Apply(
+                root,
+                TimeUIFactory.ResizeEdgeThickness,
+                proximityReveal: true,
+                TimeUIFactory.MinPanelSize,
+                TimeUIFactory.MaxPanelSize);
+
+            UIWindowResizeProximity proximity = root.GetComponent<UIWindowResizeProximity>();
+            if (proximity == null)
+                proximity = root.AddComponent<UIWindowResizeProximity>();
+
+            var proxSo = new SerializedObject(proximity);
+            proxSo.FindProperty("_enabled").boolValue = true;
+            proxSo.FindProperty("_window").objectReferenceValue = root.transform as RectTransform;
+            UIWindowDragHandler drag = root.GetComponentInChildren<UIWindowDragHandler>(true);
+            if (drag != null)
+                proxSo.FindProperty("_dragHeader").objectReferenceValue = drag;
+            proxSo.ApplyModifiedPropertiesWithoutUndo();
+
+            UITimeDisplayPanel panel = root.GetComponent<UITimeDisplayPanel>();
+            if (panel != null)
+            {
+                var panelSo = new SerializedObject(panel);
+                SerializedProperty handlesProp = panelSo.FindProperty("_resizeHandles");
+                if (handlesProp != null)
+                    handlesProp.objectReferenceValue = host;
+                SerializedProperty proxProp = panelSo.FindProperty("_resizeProximity");
+                if (proxProp != null)
+                    proxProp.objectReferenceValue = proximity;
+                if (drag != null)
+                {
+                    SerializedProperty dragProp = panelSo.FindProperty("_dragHandler");
+                    if (dragProp != null)
+                        dragProp.objectReferenceValue = drag;
+                }
+
+                panelSo.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            PrefabUtility.SaveAsPrefabAsset(root, DisplayPrefabPath);
+            Debug.Log($"[TimeUISetupMenu] Applied UIWindowResizeHandles on {DisplayPrefabPath}.");
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+    }
+
     [MenuItem("Dist/Time/Setup Canvas In Open Scene")]
     static void SetupCanvasInOpenScene()
     {

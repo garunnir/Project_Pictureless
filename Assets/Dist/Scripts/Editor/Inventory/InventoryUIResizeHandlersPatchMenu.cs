@@ -1,5 +1,5 @@
 // ============================================================
-// InventoryUIResizeHandlersPatchMenu — 기존 창 프리팹에 리사이즈 핸들 배열만 배선
+// InventoryUIResizeHandlersPatchMenu — 구 핸들 제거 + UIWindowResizeHandles 부착
 // ============================================================
 
 #if UNITY_EDITOR
@@ -25,7 +25,7 @@ static class InventoryUIResizeHandlersPatchMenu
             InventoryUIHierarchyBuilder.PatchExistingWindowResizeHandlers(root);
             PrefabUtility.SaveAsPrefabAsset(root, WindowPath);
             Debug.Log(
-                $"[InventoryUIResizeHandlersPatchMenu] Wired _resizeHandlers on {WindowPath}.");
+                $"[InventoryUIResizeHandlersPatchMenu] Applied UIWindowResizeHandles on {WindowPath}.");
         }
         finally
         {

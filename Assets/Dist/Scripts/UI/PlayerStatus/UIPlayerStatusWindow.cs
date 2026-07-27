@@ -1,5 +1,5 @@
 // ============================================================
-// UIPlayerStatusWindow ??메인 6부??+ ?�역 바이??+ ?�킬 + ?�세 ?�널
+// UIPlayerStatusWindow ? ???? 6?? + ??? + ?? + ? ??
 // ============================================================
 
 using System.Collections.Generic;
@@ -18,7 +18,6 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
     [SerializeField] TMP_Text _debugSeverArmLLabel;
     [SerializeField] UIPlayerStatusDetailPanel _detailPanel;
     [SerializeField] UIWindowDragHandler _windowDragHandler;
-    [SerializeField] UIWindowResizeHandler[] _resizeHandlers;
 
     readonly List<UIPlayerStatusBodyPartGraphic> _graphics = new(6);
     readonly List<UIPlayerStatusBodyPartRow> _rows = new(6);
@@ -32,23 +31,19 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
     {
         if (_windowDragHandler == null)
             Debug.LogError("[UIPlayerStatusWindow] Window drag handler not assigned.", this);
-        if (_resizeHandlers == null || _resizeHandlers.Length == 0)
-            Debug.LogError("[UIPlayerStatusWindow] Resize handlers not assigned.", this);
 
         _windowDragHandler?.Initialize(WindowRect, rootCanvas);
 
         Vector2 minSize = new(PlayerStatusWindowLayout.MinWidth, PlayerStatusWindowLayout.MinHeight);
         Vector2 maxSize = PlayerStatusWindowLayout.GetMaxSize(rootCanvas);
 
-        if (_resizeHandlers != null)
-        {
-            for (int i = 0; i < _resizeHandlers.Length; i++)
-            {
-                if (_resizeHandlers[i] == null)
-                    continue;
-                _resizeHandlers[i].Initialize(WindowRect, rootCanvas, minSize, maxSize);
-            }
-        }
+        UIWindowResizeHandles resizeHandles = GetComponent<UIWindowResizeHandles>();
+        if (resizeHandles == null)
+            Debug.LogError(
+                "[UIPlayerStatusWindow] UIWindowResizeHandles missing on window root.",
+                this);
+        else
+            resizeHandles.Initialize(WindowRect, rootCanvas, minSize, maxSize);
 
         if (WindowRect != null && rootCanvas != null)
             WindowRect.sizeDelta = PlayerStatusWindowLayout.ClampSize(WindowRect.sizeDelta, rootCanvas);
@@ -268,8 +263,7 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
         Button debugSeverArmLButton,
         TMP_Text debugSeverArmLLabel,
         UIPlayerStatusDetailPanel detailPanel,
-        UIWindowDragHandler dragHandler,
-        UIWindowResizeHandler[] resizeHandlers)
+        UIWindowDragHandler dragHandler)
     {
         _headerTitle = headerTitle;
         _bodyPartViewsRoot = bodyPartViewsRoot;
@@ -279,6 +273,5 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
         _debugSeverArmLLabel = debugSeverArmLLabel;
         _detailPanel = detailPanel;
         _windowDragHandler = dragHandler;
-        _resizeHandlers = resizeHandlers;
     }
 }

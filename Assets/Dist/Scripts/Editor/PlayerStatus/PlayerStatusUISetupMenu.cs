@@ -318,7 +318,7 @@ static class PlayerStatusUISetupMenu
     }
 
     /// <summary>
-    /// 계층/레이아웃은 유지하고 리사이즈 핸들 SerializeField만 배선.
+    /// 구 핸들 자식 제거 후 UIWindowResizeHandles 부착 (레이아웃 유지).
     /// </summary>
     [MenuItem("Dist/PlayerStatus/Patch Window Resize Handlers")]
     static void PatchWindowResizeHandlers()
@@ -341,34 +341,16 @@ static class PlayerStatusUISetupMenu
                 return;
             }
 
-            UIWindowResizeHandler[] handlers =
-                root.GetComponentsInChildren<UIWindowResizeHandler>(true);
-            if (handlers == null || handlers.Length == 0)
-            {
-                Debug.LogError(
-                    "[PlayerStatusUISetupMenu] No UIWindowResizeHandler children; cannot patch.",
-                    root);
-                return;
-            }
-
-            var so = new SerializedObject(window);
-            SerializedProperty prop = so.FindProperty("_resizeHandlers");
-            if (prop == null || !prop.isArray)
-            {
-                Debug.LogError(
-                    "[PlayerStatusUISetupMenu] Missing _resizeHandlers on UIPlayerStatusWindow.",
-                    window);
-                return;
-            }
-
-            prop.arraySize = handlers.Length;
-            for (int i = 0; i < handlers.Length; i++)
-                prop.GetArrayElementAtIndex(i).objectReferenceValue = handlers[i];
-            so.ApplyModifiedPropertiesWithoutUndo();
+            UIWindowResizeHandlesPrefabPatch.Apply(
+                root,
+                PlayerStatusUIFactory.ResizeEdgeThickness,
+                proximityReveal: false,
+                new Vector2(PlayerStatusWindowLayout.MinWidth, PlayerStatusWindowLayout.MinHeight),
+                PlayerStatusWindowLayout.GetMaxSize(null));
 
             PrefabUtility.SaveAsPrefabAsset(root, WindowPrefabPath);
             Debug.Log(
-                $"[PlayerStatusUISetupMenu] Wired _resizeHandlers on {WindowPrefabPath} (layout preserved).");
+                $"[PlayerStatusUISetupMenu] Applied UIWindowResizeHandles on {WindowPrefabPath}.");
         }
         finally
         {

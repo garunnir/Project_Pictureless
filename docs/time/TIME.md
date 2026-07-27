@@ -162,7 +162,7 @@ TimeUIBridge (Canvas)
 - 앵커: **상단 중앙** (Summary 우상단·런처 좌상단과 충돌 회피)
 - 표시 포맷 SSOT: `TimeDisplayFormat.DayTimePattern` → `Day {0}  {1:00}:{2:00}`
 - TMP 폰트: Katuri SDF (`TimeUIFactory.DefaultUIFontPath`)
-- 창 크롬: Controller `Enable Drag Header` / `Enable Resize`(둘 다 기본 on) → `Area_Header`+`UIWindowDragHandler`(창 근처 시 표시) · 공용 `UIWindowResizeProximity`(가장자리 근접 시 핸들). 드래그/리사이즈 핸들은 **SerializeField 미리 할당**(팩토리 `Wire`). Inventory는 proximity 미사용(상시 투명 히트)
+- 창 크롬: Controller `Enable Drag Header` / `Enable Resize`(둘 다 기본 on) → `Area_Header`+`UIWindowDragHandler`(창 근처 시 표시) · 루트 `UIWindowResizeHandles`(Awake에서 8핸들 생성, 폭만 Inspector) + `UIWindowResizeProximity`(가장자리 근접 시 핸들). Inventory/Status는 Handles만(AlwaysHit, proximity 미사용).
 
 ---
 
@@ -170,7 +170,7 @@ TimeUIBridge (Canvas)
 
 | 메뉴 | 역할 |
 |------|------|
-| `Dist/Time/Ensure World Clock Settings Asset` | SO 생성/확인 |
+| `Dist/Time/Patch Display Resize Handles` | 구 `Area_ResizeHandle_*` 제거 + `UIWindowResizeHandles`/Proximity 부착 |
 | `Dist/Time/Setup Canvas In Open Scene` | System 루트에 Service/Clock, Canvas에 Bridge, HUD Controller 배선 (기존 `Grp_TimeDisplay` 로드만 — full bake 없음) |
 | `Dist/Time/Verify Channel Math (Edit Mode)` | Period·포맷 검증 |
 | `Dist/Time/Verify Clock Advance (Play Mode)` | 진행 / World=0 정지 / 불릿 채널 분리 검증 |

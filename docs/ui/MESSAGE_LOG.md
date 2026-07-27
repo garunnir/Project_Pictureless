@@ -1,0 +1,113 @@
+# Message Log — 플레이어 정보 피드
+
+> LLM/에이전트용 Dist 메시지 로그 SSOT.  
+> 진입: `docs/README.md` · 스택: `docs/tech-stack.md` · UI 폰트/레이아웃: `docs/ui/UI_Scripts.md`  
+> **메시지 로그·Append 호출·HUD 배선을 쓰거나 고치기 전에 이 문서를 읽는다.**
+
+경로(코어): `Assets/Dist/Scripts/Gameplay/MessageLog/`  
+경로(UI): `Assets/Dist/Scripts/UI/MessageLog/`  
+경로(Editor): `Assets/Dist/Scripts/Editor/MessageLog/`  
+프리팹: `Assets/Dist/Visual/Prefabs/UIComponents/MessageLog/Hud_MessageLog.prefab`
+
+---
+
+## 역할
+
+Elona / Cataclysm DDA식 **상시·비차단** 텍스트 피드. 플레이어에게 **어느 정도 중요한** 추가 정보만 남긴다.  
+디버그 콘솔(`IngameDebugConsole`)과 입·문구·수명을 공유하지 않는다.
+
+---
+
+## 중요도 게이트 (제품 정책)
+
+| 남김 | 예 |
+|------|-----|
+| 예 | 플레이어 피해, 치명/패배, (향후) 의사결정에 영향 있는 상태·퀘스트·획득 등 |
+| 아니오 | 매 프레임/틱, 빗나감 스팸, 적끼리 전투, “정상 소모”급 바이탈, 디버그 |
+
+- **1차 게이트**: `GameplayMessageLog.Append`를 호출할지 말지 (호출부가 판단).
+- **UI**: 받은 줄을 표시만 한다. 중요도 필터를 UI에서 다시 하지 않는다.
+- `MessageLogImportance` (`Normal` / `Critical`)는 **표시 강조**용이다.
+
+---
+
+## 아키텍처
+
+```text
+CharacterAttacker.AnyAttackResolved ──┐
+GameplayData.Defeat.Changed ──────────┼─► MessageLogPlayerCombatSink
+                                      ▼
+                              GameplayMessageLog (ring buffer)
+                                      │
+                                      ▼
+MessageLogUIBridge → MessageLogViewModel → UIMessageLogController → UIMessageLogPanel
+                                                              (UICanvasLayer.HUD)
+```
+
+Time / Combat HUD와 동일: Bridge → ViewModel → Controller → Panel.
+
+---
+
+## API
+
+```csharp
+GameplayMessageLog.Append(
+    MessageLogCategory.Combat,
+    MessageLogImportance.Normal,
+    Loc.Format("msg.combat.player_hit", partLabel, damage));
+
+IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오래→최신
+```
+
+용량 SSOT: `GameplayMessageLog.Capacity` (100).
+
+### 1차 피드 (구현됨)
+
+| 사건 | 조건 | 카테고리 / Importance |
+|------|------|------------------------|
+| 피격 | `Target.Body == GameplayData.Body` 이고 hit | Combat / Normal |
+| 패배 | `Defeat.Changed`에서 패배 **진입** | Status / Critical |
+
+**남기지 않음**: miss, 플레이어→적 공격, NPC↔NPC, 출혈 틱, 바이탈 소량.
+
+플레이어 판정: `ReferenceEquals(body, GameplayData.Body)` (`NpcSenses`와 동일).
+
+---
+
+## Loc 키
+
+| Key | 문구 |
+|-----|------|
+| `msg.combat.player_hit` | `{0}에 {1}의 피해를 입었다.` |
+| `msg.status.defeat_body` | `치명상을 입고 쓰러졌다.` |
+| `msg.status.defeat_collapse` | `정신이 무너져 쓰러졌다.` |
+
+부위 표시: 기존 `PlayerStatus.Part.{id}`.
+
+메뉴: `Dist/MessageLog/Merge Localization Keys Into UI_ko`
+
+---
+
+## HUD 배선
+
+1. `Dist/MessageLog/Create Hud_MessageLog Prefab If Missing` (없을 때만 생성; 레이아웃 덮어쓰기 금지)
+2. `Dist/MessageLog/Setup Message Log HUD In Open Scene`
+   - Canvas: `MessageLogUIBridge`
+   - System: `MessageLogPlayerCombatSink`, `UIMessageLogController`
+   - `Layer_HUD`: `Hud_MessageLog` 인스턴스
+
+레이아웃 Rect·폰트 크기는 프리팹 SSOT (`MessageLogUIFactory` 초기값 / 손수 조정). 런타임 덮어쓰기 금지.
+
+폰트: `Katuri SDF`.
+
+---
+
+## 패리티
+
+| 항목 | 기대 |
+|------|------|
+| 상시 표시 | HUD 항상 표시 |
+| 비차단 | 메시지와 무관하게 입력 유지 |
+| 스크롤 | 최신 하단; 사용자가 위로 올려 보면 stick 해제 |
+| 중요·플레이어만 | miss·비플레이어·공격 성공 무로그 |
+| 디버그 분리 | 콘솔과 분리 |

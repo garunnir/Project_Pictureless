@@ -21,7 +21,6 @@ public sealed class UIInventoryListWindow : MonoBehaviour
     [SerializeField] RectTransform _listArea;
     [SerializeField] RectTransform _sidebarArea;
     [SerializeField] UIWindowDragHandler _windowDragHandler;
-    [SerializeField] UIWindowResizeHandler[] _resizeHandlers;
     [SerializeField] TMP_Text _headerTitle;
     [SerializeField] TMP_Text _weightText;
     [SerializeField] TMP_Text _volumeText;
@@ -52,20 +51,16 @@ public sealed class UIInventoryListWindow : MonoBehaviour
     {
         if (_windowDragHandler == null)
             Debug.LogError("[UIInventoryListWindow] Window drag handler not assigned.", this);
-        if (_resizeHandlers == null || _resizeHandlers.Length == 0)
-            Debug.LogError("[UIInventoryListWindow] Resize handlers not assigned.", this);
 
         _windowDragHandler?.Initialize(WindowRect, rootCanvas);
 
-        if (_resizeHandlers != null)
-        {
-            for (int i = 0; i < _resizeHandlers.Length; i++)
-            {
-                if (_resizeHandlers[i] == null)
-                    continue;
-                _resizeHandlers[i].Initialize(WindowRect, rootCanvas, minSize, maxSize);
-            }
-        }
+        UIWindowResizeHandles resizeHandles = GetComponent<UIWindowResizeHandles>();
+        if (resizeHandles == null)
+            Debug.LogError(
+                "[UIInventoryListWindow] UIWindowResizeHandles missing on window root.",
+                this);
+        else
+            resizeHandles.Initialize(WindowRect, rootCanvas, minSize, maxSize);
 
         if (WindowRect != null && rootCanvas != null)
             WindowRect.sizeDelta = InventoryWindowLayout.ClampSize(WindowRect.sizeDelta, rootCanvas);

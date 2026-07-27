@@ -71,7 +71,7 @@
 
 - 두 창은 **독립 open/close** (`TogglePrimaryWindow`, `ToggleLootWindow`). 레이아웃 프리팹은 **하나** (`Grp_InventoryListWindow`) — Primary/Loot는 인스턴스·모드·제목만 다름.
 - `Area_InvInfo` (`Txt_Weight` / `Txt_Liter`): 선택 컨테이너 used/max 무게(kg)·부피(L).
-- 창 위치는 **상단 헤더 드래그**로 자유 이동, **8방향 리사이즈 핸들**(상·하·좌·우 + 4모서리)로 크기 조절 (`WindowResizeEdge`, `InventoryWindowResizeHandler`).
+- 창 위치는 **상단 헤더 드래그**로 자유 이동, **8방향 리사이즈 핸들**(상·하·좌·우 + 4모서리)로 크기 조절 (`UIWindowResizeHandles` + `UIWindowResizeHandler` / `WindowResizeEdge`). 핸들은 프리팹에 두지 않고 런타임 생성(폭만 Inspector).
 - 크기 제한: 최소 320×240, 최대 Canvas의 75%×78% (`InventoryWindowLayout`).
 
 - 사이드탭 클릭 시 해당 컨테이너 아이템 리스트로 즉시 전환.
@@ -114,7 +114,7 @@
 
 빈 아이콘 폴백: `ItemIconCatalog` (`Assets/Dist/Resources/ItemIconCatalog.asset`) → `ItemVisualPresenter`. 편집은 **Tools/Game Data Browser** 아이템 상세의 Icon 필드.
 
-프리팹 갱신: full bake 메뉴는 두지 않음 (`.cursor/rules/ui-prefab-bake.mdc`). 기존 창에 컬럼 헤더만: `Dist/Inventory/Patch Window Column Header`. 열 폭·행간격·패딩 SSOT 에셋 반영: `Dist/Inventory/Sync List Column Layout` (`Resources/Inventory/InventoryListColumnLayoutSettings`). 리사이즈 핸들 배선: `Dist/Inventory/Patch Window Resize Handlers`.
+프리팹 갱신: full bake 메뉴는 두지 않음 (`.cursor/rules/ui-prefab-bake.mdc`). 기존 창에 컬럼 헤더만: `Dist/Inventory/Patch Window Column Header`. 열 폭·행간격·패딩 SSOT 에셋 반영: `Dist/Inventory/Sync List Column Layout` (`Resources/Inventory/InventoryListColumnLayoutSettings`). 구 리사이즈 핸들 제거+`UIWindowResizeHandles` 부착: `Dist/Inventory/Patch Window Resize Handlers`.
 
 캔버스 오버레이 배선: `Dist/Inventory/Setup Canvas Overlays In Open Scene` (IsoLand 등 씬 1회 실행).
 

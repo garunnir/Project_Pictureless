@@ -34,7 +34,6 @@ public static class PlayerStatusUIFactory
     public const float RowHeight = 28f;
     public const float HeaderHeight = 32f;
     public const float ResizeEdgeThickness = 8f;
-    public const float ResizeCornerSize = 14f;
     public const int FontSizeBody = 14;
     public const int FontSizeHeader = 18;
 
@@ -43,7 +42,6 @@ public static class PlayerStatusUIFactory
     static readonly Color FillColor = new(0.55f, 0.2f, 0.2f, 1f);
     static readonly Color FillBgColor = new(0.08f, 0.08f, 0.08f, 1f);
     static readonly Color DetailColor = new(0.1f, 0.12f, 0.16f, 0.98f);
-    static readonly Color ResizeHandleColor = new(1f, 1f, 1f, 0.02f);
 
     static readonly BodyPartGraphicSpec[] BodyPartGraphicSpecs =
     {
@@ -129,7 +127,13 @@ public static class PlayerStatusUIFactory
 
         UIPlayerStatusDetailPanel detail = CreateDetailPanel(root.transform);
 
-        UIWindowResizeHandler[] resizeHandlers = CreateResizeHandles(root.transform);
+        UIWindowResizeHandles resizeHandles = root.AddComponent<UIWindowResizeHandles>();
+        resizeHandles.SetHandleWidth(ResizeEdgeThickness);
+        resizeHandles.Initialize(
+            root.GetComponent<RectTransform>(),
+            null,
+            new Vector2(PlayerStatusWindowLayout.MinWidth, PlayerStatusWindowLayout.MinHeight),
+            PlayerStatusWindowLayout.GetMaxSize(null));
 
         UIPlayerStatusWindow window = root.AddComponent<UIPlayerStatusWindow>();
         window.Wire(
@@ -140,8 +144,7 @@ public static class PlayerStatusUIFactory
             debugBtn,
             debugLabel,
             detail,
-            dragHandler,
-            resizeHandlers);
+            dragHandler);
 
         detail.Hide();
         return window;
@@ -279,59 +282,6 @@ public static class PlayerStatusUIFactory
         UIPlayerStatusBodyPartGraphic graphic =
             hitGo.AddComponent<UIPlayerStatusBodyPartGraphic>();
         graphic.Wire(visual, spec.PartId);
-    }
-
-    static UIWindowResizeHandler[] CreateResizeHandles(Transform root)
-    {
-        return new[]
-        {
-            CreateResizeHandle(root, "Area_ResizeHandle_Left", WindowResizeEdge.Left,
-                new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f),
-                new Vector2(ResizeEdgeThickness, 0f)),
-            CreateResizeHandle(root, "Area_ResizeHandle_Right", WindowResizeEdge.Right,
-                new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f),
-                new Vector2(ResizeEdgeThickness, 0f)),
-            CreateResizeHandle(root, "Area_ResizeHandle_Top", WindowResizeEdge.Top,
-                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, ResizeEdgeThickness)),
-            CreateResizeHandle(root, "Area_ResizeHandle_Bottom", WindowResizeEdge.Bottom,
-                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f),
-                new Vector2(0f, ResizeEdgeThickness)),
-            CreateResizeHandle(root, "Area_ResizeHandle_TopLeft", WindowResizeEdge.TopLeft,
-                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(ResizeCornerSize, ResizeCornerSize)),
-            CreateResizeHandle(root, "Area_ResizeHandle_TopRight", WindowResizeEdge.TopRight,
-                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
-                new Vector2(ResizeCornerSize, ResizeCornerSize)),
-            CreateResizeHandle(root, "Area_ResizeHandle_BottomLeft", WindowResizeEdge.BottomLeft,
-                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(ResizeCornerSize, ResizeCornerSize)),
-            CreateResizeHandle(root, "Area_ResizeHandle_BottomRight", WindowResizeEdge.BottomRight,
-                new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
-                new Vector2(ResizeCornerSize, ResizeCornerSize)),
-        };
-    }
-
-    static UIWindowResizeHandler CreateResizeHandle(
-        Transform parent,
-        string name,
-        WindowResizeEdge edge,
-        Vector2 anchorMin,
-        Vector2 anchorMax,
-        Vector2 pivot,
-        Vector2 sizeDelta)
-    {
-        GameObject handle = CreateRect(name, parent, ResizeHandleColor);
-        RectTransform rect = handle.GetComponent<RectTransform>();
-        rect.anchorMin = anchorMin;
-        rect.anchorMax = anchorMax;
-        rect.pivot = pivot;
-        rect.anchoredPosition = Vector2.zero;
-        rect.sizeDelta = sizeDelta;
-
-        UIWindowResizeHandler resizeHandler = handle.AddComponent<UIWindowResizeHandler>();
-        resizeHandler.SetEdge(edge);
-        return resizeHandler;
     }
 
     public static UIPlayerStatusBodyPartRow CreateBodyPartRow(Transform parent)

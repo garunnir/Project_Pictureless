@@ -17,12 +17,10 @@ public static class TimeUIFactory
     public const int FontSize = 16;
     public const float HeaderHeight = 16f;
     public const float ResizeEdgeThickness = 8f;
-    public const float ResizeCornerSize = 14f;
     public const float ResizeProximityPadding = UIWindowResizeProximity.DefaultProximityPadding;
 
     static readonly Color PanelColor = new(0.12f, 0.12f, 0.12f, 0.75f);
     static readonly Color HeaderColor = new(0.2f, 0.2f, 0.24f, 0.95f);
-    static readonly Color ResizeHandleColor = new(1f, 1f, 1f, 0.85f);
 
     public static UITimeDisplayPanel CreateDisplayRoot()
     {
@@ -66,74 +64,19 @@ public static class TimeUIFactory
         Stretch(timeText.rectTransform, 8f, 8f, HeaderHeight + 2f, 4f);
         timeText.text = TimeDisplayFormat.Format(1, 0, 0);
 
-        UIWindowResizeHandler[] resizeHandlers = CreateResizeHandles(root.transform);
+        UIWindowResizeHandles resizeHandles = root.AddComponent<UIWindowResizeHandles>();
+        resizeHandles.SetHandleWidth(ResizeEdgeThickness);
+        resizeHandles.SetProximityReveal(true);
+        resizeHandles.Initialize(rootRect, null, MinPanelSize, MaxPanelSize);
+
         UIWindowResizeProximity proximity = root.AddComponent<UIWindowResizeProximity>();
         proximity.SetDragHeader(dragHandler);
-        proximity.SetResizeHandlers(resizeHandlers);
+        proximity.SetResizeHandlers(resizeHandles.Handlers);
+        proximity.SetProximityEnabled(true);
 
         UITimeDisplayPanel panel = root.AddComponent<UITimeDisplayPanel>();
-        panel.Wire(timeText, dragHandler, proximity, resizeHandlers);
+        panel.Wire(timeText, dragHandler, proximity, resizeHandles);
         return panel;
-    }
-
-    static UIWindowResizeHandler[] CreateResizeHandles(Transform root)
-    {
-        return new[]
-        {
-            CreateResizeHandle(root, "Area_ResizeHandle_Left", WindowResizeEdge.Left,
-                new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, 0.5f),
-                new Vector2(ResizeEdgeThickness, 0f)),
-            CreateResizeHandle(root, "Area_ResizeHandle_Right", WindowResizeEdge.Right,
-                new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(1f, 0.5f),
-                new Vector2(ResizeEdgeThickness, 0f)),
-            CreateResizeHandle(root, "Area_ResizeHandle_Top", WindowResizeEdge.Top,
-                new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, ResizeEdgeThickness)),
-            CreateResizeHandle(root, "Area_ResizeHandle_Bottom", WindowResizeEdge.Bottom,
-                new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f),
-                new Vector2(0f, ResizeEdgeThickness)),
-            CreateResizeHandle(root, "Area_ResizeHandle_TopLeft", WindowResizeEdge.TopLeft,
-                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(ResizeCornerSize, ResizeCornerSize)),
-            CreateResizeHandle(root, "Area_ResizeHandle_TopRight", WindowResizeEdge.TopRight,
-                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
-                new Vector2(ResizeCornerSize, ResizeCornerSize)),
-            CreateResizeHandle(root, "Area_ResizeHandle_BottomLeft", WindowResizeEdge.BottomLeft,
-                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(ResizeCornerSize, ResizeCornerSize)),
-            CreateResizeHandle(root, "Area_ResizeHandle_BottomRight", WindowResizeEdge.BottomRight,
-                new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f),
-                new Vector2(ResizeCornerSize, ResizeCornerSize)),
-        };
-    }
-
-    static UIWindowResizeHandler CreateResizeHandle(
-        Transform parent,
-        string name,
-        WindowResizeEdge edge,
-        Vector2 anchorMin,
-        Vector2 anchorMax,
-        Vector2 pivot,
-        Vector2 sizeDelta)
-    {
-        GameObject handle = CreateRect(name, parent, ResizeHandleColor);
-        RectTransform rect = handle.GetComponent<RectTransform>();
-        rect.anchorMin = anchorMin;
-        rect.anchorMax = anchorMax;
-        rect.pivot = pivot;
-        rect.anchoredPosition = Vector2.zero;
-        rect.sizeDelta = sizeDelta;
-
-        CanvasGroup group = handle.AddComponent<CanvasGroup>();
-        group.alpha = 0f;
-        group.blocksRaycasts = false;
-        group.interactable = false;
-        handle.GetComponent<Image>().raycastTarget = false;
-
-        UIWindowResizeHandler resizeHandler = handle.AddComponent<UIWindowResizeHandler>();
-        resizeHandler.SetEdge(edge);
-        resizeHandler.SetRevealedAlpha(UIWindowResizeHandler.DefaultRevealedAlpha);
-        return resizeHandler;
     }
 
     static GameObject CreateRect(string name, Transform parent, Color color)

@@ -1,0 +1,209 @@
+// ============================================================
+// MessageLogUISetupMenu — 메시지 로그 HUD 씬 배선 + 프리팹 작성
+// ============================================================
+
+#if UNITY_EDITOR
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+static class MessageLogUISetupMenu
+{
+    const string PrefabFolder = "Assets/Dist/Visual/Prefabs/UIComponents/MessageLog";
+    const string DisplayPrefabPath = PrefabFolder + "/Hud_MessageLog.prefab";
+
+    [MenuItem("Dist/MessageLog/Create Hud_MessageLog Prefab If Missing")]
+    static void CreatePrefabIfMissing()
+    {
+        EnsureFolder();
+        UIMessageLogPanel existing =
+            AssetDatabase.LoadAssetAtPath<UIMessageLogPanel>(DisplayPrefabPath);
+        if (existing != null)
+        {
+            Debug.Log(
+                $"[MessageLogUISetupMenu] Prefab already exists: {DisplayPrefabPath}",
+                existing);
+            Selection.activeObject = existing;
+            return;
+        }
+
+        UIMessageLogPanel panel = MessageLogUIFactory.CreateDisplayRoot();
+        GameObject root = panel.gameObject;
+        PrefabUtility.SaveAsPrefabAsset(root, DisplayPrefabPath);
+        Object.DestroyImmediate(root);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log($"[MessageLogUISetupMenu] Created prefab: {DisplayPrefabPath}");
+        Selection.activeObject =
+            AssetDatabase.LoadAssetAtPath<UIMessageLogPanel>(DisplayPrefabPath);
+    }
+
+    [MenuItem("Dist/MessageLog/Setup Message Log HUD In Open Scene")]
+    static void SetupCanvasInOpenScene()
+    {
+        Canvas canvas = ResolveUiCanvas();
+        if (canvas == null)
+        {
+            Debug.LogError("[MessageLogUISetupMenu] Canvas not found.");
+            return;
+        }
+
+        UICanvasLayerHost layerHost = canvas.GetComponent<UICanvasLayerHost>();
+        if (layerHost == null)
+            layerHost = Undo.AddComponent<UICanvasLayerHost>(canvas.gameObject);
+        layerHost.EditorSetupLayerHierarchy();
+
+        InputManager inputManager = Object.FindAnyObjectByType<InputManager>();
+        Transform systemRoot = inputManager != null ? inputManager.transform.parent : null;
+        if (systemRoot == null)
+        {
+            Debug.LogError("[MessageLogUISetupMenu] InputManager parent (System root) not found.");
+            return;
+        }
+
+        MessageLogUIBridge bridge = canvas.GetComponent<MessageLogUIBridge>();
+        if (bridge == null)
+            bridge = Undo.AddComponent<MessageLogUIBridge>(canvas.gameObject);
+
+        MessageLogPlayerCombatSink sink =
+            Object.FindAnyObjectByType<MessageLogPlayerCombatSink>();
+        if (sink == null)
+        {
+            GameObject sinkGo = new("MessageLogPlayerCombatSink");
+            Undo.RegisterCreatedObjectUndo(sinkGo, "Create MessageLogPlayerCombatSink");
+            sinkGo.transform.SetParent(systemRoot, false);
+            Undo.AddComponent<MessageLogPlayerCombatSink>(sinkGo);
+        }
+
+        UIMessageLogController controller =
+            Object.FindAnyObjectByType<UIMessageLogController>();
+        if (controller == null)
+        {
+            GameObject go = new("MessageLogDisplayController");
+            Undo.RegisterCreatedObjectUndo(go, "Create MessageLogDisplayController");
+            go.transform.SetParent(systemRoot, false);
+            controller = Undo.AddComponent<UIMessageLogController>(go);
+        }
+
+        UIMessageLogPanel prefab =
+            AssetDatabase.LoadAssetAtPath<UIMessageLogPanel>(DisplayPrefabPath);
+        if (prefab == null)
+        {
+            Debug.LogError(
+                $"[MessageLogUISetupMenu] Prefab missing: {DisplayPrefabPath}. " +
+                "Run Dist/MessageLog/Create Hud_MessageLog Prefab If Missing — " +
+                "do not full-bake over layout.");
+            return;
+        }
+
+        UIMessageLogPanel panel = EnsureHudPrefabInstance(layerHost, prefab, "Hud_MessageLog");
+        if (panel == null)
+            return;
+
+        SerializedObject so = new(controller);
+        so.FindProperty("_panel").objectReferenceValue = panel;
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        Debug.Log("[MessageLogUISetupMenu] Message log HUD wired.", panel);
+    }
+
+    [MenuItem("Dist/MessageLog/Merge Localization Keys Into UI_ko")]
+    static void MergeLocalizationKeysMenu() => MergeLocalizationKeys();
+
+    static void MergeLocalizationKeys()
+    {
+        LocalizationTable table =
+            AssetDatabase.LoadAssetAtPath<LocalizationTable>(LocalizationTable.AssetPath);
+        if (table == null)
+        {
+            Debug.LogError(
+                "[MessageLogUISetupMenu] UI_ko table missing. " +
+                "Run Dist/Localization/Select Or Create UI_ko Table.");
+            return;
+        }
+
+        var map = new Dictionary<string, string>(System.StringComparer.Ordinal);
+        for (int i = 0; i < table.Entries.Count; i++)
+        {
+            LocalizationTable.Entry e = table.Entries[i];
+            if (e != null && !string.IsNullOrEmpty(e.key))
+                map[e.key] = e.text ?? string.Empty;
+        }
+
+        void Put(string key, string text)
+        {
+            if (!map.ContainsKey(key))
+                map[key] = text;
+        }
+
+        Put("msg.combat.player_hit", "{0}에 {1}의 피해를 입었다.");
+        Put("msg.status.defeat_body", "치명상을 입고 쓰러졌다.");
+        Put("msg.status.defeat_collapse", "정신이 무너져 쓰러졌다.");
+
+        var list = new List<LocalizationTable.Entry>(map.Count);
+        foreach (KeyValuePair<string, string> kv in map)
+            list.Add(new LocalizationTable.Entry { key = kv.Key, text = kv.Value });
+
+        table.EditorSetEntries(list);
+        EditorUtility.SetDirty(table);
+        AssetDatabase.SaveAssets();
+        Debug.Log($"[MessageLogUISetupMenu] Localization merged ({map.Count} keys).");
+    }
+
+    static UIMessageLogPanel EnsureHudPrefabInstance(
+        UICanvasLayerHost layerHost,
+        UIMessageLogPanel prefab,
+        string instanceName)
+    {
+        Transform hudRoot = layerHost.GetLayerRoot(UICanvasLayer.HUD);
+        if (hudRoot == null)
+        {
+            Debug.LogError("[MessageLogUISetupMenu] Hud layer root missing.");
+            return null;
+        }
+
+        Transform existing = hudRoot.Find(instanceName);
+        if (existing != null)
+        {
+            UIMessageLogPanel panel = existing.GetComponent<UIMessageLogPanel>();
+            if (panel != null)
+                return panel;
+            Debug.LogError(
+                $"[MessageLogUISetupMenu] {instanceName} exists without UIMessageLogPanel.",
+                existing);
+            return null;
+        }
+
+        UIMessageLogPanel instance = (UIMessageLogPanel)PrefabUtility.InstantiatePrefab(
+            prefab,
+            hudRoot);
+        instance.name = instanceName;
+        Undo.RegisterCreatedObjectUndo(instance.gameObject, "Instantiate Message Log HUD");
+        return instance;
+    }
+
+    static Canvas ResolveUiCanvas()
+    {
+        Canvas[] canvases = Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+        for (int i = 0; i < canvases.Length; i++)
+        {
+            Canvas canvas = canvases[i];
+            if (canvas != null && canvas.renderMode != RenderMode.WorldSpace)
+                return canvas;
+        }
+
+        return null;
+    }
+
+    static void EnsureFolder()
+    {
+        if (!AssetDatabase.IsValidFolder("Assets/Dist/Visual/Prefabs/UIComponents"))
+            AssetDatabase.CreateFolder("Assets/Dist/Visual/Prefabs", "UIComponents");
+        if (!AssetDatabase.IsValidFolder(PrefabFolder))
+            AssetDatabase.CreateFolder("Assets/Dist/Visual/Prefabs/UIComponents", "MessageLog");
+    }
+}
+#endif

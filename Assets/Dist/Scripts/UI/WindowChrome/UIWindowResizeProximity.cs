@@ -9,6 +9,7 @@ using UnityEngine.InputSystem;
 /// 창 루트에 1개. 기본 비활성(옵트인).
 /// 리사이즈 핸들 근접 리빌만 담당. 헤더 나타남/사라짐은 UIWindowDragHandler 자체 옵션.
 /// 선택적으로 DragHeader를 받아: 헤더 드래그 중 핸들 숨김, 리사이즈 중 헤더 억제.
+/// Handlers/Window/Canvas는 비우면 같은 GO UIWindowResizeHandles·자신·부모에서 해석.
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class UIWindowResizeProximity : MonoBehaviour
@@ -25,32 +26,29 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
     [Tooltip("선택. 헤더 드래그 중 리사이즈 핸들 숨김 / 리사이즈 중 헤더 억제용.")]
     [SerializeField] UIWindowDragHandler _dragHeader;
 
-    [SerializeField] UIWindowResizeHandler[] _handlers;
+    [SerializeField] RectTransform _window;
+    [SerializeField] Canvas _canvas;
 
-    RectTransform _window;
-    Canvas _canvas;
+    UIWindowResizeHandler[] _handlers;
     bool _initialized;
     bool _resizeHandlesActive = true;
 
     public bool IsProximityEnabled => _enabled;
 
+    void Awake() => EnsureReady(resolveDepsIfMissing: true);
+
+#if UNITY_EDITOR
+    void OnValidate() => _proximityPadding = Mathf.Max(0f, _proximityPadding);
+#endif
+
     public void Initialize(RectTransform window, Canvas canvas, float proximityPadding)
     {
-        _window = window;
-        _canvas = canvas;
+        if (window != null)
+            _window = window;
+        if (canvas != null)
+            _canvas = canvas;
         _proximityPadding = Mathf.Max(0f, proximityPadding);
-        _initialized = true;
-
-        if (_handlers == null || _handlers.Length == 0)
-            Debug.LogError(
-                "[UIWindowResizeProximity] Resize handlers not assigned.",
-                this);
-
-        if (!_enabled)
-            return;
-
-        HideResizeHandlesOnly();
-        SyncHeaderSuppress(false);
+        EnsureReady(resolveDepsIfMissing: true);
     }
 
     public void SetDragHeader(UIWindowDragHandler dragHeader) =>
@@ -128,6 +126,45 @@ public sealed class UIWindowResizeProximity : MonoBehaviour
             ApplyResizeReveal(edge);
         else
             HideResizeHandlesOnly();
+    }
+
+    void EnsureReady(bool resolveDepsIfMissing)
+    {
+        if (resolveDepsIfMissing)
+        {
+            if (_window == null)
+                _window = transform as RectTransform;
+
+            if (_canvas == null)
+                _canvas = GetComponentInParent<Canvas>();
+
+            if (_handlers == null || _handlers.Length == 0)
+            {
+                UIWindowResizeHandles host = GetComponent<UIWindowResizeHandles>();
+                if (host != null)
+                    _handlers = host.Handlers;
+            }
+
+            if (_dragHeader == null)
+                _dragHeader = GetComponentInChildren<UIWindowDragHandler>(true);
+        }
+
+        _initialized = _window != null;
+
+        if (_handlers == null || _handlers.Length == 0)
+        {
+            Debug.LogError(
+                "[UIWindowResizeProximity] Resize handlers not assigned. " +
+                "Add UIWindowResizeHandles on the same GameObject.",
+                this);
+            return;
+        }
+
+        if (!_enabled)
+            return;
+
+        HideResizeHandlesOnly();
+        SyncHeaderSuppress(false);
     }
 
     void SyncHeaderSuppress(bool suppressed)
