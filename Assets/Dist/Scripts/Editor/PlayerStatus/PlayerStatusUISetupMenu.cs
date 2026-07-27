@@ -269,13 +269,15 @@ static class PlayerStatusUISetupMenu
             regenIcon == MoodIconId.Regenerating &&
             regenPolarity == MoodPolarity.Positive;
 
-        Color lowBack = PlayerStatusMoodVisuals.ResolveBackColor(MoodPolarity.Negative, 0.5f);
-        Color criticalBack = PlayerStatusMoodVisuals.ResolveBackColor(MoodPolarity.Negative, 1f);
-        Color goodBack = PlayerStatusMoodVisuals.ResolveBackColor(MoodPolarity.Positive, 1f);
-        Color neutralBack = PlayerStatusMoodVisuals.ResolveBackColor(MoodPolarity.Neutral, 0f);
-        bool tintOk = criticalBack.g < lowBack.g &&
-                      goodBack.r < neutralBack.r &&
-                      criticalBack.b < lowBack.b;
+        Color negativeTint = PlayerStatusMoodVisuals.ResolveFillTint(MoodPolarity.Negative);
+        Color positiveTint = PlayerStatusMoodVisuals.ResolveFillTint(MoodPolarity.Positive);
+        Color neutralTint = PlayerStatusMoodVisuals.ResolveFillTint(MoodPolarity.Neutral);
+        bool tintOk = negativeTint == PlayerStatusMoodVisuals.NegativeRed &&
+                      positiveTint == PlayerStatusMoodVisuals.PositiveGreen &&
+                      neutralTint == PlayerStatusMoodVisuals.NeutralWhite;
+        bool fillAmountContractOk =
+            Mathf.Approximately(Mathf.Clamp01(PlayerStatusMoodVisuals.VitalLowIntensity), 0.5f) &&
+            Mathf.Approximately(Mathf.Clamp01(PlayerStatusMoodVisuals.VitalCriticalIntensity), 1f);
 
         bool vmPathOk = false;
         var vmVitals = new DefaultPlayerVitals();
@@ -298,11 +300,11 @@ static class PlayerStatusUISetupMenu
         viewModel.Unbind();
 
         bool ok = emptyWhenNormal && hasHungerLow && hasHungerCritical && hasBleed &&
-                  hasPositiveCatalog && tintOk && vmPathOk;
+                  hasPositiveCatalog && tintOk && fillAmountContractOk && vmPathOk;
         string msg =
             $"[PlayerStatus Mood] emptyNormal={emptyWhenNormal} hungerLow={hasHungerLow} " +
             $"hungerCritical={hasHungerCritical} bleed={hasBleed} positiveCatalog={hasPositiveCatalog} " +
-            $"tintOk={tintOk} vmPathOk={vmPathOk} => {(ok ? "PASS" : "FAIL")}";
+            $"tintOk={tintOk} fillAmountOk={fillAmountContractOk} vmPathOk={vmPathOk} => {(ok ? "PASS" : "FAIL")}";
 
         if (ok)
             Debug.Log(msg);

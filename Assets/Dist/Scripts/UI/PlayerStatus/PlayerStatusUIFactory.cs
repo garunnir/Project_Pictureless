@@ -19,10 +19,12 @@ public static class PlayerStatusUIFactory
     const string ArmRSpritePath = BodyPartSpriteFolder + "PlayerStatus_ArmR.png";
     const string LegLSpritePath = BodyPartSpriteFolder + "PlayerStatus_LegL.png";
     const string LegRSpritePath = BodyPartSpriteFolder + "PlayerStatus_LegR.png";
-    const string MoodSpriteFolder = "Assets/Dist/Visual/Sprites/UI/PlayerStatus/Mood/";
-    const string MoodBackSpritePath = MoodSpriteFolder + "Mood_Back.png";
     const string MoodCatalogAssetPath =
         "Assets/Dist/SOData/Gameplay/PlayerStatus/PlayerStatusMoodIconCatalog.asset";
+    const string OutlineSpriteFolder = "Assets/Dist/Visual/Sprites/UI/Outline/";
+    const string MoodFillSpritePath = OutlineSpriteFolder + "fill.png";
+    const string MoodMaskSpritePath = OutlineSpriteFolder + "outlineMask.png";
+    const string MoodOutlineSpritePath = OutlineSpriteFolder + "outline.png";
 
     public static readonly Vector2 SummaryPanelSize = new(240f, 40f);
     public static readonly Vector2 WindowSize = new(360f, 480f);
@@ -214,23 +216,41 @@ public static class PlayerStatusUIFactory
         RectTransform shakeRoot = shakeGo.GetComponent<RectTransform>();
         Stretch(shakeRoot, 0f, 0f, 0f, 0f);
 
-        Image back = CreateRect("Img_Back", shakeRoot, Color.white).GetComponent<Image>();
-        back.raycastTarget = false;
-        back.preserveAspect = true;
-        Stretch(back.rectTransform, 0f, 0f, 0f, 0f);
+        Image maskImage = CreateRect("Img_Mask", shakeRoot, Color.white).GetComponent<Image>();
+        maskImage.raycastTarget = false;
+        maskImage.sprite = LoadUiSprite(MoodMaskSpritePath);
+        maskImage.preserveAspect = true;
+        Stretch(maskImage.rectTransform, 0f, 0f, 0f, 0f);
+        Mask mask = maskImage.gameObject.AddComponent<Mask>();
+        mask.showMaskGraphic = false;
 
-        Image front = CreateRect("Img_Front", shakeRoot, Color.white).GetComponent<Image>();
-        front.raycastTarget = false;
-        front.preserveAspect = true;
+        Image fill = CreateRect("img_Fill", maskImage.transform, Color.white).GetComponent<Image>();
+        fill.raycastTarget = false;
+        fill.sprite = LoadUiSprite(MoodFillSpritePath);
+        fill.type = Image.Type.Filled;
+        fill.fillMethod = Image.FillMethod.Horizontal;
+        fill.fillOrigin = (int)Image.OriginHorizontal.Left;
+        fill.fillAmount = 1f;
+        Stretch(fill.rectTransform, 0f, 0f, 0f, 0f);
+
+        Image icon = CreateRect("Img_Icon", maskImage.transform, Color.white).GetComponent<Image>();
+        icon.raycastTarget = false;
+        icon.preserveAspect = true;
         Stretch(
-            front.rectTransform,
+            icon.rectTransform,
             MoodFrontInset,
             MoodFrontInset,
             MoodFrontInset,
             MoodFrontInset);
 
+        Image outline = CreateRect("Img_Outline", shakeRoot, Color.white).GetComponent<Image>();
+        outline.raycastTarget = false;
+        outline.sprite = LoadUiSprite(MoodOutlineSpritePath);
+        outline.preserveAspect = true;
+        Stretch(outline.rectTransform, 0f, 0f, 0f, 0f);
+
         UIPlayerStatusMoodIconSlot slot = slotGo.AddComponent<UIPlayerStatusMoodIconSlot>();
-        slot.Wire(back, front, shakeRoot);
+        slot.Wire(fill, icon, shakeRoot);
         return slot;
     }
 
@@ -395,12 +415,14 @@ public static class PlayerStatusUIFactory
 #endif
     }
 
-    static Sprite LoadBodyPartSprite(string path)
+    static Sprite LoadBodyPartSprite(string path) => LoadUiSprite(path);
+
+    static Sprite LoadUiSprite(string path)
     {
 #if UNITY_EDITOR
         Sprite sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(path);
         if (sprite == null)
-            Debug.LogError($"[PlayerStatusUIFactory] Body-part sprite not found: {path}");
+            Debug.LogError($"[PlayerStatusUIFactory] Sprite not found: {path}");
         return sprite;
 #else
         return null;

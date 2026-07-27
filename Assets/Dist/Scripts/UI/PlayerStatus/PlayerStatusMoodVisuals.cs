@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerStatusMoodVisuals — 요약 HUD 뒷장 틴트 색 SSOT
+// PlayerStatusMoodVisuals — 요약 HUD Fill 틴트/채움 SSOT
 // ============================================================
 
 using UnityEngine;
@@ -21,6 +21,18 @@ namespace Garunnir.Runtime.Gameplay.Data
         public const int AttentionShakeOscillations = 5;
         public const float AttentionShakeStepDuration = 0.055f;
 
+        /// <summary>Fill 이미지 극성 틴트. Intensity는 fillAmount(0~1)로 별도 적용.</summary>
+        public static Color ResolveFillTint(MoodPolarity polarity)
+        {
+            return polarity switch
+            {
+                MoodPolarity.Positive => PositiveGreen,
+                MoodPolarity.Negative => NegativeRed,
+                _ => NeutralWhite
+            };
+        }
+
+        /// <summary>레거시: intensity lerp 틴트. 신규 경로는 ResolveFillTint + fillAmount.</summary>
         public static Color ResolveBackColor(MoodPolarity polarity, float intensity)
         {
             float t = Mathf.Clamp01(intensity);
