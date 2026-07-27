@@ -74,6 +74,10 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             new Vector2(InventoryWindowLayout.MinWidth, InventoryWindowLayout.MinHeight),
             InventoryWindowLayout.GetMaxSize(rootCanvas));
 
+    /// <summary>
+    /// 드래그 호스트·뷰포트 DnD 배선만 담당. 리스트/사이드바 바인딩은 Initialize·Refresh*가 SSOT.
+    /// Open 경로에서는 ConfigureWindow → Initialize 순으로 호출해 Bind가 1회로 끝나게 한다.
+    /// </summary>
     public void ConfigureDragAndDrop(IInventoryItemDragHost dragHost, Canvas rootCanvas)
     {
         if (_listView == null)
@@ -82,59 +86,49 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         _dragHost = dragHost;
         EnsureSidebarRaycastTarget();
 
-        if (!_dragConfigured)
+        if (_dragConfigured)
+            return;
+
+        ScrollRect scroll = _listView.GetComponentInChildren<ScrollRect>();
+        RectTransform viewport = scroll != null ? scroll.viewport : null;
+        if (viewport == null)
         {
-            ScrollRect scroll = _listView.GetComponentInChildren<ScrollRect>();
-            RectTransform viewport = scroll != null ? scroll.viewport : null;
-            if (viewport == null)
+            Debug.LogError("[UIInventoryListWindow] ScrollRect viewport missing on inventory window prefab.", this);
+            return;
+        }
+
+        if (!viewport.TryGetComponent(out UIInventoryListDropZone dropZone))
+        {
+            Debug.LogError("[UIInventoryListWindow] UIInventoryListDropZone missing on viewport prefab.", viewport);
+        }
+        else
+        {
+            dropZone.Bind(this);
+        }
+
+        if (!viewport.TryGetComponent(out InventoryListMarqueeSelector marquee))
+        {
+            Debug.LogError("[UIInventoryListWindow] InventoryListMarqueeSelector missing on viewport prefab.", viewport);
+        }
+        else
+        {
+            RectTransform selectionRect = FindMarqueeRect(viewport);
+            if (selectionRect == null)
             {
-                Debug.LogError("[UIInventoryListWindow] ScrollRect viewport missing on inventory window prefab.", this);
+                Debug.LogError("[UIInventoryListWindow] MarqueeSelection child missing under viewport prefab.", viewport);
             }
             else
             {
-                if (!viewport.TryGetComponent(out UIInventoryListDropZone dropZone))
-                {
-                    Debug.LogError("[UIInventoryListWindow] UIInventoryListDropZone missing on viewport prefab.", viewport);
-                }
-                else
-                {
-                    dropZone.Bind(this);
-                }
-
-                if (!viewport.TryGetComponent(out InventoryListMarqueeSelector marquee))
-                {
-                    Debug.LogError("[UIInventoryListWindow] InventoryListMarqueeSelector missing on viewport prefab.", viewport);
-                }
-                else
-                {
-                    RectTransform selectionRect = FindMarqueeRect(viewport);
-                    if (selectionRect == null)
-                    {
-                        Debug.LogError("[UIInventoryListWindow] MarqueeSelection child missing under viewport prefab.", viewport);
-                    }
-                    else
-                    {
-                        marquee.Bind(_listView, rootCanvas, selectionRect);
-                    }
-                }
-
-                if (!viewport.TryGetComponent(out Image _))
-                {
-                    Debug.LogError("[UIInventoryListWindow] Image missing on viewport prefab.", viewport);
-                }
+                marquee.Bind(_listView, rootCanvas, selectionRect);
             }
-
-            _dragConfigured = true;
         }
 
-        _listView.Configure(_session, dragHost);
+        if (!viewport.TryGetComponent(out Image _))
+        {
+            Debug.LogError("[UIInventoryListWindow] Image missing on viewport prefab.", viewport);
+        }
 
-        if (_selectedContainer != null)
-            SetActiveContainer(_selectedContainer);
-
-        // Initialize runs before ConfigureWindow and Syncs slots with null _dragHost.
-        // Re-bind sidebar so tab DnD gets the host (same for Primary and Loot).
-        RefreshSidebarAndSelection();
+        _dragConfigured = true;
     }
 
     void EnsureSidebarRaycastTarget()

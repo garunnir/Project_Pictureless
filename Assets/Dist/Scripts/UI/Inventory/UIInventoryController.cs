@@ -519,9 +519,9 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
         _primaryWindow.gameObject.SetActive(true);
         _primaryWindow.SetHeaderTitle(InventoryWindowLabels.PrimaryTitle);
-        _primaryWindow.Initialize(runtime.Session, InventoryWindowMode.PlayerOnly, runtime.Host.Container);
+        // Configure first so Initialize.RefreshAll binds rows with drag host in one pass.
         ConfigureWindow(_primaryWindow);
-        _primaryWindow.RefreshListOnly();
+        _primaryWindow.Initialize(runtime.Session, InventoryWindowMode.PlayerOnly, runtime.Host.Container);
         _isPrimaryOpen = true;
         SyncLauncherVisuals();
 
@@ -688,9 +688,9 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
         _lootWindow.gameObject.SetActive(true);
         _lootWindow.SetHeaderTitle(InventoryWindowLabels.LootTitle);
-        _lootWindow.Initialize(runtime.Session, InventoryWindowMode.NearbyOnly, focus);
+        // Configure first so Initialize.RefreshAll binds rows with drag host in one pass.
         ConfigureWindow(_lootWindow);
-        _lootWindow.RefreshListOnly();
+        _lootWindow.Initialize(runtime.Session, InventoryWindowMode.NearbyOnly, focus);
         _isLootOpen = true;
         SyncLauncherVisuals();
     }
