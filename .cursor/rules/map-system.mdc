@@ -1,0 +1,30 @@
+---
+description: Dist 맵·타일맵 — docs/map SSOT를 수정 전 읽고 bake/가시성 계약을 깨지 말 것
+globs: Assets/Dist/Scripts/Map/**/*,docs/map/**/*
+alwaysApply: false
+---
+
+# Map System
+
+## When
+맵 로드/저장·TileMap 모델/뷰·building bake·가시성·청크 스트리밍.  
+(위 globs 밖이라도 해당 주제면 이 룰 + 아래 Detail을 먼저 읽는다.)
+
+## Detail
+1. 개요: `docs/map/SYSTEM.md`
+2. 타일맵 핵심: `docs/map/TILEMAP.md`
+3. building bake: `docs/map/TILEMAP_BUILDING_BAKE.md`
+4. 가시성: `docs/map/TILEMAP_VISIBILITY.md`
+5. 좌표·내부 데이터: `docs/map/DATA.md`
+6. MonoBehaviour 진입: `docs/map/COMPONENTS.md`
+
+## MUST
+- 해당 영역 스크립트 수정 전 **관련 Detail 문서**를 읽는다
+- bake·점유셀·buildingId·가시성 SSOT는 문서 계약을 코드보다 우선하지 말고 **문서와 함께** 갱신한다
+
+## MUST NOT
+- `TILEMAP_BUILDING_BAKE.md` / `TILEMAP.md` 계약을 우회하는 이중 write·별도 flood 경로
+- 스트리밍 desired에 player focus 재도입 — `tile-chunk-streaming.mdc`
+
+## See also
+`tile-chunk-streaming.mdc` · `docs/tech-stack.md` · `migration-parity.mdc`

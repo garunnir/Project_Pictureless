@@ -1,0 +1,23 @@
+---
+description: Dist 캐릭터 이동 — docs/locomotion SSOT, TimeScale 채널 구분
+globs: Assets/Dist/Scripts/Entity/Locomotion/**/*,docs/locomotion/**/*
+alwaysApply: false
+---
+
+# Locomotion
+
+## When
+플레이어/NPC 이동·KinematicMover·CharacterLocomotion·맵 충돌 슬라이드.
+
+## Detail
+`docs/locomotion/LOCOMOTION.md`
+
+## MUST
+- 수정 전 Detail 문서를 읽는다
+- 플레이어 delta = `TimeScaleChannel.Player`, NPC/월드 = `TimeScaleChannel.World` (`game-time.mdc`)
+
+## MUST NOT
+- 책임 경계(문서 mermaid)를 무시하고 Input/물리/맵 조회를 한 클래스에 재합치기
+
+## See also
+`game-time.mdc` · `docs/time/TIME.md` · `map-system.mdc`

@@ -1,7 +1,7 @@
 # Game Time — 시간 레이어
 
 > LLM/에이전트용 Dist 게임 시간 SSOT.
-> 진입: `docs/tech-stack.md` · 룰: `.cursor/rules/game-time.mdc` · 인덱스: `00-rules-index.mdc`
+> 진입: `docs/README.md` · `docs/tech-stack.md` · 룰: `.cursor/rules/game-time.mdc` · 인덱스: `00-rules-index.mdc`
 > **시간·배속·하루 시계 스크립트를 쓰거나 고치기 전에 이 문서를 읽는다.**
 
 경로(코어): `Assets/Dist/Scripts/Gameplay/Time/` (`WorldClock` 등)  

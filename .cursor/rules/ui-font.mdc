@@ -15,7 +15,7 @@ Dist UI TMP·UI 프리팹·인벤 Editor 빌더/패치.
 | Font asset | `Assets/Dist/Scripts/UI/Font/Katuri SDF.asset` |
 | Builder const | `InventoryUIHierarchyBuilder.DefaultUIFontPath` |
 
-Docs: `Assets/Dist/Scripts/UI/UI_Scripts.md` §Font
+Docs: `docs/ui/UI_Scripts.md` §Font
 
 ## MUST
 - 신규/수정 프리팹·Instantiate 라벨·Editor 빌더 TMP `font` = **Katuri SDF**

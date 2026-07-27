@@ -90,10 +90,16 @@ When context gets long or a new session starts → read these files first.
 
 ## Domain docs (LLM entry)
 
-Stack: `docs/tech-stack.md`. Feature SSOT when touching that area:
+Index: `docs/README.md`. Stack: `docs/tech-stack.md`.  
+Feature SSOT when touching that area — **read the Doc before editing related scripts**:
 
 | Topic | Doc | Rule |
 |-------|-----|------|
 | Game time / scale / day clock | `docs/time/TIME.md` | `.cursor/rules/game-time.mdc` |
+| Map / TileMap / bake / visibility | `docs/map/SYSTEM.md` (+ `TILEMAP*.md`) | `.cursor/rules/map-system.mdc` |
+| Inventory UI | `docs/inventory/INVENTORY_UI.md` | `.cursor/rules/inventory-ui.mdc` |
+| UI MVC / font | `docs/ui/UI_Scripts.md` | `.cursor/rules/ui-prefab-layout.mdc` · `ui-font.mdc` |
+| Locomotion | `docs/locomotion/LOCOMOTION.md` | `.cursor/rules/locomotion.mdc` |
+| Legacy (do not expand as SSOT) | `docs/legacy/LEGACY_README.md` | `.cursor/rules/legacy.mdc` |
 
-**Before** writing or changing pause, speed, bullet-time, day/clock, or sim `deltaTime` ownership → read `docs/time/TIME.md` first.
+Assets 트리의 `.md`는 stub다. 본문은 `docs/`만 진실원.

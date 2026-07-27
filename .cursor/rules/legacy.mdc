@@ -1,0 +1,23 @@
+---
+description: Dist Legacy — 신규 SSOT 금지, docs/legacy 참고 후 최소 유지·교체만
+globs: Assets/Dist/Legacy/**/*,docs/legacy/**/*
+alwaysApply: false
+---
+
+# Legacy
+
+## When
+`Assets/Dist/Legacy` 전투·스킬·GameManager·ResourceManager 등.
+
+## Detail
+`docs/legacy/LEGACY_README.md` (개별: `BATTLE_LEGACY.md`, `SKILL_LEGACY.md`, `GAME_MANAGER_LEGACY.md`, `RESOURCE_MANAGER_LEGACY.md`)
+
+## MUST
+- 수정 전 관련 Detail을 읽는다
+- 신규 게임플레이 SSOT로 Legacy를 채택하지 않는다
+
+## MUST NOT
+- Legacy API를 Dist 신규 경로의 기본 의존으로 확대
+
+## See also
+`docs/tech-stack.md` · `migration-parity.mdc`

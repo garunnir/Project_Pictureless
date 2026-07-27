@@ -159,18 +159,21 @@ Project_Pictureless/
 
 ## 문서
 
-상세 설계는 `Assets/Dist/Scripts/` 아래 마크다운을 참고한다.
+상세 설계 SSOT는 `docs/` (인덱스: [`docs/README.md`](docs/README.md)).  
+`Assets/` 아래 `.md`는 stub → canonical 경로만 가리킨다.
 
 | 문서 | 내용 |
 |------|------|
-| [Map/SYSTEM.md](Assets/Dist/Scripts/Map/SYSTEM.md) | 맵 시스템 전체 개요 |
-| [Map/Components/COMPONENTS.md](Assets/Dist/Scripts/Map/Components/COMPONENTS.md) | MonoBehaviour 진입점 |
-| [Map/Internal/DATA.md](Assets/Dist/Scripts/Map/Internal/DATA.md) | 타일 내부 데이터 구조 |
-| [Map/TileMap/TILEMAP.md](Assets/Dist/Scripts/Map/TileMap/TILEMAP.md) | 타일맵 핵심 로직 |
-| [Map/TileMap/TILEMAP_VISIBILITY.md](Assets/Dist/Scripts/Map/TileMap/TILEMAP_VISIBILITY.md) | 가시성·오클루전 |
-| [UI/UI_Scripts.md](Assets/Dist/Scripts/UI/UI_Scripts.md) | UI MVC 구조 |
+| [docs/map/SYSTEM.md](docs/map/SYSTEM.md) | 맵 시스템 전체 개요 |
+| [docs/map/COMPONENTS.md](docs/map/COMPONENTS.md) | MonoBehaviour 진입점 |
+| [docs/map/DATA.md](docs/map/DATA.md) | 타일 내부 데이터 구조 |
+| [docs/map/TILEMAP.md](docs/map/TILEMAP.md) | 타일맵 핵심 로직 |
+| [docs/map/TILEMAP_VISIBILITY.md](docs/map/TILEMAP_VISIBILITY.md) | 가시성·오클루전 |
+| [docs/ui/UI_Scripts.md](docs/ui/UI_Scripts.md) | UI MVC 구조 |
+| [docs/inventory/INVENTORY_UI.md](docs/inventory/INVENTORY_UI.md) | 인벤토리 UI |
+| [docs/time/TIME.md](docs/time/TIME.md) | 게임 시간·배속 |
 
-에이전트·렌더링 규약: `.cursor/rules/` (`urp-rendering.mdc`, `tile-chunk-streaming.mdc` 등)
+에이전트·렌더링 규약: `.cursor/rules/` (`map-system.mdc`, `urp-rendering.mdc`, `tile-chunk-streaming.mdc` 등)
 
 ---
 

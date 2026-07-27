@@ -30,3 +30,6 @@ alwaysApply: false
 
 ## Types
 `TileMapChunkStreamer`, `TileMapStreamingVisualizer`, `TileViewportBounds`, `TilePoolStreamEstimate`
+
+## See also
+`map-system.mdc` · `docs/map/SYSTEM.md` · `docs/map/TILEMAP.md`

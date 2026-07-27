@@ -30,6 +30,10 @@ alwaysApply: true
 | `ui-prefab-layout.mdc` | Dist UI 스크립트·UI 프리팹 |
 | `ui-font.mdc` | Dist UI 스크립트·UI 프리팹 |
 | `tile-chunk-streaming.mdc` | `Assets/Dist/Scripts/Map/**` |
+| `map-system.mdc` | `Assets/Dist/Scripts/Map/**` · `docs/map/**` |
+| `inventory-ui.mdc` | Inventory 스크립트·프리팹 · `docs/inventory/**` |
+| `locomotion.mdc` | `Entity/Locomotion` · `docs/locomotion/**` |
+| `legacy.mdc` | `Assets/Dist/Legacy/**` · `docs/legacy/**` |
 | `game-time.mdc` | `Gameplay/Time` · `Static/Time` · `UI/Time` · `Editor/Time` · `SOData/.../Time` · `docs/time/**` |
 
 ## Non-normative

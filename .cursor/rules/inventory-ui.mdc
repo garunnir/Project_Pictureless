@@ -1,0 +1,27 @@
+---
+description: Dist 인벤토리 UI — docs/inventory SSOT, 일반 UI 의존 금지
+globs: Assets/Dist/Scripts/UI/Inventory/**/*,Assets/Dist/Scripts/Editor/Inventory/**/*,Assets/Dist/Visual/Prefabs/UIComponents/Inventory/**/*,docs/inventory/**/*
+alwaysApply: false
+---
+
+# Inventory UI
+
+## When
+인벤 리스트·루팅·드래그·컨텍스트 메뉴·컨테이너 사이드바.  
+(위 globs 밖이라도 해당 주제면 이 룰 + Detail을 먼저 읽는다.)
+
+## Detail
+`docs/inventory/INVENTORY_UI.md`  
+Item context menu: `docs/inventory/ItemContextMenu.md`
+
+## MUST
+- 수정 전 Detail 문서를 읽는다
+- 인벤 UI는 일반 UI(`UIController` 등)에 의존하지 않는다 — 경계는 문서의 절대 원칙
+- 입력은 `InputManager` SSOT만
+
+## MUST NOT
+- Loot 전용 compact 레이아웃 프리팹 재도입 (`ui-prefab-layout.mdc`)
+- chrome 수치를 런타임 매직으로 덮기
+
+## See also
+`ui-prefab-layout.mdc` · `ui-prefab-bake.mdc` · `ui-font.mdc` · `docs/inventory/INVENTORY_UI.md`

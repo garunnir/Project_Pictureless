@@ -42,4 +42,4 @@ offsetMax.x = -ResolveListRightInset(showSidebar); // sidebar offsetMin/Max
 - open 시 `SetHeaderTitle` (Inventory / Loot) — 동일 프리팹, 다른 라벨
 
 ## See also
-`no-hardcoding.mdc` · `ui-prefab-bake.mdc` · `INVENTORY_UI.md`
+`no-hardcoding.mdc` · `ui-prefab-bake.mdc` · `docs/inventory/INVENTORY_UI.md` · `inventory-ui.mdc`
