@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour, IPlayControllable
     [Required, SerializeField] private PlayerInteractionController _interaction;
     [Required, SerializeField] private PlayerAimController _aimController;
     [SerializeField] private TileObjectPointerController _tileObjectPointer;
+    [SerializeField] private PlayerCombatController _combatController;
 
     public CharacterState State => _state;
     public CharacterFacingAnim DirectionAnim => _directionAnim;
@@ -53,6 +54,7 @@ public class PlayerController : MonoBehaviour, IPlayControllable
         if (!_interaction) TryGetComponent(out _interaction);
         if (!_aimController) TryGetComponent(out _aimController);
         if (!_tileObjectPointer) TryGetComponent(out _tileObjectPointer);
+        if (!_combatController) TryGetComponent(out _combatController);
         if (_movable == null) TryGetComponent(out _movable);
     }
 
@@ -69,6 +71,7 @@ public class PlayerController : MonoBehaviour, IPlayControllable
     {
         _movable?.SetControllEnabled(enabled);
         _aimController?.SetEnabled(enabled);
+        _combatController?.SetEnabled(enabled);
         _tileObjectPointer?.SetEnabled(enabled);
     }
 }

@@ -7,7 +7,7 @@ using UnityEngine;
 /// Drives a character facing animation from <see cref="CharacterState.GetFacingDir"/>.
 /// Two modes supported:
 /// - SpriteSwap: assign eight directional sprite sequences (8-way) and it will cycle frames.
-/// - Animator: set parameters on an Animator (floats DirX/DirY and optional bool) so a Mecanim controller can drive animations.
+/// - Animator: set parameters on an Animator (floats DirX/DirY and optional Moving/IsRun bools) so a Mecanim controller can drive animations.
 /// Animation time advances via <see cref="TimeScaleService"/> channel, never Unity wall-clock.
 /// </summary>
 [RequireComponent(typeof(CharacterState))]
@@ -28,8 +28,10 @@ public class CharacterFacingAnim : MonoBehaviour
     public Animator animator;
     public string paramDirX = "DirX";
     public string paramDirY = "DirY";
-    [Tooltip("비우면 bool 파라미터를 쓰지 않는다. Player.controller는 Moving이 없고 IsRun만 있다.")]
+    [Tooltip("비우면 bool 파라미터를 쓰지 않는다.")]
     public string paramMoving = "";
+    [Tooltip("비우면 bool 파라미터를 쓰지 않는다. Player.controller는 IsRun.")]
+    public string paramRun = "IsRun";
 
     [Header("SpriteSwap Mode (8 directions)")]
     public SpriteRenderer spriteRenderer;
@@ -46,13 +48,16 @@ public class CharacterFacingAnim : MonoBehaviour
     float animTimer;
     CharacterState _characterState;
     bool _animatorManualControl;
+    bool _isRunning;
 
     int _hashDirX;
     int _hashDirY;
     int _hashMoving;
+    int _hashRun;
     bool _hasDirX;
     bool _hasDirY;
     bool _hasMoving;
+    bool _hasRun;
 
     void Awake()
     {
@@ -90,11 +95,17 @@ public class CharacterFacingAnim : MonoBehaviour
             UpdateSpriteSwap(dir, moving);
     }
 
+    /// <summary>
+    /// Sprint 입력·상태 쪽에서 Animator <c>IsRun</c> 브릿지로 호출한다.
+    /// </summary>
+    public void SetRunning(bool running) => _isRunning = running;
+
     void CacheAnimatorParameters()
     {
         _hasDirX = false;
         _hasDirY = false;
         _hasMoving = false;
+        _hasRun = false;
 
         if (animator == null || animator.runtimeAnimatorController == null)
             return;
@@ -104,6 +115,9 @@ public class CharacterFacingAnim : MonoBehaviour
         _hashMoving = string.IsNullOrEmpty(paramMoving)
             ? 0
             : Animator.StringToHash(paramMoving);
+        _hashRun = string.IsNullOrEmpty(paramRun)
+            ? 0
+            : Animator.StringToHash(paramRun);
 
         AnimatorControllerParameter[] parameters = animator.parameters;
         for (int i = 0; i < parameters.Length; i++)
@@ -115,6 +129,8 @@ public class CharacterFacingAnim : MonoBehaviour
                 _hasDirY = true;
             if (!string.IsNullOrEmpty(paramMoving) && nameHash == _hashMoving)
                 _hasMoving = true;
+            if (!string.IsNullOrEmpty(paramRun) && nameHash == _hashRun)
+                _hasRun = true;
         }
     }
 
@@ -147,6 +163,9 @@ public class CharacterFacingAnim : MonoBehaviour
 
         if (_hasMoving)
             animator.SetBool(_hashMoving, moving);
+
+        if (_hasRun)
+            animator.SetBool(_hashRun, _isRunning);
 
         animator.Update(TimeScaleService.Delta(_timeChannel));
     }

@@ -16006,7 +16006,7 @@ PrefabInstance:
     - target: {fileID: 405091090028251268, guid: f84e0b5d2f4b1ef468a698085ec4a6e1,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0.000030517578
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 405091090028251268, guid: f84e0b5d2f4b1ef468a698085ec4a6e1,
         type: 3}
@@ -25189,19 +25189,6 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 445474861}
   m_PrefabAsset: {fileID: 0}
---- !u!134 &446104426
-PhysicsMaterial:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: ' (Instance) (Instance)'
-  serializedVersion: 2
-  m_DynamicFriction: 0.6
-  m_StaticFriction: 0.6
-  m_Bounciness: 0
-  m_FrictionCombine: 0
-  m_BounceCombine: 0
 --- !u!1001 &450940145
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -55194,6 +55181,19 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1170058762}
   m_PrefabAsset: {fileID: 0}
+--- !u!134 &1171175037
+PhysicsMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ' (Instance) (Instance) (Instance)'
+  serializedVersion: 2
+  m_DynamicFriction: 0.6
+  m_StaticFriction: 0.6
+  m_Bounciness: 0
+  m_FrictionCombine: 0
+  m_BounceCombine: 0
 --- !u!1001 &1172613658
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -64346,7 +64346,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1383865911}
-  m_Material: {fileID: 446104426}
+  m_Material: {fileID: 1171175037}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -64506,6 +64506,7 @@ MonoBehaviour:
   _interaction: {fileID: 1383865918}
   _aimController: {fileID: 1383865923}
   _tileObjectPointer: {fileID: 1383865930}
+  _combatController: {fileID: 1383865931}
 --- !u!114 &1383865923
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -64613,7 +64614,7 @@ MonoBehaviour:
   _refCam: {fileID: 210656668}
   _hitMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 55
   _maxRayDistance: 200
 --- !u!114 &1383865931
 MonoBehaviour:
@@ -64643,7 +64644,7 @@ MonoBehaviour:
   _weapon: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
   _rangedObstructionMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 55
   _timeChannel: 2
   _selectedAction: 0
 --- !u!114 &1383865933

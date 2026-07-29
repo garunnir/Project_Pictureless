@@ -58,6 +58,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
     Rigidbody _rb;
     CapsuleCollider _capsule;
     CharacterState _characterState;
+    CharacterFacingAnim _facingAnim;
     KinematicMover _mover;
     CharacterLocomotion _locomotion;
     MapCollisionServices _pendingMapCollision;
@@ -137,7 +138,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
             return;
 
         if (blocksSprint || blocksMovement)
-            _mover.SetSprinting(false);
+            SetSprinting(false);
 
         if (blocksMovement)
         {
@@ -166,6 +167,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
         _rb = GetComponent<Rigidbody>();
         _capsule = GetComponent<CapsuleCollider>();
         _characterState = GetComponent<CharacterState>();
+        TryGetComponent(out _facingAnim);
         if (_debugControllerBehaviour == null) TryGetComponent(out _debugControllerBehaviour);
         _debugController = _debugControllerBehaviour as IPlayerMovementDebug;
         _rb.freezeRotation = true;
@@ -252,13 +254,13 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
     {
         if (_encumbranceBlocksSprint || _encumbranceBlocksMovement)
         {
-            _mover.SetSprinting(false);
+            SetSprinting(false);
             return;
         }
 
         bool wasSprinting = _mover.IsSprinting;
         bool isRun = context.ReadValue<float>() > 0.5f;
-        _mover.SetSprinting(isRun);
+        SetSprinting(isRun);
         if (isRun)
         {
             _pendingInitialVelocity = true;
@@ -271,6 +273,12 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
             }
         }
         _debugController?.LogPlayerRun(isRun);
+    }
+
+    void SetSprinting(bool isRun)
+    {
+        _mover.SetSprinting(isRun);
+        _facingAnim?.SetRunning(isRun);
     }
 
     void FixedUpdate()

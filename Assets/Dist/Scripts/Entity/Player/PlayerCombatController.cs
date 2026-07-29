@@ -33,9 +33,16 @@ public sealed class PlayerCombatController : MonoBehaviour
         _aimController = GetComponent<PlayerAimController>();
     }
 
-    void OnEnable() => ConnectInput();
-
     void OnDisable() => DisconnectInput();
+
+    /// <summary>PlayerController.SetControlEnabled 경로 — 조준/이동과 동일 소유권.</summary>
+    public void SetEnabled(bool enabled)
+    {
+        if (enabled)
+            ConnectInput();
+        else
+            DisconnectInput();
+    }
 
     void ConnectInput()
     {
