@@ -166,7 +166,7 @@
 - `InventoryDragDrop`: `ContainerTab`은 Source(부모)==리스트 타깃(body)이어도 early-out하지 않음(`MoveStacks` from==to가 no-op). Item/ContainerContents만 Source==target early-out.
 - 사이드 탭 이동: 간이(중첩) = 컨테이너째 `MoveStacks`; 고정 탭 = 내용물 `MoveStacksSequentiallyUntilFull`(용량 초과 시 중단). Pending: 중량·부피 소요 시간.
 - `ConfigureDragAndDrop`: 뷰포트 DnD 배선만. 리스트/사이드바 Bind는 `Initialize`·`SyncFromChangeSet` SSOT.
-- `UIItemListView`: `ItemStack` 참조 증분 Sync(LeanPool). 구조 변경 시에만 `ForceRebuildLayoutImmediate`.
+- `UIItemListView`: **고정 높이 가상화** — `_orderedStacks`(데이터)와 가시 행 LeanPool을 분리. Content 높이는 `N * stride`(+ sticky top/bottom pad, `InventoryListColumnLayout` SSOT). 스크롤·리사이즈 시 viewport+`RowOverscan` 윈도우만 Bind·배치. 프리팹 VLG/CSF는 런타임 비활성. 마퀴는 가시 GO가 아니라 인덱스 기하(`SelectRowsInRect`). 선택 SSOT는 비가시 스택도 유지. `ActiveRowCount`=가시 풀, `BoundStackCount`=데이터 수. 컨트롤러 Awake에서 `PrewarmRowPool`(`RowPoolPrewarmCount`≈viewport 상한). 패리티 계약·검증 게이트: 작업 플랜 `inventory_list_virtualization` + `.claude/checklists/migration-parity.md` §C.
 - `UIInventoryController.LateUpdate`: 포인터가 창 위에 있는지 캐시 후 변경 시에만 `SuppressPlayerAction` 호출
 
 

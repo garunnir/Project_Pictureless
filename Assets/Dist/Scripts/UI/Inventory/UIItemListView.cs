@@ -1,5 +1,5 @@
 // ============================================================
-// UIItemListView — 컨테이너 스택 목록 (LeanPool) + 선택 + 뷰 전용 정렬
+// UIItemListView — 컨테이너 스택 가상화 목록 (LeanPool) + 선택 + 뷰 전용 정렬
 // ============================================================
 
 using System;
@@ -10,6 +10,12 @@ using UnityEngine.UI;
 
 public sealed class UIItemListView : MonoBehaviour
 {
+    /// <summary>LeanPool 행 프리워밍 개수 SSOT. viewport+overscan 상한.</summary>
+    public const int RowPoolPrewarmCount = 48;
+
+    /// <summary>가시 윈도우 위·아래 여분 행 수 SSOT.</summary>
+    public const int RowOverscan = 2;
+
     [SerializeField] RectTransform _contentRoot;
     [SerializeField] UIItemListRow _rowPrefab;
     [SerializeField] UIItemListColumnHeader _columnHeader;
@@ -17,7 +23,11 @@ public sealed class UIItemListView : MonoBehaviour
     readonly InventoryListSelection _selection = new();
     readonly List<UIItemListRow> _activeRows = new();
     readonly List<ItemStack> _orderedStacks = new();
-    readonly Dictionary<ItemStack, UIItemListRow> _rowsByStack = new();
+    readonly Dictionary<int, UIItemListRow> _rowByIndex = new();
+    readonly List<int> _indexScratch = new();
+    readonly List<ItemStack> _selectionScratch = new();
+    readonly HashSet<ItemStack> _orderedSetScratch = new();
+    readonly Vector3[] _cornerScratch = new Vector3[4];
 
     InventorySession _session;
     IInventoryItemDragHost _dragHost;
@@ -26,12 +36,16 @@ public sealed class UIItemListView : MonoBehaviour
     int _appliedContentVersion = -1;
     bool _viewportConfigured;
     bool _selectionEventsWired;
+    bool _scrollEventsWired;
+    bool _manualLayoutReady;
+    static bool _rowPoolPrewarmed;
 
     ItemListSortKey _sortKey = ItemListSortKey.None;
     bool _sortAscending = true;
 
     public InventoryListSelection Selection => _selection;
     public int ActiveRowCount => _activeRows.Count;
+    public int BoundStackCount => _orderedStacks.Count;
     public ItemListSortKey SortKey => _sortKey;
     public bool SortAscending => _sortAscending;
 
@@ -39,6 +53,8 @@ public sealed class UIItemListView : MonoBehaviour
     {
         _scrollRect = GetComponent<ScrollRect>();
         EnsureScrollViewport();
+        EnsureManualContentLayout();
+        WireScrollEvents();
     }
 
     public void Configure(InventorySession session, IInventoryItemDragHost dragHost)
@@ -53,7 +69,42 @@ public sealed class UIItemListView : MonoBehaviour
         _selectionEventsWired = true;
     }
 
-    void OnDestroy() => _selection.SelectionChanged -= OnSelectionChanged;
+    /// <summary>
+    /// Prefab_ItemListRow LeanPool을 count까지 채운다. Primary/Loot가 같은 프리팹이면 프로세스당 1회.
+    /// </summary>
+    public void PrewarmRowPool(int count = RowPoolPrewarmCount)
+    {
+        if (_rowPoolPrewarmed || _rowPrefab == null || count <= 0)
+            return;
+
+        GameObject prefabGo = _rowPrefab.gameObject;
+        LeanGameObjectPool pool = null;
+        if (!LeanGameObjectPool.TryFindPoolByPrefab(prefabGo, ref pool) || pool == null)
+        {
+            pool = new GameObject("LeanPool (" + prefabGo.name + ")").AddComponent<LeanGameObjectPool>();
+            pool.Prefab = prefabGo;
+        }
+
+        if (pool.Preload < count)
+            pool.Preload = count;
+
+        pool.PreloadAll();
+        _rowPoolPrewarmed = true;
+    }
+
+    void OnDestroy()
+    {
+        _selection.SelectionChanged -= OnSelectionChanged;
+        UnwireScrollEvents();
+    }
+
+    void OnRectTransformDimensionsChange()
+    {
+        if (!_manualLayoutReady || _boundContainer == null)
+            return;
+
+        RefreshVisibleRows(forceRebind: false);
+    }
 
     public void SetSort(ItemListSortKey key)
     {
@@ -84,6 +135,8 @@ public sealed class UIItemListView : MonoBehaviour
     void Bind(InventoryContainer container, bool force, bool resetScroll)
     {
         EnsureScrollViewport();
+        EnsureManualContentLayout();
+        WireScrollEvents();
 
         if (container == null || _rowPrefab == null || _contentRoot == null)
         {
@@ -104,14 +157,12 @@ public sealed class UIItemListView : MonoBehaviour
         bool resetScrollPosition = resetScroll || containerChanged;
 
         BuildOrderedStacks(container);
-
-        bool structureChanged = SyncRows(container, resetScrollPosition);
+        PruneSelectionToBoundStacks();
+        ApplyContentHeight();
+        RefreshVisibleRows(forceRebind: true);
         _appliedContentVersion = container.ContentVersion;
 
         _columnHeader?.RefreshSortVisual(_sortKey, _sortAscending);
-
-        if (structureChanged)
-            RebuildLayout();
 
         if (resetScrollPosition)
             ResetScrollTop();
@@ -128,56 +179,137 @@ public sealed class UIItemListView : MonoBehaviour
             _orderedStacks.Sort(new ItemListStackComparer(_sortKey, _sortAscending));
     }
 
-    bool SyncRows(InventoryContainer container, bool pruneSelection)
+    void PruneSelectionToBoundStacks()
     {
-        var desired = new HashSet<ItemStack>();
+        IReadOnlyList<ItemStack> selected = _selection.GetSelectedStacks();
+        if (selected.Count == 0)
+            return;
+
+        _orderedSetScratch.Clear();
         for (int i = 0; i < _orderedStacks.Count; i++)
         {
             if (_orderedStacks[i] != null)
-                desired.Add(_orderedStacks[i]);
+                _orderedSetScratch.Add(_orderedStacks[i]);
         }
 
-        bool structureChanged = false;
-
-        var removeStacks = new List<ItemStack>();
-        foreach (KeyValuePair<ItemStack, UIItemListRow> entry in _rowsByStack)
+        _selectionScratch.Clear();
+        bool removed = false;
+        for (int i = 0; i < selected.Count; i++)
         {
-            if (!desired.Contains(entry.Key))
-                removeStacks.Add(entry.Key);
-        }
-
-        for (int i = 0; i < removeStacks.Count; i++)
-        {
-            RemoveRow(removeStacks[i], pruneSelection);
-            structureChanged = true;
-        }
-
-        for (int i = 0; i < _orderedStacks.Count; i++)
-        {
-            ItemStack stack = _orderedStacks[i];
-            if (stack == null)
-                continue;
-
-            if (!_rowsByStack.TryGetValue(stack, out UIItemListRow row) || row == null)
-            {
-                row = SpawnRow(container, stack);
-                if (row == null)
-                    continue;
-
-                _rowsByStack[stack] = row;
-                structureChanged = true;
-            }
+            ItemStack stack = selected[i];
+            if (stack != null && _orderedSetScratch.Contains(stack))
+                _selectionScratch.Add(stack);
             else
-            {
-                row.Bind(stack, container, _selection, _dragHost, this);
-            }
+                removed = true;
         }
 
-        structureChanged |= ReorderActiveRows();
-        return structureChanged;
+        if (removed)
+            _selection.SetMany(_selectionScratch);
     }
 
-    UIItemListRow SpawnRow(InventoryContainer container, ItemStack stack)
+    void ApplyContentHeight()
+    {
+        if (_contentRoot == null)
+            return;
+
+        int n = _orderedStacks.Count;
+        float topPad = InventoryListColumnLayout.ContentPaddingTopWithStickyHeader;
+        float bottomPad = InventoryListColumnLayout.ContentPadding;
+        float height = topPad + bottomPad;
+        if (n > 0)
+        {
+            height += n * InventoryListColumnLayout.RowHeight
+                + (n - 1) * InventoryListColumnLayout.RowSpacing;
+        }
+
+        Vector2 size = _contentRoot.sizeDelta;
+        size.y = height;
+        _contentRoot.sizeDelta = size;
+    }
+
+    void RefreshVisibleRows(bool forceRebind)
+    {
+        if (_contentRoot == null || _rowPrefab == null)
+            return;
+
+        GetVisibleRange(out int first, out int last);
+
+        _indexScratch.Clear();
+        foreach (KeyValuePair<int, UIItemListRow> entry in _rowByIndex)
+        {
+            if (entry.Key < first || entry.Key > last)
+                _indexScratch.Add(entry.Key);
+        }
+
+        for (int i = 0; i < _indexScratch.Count; i++)
+            RecycleRowAt(_indexScratch[i]);
+
+        if (_orderedStacks.Count == 0 || first > last)
+            return;
+
+        for (int index = first; index <= last; index++)
+        {
+            ItemStack stack = _orderedStacks[index];
+            if (stack == null)
+            {
+                RecycleRowAt(index);
+                continue;
+            }
+
+            if (_rowByIndex.TryGetValue(index, out UIItemListRow row) && row != null)
+            {
+                if (forceRebind || row.Stack != stack)
+                    BindRow(row, stack);
+                LayoutRow(row, index);
+                continue;
+            }
+
+            row = SpawnRow();
+            if (row == null)
+                continue;
+
+            BindRow(row, stack);
+            LayoutRow(row, index);
+            _rowByIndex[index] = row;
+            _activeRows.Add(row);
+        }
+    }
+
+    void GetVisibleRange(out int first, out int last)
+    {
+        int n = _orderedStacks.Count;
+        if (n <= 0)
+        {
+            first = 0;
+            last = -1;
+            return;
+        }
+
+        float stride = GetRowStride();
+        float topPad = InventoryListColumnLayout.ContentPaddingTopWithStickyHeader;
+        RectTransform viewport = _contentRoot.parent as RectTransform;
+        float viewportHeight = viewport != null ? viewport.rect.height : 0f;
+        float scrollY = _contentRoot.anchoredPosition.y;
+
+        if (viewportHeight <= 0f || stride <= 0f)
+        {
+            first = 0;
+            last = Mathf.Min(n - 1, RowOverscan * 2);
+            return;
+        }
+
+        first = Mathf.FloorToInt((scrollY - topPad) / stride) - RowOverscan;
+        last = Mathf.FloorToInt((scrollY + viewportHeight - topPad) / stride) + RowOverscan;
+        first = Mathf.Clamp(first, 0, n - 1);
+        last = Mathf.Clamp(last, 0, n - 1);
+        if (last < first)
+            last = first;
+    }
+
+    static float GetRowStride() =>
+        InventoryListColumnLayout.RowHeight + InventoryListColumnLayout.RowSpacing;
+
+    UIItemListRow SpawnRow()
     {
         UIItemListRow row = LeanPool.Spawn(_rowPrefab, _contentRoot);
         if (row == null)
@@ -186,47 +318,62 @@ public sealed class UIItemListView : MonoBehaviour
             return null;
         }
 
-        if (row.RectTransform != null)
-            row.RectTransform.localScale = Vector3.one;
-
-        row.Bind(stack, container, _selection, _dragHost, this);
         return row;
     }
 
-    void RemoveRow(ItemStack stack, bool pruneSelection)
+    void BindRow(UIItemListRow row, ItemStack stack)
     {
-        if (!_rowsByStack.TryGetValue(stack, out UIItemListRow row))
+        row.gameObject.SetActive(false);
+        row.Bind(stack, _boundContainer, _selection, _dragHost, this);
+        if (stack?.Item != null)
+            row.gameObject.SetActive(true);
+    }
+
+    void LayoutRow(UIItemListRow row, int index)
+    {
+        RectTransform rt = row.RectTransform;
+        if (rt == null)
             return;
 
-        _rowsByStack.Remove(stack);
-        _activeRows.Remove(row);
+        if (rt.parent != _contentRoot)
+            rt.SetParent(_contentRoot, false);
 
-        if (pruneSelection && _selection.IsSelected(stack))
-            _selection.Remove(stack);
+        float padH = InventoryListColumnLayout.ContentPadding;
+        rt.localScale = Vector3.one;
+        rt.anchorMin = new Vector2(0f, 1f);
+        rt.anchorMax = new Vector2(1f, 1f);
+        rt.pivot = new Vector2(0.5f, 1f);
+        rt.sizeDelta = new Vector2(-2f * padH, InventoryListColumnLayout.RowHeight);
+
+        float y = -(InventoryListColumnLayout.ContentPaddingTopWithStickyHeader
+            + index * GetRowStride());
+        rt.anchoredPosition = new Vector2(0f, y);
+    }
+
+    void RecycleRowAt(int index)
+    {
+        if (!_rowByIndex.TryGetValue(index, out UIItemListRow row))
+            return;
+
+        _rowByIndex.Remove(index);
+        _activeRows.Remove(row);
 
         if (row != null)
             LeanPool.Despawn(row.gameObject);
     }
 
-    bool ReorderActiveRows()
+    void EnsureManualContentLayout()
     {
-        bool orderChanged = false;
+        if (_manualLayoutReady || _contentRoot == null)
+            return;
 
-        _activeRows.Clear();
-        for (int i = 0; i < _orderedStacks.Count; i++)
-        {
-            ItemStack stack = _orderedStacks[i];
-            if (stack == null || !_rowsByStack.TryGetValue(stack, out UIItemListRow row) || row == null)
-                continue;
+        if (_contentRoot.TryGetComponent(out VerticalLayoutGroup layout))
+            layout.enabled = false;
 
-            if (row.transform.GetSiblingIndex() != i)
-                orderChanged = true;
+        if (_contentRoot.TryGetComponent(out ContentSizeFitter fitter))
+            fitter.enabled = false;
 
-            row.transform.SetSiblingIndex(i);
-            _activeRows.Add(row);
-        }
-
-        return orderChanged;
+        _manualLayoutReady = true;
     }
 
     void EnsureScrollViewport()
@@ -247,22 +394,36 @@ public sealed class UIItemListView : MonoBehaviour
         _viewportConfigured = true;
     }
 
-    void RebuildLayout()
+    void WireScrollEvents()
     {
-        if (_contentRoot == null)
+        if (_scrollEventsWired)
             return;
 
-        LayoutRebuilder.ForceRebuildLayoutImmediate(_contentRoot);
+        if (_scrollRect == null)
+            _scrollRect = GetComponent<ScrollRect>();
 
-        RectTransform viewport = _contentRoot.parent as RectTransform;
-        if (viewport != null)
-            LayoutRebuilder.ForceRebuildLayoutImmediate(viewport);
+        if (_scrollRect == null)
+            return;
 
-        RectTransform listArea = viewport != null ? viewport.parent as RectTransform : null;
-        if (listArea != null)
-            LayoutRebuilder.ForceRebuildLayoutImmediate(listArea);
+        _scrollRect.onValueChanged.AddListener(OnScrollValueChanged);
+        _scrollEventsWired = true;
+    }
 
-        Canvas.ForceUpdateCanvases();
+    void UnwireScrollEvents()
+    {
+        if (!_scrollEventsWired || _scrollRect == null)
+            return;
+
+        _scrollRect.onValueChanged.RemoveListener(OnScrollValueChanged);
+        _scrollEventsWired = false;
+    }
+
+    void OnScrollValueChanged(Vector2 _)
+    {
+        if (_boundContainer == null)
+            return;
+
+        RefreshVisibleRows(forceRebind: false);
     }
 
     void ResetScrollTop()
@@ -272,36 +433,118 @@ public sealed class UIItemListView : MonoBehaviour
 
         _scrollRect.verticalNormalizedPosition = 1f;
         _scrollRect.horizontalNormalizedPosition = 0f;
+        RefreshVisibleRows(forceRebind: false);
     }
 
     public void SelectRowsInRect(Rect screenRect, Camera uiCamera = null)
     {
-        var selected = new List<ItemStack>();
-        for (int i = 0; i < _activeRows.Count; i++)
+        _selectionScratch.Clear();
+        if (_contentRoot == null || _orderedStacks.Count == 0)
         {
-            UIItemListRow row = _activeRows[i];
-            if (row == null || row.Stack == null || row.RectTransform == null)
-                continue;
-
-            if (RowIntersectsScreenRect(row.RectTransform, screenRect, uiCamera))
-                selected.Add(row.Stack);
+            _selection.SetMany(_selectionScratch);
+            return;
         }
 
-        _selection.SetMany(selected);
+        if (!TryGetContentYRangeFromScreenRect(screenRect, uiCamera, out float yMin, out float yMax))
+        {
+            _selection.SetMany(_selectionScratch);
+            return;
+        }
+
+        float topPad = InventoryListColumnLayout.ContentPaddingTopWithStickyHeader;
+        float rowHeight = InventoryListColumnLayout.RowHeight;
+        float stride = GetRowStride();
+        int n = _orderedStacks.Count;
+
+        int first = Mathf.FloorToInt((yMin - topPad) / stride);
+        int last = Mathf.FloorToInt((yMax - topPad) / stride);
+        first = Mathf.Clamp(first, 0, n - 1);
+        last = Mathf.Clamp(last, 0, n - 1);
+        if (last < first)
+        {
+            int swap = first;
+            first = last;
+            last = swap;
+        }
+
+        for (int i = first; i <= last; i++)
+        {
+            ItemStack stack = _orderedStacks[i];
+            if (stack == null)
+                continue;
+
+            float rowTop = topPad + i * stride;
+            float rowBottom = rowTop + rowHeight;
+            if (rowBottom < yMin || rowTop > yMax)
+                continue;
+
+            if (!RowIndexIntersectsScreenRect(i, screenRect, uiCamera))
+                continue;
+
+            _selectionScratch.Add(stack);
+        }
+
+        _selection.SetMany(_selectionScratch);
     }
 
-    static bool RowIntersectsScreenRect(RectTransform rowRect, Rect screenRect, Camera uiCamera)
+    bool TryGetContentYRangeFromScreenRect(
+        Rect screenRect,
+        Camera uiCamera,
+        out float yMin,
+        out float yMax)
     {
-        Vector3[] corners = new Vector3[4];
-        rowRect.GetWorldCorners(corners);
+        yMin = float.PositiveInfinity;
+        yMax = float.NegativeInfinity;
+
+        Vector2[] points =
+        {
+            new(screenRect.xMin, screenRect.yMin),
+            new(screenRect.xMin, screenRect.yMax),
+            new(screenRect.xMax, screenRect.yMin),
+            new(screenRect.xMax, screenRect.yMax),
+        };
+
+        for (int i = 0; i < points.Length; i++)
+        {
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    _contentRoot,
+                    points[i],
+                    uiCamera,
+                    out Vector2 local))
+                return false;
+
+            float topDist = -local.y;
+            yMin = Mathf.Min(yMin, topDist);
+            yMax = Mathf.Max(yMax, topDist);
+        }
+
+        return yMax >= yMin;
+    }
+
+    bool RowIndexIntersectsScreenRect(int index, Rect screenRect, Camera uiCamera)
+    {
+        float topPad = InventoryListColumnLayout.ContentPaddingTopWithStickyHeader;
+        float rowHeight = InventoryListColumnLayout.RowHeight;
+        float stride = GetRowStride();
+        float rowTop = topPad + index * stride;
+
+        Rect contentRect = _contentRoot.rect;
+        float padH = InventoryListColumnLayout.ContentPadding;
+        float xMin = contentRect.xMin + padH;
+        float xMax = contentRect.xMax - padH;
+        _cornerScratch[0] = _contentRoot.TransformPoint(new Vector3(xMin, -rowTop, 0f));
+        _cornerScratch[1] = _contentRoot.TransformPoint(new Vector3(xMax, -rowTop, 0f));
+        _cornerScratch[2] = _contentRoot.TransformPoint(new Vector3(xMin, -(rowTop + rowHeight), 0f));
+        _cornerScratch[3] = _contentRoot.TransformPoint(new Vector3(xMax, -(rowTop + rowHeight), 0f));
+
         float minX = float.PositiveInfinity;
         float minY = float.PositiveInfinity;
         float maxX = float.NegativeInfinity;
         float maxY = float.NegativeInfinity;
 
-        for (int i = 0; i < corners.Length; i++)
+        for (int i = 0; i < _cornerScratch.Length; i++)
         {
-            Vector2 screen = RectTransformUtility.WorldToScreenPoint(uiCamera, corners[i]);
+            Vector2 screen = RectTransformUtility.WorldToScreenPoint(uiCamera, _cornerScratch[i]);
             minX = Mathf.Min(minX, screen.x);
             minY = Mathf.Min(minY, screen.y);
             maxX = Mathf.Max(maxX, screen.x);
@@ -332,9 +575,17 @@ public sealed class UIItemListView : MonoBehaviour
         }
 
         _activeRows.Clear();
-        _rowsByStack.Clear();
+        _rowByIndex.Clear();
         _orderedStacks.Clear();
         _boundContainer = null;
         _appliedContentVersion = -1;
+
+        if (_contentRoot != null)
+        {
+            Vector2 size = _contentRoot.sizeDelta;
+            size.y = InventoryListColumnLayout.ContentPaddingTopWithStickyHeader
+                + InventoryListColumnLayout.ContentPadding;
+            _contentRoot.sizeDelta = size;
+        }
     }
 }

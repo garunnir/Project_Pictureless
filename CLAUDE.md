@@ -25,6 +25,7 @@
 - **post-task checklist** (`.claude/checklists/post-task.md`):
   - **Skip** (token/속도 우선): ≤2 files, net ≤40 lines, typo/comment/format, handoff 구현만
   - **Required**: ≥3 files, public API·직렬화·새 타입/파이프라인, migration-parity 해당
+  - **기능 불변 최적화·내부 교체**: `.claude/checklists/migration-parity.md` §C (기능 인벤토리 + 검증 게이트). 경량 예외는 §C와 동일(≤2파일·≤40줄·경로 불변)
 
 ---
 

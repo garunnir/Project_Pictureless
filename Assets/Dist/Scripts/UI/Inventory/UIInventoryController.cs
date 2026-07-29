@@ -50,6 +50,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
     {
         EnsureReferences();
         EnsureWindows();
+        _primaryWindow?.ListView?.PrewarmRowPool();
         EnsureScrollDragOverlay();
         EnsureDragGhost();
         EnsureContextMenu();
@@ -523,9 +524,9 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         _isPrimaryOpen = true;
         SyncLauncherVisuals();
 
-        int stackCount = runtime.Host.Container.Stacks.Count;
+        UIItemListView listView = _primaryWindow.ListView;
         Debug.Log(
-            $"[UIInventoryController] OpenPrimaryWindow stacks={stackCount} rows={_primaryWindow.ListView?.ActiveRowCount ?? 0}",
+            $"[UIInventoryController] OpenPrimaryWindow stacks={listView?.BoundStackCount ?? 0} visibleRows={listView?.ActiveRowCount ?? 0}",
             this);
     }
 

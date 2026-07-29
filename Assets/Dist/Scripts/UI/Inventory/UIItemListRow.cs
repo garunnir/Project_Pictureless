@@ -42,6 +42,7 @@ public sealed class UIItemListRow : MonoBehaviour,
     InventoryListSelection _selection;
     IInventoryItemDragHost _dragHost;
     UIItemListView _listView;
+    bool _hovered;
 
     public ItemStack Stack => _stack;
     public RectTransform RectTransform => transform as RectTransform;
@@ -53,6 +54,8 @@ public sealed class UIItemListRow : MonoBehaviour,
         IInventoryItemDragHost dragHost,
         UIItemListView listView)
     {
+        ClearHoverIfNeeded();
+
         _stack = stack;
         _ownerContainer = ownerContainer;
         _selection = selection;
@@ -63,12 +66,8 @@ public sealed class UIItemListRow : MonoBehaviour,
             TryGetComponent(out _backgroundImage);
 
         if (stack?.Item == null)
-        {
-            gameObject.SetActive(false);
             return;
-        }
 
-        gameObject.SetActive(true);
         ItemData item = stack.Item;
 
         if (_categoryText != null)
@@ -136,10 +135,29 @@ public sealed class UIItemListRow : MonoBehaviour,
         if (InventoryDragState.IsDragging || _stack?.Item == null)
             return;
 
+        _hovered = true;
         Hovered?.Invoke(_stack, eventData.position);
     }
 
-    public void OnPointerExit(PointerEventData eventData) => HoverEnded?.Invoke();
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (!_hovered)
+            return;
+
+        _hovered = false;
+        HoverEnded?.Invoke();
+    }
+
+    void OnDisable() => ClearHoverIfNeeded();
+
+    void ClearHoverIfNeeded()
+    {
+        if (!_hovered)
+            return;
+
+        _hovered = false;
+        HoverEnded?.Invoke();
+    }
 
     public void RefreshSelectionVisual()
     {
