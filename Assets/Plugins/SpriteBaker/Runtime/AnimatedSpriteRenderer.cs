@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace SpriteBaker
@@ -8,13 +9,8 @@ namespace SpriteBaker
     /// drive animation state from your gameplay code via
     /// <see cref="SetRow"/> + <see cref="SetFacing"/>.
     ///
-    /// The renderer creates its own <see cref="MeshFilter"/> + <see cref="MeshRenderer"/>
-    /// on the same GameObject, sharing the atlas's material so SRP Batcher
-    /// batches multiple sprite instances. World-space units match the
-    /// <see cref="BakedSpriteAtlas.QuadWidth"/> / <see cref="BakedSpriteAtlas.QuadHeight"/>
-    /// set during the bake — bottom-aligned to the GameObject's pivot, so
-    /// you can swap between 3D and sprite rendering at the same world
-    /// position without footprints jumping.
+    /// When <see cref="ExternalClock"/> is true, built-in <c>Update</c> skips
+    /// advancement — callers drive time via <see cref="Tick"/>.
     /// </summary>
     public class AnimatedSpriteRenderer : MonoBehaviour
     {
@@ -26,10 +22,9 @@ namespace SpriteBaker
         private int currentFrame;
         private float animTimer;
         private bool facingRight = true;
+        private bool rowComplete;
+        private bool externalClock;
 
-        // Multi-angle playback. pendingYawDegrees holds the latest SetYaw
-        // call until the atlas binds, so a SetYaw before the bake lands
-        // isn't lost.
         private int   yawIndex;
         private int   yawCount = 1;
         private float pendingYawDegrees;
@@ -40,40 +35,32 @@ namespace SpriteBaker
         private Vector2[] uvBuffer = new Vector2[4];
         private float frameU, frameV;
 
-        /// <summary>
-        /// Set up the quad and try to bind to the atlas. If the atlas isn't
-        /// yet baked, the renderer stays hidden and re-checks every frame
-        /// until the bake lands.
-        /// </summary>
+        public bool ExternalClock
+        {
+            get => externalClock;
+            set => externalClock = value;
+        }
+
+        public bool IsRowComplete => rowComplete;
+        public int CurrentRow => currentRow;
+        public event Action RowCompleted;
+
         public void Bind(int atlasKey)
         {
             boundKey = atlasKey;
             EnsureQuadMesh();
-
-            // Force a fresh re-bind so a Bind(newKey) after an Evict
-            // doesn't leave the renderer sampling the destroyed atlas.
             hasAtlas = false;
-
-            // Hide until the atlas lands — otherwise a slow bake would
-            // briefly show the default magenta error material.
+            rowComplete = false;
             if (meshRenderer != null) meshRenderer.enabled = false;
-
             TryBindAtlas();
         }
 
-        /// <summary>
-        /// Switch the playback row. <paramref name="row"/> must be one of
-        /// the indices used in the original <see cref="SpriteBakeRequest.Rows"/>.
-        /// Rows with zero frames are silently ignored. Calls before the
-        /// atlas binds are remembered, so <c>Bind() + SetRow(Run)</c>
-        /// doesn't briefly snap to row 0 once the bake lands.
-        /// </summary>
         public void SetRow(int row)
         {
-            // Stored even when !hasAtlas — TryBindAtlas reads it on landing.
             currentRow = row;
             currentFrame = 0;
             animTimer = 0f;
+            rowComplete = false;
 
             if (!hasAtlas) return;
             if (row < 0 || row >= atlas.Rows.Length) return;
@@ -81,15 +68,8 @@ namespace SpriteBaker
             UpdateUVs();
         }
 
-        /// <summary>True = right (the default capture direction); false = left, achieved by flipping U coordinates.</summary>
         public void SetFacing(bool right) => facingRight = right;
 
-        /// <summary>
-        /// Pick the closest baked yaw for playback. <paramref name="degrees"/>
-        /// is the world-Y angle from character to camera; 0° = camera on +Z
-        /// (character's "front"). Calls before bind are remembered so the
-        /// first post-bind frame doesn't default to the front view.
-        /// </summary>
         public void SetYaw(float degrees)
         {
             if (!hasAtlas)
@@ -104,16 +84,62 @@ namespace SpriteBaker
             UpdateUVs();
         }
 
-        /// <summary>
-        /// Y-axis billboard rotation. <paramref name="degrees"/> = world-Y
-        /// angle from the sprite to the camera (same convention as
-        /// <see cref="SetYaw"/>). The quad's textured face is its local -Z,
-        /// so the transform rotates by <c>degrees + 180°</c>. Pitch is
-        /// ignored to avoid the "card edge" reveal full LookAt produces.
-        /// </summary>
         public void SetBillboardYaw(float degrees)
         {
             transform.rotation = Quaternion.Euler(0f, degrees + 180f, 0f);
+        }
+
+        public void Tick(float deltaTime)
+        {
+            if (!hasAtlas)
+            {
+                TryBindAtlas();
+                if (!hasAtlas) return;
+            }
+
+            if (atlas.Rows == null || currentRow < 0 || currentRow >= atlas.Rows.Length)
+                return;
+
+            var info = atlas.Rows[currentRow];
+            if (info.FrameCount <= 0)
+                return;
+
+            if (info.FrameCount > 1 && deltaTime > 0f && !rowComplete)
+            {
+                animTimer += deltaTime;
+                while (animTimer >= info.FrameDuration && info.FrameDuration > 0f)
+                {
+                    animTimer -= info.FrameDuration;
+                    if (info.Loop)
+                    {
+                        currentFrame = (currentFrame + 1) % info.FrameCount;
+                    }
+                    else if (currentFrame < info.FrameCount - 1)
+                    {
+                        currentFrame++;
+                    }
+                    else
+                    {
+                        MarkRowComplete();
+                        break;
+                    }
+                }
+            }
+            else if (info.FrameCount <= 1)
+            {
+                currentFrame = 0;
+                if (!info.Loop && !rowComplete)
+                    MarkRowComplete();
+            }
+
+            UpdateUVs();
+        }
+
+        private void MarkRowComplete()
+        {
+            if (rowComplete) return;
+            rowComplete = true;
+            RowCompleted?.Invoke();
         }
 
         private int ComputeYawIndex(float degrees)
@@ -129,45 +155,20 @@ namespace SpriteBaker
 
         private void Update()
         {
-            if (!hasAtlas)
+            if (externalClock)
             {
-                TryBindAtlas();
-                if (!hasAtlas) return;
+                if (!hasAtlas)
+                    TryBindAtlas();
+                return;
             }
 
-            var info = atlas.Rows[currentRow];
-            if (info.FrameCount > 1)
-            {
-                animTimer += Time.deltaTime;
-                if (animTimer >= info.FrameDuration)
-                {
-                    animTimer -= info.FrameDuration;
-                    if (info.Loop)
-                    {
-                        currentFrame = (currentFrame + 1) % info.FrameCount;
-                    }
-                    else if (currentFrame < info.FrameCount - 1)
-                    {
-                        // Non-looping rows freeze on the last frame; caller
-                        // switches back via SetRow.
-                        currentFrame++;
-                    }
-                }
-            }
-            else
-            {
-                currentFrame = 0;
-            }
-
-            UpdateUVs();
+            Tick(Time.deltaTime);
         }
 
         private void TryBindAtlas()
         {
             if (!SpriteAtlasCache.TryGet(boundKey, out atlas)) return;
 
-            // Resize from the placeholder unit quad to the baked frame's
-            // world dimensions.
             float hw = atlas.QuadWidth * 0.5f;
             float hh = atlas.QuadHeight;
             quadMesh.vertices = new[]
@@ -182,8 +183,6 @@ namespace SpriteBaker
             meshRenderer.sharedMaterial = atlas.SharedMaterial;
             meshRenderer.enabled = true;
 
-            // frameV's denominator is the TEXTURE row count (state rows ×
-            // yaws), since multi-angle atlases stack yaws contiguously.
             yawCount = Mathf.Max(1, atlas.YawCount);
             int textureRows = Mathf.Max(1, atlas.Rows.Length) * yawCount;
 
@@ -232,8 +231,6 @@ namespace SpriteBaker
             float v0 = textureRow * frameV;
             float v1 = v0 + frameV;
 
-            // Mirror via UVs, not transform.scale — keeps shadow projection
-            // and scale-reading physics queries stable.
             if (!facingRight)
             {
                 float tmp = u0; u0 = u1; u1 = tmp;

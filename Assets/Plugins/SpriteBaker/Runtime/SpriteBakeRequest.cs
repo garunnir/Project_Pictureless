@@ -63,6 +63,18 @@ namespace SpriteBaker
         public int FrameRate;
 
         /// <summary>
+        /// Multiplier on playback FrameDuration (= 1/FrameRate × scale). ≤0 → 1.
+        /// Dist Recipe durationScale maps here at editor bake.
+        /// </summary>
+        public float FrameDurationScale;
+
+        /// <summary>Keep CPU pixels after Apply for EncodeToPNG export.</summary>
+        public bool KeepCpuReadable;
+
+        /// <summary>Skip SpriteAtlasCache store; caller reads via BakeSync result.</summary>
+        public bool SkipCacheStore;
+
+        /// <summary>
         /// Number of evenly-spaced yaw angles to capture around the model.
         /// 0 or 1 = single-angle atlas. Higher values (4, 8, 16) produce a
         /// multi-angle atlas so the runtime renderer can pick the baked

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a05761146d9a7c488d595f058401415, type: 3}
+  m_Name: Run_Sheet
+  m_EditorClassIdentifier: DistScript::SpriteBakerSheetAsset
+  _animId: Run
+  _atlas: {fileID: 2800000, guid: d32e378a780d04e4cbf9abdb3d49b2f7, type: 3}
+  _sharedMaterial: {fileID: 2100000, guid: 79fb96cabce870f46927514129080d40, type: 2}
+  _framePixelSize: 128
+  _atlasCols: 8
+  _quadWidth: 4.340857
+  _quadHeight: 4.340857
+  _yawCount: 8
+  _frameCount: 8
+  _frameDuration: 0.083333336
+  _loop: 1
+  _cacheKey: -894787807

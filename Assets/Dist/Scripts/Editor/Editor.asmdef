@@ -12,7 +12,8 @@
         "IngameDebugConsole.Runtime",
         "GUID:6055be8ebefd69e48b49212b09b47b2f",
         "GUID:71c4ae7573588cc4c9e9ee859ce3512d",
-        "Dist.Inventory.UI"
+        "Dist.Inventory.UI",
+        "SpriteBaker"
     ],
     "includePlatforms": [
         "Editor"

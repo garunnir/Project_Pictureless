@@ -70,6 +70,45 @@ namespace SpriteBaker
         /// <summary>True if the bake for this key is queued or in-flight.</summary>
         public bool IsPending(int key) => pending.Contains(key);
 
+        /// <summary>
+        /// Editor export bake. Pumps BakeOne without player-loop waits.
+        /// Prefer <see cref="Enqueue"/> at runtime.
+        /// </summary>
+        public static BakedSpriteAtlas BakeSync(SpriteBakeRequest req)
+        {
+            s_syncBake = true;
+            try
+            {
+                var host = new GameObject("[SpriteAtlasBaker_Sync]");
+                host.hideFlags = HideFlags.HideAndDontSave;
+                var baker = host.AddComponent<SpriteAtlasBaker>();
+                var e = baker.BakeOne(req);
+                while (e.MoveNext()) { }
+
+                BakedSpriteAtlas result = default;
+                if (!req.SkipCacheStore)
+                    SpriteAtlasCache.TryGet(req.Key, out result);
+                else if (baker._lastBake.HasValue)
+                    result = baker._lastBake.Value;
+
+                if (Application.isPlaying)
+                    Destroy(host);
+                else
+                    DestroyImmediate(host);
+                return result;
+            }
+            finally
+            {
+                s_syncBake = false;
+            }
+        }
+
+        private static bool s_syncBake;
+        private BakedSpriteAtlas? _lastBake;
+
+        public static Material CreatePlaybackMaterial(Texture2D atlas)
+            => CreateAtlasPlaybackMaterial(atlas);
+
         private IEnumerator ProcessQueue()
         {
             processing = true;
@@ -84,8 +123,10 @@ namespace SpriteBaker
 
         private IEnumerator BakeOne(SpriteBakeRequest req)
         {
+            _lastBake = null;
             int px = Mathf.Max(8, req.FramePixelSize);
-            float frameDuration = 1f / Mathf.Max(1, req.FrameRate);
+            float durationScale = req.FrameDurationScale > 0f ? req.FrameDurationScale : 1f;
+            float frameDuration = (1f / Mathf.Max(1, req.FrameRate)) * durationScale;
 
             // Far from any live scene geometry / probes.
             Vector3 capturePos = new Vector3(2000f, 2000f, 0f);
@@ -131,7 +172,7 @@ namespace SpriteBaker
             if (req.AnimatorController != null)
             {
                 animator = SetupAnimator(model, req.AnimatorController, req.AvatarOverride);
-                yield return null; // let Unity finish the first pose evaluation
+                if (!s_syncBake) yield return null; // let Unity finish the first pose evaluation
                 sampler = SamplerFromAnimator(animator, req.Rows);
             }
             else if (req.Clips != null && req.Clips.Length > 0)
@@ -178,13 +219,13 @@ namespace SpriteBaker
                 }
 
                 sampler = SamplerFromClips(sampleTarget, req.Clips, req.Rows);
-                yield return null;
+                if (!s_syncBake) yield return null;
             }
             else
             {
                 animator = model.GetComponentInChildren<Animator>();
                 sampler = SamplerForBindPose(req.Rows);
-                yield return null;
+                if (!s_syncBake) yield return null;
             }
 
             Bounds bounds = ComputeAnimatedBounds(model);
@@ -342,7 +383,8 @@ namespace SpriteBaker
                         // Yield so Unity propagates bone transforms through
                         // the skinning pipeline (LateUpdate). Without this
                         // every captured frame holds the same pose.
-                        yield return null;
+                        if (!s_syncBake)
+                            yield return null;
 
                         req.PerFrameCallback?.Invoke(model);
 
@@ -380,17 +422,25 @@ namespace SpriteBaker
             // done, then drain all consecutively-ready ones. WebGL needs the
             // event loop to advance for the GPU fence to fire, so we cannot
             // call WaitForCompletion (deadlock).
+            if (s_syncBake && pendingReadbacks.Count > 0)
+                AsyncGPUReadback.WaitAllRequests();
+
             while (pendingReadbacks.Count > 0)
             {
                 if (!pendingReadbacks.Peek().req.done)
                 {
+                    if (s_syncBake)
+                    {
+                        AsyncGPUReadback.WaitAllRequests();
+                        continue;
+                    }
                     yield return null;
                     continue;
                 }
                 DrainReady(pendingReadbacks, atlas, px, pixelBuffer);
             }
 
-            atlas.Apply(false, true); // makeNoLongerReadable: drop the CPU copy
+            atlas.Apply(false, !req.KeepCpuReadable);
 
             cam.targetTexture = null;
             Destroy(rt);
@@ -415,7 +465,7 @@ namespace SpriteBaker
                 };
             }
 
-            SpriteAtlasCache.StoreResult(req.Key, new BakedSpriteAtlas
+            var baked = new BakedSpriteAtlas
             {
                 Atlas = atlas,
                 SharedMaterial = material,
@@ -425,7 +475,11 @@ namespace SpriteBaker
                 QuadHeight = quadHeight,
                 Rows = rowInfos,
                 YawCount = yawCount,
-            });
+            };
+            _lastBake = baked;
+
+            if (!req.SkipCacheStore)
+                SpriteAtlasCache.StoreResult(req.Key, baked);
         }
 
         // ─── Helpers ─────────────────────────────────────────────────────
