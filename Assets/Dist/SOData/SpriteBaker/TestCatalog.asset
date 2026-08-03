@@ -14,8 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::SpriteBakerCatalog
   _characterId: _Test
   _entries:
-  - AnimId: 0.Targeting Pose
-    Sheet: {fileID: 11400000, guid: 8116f42084c3e674ca14bf28a5256c93, type: 2}
   - AnimId: Run
     Sheet: {fileID: 11400000, guid: 82cd9729751d47d45beaab405894eeec, type: 2}
   - AnimId: Jump

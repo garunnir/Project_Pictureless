@@ -17,10 +17,10 @@ MonoBehaviour:
   _sharedMaterial: {fileID: 2100000, guid: b0d603ac5068b8246b40bc5499b13292, type: 2}
   _framePixelSize: 128
   _atlasCols: 13
-  _quadWidth: 4.340857
-  _quadHeight: 4.340857
+  _quadWidth: 3.6557982
+  _quadHeight: 3.6557982
   _yawCount: 8
   _frameCount: 13
   _frameDuration: 0.083333336
   _loop: 1
-  _cacheKey: 907616998
+  _cacheKey: 690851807

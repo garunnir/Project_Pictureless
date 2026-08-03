@@ -16,11 +16,11 @@ MonoBehaviour:
   _atlas: {fileID: 2800000, guid: 8ca5fb8fe49fe684a81e745d58c65c99, type: 3}
   _sharedMaterial: {fileID: 2100000, guid: 18c441618615f3147bf2a7b7941753e6, type: 2}
   _framePixelSize: 128
-  _atlasCols: 6
-  _quadWidth: 4.340857
-  _quadHeight: 4.340857
+  _atlasCols: 13
+  _quadWidth: 3.6557982
+  _quadHeight: 3.6557982
   _yawCount: 8
   _frameCount: 6
   _frameDuration: 0.083333336
   _loop: 0
-  _cacheKey: 1741573973
+  _cacheKey: -1130620400

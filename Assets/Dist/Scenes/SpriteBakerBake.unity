@@ -367,33 +367,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8d16e1ec83f13d4ba6d7f072cf913f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::SpriteBakerBakeSceneRunner
-  _characterPrefab: {fileID: 919132149155446097, guid: 13818644d0b8a6d4684c2aa4946999fe,
+  _characterPrefab: {fileID: 171944187803689447, guid: af0c8e385ddbcff46b27e6ce116e272c,
     type: 3}
-  _sampleAnimationTargetPath: Root
+  _animatorController: {fileID: 9100000, guid: 5f879c1d6a5a81a4496d539ef5e815e5, type: 2}
+  _avatarOverride: {fileID: 9000000, guid: f73f54796fd53824693e7077f807a82c, type: 3}
+  _sampleAnimationTargetPath: 
   _captureRotationEuler: {x: 0, y: 0, z: 0}
   _clips:
   - Clip: {fileID: 2910742486769232160, guid: 45c018ddb6e7e6d43949f92d06d0770d, type: 3}
     AnimIdOverride: Idle
     Loop: 1
-    DurationScale: 0
     Skip: 0
   - Clip: {fileID: 4188298191382927259, guid: 64b9dd5da957ffb459af5d63ca397d73, type: 3}
     AnimIdOverride: Run
     Loop: 1
-    DurationScale: 0
     Skip: 0
   - Clip: {fileID: -8630955994762890147, guid: a992cf4ccf609364491960002103f9d0, type: 3}
     AnimIdOverride: Jump
     Loop: 0
-    DurationScale: 0
     Skip: 0
   _framePixelSize: 128
   _frameRate: 12
   _captureYawCount: 8
-  _capturePitchDegrees: 35.264
+  _capturePitchDegrees: 45
   _durationScale: 1
   _outputFolder: Assets/Dist/SOData/SpriteBaker/Output/_Test
   _catalog: {fileID: 11400000, guid: 544d8330d4bf64a42ac5f3f7dff01d1d, type: 2}
+  _spawnDemoPreview: 1
   _exitPlayModeWhenDone: 1
   _bakeOnStart: 1
 --- !u!4 &903876079

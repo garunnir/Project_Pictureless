@@ -1,5 +1,5 @@
 // ============================================================
-// SpriteBakerBakeSceneRunner — 베이크 전용 씬에서 Enqueue로 아틀라스 추출·Output 저장
+// SpriteBakerBakeSceneRunner — Demo와 동일한 Enqueue + Catalog용 PNG export
 // ============================================================
 
 using System;
@@ -14,14 +14,12 @@ using UnityEditor;
 #endif
 
 /// <summary>
-/// Play Mode bake host: uses stock <see cref="SpriteAtlasBaker.Enqueue"/> (frame yields),
-/// then writes Output PNG / material / <see cref="SpriteBakerSheetAsset"/>.
-/// Configure on the bake scene — no CaptureRecipe SO.
+/// Thin bake host: fills <see cref="SpriteBakeRequest"/> like
+/// <c>SpriteBakerDemo</c>, calls stock <see cref="SpriteAtlasBaker.Enqueue"/>.
+/// Dist only adds KeepCpuReadable PNG/Sheet export for Catalog — no bake-loop forks.
 /// </summary>
 public sealed class SpriteBakerBakeSceneRunner : MonoBehaviour
 {
-    public const int DefaultYawCount = 8;
-    public const float DefaultIsoPitchDegrees = 35.264f;
     public const int DefaultFrameRate = 12;
     public const int DefaultFramePixelSize = 128;
     public const string DefaultOutputFolder = "Assets/Dist/SOData/SpriteBaker/Output/_Test";
@@ -29,137 +27,173 @@ public sealed class SpriteBakerBakeSceneRunner : MonoBehaviour
     [Serializable]
     public sealed class ClipEntry
     {
+        [Tooltip("Loose path: clip asset. Controller path: optional.")]
         public AnimationClip Clip;
+
+        [Tooltip("Catalog animId / Controller state name when set.")]
         public string AnimIdOverride;
+
         public bool Loop = true;
-        [Tooltip("≤0 = use runner default durationScale")]
-        public float DurationScale;
         public bool Skip;
     }
 
-    [Title("Source")]
+    [Title("Source (Demo)")]
     [SerializeField] GameObject _characterPrefab;
-    [Tooltip("Armature child under Character Prefab (e.g. Root). Empty = prefab root.")]
+
+    [Tooltip("If set, Controller path wins (Demo). Leave null for Kenney loose clips.")]
+    [SerializeField] RuntimeAnimatorController _animatorController;
+
+    [SerializeField] Avatar _avatarOverride;
+
+    [Tooltip("Plugin SampleAnimationTargetPath. Kenney AC2: Root. Controller path ignored by baker.")]
     [SerializeField] string _sampleAnimationTargetPath = "Root";
+
     [SerializeField] Vector3 _captureRotationEuler;
 
-    [Title("Clips")]
+    [Title("Rows")]
     [SerializeField] List<ClipEntry> _clips = new();
 
     [Title("Bake")]
     [SerializeField] int _framePixelSize = DefaultFramePixelSize;
     [SerializeField] int _frameRate = DefaultFrameRate;
-    [SerializeField] int _captureYawCount = DefaultYawCount;
-    [SerializeField] float _capturePitchDegrees = DefaultIsoPitchDegrees;
+    [Tooltip("0/1 = single angle (Demo).")]
+    [SerializeField] int _captureYawCount;
+    [SerializeField] float _capturePitchDegrees;
     [SerializeField] float _durationScale = 1f;
 
-    [Title("Output")]
+    [Title("Output (Dist Catalog)")]
     [SerializeField] string _outputFolder = DefaultOutputFolder;
     [SerializeField] SpriteBakerCatalog _catalog;
-    [SerializeField] bool _exitPlayModeWhenDone = true;
+    [SerializeField] bool _spawnDemoPreview = true;
+    [SerializeField] bool _exitPlayModeWhenDone;
 
     [Title("Run")]
     [SerializeField] bool _bakeOnStart = true;
 
+    AnimatedSpriteRenderer _previewRenderer;
+
     void Start()
     {
         if (_bakeOnStart)
-            StartCoroutine(BakeAllCoroutine());
+            StartCoroutine(BakeCoroutine());
     }
 
-    [Button("Bake All (Play Mode)"), EnableIf("@UnityEngine.Application.isPlaying")]
-    void BakeAllButton()
-    {
-        StartCoroutine(BakeAllCoroutine());
-    }
+    [Button("Bake (Play Mode)"), EnableIf("@UnityEngine.Application.isPlaying")]
+    void BakeButton() => StartCoroutine(BakeCoroutine());
 
-    IEnumerator BakeAllCoroutine()
+    IEnumerator BakeCoroutine()
     {
         if (_characterPrefab == null)
         {
-            Debug.LogError("[SpriteBakerBakeSceneRunner] Character Prefab missing.", this);
+            Debug.LogError("[SpriteBakerBakeSceneRunner] Assign Character Prefab (project asset).", this);
             yield break;
         }
 
-        if (_clips == null || _clips.Count == 0)
+        bool useController = _animatorController != null;
+        var active = new List<(ClipEntry entry, string clipName, string animId)>();
+        var looseClips = new List<AnimationClip>();
+
+        if (_clips != null)
         {
-            Debug.LogError("[SpriteBakerBakeSceneRunner] Assign clips on the runner.", this);
+            for (int i = 0; i < _clips.Count; i++)
+            {
+                ClipEntry entry = _clips[i];
+                if (entry == null || entry.Skip)
+                    continue;
+                if (!useController && entry.Clip == null)
+                    continue;
+
+                string clipName = useController
+                    ? (string.IsNullOrEmpty(entry.AnimIdOverride)
+                        ? (entry.Clip != null ? entry.Clip.name : null)
+                        : entry.AnimIdOverride)
+                    : entry.Clip.name;
+
+                if (string.IsNullOrEmpty(clipName))
+                    continue;
+
+                string animId = string.IsNullOrEmpty(entry.AnimIdOverride)
+                    ? DeriveAnimId(clipName)
+                    : entry.AnimIdOverride;
+
+                active.Add((entry, clipName, animId));
+                if (!useController)
+                    looseClips.Add(entry.Clip);
+            }
+        }
+
+        if (active.Count == 0)
+        {
+            Debug.LogError(
+                "[SpriteBakerBakeSceneRunner] Need AnimatorController or Loose Clips (Demo).",
+                this);
             yield break;
         }
+
+        var rows = new SpriteAnimRow[active.Count];
+        for (int i = 0; i < active.Count; i++)
+        {
+            rows[i] = new SpriteAnimRow
+            {
+                Row = i,
+                ClipName = active[i].clipName,
+                Loop = active[i].entry.Loop,
+            };
+        }
+
+        int framePx = _framePixelSize > 0 ? _framePixelSize : DefaultFramePixelSize;
+        int frameRate = _frameRate > 0 ? _frameRate : DefaultFrameRate;
+        float scale = _durationScale > 0f ? _durationScale : 1f;
+        int key = ComputeCacheKey(active, useController, framePx, frameRate);
+
+        SpriteAtlasCache.Evict(key);
 
 #if UNITY_EDITOR
         EnsureFolder(_outputFolder);
 #endif
 
-        int baked = 0;
-        for (int i = 0; i < _clips.Count; i++)
+        // Same shape as SpriteBakerDemo — plus KeepCpuReadable / optional yaw for Dist Catalog.
+        SpriteAtlasBaker.Instance.Enqueue(new SpriteBakeRequest
         {
-            ClipEntry entry = _clips[i];
-            if (entry == null || entry.Clip == null || entry.Skip)
-                continue;
+            Key = key,
+            Prefab = _characterPrefab,
+            AnimatorController = _animatorController,
+            AvatarOverride = _avatarOverride,
+            Clips = useController ? null : looseClips.ToArray(),
+            SampleAnimationTargetPath = useController ? null : _sampleAnimationTargetPath,
+            CaptureRotation = Quaternion.Euler(_captureRotationEuler),
+            FramePixelSize = framePx,
+            FrameRate = frameRate,
+            FrameDurationScale = scale,
+            CaptureYawCount = _captureYawCount,
+            CapturePitch = _capturePitchDegrees,
+            Rows = rows,
+            Lighting = CaptureLighting.Default,
+            KeepCpuReadable = true,
+            BackgroundColor = Color.clear,
+        });
 
-            string animId = string.IsNullOrEmpty(entry.AnimIdOverride)
-                ? DeriveAnimId(entry.Clip.name)
-                : entry.AnimIdOverride;
+        while (SpriteAtlasBaker.Instance.IsPending(key) || !SpriteAtlasCache.IsReady(key))
+            yield return null;
 
-            float scale = entry.DurationScale > 0f ? entry.DurationScale : _durationScale;
-            int key = ComputeCacheKey(animId, scale);
-
-            SpriteAtlasCache.Evict(key);
-
-            var rows = new[]
-            {
-                new SpriteAnimRow
-                {
-                    Row = 0,
-                    ClipName = entry.Clip.name,
-                    Loop = entry.Loop,
-                    SingleFrame = false,
-                },
-            };
-
-            SpriteAtlasBaker.Instance.Enqueue(new SpriteBakeRequest
-            {
-                Key = key,
-                Prefab = _characterPrefab,
-                Clips = new[] { entry.Clip },
-                SampleAnimationTargetPath = _sampleAnimationTargetPath,
-                CaptureRotation = Quaternion.Euler(_captureRotationEuler),
-                FramePixelSize = _framePixelSize > 0 ? _framePixelSize : DefaultFramePixelSize,
-                FrameRate = _frameRate > 0 ? _frameRate : DefaultFrameRate,
-                FrameDurationScale = scale > 0f ? scale : 1f,
-                CaptureYawCount = _captureYawCount > 0 ? _captureYawCount : DefaultYawCount,
-                CapturePitch = _capturePitchDegrees,
-                Rows = rows,
-                Lighting = CaptureLighting.Default,
-                KeepCpuReadable = true,
-                SkipCacheStore = false,
-                BackgroundColor = Color.clear,
-            });
-
-            while (SpriteAtlasBaker.Instance.IsPending(key) || !SpriteAtlasCache.IsReady(key))
-                yield return null;
-
-            if (!SpriteAtlasCache.TryGet(key, out BakedSpriteAtlas bakedAtlas) ||
-                bakedAtlas.Atlas == null)
-            {
-                Debug.LogError($"[SpriteBakerBakeSceneRunner] Bake failed for '{animId}'.", this);
-                continue;
-            }
-
-#if UNITY_EDITOR
-            if (ExportSheet(animId, entry.Loop, key, bakedAtlas))
-                baked++;
-#else
-            Debug.LogWarning(
-                "[SpriteBakerBakeSceneRunner] Export requires Editor. Atlas left in runtime cache.",
-                this);
-            baked++;
-#endif
-            SpriteAtlasCache.Evict(key);
+        if (!SpriteAtlasCache.TryGet(key, out BakedSpriteAtlas baked) || baked.Atlas == null)
+        {
+            Debug.LogError("[SpriteBakerBakeSceneRunner] Bake failed (cache empty).", this);
+            yield break;
         }
 
-        Debug.Log($"[SpriteBakerBakeSceneRunner] Done. Exported {baked} sheet(s) → {_outputFolder}", this);
+        if (_spawnDemoPreview)
+            SpawnDemoPreview(key);
+
+        int exported = 0;
+#if UNITY_EDITOR
+        exported = ExportPerAnimSheets(active, key, baked);
+#endif
+
+        Debug.Log(
+            $"[SpriteBakerBakeSceneRunner] Done mode={(useController ? "Controller" : "Loose")} " +
+            $"rows={active.Count} exported={exported} sample='{_sampleAnimationTargetPath}'",
+            this);
 
 #if UNITY_EDITOR
         if (_exitPlayModeWhenDone && Application.isPlaying)
@@ -167,46 +201,97 @@ public sealed class SpriteBakerBakeSceneRunner : MonoBehaviour
 #endif
     }
 
-    static string DeriveAnimId(string clipName)
+    void SpawnDemoPreview(int bakeKey)
     {
-        if (string.IsNullOrEmpty(clipName))
-            return "Clip";
-        int pipe = clipName.LastIndexOf('|');
-        if (pipe >= 0 && pipe < clipName.Length - 1)
-            return clipName.Substring(pipe + 1).Trim();
-        return clipName;
-    }
-
-    int ComputeCacheKey(string animId, float durationScale)
-    {
-        unchecked
-        {
-            int hash = 17;
-            hash = hash * 31 + (_characterPrefab != null ? _characterPrefab.name.GetHashCode() : 0);
-            hash = hash * 31 + (animId != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(animId) : 0);
-            hash = hash * 31 + (_framePixelSize > 0 ? _framePixelSize : DefaultFramePixelSize);
-            hash = hash * 31 + (_frameRate > 0 ? _frameRate : DefaultFrameRate);
-            hash = hash * 31 + (_captureYawCount > 0 ? _captureYawCount : DefaultYawCount);
-            hash = hash * 31 + (int)(_capturePitchDegrees * 1000f);
-            hash = hash * 31 + (int)(durationScale * 1000f);
-            return hash;
-        }
+        if (_previewRenderer != null)
+            return;
+        var go = new GameObject("SpritePlayback");
+        go.transform.position = transform.position;
+        _previewRenderer = go.AddComponent<AnimatedSpriteRenderer>();
+        _previewRenderer.Bind(bakeKey);
+        _previewRenderer.SetRow(0);
     }
 
 #if UNITY_EDITOR
+    int ExportPerAnimSheets(
+        List<(ClipEntry entry, string clipName, string animId)> active,
+        int sharedKey,
+        BakedSpriteAtlas baked)
+    {
+        if (baked.Atlas == null || !baked.Atlas.isReadable)
+        {
+            Debug.LogError("[SpriteBakerBakeSceneRunner] Atlas not readable for export.", this);
+            return 0;
+        }
+
+        int px = baked.FramePixelSize > 0 ? baked.FramePixelSize : DefaultFramePixelSize;
+        int yaw = Mathf.Max(1, baked.YawCount);
+        int cols = Mathf.Max(1, baked.AtlasCols);
+        int exported = 0;
+
+        for (int r = 0; r < active.Count; r++)
+        {
+            Texture2D sheetTex = CropAnimBlock(baked.Atlas, r, yaw, px, cols);
+            if (sheetTex == null)
+                continue;
+
+            int cacheKey = unchecked(sharedKey * 31 + StringComparer.OrdinalIgnoreCase.GetHashCode(active[r].animId));
+            var slice = baked;
+            slice.Atlas = sheetTex;
+            slice.YawCount = yaw;
+            slice.AtlasCols = cols;
+            slice.Rows = baked.Rows != null && r < baked.Rows.Length
+                ? new[] { baked.Rows[r] }
+                : new[]
+                {
+                    new AnimRowInfo
+                    {
+                        FrameCount = cols,
+                        FrameDuration = 1f / frameRateSafe(),
+                        Loop = active[r].entry.Loop,
+                    },
+                };
+            slice.Rows[0].Loop = active[r].entry.Loop;
+
+            if (ExportSheet(active[r].animId, active[r].entry.Loop, cacheKey, slice))
+                exported++;
+            Destroy(sheetTex);
+        }
+
+        return exported;
+    }
+
+    int frameRateSafe() => _frameRate > 0 ? _frameRate : DefaultFrameRate;
+
+    static Texture2D CropAnimBlock(Texture2D src, int animRow, int yawCount, int px, int cols)
+    {
+        int blockH = yawCount * px;
+        int width = cols * px;
+        int srcY = animRow * blockH;
+        if (srcY + blockH > src.height || width > src.width)
+            return null;
+
+        Color[] block = src.GetPixels(0, srcY, width, blockH);
+        var tex = new Texture2D(width, blockH, TextureFormat.RGBA32, false)
+        {
+            filterMode = FilterMode.Point,
+            wrapMode = TextureWrapMode.Clamp,
+        };
+        tex.SetPixels(block);
+        tex.Apply(false, false);
+        return tex;
+    }
+
     bool ExportSheet(string animId, bool loop, int cacheKey, BakedSpriteAtlas baked)
     {
-        string safeName = SanitizeFileName(animId);
-        string texPath = $"{_outputFolder}/{safeName}_Atlas.png";
-        string matPath = $"{_outputFolder}/{safeName}_Mat.mat";
-        string sheetPath = $"{_outputFolder}/{safeName}_Sheet.asset";
+        string safe = SanitizeFileName(animId);
+        string texPath = $"{_outputFolder}/{safe}_Atlas.png";
+        string matPath = $"{_outputFolder}/{safe}_Mat.mat";
+        string sheetPath = $"{_outputFolder}/{safe}_Sheet.asset";
 
         byte[] png = baked.Atlas.EncodeToPNG();
         if (png == null || png.Length == 0)
-        {
-            Debug.LogError($"[SpriteBakerBakeSceneRunner] EncodeToPNG failed for '{animId}'.", this);
             return false;
-        }
 
         File.WriteAllBytes(ToAbsolute(texPath), png);
         AssetDatabase.ImportAsset(texPath);
@@ -219,8 +304,7 @@ public sealed class SpriteBakerBakeSceneRunner : MonoBehaviour
         Material matAsset = AssetDatabase.LoadAssetAtPath<Material>(matPath);
         if (matAsset == null)
         {
-            Material runtimeMat = SpriteAtlasBaker.CreatePlaybackMaterial(texAsset);
-            AssetDatabase.CreateAsset(runtimeMat, matPath);
+            AssetDatabase.CreateAsset(SpriteAtlasBaker.CreatePlaybackMaterial(texAsset), matPath);
             matAsset = AssetDatabase.LoadAssetAtPath<Material>(matPath);
         }
         else
@@ -238,12 +322,9 @@ public sealed class SpriteBakerBakeSceneRunner : MonoBehaviour
             AssetDatabase.CreateAsset(sheet, sheetPath);
         }
 
-        BakedSpriteAtlas meta = baked;
+        var meta = baked;
         meta.Atlas = texAsset;
         meta.SharedMaterial = matAsset;
-        if (meta.Rows != null && meta.Rows.Length > 0)
-            meta.Rows[0].Loop = loop;
-
         sheet.EditorApplyBakeResult(animId, texAsset, matAsset, meta, loop, cacheKey);
         EditorUtility.SetDirty(sheet);
 
@@ -262,7 +343,6 @@ public sealed class SpriteBakerBakeSceneRunner : MonoBehaviour
         var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
         if (importer == null)
             return;
-
         importer.textureType = TextureImporterType.Default;
         importer.sRGBTexture = true;
         importer.mipmapEnabled = false;
@@ -279,7 +359,6 @@ public sealed class SpriteBakerBakeSceneRunner : MonoBehaviour
     {
         if (AssetDatabase.IsValidFolder(assetFolder))
             return;
-
         string[] parts = assetFolder.Replace('\\', '/').Split('/');
         string current = parts[0];
         for (int i = 1; i < parts.Length; i++)
@@ -293,15 +372,14 @@ public sealed class SpriteBakerBakeSceneRunner : MonoBehaviour
 
     static string ToAbsolute(string assetPath)
     {
-        string projectRoot = Directory.GetParent(Application.dataPath)?.FullName ?? Application.dataPath;
-        return Path.GetFullPath(Path.Combine(projectRoot, assetPath.Replace('/', Path.DirectorySeparatorChar)));
+        string root = Directory.GetParent(Application.dataPath)?.FullName ?? Application.dataPath;
+        return Path.GetFullPath(Path.Combine(root, assetPath.Replace('/', Path.DirectorySeparatorChar)));
     }
 
     static string SanitizeFileName(string name)
     {
         if (string.IsNullOrEmpty(name))
             return "Clip";
-
         char[] invalid = Path.GetInvalidFileNameChars();
         char[] chars = name.ToCharArray();
         for (int i = 0; i < chars.Length; i++)
@@ -315,8 +393,39 @@ public sealed class SpriteBakerBakeSceneRunner : MonoBehaviour
                 }
             }
         }
-
         return new string(chars);
     }
 #endif
+
+    static string DeriveAnimId(string clipName)
+    {
+        if (string.IsNullOrEmpty(clipName))
+            return "Clip";
+        int pipe = clipName.LastIndexOf('|');
+        return pipe >= 0 && pipe < clipName.Length - 1
+            ? clipName.Substring(pipe + 1).Trim()
+            : clipName;
+    }
+
+    int ComputeCacheKey(
+        List<(ClipEntry entry, string clipName, string animId)> active,
+        bool useController,
+        int framePx,
+        int frameRate)
+    {
+        unchecked
+        {
+            int hash = 17;
+            hash = hash * 31 + (_characterPrefab != null ? _characterPrefab.name.GetHashCode() : 0);
+            hash = hash * 31 + (useController && _animatorController != null
+                ? _animatorController.GetInstanceID()
+                : 0);
+            for (int i = 0; i < active.Count; i++)
+                hash = hash * 31 + StringComparer.OrdinalIgnoreCase.GetHashCode(active[i].animId);
+            hash = hash * 31 + framePx;
+            hash = hash * 31 + frameRate;
+            hash = hash * 31 + _captureYawCount;
+            return hash;
+        }
+    }
 }
