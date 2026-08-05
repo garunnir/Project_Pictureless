@@ -88,6 +88,8 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
     public bool IsSprinting => _mover != null && _mover.IsSprinting;
     public bool IsInertiaActive => _mover != null && _mover.IsInertiaActive;
     public float CurrentSpeed => _mover != null ? _mover.CurrentSpeed : 0f;
+    /// <summary>애니 Speed 정규화 분모 (달리기 상한). Inspector <c>_runMaxSpeed</c> SSOT.</summary>
+    public float RunMaxSpeed => _runMaxSpeed;
     public bool IsStuck => _locomotion != null && _locomotion.IsStuck;
     public float InitialVelocity
     {

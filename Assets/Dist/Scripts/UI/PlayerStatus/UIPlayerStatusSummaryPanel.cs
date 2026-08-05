@@ -12,16 +12,20 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
 {
     public const int MaxSlots = 8;
 
+    static readonly UIHoverStyle MoodHoverStyle = new(new Vector2(0f, 28f), followMouse: false);
+
     [SerializeField] RectTransform _slotRoot;
     [SerializeField] UIPlayerStatusMoodIconSlot _slotPrefab;
     [SerializeField] PlayerStatusMoodIconCatalog _iconCatalog;
     [SerializeField] RectTransform _tooltipRoot;
     [SerializeField] TMP_Text _tooltipText;
+    [SerializeField] UIHoverPanelShell _tooltipShell;
 
     readonly List<UIPlayerStatusMoodIconSlot> _slots = new(MaxSlots);
     readonly Dictionary<MoodIconId, float> _lastIntensityByIcon = new(MaxSlots);
 
     PlayerStatusViewModel _viewModel;
+    Canvas _rootCanvas;
 
     public void Wire(
         RectTransform slotRoot,
@@ -35,6 +39,8 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
         _iconCatalog = iconCatalog;
         _tooltipRoot = tooltipRoot;
         _tooltipText = tooltipText;
+        _tooltipShell = null;
+        _rootCanvas = null;
     }
 
     public void BindViewModel(PlayerStatusViewModel viewModel) => _viewModel = viewModel;
@@ -117,19 +123,37 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
             return;
 
         _tooltipText.text = text;
-        _tooltipRoot.gameObject.SetActive(true);
-
-        if (anchor == null)
+        EnsureTooltipShell();
+        if (_tooltipShell == null)
             return;
 
-        RectTransform tooltipRect = _tooltipRoot;
-        tooltipRect.position = anchor.position;
-        tooltipRect.anchoredPosition += new Vector2(0f, 28f);
+        _tooltipShell.ShowNearAnchor(anchor, MoodHoverStyle);
     }
 
     public void HideTooltip()
     {
-        if (_tooltipRoot != null)
+        if (_tooltipShell != null)
+            _tooltipShell.Hide();
+        else if (_tooltipRoot != null)
             _tooltipRoot.gameObject.SetActive(false);
+    }
+
+    void EnsureTooltipShell()
+    {
+        if (_tooltipRoot == null)
+            return;
+
+        if (_rootCanvas == null)
+            _rootCanvas = _tooltipRoot.GetComponentInParent<Canvas>();
+
+        if (_tooltipShell == null)
+        {
+            _tooltipShell = _tooltipRoot.GetComponent<UIHoverPanelShell>();
+            if (_tooltipShell == null)
+                _tooltipShell = _tooltipRoot.gameObject.AddComponent<UIHoverPanelShell>();
+
+            if (_rootCanvas != null)
+                _tooltipShell.Initialize(_rootCanvas);
+        }
     }
 }

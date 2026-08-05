@@ -9,9 +9,9 @@ using UnityEngine.UI;
 
 public sealed class UIInventoryItemDetailPanel : MonoBehaviour
 {
-    const float ScreenOffsetX = 16f;
-    const float ScreenOffsetY = -16f;
+    static readonly UIHoverStyle DetailHoverStyle = new(new Vector2(16f, -16f), followMouse: true);
 
+    [SerializeField] UIHoverPanelShell _shell;
     [SerializeField] RectTransform _rect;
     [SerializeField] TMP_Text _nameLine;
     [SerializeField] TMP_Text _descriptionLine;
@@ -24,18 +24,12 @@ public sealed class UIInventoryItemDetailPanel : MonoBehaviour
     [SerializeField] TMP_Text _containerCapacityLine;
     [SerializeField] TMP_Text _materialsLine;
 
-    Canvas _rootCanvas;
-    bool _isVisible;
-
-    public bool IsVisible => _isVisible;
+    public bool IsVisible => _shell != null && _shell.IsVisible;
 
     public void Initialize(Canvas rootCanvas)
     {
-        _rootCanvas = rootCanvas;
-        if (_rect == null)
-            _rect = transform as RectTransform;
-
-        Hide();
+        EnsureShell();
+        _shell.Initialize(rootCanvas);
     }
 
     public void Show(ItemStack stack, Vector2 screenPosition)
@@ -46,55 +40,24 @@ public sealed class UIInventoryItemDetailPanel : MonoBehaviour
             return;
         }
 
+        EnsureShell();
         BindRows(stack);
-        gameObject.SetActive(true);
-        _isVisible = true;
         RebuildLayout();
-        SetScreenPosition(screenPosition);
+        _shell.ShowAtScreen(screenPosition, DetailHoverStyle);
     }
 
-    public void Hide()
+    public void Hide() => _shell?.Hide();
+
+    public void SetScreenPosition(Vector2 screenPosition) => _shell?.SetScreenPosition(screenPosition);
+
+    void EnsureShell()
     {
-        if (!this)
+        if (_shell != null)
             return;
 
-        _isVisible = false;
-        gameObject.SetActive(false);
-    }
-
-    public void SetScreenPosition(Vector2 screenPosition)
-    {
-        if (_rect == null || _rootCanvas == null)
-            return;
-
-        RectTransform canvasRect = _rootCanvas.transform as RectTransform;
-        if (canvasRect == null)
-            return;
-
-        Camera camera = _rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay
-            ? null
-            : _rootCanvas.worldCamera;
-
-        Vector2 offsetScreen = screenPosition + new Vector2(ScreenOffsetX, ScreenOffsetY);
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                canvasRect,
-                offsetScreen,
-                camera,
-                out Vector2 localPoint))
-        {
-            return;
-        }
-
-        Vector2 size = _rect.rect.size;
-        Rect canvas = canvasRect.rect;
-        float minX = canvas.xMin + size.x * _rect.pivot.x;
-        float maxX = canvas.xMax - size.x * (1f - _rect.pivot.x);
-        float minY = canvas.yMin + size.y * (1f - _rect.pivot.y);
-        float maxY = canvas.yMax - size.y * _rect.pivot.y;
-
-        localPoint.x = Mathf.Clamp(localPoint.x, minX, maxX);
-        localPoint.y = Mathf.Clamp(localPoint.y, minY, maxY);
-        _rect.anchoredPosition = localPoint;
+        _shell = GetComponent<UIHoverPanelShell>();
+        if (_shell == null)
+            _shell = gameObject.AddComponent<UIHoverPanelShell>();
     }
 
     void BindRows(ItemStack stack)
@@ -148,6 +111,8 @@ public sealed class UIInventoryItemDetailPanel : MonoBehaviour
 
     void RebuildLayout()
     {
+        if (_rect == null)
+            _rect = transform as RectTransform;
         if (_rect == null)
             return;
 

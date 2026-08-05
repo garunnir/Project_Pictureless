@@ -10,7 +10,8 @@
 | `View/` | Cascade 패널/행, Style |
 | `UIContextMenuHost` | 공용 Show(model)/Hide 호스트 |
 | `ContextMenuHostEvents` | 호스트 상호 Hide |
-| `UIPopupPositioner` | 스크린 포인트 배치 |
+| `UIPopupPositioner` | 스크린 포인트 배치 (+ 호버용 offset·캔버스 clamp 오버로드) |
+| `UIHoverStyle` / `UIHoverPanelShell` | 호버 정보창 Placement 셸 — [`HOVER.md`](HOVER.md) |
 
 ## 의존
 

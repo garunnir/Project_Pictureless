@@ -48,6 +48,22 @@ flowchart LR
 표급하지 않는다. 공통 이주 절차는
 [`migration-parity.md`](../../../../../.claude/checklists/migration-parity.md)를 따른다.
 
+## 3D 애니 브릿지
+
+컨트롤러: `Assets/Dist/Visual/Anim/CharacterClips/CharacterAnimController.controller`  
+드라이버: `CharacterLocomotionAnim` · 루트 회전: `CharacterFacingRotator` → `CharacterState.GetFacingDir()`  
+스프라이트 8방향: `CharacterFacingAnim` (SpriteSwap 전용, 3D와 별도)
+
+| Param | Type | Source | Layer |
+|-------|------|--------|-------|
+| `Speed` | float 0..1 | `PlayerMovement.CurrentSpeed / RunMaxSpeed` | Move (Locomotion 1D BlendTree: Idle→Walk→Run) |
+| `IsAiming` | bool | `CharacterState.IsAiming` | Aim (UpperBody mask, Override) |
+
+- 조준 중 루트는 에임(`SightDir`)을 본다. 스트레이프용 `AimYaw` / MoveDir-only 루트는 넣지 않는다.
+- 애니 시간은 `TimeScaleService` 채널로만 진행한다 (`CharacterLocomotionAnim`이 Animator 자동 틱을 끈다).
+- Play 중 `Animator.enabled == false`는 **정상**(수동 틱). 본 바인딩을 위해 첫 Update에서 enable→`Rebind()` 후 다시 끈다.
+- Locomotion/Aim 클립은 FBX `loopTime`이 켜져 있어야 한다. 꺼져 있으면 1회 재생 후 마지막 포즈에 멈춰 “안 움직이는 것처럼” 보인다.
+
 ## 현재 한계
 
 - NPC는 직선 목표점 조향만 지원한다.

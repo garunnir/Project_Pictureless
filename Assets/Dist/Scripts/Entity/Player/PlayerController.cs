@@ -6,7 +6,7 @@ using Interactions;
 using Sirenix.OdinInspector;
 
 [RequireComponent(typeof(CharacterState))]
-[RequireComponent(typeof(CharacterFacingAnim))]
+[RequireComponent(typeof(CharacterLocomotionAnim))]
 [RequireComponent(typeof(PlayerInteractionController))]
 [RequireComponent(typeof(PlayerAimController))]
 [RequireComponent(typeof(TileObjectPointerController))]
@@ -14,13 +14,15 @@ public class PlayerController : MonoBehaviour, IPlayControllable
 {
     [Title("References")]
     [Required, SerializeField] private CharacterState _state;
-    [Required, SerializeField] private CharacterFacingAnim _directionAnim;
+    [Required, SerializeField] private CharacterLocomotionAnim _locomotionAnim;
+    [SerializeField] private CharacterFacingAnim _directionAnim;
     [Required, SerializeField] private PlayerInteractionController _interaction;
     [Required, SerializeField] private PlayerAimController _aimController;
     [SerializeField] private TileObjectPointerController _tileObjectPointer;
     [SerializeField] private PlayerCombatController _combatController;
 
     public CharacterState State => _state;
+    public CharacterLocomotionAnim LocomotionAnim => _locomotionAnim;
     public CharacterFacingAnim DirectionAnim => _directionAnim;
     public PlayerInteractionController Interaction => _interaction;
 
@@ -50,6 +52,7 @@ public class PlayerController : MonoBehaviour, IPlayControllable
     private void EnsureReferences()
     {
         if (!_state) TryGetComponent(out _state);
+        if (!_locomotionAnim) TryGetComponent(out _locomotionAnim);
         if (!_directionAnim) TryGetComponent(out _directionAnim);
         if (!_interaction) TryGetComponent(out _interaction);
         if (!_aimController) TryGetComponent(out _aimController);
