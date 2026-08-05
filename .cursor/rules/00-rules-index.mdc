@@ -20,6 +20,7 @@ alwaysApply: true
 | `no-hardcoding.mdc` | 매직 넘버/복붙 SSOT |
 | `migration-parity.mdc` | 경로 교체·하이브리드·기능 불변 최적화 — 패리티·기능 체크리스트, 재현 뺑뺑이 금지 |
 | `ui-prefab-bake.mdc` | UI 프리팹 full bake는 일회성 — 베이크 후 스크립트 삭제 |
+| `vendor-packages.mdc` | 서드파티·벤더 원본 인플레이스 수정 금지 — Dist 포크/래퍼 |
 
 ## Glob (해당 경로 작업 시)
 | File | Globs |

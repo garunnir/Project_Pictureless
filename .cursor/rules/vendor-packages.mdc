@@ -1,0 +1,50 @@
+---
+description: 서드파티·벤더 원본 인플레이스 수정 금지 — Dist 포크/래퍼만
+alwaysApply: true
+---
+
+# Vendor / Third-Party Sources
+
+## When
+Asset Store·플러그인·벤더 트리, Package Manager 패키지, 외부로 재임포트되는 에셋.
+
+## Why
+원본을 고치면 재임포트/업그레이드 시 덮어쓰기·충돌·패치 유실이 난다 (2026-08 ProPixelizer `RecordRenderGraph` 인플레이스 수정).
+
+## Vendor roots (예)
+| Path | Note |
+|------|------|
+| `Assets/ProPixelizer/**` | Asset Store 원본 |
+| `Assets/Plugins/**` (서드파티) | 벤더 플러그인 |
+| `Packages/**` · `Library/PackageCache/**` | UPM — 직접 편집 금지 |
+| 기타 벤더 README/라이선스가 있는 `Assets/<Vendor>/**` | Dist가 아닌 외부 패키지 |
+
+`Assets/Dist/**` 는 프로젝트 소유 — 이 룰의 vendor root 아님.
+
+## MUST
+1. 버그·URP/API 적응·기능 추가는 **원본 밖**에서: Dist 포크 복사, 래퍼 Feature/Pass, 또는 업스트림 버전 교체
+2. 포크 시 원본 트리는 **미수정**으로 두고, asmdef·Renderer Feature 참조만 포크를 가리키게 전환
+3. 불가피한 원본 터치 → **적용 전** 사용자 예외 승인 + 룰 위반 알림 (`00-rules-index.mdc`)
+
+## MUST NOT
+- `Assets/ProPixelizer/**` 등 vendor root에 기능/패치를 **인플레이스**로 넣기
+- PackageCache·Packages 내 파일 수정
+- “일단 원본 고치고 나중에 옮긴다”로 머지
+
+## OK
+| OK | Condition |
+|----|-----------|
+| Dist 포크 | 원본 복사 → Dist에서만 수정, 참조 전환 |
+| 래퍼만 Dist | vendor 패스는 그대로, Dist Feature가 감싸거나 대체 |
+| 설정·할당 | URP Renderer에 Feature 추가, 머티리얼/프리팹 배선 (원본 `.cs` 미수정) |
+| 업스트림 교체 | 공식 RenderGraph 지원 버전으로 원본 폴더 교체 |
+| 예외 승인 | 사용자가 인플레이스 명시 승인 — 범위·되돌리기 조건 기록 |
+
+## Known debt
+| Item | Remove when |
+|------|-------------|
+| `Assets/Dist/Visual/ProPixelizer/` (RG 포크) | 공식 ProPixelizer v2(RenderGraph)로 `Assets/ProPixelizer` 교체 → URP Renderer Feature를 vendor `PixelisationFeature`로 되돌림 → **이 Dist 폴더 전체 삭제** |
+| `URP_COMPATIBILITY_MODE` define | Dist 포크 `RecordRenderGraph`가 Game 경로에서 Execute와 패리티될 때까지 임시 유지. v2 교체 또는 Dist RG 완성 후, 다른 의존 없으면 define 제거 |
+
+## See also
+`agent-scope.mdc` · `legacy.mdc` · `00-rules-index.mdc`

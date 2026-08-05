@@ -108,6 +108,5 @@ Feature SSOT when touching that area — **read the Doc before editing related s
 | UI MVC / font | `docs/ui/UI_Scripts.md` | `.cursor/rules/ui-prefab-layout.mdc` · `ui-font.mdc` |
 | Locomotion | `docs/locomotion/LOCOMOTION.md` | `.cursor/rules/locomotion.mdc` |
 | Legacy (do not expand as SSOT) | `docs/legacy/LEGACY_README.md` | `.cursor/rules/legacy.mdc` |
-| SpriteBaker (Plugins vendor) | `docs/spritebaker/SPRITEBAKER.md` | Dist 흡수 금지 — 어댑터만 |
 
 Assets 트리의 `.md`는 stub다. 본문은 `docs/`만 진실원.

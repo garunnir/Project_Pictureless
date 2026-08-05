@@ -13,7 +13,6 @@
 | Message log HUD | [`ui/MESSAGE_LOG.md`](ui/MESSAGE_LOG.md) | (UI 레이아웃·폰트 룰 공유) |
 | Locomotion | [`locomotion/LOCOMOTION.md`](locomotion/LOCOMOTION.md) | `locomotion.mdc` |
 | Legacy | [`legacy/LEGACY_README.md`](legacy/LEGACY_README.md) | `legacy.mdc` |
-| SpriteBaker | [`spritebaker/SPRITEBAKER.md`](spritebaker/SPRITEBAKER.md) | (Plugins 벤더 — Dist 흡수 금지) |
 
 **스크립트를 수정하기 전에** 해당 행의 Canonical 문서를 읽는다.  
 Assets 트리 안의 `.md`는 stub이며 본문은 여기만 진실원이다.
