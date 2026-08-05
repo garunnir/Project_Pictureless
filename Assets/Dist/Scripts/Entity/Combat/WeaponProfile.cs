@@ -38,9 +38,12 @@ public sealed class WeaponProfile : ScriptableObject
 
     [SerializeField] Entry[] _entries = Array.Empty<Entry>();
     [SerializeField] WeaponActionMask _supportedActions;
+    [Tooltip("공유 CharacterAnimController 슬롯에 덮어쓸 클립 묶음. 비우면 캐릭터 기본 컨트롤러 유지.")]
+    [SerializeField] AnimatorOverrideController _animatorOverride;
 
     public WeaponActionMask SupportedActions => _supportedActions;
     public Entry[] Entries => _entries;
+    public AnimatorOverrideController AnimatorOverride => _animatorOverride;
 
     void OnValidate() => RebuildSupportedActions();
 

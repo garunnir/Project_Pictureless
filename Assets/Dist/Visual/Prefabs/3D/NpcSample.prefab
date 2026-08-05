@@ -55,6 +55,7 @@ GameObject:
   - component: {fileID: 1118176453110266648}
   - component: {fileID: 5197488811145636763}
   - component: {fileID: 8762515008328947030}
+  - component: {fileID: 929168342102942221}
   m_Layer: 0
   m_Name: NpcSample
   m_TagString: Untagged
@@ -140,14 +141,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e17cd38645b97e4faf381291048ef9f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::PlayerInputDirectionAnim
-  mode: 1
   _timeChannel: 1
   moveThreshold: 0.01
   angleOffset: 45
-  animator: {fileID: 6447396323971381412}
-  paramDirX: DirX
-  paramDirY: DirY
-  paramMoving: 
   spriteRenderer: {fileID: 0}
   fps: 8
   directionFrames:
@@ -339,6 +335,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterCombatVfx
   _timeChannel: 1
+--- !u!114 &929168342102942221
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 630dffec6308fd5468336347a82c3b75, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterLocomotionAnim
+  _timeChannel: 1
+  _animator: {fileID: 6447396323971381412}
+  _defaultController: {fileID: 9100000, guid: 340c7b66e1595a44db858530dc6283b7, type: 2}
+  _paramSpeed: Speed
+  _paramAiming: IsAiming
+  _paramAction: Action
+  _poseRate: 10
 --- !u!1 &4805479869313538020
 GameObject:
   m_ObjectHideFlags: 0

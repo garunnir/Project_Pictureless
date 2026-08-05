@@ -54,11 +54,19 @@ flowchart LR
 드라이버: `CharacterLocomotionAnim` · 루트 회전: `CharacterFacingRotator` → `CharacterState.GetFacingDir()`  
 스프라이트 8방향: `CharacterFacingAnim` (SpriteSwap 전용, 3D와 별도)
 
-| Param | Type | Source | Layer |
-|-------|------|--------|-------|
+| Param / Asset | Type | Source | Layer / 역할 |
+|---------------|------|--------|----------------|
 | `Speed` | float 0..1 | `PlayerMovement.CurrentSpeed / RunMaxSpeed` | Move (Locomotion 1D BlendTree: Idle→Walk→Run) |
 | `IsAiming` | bool | `CharacterState.IsAiming` | Aim (UpperBody mask, Override) |
+| `Action` | int | `CharacterAttacker.SelectedAction` (`Swing`/`Stab`/`Trigger`) | Aim: `AimSwing`/`AimStab`/`AimTrigger` (슬롯 클립) |
+| `WeaponProfile.AnimatorOverride` | OverrideController | 장착 무기 | 공유 컨트롤러 슬롯 클립 교체 |
 
+Override 템플릿: `Assets/Dist/Visual/Anim/CharacterClips/Overrides/CharacterAnim_{Pistol,Bat,Knife}.overrideController`  
+Aim 슬롯 클립: `Assets/Dist/Visual/Anim/CharacterClips/Slots/Aim{Swing,Stab,Trigger}_Slot.anim` (내용은 플레이스홀더 — 무기 Override에서 교체)
+
+- 플레이어 동사는 `WeaponAction`을 유지한다. 실루엣(피스톨/배트/나이프)은 Override로만 바꾼다 — `TriggerPistol` 같은 동명 액션을 만들지 않는다.
+- 무기 Override가 없거나 비무장이면 `CharacterLocomotionAnim`의 `_defaultController`(공유 베이스)를 쓴다. `SetWeapon` → `WeaponChanged`에서 재적용·Rebind.
+- Aim 레이어: `AimIdle` ↔ `AimSwing|AimStab|AimTrigger` (`IsAiming` + `Action`). 레거시 `AimPose`는 미연결.
 - 조준 중 루트는 에임(`SightDir`)을 본다. 스트레이프용 `AimYaw` / MoveDir-only 루트는 넣지 않는다.
 - 애니 시간은 `TimeScaleService` 채널로만 진행한다 (`CharacterLocomotionAnim`이 Animator 자동 틱을 끈다).
 - Play 중 `Animator.enabled == false`는 **정상**(수동 틱). 본 바인딩을 위해 첫 Update에서 enable→`Rebind()` 후 다시 끈다.

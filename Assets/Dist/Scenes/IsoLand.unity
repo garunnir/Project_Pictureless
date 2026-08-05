@@ -64585,8 +64585,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::CharacterLocomotionAnim
   _timeChannel: 2
   _animator: {fileID: 543450653236232290}
+  _defaultController: {fileID: 9100000, guid: 340c7b66e1595a44db858530dc6283b7, type: 2}
   _paramSpeed: Speed
   _paramAiming: IsAiming
+  _paramAction: Action
+  _poseRate: 10
 --- !u!1 &1384417763
 GameObject:
   m_ObjectHideFlags: 0
@@ -105673,8 +105676,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::CharacterLocomotionAnim
   _timeChannel: 2
   _animator: {fileID: 1356982277}
+  _defaultController: {fileID: 9100000, guid: 340c7b66e1595a44db858530dc6283b7, type: 2}
   _paramSpeed: Speed
   _paramAiming: IsAiming
+  _paramAction: Action
+  _poseRate: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

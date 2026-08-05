@@ -1,13 +1,14 @@
 // ============================================================
-// CharacterLocomotionAnim — 3D Mecanim에 Speed/IsAiming을 넣고 TimeScale 채널로 진행
+// CharacterLocomotionAnim — Speed/IsAiming/Action + 무기 Override, TimeScale 틱
 // ============================================================
 using Sirenix.OdinInspector;
 using UnityEngine;
 
 /// <summary>
-/// Drives a 3D layered Animator from <see cref="PlayerMovement"/> speed and
-/// <see cref="CharacterState.IsAiming"/>. Animation time advances via
-/// <see cref="TimeScaleService"/> only (Animator auto-tick disabled).
+/// Drives a 3D layered Animator from <see cref="PlayerMovement"/> speed,
+/// <see cref="CharacterState.IsAiming"/>, and <see cref="CharacterAttacker.SelectedAction"/>.
+/// Applies <see cref="WeaponProfile.AnimatorOverride"/> when the weapon changes.
+/// Animation time advances via <see cref="TimeScaleService"/> only (Animator auto-tick disabled).
 /// Optional pose rate quantizes ticks for a flipbook look without stepped clips.
 /// </summary>
 [RequireComponent(typeof(CharacterState))]
@@ -28,8 +29,11 @@ public class CharacterLocomotionAnim : MonoBehaviour
     [Header("Animator (TimeScale manual tick)")]
     [Tooltip(ManualTickHelp)]
     [SerializeField] Animator _animator;
+    [Tooltip("무기 Override가 없거나 비무장일 때 쓸 기본 컨트롤러. 비우면 Awake 시점 Animator 할당값을 캡처.")]
+    [SerializeField] RuntimeAnimatorController _defaultController;
     [SerializeField] string _paramSpeed = "Speed";
     [SerializeField] string _paramAiming = "IsAiming";
+    [SerializeField] string _paramAction = "Action";
     [Tooltip("초당 애니 포즈 수(채널 시간 기준). 0이면 매 프레임 연속 틱. BlendTree 유지한 채 플립북 느낌.")]
     [SerializeField, Min(0f)] float _poseRate = DefaultPoseRate;
     [ShowInInspector, ReadOnly, PropertyOrder(20)]
@@ -37,15 +41,19 @@ public class CharacterLocomotionAnim : MonoBehaviour
     bool ManualTickActive => _manualControl && _animator != null && !_animator.enabled;
 
     CharacterState _characterState;
+    CharacterAttacker _attacker;
     PlayerMovement _playerMovement;
     bool _manualControl;
     bool _pendingBind = true;
     float _poseAccum;
+    RuntimeAnimatorController _appliedController;
 
     int _hashSpeed;
     int _hashAiming;
+    int _hashAction;
     bool _hasSpeed;
     bool _hasAiming;
+    bool _hasAction;
 
     public Animator Animator => _animator;
 
@@ -55,6 +63,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (_characterState == null)
             _characterState = GetComponent<CharacterState>();
 
+        _attacker = GetComponentInParent<CharacterAttacker>();
+        if (_attacker == null)
+            _attacker = GetComponent<CharacterAttacker>();
+
         _playerMovement = GetComponentInParent<PlayerMovement>();
         if (_playerMovement == null)
             _playerMovement = GetComponent<PlayerMovement>();
@@ -62,7 +74,23 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (_animator == null)
             _animator = GetComponentInChildren<Animator>();
 
+        if (_defaultController == null && _animator != null)
+            _defaultController = ResolveBaseController(_animator.runtimeAnimatorController);
+
+        ApplyWeaponAnimOverride(forceRebind: false);
         CacheAnimatorParameters();
+    }
+
+    void OnEnable()
+    {
+        if (_attacker != null)
+            _attacker.WeaponChanged += OnWeaponChanged;
+    }
+
+    void OnDisable()
+    {
+        if (_attacker != null)
+            _attacker.WeaponChanged -= OnWeaponChanged;
     }
 
     void Reset()
@@ -98,7 +126,55 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (_hasAiming)
             _animator.SetBool(_hashAiming, _characterState != null && _characterState.IsAiming);
 
+        if (_hasAction)
+            _animator.SetInteger(_hashAction, ResolveAction());
+
         AdvanceAnimator(TimeScaleService.Delta(_timeChannel));
+    }
+
+    void OnWeaponChanged() => ApplyWeaponAnimOverride(forceRebind: true);
+
+    void ApplyWeaponAnimOverride(bool forceRebind)
+    {
+        if (_animator == null)
+            return;
+
+        RuntimeAnimatorController next = _defaultController;
+        if (_attacker != null &&
+            _attacker.Weapon != null &&
+            _attacker.Weapon.AnimatorOverride != null)
+        {
+            next = _attacker.Weapon.AnimatorOverride;
+        }
+
+        if (next == null)
+            return;
+
+        if (!forceRebind && ReferenceEquals(next, _appliedController))
+            return;
+
+        if (!ReferenceEquals(_animator.runtimeAnimatorController, next))
+            _animator.runtimeAnimatorController = next;
+
+        _appliedController = next;
+        CacheAnimatorParameters();
+
+        if (forceRebind || _manualControl)
+        {
+            _manualControl = false;
+            _pendingBind = true;
+        }
+    }
+
+    static RuntimeAnimatorController ResolveBaseController(RuntimeAnimatorController controller)
+    {
+        if (controller is AnimatorOverrideController overrideController &&
+            overrideController.runtimeAnimatorController != null)
+        {
+            return overrideController.runtimeAnimatorController;
+        }
+
+        return controller;
     }
 
     void AdvanceAnimator(float channelDelta)
@@ -130,12 +206,14 @@ public class CharacterLocomotionAnim : MonoBehaviour
     {
         _hasSpeed = false;
         _hasAiming = false;
+        _hasAction = false;
 
         if (_animator == null || _animator.runtimeAnimatorController == null)
             return;
 
         _hashSpeed = string.IsNullOrEmpty(_paramSpeed) ? 0 : Animator.StringToHash(_paramSpeed);
         _hashAiming = string.IsNullOrEmpty(_paramAiming) ? 0 : Animator.StringToHash(_paramAiming);
+        _hashAction = string.IsNullOrEmpty(_paramAction) ? 0 : Animator.StringToHash(_paramAction);
 
         AnimatorControllerParameter[] parameters = _animator.parameters;
         for (int i = 0; i < parameters.Length; i++)
@@ -145,6 +223,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
                 _hasSpeed = true;
             if (!string.IsNullOrEmpty(_paramAiming) && nameHash == _hashAiming)
                 _hasAiming = true;
+            if (!string.IsNullOrEmpty(_paramAction) && nameHash == _hashAction)
+                _hasAction = true;
         }
     }
 
@@ -175,5 +255,13 @@ public class CharacterLocomotionAnim : MonoBehaviour
             return 0f;
 
         return Mathf.Clamp01(_playerMovement.CurrentSpeed / max);
+    }
+
+    int ResolveAction()
+    {
+        if (_attacker == null)
+            return (int)WeaponAction.Swing;
+
+        return (int)_attacker.SelectedAction;
     }
 }

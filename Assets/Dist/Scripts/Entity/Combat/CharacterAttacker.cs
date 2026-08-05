@@ -35,6 +35,7 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     public event Action AvailableActionsChanged;
     public event Action SelectedActionChanged;
+    public event Action WeaponChanged;
 
     /// <summary>실제로 시전된 공격(Performed/Miss)의 판정 결과. 연출 계층이 구독한다.</summary>
     public event Action<AttackOutcome> AttackResolved;
@@ -87,11 +88,15 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     public void SetWeapon(WeaponProfile weapon)
     {
+        if (_weapon == weapon)
+            return;
+
         _weapon = weapon;
         if (_weapon != null)
             _weapon.RebuildSupportedActions();
         RebuildAvailableActions();
         ClampSelectedAction();
+        WeaponChanged?.Invoke();
     }
 
     public bool CanPerform(WeaponAction action) =>
