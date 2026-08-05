@@ -8,6 +8,7 @@ using UnityEngine;
 /// Drives a 3D layered Animator from <see cref="PlayerMovement"/> speed and
 /// <see cref="CharacterState.IsAiming"/>. Animation time advances via
 /// <see cref="TimeScaleService"/> only (Animator auto-tick disabled).
+/// Optional pose rate quantizes ticks for a flipbook look without stepped clips.
 /// </summary>
 [RequireComponent(typeof(CharacterState))]
 public class CharacterLocomotionAnim : MonoBehaviour
@@ -16,6 +17,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         "Play 시 Animator 컴포넌트를 끕니다(TimeScale 채널 수동 틱). " +
         "Inspector에서 Animator.enabled가 꺼져 보이는 것은 정상입니다. " +
         "재생은 이 스크립트의 Update → Animator.Update(TimeScaleService.Delta)로만 진행됩니다.";
+
+    const float DefaultPoseRate = 10f;
+    const int MaxPoseStepsPerFrame = 8;
 
     [InfoBox(ManualTickHelp, InfoMessageType.Warning)]
     [Tooltip("애니 진행에 사용할 시간 채널. 플레이어=Player, NPC·환경=World.")]
@@ -26,6 +30,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
     [SerializeField] Animator _animator;
     [SerializeField] string _paramSpeed = "Speed";
     [SerializeField] string _paramAiming = "IsAiming";
+    [Tooltip("초당 애니 포즈 수(채널 시간 기준). 0이면 매 프레임 연속 틱. BlendTree 유지한 채 플립북 느낌.")]
+    [SerializeField, Min(0f)] float _poseRate = DefaultPoseRate;
     [ShowInInspector, ReadOnly, PropertyOrder(20)]
     [LabelText("Manual tick active (Animator.enabled forced off)")]
     bool ManualTickActive => _manualControl && _animator != null && !_animator.enabled;
@@ -34,6 +40,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     PlayerMovement _playerMovement;
     bool _manualControl;
     bool _pendingBind = true;
+    float _poseAccum;
 
     int _hashSpeed;
     int _hashAiming;
@@ -66,6 +73,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void OnValidate()
     {
+        if (_poseRate < 0f)
+            _poseRate = 0f;
+
         if (_animator != null)
             CacheAnimatorParameters();
     }
@@ -88,7 +98,32 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (_hasAiming)
             _animator.SetBool(_hashAiming, _characterState != null && _characterState.IsAiming);
 
-        _animator.Update(TimeScaleService.Delta(_timeChannel));
+        AdvanceAnimator(TimeScaleService.Delta(_timeChannel));
+    }
+
+    void AdvanceAnimator(float channelDelta)
+    {
+        if (channelDelta <= 0f)
+            return;
+
+        if (_poseRate <= 0f)
+        {
+            _animator.Update(channelDelta);
+            return;
+        }
+
+        float step = 1f / _poseRate;
+        _poseAccum += channelDelta;
+        int steps = 0;
+        while (_poseAccum >= step && steps < MaxPoseStepsPerFrame)
+        {
+            _poseAccum -= step;
+            _animator.Update(step);
+            steps++;
+        }
+
+        if (steps >= MaxPoseStepsPerFrame && _poseAccum >= step)
+            _poseAccum %= step;
     }
 
     void CacheAnimatorParameters()

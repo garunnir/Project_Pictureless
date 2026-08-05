@@ -62,6 +62,7 @@ flowchart LR
 - 조준 중 루트는 에임(`SightDir`)을 본다. 스트레이프용 `AimYaw` / MoveDir-only 루트는 넣지 않는다.
 - 애니 시간은 `TimeScaleService` 채널로만 진행한다 (`CharacterLocomotionAnim`이 Animator 자동 틱을 끈다).
 - Play 중 `Animator.enabled == false`는 **정상**(수동 틱). 본 바인딩을 위해 첫 Update에서 enable→`Rebind()` 후 다시 끈다.
+- `_poseRate`(기본 10): 채널 시간 기준 초당 포즈 수로 `Animator.Update`를 양자화한다. BlendTree/레이어 유지한 채 플립북 느낌. `0`이면 매 프레임 연속 틱.
 - Locomotion/Aim 클립은 FBX `loopTime`이 켜져 있어야 한다. 꺼져 있으면 1회 재생 후 마지막 포즈에 멈춰 “안 움직이는 것처럼” 보인다.
 
 ## 현재 한계
