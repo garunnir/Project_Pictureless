@@ -1,5 +1,5 @@
 // ============================================================
-// UIPlayerStatusWindow ? ???? 6?? + ??? + ?? + ? ??
+// UIPlayerStatusWindow — 상태 창 6부위 + vitals + skills + 호버 상세
 // ============================================================
 
 using System.Collections.Generic;
@@ -47,6 +47,8 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
 
         if (WindowRect != null && rootCanvas != null)
             WindowRect.sizeDelta = PlayerStatusWindowLayout.ClampSize(WindowRect.sizeDelta, rootCanvas);
+
+        _detailPanel?.Initialize(rootCanvas);
     }
 
     public void SetHeaderTitle(string title)
@@ -143,13 +145,13 @@ public sealed class UIPlayerStatusWindow : MonoBehaviour
             _rows[i].Bind(mains[i], OnPartHover, OnPartExit);
     }
 
-    void OnPartHover(string partId)
+    void OnPartHover(string partId, RectTransform anchor)
     {
         ICharacterBody body = _viewModel?.Body;
         if (_detailPanel == null || body == null)
             return;
 
-        _detailPanel.ShowForPart(body, partId);
+        _detailPanel.ShowForPart(body, partId, anchor);
     }
 
     void OnPartExit() => _detailPanel?.Hide();

@@ -21,12 +21,12 @@ public sealed class UIPlayerStatusBodyPartGraphic :
     [SerializeField] string _partId;
 
     Color _displayColor = Color.white;
-    Action<string> _onHover;
+    Action<string, RectTransform> _onHover;
     Action _onExit;
 
     public string PartId => _partId;
 
-    public void Bind(string partId, Action<string> onHover, Action onExit)
+    public void Bind(string partId, Action<string, RectTransform> onHover, Action onExit)
     {
         _partId = partId;
         _onHover = onHover;
@@ -65,7 +65,7 @@ public sealed class UIPlayerStatusBodyPartGraphic :
                 HoverHighlightAmount);
 
         if (!string.IsNullOrEmpty(_partId))
-            _onHover?.Invoke(_partId);
+            _onHover?.Invoke(_partId, transform as RectTransform);
     }
 
     public void OnPointerExit(PointerEventData eventData)

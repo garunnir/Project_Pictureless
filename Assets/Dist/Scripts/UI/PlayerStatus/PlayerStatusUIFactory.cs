@@ -345,16 +345,22 @@ public static class PlayerStatusUIFactory
     {
         GameObject panel = CreateRect("DetailPanel", parent, DetailColor);
         RectTransform rect = panel.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(1f, 1f);
-        rect.anchorMax = new Vector2(1f, 1f);
+        // Hover Placement SSOT: center anchors so UIPopupPositioner local coords match.
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0f, 1f);
         rect.sizeDelta = DetailSize;
-        rect.anchoredPosition = new Vector2(12f, 0f);
+        rect.anchoredPosition = Vector2.zero;
+
+        Image panelImage = panel.GetComponent<Image>();
+        if (panelImage != null)
+            panelImage.raycastTarget = false;
 
         TMP_Text body = CreateTmp("Body", panel.transform, FontSizeBody, TextAlignmentOptions.TopLeft);
         Stretch(body.rectTransform, 8f, 8f, 8f, 8f);
         body.enableWordWrapping = true;
         body.overflowMode = TextOverflowModes.Overflow;
+        body.raycastTarget = false;
 
         UIPlayerStatusDetailPanel view = panel.AddComponent<UIPlayerStatusDetailPanel>();
         view.Wire(body);

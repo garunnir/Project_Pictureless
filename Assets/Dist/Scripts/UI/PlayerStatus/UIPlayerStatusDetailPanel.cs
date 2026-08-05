@@ -1,5 +1,5 @@
 // ============================================================
-// UIPlayerStatusDetailPanel ??Î©îÏù∏ Î∂Ä???∏Î≤Ñ ???∏Î? anatomy¬∑?®Í≥º Î≥¥Ï°∞ ?§Î™Ö
+// UIPlayerStatusDetailPanel ? ?? ?? ?? anatomy??? ?? ??
 // ============================================================
 
 using System.Collections.Generic;
@@ -7,27 +7,50 @@ using System.Text;
 using Garunnir.Runtime.Gameplay.Data;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
 {
+    static readonly UIHoverStyle PartHoverStyle = new(new Vector2(16f, -16f), followMouse: false);
+
+    [SerializeField] UIHoverPanelShell _shell;
+    [SerializeField] RectTransform _rect;
     [SerializeField] TMP_Text _bodyText;
 
     readonly StringBuilder _builder = new(256);
     readonly List<BodyPartEffect> _effectBuffer = new(16);
 
-    public void Hide()
+    public void Initialize(Canvas rootCanvas)
     {
-        gameObject.SetActive(false);
+        EnsureHoverLayout();
+        EnsureShell();
+        _shell.Initialize(rootCanvas);
     }
 
-    public void ShowForPart(ICharacterBody body, string mainPartId)
+    public void Hide()
     {
-        if (body == null || string.IsNullOrEmpty(mainPartId))
+        if (_shell != null)
+            _shell.Hide();
+        else
+            gameObject.SetActive(false);
+    }
+
+    public void ShowForPart(ICharacterBody body, string mainPartId, RectTransform anchor)
+    {
+        if (body == null || string.IsNullOrEmpty(mainPartId) || anchor == null)
         {
             Hide();
             return;
         }
 
+        EnsureShell();
+        BindPart(body, mainPartId);
+        RebuildLayout();
+        _shell.ShowNearAnchor(anchor, PartHoverStyle);
+    }
+
+    void BindPart(ICharacterBody body, string mainPartId)
+    {
         if (!body.TryGet(mainPartId, out BodyPartNode node))
         {
             if (_bodyText != null)
@@ -36,7 +59,7 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
                     $"{PlayerStatusLabels.GetPartName(mainPartId)}\n" +
                     PlayerStatusLabels.Lost;
             }
-            gameObject.SetActive(true);
+
             return;
         }
 
@@ -86,8 +109,6 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
 
         if (_bodyText != null)
             _bodyText.text = _builder.ToString();
-
-        gameObject.SetActive(true);
     }
 
     void AppendSubtree(BodyPartNode node, int depth)
@@ -123,5 +144,40 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
     public void Wire(TMP_Text bodyText)
     {
         _bodyText = bodyText;
+        _shell = null;
+    }
+
+    void EnsureShell()
+    {
+        if (_shell != null)
+            return;
+
+        _shell = GetComponent<UIHoverPanelShell>();
+        if (_shell == null)
+            _shell = gameObject.AddComponent<UIHoverPanelShell>();
+    }
+
+    void EnsureHoverLayout()
+    {
+        if (_rect == null)
+            _rect = transform as RectTransform;
+        if (_rect == null)
+            return;
+
+        // Positioner sets anchoredPosition in parent local space ? center anchors required.
+        _rect.anchorMin = new Vector2(0.5f, 0.5f);
+        _rect.anchorMax = new Vector2(0.5f, 0.5f);
+        _rect.pivot = new Vector2(0f, 1f);
+    }
+
+    void RebuildLayout()
+    {
+        if (_rect == null)
+            _rect = transform as RectTransform;
+        if (_rect == null)
+            return;
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_rect);
+        Canvas.ForceUpdateCanvases();
     }
 }

@@ -9,9 +9,9 @@
 | 포함 | 제외 |
 |------|------|
 | 인벤 `UIInventoryItemDetailPanel` | ContextMenu (자체 배치·clamp) |
-| PlayerStatus Mood 툴팁 | Body DetailPanel (창 내부 고정) |
-| 이후 동급 follow-mouse / 앵커 정보창 | DragGhost (`TopMost`) |
-| | Interaction hint (`PopUpManager`) |
+| PlayerStatus Mood 툴팁 | DragGhost (`TopMost`) |
+| PlayerStatus Body `UIPlayerStatusDetailPanel` | Interaction hint (`PopUpManager`) |
+| 이후 동급 follow-mouse / 앵커 정보창 | |
 
 ## SSOT
 
@@ -28,10 +28,12 @@
 - Keep-in-bounds: 호버 셸 경로에서 clamp opt-out 없음. 기준은 **루트 Canvas rect**.
 - ContextMenu용 `PlaceAtScreenPoint(panel, screen, canvas)`는 offset=0·clamp off (패리티).
 - 콘텐츠 바인딩·숨김 시점(exit/드래그/창 닫힘/우클릭)은 Presenter·Controller.
+- 창 자식 툴팁(Mood·Body detail)은 Overlay로 재부모화하지 않음. Positioner용으로 **center anchors** 필요.
 
 ## Presenter Style
 
-| Presenter | Offset | Follow |
-|-----------|--------|--------|
-| Item detail | `(16, -16)` | yes |
-| Mood tooltip | `(0, 28)` | no |
+| Presenter | Offset | Follow | 배치 |
+|-----------|--------|--------|------|
+| Item detail | `(16, -16)` | yes | Overlay, `ShowAtScreen` |
+| Mood tooltip | `(0, 28)` | no | Summary 자식, `ShowNearAnchor` |
+| Body detail | `(16, -16)` | no | Status 창 자식, `ShowNearAnchor` |

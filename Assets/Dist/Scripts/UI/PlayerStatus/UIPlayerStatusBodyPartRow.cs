@@ -18,12 +18,12 @@ public sealed class UIPlayerStatusBodyPartRow : MonoBehaviour, IPointerEnterHand
     [SerializeField] Image _background;
 
     string _partId;
-    Action<string> _onHover;
+    Action<string, RectTransform> _onHover;
     Action _onExit;
 
     public string PartId => _partId;
 
-    public void Bind(string partId, Action<string> onHover, Action onExit)
+    public void Bind(string partId, Action<string, RectTransform> onHover, Action onExit)
     {
         _partId = partId;
         _onHover = onHover;
@@ -57,7 +57,7 @@ public sealed class UIPlayerStatusBodyPartRow : MonoBehaviour, IPointerEnterHand
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (!string.IsNullOrEmpty(_partId))
-            _onHover?.Invoke(_partId);
+            _onHover?.Invoke(_partId, transform as RectTransform);
     }
 
     public void OnPointerExit(PointerEventData eventData) => _onExit?.Invoke();
