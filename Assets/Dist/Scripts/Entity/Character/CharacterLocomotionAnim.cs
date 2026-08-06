@@ -7,7 +7,7 @@ using UnityEngine;
 /// <summary>
 /// Drives a 3D layered Animator from <see cref="PlayerMovement"/> speed,
 /// <see cref="CharacterState.IsAiming"/>, and <see cref="CharacterAttacker.SelectedAction"/>.
-/// Applies <see cref="WeaponProfile.AnimatorOverride"/> when the weapon changes.
+/// Applies <see cref="WeaponPresentation.AnimatorOverride"/> when presentation changes.
 /// Animation time advances via <see cref="TimeScaleService"/> only (Animator auto-tick disabled).
 /// Optional pose rate quantizes ticks for a flipbook look without stepped clips.
 /// </summary>
@@ -84,13 +84,13 @@ public class CharacterLocomotionAnim : MonoBehaviour
     void OnEnable()
     {
         if (_attacker != null)
-            _attacker.WeaponChanged += OnWeaponChanged;
+            _attacker.PresentationChanged += OnPresentationChanged;
     }
 
     void OnDisable()
     {
         if (_attacker != null)
-            _attacker.WeaponChanged -= OnWeaponChanged;
+            _attacker.PresentationChanged -= OnPresentationChanged;
     }
 
     void Reset()
@@ -132,7 +132,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         AdvanceAnimator(TimeScaleService.Delta(_timeChannel));
     }
 
-    void OnWeaponChanged() => ApplyWeaponAnimOverride(forceRebind: true);
+    void OnPresentationChanged() => ApplyWeaponAnimOverride(forceRebind: true);
 
     void ApplyWeaponAnimOverride(bool forceRebind)
     {
@@ -141,10 +141,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
         RuntimeAnimatorController next = _defaultController;
         if (_attacker != null &&
-            _attacker.Weapon != null &&
-            _attacker.Weapon.AnimatorOverride != null)
+            _attacker.Presentation != null &&
+            _attacker.Presentation.AnimatorOverride != null)
         {
-            next = _attacker.Weapon.AnimatorOverride;
+            next = _attacker.Presentation.AnimatorOverride;
         }
 
         if (next == null)
@@ -260,7 +260,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     int ResolveAction()
     {
         if (_attacker == null)
-            return (int)WeaponAction.Swing;
+            return (int)WeaponAction.Bashing;
 
         return (int)_attacker.SelectedAction;
     }

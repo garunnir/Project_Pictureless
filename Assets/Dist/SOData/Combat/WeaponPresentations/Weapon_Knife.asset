@@ -11,18 +11,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 00900423e44b6474a9b7ac9e5c311606, type: 3}
   m_Name: Weapon_Knife
-  m_EditorClassIdentifier: DistScript::WeaponProfile
+  m_EditorClassIdentifier: DistScript::WeaponPresentation
   _entries:
   - action: 0
-    resolveMode: 0
-    range: 1.1
-    cooldownSeconds: 0.7
-    damage: 7
-    accuracy: 0.72
-    skillId: combat.swing
-    minimumSkillLevel: 0
-    accuracyPerSkillLevel: 0.01
-    practiceXp: 4
     effectSeeds: []
     vfx:
       actionVfx: {fileID: 3393811213086816214, guid: df92d15a593607146b78ad219988cefb,
@@ -33,15 +24,6 @@ MonoBehaviour:
       missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
         type: 3}
   - action: 1
-    resolveMode: 0
-    range: 1
-    cooldownSeconds: 0.55
-    damage: 9
-    accuracy: 0.68
-    skillId: combat.stab
-    minimumSkillLevel: 0
-    accuracyPerSkillLevel: 0.01
-    practiceXp: 4
     effectSeeds:
     - effectId: bleed
       intensity: 1
@@ -55,3 +37,4 @@ MonoBehaviour:
       missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
         type: 3}
   _supportedActions: 3
+  _animatorOverride: {fileID: 22100000, guid: 48a3c46dae2eabd46abf894f757f571b, type: 2}

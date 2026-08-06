@@ -155,7 +155,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '-  [Swing]  (none)'
+  m_text: '-  [Bashing]  (none)'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 7747a49fbb2297a4999023ad4f30ce14, type: 2}
   m_sharedMaterial: {fileID: 3010285330736283134, guid: 7747a49fbb2297a4999023ad4f30ce14,

@@ -19,6 +19,55 @@
       "max_stack": 1
     },
     {
+      "id": "weapon_bat",
+      "name": "야구방망이",
+      "type": "GENERIC",
+      "category": "weapons",
+      "weight_g": 1200,
+      "volume_ml": 1500,
+      "max_stack": 1,
+      "bashing": 10,
+      "to_hit": 1,
+      "weapon_category": ["BAT"]
+    },
+    {
+      "id": "weapon_knife",
+      "name": "나이프",
+      "type": "GENERIC",
+      "category": "weapons",
+      "weight_g": 200,
+      "volume_ml": 250,
+      "max_stack": 1,
+      "bashing": 2,
+      "cutting": 9,
+      "to_hit": 1,
+      "weapon_category": ["KNIFE"]
+    },
+    {
+      "id": "weapon_pistol",
+      "name": "권총",
+      "type": "GUN",
+      "category": "weapons",
+      "weight_g": 900,
+      "volume_ml": 500,
+      "max_stack": 1,
+      "bashing": 4,
+      "to_hit": -1,
+      "weapon_category": ["PISTOL"],
+      "gun": {
+        "skill": "gun",
+        "ammo": ["9mm"],
+        "ranged_damage": 12,
+        "range": 12,
+        "dispersion": 300,
+        "recoil": 100,
+        "durability": 8,
+        "clip_size": 12,
+        "reload": 100,
+        "burst": 1
+      }
+    },
+    {
       "id": "clothing_plain",
       "name": "그냥 옷",
       "type": "ARMOR",

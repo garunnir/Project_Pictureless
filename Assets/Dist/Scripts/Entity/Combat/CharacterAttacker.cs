@@ -1,10 +1,11 @@
 // ============================================================
-// CharacterAttacker — 무기 액션 시전 (가용 마스크·명중·숙련)
+// CharacterAttacker — 무기 액션 시전 (ItemData 수치 + Presentation 연출)
 // ============================================================
 
 using System;
 using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(CharacterAimIntent))]
@@ -13,9 +14,9 @@ public sealed class CharacterAttacker : MonoBehaviour
 {
     static readonly WeaponAction[] ActionOrder =
     {
-        WeaponAction.Swing,
-        WeaponAction.Stab,
-        WeaponAction.Trigger
+        WeaponAction.Bashing,
+        WeaponAction.Cutting,
+        WeaponAction.Gun
     };
 
     const float AimHeight = 0.15f;
@@ -23,10 +24,16 @@ public sealed class CharacterAttacker : MonoBehaviour
     const float SurfaceProbeMargin = 1f;
     const float FallbackImpactRadius = 0.4f;
 
-    [SerializeField] WeaponProfile _weapon;
+    [FormerlySerializedAs("_weapon")]
+    [SerializeField] WeaponPresentation _presentation;
+    [Tooltip("GameplayData ItemData id. 비우면 비무장.")]
+    [SerializeField] string _itemId;
+    [SerializeField] WeaponPresentationCatalog _catalog;
+    [Tooltip("장전 시스템 전 스텁. Gun 발사마다 1 소모. 자동 장전 없음.")]
+    [SerializeField, Min(0)] int _loadedRounds;
     [SerializeField] LayerMask _rangedObstructionMask = ~0;
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
-    [SerializeField] WeaponAction _selectedAction = WeaponAction.Swing;
+    [SerializeField] WeaponAction _selectedAction = WeaponAction.Bashing;
 
     CharacterAimIntent _aimIntent;
     CharacterSkillsHost _skillsHost;
@@ -35,7 +42,7 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     public event Action AvailableActionsChanged;
     public event Action SelectedActionChanged;
-    public event Action WeaponChanged;
+    public event Action PresentationChanged;
 
     /// <summary>실제로 시전된 공격(Performed/Miss)의 판정 결과. 연출 계층이 구독한다.</summary>
     public event Action<AttackOutcome> AttackResolved;
@@ -43,17 +50,23 @@ public sealed class CharacterAttacker : MonoBehaviour
     /// <summary>모든 CharacterAttacker Resolve 공통 훅 (메시지 로그 등).</summary>
     public static event Action<AttackOutcome> AnyAttackResolved;
 
-    public WeaponProfile Weapon => _weapon;
+    public WeaponPresentation Presentation => _presentation;
+    public string ItemId => _itemId;
+    public int LoadedRounds => _loadedRounds;
     public WeaponActionMask AvailableActions { get; private set; }
     public WeaponAction SelectedAction => _selectedAction;
+
+    ItemData CurrentItem =>
+        string.IsNullOrEmpty(_itemId) ? null : GameplayData.GetItem(_itemId);
 
     void Awake()
     {
         _aimIntent = GetComponent<CharacterAimIntent>();
         _skillsHost = GetComponent<CharacterSkillsHost>();
         _selfCollider = GetComponentInChildren<Collider>();
-        if (_weapon != null)
-            _weapon.RebuildSupportedActions();
+        if (_presentation != null)
+            _presentation.RebuildSupportedActions();
+        RefreshPresentationFromCatalog();
         RebuildAvailableActions();
         ClampSelectedAction();
     }
@@ -86,17 +99,37 @@ public sealed class CharacterAttacker : MonoBehaviour
         }
     }
 
-    public void SetWeapon(WeaponProfile weapon)
+    /// <summary>장착 훅. 카탈로그로 Presentation resolve. rounds는 장전 전 스텁.</summary>
+    public void SetEquippedItem(string itemId, int loadedRounds = 0)
     {
-        if (_weapon == weapon)
+        if (string.Equals(_itemId, itemId, StringComparison.Ordinal) &&
+            _loadedRounds == loadedRounds)
             return;
 
-        _weapon = weapon;
-        if (_weapon != null)
-            _weapon.RebuildSupportedActions();
+        _itemId = itemId ?? string.Empty;
+        _loadedRounds = Mathf.Max(0, loadedRounds);
+        RefreshPresentationFromCatalog();
         RebuildAvailableActions();
         ClampSelectedAction();
-        WeaponChanged?.Invoke();
+    }
+
+    public void SetPresentation(WeaponPresentation presentation)
+    {
+        if (_presentation == presentation)
+            return;
+
+        _presentation = presentation;
+        if (_presentation != null)
+            _presentation.RebuildSupportedActions();
+        RebuildAvailableActions();
+        ClampSelectedAction();
+        PresentationChanged?.Invoke();
+    }
+
+    public void SetCatalog(WeaponPresentationCatalog catalog)
+    {
+        _catalog = catalog;
+        RefreshPresentationFromCatalog();
     }
 
     public bool CanPerform(WeaponAction action) =>
@@ -130,9 +163,8 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     public bool TryGetBestAction(float distance, out WeaponAction action)
     {
-        action = WeaponAction.Swing;
-        if (_weapon == null)
-            return false;
+        action = WeaponAction.Bashing;
+        ItemData item = CurrentItem;
 
         WeaponAction best = default;
         bool found = false;
@@ -143,18 +175,18 @@ public sealed class CharacterAttacker : MonoBehaviour
             WeaponAction candidate = ActionOrder[i];
             if (!CanPerform(candidate))
                 continue;
-            if (!_weapon.TryGetEntry(candidate, out WeaponProfile.Entry entry))
-                continue;
             if (GetCooldown(candidate) > 0f)
                 continue;
-            if (distance > entry.range)
+
+            float range = CombatMath.RangeMeters(item, candidate);
+            if (distance > range)
                 continue;
 
-            if (!found || entry.range < bestRange)
+            if (!found || range < bestRange)
             {
                 found = true;
                 best = candidate;
-                bestRange = entry.range;
+                bestRange = range;
             }
         }
 
@@ -169,15 +201,6 @@ public sealed class CharacterAttacker : MonoBehaviour
         WeaponAction action,
         CharacterBodyHost targetHost)
     {
-        if (_weapon == null ||
-            !_weapon.TryGetEntry(action, out WeaponProfile.Entry entry))
-        {
-            Debug.LogWarning(
-                $"[CharacterAttacker] Unsupported action {action} on {name}",
-                this);
-            return AttackPerformResult.Unsupported;
-        }
-
         if (!CanPerform(action))
         {
             Debug.LogWarning(
@@ -189,20 +212,27 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (GetCooldown(action) > 0f)
             return AttackPerformResult.Cooling;
 
+        ItemData item = CurrentItem;
+        if (action == WeaponAction.Gun && !CombatMath.CanFireGun(item, _loadedRounds))
+            return AttackPerformResult.NoAmmo;
+
         if (targetHost == null || targetHost.Body == null)
             return AttackPerformResult.NoTarget;
 
         Vector3 toTarget = targetHost.transform.position - transform.position;
         toTarget.y = 0f;
         float distance = toTarget.magnitude;
-        if (distance > entry.range)
+        float range = CombatMath.RangeMeters(item, action);
+        if (distance > range)
             return AttackPerformResult.OutOfRange;
 
+        WeaponResolveMode resolveMode = WeaponActionUtil.ResolveMode(action);
         Collider targetCollider = targetHost.GetComponentInChildren<Collider>();
         Vector3 origin = ResolveBodyCenter(transform, _selfCollider);
         Vector3 targetCenter = ResolveBodyCenter(targetHost.transform, targetCollider);
+        float cooldown = CombatMath.AttackIntervalSeconds(item, action);
 
-        if (entry.resolveMode == WeaponResolveMode.RangedRay)
+        if (resolveMode == WeaponResolveMode.RangedRay)
         {
             Vector3 dir = targetCenter - origin;
             float rayDist = dir.magnitude;
@@ -218,11 +248,12 @@ public sealed class CharacterAttacker : MonoBehaviour
                 blocker.collider.transform != targetHost.transform &&
                 !blocker.collider.transform.IsChildOf(targetHost.transform))
             {
-                BeginCooldown(action, entry.cooldownSeconds);
-                Practice(entry);
+                BeginCooldown(action, cooldown);
+                ConsumeAmmoIfGun(action);
+                Practice(item, action);
                 return Resolve(
-                    entry,
                     action,
+                    resolveMode,
                     AttackPerformResult.Miss,
                     targetHost,
                     string.Empty,
@@ -232,8 +263,9 @@ public sealed class CharacterAttacker : MonoBehaviour
             }
         }
 
-        BeginCooldown(action, entry.cooldownSeconds);
-        Practice(entry);
+        BeginCooldown(action, cooldown);
+        ConsumeAmmoIfGun(action);
+        Practice(item, action);
 
         if (!AimPartResolver.TryResolve(
                 targetHost.Body,
@@ -244,18 +276,18 @@ public sealed class CharacterAttacker : MonoBehaviour
         Vector3 impact = ResolveImpactPoint(targetCollider, targetCenter, origin);
 
         ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
-        int skillLevel = skills != null && !string.IsNullOrEmpty(entry.skillId)
-            ? skills.Level(entry.skillId)
+        string skillId = CombatMath.SkillId(item, action);
+        int skillLevel = skills != null && !string.IsNullOrEmpty(skillId)
+            ? skills.Level(skillId)
             : 0;
-        float hitChance = Mathf.Clamp01(
-            (entry.accuracy + skillLevel * entry.accuracyPerSkillLevel) *
-            BodyPartHitDifficulty.Get(aimedPart));
+        int strength = skills != null ? skills.Level(AttributeIds.Str) : StrengthBaselineFallback;
+        float hitChance = CombatMath.HitChance(item, action, skillLevel, aimedPart);
 
         if (UnityEngine.Random.value > hitChance)
         {
             return Resolve(
-                entry,
                 action,
+                resolveMode,
                 AttackPerformResult.Miss,
                 targetHost,
                 aimedPart,
@@ -264,22 +296,25 @@ public sealed class CharacterAttacker : MonoBehaviour
                 impact);
         }
 
-        BodyPartEffect[] seeds = BuildSeeds(entry);
-        BodyDamageService.ApplyHit(targetHost.Body, aimedPart, entry.damage, seeds);
+        int damage = CombatMath.Damage(item, action, strength, skillLevel);
+        BodyPartEffect[] seeds = BuildSeeds(action);
+        BodyDamageService.ApplyHit(targetHost.Body, aimedPart, damage, seeds);
         return Resolve(
-            entry,
             action,
+            resolveMode,
             AttackPerformResult.Performed,
             targetHost,
             aimedPart,
-            entry.damage,
+            damage,
             origin,
             impact);
     }
 
+    const int StrengthBaselineFallback = 8;
+
     AttackPerformResult Resolve(
-        WeaponProfile.Entry entry,
         WeaponAction action,
+        WeaponResolveMode resolveMode,
         AttackPerformResult result,
         CharacterBodyHost target,
         string aimedPartId,
@@ -289,7 +324,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     {
         var outcome = new AttackOutcome(
             action,
-            entry.resolveMode,
+            resolveMode,
             result,
             target,
             aimedPartId,
@@ -301,13 +336,11 @@ public sealed class CharacterAttacker : MonoBehaviour
         return result;
     }
 
-    /// <summary>조준·타격 기준 높이. 콜라이더가 있으면 그 중심, 없으면 발치 기준 오프셋.</summary>
     static Vector3 ResolveBodyCenter(Transform owner, Collider collider) =>
         collider != null
             ? collider.bounds.center
             : owner.position + Vector3.up * AimHeight;
 
-    /// <summary>공격자에서 타겟을 향한 접점. 표면을 못 잡으면 중심에서 반경만큼 물린다.</summary>
     static Vector3 ResolveImpactPoint(
         Collider targetCollider,
         Vector3 targetCenter,
@@ -343,24 +376,36 @@ public sealed class CharacterAttacker : MonoBehaviour
     void BeginCooldown(WeaponAction action, float seconds) =>
         _cooldownRemaining[(int)action] = Mathf.Max(0f, seconds);
 
-    void Practice(WeaponProfile.Entry entry)
+    void ConsumeAmmoIfGun(WeaponAction action)
     {
-        if (_skillsHost == null ||
-            string.IsNullOrEmpty(entry.skillId) ||
-            entry.practiceXp <= 0)
+        if (action != WeaponAction.Gun || _loadedRounds <= 0)
             return;
-        _skillsHost.Skills?.AddPractice(entry.skillId, entry.practiceXp);
+        _loadedRounds--;
     }
 
-    static BodyPartEffect[] BuildSeeds(WeaponProfile.Entry entry)
+    void Practice(ItemData item, WeaponAction action)
     {
-        if (entry.effectSeeds == null || entry.effectSeeds.Length == 0)
+        if (_skillsHost == null)
+            return;
+        string skillId = CombatMath.SkillId(item, action);
+        int xp = CombatMath.PracticeXp(action);
+        if (string.IsNullOrEmpty(skillId) || xp <= 0)
+            return;
+        _skillsHost.Skills?.AddPractice(skillId, xp);
+    }
+
+    BodyPartEffect[] BuildSeeds(WeaponAction action)
+    {
+        if (_presentation == null ||
+            !_presentation.TryGetEntry(action, out WeaponPresentation.Entry entry) ||
+            entry.effectSeeds == null ||
+            entry.effectSeeds.Length == 0)
             return null;
 
         var seeds = new BodyPartEffect[entry.effectSeeds.Length];
         for (int i = 0; i < entry.effectSeeds.Length; i++)
         {
-            WeaponProfile.EffectSeed seed = entry.effectSeeds[i];
+            WeaponPresentation.EffectSeed seed = entry.effectSeeds[i];
             if (seed == null)
             {
                 seeds[i] = default;
@@ -378,32 +423,25 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     void OnSkillsRefreshed() => RebuildAvailableActions();
 
+    void RefreshPresentationFromCatalog()
+    {
+        if (_catalog == null)
+            return;
+
+        WeaponPresentation resolved = _catalog.Resolve(_itemId, CurrentItem);
+        if (resolved == _presentation)
+            return;
+
+        _presentation = resolved;
+        if (_presentation != null)
+            _presentation.RebuildSupportedActions();
+        PresentationChanged?.Invoke();
+    }
+
     void RebuildAvailableActions()
     {
         WeaponActionMask previous = AvailableActions;
-        WeaponActionMask mask = WeaponActionMask.None;
-        ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
-
-        if (_weapon != null && _weapon.Entries != null)
-        {
-            WeaponProfile.Entry[] entries = _weapon.Entries;
-            for (int i = 0; i < entries.Length; i++)
-            {
-                WeaponProfile.Entry entry = entries[i];
-                if (entry == null)
-                    continue;
-
-                int level = 0;
-                if (skills != null && !string.IsNullOrEmpty(entry.skillId))
-                    level = skills.Level(entry.skillId);
-                if (level < entry.minimumSkillLevel)
-                    continue;
-
-                mask |= WeaponActionUtil.ToMask(entry.action);
-            }
-        }
-
-        AvailableActions = mask;
+        AvailableActions = CombatMath.AvailableModes(CurrentItem);
         if (previous != AvailableActions)
             AvailableActionsChanged?.Invoke();
         ClampSelectedAction();

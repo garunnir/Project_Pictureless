@@ -1,5 +1,5 @@
 // ============================================================
-// WeaponAction — 캐릭터 무기 활용 동사 / 마스크
+// WeaponAction — 캐릭터 무기 활용 동사 / 마스크 (Bashing/Cutting/Gun)
 // ============================================================
 
 using System;
@@ -8,16 +8,16 @@ using System;
 public enum WeaponActionMask
 {
     None = 0,
-    Swing = 1,
-    Stab = 2,
-    Trigger = 4
+    Bashing = 1,
+    Cutting = 2,
+    Gun = 4
 }
 
 public enum WeaponAction
 {
-    Swing = 0,
-    Stab = 1,
-    Trigger = 2
+    Bashing = 0,
+    Cutting = 1,
+    Gun = 2
 }
 
 public enum WeaponResolveMode
@@ -33,7 +33,8 @@ public enum AttackPerformResult
     Unsupported = 2,
     OutOfRange = 3,
     Cooling = 4,
-    NoTarget = 5
+    NoTarget = 5,
+    NoAmmo = 6
 }
 
 public static class WeaponActionUtil
@@ -42,12 +43,17 @@ public static class WeaponActionUtil
     {
         switch (action)
         {
-            case WeaponAction.Swing: return WeaponActionMask.Swing;
-            case WeaponAction.Stab: return WeaponActionMask.Stab;
-            case WeaponAction.Trigger: return WeaponActionMask.Trigger;
+            case WeaponAction.Bashing: return WeaponActionMask.Bashing;
+            case WeaponAction.Cutting: return WeaponActionMask.Cutting;
+            case WeaponAction.Gun: return WeaponActionMask.Gun;
             default: return WeaponActionMask.None;
         }
     }
+
+    public static WeaponResolveMode ResolveMode(WeaponAction action) =>
+        action == WeaponAction.Gun
+            ? WeaponResolveMode.RangedRay
+            : WeaponResolveMode.MeleeReach;
 
     public static bool TryNextAvailable(
         WeaponActionMask available,
@@ -73,25 +79,25 @@ public static class WeaponActionUtil
 
     public static bool TryFirstAvailable(WeaponActionMask available, out WeaponAction action)
     {
-        if ((available & WeaponActionMask.Swing) != 0)
+        if ((available & WeaponActionMask.Bashing) != 0)
         {
-            action = WeaponAction.Swing;
+            action = WeaponAction.Bashing;
             return true;
         }
 
-        if ((available & WeaponActionMask.Stab) != 0)
+        if ((available & WeaponActionMask.Cutting) != 0)
         {
-            action = WeaponAction.Stab;
+            action = WeaponAction.Cutting;
             return true;
         }
 
-        if ((available & WeaponActionMask.Trigger) != 0)
+        if ((available & WeaponActionMask.Gun) != 0)
         {
-            action = WeaponAction.Trigger;
+            action = WeaponAction.Gun;
             return true;
         }
 
-        action = WeaponAction.Swing;
+        action = WeaponAction.Bashing;
         return false;
     }
 }

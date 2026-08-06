@@ -3,6 +3,7 @@
 // ============================================================
 
 using System.Collections.Generic;
+using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -52,9 +53,9 @@ public sealed class PlayerCombatController : MonoBehaviour
 
         input.PlayerCombatCyclePerformed += OnCombatCycle;
         input.PlayerCombatAttackPerformed += OnCombatAttack;
-        input.PlayerCombatSelectSwingPerformed += OnSelectSwing;
-        input.PlayerCombatSelectStabPerformed += OnSelectStab;
-        input.PlayerCombatSelectTriggerPerformed += OnSelectTrigger;
+        input.PlayerCombatSelectBashingPerformed += OnSelectBashing;
+        input.PlayerCombatSelectCuttingPerformed += OnSelectCutting;
+        input.PlayerCombatSelectGunPerformed += OnSelectGun;
         _connected = true;
     }
 
@@ -65,9 +66,9 @@ public sealed class PlayerCombatController : MonoBehaviour
         {
             input.PlayerCombatCyclePerformed -= OnCombatCycle;
             input.PlayerCombatAttackPerformed -= OnCombatAttack;
-            input.PlayerCombatSelectSwingPerformed -= OnSelectSwing;
-            input.PlayerCombatSelectStabPerformed -= OnSelectStab;
-            input.PlayerCombatSelectTriggerPerformed -= OnSelectTrigger;
+            input.PlayerCombatSelectBashingPerformed -= OnSelectBashing;
+            input.PlayerCombatSelectCuttingPerformed -= OnSelectCutting;
+            input.PlayerCombatSelectGunPerformed -= OnSelectGun;
         }
 
         _connected = false;
@@ -103,22 +104,22 @@ public sealed class PlayerCombatController : MonoBehaviour
         _attacker.TryPerformSelected(target);
     }
 
-    void OnSelectSwing(InputAction.CallbackContext context)
+    void OnSelectBashing(InputAction.CallbackContext context)
     {
         if (context.performed)
-            _attacker.TrySelectAction(WeaponAction.Swing);
+            _attacker.TrySelectAction(WeaponAction.Bashing);
     }
 
-    void OnSelectStab(InputAction.CallbackContext context)
+    void OnSelectCutting(InputAction.CallbackContext context)
     {
         if (context.performed)
-            _attacker.TrySelectAction(WeaponAction.Stab);
+            _attacker.TrySelectAction(WeaponAction.Cutting);
     }
 
-    void OnSelectTrigger(InputAction.CallbackContext context)
+    void OnSelectGun(InputAction.CallbackContext context)
     {
         if (context.performed)
-            _attacker.TrySelectAction(WeaponAction.Trigger);
+            _attacker.TrySelectAction(WeaponAction.Gun);
     }
 
     bool TryResolveAimedTarget(out CharacterBodyHost target)
@@ -137,11 +138,12 @@ public sealed class PlayerCombatController : MonoBehaviour
         float maxDistance = Mathf.Max(
             _characterState.InteractionReach,
             _aimController.MaxAimDistance);
-        if (_attacker.Weapon != null &&
-            _attacker.Weapon.TryGetEntry(_attacker.SelectedAction, out WeaponProfile.Entry entry))
-        {
-            maxDistance = Mathf.Min(maxDistance, Mathf.Max(entry.range, 0.01f));
-        }
+        string itemId = _attacker.ItemId;
+        ItemData item = string.IsNullOrEmpty(itemId)
+            ? null
+            : GameplayData.GetItem(itemId);
+        float actionRange = CombatMath.RangeMeters(item, _attacker.SelectedAction);
+        maxDistance = Mathf.Min(maxDistance, Mathf.Max(actionRange, 0.01f));
 
         if (TrySphereCastBody(origin, direction, maxDistance, out target))
             return true;

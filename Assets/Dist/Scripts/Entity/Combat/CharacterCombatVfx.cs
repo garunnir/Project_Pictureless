@@ -29,9 +29,9 @@ public sealed class CharacterCombatVfx : MonoBehaviour
 
     void OnAttackResolved(AttackOutcome outcome)
     {
-        WeaponProfile weapon = _attacker.Weapon;
-        if (weapon == null ||
-            !weapon.TryGetEntry(outcome.Action, out WeaponProfile.Entry entry) ||
+        WeaponPresentation presentation = _attacker.Presentation;
+        if (presentation == null ||
+            !presentation.TryGetEntry(outcome.Action, out WeaponPresentation.Entry entry) ||
             entry.vfx == null)
         {
             return;

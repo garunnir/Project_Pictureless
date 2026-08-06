@@ -1,5 +1,5 @@
 // ============================================================
-// WeaponProfile — 무기별 지원 액션·수치 SO
+// WeaponPresentation — 무기별 연출 SO (VFX·애니·효과 시드)
 // ============================================================
 
 using System;
@@ -7,9 +7,9 @@ using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
 [CreateAssetMenu(
-    fileName = "WeaponProfile",
-    menuName = "Dist/Combat/Weapon Profile")]
-public sealed class WeaponProfile : ScriptableObject
+    fileName = "WeaponPresentation",
+    menuName = "Dist/Combat/Weapon Presentation")]
+public sealed class WeaponPresentation : ScriptableObject
 {
     [Serializable]
     public sealed class EffectSeed
@@ -22,16 +22,7 @@ public sealed class WeaponProfile : ScriptableObject
     [Serializable]
     public sealed class Entry
     {
-        public WeaponAction action = WeaponAction.Swing;
-        public WeaponResolveMode resolveMode = WeaponResolveMode.MeleeReach;
-        [Min(0f)] public float range = 1.2f;
-        [Min(0f)] public float cooldownSeconds = 0.8f;
-        [Min(0)] public int damage = 8;
-        [Range(0f, 1f)] public float accuracy = 0.7f;
-        public string skillId = CombatSkillIds.Swing;
-        [Min(0)] public int minimumSkillLevel;
-        public float accuracyPerSkillLevel = 0.01f;
-        [Min(0)] public int practiceXp = 4;
+        public WeaponAction action = WeaponAction.Bashing;
         public EffectSeed[] effectSeeds;
         public WeaponActionVfx vfx = new();
     }

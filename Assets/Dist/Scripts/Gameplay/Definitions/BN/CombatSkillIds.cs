@@ -1,13 +1,13 @@
 // ============================================================
-// CombatSkillIds — 전투 액션 숙련 ID SSOT
+// CombatSkillIds — 전투 숙련 ID SSOT (BN축)
 // ============================================================
 
 namespace Garunnir.Runtime.Gameplay.Data
 {
     public static class CombatSkillIds
     {
-        public const string Swing = "combat.swing";
-        public const string Stab = "combat.stab";
-        public const string Trigger = "combat.trigger";
+        public const string Melee = "melee";
+        public const string Unarmed = "unarmed";
+        public const string Gun = "gun";
     }
 }

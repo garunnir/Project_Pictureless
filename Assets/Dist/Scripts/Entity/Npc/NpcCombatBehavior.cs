@@ -46,7 +46,7 @@ public sealed class NpcCombatBehavior : MonoBehaviour
     int _patrolIndex;
     float _alertTimer;
     Vector3 _homePosition;
-    WeaponAction _pendingAction = WeaponAction.Swing;
+    WeaponAction _pendingAction = WeaponAction.Bashing;
 
     public NpcCombatState State => _state;
     public bool SuppressMode

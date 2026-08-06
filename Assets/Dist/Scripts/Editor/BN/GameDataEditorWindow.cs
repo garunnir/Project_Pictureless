@@ -341,6 +341,7 @@ public sealed class GameDataEditorWindow : EditorWindow
             EditIntField("Volume (ml)", ref item.volume_ml);
 
             GameDataEditorDetailDrawers.DrawItemDetailEditable(item, MarkDirty);
+            GameDataWeaponPresentationEditor.DrawSection(item, editable: true);
 
             EditorGUILayout.Space(4);
             if (GUILayout.Button("Delete Item", GUILayout.Width(100)))
@@ -370,6 +371,8 @@ public sealed class GameDataEditorWindow : EditorWindow
 
         if (!IsCustom)
             GameDataEditorDetailDrawers.DrawItemDetailReadOnly(item);
+
+        GameDataWeaponPresentationEditor.DrawSection(item, editable: IsCustom);
 
         DrawItemIconSection(item);
 

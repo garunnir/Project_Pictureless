@@ -52,7 +52,7 @@ public sealed class CombatActionViewModel
     {
         if (_attacker == null)
         {
-            SelectedAction = WeaponAction.Swing;
+            SelectedAction = WeaponAction.Bashing;
             AvailableActions = WeaponActionMask.None;
             WeaponName = string.Empty;
             return;
@@ -60,6 +60,8 @@ public sealed class CombatActionViewModel
 
         SelectedAction = _attacker.SelectedAction;
         AvailableActions = _attacker.AvailableActions;
-        WeaponName = _attacker.Weapon != null ? _attacker.Weapon.name : string.Empty;
+        WeaponName = !string.IsNullOrEmpty(_attacker.ItemId)
+            ? _attacker.ItemId
+            : (_attacker.Presentation != null ? _attacker.Presentation.name : string.Empty);
     }
 }

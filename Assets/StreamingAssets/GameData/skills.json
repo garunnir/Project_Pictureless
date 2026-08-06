@@ -7,8 +7,8 @@
     { "id": "wis", "kind": "attribute", "initial_level": 8, "initial_potential": 100 },
     { "id": "cha", "kind": "attribute", "initial_level": 8, "initial_potential": 100 },
     { "id": "survival", "kind": "skill", "initial_level": 0, "initial_potential": 100 },
-    { "id": "combat.swing", "kind": "skill", "initial_level": 1, "initial_potential": 100 },
-    { "id": "combat.stab", "kind": "skill", "initial_level": 1, "initial_potential": 100 },
-    { "id": "combat.trigger", "kind": "skill", "initial_level": 1, "initial_potential": 100 }
+    { "id": "melee", "kind": "skill", "initial_level": 1, "initial_potential": 100 },
+    { "id": "unarmed", "kind": "skill", "initial_level": 1, "initial_potential": 100 },
+    { "id": "gun", "kind": "skill", "initial_level": 1, "initial_potential": 100 }
   ]
 }

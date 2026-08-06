@@ -17,9 +17,9 @@ public static class CombatActionDisplayFormat
     {
         switch (action)
         {
-            case WeaponAction.Swing: return "Swing";
-            case WeaponAction.Stab: return "Stab";
-            case WeaponAction.Trigger: return "Trigger";
+            case WeaponAction.Bashing: return "Bashing";
+            case WeaponAction.Cutting: return "Cutting";
+            case WeaponAction.Gun: return "Gun";
             default: return "?";
         }
     }
@@ -30,12 +30,12 @@ public static class CombatActionDisplayFormat
             return "(none)";
 
         var parts = new System.Collections.Generic.List<string>(3);
-        if ((mask & WeaponActionMask.Swing) != 0)
-            parts.Add("Swing");
-        if ((mask & WeaponActionMask.Stab) != 0)
-            parts.Add("Stab");
-        if ((mask & WeaponActionMask.Trigger) != 0)
-            parts.Add("Trigger");
+        if ((mask & WeaponActionMask.Bashing) != 0)
+            parts.Add("Bashing");
+        if ((mask & WeaponActionMask.Cutting) != 0)
+            parts.Add("Cutting");
+        if ((mask & WeaponActionMask.Gun) != 0)
+            parts.Add("Gun");
         return string.Join("|", parts);
     }
 }
