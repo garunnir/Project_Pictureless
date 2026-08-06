@@ -5,7 +5,7 @@ using Sirenix.OdinInspector;
 using UnityEngine;
 
 /// <summary>
-/// Drives a 3D layered Animator from <see cref="PlayerMovement"/> speed,
+/// Drives a 3D layered Animator from <see cref="ICharacterLocomotion"/> speed,
 /// <see cref="CharacterState.IsAiming"/>, and <see cref="CharacterAttacker.SelectedAction"/>.
 /// Applies <see cref="WeaponPresentation.AnimatorOverride"/> when presentation changes.
 /// Animation time advances via <see cref="TimeScaleService"/> only (Animator auto-tick disabled).
@@ -42,7 +42,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     CharacterState _characterState;
     CharacterAttacker _attacker;
-    PlayerMovement _playerMovement;
+    ICharacterLocomotion _locomotion;
     bool _manualControl;
     bool _pendingBind = true;
     float _poseAccum;
@@ -67,9 +67,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (_attacker == null)
             _attacker = GetComponent<CharacterAttacker>();
 
-        _playerMovement = GetComponentInParent<PlayerMovement>();
-        if (_playerMovement == null)
-            _playerMovement = GetComponent<PlayerMovement>();
+        _locomotion = GetComponentInParent<ICharacterLocomotion>();
+        if (_locomotion == null)
+            _locomotion = GetComponent<ICharacterLocomotion>();
 
         if (_animator == null)
             _animator = GetComponentInChildren<Animator>();
@@ -247,14 +247,14 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     float ResolveNormalizedSpeed()
     {
-        if (_playerMovement == null)
+        if (_locomotion == null)
             return 0f;
 
-        float max = _playerMovement.RunMaxSpeed;
+        float max = _locomotion.AnimSpeedReference;
         if (max <= 1e-4f)
             return 0f;
 
-        return Mathf.Clamp01(_playerMovement.CurrentSpeed / max);
+        return Mathf.Clamp01(_locomotion.CurrentSpeed / max);
     }
 
     int ResolveAction()

@@ -2,6 +2,7 @@
 // CharacterLocomotion — 캐릭터 공용 캡슐·맵 토폴로지 이동을 해결
 // ============================================================
 
+using System;
 using IsoTilemap;
 using UnityEngine;
 
@@ -11,6 +12,9 @@ public interface ICharacterLocomotion
     void SetDesiredWorldDir(Vector3 worldDirXZ);
     void SetSpeed(float metersPerSecond);
     bool IsStuck { get; }
+    float CurrentSpeed { get; }
+    /// <summary>애니 Speed 정규화 분모 (Player=RunMax, NPC=유효 이동속도).</summary>
+    float AnimSpeedReference { get; }
 }
 
 public static class CharacterLocomotionDefaults
@@ -22,6 +26,37 @@ public static class CharacterLocomotionDefaults
     public const float LogicalGravity = -9.81f;
     public const float TopologyPushSpeed = 4f;
     public const int TopologyPushMaxIterations = 4;
+}
+
+/// <summary>
+/// Player/Npc Movement Collision Inspector SSOT.
+/// 기본값은 <see cref="CharacterLocomotionDefaults"/>.
+/// </summary>
+[Serializable]
+public struct CharacterLocomotionCollisionSettings
+{
+    [Min(0f)] public float ClimbAllowance;
+    [Min(0f)] public float BaseSkin;
+    [Tooltip("WalkableOnly 소품·경사 등 Physics 충돌 레이어")]
+    public LayerMask CollisionMask;
+    public QueryTriggerInteraction TriggerInteraction;
+    [Tooltip("논리 낙하 중력 (useGravity 대신 사용)")]
+    public float LogicalGravity;
+    [Tooltip("topology 벽 셀 끼임 탈출 push 속도")]
+    [Min(0f)] public float TopologyPushSpeed;
+    [Tooltip("같은 FixedUpdate 내 topology 탈출 push 최대 반복")]
+    [Min(1)] public int TopologyPushMaxIterations;
+
+    public static CharacterLocomotionCollisionSettings Default => new CharacterLocomotionCollisionSettings
+    {
+        ClimbAllowance = CharacterLocomotionDefaults.ClimbAllowance,
+        BaseSkin = CharacterLocomotionDefaults.BaseSkin,
+        CollisionMask = CharacterLocomotionDefaults.AllCollisionLayers,
+        TriggerInteraction = QueryTriggerInteraction.Ignore,
+        LogicalGravity = CharacterLocomotionDefaults.LogicalGravity,
+        TopologyPushSpeed = CharacterLocomotionDefaults.TopologyPushSpeed,
+        TopologyPushMaxIterations = CharacterLocomotionDefaults.TopologyPushMaxIterations,
+    };
 }
 
 public sealed class CharacterLocomotion

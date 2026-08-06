@@ -36,23 +36,8 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
     [SerializeField] private float _runEnterBoost = 1.5f;
 
     [Header("Collision")]
-    [SerializeField] private float _climbAllowance =
-        CharacterLocomotionDefaults.ClimbAllowance;
-    [SerializeField] private float _baseSkin =
-        CharacterLocomotionDefaults.BaseSkin;
-    [Tooltip("WalkableOnly 소품·경사 등 Physics 충돌 레이어")]
-    [SerializeField] private LayerMask _collisionMask =
-        CharacterLocomotionDefaults.AllCollisionLayers;
-    [SerializeField] private QueryTriggerInteraction _triggerInteraction = QueryTriggerInteraction.Ignore;
-    [Tooltip("논리 낙하 중력 (useGravity 대신 사용)")]
-    [SerializeField] private float _logicalGravity =
-        CharacterLocomotionDefaults.LogicalGravity;
-    [Tooltip("topology 벽 셀 끼임 탈출 push 속도")]
-    [SerializeField] private float _topologyPushSpeed =
-        CharacterLocomotionDefaults.TopologyPushSpeed;
-    [Tooltip("같은 FixedUpdate 내 topology 탈출 push 최대 반복")]
-    [SerializeField] private int _topologyPushMaxIter =
-        CharacterLocomotionDefaults.TopologyPushMaxIterations;
+    [SerializeField] private CharacterLocomotionCollisionSettings _collision =
+        CharacterLocomotionCollisionSettings.Default;
 
     [SerializeField,ReadOnly] private Vector2 _moveDir;
     Rigidbody _rb;
@@ -82,7 +67,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
         _locomotion != null ? _locomotion.LastCapsulePoint : Vector3.zero;
     public Vector3 LastDesiredMove =>
         _locomotion != null ? _locomotion.LastDesiredMove : Vector3.zero;
-    public float BaseSkin => _baseSkin;
+    public float BaseSkin => _collision.BaseSkin;
     public int LastNearestIndex => _mover != null ? _mover.LastNearestIndex : -1;
     public Vector3 LastSlide => _mover != null ? _mover.LastSlide : Vector3.zero;
     public bool IsSprinting => _mover != null && _mover.IsSprinting;
@@ -90,6 +75,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
     public float CurrentSpeed => _mover != null ? _mover.CurrentSpeed : 0f;
     /// <summary>애니 Speed 정규화 분모 (달리기 상한). Inspector <c>_runMaxSpeed</c> SSOT.</summary>
     public float RunMaxSpeed => _runMaxSpeed;
+    public float AnimSpeedReference => _runMaxSpeed;
     public bool IsStuck => _locomotion != null && _locomotion.IsStuck;
     public float InitialVelocity
     {
@@ -179,9 +165,9 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
         {
             Acceleration       = _acceleration,
             Inertia            = _inertia,
-            BaseSkin           = _baseSkin,
-            CollisionMask      = _collisionMask,
-            TriggerInteraction = _triggerInteraction,
+            BaseSkin           = _collision.BaseSkin,
+            CollisionMask      = _collision.CollisionMask,
+            TriggerInteraction = _collision.TriggerInteraction,
         };
 
         _locomotion = new CharacterLocomotion(
@@ -191,13 +177,13 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
             _characterState,
             _mover,
             _hits,
-            _climbAllowance,
-            _baseSkin,
-            _collisionMask,
-            _triggerInteraction,
-            _logicalGravity,
-            _topologyPushSpeed,
-            _topologyPushMaxIter);
+            _collision.ClimbAllowance,
+            _collision.BaseSkin,
+            _collision.CollisionMask,
+            _collision.TriggerInteraction,
+            _collision.LogicalGravity,
+            _collision.TopologyPushSpeed,
+            _collision.TopologyPushMaxIterations);
         _locomotion.BindMapCollision(_pendingMapCollision);
     }
 

@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28bcaa04391dc63499b0155ec831e668, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterFacingRotator
-  _state: {fileID: 0}
+  _state: {fileID: 8587219361330171216}
   _rotationOffset: 0
   _rotationAxes: 2
   _rotationDirection: -1
@@ -60,7 +60,6 @@ GameObject:
   - component: {fileID: 7996229525068258368}
   - component: {fileID: 2414829327690780563}
   - component: {fileID: 208125999193700478}
-  - component: {fileID: 7124203854360134327}
   - component: {fileID: 8587219361330171216}
   - component: {fileID: 626806252378597420}
   - component: {fileID: 1797648017738236570}
@@ -73,7 +72,7 @@ GameObject:
   - component: {fileID: 5197488811145636763}
   - component: {fileID: 8762515008328947030}
   - component: {fileID: 929168342102942221}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: NpcSample
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -146,41 +145,6 @@ CapsuleCollider:
   m_Height: 0.3
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &7124203854360134327
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2816094712680714504}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8e17cd38645b97e4faf381291048ef9f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DistScript::PlayerInputDirectionAnim
-  _timeChannel: 1
-  moveThreshold: 0.01
-  angleOffset: 45
-  spriteRenderer: {fileID: 0}
-  fps: 8
-  directionFrames:
-  - name: 
-    frames:
-    - {fileID: 0}
-  - name: 
-    frames: []
-  - name: 
-    frames: []
-  - name: 
-    frames: []
-  - name: 
-    frames: []
-  - name: 
-    frames: []
-  - name: 
-    frames: []
-  - name: 
-    frames: []
 --- !u!114 &8587219361330171216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -207,15 +171,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::NpcMovement
   _moveSpeed: 3
   _activeStyle: {fileID: 0}
-  _climbAllowance: 0.3
-  _baseSkin: 0.02
-  _collisionMask:
-    serializedVersion: 2
-    m_Bits: 55
-  _triggerInteraction: 1
-  _logicalGravity: -9.81
-  _topologyPushSpeed: 4
-  _topologyPushMaxIterations: 4
+  _collision:
+    ClimbAllowance: 0.3
+    BaseSkin: 0.02
+    CollisionMask:
+      serializedVersion: 2
+      m_Bits: 55
+    TriggerInteraction: 1
+    LogicalGravity: -9.81
+    TopologyPushSpeed: 4
+    TopologyPushMaxIterations: 4
 --- !u!114 &1797648017738236570
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -304,7 +269,7 @@ MonoBehaviour:
   _loadedRounds: 0
   _rangedObstructionMask:
     serializedVersion: 2
-    m_Bits: 119
+    m_Bits: 55
   _timeChannel: 1
   _selectedAction: 0
 --- !u!114 &1118176453110266648

@@ -14,24 +14,8 @@ public sealed class NpcMovement : MonoBehaviour, ICharacterLocomotion
     [SerializeField] MovementStyle _activeStyle;
 
     [Header("Collision")]
-    [SerializeField, Min(0f)] float _climbAllowance =
-        CharacterLocomotionDefaults.ClimbAllowance;
-    [SerializeField, Min(0f)] float _baseSkin =
-        CharacterLocomotionDefaults.BaseSkin;
-    [Tooltip("WalkableOnly 소품·경사 등 Physics 충돌 레이어")]
-    [SerializeField] LayerMask _collisionMask =
-        CharacterLocomotionDefaults.AllCollisionLayers;
-    [SerializeField] QueryTriggerInteraction _triggerInteraction =
-        QueryTriggerInteraction.Ignore;
-    [Tooltip("논리 낙하 중력 (useGravity 대신 사용)")]
-    [SerializeField] float _logicalGravity =
-        CharacterLocomotionDefaults.LogicalGravity;
-    [Tooltip("topology 벽 셀 끼임 탈출 push 속도")]
-    [SerializeField, Min(0f)] float _topologyPushSpeed =
-        CharacterLocomotionDefaults.TopologyPushSpeed;
-    [Tooltip("같은 FixedUpdate 내 topology 탈출 push 최대 반복")]
-    [SerializeField, Min(1)] int _topologyPushMaxIterations =
-        CharacterLocomotionDefaults.TopologyPushMaxIterations;
+    [SerializeField] CharacterLocomotionCollisionSettings _collision =
+        CharacterLocomotionCollisionSettings.Default;
 
     readonly RaycastHit[] _hits =
         new RaycastHit[CharacterLocomotionDefaults.HitBufferSize];
@@ -47,6 +31,7 @@ public sealed class NpcMovement : MonoBehaviour, ICharacterLocomotion
 
     public bool IsStuck => _locomotion != null && _locomotion.IsStuck;
     public float CurrentSpeed => _mover != null ? _mover.CurrentSpeed : 0f;
+    public float AnimSpeedReference => EffectiveMoveSpeed;
     public MovementStyle ActiveStyle => _activeStyle;
 
     float EffectiveMoveSpeed =>
@@ -63,9 +48,9 @@ public sealed class NpcMovement : MonoBehaviour, ICharacterLocomotion
 
         _mover = new KinematicMover
         {
-            BaseSkin = _baseSkin,
-            CollisionMask = _collisionMask,
-            TriggerInteraction = _triggerInteraction,
+            BaseSkin = _collision.BaseSkin,
+            CollisionMask = _collision.CollisionMask,
+            TriggerInteraction = _collision.TriggerInteraction,
         };
 
         _locomotion = new CharacterLocomotion(
@@ -75,13 +60,13 @@ public sealed class NpcMovement : MonoBehaviour, ICharacterLocomotion
             _characterState,
             _mover,
             _hits,
-            _climbAllowance,
-            _baseSkin,
-            _collisionMask,
-            _triggerInteraction,
-            _logicalGravity,
-            _topologyPushSpeed,
-            _topologyPushMaxIterations);
+            _collision.ClimbAllowance,
+            _collision.BaseSkin,
+            _collision.CollisionMask,
+            _collision.TriggerInteraction,
+            _collision.LogicalGravity,
+            _collision.TopologyPushSpeed,
+            _collision.TopologyPushMaxIterations);
         _locomotion.BindMapCollision(_pendingMapCollision);
     }
 

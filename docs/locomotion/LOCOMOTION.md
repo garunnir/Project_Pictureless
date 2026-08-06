@@ -28,7 +28,8 @@ flowchart LR
 - `MapGameplayBootstrap`: 활성/비활성 Player/NPC에 맵 충돌 서비스를 바인딩
 
 `ICharacterLocomotion`은 `PlayerMovement`와 `NpcMovement` MonoBehaviour 파사드의
-공통 바인딩·명령 계약이다. 비활성 오브젝트는 `Awake` 전에 바인딩될 수 있으므로
+공통 바인딩·명령·속도 조회 계약이다 (`CurrentSpeed` / `AnimSpeedReference`).
+비활성 오브젝트는 `Awake` 전에 바인딩될 수 있으므로
 두 파사드는 서비스를 보관했다가 공용 locomotion 생성 직후 다시 적용한다.
 
 ## 플레이어 마이그레이션 패리티
@@ -56,10 +57,12 @@ flowchart LR
 
 | Param / Asset | Type | Source | Layer / 역할 |
 |---------------|------|--------|----------------|
-| `Speed` | float 0..1 | `PlayerMovement.CurrentSpeed / RunMaxSpeed` | Move (Locomotion 1D BlendTree: Idle→Walk→Run) |
+| `Speed` | float 0..1 | `ICharacterLocomotion.CurrentSpeed / AnimSpeedReference` (Player=`RunMaxSpeed`, NPC=유효 이동속도) | Move (Locomotion 1D BlendTree: Idle→Walk→Run) |
 | `IsAiming` | bool | `CharacterState.IsAiming` | Aim (UpperBody mask, Override) |
 | `Action` | int | `CharacterAttacker.SelectedAction` (`Swing`/`Stab`/`Trigger`) | Aim: `AimSwing`/`AimStab`/`AimTrigger` (슬롯 클립) |
-| `WeaponProfile.AnimatorOverride` | OverrideController | 장착 무기 | 공유 컨트롤러 슬롯 클립 교체 |
+| `WeaponPresentation.AnimatorOverride` | OverrideController | 장착 무기 | 공유 컨트롤러 슬롯 클립 교체 |
+
+Collision Inspector는 `CharacterLocomotionCollisionSettings`(`PlayerMovement`/`NpcMovement`의 `_collision`)이며, 필드 기본값은 `CharacterLocomotionDefaults` SSOT다.
 
 Override 템플릿: `Assets/Dist/Visual/Anim/CharacterClips/Overrides/CharacterAnim_{Pistol,Bat,Knife}.overrideController`  
 Aim 슬롯 클립: `Assets/Dist/Visual/Anim/CharacterClips/Slots/Aim{Swing,Stab,Trigger}_Slot.anim` (내용은 플레이스홀더 — 무기 Override에서 교체)
