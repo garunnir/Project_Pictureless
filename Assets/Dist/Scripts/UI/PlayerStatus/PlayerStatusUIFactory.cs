@@ -85,7 +85,7 @@ public static class PlayerStatusUIFactory
             new Vector2(0.64f, 0.99f))
     };
 
-    public static UIPlayerStatusWindow CreateWindowRoot()
+    public static UICharacterWindow CreateWindowRoot()
     {
         GameObject root = CreateRect("Grp_PlayerStatusWindow", null, PanelColor);
         RectTransform rootRect = root.GetComponent<RectTransform>();
@@ -137,7 +137,7 @@ public static class PlayerStatusUIFactory
             new Vector2(PlayerStatusWindowLayout.MinWidth, PlayerStatusWindowLayout.MinHeight),
             PlayerStatusWindowLayout.GetMaxSize(null));
 
-        UIPlayerStatusWindow window = root.AddComponent<UIPlayerStatusWindow>();
+        UICharacterWindow window = root.AddComponent<UICharacterWindow>();
         window.Wire(
             title,
             bodyDiagramRoot,

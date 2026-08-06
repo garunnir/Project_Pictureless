@@ -13,6 +13,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CharacterAttacker))]
 [RequireComponent(typeof(CharacterState))]
 [RequireComponent(typeof(PlayerAimController))]
+[RequireComponent(typeof(DualWieldAttackDriver))]
 public sealed class PlayerCombatController : MonoBehaviour
 {
     const int PhysicsHitBufferSize = 16;
@@ -23,6 +24,7 @@ public sealed class PlayerCombatController : MonoBehaviour
     CharacterAttacker _attacker;
     CharacterState _characterState;
     PlayerAimController _aimController;
+    DualWieldAttackDriver _dualDriver;
     readonly RaycastHit[] _hits = new RaycastHit[PhysicsHitBufferSize];
     readonly List<RaycastResult> _uiRaycastResults = new();
     bool _connected;
@@ -32,6 +34,7 @@ public sealed class PlayerCombatController : MonoBehaviour
         _attacker = GetComponent<CharacterAttacker>();
         _characterState = GetComponent<CharacterState>();
         _aimController = GetComponent<PlayerAimController>();
+        _dualDriver = GetComponent<DualWieldAttackDriver>();
     }
 
     void OnDisable() => DisconnectInput();
@@ -99,6 +102,9 @@ public sealed class PlayerCombatController : MonoBehaviour
         }
 
         if (!TryResolveAimedTarget(out CharacterBodyHost target))
+            return;
+
+        if (_dualDriver != null && _dualDriver.TryPerformDual(target))
             return;
 
         _attacker.TryPerformSelected(target);

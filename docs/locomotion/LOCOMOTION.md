@@ -49,6 +49,11 @@ flowchart LR
 표급하지 않는다. 공통 이주 절차는
 [`migration-parity.md`](../../../../../.claude/checklists/migration-parity.md)를 따른다.
 
+### Gear 이동 배율 (교차)
+
+`PlayerMovement` 속도 = base × enc × LiftStrain × **`GearEnvPenalties.MoveSpeedFactor`**
+(`PlayerGearHost` → `SetEnvMovement`). 계약·상수: [`docs/equipment/GEAR.md`](../equipment/GEAR.md) Phase H.
+
 ## 3D 애니 브릿지
 
 컨트롤러: `Assets/Dist/Visual/Anim/CharacterClips/CharacterAnimController.controller`  

@@ -186,6 +186,8 @@ static class GameDataEditorDetailDrawers
             ReadField("  Encumbrance", item.armor.encumbrance.ToString());
             ReadField("  Warmth", item.armor.warmth.ToString());
             ReadField("  Storage", item.armor.storage.ToString());
+            if (item.armor.pockets is { Count: > 0 })
+                ReadField("  Pockets", item.armor.pockets.Count.ToString());
             ReadField("  Env. protection", item.armor.environmental_protection.ToString());
             ReadField("  Mat. thickness", item.armor.material_thickness.ToString());
         }
@@ -255,6 +257,8 @@ static class GameDataEditorDetailDrawers
         EditInt(markDirty, "  Env. protection", ref armor.environmental_protection);
         EditInt(markDirty, "  Mat. thickness", ref armor.material_thickness);
         EditBool(markDirty, "  Power armor", ref armor.power_armor);
+        EditField(markDirty, "  Layer", ref armor.layer);
+        EditBool(markDirty, "  Sided", ref armor.sided);
     }
 
     static void DrawGunBlock(ItemData item, Action markDirty)

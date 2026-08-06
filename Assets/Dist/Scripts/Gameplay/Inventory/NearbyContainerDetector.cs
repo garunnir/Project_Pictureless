@@ -297,7 +297,7 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         for (int i = 0; i < stacks.Count; i++)
         {
             ItemStack stack = stacks[i];
-            if (stack?.Item == null || !stack.Item.is_container)
+            if (stack?.Item == null || !stack.CanHaveNested)
                 continue;
 
             if (!stack.TryEnsureNested(_nestedContainerPolicy) || stack.Nested == null)

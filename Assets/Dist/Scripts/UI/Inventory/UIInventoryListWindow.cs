@@ -542,6 +542,9 @@ public sealed class UIInventoryListWindow : MonoBehaviour
 
     bool HasPlayerBagTabs()
     {
+        if (HasWornPocketTabs())
+            return true;
+
         InventoryContainer body = GetPlayerBodyContainer();
         if (body == null)
             return false;
@@ -549,7 +552,23 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         for (int i = 0; i < body.Stacks.Count; i++)
         {
             ItemStack stack = body.Stacks[i];
-            if (stack?.Item != null && stack.Item.is_container)
+            if (stack != null && stack.CanHaveNested)
+                return true;
+        }
+
+        return false;
+    }
+
+    bool HasWornPocketTabs()
+    {
+        EquipmentWearState wear = PlayerGearHost.Active?.Wear;
+        if (wear == null)
+            return false;
+
+        IReadOnlyList<ItemStack> worn = wear.Worn;
+        for (int i = 0; i < worn.Count; i++)
+        {
+            if (WornPocketRules.HasStorageCapacity(worn[i]?.Item))
                 return true;
         }
 
@@ -577,6 +596,7 @@ public sealed class UIInventoryListWindow : MonoBehaviour
 
             _filteredSidebar.Add(body);
             AppendNestedContainerTabs(body);
+            AppendWornPocketTabs();
             return _filteredSidebar;
         }
 
@@ -614,10 +634,32 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         for (int i = 0; i < parent.Stacks.Count; i++)
         {
             ItemStack stack = parent.Stacks[i];
-            if (stack?.Item == null || !stack.Item.is_container)
+            if (stack?.Item == null || !stack.CanHaveNested)
                 continue;
 
             if (!stack.TryEnsureNested(_nestedContainerPolicy) || stack.Nested == null)
+                continue;
+
+            string nestedId = stack.Nested.InstanceId;
+            if (string.IsNullOrEmpty(nestedId) || ContainsSidebarContainer(_filteredSidebar, nestedId))
+                continue;
+
+            _filteredSidebar.Add(stack.Nested);
+        }
+    }
+
+    void AppendWornPocketTabs()
+    {
+        EquipmentWearState wear = PlayerGearHost.Active?.Wear;
+        if (wear == null)
+            return;
+
+        WornPocketRules.EnsureWornPockets(wear, _nestedContainerPolicy);
+        IReadOnlyList<ItemStack> worn = wear.Worn;
+        for (int i = 0; i < worn.Count; i++)
+        {
+            ItemStack stack = worn[i];
+            if (stack?.Nested == null || !WornPocketRules.HasStorageCapacity(stack.Item))
                 continue;
 
             string nestedId = stack.Nested.InstanceId;
@@ -636,7 +678,7 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         for (int i = 0; i < floorLoot.Stacks.Count; i++)
         {
             ItemStack stack = floorLoot.Stacks[i];
-            if (stack?.Item == null || !stack.Item.is_container)
+            if (stack?.Item == null || !stack.CanHaveNested)
                 continue;
 
             if (!stack.TryEnsureNested(_nestedContainerPolicy) || stack.Nested == null)

@@ -1,5 +1,5 @@
 // ============================================================
-// UIItemListRow — 아이템 리스트 한 행 (바인딩 + 선택 + 드래그)
+// UIItemListRow — 아이템 리스트 한 행 (바인딩 + 선택 + 드래그 + 이름 겹침 바)
 // ============================================================
 
 using System;
@@ -42,10 +42,23 @@ public sealed class UIItemListRow : MonoBehaviour,
     InventoryListSelection _selection;
     IInventoryItemDragHost _dragHost;
     UIItemListView _listView;
+    ItemNameStatusBar _nameBar;
+    InventoryTimedMoveHost _timedHost;
+    CharacterGearService _gearService;
     bool _hovered;
+    bool _subscribedTimed;
+    bool _subscribedGear;
 
     public ItemStack Stack => _stack;
     public RectTransform RectTransform => transform as RectTransform;
+
+    void OnEnable() => SubscribeProgressSources();
+
+    void OnDisable()
+    {
+        UnsubscribeProgressSources();
+        ClearHoverIfNeeded();
+    }
 
     public void Bind(
         ItemStack stack,
@@ -55,6 +68,7 @@ public sealed class UIItemListRow : MonoBehaviour,
         UIItemListView listView)
     {
         ClearHoverIfNeeded();
+        EnsureNameBar();
 
         _stack = stack;
         _ownerContainer = ownerContainer;
@@ -66,7 +80,10 @@ public sealed class UIItemListRow : MonoBehaviour,
             TryGetComponent(out _backgroundImage);
 
         if (stack?.Item == null)
+        {
+            _nameBar?.Clear();
             return;
+        }
 
         ItemData item = stack.Item;
 
@@ -105,6 +122,8 @@ public sealed class UIItemListRow : MonoBehaviour,
         }
 
         RefreshSelectionVisual();
+        RefreshNameBar();
+        SubscribeProgressSources();
     }
 
     public void OnPointerDown(PointerEventData eventData)
@@ -147,8 +166,6 @@ public sealed class UIItemListRow : MonoBehaviour,
         _hovered = false;
         HoverEnded?.Invoke();
     }
-
-    void OnDisable() => ClearHoverIfNeeded();
 
     void ClearHoverIfNeeded()
     {
@@ -203,4 +220,84 @@ public sealed class UIItemListRow : MonoBehaviour,
 
         _dragHost.OnItemDragEnded();
     }
+
+    void EnsureNameBar()
+    {
+        if (_nameBar != null || _nameText == null)
+            return;
+
+        _nameBar = ItemNameStatusBar.Ensure(ref _nameText);
+    }
+
+    void RefreshNameBar()
+    {
+        if (_nameBar == null)
+            return;
+
+        ItemTimedNameProgress.Apply(_nameBar, _stack);
+    }
+
+    void SubscribeProgressSources()
+    {
+        SubscribeTimed();
+        SubscribeGear();
+    }
+
+    void UnsubscribeProgressSources()
+    {
+        UnsubscribeTimed();
+        UnsubscribeGear();
+    }
+
+    void SubscribeTimed()
+    {
+        InventoryTimedMoveHost timed = InventoryTimedMoveHost.Active;
+        if (timed == _timedHost && _subscribedTimed)
+            return;
+
+        UnsubscribeTimed();
+        _timedHost = timed;
+        if (_timedHost == null)
+            return;
+
+        _timedHost.Changed += OnProgressChanged;
+        _subscribedTimed = true;
+    }
+
+    void UnsubscribeTimed()
+    {
+        if (!_subscribedTimed || _timedHost == null)
+            return;
+
+        _timedHost.Changed -= OnProgressChanged;
+        _timedHost = null;
+        _subscribedTimed = false;
+    }
+
+    void SubscribeGear()
+    {
+        CharacterGearService gear = PlayerGearHost.Active?.Service;
+        if (gear == _gearService && _subscribedGear)
+            return;
+
+        UnsubscribeGear();
+        _gearService = gear;
+        if (_gearService == null)
+            return;
+
+        _gearService.Changed += OnProgressChanged;
+        _subscribedGear = true;
+    }
+
+    void UnsubscribeGear()
+    {
+        if (!_subscribedGear || _gearService == null)
+            return;
+
+        _gearService.Changed -= OnProgressChanged;
+        _gearService = null;
+        _subscribedGear = false;
+    }
+
+    void OnProgressChanged() => RefreshNameBar();
 }

@@ -46,6 +46,16 @@ public static class ContainerVisualPresenter
             return ItemVisualPresenter.GetDisplayIcon(stack.Item.id);
         }
 
+        // 착용 포켓: 세션 바디 스택에 없으므로 Wear에서 소유 스택 조회.
+        if (WornPocketRules.TryFindOwnerStack(
+                container,
+                PlayerGearHost.Active?.Wear,
+                out ItemStack wornOwner) &&
+            wornOwner?.Item != null)
+        {
+            return ItemVisualPresenter.GetDisplayIcon(wornOwner.Item.id);
+        }
+
         return null;
     }
 

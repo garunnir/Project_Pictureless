@@ -8,6 +8,7 @@ public static class InventoryContextMenuCatalog
 {
     static readonly IContextMenuContributor[] Contributors =
     {
+        new GearContextContributor(),
         new CraftContextContributor(),
         new UncraftContextContributor(),
     };

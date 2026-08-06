@@ -53,7 +53,7 @@
 
 - 차이는 `InventoryWindowMode` 데이터 바인딩뿐이다.
 
-  - `PlayerOnly`: 플레이어 컨테이너(`player-body`) 단일 리스트. 중첩 가방 탭이 있으면 사이드바 표시, 없으면 숨김.
+  - `PlayerOnly`: 플레이어 컨테이너(`player-body`) 단일 리스트. 중첩 가방 탭 **또는 착용 storage 포켓**이 있으면 사이드바 표시, 없으면 숨김. 착용 포켓 SSOT: `WornPocketRules` + `EquipmentWearState` (`docs/equipment/GEAR.md` Phase B).
 
   - `NearbyOnly`: `NearbyContainerDetector`가 등록한 주변 컨테이너 전체를 사이드탭으로 표시 (플레이어 제외). `TrackLootContainer` 없음 — 반경 스캔만 사용. 바닥 `floor-loot` 안 휴대 컨테이너(Nested)는 Detector가 managed 월드 루트로 promote하고, 사이드바 탭은 PlayerOnly body 유도와 같이 floor 스택에서 유도한다.
   - 감지 SSOT: 컨테이너 후보 판정은 `InventoryContainerRegistry` provider 목록 + `CharacterState.ResolveGridCell`(WorldGrid 기준) 단일 경로를 사용한다. `ContainerGridRegistry`는 Nearby 판단 경로에서 사용하지 않는다.
@@ -62,7 +62,8 @@
 - 루팅 파이프라인: `NearbyContainerDetector` → `LootProximityCoordinator` 이벤트 → `{ TilePresentationSystem, UIInventoryController }` 각각 구독. 컨테이너 TileView는 `EmphasisBlend`(살짝 밝게).
 - `NearbyOnly`: 사이드탭이 없으면 아이템 리스트도 비움. 활성 탭 1개만 월드 하이라이트.
 - 사이드탭 표현: `Normal` / `Selected` / `Dragging`. 중첩 가방 탭은 드래그 소스(컨테이너째), 고정 컨테이너 탭(`player-body` / `floor-loot` / 월드)은 내용물 전체 드래그(스택 순차 이동, 중량·부피 초과 시 중단). 모든 탭은 드롭 타겟.
-- Pending: 물건 이동 시 중량·부피에 따른 소요 시간(지금은 즉시 이전).
+- Transfer duration: `InventoryTransferDuration` SSOT — MoveStacks / 퀵이동 / 창밖 투하 / 가방→Gear 인출에 적용 (`InventoryTimedMoveHost`). 소스 `ContainerData.draw_moves`&gt;0(베이크 pocket moves)이면 moves 우선, 아니면 weight/volume/(storage) 공식. **다중 스택은 합산 없이 순차**(스택마다 개별 딜레이→이동). 가방 중량 SSOT=`ItemStack.TotalWeight`(Nested 내용물 포함; `TotalVolume`은 외형만). **진행 UI**: `ItemTimedNameProgress` → 리스트 행·중첩가방 탭 Name stretch fill(idle=내구도, busy=로딩; Gear Wear/Wield도 동일). `Dist/Inventory/Patch Row Name Status Bar`. 상세: [`docs/equipment/GEAR.md`](../equipment/GEAR.md).
+- 착용 포켓 탭: Wear 변경 시 `InventorySession.NotifySidebarLayoutChanged`로 사이드바 Sync. 착용 포켓은 고정 탭(컨테이너째 드래그 아님); 아이콘은 착용 아이템.
 - `Area_List`·`Area_Sidebar`(`SlotRoot`)는 세로 스크롤바(`Scrollbar_Vertical`, AutoHideAndExpandViewport)를 프리팹에 내장한다. 창 전체 rebake 금지 — `Dist/Inventory/Patch Window Scrollbars`로만 패치 (`Area_InvInfo` 보존). 사이드바는 `InventorySidebarScrollRect`(탭 DnD 중 스크롤 드래그 무시); 사이드바 Viewport에는 `InventoryScrollDragHandler` 없음.
 - 컨테이너 상호작용은 `Interactable`의 레거시 스프라이트 아웃라인을 사용하지 않는다. 포커스 시각효과는 타입별 전용 컴포넌트(`SpriteOutlineFocusVisual` 등)로 분리한다.
 - `ContainerInteractable`는 런타임 `containerId` 충돌 시 자동으로 고유 suffix를 부여해 레지스트리 충돌을 방지한다.
@@ -164,7 +165,7 @@
   - 탭 클릭 / 컨테이너 선택 → `SetActiveContainer` / 리스트 `Bind`(version skip + 증분 Sync).
 - `SetActiveContainer`: 드래그 중 리스트 Bind 생략.
 - `InventoryDragDrop`: `ContainerTab`은 Source(부모)==리스트 타깃(body)이어도 early-out하지 않음(`MoveStacks` from==to가 no-op). Item/ContainerContents만 Source==target early-out.
-- 사이드 탭 이동: 간이(중첩) = 컨테이너째 `MoveStacks`; 고정 탭 = 내용물 `MoveStacksSequentiallyUntilFull`(용량 초과 시 중단). Pending: 중량·부피 소요 시간.
+- 사이드 탭 이동: 간이(중첩) = 컨테이너째 `MoveStacks`; 고정 탭 = 내용물 순차(용량 초과 시 중단). 소요 시간=`InventoryTransferDuration` — 스택당 순차 (`InventoryTimedMoveHost`).
 - `ConfigureDragAndDrop`: 뷰포트 DnD 배선만. 리스트/사이드바 Bind는 `Initialize`·`SyncFromChangeSet` SSOT.
 - `UIItemListView`: **고정 높이 가상화** — `_orderedStacks`(데이터)와 가시 행 LeanPool을 분리. Content 높이는 `N * stride`(+ sticky top/bottom pad, `InventoryListColumnLayout` SSOT). 스크롤·리사이즈 시 viewport+`RowOverscan` 윈도우만 Bind·배치. 프리팹 VLG/CSF는 런타임 비활성. 마퀴는 가시 GO가 아니라 인덱스 기하(`SelectRowsInRect`). 선택 SSOT는 비가시 스택도 유지. `ActiveRowCount`=가시 풀, `BoundStackCount`=데이터 수. 컨트롤러 Awake에서 `PrewarmRowPool`(`RowPoolPrewarmCount`≈viewport 상한). 패리티 계약·검증 게이트: 작업 플랜 `inventory_list_virtualization` + `.claude/checklists/migration-parity.md` §C.
 - `UIInventoryController.LateUpdate`: 포인터가 창 위에 있는지 캐시 후 변경 시에만 `SuppressPlayerAction` 호출

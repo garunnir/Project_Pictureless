@@ -236,7 +236,7 @@ public sealed class InventorySession
             for (int s = 0; s < candidate.Stacks.Count; s++)
             {
                 ItemStack stack = candidate.Stacks[s];
-                if (stack?.Item == null || !stack.Item.is_container)
+                if (stack?.Item == null || !stack.CanHaveNested)
                     continue;
 
                 if (stack.Nested == nestedContainer)
@@ -250,6 +250,9 @@ public sealed class InventorySession
 
         return false;
     }
+
+    /// <summary>착용 포켓 등 사이드바 유도 레이아웃만 바뀌었을 때 UI Sync용.</summary>
+    public void NotifySidebarLayoutChanged() => NotifySidebarChanged();
 
     void NotifySidebarChanged() => SidebarChanged?.Invoke();
 
@@ -289,7 +292,7 @@ public sealed class InventorySession
         if (stack?.Item == null || target == null)
             return false;
 
-        if (!stack.Item.is_container || stack.Nested == null)
+        if (!stack.CanHaveNested || stack.Nested == null)
             return true;
 
         return !IsContainerWithinHierarchy(target, stack.Nested);
@@ -306,7 +309,7 @@ public sealed class InventorySession
         for (int i = 0; i < outer.Stacks.Count; i++)
         {
             ItemStack stack = outer.Stacks[i];
-            if (stack?.Item == null || !stack.Item.is_container || stack.Nested == null)
+            if (stack?.Item == null || !stack.CanHaveNested || stack.Nested == null)
                 continue;
 
             if (stack.Nested == inner || IsContainerWithinHierarchy(inner, stack.Nested))
@@ -370,7 +373,7 @@ public sealed class InventorySession
         for (int i = 0; i < container.Stacks.Count; i++)
         {
             ItemStack stack = container.Stacks[i];
-            if (stack?.Item == null || !stack.Item.is_container)
+            if (stack?.Item == null || !stack.CanHaveNested)
                 continue;
 
             if (stack.Nested != null)
@@ -386,7 +389,7 @@ public sealed class InventorySession
         for (int i = 0; i < container.Stacks.Count; i++)
         {
             ItemStack stack = container.Stacks[i];
-            if (stack?.Item == null || !stack.Item.is_container)
+            if (stack?.Item == null || !stack.CanHaveNested)
                 continue;
 
             stack.TryEnsureNested(_nestedContainerPolicy);

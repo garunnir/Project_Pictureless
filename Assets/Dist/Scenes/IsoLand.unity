@@ -39057,7 +39057,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 142d406481b25da42bd51c2ed6cce067, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: DistScript::UIPlayerStatusController
+  m_EditorClassIdentifier: DistScript::UICharacterController
   _windowPrefab: {fileID: 2154322020509229120, guid: e073327a23388c0418b74a546e328fbf,
     type: 3}
   _window: {fileID: 0}

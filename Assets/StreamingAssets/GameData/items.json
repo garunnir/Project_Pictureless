@@ -28,7 +28,9 @@
       "max_stack": 1,
       "bashing": 10,
       "to_hit": 1,
-      "weapon_category": ["BAT"]
+      "weapon_category": [
+        "BAT"
+      ]
     },
     {
       "id": "weapon_knife",
@@ -41,7 +43,9 @@
       "bashing": 2,
       "cutting": 9,
       "to_hit": 1,
-      "weapon_category": ["KNIFE"]
+      "weapon_category": [
+        "KNIFE"
+      ]
     },
     {
       "id": "weapon_pistol",
@@ -53,10 +57,14 @@
       "max_stack": 1,
       "bashing": 4,
       "to_hit": -1,
-      "weapon_category": ["PISTOL"],
+      "weapon_category": [
+        "PISTOL"
+      ],
       "gun": {
         "skill": "gun",
-        "ammo": ["9mm"],
+        "ammo": [
+          "9mm"
+        ],
         "ranged_damage": 12,
         "range": 12,
         "dispersion": 300,
@@ -74,7 +82,101 @@
       "category": "clothing",
       "weight_g": 1000,
       "volume_ml": 1000,
-      "max_stack": 1
+      "max_stack": 1,
+      "armor": {
+        "covers": [
+          "torso"
+        ],
+        "coverage": 40,
+        "encumbrance": 2,
+        "max_encumbrance": 10,
+        "warmth": 15,
+        "storage": 3000,
+        "pockets": [
+          {
+            "volume_ml": 3000,
+            "moves": 100
+          }
+        ],
+        "environmental_protection": 0,
+        "material_thickness": 1,
+        "power_armor": false,
+        "layer": "NORMAL",
+        "sided": false
+      }
+    },
+    {
+      "id": "clothing_jacket",
+      "name": "재킷",
+      "type": "ARMOR",
+      "category": "clothing",
+      "weight_g": 1200,
+      "volume_ml": 1500,
+      "max_stack": 1,
+      "armor": {
+        "covers": [
+          "torso"
+        ],
+        "coverage": 55,
+        "encumbrance": 4,
+        "max_encumbrance": 12,
+        "warmth": 25,
+        "storage": 0,
+        "environmental_protection": 1,
+        "material_thickness": 2,
+        "power_armor": false,
+        "layer": "NORMAL",
+        "sided": false
+      }
+    },
+    {
+      "id": "clothing_undershirt",
+      "name": "속옷",
+      "type": "ARMOR",
+      "category": "clothing",
+      "weight_g": 200,
+      "volume_ml": 300,
+      "max_stack": 1,
+      "armor": {
+        "covers": [
+          "torso"
+        ],
+        "coverage": 30,
+        "encumbrance": 0,
+        "max_encumbrance": 4,
+        "warmth": 5,
+        "storage": 0,
+        "environmental_protection": 0,
+        "material_thickness": 1,
+        "power_armor": false,
+        "layer": "UNDER",
+        "sided": false
+      }
+    },
+    {
+      "id": "clothing_glove",
+      "name": "장갑",
+      "type": "ARMOR",
+      "category": "clothing",
+      "weight_g": 80,
+      "volume_ml": 100,
+      "max_stack": 1,
+      "armor": {
+        "covers": [
+          "hand_l",
+          "hand_r"
+        ],
+        "coverage": 80,
+        "encumbrance": 1,
+        "max_encumbrance": 5,
+        "warmth": 8,
+        "storage": 0,
+        "environmental_protection": 0,
+        "material_thickness": 1,
+        "power_armor": false,
+        "layer": "NORMAL",
+        "sided": true
+      }
     },
     {
       "id": "container_bag",
@@ -89,9 +191,29 @@
     }
   ],
   "containers": [
-    {"id": "bag_default", "name": "가방", "max_weight": 20.0, "max_volume": 15.0},
-    {"id": "floor_loot", "name": "바닥", "max_weight": 9999.0, "max_volume": 9999.0},
-    {"id": "crate", "name": "상자", "max_weight": 100.0, "max_volume": 80.0},
-    {"id": "player_body", "name": "인벤토리", "max_weight": 50.0, "max_volume": 30.0}
+    {
+      "id": "bag_default",
+      "name": "가방",
+      "max_weight": 20.0,
+      "max_volume": 15.0
+    },
+    {
+      "id": "floor_loot",
+      "name": "바닥",
+      "max_weight": 9999.0,
+      "max_volume": 9999.0
+    },
+    {
+      "id": "crate",
+      "name": "상자",
+      "max_weight": 100.0,
+      "max_volume": 80.0
+    },
+    {
+      "id": "player_body",
+      "name": "인벤토리",
+      "max_weight": 50.0,
+      "max_volume": 30.0
+    }
   ]
 }

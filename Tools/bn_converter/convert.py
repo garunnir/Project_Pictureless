@@ -275,7 +275,41 @@ def _float_or_zero(value) -> float:
         return 0.0
 
 
+# Dist BodyPartIds — BN plural / either covers → L/R parts.
+_BN_COVER_EXPAND: dict[str, list[str]] = {
+    "arms": ["arm_l", "arm_r"],
+    "legs": ["leg_l", "leg_r"],
+    "hands": ["hand_l", "hand_r"],
+    "feet": ["foot_l", "foot_r"],
+    "arm_either": ["arm_l", "arm_r"],
+    "leg_either": ["leg_l", "leg_r"],
+    "hand_either": ["hand_l", "hand_r"],
+    "foot_either": ["foot_l", "foot_r"],
+}
+
+# Unilateral Dist parts → sided=true when covers is only these.
+_BN_SIDED_PARTS = frozenset({
+    "arm_l", "arm_r", "hand_l", "hand_r",
+    "leg_l", "leg_r", "foot_l", "foot_r",
+})
+
+# BN layer is usually a flag (not `layer` field). Outer → under priority.
+_BN_LAYER_FLAG_TO_DIST: tuple[tuple[str, str], ...] = (
+    ("AURA", "AURA"),
+    ("PERSONAL", "PERSONAL"),
+    ("WAIST", "WAIST"),
+    ("BELTED", "BELTED"),
+    ("OUTER", "OUTER"),
+    ("SKINTIGHT", "UNDER"),
+)
+
+
 def export_armor_detail(entry: dict, item_type: str) -> dict | None:
+    """Armor whitelist bake. Intentional omissions (wear cost):
+    docs/equipment/GEAR.md §BN Bake Omissions — keep in sync when changing keys below.
+    Phase B: storage volume_ml + optional pockets(volume_ml, moves).
+    Phase C: layer (str|flags) + sided (bool|inferred) + Dist covers expand.
+    """
     source = entry.get("armor_data")
     if item_type in ("ARMOR", "TOOL_ARMOR", "PET_ARMOR"):
         source = entry if source is None else {**entry, **source}
@@ -283,18 +317,140 @@ def export_armor_detail(entry: dict, item_type: str) -> dict | None:
         return None
 
     armor = {}
-    covers = source.get("covers")
+    covers = _export_armor_covers(source)
     if covers:
-        armor["covers"] = covers if isinstance(covers, list) else [covers]
+        armor["covers"] = covers
     for key in (
-        "coverage", "encumbrance", "max_encumbrance", "warmth", "storage",
+        "coverage", "encumbrance", "max_encumbrance", "warmth",
         "environmental_protection", "material_thickness",
     ):
         if key in source:
             armor[key] = _int_or_zero(source.get(key))
     if "power_armor" in source:
         armor["power_armor"] = bool(source.get("power_armor"))
+
+    layer = _export_armor_layer(source)
+    if layer:
+        armor["layer"] = layer
+
+    sided = _export_armor_sided(source, covers)
+    if sided is not None:
+        armor["sided"] = sided
+
+    # BN legacy storage is volume string ("3 L" / "500 ml"); Dist stores ml.
+    storage_ml = 0
+    if "storage" in source:
+        storage_ml = parse_volume_to_ml(source.get("storage"))
+        if storage_ml > 0:
+            armor["storage"] = storage_ml
+
+    pockets = _export_armor_pockets(source)
+    if pockets:
+        armor["pockets"] = pockets
+        pocket_vol = sum(int(p.get("volume_ml", 0) or 0) for p in pockets)
+        if "storage" not in armor and pocket_vol > 0:
+            armor["storage"] = pocket_vol
+
     return armor or None
+
+
+def _export_armor_covers(source: dict) -> list[str]:
+    """Expand BN plural/either covers to Dist BodyPartIds (hand_l/hand_r, …)."""
+    raw = source.get("covers")
+    if not raw:
+        return []
+    parts = raw if isinstance(raw, list) else [raw]
+    out: list[str] = []
+    seen: set[str] = set()
+    for part in parts:
+        if part is None:
+            continue
+        key = str(part).strip()
+        if not key:
+            continue
+        expanded = _BN_COVER_EXPAND.get(key)
+        if expanded:
+            for e in expanded:
+                if e not in seen:
+                    seen.add(e)
+                    out.append(e)
+            continue
+        if key not in seen:
+            seen.add(key)
+            out.append(key)
+    return out
+
+
+def _export_armor_layer(source: dict) -> str | None:
+    """BN layer field (string/list) or flags SKINTIGHT/OUTER/BELTED/WAIST/… → Dist layer."""
+    raw = source.get("layer")
+    if raw is not None:
+        if isinstance(raw, list):
+            for entry in raw:
+                if entry is None:
+                    continue
+                text = str(entry).strip()
+                if text:
+                    return text
+        else:
+            text = str(raw).strip()
+            if text:
+                return text
+
+    flags = source.get("flags")
+    if not isinstance(flags, list):
+        return None
+    flag_set = {str(f).strip().upper() for f in flags if f is not None}
+    for flag, dist_layer in _BN_LAYER_FLAG_TO_DIST:
+        if flag in flag_set:
+            return dist_layer
+    return None
+
+
+def _export_armor_sided(source: dict, covers: list[str]) -> bool | None:
+    """Explicit BN sided, or infer from either-covers / unilateral Dist parts."""
+    if "sided" in source:
+        return bool(source.get("sided"))
+
+    raw = source.get("covers")
+    parts = raw if isinstance(raw, list) else ([raw] if raw else [])
+    for part in parts:
+        if part is None:
+            continue
+        key = str(part).strip()
+        if key.endswith("_either"):
+            return True
+
+    if covers and all(p in _BN_SIDED_PARTS for p in covers) and len(covers) == 1:
+        return True
+    return None
+
+
+def _export_armor_pockets(source: dict) -> list[dict]:
+    """BN/DDA pocket_data → [{volume_ml, moves}]. BN often has storage only (no pocket_data)."""
+    raw = source.get("pocket_data")
+    if not isinstance(raw, list):
+        return []
+
+    pockets: list[dict] = []
+    for pocket in raw:
+        if not isinstance(pocket, dict):
+            continue
+        vol_raw = (
+            pocket.get("max_contains_volume")
+            or pocket.get("volume_capacity")
+            or pocket.get("max_volume")
+            or 0
+        )
+        volume_ml = parse_volume_to_ml(vol_raw)
+        moves = _int_or_zero(pocket.get("moves"))
+        if volume_ml <= 0 and moves <= 0:
+            continue
+        entry = {"volume_ml": volume_ml}
+        if moves > 0:
+            entry["moves"] = moves
+        pockets.append(entry)
+    return pockets
 
 
 def export_gun_detail(entry: dict, item_type: str) -> dict | None:

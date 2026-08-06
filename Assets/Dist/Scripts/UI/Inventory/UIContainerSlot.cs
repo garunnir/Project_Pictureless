@@ -41,10 +41,15 @@ public sealed class UIContainerSlot : MonoBehaviour,
     IInventoryItemDragHost _dragHost;
     UIInventoryListWindow _window;
     InventorySession _session;
+    ItemNameStatusBar _nameBar;
+    InventoryTimedMoveHost _timedHost;
+    CharacterGearService _gearService;
     bool _canMoveContainerAsStack;
     bool _isDropHover;
     ContainerSlotVisualState _visualState = ContainerSlotVisualState.Normal;
     bool _isSelected;
+    bool _subscribedTimed;
+    bool _subscribedGear;
 
     public InventoryContainer Container => _container;
     public string ContainerInstanceId => _container != null ? _container.InstanceId : string.Empty;
@@ -58,14 +63,19 @@ public sealed class UIContainerSlot : MonoBehaviour,
             _backgroundImage = GetComponent<Image>();
     }
 
+    void OnEnable() => SubscribeProgressSources();
+
     void OnDestroy()
     {
         if (_button != null)
             _button.onClick.RemoveListener(OnClick);
+        UnsubscribeProgressSources();
     }
 
     void OnDisable()
     {
+        UnsubscribeProgressSources();
+
         // Sidebar Sync / ApplyModeLayout may deactivate or destroy this slot mid-drag.
         if (_visualState != ContainerSlotVisualState.Dragging)
             return;
@@ -109,6 +119,7 @@ public sealed class UIContainerSlot : MonoBehaviour,
         gameObject.SetActive(true);
         ContainerData def = container.Definition;
 
+        EnsureNameBar();
         if (_label != null)
             _label.text = UITextPresenter.GetContainerName(def);
 
@@ -131,6 +142,8 @@ public sealed class UIContainerSlot : MonoBehaviour,
 
         _isDropHover = false;
         SetSelected(selected);
+        RefreshNameBar();
+        SubscribeProgressSources();
     }
 
     public void SetSelected(bool selected)
@@ -242,4 +255,90 @@ public sealed class UIContainerSlot : MonoBehaviour,
         if (_backgroundImage != null)
             _backgroundImage.color = color;
     }
+
+    void EnsureNameBar()
+    {
+        if (_nameBar != null || _label == null)
+            return;
+
+        _nameBar = ItemNameStatusBar.Ensure(ref _label);
+    }
+
+    void RefreshNameBar()
+    {
+        if (_nameBar == null)
+            return;
+
+        if (!_canMoveContainerAsStack || _dragContainerStack == null)
+        {
+            _nameBar.Clear();
+            return;
+        }
+
+        ItemTimedNameProgress.Apply(_nameBar, _dragContainerStack);
+    }
+
+    void SubscribeProgressSources()
+    {
+        SubscribeTimed();
+        SubscribeGear();
+    }
+
+    void UnsubscribeProgressSources()
+    {
+        UnsubscribeTimed();
+        UnsubscribeGear();
+    }
+
+    void SubscribeTimed()
+    {
+        InventoryTimedMoveHost timed = InventoryTimedMoveHost.Active;
+        if (timed == _timedHost && _subscribedTimed)
+            return;
+
+        UnsubscribeTimed();
+        _timedHost = timed;
+        if (_timedHost == null)
+            return;
+
+        _timedHost.Changed += OnProgressChanged;
+        _subscribedTimed = true;
+    }
+
+    void UnsubscribeTimed()
+    {
+        if (!_subscribedTimed || _timedHost == null)
+            return;
+
+        _timedHost.Changed -= OnProgressChanged;
+        _timedHost = null;
+        _subscribedTimed = false;
+    }
+
+    void SubscribeGear()
+    {
+        CharacterGearService gear = PlayerGearHost.Active?.Service;
+        if (gear == _gearService && _subscribedGear)
+            return;
+
+        UnsubscribeGear();
+        _gearService = gear;
+        if (_gearService == null)
+            return;
+
+        _gearService.Changed += OnProgressChanged;
+        _subscribedGear = true;
+    }
+
+    void UnsubscribeGear()
+    {
+        if (!_subscribedGear || _gearService == null)
+            return;
+
+        _gearService.Changed -= OnProgressChanged;
+        _gearService = null;
+        _subscribedGear = false;
+    }
+
+    void OnProgressChanged() => RefreshNameBar();
 }

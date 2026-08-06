@@ -9,6 +9,8 @@
     { "id": "survival", "kind": "skill", "initial_level": 0, "initial_potential": 100 },
     { "id": "melee", "kind": "skill", "initial_level": 1, "initial_potential": 100 },
     { "id": "unarmed", "kind": "skill", "initial_level": 1, "initial_potential": 100 },
-    { "id": "gun", "kind": "skill", "initial_level": 1, "initial_potential": 100 }
+    { "id": "gun", "kind": "skill", "initial_level": 1, "initial_potential": 100 },
+    { "id": "hand_l", "kind": "skill", "initial_level": 1, "initial_potential": 100 },
+    { "id": "hand_r", "kind": "skill", "initial_level": 1, "initial_potential": 100 }
   ]
 }

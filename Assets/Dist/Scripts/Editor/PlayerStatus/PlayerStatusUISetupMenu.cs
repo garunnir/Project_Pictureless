@@ -4,6 +4,7 @@
 
 #if UNITY_EDITOR
 using Garunnir.Runtime.Gameplay.Data;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -334,11 +335,11 @@ static class PlayerStatusUISetupMenu
 
         try
         {
-            UIPlayerStatusWindow window = root.GetComponent<UIPlayerStatusWindow>();
+            UICharacterWindow window = root.GetComponent<UICharacterWindow>();
             if (window == null)
             {
                 Debug.LogError(
-                    "[PlayerStatusUISetupMenu] UIPlayerStatusWindow missing; cannot patch.",
+                    "[PlayerStatusUISetupMenu] UICharacterWindow missing; cannot patch.",
                     root);
                 return;
             }
@@ -361,6 +362,540 @@ static class PlayerStatusUISetupMenu
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
+    }
+
+    /// <summary>
+    /// TabBar + GearPanel chrome을 프리팹에 추가·배선 (손수 body diagram 유지, full bake 아님).
+    /// </summary>
+    [MenuItem("Dist/PlayerStatus/Patch Character Tabs And Gear Panel")]
+    static void PatchCharacterTabsAndGearPanel()
+    {
+        GameObject root = PrefabUtility.LoadPrefabContents(WindowPrefabPath);
+        if (root == null)
+        {
+            Debug.LogError($"[PlayerStatusUISetupMenu] Failed to load: {WindowPrefabPath}");
+            return;
+        }
+
+        try
+        {
+            UICharacterWindow window = root.GetComponent<UICharacterWindow>();
+            if (window == null)
+            {
+                Debug.LogError(
+                    "[PlayerStatusUISetupMenu] UICharacterWindow missing; cannot patch.",
+                    root);
+                return;
+            }
+
+            TMP_FontAsset font = ResolveWindowFont(root);
+            Color headerColor = ResolveHeaderColor(root);
+            Color panelColor = new Color(0.14f, 0.14f, 0.14f, 0.92f);
+            Color tabColor = new Color(
+                Mathf.Min(1f, headerColor.r + 0.06f),
+                Mathf.Min(1f, headerColor.g + 0.06f),
+                Mathf.Min(1f, headerColor.b + 0.06f),
+                1f);
+
+            RectTransform statusContent = FindChildRect(root.transform, "Area_Content");
+            RectTransform tabBar = EnsureTabBar(root.transform, tabColor, font);
+            RectTransform gearRoot = EnsureGearPanelRoot(root.transform, panelColor);
+            UICharacterGearPanel gearPanel = EnsureGearPanelTree(gearRoot, font, tabColor);
+
+            SerializedObject so = new(window);
+            so.FindProperty("_statusContentRoot").objectReferenceValue = statusContent;
+            so.FindProperty("_tabBarRoot").objectReferenceValue = tabBar;
+            so.FindProperty("_gearPanelRoot").objectReferenceValue = gearRoot;
+            so.FindProperty("_gearPanel").objectReferenceValue = gearPanel;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            PrefabUtility.SaveAsPrefabAsset(root, WindowPrefabPath);
+            Debug.Log(
+                $"[PlayerStatusUISetupMenu] Patched TabBar + GearPanel on {WindowPrefabPath}.");
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+    }
+
+    static TMP_FontAsset ResolveWindowFont(GameObject root)
+    {
+        Transform title = root.transform.Find("Header/Title");
+        if (title != null)
+        {
+            TMP_Text titleText = title.GetComponent<TMP_Text>();
+            if (titleText != null && titleText.font != null)
+                return titleText.font;
+        }
+
+        return AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
+            InventoryUIHierarchyBuilder.DefaultUIFontPath);
+    }
+
+    static Color ResolveHeaderColor(GameObject root)
+    {
+        Transform header = root.transform.Find("Header");
+        if (header != null)
+        {
+            Image img = header.GetComponent<Image>();
+            if (img != null)
+                return img.color;
+        }
+
+        return new Color(0.16f, 0.16f, 0.16f, 1f);
+    }
+
+    static RectTransform FindChildRect(Transform parent, string name)
+    {
+        Transform t = parent.Find(name);
+        return t as RectTransform;
+    }
+
+    static RectTransform EnsureTabBar(Transform windowRoot, Color tabColor, TMP_FontAsset font)
+    {
+        Transform existing = windowRoot.Find("TabBar");
+        GameObject barGo;
+        RectTransform barRt;
+        if (existing != null)
+        {
+            barGo = existing.gameObject;
+            barRt = existing as RectTransform;
+        }
+        else
+        {
+            barGo = new GameObject("TabBar", typeof(RectTransform));
+            barGo.layer = LayerMask.NameToLayer("UI");
+            barGo.transform.SetParent(windowRoot, false);
+            barRt = barGo.GetComponent<RectTransform>();
+            // Place just under Header; do not rebuild body diagram internals.
+            barRt.SetSiblingIndex(1);
+        }
+
+        barRt.anchorMin = new Vector2(0f, 1f);
+        barRt.anchorMax = new Vector2(1f, 1f);
+        barRt.pivot = new Vector2(0.5f, 1f);
+        barRt.sizeDelta = new Vector2(-20f, 28f);
+        barRt.anchoredPosition = new Vector2(0f, -40f);
+
+        HorizontalLayoutGroup layout = barGo.GetComponent<HorizontalLayoutGroup>();
+        if (layout == null)
+            layout = barGo.AddComponent<HorizontalLayoutGroup>();
+        layout.childForceExpandWidth = true;
+        layout.childControlWidth = true;
+        layout.childForceExpandHeight = true;
+        layout.childControlHeight = true;
+        layout.spacing = 4f;
+        layout.padding = new RectOffset(4, 4, 2, 2);
+
+        EnsureTabButton(barRt, CharacterWindowTab.Status, CharacterGearLabels.TabStatus, tabColor, font);
+        EnsureTabButton(barRt, CharacterWindowTab.Equipment, CharacterGearLabels.TabEquipment, tabColor, font);
+        EnsureTabButton(barRt, CharacterWindowTab.Encumbrance, CharacterGearLabels.TabEncumbrance, tabColor, font);
+        EnsureTabButton(barRt, CharacterWindowTab.BodyTemp, CharacterGearLabels.TabBodyTemp, tabColor, font);
+        return barRt;
+    }
+
+    static void EnsureTabButton(
+        RectTransform tabBar,
+        CharacterWindowTab tab,
+        string label,
+        Color tabColor,
+        TMP_FontAsset font)
+    {
+        string childName = "Tab_" + tab;
+        Transform existing = tabBar.Find(childName);
+        GameObject go;
+        if (existing != null)
+        {
+            go = existing.gameObject;
+        }
+        else
+        {
+            go = new GameObject(childName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            go.layer = LayerMask.NameToLayer("UI");
+            go.transform.SetParent(tabBar, false);
+        }
+
+        LayoutElement le = go.GetComponent<LayoutElement>();
+        if (le == null)
+            le = go.AddComponent<LayoutElement>();
+        le.flexibleWidth = 1f;
+        le.minHeight = 24f;
+
+        Image bg = go.GetComponent<Image>();
+        if (bg == null)
+            bg = go.AddComponent<Image>();
+        bg.color = tabColor;
+        bg.raycastTarget = true;
+
+        Button button = go.GetComponent<Button>();
+        if (button == null)
+            button = go.AddComponent<Button>();
+        button.targetGraphic = bg;
+        button.transition = Selectable.Transition.ColorTint;
+
+        Transform labelTf = go.transform.Find("Label");
+        GameObject labelGo;
+        if (labelTf != null)
+        {
+            labelGo = labelTf.gameObject;
+        }
+        else
+        {
+            labelGo = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer));
+            labelGo.layer = LayerMask.NameToLayer("UI");
+            labelGo.transform.SetParent(go.transform, false);
+        }
+
+        RectTransform labelRt = labelGo.GetComponent<RectTransform>();
+        labelRt.anchorMin = Vector2.zero;
+        labelRt.anchorMax = Vector2.one;
+        labelRt.offsetMin = Vector2.zero;
+        labelRt.offsetMax = Vector2.zero;
+
+        TextMeshProUGUI tmp = labelGo.GetComponent<TextMeshProUGUI>();
+        if (tmp == null)
+            tmp = labelGo.AddComponent<TextMeshProUGUI>();
+        tmp.text = label;
+        tmp.fontSize = 15f;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.raycastTarget = false;
+        if (font != null)
+            tmp.font = font;
+    }
+
+    static RectTransform EnsureGearPanelRoot(Transform windowRoot, Color panelColor)
+    {
+        Transform existing = windowRoot.Find("GearPanelRoot");
+        GameObject rootGo;
+        RectTransform rt;
+        if (existing != null)
+        {
+            rootGo = existing.gameObject;
+            rt = existing as RectTransform;
+        }
+        else
+        {
+            rootGo = new GameObject(
+                "GearPanelRoot",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image));
+            rootGo.layer = LayerMask.NameToLayer("UI");
+            rootGo.transform.SetParent(windowRoot, false);
+            rt = rootGo.GetComponent<RectTransform>();
+        }
+
+        rt.anchorMin = new Vector2(0.48f, 0f);
+        rt.anchorMax = new Vector2(1f, 1f);
+        rt.pivot = new Vector2(1f, 0.5f);
+        rt.offsetMin = new Vector2(4f, 8f);
+        rt.offsetMax = new Vector2(-8f, -68f);
+
+        Image bg = rootGo.GetComponent<Image>();
+        if (bg == null)
+            bg = rootGo.AddComponent<Image>();
+        bg.color = panelColor;
+        bg.raycastTarget = false;
+
+        // Prefab default: hidden until Equipment/Encumbrance/BodyTemp.
+        rootGo.SetActive(false);
+        return rt;
+    }
+
+    static UICharacterGearPanel EnsureGearPanelTree(
+        RectTransform gearRoot,
+        TMP_FontAsset font,
+        Color chromeColor)
+    {
+        UICharacterGearPanel panel = gearRoot.GetComponent<UICharacterGearPanel>();
+        if (panel == null)
+            panel = gearRoot.gameObject.AddComponent<UICharacterGearPanel>();
+
+        VerticalLayoutGroup rootLayout = gearRoot.GetComponent<VerticalLayoutGroup>();
+        if (rootLayout == null)
+            rootLayout = gearRoot.gameObject.AddComponent<VerticalLayoutGroup>();
+        rootLayout.padding = new RectOffset(8, 8, 8, 8);
+        rootLayout.spacing = 6f;
+        rootLayout.childForceExpandWidth = true;
+        rootLayout.childForceExpandHeight = false;
+        rootLayout.childControlWidth = true;
+        rootLayout.childControlHeight = false;
+
+        RectTransform wieldRoot = EnsureNamedVertical(gearRoot, "WieldRoot", preferredHeight: 80f);
+        EnsureWieldSlot(wieldRoot, "Wield_L", WieldSlotId.Left, font, chromeColor);
+        EnsureWieldSlot(wieldRoot, "Wield_R", WieldSlotId.Right, font, chromeColor);
+
+        RectTransform wornRoot = EnsureNamedVertical(gearRoot, "WornRoot", preferredHeight: 120f);
+        TMP_Text filterLabel = EnsureTmpChild(wornRoot, "FilterLabel", CharacterGearLabels.WornFilterAll, 16f, font);
+        LayoutElement filterLe = filterLabel.GetComponent<LayoutElement>();
+        if (filterLe == null)
+            filterLe = filterLabel.gameObject.AddComponent<LayoutElement>();
+        filterLe.minHeight = 22f;
+        filterLe.preferredHeight = 22f;
+
+        TMP_Text encTotals = EnsureTmpChild(gearRoot, "EncTotals", string.Empty, 14f, font);
+        encTotals.gameObject.SetActive(false);
+
+        TMP_Text hover = EnsureTmpChild(gearRoot, "HoverDetail", string.Empty, 14f, font);
+        LayoutElement hoverLe = hover.GetComponent<LayoutElement>();
+        if (hoverLe == null)
+            hoverLe = hover.gameObject.AddComponent<LayoutElement>();
+        hoverLe.minHeight = 40f;
+        hoverLe.preferredHeight = 48f;
+
+        Slider progress = EnsureProgressSlider(gearRoot, chromeColor);
+        progress.gameObject.SetActive(false);
+
+        SerializedObject panelSo = new(panel);
+        panelSo.FindProperty("_wieldRoot").objectReferenceValue = wieldRoot;
+        panelSo.FindProperty("_wornRoot").objectReferenceValue = wornRoot;
+        panelSo.FindProperty("_hoverText").objectReferenceValue = hover;
+        panelSo.FindProperty("_progressBar").objectReferenceValue = progress;
+        panelSo.FindProperty("_filterLabel").objectReferenceValue = filterLabel;
+        panelSo.FindProperty("_encTotalsText").objectReferenceValue = encTotals;
+        panelSo.ApplyModifiedPropertiesWithoutUndo();
+        return panel;
+    }
+
+    static RectTransform EnsureNamedVertical(Transform parent, string name, float preferredHeight)
+    {
+        Transform existing = parent.Find(name);
+        GameObject go;
+        RectTransform rt;
+        if (existing != null)
+        {
+            go = existing.gameObject;
+            rt = existing as RectTransform;
+        }
+        else
+        {
+            go = new GameObject(name, typeof(RectTransform));
+            go.layer = LayerMask.NameToLayer("UI");
+            go.transform.SetParent(parent, false);
+            rt = go.GetComponent<RectTransform>();
+        }
+
+        VerticalLayoutGroup layout = go.GetComponent<VerticalLayoutGroup>();
+        if (layout == null)
+            layout = go.AddComponent<VerticalLayoutGroup>();
+        layout.childForceExpandHeight = false;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = true;
+        layout.spacing = 4f;
+
+        LayoutElement le = go.GetComponent<LayoutElement>();
+        if (le == null)
+            le = go.AddComponent<LayoutElement>();
+        le.minHeight = preferredHeight * 0.5f;
+        le.preferredHeight = preferredHeight;
+        le.flexibleHeight = 1f;
+        return rt;
+    }
+
+    static void EnsureWieldSlot(
+        RectTransform wieldRoot,
+        string name,
+        WieldSlotId slot,
+        TMP_FontAsset font,
+        Color chromeColor)
+    {
+        Transform existing = wieldRoot.Find(name);
+        GameObject go;
+        if (existing != null)
+        {
+            go = existing.gameObject;
+        }
+        else
+        {
+            go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            go.layer = LayerMask.NameToLayer("UI");
+            go.transform.SetParent(wieldRoot, false);
+        }
+
+        LayoutElement le = go.GetComponent<LayoutElement>();
+        if (le == null)
+            le = go.AddComponent<LayoutElement>();
+        le.minHeight = 36f;
+        le.preferredHeight = 36f;
+
+        Image bg = go.GetComponent<Image>();
+        if (bg == null)
+            bg = go.AddComponent<Image>();
+        bg.color = new Color(chromeColor.r * 0.85f, chromeColor.g * 0.85f, chromeColor.b * 0.85f, 0.95f);
+        bg.raycastTarget = true;
+
+        if (go.GetComponent<UICharacterWieldSlotView>() == null)
+            go.AddComponent<UICharacterWieldSlotView>();
+
+        // Optional label child for Prefab Mode readability; runtime EnsureLabel can still use root TMP.
+        Transform labelTf = go.transform.Find("Label");
+        if (labelTf == null)
+        {
+            GameObject labelGo = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer));
+            labelGo.layer = LayerMask.NameToLayer("UI");
+            labelGo.transform.SetParent(go.transform, false);
+            RectTransform labelRt = labelGo.GetComponent<RectTransform>();
+            labelRt.anchorMin = Vector2.zero;
+            labelRt.anchorMax = Vector2.one;
+            labelRt.offsetMin = new Vector2(6f, 2f);
+            labelRt.offsetMax = new Vector2(-6f, -2f);
+            TextMeshProUGUI tmp = labelGo.AddComponent<TextMeshProUGUI>();
+            tmp.text = slot == WieldSlotId.Left
+                ? CharacterGearLabels.SlotLeft + ": —"
+                : CharacterGearLabels.SlotRight + ": —";
+            tmp.fontSize = 15f;
+            tmp.alignment = TextAlignmentOptions.MidlineLeft;
+            tmp.raycastTarget = false;
+            if (font != null)
+                tmp.font = font;
+        }
+    }
+
+    static TMP_Text EnsureTmpChild(
+        Transform parent,
+        string name,
+        string text,
+        float fontSize,
+        TMP_FontAsset font)
+    {
+        Transform existing = parent.Find(name);
+        GameObject go;
+        if (existing != null)
+        {
+            go = existing.gameObject;
+        }
+        else
+        {
+            go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer));
+            go.layer = LayerMask.NameToLayer("UI");
+            go.transform.SetParent(parent, false);
+        }
+
+        TextMeshProUGUI tmp = go.GetComponent<TextMeshProUGUI>();
+        if (tmp == null)
+            tmp = go.AddComponent<TextMeshProUGUI>();
+        if (!string.IsNullOrEmpty(text))
+            tmp.text = text;
+        tmp.fontSize = fontSize;
+        tmp.raycastTarget = false;
+        if (font != null)
+            tmp.font = font;
+        return tmp;
+    }
+
+    static Slider EnsureProgressSlider(Transform parent, Color chromeColor)
+    {
+        Transform existing = parent.Find("Progress");
+        GameObject barGo;
+        if (existing != null)
+        {
+            barGo = existing.gameObject;
+        }
+        else
+        {
+            barGo = new GameObject(
+                "Progress",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image),
+                typeof(Slider));
+            barGo.layer = LayerMask.NameToLayer("UI");
+            barGo.transform.SetParent(parent, false);
+        }
+
+        LayoutElement le = barGo.GetComponent<LayoutElement>();
+        if (le == null)
+            le = barGo.AddComponent<LayoutElement>();
+        le.minHeight = 16f;
+        le.preferredHeight = 16f;
+
+        Image rootImage = barGo.GetComponent<Image>();
+        if (rootImage == null)
+            rootImage = barGo.AddComponent<Image>();
+        rootImage.color = new Color(0.1f, 0.1f, 0.1f, 1f);
+        rootImage.raycastTarget = false;
+
+        Transform bgTf = barGo.transform.Find("Background");
+        GameObject bgGo;
+        if (bgTf != null)
+        {
+            bgGo = bgTf.gameObject;
+        }
+        else
+        {
+            bgGo = new GameObject("Background", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            bgGo.layer = LayerMask.NameToLayer("UI");
+            bgGo.transform.SetParent(barGo.transform, false);
+        }
+
+        RectTransform bgRt = bgGo.GetComponent<RectTransform>();
+        bgRt.anchorMin = Vector2.zero;
+        bgRt.anchorMax = Vector2.one;
+        bgRt.offsetMin = Vector2.zero;
+        bgRt.offsetMax = Vector2.zero;
+        Image bgImage = bgGo.GetComponent<Image>();
+        if (bgImage == null)
+            bgImage = bgGo.AddComponent<Image>();
+        bgImage.color = new Color(chromeColor.r * 0.7f, chromeColor.g * 0.7f, chromeColor.b * 0.7f, 1f);
+        bgImage.raycastTarget = false;
+
+        Transform fillAreaTf = barGo.transform.Find("Fill Area");
+        GameObject fillAreaGo;
+        if (fillAreaTf != null)
+        {
+            fillAreaGo = fillAreaTf.gameObject;
+        }
+        else
+        {
+            fillAreaGo = new GameObject("Fill Area", typeof(RectTransform));
+            fillAreaGo.layer = LayerMask.NameToLayer("UI");
+            fillAreaGo.transform.SetParent(barGo.transform, false);
+        }
+
+        RectTransform fillAreaRt = fillAreaGo.GetComponent<RectTransform>();
+        fillAreaRt.anchorMin = Vector2.zero;
+        fillAreaRt.anchorMax = Vector2.one;
+        fillAreaRt.offsetMin = new Vector2(2f, 2f);
+        fillAreaRt.offsetMax = new Vector2(-2f, -2f);
+
+        Transform fillTf = fillAreaGo.transform.Find("Fill");
+        GameObject fillGo;
+        if (fillTf != null)
+        {
+            fillGo = fillTf.gameObject;
+        }
+        else
+        {
+            fillGo = new GameObject("Fill", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            fillGo.layer = LayerMask.NameToLayer("UI");
+            fillGo.transform.SetParent(fillAreaGo.transform, false);
+        }
+
+        RectTransform fillRt = fillGo.GetComponent<RectTransform>();
+        fillRt.anchorMin = Vector2.zero;
+        fillRt.anchorMax = Vector2.one;
+        fillRt.offsetMin = Vector2.zero;
+        fillRt.offsetMax = Vector2.zero;
+        Image fillImage = fillGo.GetComponent<Image>();
+        if (fillImage == null)
+            fillImage = fillGo.AddComponent<Image>();
+        fillImage.color = new Color(0.35f, 0.7f, 0.4f, 1f);
+        fillImage.raycastTarget = false;
+
+        Slider slider = barGo.GetComponent<Slider>();
+        if (slider == null)
+            slider = barGo.AddComponent<Slider>();
+        slider.minValue = 0f;
+        slider.maxValue = 1f;
+        slider.wholeNumbers = false;
+        slider.fillRect = fillRt;
+        slider.targetGraphic = bgImage;
+        slider.direction = Slider.Direction.LeftToRight;
+        return slider;
     }
 
     [MenuItem("Dist/PlayerStatus/Setup Canvas In Open Scene")]
@@ -392,13 +927,13 @@ static class PlayerStatusUISetupMenu
             systemRoot,
             SystemHierarchySetup.PlayerStatus);
 
-        UIPlayerStatusController controller = Object.FindAnyObjectByType<UIPlayerStatusController>();
+        UICharacterController controller = Object.FindAnyObjectByType<UICharacterController>();
         if (controller == null)
         {
             GameObject go = new("PlayerStatusController");
             Undo.RegisterCreatedObjectUndo(go, "Create PlayerStatusController");
             go.transform.SetParent(playerStatusRoot, false);
-            controller = Undo.AddComponent<UIPlayerStatusController>(go);
+            controller = Undo.AddComponent<UICharacterController>(go);
         }
         else
         {
@@ -412,8 +947,8 @@ static class PlayerStatusUISetupMenu
         so.FindProperty("_uiCanvas").objectReferenceValue = canvas;
         so.FindProperty("_layerHost").objectReferenceValue = layerHost;
 
-        UIPlayerStatusWindow prefab =
-            AssetDatabase.LoadAssetAtPath<UIPlayerStatusWindow>(WindowPrefabPath);
+        UICharacterWindow prefab =
+            AssetDatabase.LoadAssetAtPath<UICharacterWindow>(WindowPrefabPath);
         if (prefab == null)
         {
             Debug.LogError(
@@ -767,7 +1302,7 @@ static class PlayerStatusUISetupMenu
 
     static PlayerStatusWindowLauncher EnsureHudLauncher(
         UICanvasLayerHost layerHost,
-        UIPlayerStatusController controller)
+        UICharacterController controller)
     {
         Transform hud = layerHost.GetLayerRoot(UICanvasLayer.HUD);
         Transform existing = hud.Find("Btn_PlayerStatusLauncher");

@@ -26,9 +26,20 @@ public static class InventoryDragDrop
 
         if (payload.Kind == InventoryDragKind.ContainerContents)
         {
-            bool moved = session.MoveStacksSequentiallyUntilFull(
+            InventoryTimedMoveHost timed = InventoryTimedMoveHost.Active;
+            if (timed != null)
+            {
+                if (timed.IsBusy)
+                    return false;
+                return timed.TryBeginSequentialUntilFull(
+                    session,
+                    payload.SourceContainer,
+                    target,
+                    payload.Stacks);
+            }
+
+            return session.MoveStacksSequentiallyUntilFull(
                 payload.SourceContainer, target, payload.Stacks) > 0;
-            return moved;
         }
 
         if (payload.Kind == InventoryDragKind.Item)
@@ -41,7 +52,12 @@ public static class InventoryDragDrop
                 payload.SourceSelection);
         }
 
-        return session.MoveStacks(payload.SourceContainer, target, payload.Stacks);
+        return TryMoveItemStacks(
+            session,
+            payload.SourceContainer,
+            target,
+            payload.Stacks,
+            null);
     }
 
     public static bool TryMoveItemStacks(
@@ -56,6 +72,20 @@ public static class InventoryDragDrop
 
         if (from == to)
             return false;
+
+        InventoryTimedMoveHost timed = InventoryTimedMoveHost.Active;
+        if (timed != null)
+        {
+            if (timed.IsBusy)
+                return false;
+
+            return timed.TryBeginMove(
+                session,
+                from,
+                to,
+                stacks,
+                () => sourceSelection?.Clear());
+        }
 
         if (!session.MoveStacks(from, to, stacks))
             return false;

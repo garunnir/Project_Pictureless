@@ -37,6 +37,7 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     CharacterAimIntent _aimIntent;
     CharacterSkillsHost _skillsHost;
+    PlayerGearHost _gearHost;
     Collider _selfCollider;
     readonly float[] _cooldownRemaining = new float[3];
 
@@ -63,6 +64,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     {
         _aimIntent = GetComponent<CharacterAimIntent>();
         _skillsHost = GetComponent<CharacterSkillsHost>();
+        TryGetComponent(out _gearHost);
         _selfCollider = GetComponentInChildren<Collider>();
         if (_presentation != null)
             _presentation.RebuildSupportedActions();
@@ -99,8 +101,8 @@ public sealed class CharacterAttacker : MonoBehaviour
         }
     }
 
-    /// <summary>장착 훅. 카탈로그로 Presentation resolve. rounds는 장전 전 스텁.</summary>
-    public void SetEquippedItem(string itemId, int loadedRounds = 0)
+    /// <summary>들기(Wield) 훅. 카탈로그로 Presentation resolve. rounds는 장전 전 스텁.</summary>
+    public void SetWieldedItem(string itemId, int loadedRounds = 0)
     {
         if (string.Equals(_itemId, itemId, StringComparison.Ordinal) &&
             _loadedRounds == loadedRounds)
@@ -112,6 +114,10 @@ public sealed class CharacterAttacker : MonoBehaviour
         RebuildAvailableActions();
         ClampSelectedAction();
     }
+
+    [Obsolete("Use SetWieldedItem")]
+    public void SetEquippedItem(string itemId, int loadedRounds = 0) =>
+        SetWieldedItem(itemId, loadedRounds);
 
     public void SetPresentation(WeaponPresentation presentation)
     {
@@ -199,7 +205,8 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     public AttackPerformResult TryPerform(
         WeaponAction action,
-        CharacterBodyHost targetHost)
+        CharacterBodyHost targetHost,
+        float offenseFactor = 1f)
     {
         if (!CanPerform(action))
         {
@@ -231,6 +238,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         Vector3 origin = ResolveBodyCenter(transform, _selfCollider);
         Vector3 targetCenter = ResolveBodyCenter(targetHost.transform, targetCollider);
         float cooldown = CombatMath.AttackIntervalSeconds(item, action);
+        float factor = Mathf.Max(0f, offenseFactor);
 
         if (resolveMode == WeaponResolveMode.RangedRay)
         {
@@ -281,7 +289,10 @@ public sealed class CharacterAttacker : MonoBehaviour
             ? skills.Level(skillId)
             : 0;
         int strength = skills != null ? skills.Level(AttributeIds.Str) : StrengthBaselineFallback;
-        float hitChance = CombatMath.HitChance(item, action, skillLevel, aimedPart);
+        float hitChance = CombatMath.HitChance(item, action, skillLevel, aimedPart)
+            * factor
+            * ResolveAttackerWearEncAccuracyFactor()
+            * ResolveAttackerEnvAccuracyFactor();
 
         if (UnityEngine.Random.value > hitChance)
         {
@@ -296,7 +307,14 @@ public sealed class CharacterAttacker : MonoBehaviour
                 impact);
         }
 
-        int damage = CombatMath.Damage(item, action, strength, skillLevel);
+        int damage = Mathf.Max(
+            0,
+            Mathf.RoundToInt(CombatMath.Damage(item, action, strength, skillLevel) * factor));
+        damage = WearCombatDefense.MitigateDamage(
+            ResolveTargetWear(targetHost),
+            aimedPart,
+            damage,
+            action);
         BodyPartEffect[] seeds = BuildSeeds(action);
         BodyDamageService.ApplyHit(targetHost.Body, aimedPart, damage, seeds);
         return Resolve(
@@ -308,6 +326,35 @@ public sealed class CharacterAttacker : MonoBehaviour
             damage,
             origin,
             impact);
+    }
+
+    float ResolveAttackerWearEncAccuracyFactor()
+    {
+        EquipmentWearState wear = _gearHost != null ? _gearHost.Wear : null;
+        if (wear == null)
+            return 1f;
+        return WearCombatDefense.WearEncAccuracyFactor(
+            WearStatsAggregator.Aggregate(wear).TotalEncumbrance);
+    }
+
+    float ResolveAttackerEnvAccuracyFactor()
+    {
+        if (_gearHost == null)
+            return 1f;
+        BodyTemp bodyTemp = _gearHost.BodyTemperature;
+        WearEnvExposure env = _gearHost.EnvExposure;
+        if (bodyTemp == null || env == null)
+            return 1f;
+        return GearEnvPenalties.HitAccuracyFactor(bodyTemp.Feeling, env.Wetness01);
+    }
+
+    static EquipmentWearState ResolveTargetWear(CharacterBodyHost targetHost)
+    {
+        if (targetHost == null)
+            return null;
+        if (targetHost.TryGetComponent(out PlayerGearHost gear))
+            return gear.Wear;
+        return null;
     }
 
     const int StrengthBaselineFallback = 8;

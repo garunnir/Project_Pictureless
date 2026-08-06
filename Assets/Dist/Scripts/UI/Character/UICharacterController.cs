@@ -1,15 +1,18 @@
 // ============================================================
-// UIPlayerStatusController — 상태창 토글 + Layer_Window 스폰
+// UICharacterController — Character 창 토글 (StatusToggle=C) + Layer_Window
 // ============================================================
 
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
-public sealed class UIPlayerStatusController : MonoBehaviour
+public sealed class UICharacterController : MonoBehaviour
 {
-    [SerializeField, Required] UIPlayerStatusWindow _windowPrefab;
-    [SerializeField] UIPlayerStatusWindow _window;
+    [FormerlySerializedAs("_windowPrefab")]
+    [SerializeField, Required] UICharacterWindow _windowPrefab;
+    [FormerlySerializedAs("_window")]
+    [SerializeField] UICharacterWindow _window;
     [SerializeField] Canvas _uiCanvas;
     [SerializeField] UICanvasLayerHost _layerHost;
     [SerializeField] PlayerStatusWindowLauncher _launcher;
@@ -29,7 +32,7 @@ public sealed class UIPlayerStatusController : MonoBehaviour
         if (!PlayerStatusUIBridge.TryResolve(out _viewModel))
         {
             Debug.LogError(
-                "[UIPlayerStatusController] PlayerStatusUIBridge not found in scene.",
+                "[UICharacterController] PlayerStatusUIBridge not found in scene.",
                 this);
         }
     }
@@ -123,7 +126,7 @@ public sealed class UIPlayerStatusController : MonoBehaviour
         if (_windowPrefab == null)
         {
             Debug.LogError(
-                "[UIPlayerStatusController] Window prefab is not assigned.",
+                "[UICharacterController] Window prefab is not assigned.",
                 this);
             return;
         }
@@ -133,7 +136,7 @@ public sealed class UIPlayerStatusController : MonoBehaviour
         if (_window.transform.parent != windowRoot)
             _window.transform.SetParent(windowRoot, false);
 
-        _window.name = "Grp_PlayerStatusWindow";
+        _window.name = "Grp_CharacterWindow";
         if (_window.WindowRect != null)
             _window.WindowRect.anchoredPosition = _windowInitialPosition;
     }

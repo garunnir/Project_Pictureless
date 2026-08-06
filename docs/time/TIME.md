@@ -203,6 +203,7 @@ IsoLand에는 Setup이 적용·저장되어 있다. Full bake 정책: `.cursor/r
 | `TileMapChunkStreamer` (unload hysteresis) | Realtime | `TimeNow` |
 | `GridCursor` (hold/repeat) | Realtime | `Delta` |
 | Context menus | Realtime | `WaitForSecondsRealtime` (기존) |
+| `PlayerGearHost` (EnvExposure / BodyTemp) | World | `Delta` |
 
 구동작 계약: scale=1·모디파이어 없을 때 unscaled 기준이므로 Unity `timeScale==1`일 때와 동일. Dist는 `timeScale`을 쓰지 않으므로 기본 플레이 패리티 유지. 채널 Push 시에만 분기.
 

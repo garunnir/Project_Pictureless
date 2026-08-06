@@ -15,10 +15,25 @@ namespace Garunnir.Runtime.Gameplay.Data
         public int encumbrance;
         public int max_encumbrance;
         public int warmth;
+        /// <summary>총 포켓 용량(ml). BN legacy storage / pockets 합.</summary>
         public int storage;
+        /// <summary>선택: 포켓별 volume_ml + draw moves. 비어 있으면 storage만 사용.</summary>
+        public List<ArmorPocketData> pockets;
         public int environmental_protection;
         public int material_thickness;
         public bool power_armor;
+        /// <summary>BN armor layer (NORMAL/UNDER/OUTER/…). Empty → GearConstants.DefaultArmorLayer.</summary>
+        public string layer;
+        /// <summary>BN sided — bilateral pair slot; up to MaxSidedPerLayer on same part+layer.</summary>
+        public bool sided;
+    }
+
+    /// <summary>BN/DDA pocket 조각. moves&gt;0이면 InventoryTransferDuration이 공식보다 우선.</summary>
+    [Serializable]
+    public sealed class ArmorPocketData
+    {
+        public int volume_ml;
+        public int moves;
     }
 
     [Serializable]

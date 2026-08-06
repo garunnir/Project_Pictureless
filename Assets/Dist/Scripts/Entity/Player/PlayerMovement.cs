@@ -55,6 +55,8 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
         new RaycastHit[CharacterLocomotionDefaults.HitBufferSize];
 
     float _encumbranceSpeedMultiplier = 1f;
+    float _liftStrainSpeedMultiplier = 1f;
+    float _envSpeedMultiplier = 1f;
     bool _encumbranceBlocksSprint;
     bool _encumbranceBlocksMovement;
 
@@ -134,6 +136,14 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
             _characterState?.SetMoveDir(Vector3.zero);
         }
     }
+
+    /// <summary>LiftStrain(들기 힘 부담) 이동 배율. 1 = 없음. GearConstants.LiftStrainMoveFactor.</summary>
+    public void SetLiftStrainMovement(float speedMultiplier) =>
+        _liftStrainSpeedMultiplier = Mathf.Max(0f, speedMultiplier);
+
+    /// <summary>BodyTemp/wetness 이동 배율. 1 = 없음. GearEnvPenalties.MoveSpeedFactor.</summary>
+    public void SetEnvMovement(float speedMultiplier) =>
+        _envSpeedMultiplier = Mathf.Max(0f, speedMultiplier);
 
     public void SetControllEnabled(bool enabled)
     {
@@ -287,7 +297,10 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
         if (_encumbranceBlocksMovement || _encumbranceSpeedMultiplier <= 0f)
             return Vector3.zero;
 
-        float moveSpeed = _moveSpeed * _encumbranceSpeedMultiplier;
+        float moveSpeed = _moveSpeed
+            * _encumbranceSpeedMultiplier
+            * _liftStrainSpeedMultiplier
+            * _envSpeedMultiplier;
         float sprintMultiplier = _encumbranceBlocksSprint ? 1f : _sprintMultiplier;
         Vector3 desiredMove = _mover.CalcDesiredMove(
             moveSpeed,

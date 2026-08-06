@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public sealed class PlayerStatusWindowLauncher : MonoBehaviour
 {
-    [Required, SerializeField] UIPlayerStatusController _controller;
+    [Required, SerializeField] UICharacterController _controller;
     [SerializeField] Button _button;
     [SerializeField] Image _iconImage;
     [SerializeField] Color _closedColor = new(1f, 1f, 1f, 0.55f);
@@ -34,7 +34,7 @@ public sealed class PlayerStatusWindowLauncher : MonoBehaviour
             _button.onClick.RemoveListener(OnClicked);
     }
 
-    public void Bind(UIPlayerStatusController controller) => _controller = controller;
+    public void Bind(UICharacterController controller) => _controller = controller;
 
     public void SetOpen(bool open)
     {

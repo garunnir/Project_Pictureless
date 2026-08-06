@@ -1,5 +1,5 @@
 // ============================================================
-// CameraZoomController — Cinemachine orthographic 렌즈 줌
+// CameraZoomController — Cinemachine orthographic 렌즈 줌 (+ HelmetVision)
 // ============================================================
 using Unity.Cinemachine;
 using UnityEngine;
@@ -17,12 +17,20 @@ public class CameraZoomController : MonoBehaviour, IMaxOrthographicSizeProvider
     private CinemachineCamera _cinemachineCamera;
     private float _targetOrthographicSize;
     private float _zoomVelocity;
+    private float _visionFactor = HelmetVision.FullVisionFactor;
+
+    /// <summary>씬 활성 줌 컨트롤러 (HelmetVision / PlayerGearHost 소비).</summary>
+    public static CameraZoomController Active { get; private set; }
 
     public float MinOrthographicSize =>
         Mathf.Min(_minOrthographicSize, _maxOrthographicSize);
 
+    /// <summary>스트리밍 예산용 — VisionFactor 미적용 상한.</summary>
     public float MaxOrthographicSize =>
         Mathf.Max(_minOrthographicSize, _maxOrthographicSize);
+
+    /// <summary>플레이어 줌 타깃에 곱하는 시야 배율 (1=정상). HelmetVision.</summary>
+    public float VisionFactor => _visionFactor;
 
     private void Awake()
     {
@@ -31,25 +39,48 @@ public class CameraZoomController : MonoBehaviour, IMaxOrthographicSizeProvider
         ClampTarget();
     }
 
+    private void OnEnable()
+    {
+        Active = this;
+        ApplyOrthographicSize(_targetOrthographicSize);
+    }
+
+    private void OnDisable()
+    {
+        if (Active == this)
+            Active = null;
+        if (_cinemachineCamera != null)
+            _cinemachineCamera.Lens.OrthographicSize = _targetOrthographicSize;
+    }
+
+    /// <summary>HelmetVision / PlayerGearHost.VisionFactor → ortho FOV 배율.</summary>
+    public void SetVisionFactor(float visionFactor)
+    {
+        float next = Mathf.Clamp(
+            visionFactor,
+            HelmetVision.HeadCoverVisionFactor,
+            HelmetVision.FullVisionFactor);
+        if (Mathf.Approximately(next, _visionFactor))
+            return;
+        _visionFactor = next;
+        ApplyCurrentTarget();
+    }
+
     private void Update()
     {
         if (_cinemachineCamera == null)
             return;
 
-        if (InputManager.Instance == null)
-            return;
+        float scrollY = 0f;
+        bool scrolled = InputManager.Instance != null
+            && InputManager.Instance.TryReadZoomScroll(out scrollY);
+        if (scrolled)
+        {
+            _targetOrthographicSize -= scrollY * _scrollStepSize / 120f;
+            ClampTarget();
+        }
 
-        if (!InputManager.Instance.TryReadZoomScroll(out float scrollY))
-            return;
-
-        _targetOrthographicSize -= scrollY * _scrollStepSize / 120f;
-        ClampTarget();
-
-        float currentSize = _cinemachineCamera.Lens.OrthographicSize;
-        float nextSize = _zoomSmoothTime <= 0f
-            ? _targetOrthographicSize
-            : Mathf.SmoothDamp(currentSize, _targetOrthographicSize, ref _zoomVelocity, _zoomSmoothTime);
-        ApplyOrthographicSize(nextSize);
+        ApplyCurrentTarget();
     }
 
     private void ClampTarget()
@@ -59,8 +90,26 @@ public class CameraZoomController : MonoBehaviour, IMaxOrthographicSizeProvider
         _targetOrthographicSize = Mathf.Clamp(_targetOrthographicSize, min, max);
     }
 
-    private void ApplyOrthographicSize(float size)
+    private void ApplyCurrentTarget()
     {
-        _cinemachineCamera.Lens.OrthographicSize = size;
+        if (_cinemachineCamera == null)
+            return;
+
+        float currentLogical = _cinemachineCamera.Lens.OrthographicSize
+            / Mathf.Max(0.01f, _visionFactor);
+        float nextLogical = _zoomSmoothTime <= 0f
+            ? _targetOrthographicSize
+            : Mathf.SmoothDamp(
+                currentLogical,
+                _targetOrthographicSize,
+                ref _zoomVelocity,
+                _zoomSmoothTime);
+        ApplyOrthographicSize(nextLogical);
+    }
+
+    private void ApplyOrthographicSize(float logicalSize)
+    {
+        _cinemachineCamera.Lens.OrthographicSize =
+            Mathf.Max(0.01f, logicalSize * _visionFactor);
     }
 }

@@ -121,6 +121,8 @@ namespace Garunnir.Runtime.Gameplay.Data
         public string name;
         public float max_weight;
         public float max_volume;
+        /// <summary>소스 컨테이너 인출 moves. 0이면 weight/volume 공식 fallback.</summary>
+        public int draw_moves;
 
         public float MaxWeight => max_weight;
         public float MaxVolume => max_volume;
