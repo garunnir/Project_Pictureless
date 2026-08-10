@@ -16,7 +16,7 @@ public sealed class UIPlayerStatusSummaryController : MonoBehaviour
         {
             Debug.LogError(
                 "[UIPlayerStatusSummaryController] _panel is not assigned. " +
-                "Run Dist/PlayerStatus/Setup Canvas In Open Scene to place HUD in the scene.",
+                "Run Dist/MCP/PlayerStatus/Setup Canvas In Open Scene to place HUD in the scene.",
                 this);
             return;
         }

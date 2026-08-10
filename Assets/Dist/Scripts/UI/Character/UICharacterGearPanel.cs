@@ -2,6 +2,7 @@
 // UICharacterGearPanel — 들기 L/R + 착용 목록 (Character 장비 탭)
 // ============================================================
 
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -11,7 +12,6 @@ public sealed class UICharacterGearPanel : MonoBehaviour
 {
     [SerializeField] RectTransform _wieldRoot;
     [SerializeField] RectTransform _wornRoot;
-    [SerializeField] TMP_Text _hoverText;
     [SerializeField] TMP_Text _filterLabel;
     [SerializeField] TMP_Text _encTotalsText;
 
@@ -24,6 +24,16 @@ public sealed class UICharacterGearPanel : MonoBehaviour
     PlayerGearHost _gearHost;
     int _strength;
     CharacterWindowTab _activeTab = CharacterWindowTab.Equipment;
+    Action<string, RectTransform> _onItemHover;
+    Action _onItemHoverExit;
+
+    public string CoverFilter => _coverFilter;
+
+    public void SetHoverHandlers(Action<string, RectTransform> onHover, Action onExit)
+    {
+        _onItemHover = onHover;
+        _onItemHoverExit = onExit;
+    }
 
     public void EnsureBuilt(RectTransform parent)
     {
@@ -32,23 +42,15 @@ public sealed class UICharacterGearPanel : MonoBehaviour
 
         WireExistingChildren();
         DestroyLegacyPanelProgress();
+        DestroyLegacyHoverDetail();
 
         if (_wieldRoot == null)
-            _wieldRoot = CreateVertical("WieldRoot", transform);
+            _wieldRoot = CreateWieldRoot(transform);
+        else
+            EnsureWieldRootHorizontal(_wieldRoot);
+
         if (_wornRoot == null)
             _wornRoot = CreateVertical("WornRoot", transform);
-
-        if (_hoverText == null)
-        {
-            GameObject hoverGo = new("HoverDetail");
-            hoverGo.transform.SetParent(transform, false);
-            RectTransform hoverRt = hoverGo.AddComponent<RectTransform>();
-            hoverRt.sizeDelta = new Vector2(0f, 48f);
-            _hoverText = hoverGo.AddComponent<TextMeshProUGUI>();
-            _hoverText.fontSize = 14f;
-            _hoverText.raycastTarget = false;
-            ApplySharedFont(_hoverText);
-        }
 
         if (_filterLabel == null)
         {
@@ -62,14 +64,29 @@ public sealed class UICharacterGearPanel : MonoBehaviour
             GameObject filterGo = new("FilterLabel");
             filterGo.transform.SetParent(_wornRoot, false);
             _filterLabel = filterGo.AddComponent<TextMeshProUGUI>();
-            _filterLabel.fontSize = 16f;
+            _filterLabel.fontSize = GearConstants.UiFontSizeFilter;
             _filterLabel.text = CharacterGearLabels.WornFilterAll;
             _filterLabel.raycastTarget = false;
-            ApplySharedFont(_filterLabel);
+            DistUiFont.Apply(_filterLabel);
         }
 
+        EnsureFilterClearButton();
         EnsureWieldSlots();
         EnsureEncTotals();
+    }
+
+    void EnsureFilterClearButton()
+    {
+        if (_filterLabel == null)
+            return;
+
+        _filterLabel.raycastTarget = true;
+        Button button = _filterLabel.GetComponent<Button>();
+        if (button == null)
+            button = _filterLabel.gameObject.AddComponent<Button>();
+        button.transition = Selectable.Transition.None;
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(ClearCoverFilter);
     }
 
     void WireExistingChildren()
@@ -86,13 +103,6 @@ public sealed class UICharacterGearPanel : MonoBehaviour
             Transform t = transform.Find("WornRoot");
             if (t != null)
                 _wornRoot = t as RectTransform;
-        }
-
-        if (_hoverText == null)
-        {
-            Transform t = transform.Find("HoverDetail");
-            if (t != null)
-                _hoverText = t.GetComponent<TMP_Text>();
         }
 
         if (_encTotalsText == null)
@@ -126,6 +136,22 @@ public sealed class UICharacterGearPanel : MonoBehaviour
         Destroy(progress.gameObject);
     }
 
+    void DestroyLegacyHoverDetail()
+    {
+        Transform hover = transform.Find("HoverDetail");
+        if (hover == null)
+            return;
+
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            DestroyImmediate(hover.gameObject);
+            return;
+        }
+#endif
+        Destroy(hover.gameObject);
+    }
+
     void EnsureWieldSlots()
     {
         if (_wieldRoot == null)
@@ -138,6 +164,8 @@ public sealed class UICharacterGearPanel : MonoBehaviour
                 _leftSlot = left.GetComponent<UICharacterWieldSlotView>();
             if (_leftSlot == null)
                 _leftSlot = CreateSlot(_wieldRoot, WieldSlotId.Left);
+            else
+                _leftSlot.EnsureChrome();
         }
 
         if (_rightSlot == null)
@@ -147,6 +175,8 @@ public sealed class UICharacterGearPanel : MonoBehaviour
                 _rightSlot = right.GetComponent<UICharacterWieldSlotView>();
             if (_rightSlot == null)
                 _rightSlot = CreateSlot(_wieldRoot, WieldSlotId.Right);
+            else
+                _rightSlot.EnsureChrome();
         }
     }
 
@@ -158,10 +188,10 @@ public sealed class UICharacterGearPanel : MonoBehaviour
         GameObject totalsGo = new("EncTotals");
         totalsGo.transform.SetParent(transform, false);
         _encTotalsText = totalsGo.AddComponent<TextMeshProUGUI>();
-        _encTotalsText.fontSize = 14f;
+        _encTotalsText.fontSize = GearConstants.UiFontSizeBody;
         _encTotalsText.raycastTarget = false;
         _encTotalsText.gameObject.SetActive(false);
-        ApplySharedFont(_encTotalsText);
+        DistUiFont.Apply(_encTotalsText);
     }
 
     public void SetActiveTab(CharacterWindowTab tab)
@@ -170,7 +200,7 @@ public sealed class UICharacterGearPanel : MonoBehaviour
         Refresh();
     }
 
-    public void ShowPartHover(string partId)
+    public void ShowPartHover(string partId, RectTransform anchor = null)
     {
         if (string.IsNullOrEmpty(partId) || _gear == null)
             return;
@@ -186,10 +216,10 @@ public sealed class UICharacterGearPanel : MonoBehaviour
             text += "\n" + CharacterGearLabels.FormatWeatherVisionLine(
                 host.Weather,
                 host.VisionFactor);
-        ShowHover(text);
+        ShowHover(text, anchor != null ? anchor : transform as RectTransform);
     }
 
-    public void ShowBodyTempPartHover(string partId)
+    public void ShowBodyTempPartHover(string partId, RectTransform anchor = null)
     {
         if (string.IsNullOrEmpty(partId) || _gear == null)
             return;
@@ -205,7 +235,7 @@ public sealed class UICharacterGearPanel : MonoBehaviour
             text += "\n" + CharacterGearLabels.FormatWeatherVisionLine(
                 host.Weather,
                 host.VisionFactor);
-        ShowHover(text);
+        ShowHover(text, anchor != null ? anchor : transform as RectTransform);
     }
 
     public void HidePartHover() => HideHover();
@@ -231,6 +261,7 @@ public sealed class UICharacterGearPanel : MonoBehaviour
         if (_gearHost != null)
             _gearHost.Changed -= Refresh;
         _gearHost = null;
+        UICharacterHandActionMenu.HideActive();
     }
 
     public void SetCoverFilter(string partId)
@@ -334,16 +365,18 @@ public sealed class UICharacterGearPanel : MonoBehaviour
 
     void OnDestroy() => Unbind();
 
-    void ShowHover(string text)
+    void ShowHover(string text, RectTransform anchor)
     {
-        if (_hoverText != null)
-            _hoverText.text = text ?? string.Empty;
+        if (_onItemHover != null)
+        {
+            _onItemHover.Invoke(text, anchor);
+            return;
+        }
     }
 
     void HideHover()
     {
-        if (_hoverText != null)
-            _hoverText.text = string.Empty;
+        _onItemHoverExit?.Invoke();
     }
 
     void OnSlotUnequip(WieldSlotId slot, bool toFloor)
@@ -356,30 +389,45 @@ public sealed class UICharacterGearPanel : MonoBehaviour
         _gear?.TryBeginTakeOff(stack, toFloor);
     }
 
-    void ApplySharedFont(TMP_Text target)
+    void ApplySharedFont(TMP_Text target) => DistUiFont.Apply(target);
+
+    static RectTransform CreateWieldRoot(Transform parent)
     {
-        if (target == null)
+        GameObject go = new("WieldRoot");
+        go.transform.SetParent(parent, false);
+        RectTransform rt = go.AddComponent<RectTransform>();
+        EnsureWieldRootHorizontal(rt);
+        LayoutElement le = go.AddComponent<LayoutElement>();
+        le.minHeight = GearConstants.WieldSlotHeight;
+        le.preferredHeight = GearConstants.WieldSlotHeight + 8f;
+        return rt;
+    }
+
+    static void EnsureWieldRootHorizontal(RectTransform wieldRoot)
+    {
+        if (wieldRoot == null)
             return;
 
-        UICharacterWindow window = GetComponentInParent<UICharacterWindow>();
-        if (window == null)
-            return;
-
-        TMP_Text title = window.GetComponentInChildren<TMP_Text>(true);
-        // Prefer Title under Header when present.
-        Transform header = window.transform.Find("Header/Title");
-        if (header != null)
+        VerticalLayoutGroup vertical = wieldRoot.GetComponent<VerticalLayoutGroup>();
+        if (vertical != null)
         {
-            TMP_Text headerTitle = header.GetComponent<TMP_Text>();
-            if (headerTitle != null && headerTitle.font != null)
-            {
-                target.font = headerTitle.font;
-                return;
-            }
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                UnityEngine.Object.DestroyImmediate(vertical);
+            else
+#endif
+                UnityEngine.Object.Destroy(vertical);
         }
 
-        if (title != null && title.font != null)
-            target.font = title.font;
+        HorizontalLayoutGroup h = wieldRoot.GetComponent<HorizontalLayoutGroup>();
+        if (h == null)
+            h = wieldRoot.gameObject.AddComponent<HorizontalLayoutGroup>();
+        h.childForceExpandWidth = true;
+        h.childForceExpandHeight = true;
+        h.childControlWidth = true;
+        h.childControlHeight = true;
+        h.spacing = 8f;
+        h.padding = new RectOffset(0, 0, 0, 0);
     }
 
     static RectTransform CreateVertical(string name, Transform parent)
@@ -399,12 +447,15 @@ public sealed class UICharacterGearPanel : MonoBehaviour
         GameObject go = new(slot == WieldSlotId.Left ? "Wield_L" : "Wield_R");
         go.transform.SetParent(parent, false);
         var le = go.AddComponent<LayoutElement>();
-        le.minHeight = 36f;
-        le.preferredHeight = 36f;
+        le.minHeight = GearConstants.WieldSlotHeight;
+        le.preferredHeight = GearConstants.WieldSlotHeight;
+        le.flexibleWidth = 1f;
         Image bg = go.AddComponent<Image>();
         bg.color = new Color(0.18f, 0.18f, 0.18f, 0.9f);
         bg.raycastTarget = true;
-        return go.AddComponent<UICharacterWieldSlotView>();
+        UICharacterWieldSlotView view = go.AddComponent<UICharacterWieldSlotView>();
+        view.EnsureChrome();
+        return view;
     }
 
     static UICharacterWornRow CreateWornRow(Transform parent)
@@ -412,11 +463,13 @@ public sealed class UICharacterGearPanel : MonoBehaviour
         GameObject go = new("WornRow");
         go.transform.SetParent(parent, false);
         var le = go.AddComponent<LayoutElement>();
-        le.minHeight = 28f;
-        le.preferredHeight = 28f;
+        le.minHeight = GearConstants.WornRowHeight;
+        le.preferredHeight = GearConstants.WornRowHeight;
         Image bg = go.AddComponent<Image>();
         bg.color = new Color(0.16f, 0.16f, 0.16f, 0.5f);
         bg.raycastTarget = true;
-        return go.AddComponent<UICharacterWornRow>();
+        UICharacterWornRow row = go.AddComponent<UICharacterWornRow>();
+        row.EnsureChrome();
+        return row;
     }
 }

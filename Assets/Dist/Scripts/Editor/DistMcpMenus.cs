@@ -1,0 +1,59 @@
+// ============================================================
+// DistMcpMenus — Unity MCP / agent Editor 메뉴 경로 SSOT
+// ============================================================
+// Dist/MCP/* 는 디자이너 일상 UX가 아니라 MCP·에이전트 자동화용이다.
+// CreateAssetMenu(Dist/...) 와 혼동하지 말 것.
+
+#if UNITY_EDITOR
+internal static class DistMcpMenus
+{
+    public const string Root = "Dist/MCP";
+
+    public const string InventorySyncListColumnLayout =
+        Root + "/Inventory/Sync List Column Layout";
+    public const string InventoryPatchWindowScrollbars =
+        Root + "/Inventory/Patch Window Scrollbars";
+    public const string InventoryPatchWindowColumnHeader =
+        Root + "/Inventory/Patch Window Column Header";
+    public const string InventoryPatchWindowResizeHandlers =
+        Root + "/Inventory/Patch Window Resize Handlers";
+    public const string InventoryPatchRowNameStatusBar =
+        Root + "/Inventory/Patch Row Name Status Bar";
+    public const string InventorySetupCanvasOverlays =
+        Root + "/Inventory/Setup Canvas Overlays In Open Scene";
+
+    public const string PlayerStatusEnsureMoodAssets =
+        Root + "/PlayerStatus/Ensure Mood Assets";
+    public const string PlayerStatusPatchWindowResizeHandlers =
+        Root + "/PlayerStatus/Patch Window Resize Handlers";
+    public const string PlayerStatusPatchCharacterTabsAndGearPanel =
+        Root + "/PlayerStatus/Patch Character Tabs And Gear Panel";
+    public const string PlayerStatusSetupCanvas =
+        Root + "/PlayerStatus/Setup Canvas In Open Scene";
+    public const string PlayerStatusMergeLocalizationKeys =
+        Root + "/PlayerStatus/Merge Localization Keys Into UI_ko";
+
+    public const string TimeEnsureWorldClockSettings =
+        Root + "/Time/Ensure World Clock Settings Asset";
+    public const string TimePatchDisplayResizeHandles =
+        Root + "/Time/Patch Display Resize Handles";
+    public const string TimeSetupCanvas =
+        Root + "/Time/Setup Canvas In Open Scene";
+
+    public const string MessageLogCreatePrefabIfMissing =
+        Root + "/MessageLog/Create Hud_MessageLog Prefab If Missing";
+    public const string MessageLogSetupHud =
+        Root + "/MessageLog/Setup Message Log HUD In Open Scene";
+    public const string MessageLogMergeLocalizationKeys =
+        Root + "/MessageLog/Merge Localization Keys Into UI_ko";
+
+    public const string CombatSetupActionHud =
+        Root + "/Combat/Setup Combat Action HUD In Open Scene";
+
+    public const string CharacterEnsurePlayerGearComponents =
+        Root + "/Character/Ensure Player Gear Components";
+
+    public const string LocalizationSelectOrCreateUiKo =
+        Root + "/Localization/Select Or Create UI_ko Table";
+}
+#endif

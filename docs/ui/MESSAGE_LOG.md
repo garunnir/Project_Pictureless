@@ -88,14 +88,14 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 
 부위 표시: 기존 `PlayerStatus.Part.{id}`.
 
-메뉴: `Dist/MessageLog/Merge Localization Keys Into UI_ko`
+메뉴 (MCP): `Dist/MCP/MessageLog/Merge Localization Keys Into UI_ko`
 
 ---
 
 ## HUD 배선
 
-1. `Dist/MessageLog/Create Hud_MessageLog Prefab If Missing` (없을 때만 생성; 레이아웃 덮어쓰기 금지)
-2. `Dist/MessageLog/Setup Message Log HUD In Open Scene`
+1. `Dist/MCP/MessageLog/Create Hud_MessageLog Prefab If Missing` (없을 때만 생성; 레이아웃 덮어쓰기 금지)
+2. `Dist/MCP/MessageLog/Setup Message Log HUD In Open Scene`
    - Canvas: `MessageLogUIBridge`
    - `System/Msg`: `MessageLogPlayerCombatSink`, `MessageLogPlayerEncumbranceSink`, `UIMessageLogController`
    - `Layer_HUD`: `Hud_MessageLog` 인스턴스

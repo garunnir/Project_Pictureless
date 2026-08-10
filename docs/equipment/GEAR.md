@@ -12,7 +12,7 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 | Wield | L/R hand slots (weapons/tools). Two-hand = same stack on both slots; **no extra UI cell** |
 | Character window | Tabs: 상태 \| 장비 \| 방해 \| 체온. Key = existing `StatusToggle` (`C`) |
 | Primary | Highest DPS hand → `CharacterAttacker.SetWieldedItem` |
-| HandActionBinding | `itemId → WeaponAction?` (null = 없음), persists across unequip |
+| HandActionBinding | `itemId → WeaponAction?` (null = 없음), persists across unequip + `HandActionBindingPersistence` disk JSON |
 
 ## Domain SSOT
 
@@ -62,7 +62,9 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 ### Unequip
 
 - Worn row / wield slot: take off / unwield
-- Double-click → body inventory; (floor path via `toFloor` when wired)
+- Double-click → body inventory; drag outside Character window → floor (`toFloor`); slot RMB includes 바닥에 놓기
+- Worn filter: **body part click** (toggle); FilterLabel click → 전체; hover does not sticky-filter
+- Worn hover uses `AppendItemArmorHover` (Phase A/C fields)
 - Two-hand unwield once
 
 ## Phase A — Armor detail aggregates (UI only)
@@ -469,7 +471,7 @@ flowchart LR
 ## UI layout SSOT / audit
 
 **Prefab SSOT:** `Assets/Dist/Visual/Prefabs/UIComponents/PlayerStatus/Grp_PlayerStatusWindow.prefab`  
-**Patch (keep permanently):** `Dist/PlayerStatus/Patch Character Tabs And Gear Panel`
+**Patch (keep permanently, MCP):** `Dist/MCP/PlayerStatus/Patch Character Tabs And Gear Panel`
 
 | Issue | Status |
 |-------|--------|
@@ -491,6 +493,27 @@ flowchart LR
 ### Remaining debt
 
 - TabBar vs hand-tuned BodyProfile spacing may need a one-line Prefab Mode nudge after play test
-- Wield/Worn row chrome still mostly runtime `AddComponent` (list items), not per-row prefabs
-- Gear panel right-column vs `Area_BodyStatus` overlap is soft (hide vitals, show panel) — no dedicated Status-only column collapse anim
+- Worn row chrome still mostly runtime for list items (Icon+Label roots patched on create)
 - Localization keys for Character.* tabs may still fall back to `CharacterGearLabels` defaults until Merge Localization covers them
+
+## UI Plan Parity Checklist
+
+Contract: M0 `UICharacterWindow` schema in equipment plan · this doc.  
+Gate: all rows **Pass** before declaring Character gear UI done.  
+Last run: **2026-08-06 post-P0** (Play MCP smoke Pass).
+
+| # | Contract | Status | Evidence |
+|---|----------|--------|----------|
+| L1 | Equipment: body diagram **left** + wield/worn **right** (2-col) | Pass | `GearPanelRoot` right; `Area_BodyStatus` off on gear tabs |
+| L2 | Wield L\|R **horizontal** | Pass | `WieldRoot` HorizontalLayoutGroup |
+| S1 | Wield: **item icon** primary; **no always-on name** | Pass | `Icon` Image; Label alpha 0 for name-bar only |
+| S2 | Wield: **action icon** corner (none = none icon) | Pass | `ActionIcon` + B/C/G/— |
+| S3 | Worn: **icon** + name + covers + name-overlay bar | Pass | `UICharacterWornRow` Icon + Label + `ItemNameStatusBar` |
+| H1 | Hover = DetailPanel (strain/need Str hover-only) | Pass | `ShowText` + Worn `AppendItemArmorHover` |
+| A1 | Slot RMB = context Bash/Cut/Gun/None (+ unwield/floor) | Pass | `UICharacterHandActionMenu` + DropFloor |
+| F1 | Worn filter by body **click** (toggle); FilterLabel clears | Pass | `OnPartClick` / not hover sticky |
+| T1 | Enc tab: enc body + worn; wield hidden | Pass | `showWield` Equipment-only |
+| T2 | BodyTemp tab: warmth + BodyTemp totals | Pass | `FormatBodyTempTotals` |
+| T3 | Tabs 상태\|장비\|방해\|체온 + key C | Pass | TabBar + StatusToggle |
+| P1 | Progress = name-overlay bar only (no panel Slider) | Pass | Progress/HoverDetail removed from prefab |
+| U1 | Status tab vitals/skills parity | Pass | Area_Content + BodyStatus on Status |

@@ -320,7 +320,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         if (_dragGhostPrefab == null)
         {
             Debug.LogError(
-                "[UIInventoryController] Drag ghost prefab is not assigned. Run Dist/Inventory/Setup Canvas Overlays In Open Scene.",
+                "[UIInventoryController] Drag ghost prefab is not assigned. Run Dist/MCP/Inventory/Setup Canvas Overlays In Open Scene.",
                 this);
             return;
         }
@@ -407,7 +407,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         if (_scrollDragOverlayPrefab == null)
         {
             Debug.LogError(
-                "[UIInventoryController] Scroll drag overlay prefab is not assigned. Run Dist/Inventory/Setup Canvas Overlays In Open Scene.",
+                "[UIInventoryController] Scroll drag overlay prefab is not assigned. Run Dist/MCP/Inventory/Setup Canvas Overlays In Open Scene.",
                 this);
             return;
         }
@@ -426,7 +426,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         if (_contextMenuPrefab == null)
         {
             Debug.LogError(
-                "[UIInventoryController] Context menu prefab is not assigned. Run Dist/Inventory/Setup Canvas Overlays In Open Scene.",
+                "[UIInventoryController] Context menu prefab is not assigned. Run Dist/MCP/Inventory/Setup Canvas Overlays In Open Scene.",
                 this);
             return;
         }
@@ -445,7 +445,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         if (_itemDetailPanelPrefab == null)
         {
             Debug.LogError(
-                "[UIInventoryController] Item detail panel prefab is not assigned. Run Dist/Inventory/Setup Canvas Overlays In Open Scene.",
+                "[UIInventoryController] Item detail panel prefab is not assigned. Run Dist/MCP/Inventory/Setup Canvas Overlays In Open Scene.",
                 this);
             return;
         }

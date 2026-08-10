@@ -34,6 +34,36 @@ public static class GearConstants
     /// <summary>sided=true 아이템이 같은 부위+레이어에 허용되는 최대 개수 (좌/우).</summary>
     public const int MaxSidedPerLayer = 2;
 
+    /// <summary>들기 슬롯 아이템 아이콘 한 변 (px).</summary>
+    public const float WieldIconSize = 40f;
+
+    /// <summary>들기 슬롯 액션 아이콘 한 변 (px).</summary>
+    public const float WieldActionIconSize = 16f;
+
+    /// <summary>착용 행 아이템 아이콘 한 변 (px).</summary>
+    public const float WornIconSize = 28f;
+
+    /// <summary>들기 슬롯 LayoutElement 높이.</summary>
+    public const float WieldSlotHeight = 48f;
+
+    /// <summary>착용 행 LayoutElement 높이.</summary>
+    public const float WornRowHeight = 32f;
+
+    /// <summary>Character 탭/슬롯 TMP 기본 크기.</summary>
+    public const float UiFontSizeTab = 15f;
+
+    /// <summary>Filter / EncTotals TMP 크기.</summary>
+    public const float UiFontSizeBody = 14f;
+
+    /// <summary>FilterLabel TMP 크기.</summary>
+    public const float UiFontSizeFilter = 16f;
+
+    /// <summary>들기 액션 코너 라벨 TMP 크기.</summary>
+    public const float UiFontSizeActionIcon = 11f;
+
+    /// <summary>HandAction 미니메뉴 행 TMP 크기.</summary>
+    public const float UiFontSizeContextRow = 14f;
+
     public static float OffHandDpsFactor(int handSkillLevel)
     {
         float t = Mathf.Clamp01(handSkillLevel / (float)OffHandDpsFactorCapLevel);

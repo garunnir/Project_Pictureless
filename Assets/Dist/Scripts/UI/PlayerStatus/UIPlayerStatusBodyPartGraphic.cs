@@ -10,7 +10,8 @@ using UnityEngine.UI;
 public sealed class UIPlayerStatusBodyPartGraphic :
     MonoBehaviour,
     IPointerEnterHandler,
-    IPointerExitHandler
+    IPointerExitHandler,
+    IPointerClickHandler
 {
     static readonly Color HealthyColor = Color.white;
     static readonly Color CriticalColor = new(0.8f, 0.2f, 0.18f, 1f);
@@ -23,14 +24,20 @@ public sealed class UIPlayerStatusBodyPartGraphic :
     Color _displayColor = Color.white;
     Action<string, RectTransform> _onHover;
     Action _onExit;
+    Action<string> _onClick;
 
     public string PartId => _partId;
 
-    public void Bind(string partId, Action<string, RectTransform> onHover, Action onExit)
+    public void Bind(
+        string partId,
+        Action<string, RectTransform> onHover,
+        Action onExit,
+        Action<string> onClick = null)
     {
         _partId = partId;
         _onHover = onHover;
         _onExit = onExit;
+        _onClick = onClick;
     }
 
     public void SetDisplay(int currentCondition, int maxCondition, bool present)
@@ -74,6 +81,15 @@ public sealed class UIPlayerStatusBodyPartGraphic :
             _partImage.color = _displayColor;
 
         _onExit?.Invoke();
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button != PointerEventData.InputButton.Left)
+            return;
+        if (string.IsNullOrEmpty(_partId))
+            return;
+        _onClick?.Invoke(_partId);
     }
 
     public void Wire(Image partImage, string partId)

@@ -22,6 +22,8 @@ alwaysApply: true
 | `ui-prefab-bake.mdc` | UI 프리팹 full bake는 일회성 — 베이크 후 스크립트 삭제 |
 | `vendor-packages.mdc` | 서드파티·벤더 원본 인플레이스 수정 금지 — Dist 포크/래퍼 |
 
+`00-rules-index.mdc` §**Dist UI path gate**: UI 경로 수정 시 `ui-font`/`ui-prefab-layout` 로드 스위치 (전문 Always 아님).
+
 ## Glob (해당 경로 작업 시)
 | File | Globs |
 |------|-------|
@@ -36,6 +38,30 @@ alwaysApply: true
 | `locomotion.mdc` | `Entity/Locomotion` · `docs/locomotion/**` |
 | `legacy.mdc` | `Assets/Dist/Legacy/**` · `docs/legacy/**` |
 | `game-time.mdc` | `Gameplay/Time` · `Static/Time` · `UI/Time` · `Editor/Time` · `SOData/.../Time` · `docs/time/**` |
+
+## Dist UI path gate (Always — 스위치만, 전문은 Glob)
+
+이번 턴·서브에이전트 작업이 아래를 **생성·수정**하면 (읽기만은 해당 없음):
+
+- `Assets/Dist/Scripts/UI/**`
+- `Assets/Dist/Visual/Prefabs/UIComponents/**`
+- `Assets/Dist/Scripts/Editor/**` 중 UI 프리팹 Patch/빌더
+
+**MUST (편집 전):**
+1. `ui-font.mdc` · `ui-prefab-layout.mdc` 전문을 읽고 따른다 (Always에 전문을 넣지 않음 — 비UI 컨텍스트 오염 방지).
+2. `Task`/서브에이전트에 UI 경로를 맡기면 프롬프트에 아래 블록을 **그대로** 넣는다.
+
+```text
+## Dist UI MUST (path gate)
+- Read and obey: .cursor/rules/ui-font.mdc , .cursor/rules/ui-prefab-layout.mdc
+- TMP: Katuri via DistUiFont or prefab-serialized font — no Liberation/unset
+- Chrome layout: prefab SSOT — no runtime new+magic Rect/Layout for window chrome
+- Fail either rule → task Incomplete (do not declare done)
+```
+
+**MUST NOT:** UI 경로를 수정하면서 위 룰을 읽지 않은 채 기능만 Pass로 완료 선언.
+
+검증 전용 프롬프트 SSOT: `.claude/checklists/dist-ui-gate.md`
 
 ## Non-normative
 | File | Note |

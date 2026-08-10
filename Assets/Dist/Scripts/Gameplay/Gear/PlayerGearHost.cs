@@ -68,6 +68,8 @@ public sealed class PlayerGearHost : MonoBehaviour
     {
         if (_service != null)
         {
+            _service.HandActions.Changed -= PersistHandActions;
+            HandActionBindingPersistence.SaveFrom(_service.HandActions);
             _service.LiftStrainChanged -= ApplyLiftStrainMovement;
             _service.Changed -= OnServiceChanged;
             _service.Unbind();
@@ -171,9 +173,17 @@ public sealed class PlayerGearHost : MonoBehaviour
             BodyContainer,
             FloorContainer,
             RefreshPrimaryWield);
+        HandActionBindingPersistence.LoadInto(_service.HandActions);
+        _service.HandActions.Changed += PersistHandActions;
         _service.LiftStrainChanged += ApplyLiftStrainMovement;
         _service.Changed += OnServiceChanged;
         _bound = true;
+    }
+
+    void PersistHandActions()
+    {
+        if (_service != null)
+            HandActionBindingPersistence.SaveFrom(_service.HandActions);
     }
 
     int Strength()

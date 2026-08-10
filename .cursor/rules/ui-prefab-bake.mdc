@@ -25,9 +25,11 @@ alwaysApply: true
 ## OK (예외 — 상시 유지 가능)
 | OK | Condition |
 |----|-----------|
-| Patch 메뉴 | 기존 계층 유지, SerializeField·부분 geometry만 |
-| Overlay Setup | 고스트/컨텍스트 등 ephemeral 프리팹 Ensure (창 본체 full bake 아님) |
+| Patch 메뉴 | `Dist/MCP/...` — 기존 계층 유지, SerializeField·부분 geometry만 (MCP/에이전트용) |
+| Overlay Setup | `Dist/MCP/...` — 고스트/컨텍스트 등 ephemeral 프리팹 Ensure (창 본체 full bake 아님) |
 | 일회 bake | 사용자 승인 + 베이크 후 **즉시 삭제** |
+
+`Dist/MCP/*` 는 Unity MCP·에이전트 자동화용이다. `Create → Dist/...` (CreateAssetMenu) 와 별개.
 
 ## See also
 `ui-prefab-layout.mdc` · `00-rules-index.mdc`

@@ -17,6 +17,7 @@ alwaysApply: true
   - 공개 API·직렬화·DB 스키마
   - 새 타입/파이프라인
 - 작업 끝: **검증 가능 한 문장** (컴파일/씬/로드 등). 못하면 이유 한 줄
+- **Dist UI path gate:** 수정 경로가 `Assets/Dist/Scripts/UI/**` · `UIComponents/**` · Editor UI Patch면 → 편집 전 `ui-font`/`ui-prefab-layout` 읽고, `Task`에는 `.claude/checklists/dist-ui-gate.md` MUST 블록 포함 (`00-rules-index.mdc`)
 
 ## Token efficiency (MUST)
 

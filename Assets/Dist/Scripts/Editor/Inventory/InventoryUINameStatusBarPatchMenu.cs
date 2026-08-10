@@ -1,5 +1,5 @@
 // ============================================================
-// InventoryUINameStatusBarPatchMenu — 행 Name 셀 겹침 fill Ensure
+// InventoryUINameStatusBarPatchMenu — Dist/MCP Name fill Patch (에이전트용)
 // ============================================================
 
 #if UNITY_EDITOR
@@ -11,7 +11,7 @@ static class InventoryUINameStatusBarPatchMenu
 {
     const string RowPath = InventoryUIHierarchyBuilder.PrefabFolder + "/Grp_ItemListRow.prefab";
 
-    [MenuItem("Dist/Inventory/Patch Row Name Status Bar")]
+    [MenuItem(DistMcpMenus.InventoryPatchRowNameStatusBar)]
     static void PatchRowNameStatusBar()
     {
         GameObject rowRoot = PrefabUtility.LoadPrefabContents(RowPath);

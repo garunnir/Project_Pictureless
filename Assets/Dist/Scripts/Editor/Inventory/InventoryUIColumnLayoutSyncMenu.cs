@@ -1,5 +1,5 @@
 // ============================================================
-// InventoryUIColumnLayoutSyncMenu — Settings → 행/창 프리팹 열 geometry 동기화
+// InventoryUIColumnLayoutSyncMenu — Dist/MCP 열 geometry Sync (에이전트용)
 // ============================================================
 
 #if UNITY_EDITOR
@@ -11,7 +11,7 @@ static class InventoryUIColumnLayoutSyncMenu
     const string WindowPath = InventoryUIHierarchyBuilder.PrefabFolder + "/Grp_InventoryListWindow.prefab";
     const string RowPath = InventoryUIHierarchyBuilder.PrefabFolder + "/Grp_ItemListRow.prefab";
 
-    [MenuItem("Dist/Inventory/Sync List Column Layout")]
+    [MenuItem(DistMcpMenus.InventorySyncListColumnLayout)]
     static void SyncListColumnLayout()
     {
         InventoryListColumnLayoutSettings settings = InventoryListColumnLayoutSettingsUtility.LoadOrCreateSettings();

@@ -26,4 +26,8 @@ Before reporting completion, verify ALL of the following:
 - [ ] `.claude/checklists/migration-parity.md` 계약을 표급 전에 통과했거나, 미완이면 구경로·Revert·flag off·Pending을 명시했다
 - [ ] 예상 가능 공백을 사용자 재현 뺑뺑이로 메우지 않았다 (룰: `migration-parity.mdc`)
 
+## Dist UI — if this task created/edited UI paths
+- [ ] `.claude/checklists/dist-ui-gate.md` 통과 (`ui-font` · `ui-prefab-layout`)
+- [ ] 검증 에이전트를 쓰면 Fail 시 Incomplete
+
 If any item fails → fix it before reporting done.

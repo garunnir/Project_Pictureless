@@ -1,5 +1,5 @@
 // ============================================================
-// InventoryUIColumnHeaderPatchMenu — 창 프리팹에 컬럼 헤더만 패치 (전체 rebake 금지)
+// InventoryUIColumnHeaderPatchMenu — Dist/MCP 컬럼 헤더 Patch (에이전트용)
 // ============================================================
 
 #if UNITY_EDITOR
@@ -10,7 +10,7 @@ static class InventoryUIColumnHeaderPatchMenu
 {
     const string WindowPath = InventoryUIHierarchyBuilder.PrefabFolder + "/Grp_InventoryListWindow.prefab";
 
-    [MenuItem("Dist/Inventory/Patch Window Column Header")]
+    [MenuItem(DistMcpMenus.InventoryPatchWindowColumnHeader)]
     static void PatchWindowColumnHeader()
     {
         GameObject root = PrefabUtility.LoadPrefabContents(WindowPath);

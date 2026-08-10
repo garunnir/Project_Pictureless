@@ -22,6 +22,7 @@ public static class CharacterGearLabels
     const string KeyWieldRight = "Character.WieldRight";
     const string KeyWieldTwoHand = "Character.WieldTwoHand";
     const string KeyUnwield = "Character.Unwield";
+    const string KeyDropFloor = "Character.DropFloor";
     const string KeyHandActionGroup = "Character.HandActionGroup";
     const string KeyActionNone = "Character.ActionNone";
     const string KeyActionBash = "Character.ActionBash";
@@ -85,6 +86,7 @@ public static class CharacterGearLabels
     public static string WieldRight => GetOr(KeyWieldRight, "오른손 들기");
     public static string WieldTwoHand => GetOr(KeyWieldTwoHand, "양손 들기");
     public static string Unwield => GetOr(KeyUnwield, "내려놓기");
+    public static string DropFloor => GetOr(KeyDropFloor, "바닥에 놓기");
     public static string HandActionGroup => GetOr(KeyHandActionGroup, "사용 액션");
     public static string ActionNone => GetOr(KeyActionNone, "없음");
     public static string ActionBash => GetOr(KeyActionBash, "타격");

@@ -1,5 +1,5 @@
 // ============================================================
-// MessageLogUISetupMenu — 메시지 로그 HUD 씬 배선 + 프리팹 작성
+// MessageLogUISetupMenu — Dist/MCP 메시지 로그 Setup·Ensure (에이전트용)
 // ============================================================
 
 #if UNITY_EDITOR
@@ -14,7 +14,7 @@ static class MessageLogUISetupMenu
     const string PrefabFolder = "Assets/Dist/Visual/Prefabs/UIComponents/MessageLog";
     const string DisplayPrefabPath = PrefabFolder + "/Hud_MessageLog.prefab";
 
-    [MenuItem("Dist/MessageLog/Create Hud_MessageLog Prefab If Missing")]
+    [MenuItem(DistMcpMenus.MessageLogCreatePrefabIfMissing)]
     static void CreatePrefabIfMissing()
     {
         EnsureFolder();
@@ -40,7 +40,7 @@ static class MessageLogUISetupMenu
             AssetDatabase.LoadAssetAtPath<UIMessageLogPanel>(DisplayPrefabPath);
     }
 
-    [MenuItem("Dist/MessageLog/Setup Message Log HUD In Open Scene")]
+    [MenuItem(DistMcpMenus.MessageLogSetupHud)]
     static void SetupCanvasInOpenScene()
     {
         Canvas canvas = ResolveUiCanvas();
@@ -127,7 +127,7 @@ static class MessageLogUISetupMenu
         {
             Debug.LogError(
                 $"[MessageLogUISetupMenu] Prefab missing: {DisplayPrefabPath}. " +
-                "Run Dist/MessageLog/Create Hud_MessageLog Prefab If Missing — " +
+                "Run " + DistMcpMenus.MessageLogCreatePrefabIfMissing + " — " +
                 "do not full-bake over layout.");
             return;
         }
@@ -144,7 +144,7 @@ static class MessageLogUISetupMenu
         Debug.Log("[MessageLogUISetupMenu] Message log HUD wired.", panel);
     }
 
-    [MenuItem("Dist/MessageLog/Merge Localization Keys Into UI_ko")]
+    [MenuItem(DistMcpMenus.MessageLogMergeLocalizationKeys)]
     static void MergeLocalizationKeysMenu() => MergeLocalizationKeys();
 
     static void MergeLocalizationKeys()
@@ -155,7 +155,7 @@ static class MessageLogUISetupMenu
         {
             Debug.LogError(
                 "[MessageLogUISetupMenu] UI_ko table missing. " +
-                "Run Dist/Localization/Select Or Create UI_ko Table.");
+                "Run " + DistMcpMenus.LocalizationSelectOrCreateUiKo + ".");
             return;
         }
 

@@ -1,5 +1,5 @@
 // ============================================================
-// InventoryUICanvasOverlaySetupMenu — Layer 그룹 + 일시 UI 프리팹 배선
+// InventoryUICanvasOverlaySetupMenu — Dist/MCP 오버레이 Setup (에이전트용)
 // ============================================================
 
 #if UNITY_EDITOR
@@ -18,7 +18,7 @@ static class InventoryUICanvasOverlaySetupMenu
     const string ItemDetailPanelPrefabPath = PrefabFolder + "/InventoryItemDetailPanel.prefab";
     const string ContextMenuButtonPath = InventoryUIHierarchyBuilder.PrefabFolder + "/ContextMenuButton.prefab";
 
-    [MenuItem("Dist/Inventory/Setup Canvas Overlays In Open Scene")]
+    [MenuItem(DistMcpMenus.InventorySetupCanvasOverlays)]
     static void SetupCanvasOverlaysInOpenScene()
     {
         UIInventoryController controller = Object.FindAnyObjectByType<UIInventoryController>();

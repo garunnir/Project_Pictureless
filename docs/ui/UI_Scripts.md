@@ -249,7 +249,7 @@ UI.cs 상속, ContentSizeFitter 필수
 - `Katuri.otf` / `Katuri.ttf` — 원본 폰트 파일
 - `Katuri SDF.asset` — TextMeshPro용 SDF 렌더링 에셋 (`Assets/Dist/Scripts/UI/Font/Katuri SDF.asset`)
 
-**기본값 (필수):** Dist UI의 모든 `TextMeshProUGUI`는 **Katuri SDF**를 폰트 에셋으로 사용한다. TMP 기본값(Liberation Sans)이나 미지정은 사용하지 않는다.
+**런타임 SSOT:** `DistUiFont` (`Assets/Dist/Scripts/UI/Font/DistUiFont.cs`) — Character 등 동적 TMP에 Katuri 적용. Editor 빌더는 `DefaultUIFontPath` 유지.
 
 - 신규 UI 프리팹·일회 bake(후 삭제) 스크립트: 위 경로의 `Katuri SDF.asset` 참조
 - 인벤 UI (`Visual/Prefabs/UIComponents/Inventory/`): `Grp_ItemListRow`, `Grp_ContainerSlot`의 TMP가 Katuri SDF를 참조

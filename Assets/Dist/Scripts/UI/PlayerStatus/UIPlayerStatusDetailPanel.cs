@@ -49,6 +49,22 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
         _shell.ShowNearAnchor(anchor, PartHoverStyle);
     }
 
+    /// <summary>Gear 슬롯/행 호버 — 인벤식 DetailPanel 셸에 임의 본문.</summary>
+    public void ShowText(string body, RectTransform anchor)
+    {
+        if (string.IsNullOrEmpty(body) || anchor == null)
+        {
+            Hide();
+            return;
+        }
+
+        EnsureShell();
+        if (_bodyText != null)
+            _bodyText.text = body;
+        RebuildLayout();
+        _shell.ShowNearAnchor(anchor, PartHoverStyle);
+    }
+
     void BindPart(ICharacterBody body, string mainPartId)
     {
         if (!body.TryGet(mainPartId, out BodyPartNode node))

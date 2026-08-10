@@ -1,5 +1,5 @@
 // ============================================================
-// UICharacterWornRow — 착용 목록 행 (호버 · 더블클릭 벗기 · 이름 겹침 바)
+// UICharacterWornRow — 착용 목록 행 (아이콘·이름·covers·호버·벗기)
 // ============================================================
 
 using System;
@@ -13,16 +13,53 @@ public sealed class UICharacterWornRow :
     MonoBehaviour,
     IPointerEnterHandler,
     IPointerExitHandler,
-    IPointerClickHandler
+    IPointerClickHandler,
+    IBeginDragHandler,
+    IDragHandler,
+    IEndDragHandler
 {
+    Image _icon;
     TMP_Text _label;
     ItemNameStatusBar _nameBar;
     ItemStack _stack;
     CharacterGearService _gear;
     int _strength;
-    Action<string> _onHover;
+    Action<string, RectTransform> _onHover;
     Action _onExit;
     Action<ItemStack, bool> _onUnequip;
+    bool _dragging;
+
+    public void EnsureChrome()
+    {
+        EnsureIcon();
+        EnsureLabel();
+        if (_nameBar == null)
+            _nameBar = ItemNameStatusBar.Ensure(ref _label);
+    }
+
+    void EnsureIcon()
+    {
+        if (_icon != null)
+            return;
+
+        Transform t = transform.Find("Icon");
+        if (t != null)
+            _icon = t.GetComponent<Image>();
+        if (_icon != null)
+            return;
+
+        GameObject go = new("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        go.transform.SetParent(transform, false);
+        go.transform.SetAsFirstSibling();
+        LayoutElement le = go.AddComponent<LayoutElement>();
+        le.minWidth = GearConstants.WornIconSize;
+        le.preferredWidth = GearConstants.WornIconSize;
+        le.minHeight = GearConstants.WornIconSize;
+        le.preferredHeight = GearConstants.WornIconSize;
+        _icon = go.GetComponent<Image>();
+        _icon.preserveAspect = true;
+        _icon.raycastTarget = false;
+    }
 
     void EnsureLabel()
     {
@@ -35,28 +72,30 @@ public sealed class UICharacterWornRow :
         if (_label == null)
             _label = GetComponent<TMP_Text>();
         if (_label == null)
-            _label = gameObject.AddComponent<TextMeshProUGUI>();
-        _label.fontSize = 14f;
-        _label.raycastTarget = false;
-    }
+        {
+            GameObject labelGo = new(ItemNameStatusBar.LabelObjectName, typeof(RectTransform), typeof(CanvasRenderer));
+            labelGo.transform.SetParent(transform, false);
+            LayoutElement le = labelGo.AddComponent<LayoutElement>();
+            le.flexibleWidth = 1f;
+            le.minHeight = GearConstants.WornRowHeight;
+            _label = labelGo.AddComponent<TextMeshProUGUI>();
+        }
 
-    void EnsureNameBar()
-    {
-        EnsureLabel();
-        if (_nameBar != null)
-            return;
-        _nameBar = ItemNameStatusBar.Ensure(ref _label);
+        _label.fontSize = GearConstants.UiFontSizeBody;
+        _label.raycastTarget = false;
+        DistUiFont.Apply(_label);
     }
 
     public void Bind(
         ItemStack stack,
         CharacterGearService gear,
         int strength,
-        Action<string> onHover,
+        Action<string, RectTransform> onHover,
         Action onExit,
         Action<ItemStack, bool> onUnequip)
     {
-        EnsureNameBar();
+        EnsureChrome();
+        EnsureHorizontalLayout();
         _stack = stack;
         _gear = gear;
         _strength = strength;
@@ -68,8 +107,21 @@ public sealed class UICharacterWornRow :
         {
             if (_label != null)
                 _label.text = string.Empty;
+            if (_icon != null)
+            {
+                _icon.sprite = null;
+                _icon.enabled = false;
+            }
+
             _nameBar?.Clear();
             return;
+        }
+
+        if (_icon != null)
+        {
+            _icon.enabled = true;
+            _icon.sprite = ItemVisualPresenter.GetDisplayIcon(stack.ItemId);
+            _icon.color = Color.white;
         }
 
         string covers = stack.Item.armor?.covers != null
@@ -80,6 +132,22 @@ public sealed class UICharacterWornRow :
             : $"{stack.Item.name} ({covers})";
 
         RefreshNameBar();
+    }
+
+    void EnsureHorizontalLayout()
+    {
+        HorizontalLayoutGroup h = GetComponent<HorizontalLayoutGroup>();
+        if (h == null)
+        {
+            h = gameObject.AddComponent<HorizontalLayoutGroup>();
+            h.childAlignment = TextAnchor.MiddleLeft;
+            h.spacing = 6f;
+            h.padding = new RectOffset(4, 4, 2, 2);
+            h.childForceExpandWidth = false;
+            h.childForceExpandHeight = false;
+            h.childControlWidth = true;
+            h.childControlHeight = true;
+        }
     }
 
     public void RefreshNameBar()
@@ -97,28 +165,51 @@ public sealed class UICharacterWornRow :
 
         int required = GearHandleRules.RequiredStrForWear(_stack.Item);
         bool strain = GearHandleRules.HasLiftStrain(_strength, _stack.Item, false);
-        var sb = new StringBuilder(160);
+        var sb = new StringBuilder(220);
         sb.Append(_stack.Item.name).Append('\n');
         sb.Append(CharacterGearLabels.FormatRequiredStr(required, _strength, strain));
         CharacterGearLabels.AppendItemArmorHover(sb, _stack.Item.armor);
-
-        _onHover?.Invoke(sb.ToString());
+        _onHover?.Invoke(sb.ToString(), transform as RectTransform);
     }
 
     public void OnPointerExit(PointerEventData eventData) => _onExit?.Invoke();
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (_stack == null)
+        if (_stack == null || _onUnequip == null)
             return;
-
-        if (eventData.button == PointerEventData.InputButton.Right)
-        {
-            _onUnequip?.Invoke(_stack, false);
-            return;
-        }
 
         if (eventData.button == PointerEventData.InputButton.Left && eventData.clickCount >= 2)
-            _onUnequip?.Invoke(_stack, false);
+            _onUnequip.Invoke(_stack, false);
+    }
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        if (eventData.button != PointerEventData.InputButton.Left)
+            return;
+        _dragging = true;
+    }
+
+    public void OnDrag(PointerEventData eventData) { }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        if (!_dragging)
+            return;
+        _dragging = false;
+        if (_stack == null || _onUnequip == null)
+            return;
+
+        UICharacterWindow window = GetComponentInParent<UICharacterWindow>();
+        RectTransform windowRt = window != null ? window.WindowRect : null;
+        if (windowRt == null)
+            return;
+
+        Canvas canvas = window.GetComponentInParent<Canvas>();
+        Camera cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? canvas.worldCamera
+            : null;
+        if (!RectTransformUtility.RectangleContainsScreenPoint(windowRt, eventData.position, cam))
+            _onUnequip.Invoke(_stack, true);
     }
 }

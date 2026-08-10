@@ -1,5 +1,5 @@
 // ============================================================
-// LocalizationTableSetupMenu — UI_ko LocalizationTable 생성/선택
+// LocalizationTableSetupMenu — Dist/MCP UI_ko 테이블 Ensure (에이전트용)
 // ============================================================
 
 #if UNITY_EDITOR
@@ -10,7 +10,7 @@ static class LocalizationTableSetupMenu
 {
     const string AssetFolder = "Assets/Dist/Resources/Localization";
 
-    [MenuItem("Dist/Localization/Select Or Create UI_ko Table")]
+    [MenuItem(DistMcpMenus.LocalizationSelectOrCreateUiKo)]
     static void SelectOrCreateUiKoTable()
     {
         if (!AssetDatabase.IsValidFolder("Assets/Dist/Resources"))

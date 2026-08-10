@@ -2,6 +2,7 @@
 // UICharacterWindow — Character 창 (상태|장비|방해|체온) + Status 패리티
 // ============================================================
 
+using System;
 using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 using TMPro;
@@ -19,6 +20,7 @@ public sealed class UICharacterWindow : MonoBehaviour
     [SerializeField] UIPlayerStatusDetailPanel _detailPanel;
     [SerializeField] UIWindowDragHandler _windowDragHandler;
     [SerializeField] RectTransform _statusContentRoot;
+    [SerializeField] RectTransform _bodyStatusRoot;
     [SerializeField] RectTransform _tabBarRoot;
     [SerializeField] RectTransform _gearPanelRoot;
     [SerializeField] UICharacterGearPanel _gearPanel;
@@ -211,10 +213,10 @@ public sealed class UICharacterWindow : MonoBehaviour
 
         TextMeshProUGUI text = labelGo.AddComponent<TextMeshProUGUI>();
         text.text = label;
-        text.fontSize = 15f;
+        text.fontSize = GearConstants.UiFontSizeTab;
         text.alignment = TextAlignmentOptions.Center;
         text.raycastTarget = false;
-        ApplySharedFont(text);
+        DistUiFont.Apply(text);
 
         return button;
     }
@@ -251,6 +253,7 @@ public sealed class UICharacterWindow : MonoBehaviour
             _gearPanel = _gearPanelRoot.gameObject.AddComponent<UICharacterGearPanel>();
 
         _gearPanel.EnsureBuilt(_gearPanelRoot);
+        _gearPanel.SetHoverHandlers(OnGearItemHover, OnGearItemHoverExit);
     }
 
     void BindGear()
@@ -263,7 +266,21 @@ public sealed class UICharacterWindow : MonoBehaviour
         else if (GameplayData.CharacterSkills != null)
             str = GameplayData.CharacterSkills.Level(AttributeIds.Str);
 
+        _gearPanel?.SetHoverHandlers(OnGearItemHover, OnGearItemHoverExit);
         _gearPanel?.Bind(gear, str);
+    }
+
+    void OnGearItemHover(string text, RectTransform anchor)
+    {
+        if (_detailPanel == null || string.IsNullOrEmpty(text))
+            return;
+        RectTransform a = anchor != null ? anchor : _gearPanelRoot;
+        _detailPanel.ShowText(text, a);
+    }
+
+    void OnGearItemHoverExit()
+    {
+        _detailPanel?.Hide();
     }
 
     void ApplyTabVisibility()
@@ -273,8 +290,17 @@ public sealed class UICharacterWindow : MonoBehaviour
             || _tab == CharacterWindowTab.Encumbrance
             || _tab == CharacterWindowTab.BodyTemp;
 
+        if (_bodyStatusRoot == null)
+        {
+            Transform bodyStatus = transform.Find("Area_BodyProfile/Area_BodyStatus");
+            if (bodyStatus != null)
+                _bodyStatusRoot = bodyStatus as RectTransform;
+        }
+
         if (_statusContentRoot != null)
             _statusContentRoot.gameObject.SetActive(statusLike);
+        if (_bodyStatusRoot != null)
+            _bodyStatusRoot.gameObject.SetActive(statusLike);
         if (_vitalsText != null)
             _vitalsText.gameObject.SetActive(statusLike);
         if (_skillsText != null)
@@ -286,12 +312,7 @@ public sealed class UICharacterWindow : MonoBehaviour
             _gearPanel?.ClearCoverFilter();
     }
 
-    void ApplySharedFont(TMP_Text target)
-    {
-        if (target == null || _headerTitle == null || _headerTitle.font == null)
-            return;
-        target.font = _headerTitle.font;
-    }
+    void ApplySharedFont(TMP_Text target) => DistUiFont.Apply(target);
 
     void EnsurePartViews()
     {
@@ -315,7 +336,7 @@ public sealed class UICharacterWindow : MonoBehaviour
                 if (string.IsNullOrEmpty(partId))
                     continue;
 
-                _graphics[i].Bind(partId, OnPartHover, OnPartExit);
+                _graphics[i].Bind(partId, OnPartHover, OnPartExit, OnPartClick);
             }
             return;
         }
@@ -341,22 +362,15 @@ public sealed class UICharacterWindow : MonoBehaviour
 
     void OnPartHover(string partId, RectTransform anchor)
     {
-        if (_tab == CharacterWindowTab.Equipment
-            || _tab == CharacterWindowTab.Encumbrance
-            || _tab == CharacterWindowTab.BodyTemp)
-        {
-            _gearPanel?.SetCoverFilter(partId);
-        }
-
         if (_tab == CharacterWindowTab.Encumbrance)
         {
-            _gearPanel?.ShowPartHover(partId);
+            _gearPanel?.ShowPartHover(partId, anchor);
             return;
         }
 
         if (_tab == CharacterWindowTab.BodyTemp)
         {
-            _gearPanel?.ShowBodyTempPartHover(partId);
+            _gearPanel?.ShowBodyTempPartHover(partId, anchor);
             return;
         }
 
@@ -365,6 +379,23 @@ public sealed class UICharacterWindow : MonoBehaviour
             return;
 
         _detailPanel.ShowForPart(body, partId, anchor);
+    }
+
+    void OnPartClick(string partId)
+    {
+        if (_tab != CharacterWindowTab.Equipment
+            && _tab != CharacterWindowTab.Encumbrance
+            && _tab != CharacterWindowTab.BodyTemp)
+            return;
+
+        if (_gearPanel == null)
+            return;
+
+        // Toggle: same part click clears filter (전체).
+        if (string.Equals(_gearPanel.CoverFilter, partId, StringComparison.Ordinal))
+            _gearPanel.ClearCoverFilter();
+        else
+            _gearPanel.SetCoverFilter(partId);
     }
 
     void OnPartExit()

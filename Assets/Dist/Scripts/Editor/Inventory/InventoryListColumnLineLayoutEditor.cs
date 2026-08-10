@@ -39,7 +39,7 @@ public sealed class InventoryListColumnLineLayoutEditor : Editor
         {
             EditorGUILayout.HelpBox(
                 "Assign InventoryListColumnLayoutSettings. " +
-                "Run Dist/Inventory/Sync List Column Layout to create the default asset.",
+                "Run Dist/MCP/Inventory/Sync List Column Layout to create the default asset.",
                 MessageType.Warning);
         }
 

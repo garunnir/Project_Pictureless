@@ -62,9 +62,9 @@
 - 루팅 파이프라인: `NearbyContainerDetector` → `LootProximityCoordinator` 이벤트 → `{ TilePresentationSystem, UIInventoryController }` 각각 구독. 컨테이너 TileView는 `EmphasisBlend`(살짝 밝게).
 - `NearbyOnly`: 사이드탭이 없으면 아이템 리스트도 비움. 활성 탭 1개만 월드 하이라이트.
 - 사이드탭 표현: `Normal` / `Selected` / `Dragging`. 중첩 가방 탭은 드래그 소스(컨테이너째), 고정 컨테이너 탭(`player-body` / `floor-loot` / 월드)은 내용물 전체 드래그(스택 순차 이동, 중량·부피 초과 시 중단). 모든 탭은 드롭 타겟.
-- Transfer duration: `InventoryTransferDuration` SSOT — MoveStacks / 퀵이동 / 창밖 투하 / 가방→Gear 인출에 적용 (`InventoryTimedMoveHost`). 소스 `ContainerData.draw_moves`&gt;0(베이크 pocket moves)이면 moves 우선, 아니면 weight/volume/(storage) 공식. **다중 스택은 합산 없이 순차**(스택마다 개별 딜레이→이동). 가방 중량 SSOT=`ItemStack.TotalWeight`(Nested 내용물 포함; `TotalVolume`은 외형만). **진행 UI**: `ItemTimedNameProgress` → 리스트 행·중첩가방 탭 Name stretch fill(idle=내구도, busy=로딩; Gear Wear/Wield도 동일). `Dist/Inventory/Patch Row Name Status Bar`. 상세: [`docs/equipment/GEAR.md`](../equipment/GEAR.md).
+- Transfer duration: `InventoryTransferDuration` SSOT — MoveStacks / 퀵이동 / 창밖 투하 / 가방→Gear 인출에 적용 (`InventoryTimedMoveHost`). 소스 `ContainerData.draw_moves`&gt;0(베이크 pocket moves)이면 moves 우선, 아니면 weight/volume/(storage) 공식. **다중 스택은 합산 없이 순차**(스택마다 개별 딜레이→이동). 가방 중량 SSOT=`ItemStack.TotalWeight`(Nested 내용물 포함; `TotalVolume`은 외형만). **진행 UI**: `ItemTimedNameProgress` → 리스트 행·중첩가방 탭 Name stretch fill(idle=내구도, busy=로딩; Gear Wear/Wield도 동일). `Dist/MCP/Inventory/Patch Row Name Status Bar`. 상세: [`docs/equipment/GEAR.md`](../equipment/GEAR.md).
 - 착용 포켓 탭: Wear 변경 시 `InventorySession.NotifySidebarLayoutChanged`로 사이드바 Sync. 착용 포켓은 고정 탭(컨테이너째 드래그 아님); 아이콘은 착용 아이템.
-- `Area_List`·`Area_Sidebar`(`SlotRoot`)는 세로 스크롤바(`Scrollbar_Vertical`, AutoHideAndExpandViewport)를 프리팹에 내장한다. 창 전체 rebake 금지 — `Dist/Inventory/Patch Window Scrollbars`로만 패치 (`Area_InvInfo` 보존). 사이드바는 `InventorySidebarScrollRect`(탭 DnD 중 스크롤 드래그 무시); 사이드바 Viewport에는 `InventoryScrollDragHandler` 없음.
+- `Area_List`·`Area_Sidebar`(`SlotRoot`)는 세로 스크롤바(`Scrollbar_Vertical`, AutoHideAndExpandViewport)를 프리팹에 내장한다. 창 전체 rebake 금지 — `Dist/MCP/Inventory/Patch Window Scrollbars`로만 패치 (`Area_InvInfo` 보존). 사이드바는 `InventorySidebarScrollRect`(탭 DnD 중 스크롤 드래그 무시); 사이드바 Viewport에는 `InventoryScrollDragHandler` 없음.
 - 컨테이너 상호작용은 `Interactable`의 레거시 스프라이트 아웃라인을 사용하지 않는다. 포커스 시각효과는 타입별 전용 컴포넌트(`SpriteOutlineFocusVisual` 등)로 분리한다.
 - `ContainerInteractable`는 런타임 `containerId` 충돌 시 자동으로 고유 suffix를 부여해 레지스트리 충돌을 방지한다.
 
@@ -115,9 +115,9 @@
 
 빈 아이콘 폴백: `ItemIconCatalog` (`Assets/Dist/Resources/ItemIconCatalog.asset`) → `ItemVisualPresenter`. 편집은 **Tools/Game Data Browser** 아이템 상세의 Icon 필드.
 
-프리팹 갱신: full bake 메뉴는 두지 않음 (`.cursor/rules/ui-prefab-bake.mdc`). 기존 창에 컬럼 헤더만: `Dist/Inventory/Patch Window Column Header`. 열 폭·행간격·패딩 SSOT 에셋 반영: `Dist/Inventory/Sync List Column Layout` (`Resources/Inventory/InventoryListColumnLayoutSettings`). 구 리사이즈 핸들 제거+`UIWindowResizeHandles` 부착: `Dist/Inventory/Patch Window Resize Handlers`.
+프리팹 갱신: full bake 메뉴는 두지 않음 (`.cursor/rules/ui-prefab-bake.mdc`). 기존 창에 컬럼 헤더만: `Dist/MCP/Inventory/Patch Window Column Header`. 열 폭·행간격·패딩 SSOT 에셋 반영: `Dist/MCP/Inventory/Sync List Column Layout` (`Resources/Inventory/InventoryListColumnLayoutSettings`). 구 리사이즈 핸들 제거+`UIWindowResizeHandles` 부착: `Dist/MCP/Inventory/Patch Window Resize Handlers`. `Dist/MCP/*` 는 Unity MCP·에이전트용 Setup/Patch 메뉴다 (`Create → Dist/...` 와 별개).
 
-캔버스 오버레이 배선: `Dist/Inventory/Setup Canvas Overlays In Open Scene` (IsoLand 등 씬 1회 실행).
+캔버스 오버레이 배선: `Dist/MCP/Inventory/Setup Canvas Overlays In Open Scene` (IsoLand 등 씬 1회 실행).
 
 **유의사항 (이주/하이브리드):** uGUI와 UI Toolkit 등 **다른 UI 경로를 한 화면에 섞거나** 리스트만 갈아끼울 때, 변경 전 동작 패리티 없이 표급하지 말 것. 반쯤 켠 채 증상별 재현으로 메우지 말 것 — `.cursor/rules/migration-parity.mdc`, `.claude/checklists/migration-parity.md`.
 

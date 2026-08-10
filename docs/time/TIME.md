@@ -166,17 +166,17 @@ TimeUIBridge (Canvas)
 
 ---
 
-## Editor 메뉴
+## Editor 메뉴 (Dist/MCP — Unity MCP / 에이전트용)
 
 | 메뉴 | 역할 |
 |------|------|
-| `Dist/Time/Patch Display Resize Handles` | 구 `Area_ResizeHandle_*` 제거 + `UIWindowResizeHandles`/Proximity 부착 |
-| `Dist/Time/Setup Canvas In Open Scene` | `System/Time`에 Service/Clock/Controller, Canvas에 Bridge, HUD 배선 (기존 `Hud_TimeDisplay` 로드만 — full bake 없음) |
-| `Dist/Time/Verify Channel Math (Edit Mode)` | Period·포맷 검증 |
-| `Dist/Time/Verify Clock Advance (Play Mode)` | 진행 / World=0 정지 / 불릿 채널 분리 검증 |
+| `Dist/MCP/Time/Patch Display Resize Handles` | 구 `Area_ResizeHandle_*` 제거 + `UIWindowResizeHandles`/Proximity 부착 |
+| `Dist/MCP/Time/Setup Canvas In Open Scene` | `System/Time`에 Service/Clock/Controller, Canvas에 Bridge, HUD 배선 (기존 `Hud_TimeDisplay` 로드만 — full bake 없음) |
+| `Dist/MCP/Time/Ensure World Clock Settings Asset` | `WorldClockSettings` 에셋 Ensure |
 
 Setup 전제: 열린 씬에 `Canvas` + `InputManager`(System 부모)가 있어야 한다.  
-IsoLand에는 Setup이 적용·저장되어 있다. Full bake 정책: `.cursor/rules/ui-prefab-bake.mdc`.
+IsoLand에는 Setup이 적용·저장되어 있다. Full bake 정책: `.cursor/rules/ui-prefab-bake.mdc`.  
+`Create → Dist/Time/World Clock Settings` 는 CreateAssetMenu(사람용)이며 `Dist/MCP` 와 별개다.
 
 ---
 

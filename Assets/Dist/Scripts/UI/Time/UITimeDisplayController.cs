@@ -24,7 +24,7 @@ public sealed class UITimeDisplayController : MonoBehaviour
         {
             Debug.LogError(
                 "[UITimeDisplayController] _panel is not assigned. " +
-                "Run Dist/Time/Setup Canvas In Open Scene to place HUD in the scene.",
+                "Run Dist/MCP/Time/Setup Canvas In Open Scene to place HUD in the scene.",
                 this);
             return;
         }

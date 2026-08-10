@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerStatusUISetupMenu — 상태창 설치·로컬라이즈 병합·검증 메뉴
+// PlayerStatusUISetupMenu — Dist/MCP 상태창 Setup·Patch·Ensure (에이전트용)
 // ============================================================
 
 #if UNITY_EDITOR
@@ -22,298 +22,7 @@ static class PlayerStatusUISetupMenu
     const string SoGameplayFolder = "Assets/Dist/SOData/Gameplay";
     const string SoPlayerStatusFolder = SoGameplayFolder + "/PlayerStatus";
 
-    [MenuItem("Dist/PlayerStatus/Verify Ownership Cascade (Edit Mode)")]
-    static void VerifyOwnershipCascade()
-    {
-        var body = CharacterBody.CreateHumanDefault(8);
-        bool hadHand = body.Has(BodyPartIds.HandL);
-        bool hadFinger = body.Has(BodyPartIds.FingerIndexL);
-        var effects = new System.Collections.Generic.List<BodyPartEffect>();
-        body.CollectEffectsUnder(BodyPartIds.ArmL, effects, includeDescendants: true);
-        int effectCountBefore = effects.Count;
-
-        bool removed = body.RemovePart(BodyPartIds.ArmL);
-        bool handGone = !body.Has(BodyPartIds.HandL);
-        bool fingerGone = !body.Has(BodyPartIds.FingerIndexL);
-        effects.Clear();
-        body.CollectEffectsUnder(BodyPartIds.ArmL, effects, includeDescendants: true);
-        int effectCountAfter = effects.Count;
-        bool headRemains = body.Has(BodyPartIds.Head);
-
-        bool ok = hadHand && hadFinger && effectCountBefore > 0 && removed &&
-                  handGone && fingerGone && effectCountAfter == 0 && headRemains;
-
-        string msg =
-            $"[PlayerStatus Cascade] hadHand={hadHand} hadFinger={hadFinger} effectsBefore={effectCountBefore} " +
-            $"removed={removed} handGone={handGone} fingerGone={fingerGone} effectsAfter={effectCountAfter} " +
-            $"headRemains={headRemains} => {(ok ? "PASS" : "FAIL")}";
-
-        if (ok)
-            Debug.Log(msg);
-        else
-            Debug.LogError(msg);
-    }
-
-    [MenuItem("Dist/PlayerStatus/Verify Vital Display (Edit Mode)")]
-    static void VerifyVitalDisplay()
-    {
-        bool nullStatsProse = !PlayerStatusVitalDisplay.CanShowNumericVitals(null);
-
-        var stats = new DefaultPlayerStats();
-        bool level0Prose = !PlayerStatusVitalDisplay.CanShowNumericVitals(stats);
-        stats.SetSkillLevel(
-            SkillIds.Survival,
-            PlayerStatusVitalDisplay.NumericVitalMinSkillLevel);
-        bool level2Numeric = PlayerStatusVitalDisplay.CanShowNumericVitals(stats);
-
-        string hungerProse = PlayerStatusLabels.FormatVitalProse(VitalKeys.Hunger, 30, 100);
-        bool proseNonEmpty = !string.IsNullOrEmpty(hungerProse);
-
-        string numericLine =
-            $"{PlayerStatusLabels.GetVitalName(VitalKeys.Hunger)}  " +
-            PlayerStatusLabels.FormatVital(82, 100);
-        bool numericHasFraction = numericLine.Contains("82") && numericLine.Contains("100");
-
-        bool ok = nullStatsProse && level0Prose && level2Numeric && proseNonEmpty && numericHasFraction;
-        string msg =
-            $"[PlayerStatus VitalDisplay] nullProse={nullStatsProse} lv0Prose={level0Prose} " +
-            $"lv2Numeric={level2Numeric} prose='{hungerProse}' numeric='{numericLine}' " +
-            $"=> {(ok ? "PASS" : "FAIL")}";
-
-        if (ok)
-            Debug.Log(msg);
-        else
-            Debug.LogError(msg);
-    }
-
-    [MenuItem("Dist/Debug/Verify Debug Input Mode (Play Mode)")]
-    static void VerifyDebugInputMode()
-    {
-        if (!EditorApplication.isPlaying)
-        {
-            Debug.LogError("[DebugInput] Verification requires Play Mode.");
-            return;
-        }
-
-        InputManager input = InputManager.Instance;
-        if (input == null)
-        {
-            Debug.LogError("[DebugInput] InputManager.Instance is null.");
-            return;
-        }
-
-        bool closedMoveEnabled = input.IsPlayerActionEnabled(PlayerAction.Move);
-        bool closedDebugInactive = !input.IsDebugInputActive;
-
-        using (input.AcquireDebugInput(typeof(PlayerStatusUISetupMenu)))
-        {
-            bool openMoveBlocked = !input.IsPlayerActionEnabled(PlayerAction.Move);
-            bool openDebugActive = input.IsDebugInputActive;
-            bool openGameplayBlocked = openMoveBlocked && openDebugActive;
-
-            IngameDebugConsole.DebugLogManager console = IngameDebugConsole.DebugLogManager.Instance;
-            if (console != null)
-            {
-                console.ShowLogWindow();
-                bool shownDebugActive = input.IsDebugInputActive;
-                console.HideLogWindow();
-                // Bridge may keep or release based on window; force-owned scope still holds.
-                bool afterHideStillOwned = input.IsDebugInputActive;
-                openGameplayBlocked = openGameplayBlocked && shownDebugActive && afterHideStillOwned;
-            }
-
-            bool okWhileHeld = closedMoveEnabled && closedDebugInactive && openGameplayBlocked;
-            if (!okWhileHeld)
-            {
-                Debug.LogError(
-                    $"[DebugInput] held FAIL closedMove={closedMoveEnabled} closedDebugOff={closedDebugInactive} " +
-                    $"openBlocked={openGameplayBlocked}");
-                return;
-            }
-        }
-
-        bool restoredMove = input.IsPlayerActionEnabled(PlayerAction.Move);
-        bool restoredDebugOff = !input.IsDebugInputActive;
-        bool ok = restoredMove && restoredDebugOff;
-        string msg =
-            $"[DebugInput] closedMove={closedMoveEnabled} openBlocked=True restoredMove={restoredMove} " +
-            $"restoredDebugOff={restoredDebugOff} => {(ok ? "PASS" : "FAIL")}";
-
-        if (ok)
-            Debug.Log(msg);
-        else
-            Debug.LogError(msg);
-    }
-
-    [MenuItem("Dist/Debug/Verify Player Commands (Play Mode)")]
-    static void VerifyPlayerCommands()
-    {
-        if (!EditorApplication.isPlaying)
-        {
-            Debug.LogError("[RuntimeDebugConsole] Verification requires Play Mode.");
-            return;
-        }
-
-        IPlayerStats stats = GameplayData.Stats;
-        IPlayerVitals vitals = GameplayData.Vitals;
-        bool consoleInstance = IngameDebugConsole.DebugLogManager.Instance != null;
-        int originalSkillLevel = stats.GetSkillLevel(SkillIds.Survival);
-        int originalHunger = vitals.GetCurrent(VitalKeys.Hunger);
-        int statsChangedCount = 0;
-        bool proseGate = false;
-        bool numericGate = false;
-        bool invalidLevelRejected = false;
-        bool invalidPracticeRejected = false;
-        bool vitalClamp = false;
-        bool vitalSet = false;
-        bool invalidVitalRejected = false;
-
-        void OnStatsChanged(string _) => statsChangedCount++;
-        stats.Changed += OnStatsChanged;
-
-        try
-        {
-            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
-                $"{PlayerSkillDebugCommands.SetCommand} {SkillIds.Survival} 0");
-            proseGate = !PlayerStatusVitalDisplay.CanShowNumericVitals(stats);
-
-            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
-                $"{PlayerSkillDebugCommands.SetCommand} {SkillIds.Survival} " +
-                PlayerStatusVitalDisplay.NumericVitalMinSkillLevel);
-            numericGate = PlayerStatusVitalDisplay.CanShowNumericVitals(stats);
-
-            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
-                $"{PlayerSkillDebugCommands.SetCommand} {SkillIds.Survival} -1");
-            invalidLevelRejected =
-                stats.GetSkillLevel(SkillIds.Survival) ==
-                PlayerStatusVitalDisplay.NumericVitalMinSkillLevel;
-
-            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
-                $"{PlayerSkillDebugCommands.PracticeCommand} {SkillIds.Survival} 0");
-            invalidPracticeRejected =
-                stats.GetSkillLevel(SkillIds.Survival) ==
-                PlayerStatusVitalDisplay.NumericVitalMinSkillLevel;
-
-            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
-                $"{PlayerSkillDebugCommands.PracticeCommand} {SkillIds.Survival} 100");
-            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
-                $"{PlayerVitalDebugCommands.SetCommand} HUNGER {int.MaxValue}");
-            vitalClamp =
-                vitals.GetCurrent(VitalKeys.Hunger) ==
-                vitals.GetMax(VitalKeys.Hunger);
-
-            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
-                $"{PlayerVitalDebugCommands.SetCommand} Hunger 30");
-            vitalSet = vitals.GetCurrent(VitalKeys.Hunger) == 30;
-
-            IngameDebugConsole.DebugLogConsole.ExecuteCommand(
-                $"{PlayerVitalDebugCommands.SetCommand} unknown 20");
-            invalidVitalRejected = vitals.GetCurrent(VitalKeys.Hunger) == 30;
-        }
-        finally
-        {
-            stats.Changed -= OnStatsChanged;
-            stats.SetSkillLevel(SkillIds.Survival, originalSkillLevel);
-            vitals.SetCurrent(VitalKeys.Hunger, originalHunger);
-        }
-
-        bool notificationsRaised = statsChangedCount >= 3;
-        bool ok = consoleInstance && proseGate && numericGate &&
-                  invalidLevelRejected && invalidPracticeRejected &&
-                  vitalClamp && vitalSet && invalidVitalRejected &&
-                  notificationsRaised;
-        string msg =
-            $"[RuntimeDebugConsole] instance={consoleInstance} proseGate={proseGate} numericGate={numericGate} " +
-            $"invalidLevel={invalidLevelRejected} invalidPractice={invalidPracticeRejected} " +
-            $"vitalClamp={vitalClamp} vitalSet={vitalSet} invalidVital={invalidVitalRejected} " +
-            $"statsChanged={statsChangedCount} => {(ok ? "PASS" : "FAIL")}";
-
-        if (ok)
-            Debug.Log(msg);
-        else
-            Debug.LogError(msg);
-    }
-
-    [MenuItem("Dist/PlayerStatus/Verify Mood Entries (Edit Mode)")]
-    static void VerifyMoodEntries()
-    {
-        var vitals = new DefaultPlayerVitals();
-        var cleanBody = CharacterBody.CreateHumanDefault(8, prototypeSeed: false);
-
-        var normal = new System.Collections.Generic.List<MoodEntry>();
-        PlayerStatusMoodEntries.Collect(cleanBody, vitals, normal);
-        bool emptyWhenNormal = normal.Count == 0;
-
-        vitals.SetCurrent(VitalKeys.Hunger, 30);
-        var lowHunger = new System.Collections.Generic.List<MoodEntry>();
-        PlayerStatusMoodEntries.Collect(cleanBody, vitals, lowHunger);
-        bool hasHungerLow = lowHunger.Exists(e =>
-            e.IconId == MoodIconId.Hunger &&
-            e.Polarity == MoodPolarity.Negative &&
-            Mathf.Approximately(e.Intensity, PlayerStatusMoodVisuals.VitalLowIntensity));
-
-        vitals.SetCurrent(VitalKeys.Hunger, 10);
-        var criticalHunger = new System.Collections.Generic.List<MoodEntry>();
-        PlayerStatusMoodEntries.Collect(cleanBody, vitals, criticalHunger);
-        bool hasHungerCritical = criticalHunger.Exists(e =>
-            e.IconId == MoodIconId.Hunger &&
-            Mathf.Approximately(e.Intensity, PlayerStatusMoodVisuals.VitalCriticalIntensity));
-
-        var seededBody = CharacterBody.CreateHumanDefault(8);
-        var seeded = new System.Collections.Generic.List<MoodEntry>();
-        PlayerStatusMoodEntries.Collect(seededBody, vitals, seeded);
-        bool hasBleed = seeded.Exists(e => e.IconId == MoodIconId.Bleed);
-        bool hasPositiveCatalog = PlayerStatusMoodEffectCatalog.TryGet(
-            BodyPartEffectIds.Regenerating,
-            out MoodIconId regenIcon,
-            out MoodPolarity regenPolarity) &&
-            regenIcon == MoodIconId.Regenerating &&
-            regenPolarity == MoodPolarity.Positive;
-
-        Color negativeTint = PlayerStatusMoodVisuals.ResolveFillTint(MoodPolarity.Negative);
-        Color positiveTint = PlayerStatusMoodVisuals.ResolveFillTint(MoodPolarity.Positive);
-        Color neutralTint = PlayerStatusMoodVisuals.ResolveFillTint(MoodPolarity.Neutral);
-        bool tintOk = negativeTint == PlayerStatusMoodVisuals.NegativeRed &&
-                      positiveTint == PlayerStatusMoodVisuals.PositiveGreen &&
-                      neutralTint == PlayerStatusMoodVisuals.NeutralWhite;
-        bool fillAmountContractOk =
-            Mathf.Approximately(Mathf.Clamp01(PlayerStatusMoodVisuals.VitalLowIntensity), 0.5f) &&
-            Mathf.Approximately(Mathf.Clamp01(PlayerStatusMoodVisuals.VitalCriticalIntensity), 1f);
-
-        bool vmPathOk = false;
-        var vmVitals = new DefaultPlayerVitals();
-        var vmCheck = new System.Collections.Generic.List<MoodEntry>();
-        var viewModel = new PlayerStatusViewModel();
-        viewModel.Bind(cleanBody, vmVitals, new DefaultPlayerStats());
-        PlayerStatusMoodEntries.Collect(cleanBody, vmVitals, vmCheck);
-        vmPathOk = vmCheck.Count == 0 && viewModel.MoodEntries.Count == vmCheck.Count;
-
-        vmVitals.SetCurrent(VitalKeys.Hunger, 10);
-        PlayerStatusMoodEntries.Collect(cleanBody, vmVitals, vmCheck);
-        bool vmHasCriticalHunger = false;
-        for (int i = 0; i < viewModel.MoodEntries.Count; i++)
-        {
-            if (viewModel.MoodEntries[i].IconId == MoodIconId.Hunger)
-                vmHasCriticalHunger = true;
-        }
-
-        vmPathOk &= vmCheck.Count == viewModel.MoodEntries.Count && vmHasCriticalHunger;
-        viewModel.Unbind();
-
-        bool ok = emptyWhenNormal && hasHungerLow && hasHungerCritical && hasBleed &&
-                  hasPositiveCatalog && tintOk && fillAmountContractOk && vmPathOk;
-        string msg =
-            $"[PlayerStatus Mood] emptyNormal={emptyWhenNormal} hungerLow={hasHungerLow} " +
-            $"hungerCritical={hasHungerCritical} bleed={hasBleed} positiveCatalog={hasPositiveCatalog} " +
-            $"tintOk={tintOk} fillAmountOk={fillAmountContractOk} vmPathOk={vmPathOk} => {(ok ? "PASS" : "FAIL")}";
-
-        if (ok)
-            Debug.Log(msg);
-        else
-            Debug.LogError(msg);
-    }
-
-    [MenuItem("Dist/PlayerStatus/Ensure Mood Assets")]
+    [MenuItem(DistMcpMenus.PlayerStatusEnsureMoodAssets)]
     static void EnsureMoodAssetsMenu()
     {
         EnsureMoodAssets();
@@ -323,7 +32,7 @@ static class PlayerStatusUISetupMenu
     /// <summary>
     /// 구 핸들 자식 제거 후 UIWindowResizeHandles 부착 (레이아웃 유지).
     /// </summary>
-    [MenuItem("Dist/PlayerStatus/Patch Window Resize Handlers")]
+    [MenuItem(DistMcpMenus.PlayerStatusPatchWindowResizeHandlers)]
     static void PatchWindowResizeHandlers()
     {
         GameObject root = PrefabUtility.LoadPrefabContents(WindowPrefabPath);
@@ -367,7 +76,7 @@ static class PlayerStatusUISetupMenu
     /// <summary>
     /// TabBar + GearPanel chrome을 프리팹에 추가·배선 (손수 body diagram 유지, full bake 아님).
     /// </summary>
-    [MenuItem("Dist/PlayerStatus/Patch Character Tabs And Gear Panel")]
+    [MenuItem(DistMcpMenus.PlayerStatusPatchCharacterTabsAndGearPanel)]
     static void PatchCharacterTabsAndGearPanel()
     {
         GameObject root = PrefabUtility.LoadPrefabContents(WindowPrefabPath);
@@ -398,12 +107,20 @@ static class PlayerStatusUISetupMenu
                 1f);
 
             RectTransform statusContent = FindChildRect(root.transform, "Area_Content");
+            RectTransform bodyStatus = FindChildRect(
+                root.transform.Find("Area_BodyProfile") != null
+                    ? root.transform.Find("Area_BodyProfile")
+                    : root.transform,
+                "Area_BodyStatus");
             RectTransform tabBar = EnsureTabBar(root.transform, tabColor, font);
             RectTransform gearRoot = EnsureGearPanelRoot(root.transform, panelColor);
             UICharacterGearPanel gearPanel = EnsureGearPanelTree(gearRoot, font, tabColor);
 
             SerializedObject so = new(window);
             so.FindProperty("_statusContentRoot").objectReferenceValue = statusContent;
+            SerializedProperty bodyStatusProp = so.FindProperty("_bodyStatusRoot");
+            if (bodyStatusProp != null)
+                bodyStatusProp.objectReferenceValue = bodyStatus;
             so.FindProperty("_tabBarRoot").objectReferenceValue = tabBar;
             so.FindProperty("_gearPanelRoot").objectReferenceValue = gearRoot;
             so.FindProperty("_gearPanel").objectReferenceValue = gearPanel;
@@ -411,7 +128,7 @@ static class PlayerStatusUISetupMenu
 
             PrefabUtility.SaveAsPrefabAsset(root, WindowPrefabPath);
             Debug.Log(
-                $"[PlayerStatusUISetupMenu] Patched TabBar + GearPanel on {WindowPrefabPath}.");
+                $"[PlayerStatusUISetupMenu] Patched TabBar + GearPanel (parity) on {WindowPrefabPath}.");
         }
         finally
         {
@@ -625,7 +342,7 @@ static class PlayerStatusUISetupMenu
         rootLayout.childControlWidth = true;
         rootLayout.childControlHeight = false;
 
-        RectTransform wieldRoot = EnsureNamedVertical(gearRoot, "WieldRoot", preferredHeight: 80f);
+        RectTransform wieldRoot = EnsureWieldRootHorizontal(gearRoot, preferredHeight: GearConstants.WieldSlotHeight + 12f);
         EnsureWieldSlot(wieldRoot, "Wield_L", WieldSlotId.Left, font, chromeColor);
         EnsureWieldSlot(wieldRoot, "Wield_R", WieldSlotId.Right, font, chromeColor);
 
@@ -640,25 +357,67 @@ static class PlayerStatusUISetupMenu
         TMP_Text encTotals = EnsureTmpChild(gearRoot, "EncTotals", string.Empty, 14f, font);
         encTotals.gameObject.SetActive(false);
 
-        TMP_Text hover = EnsureTmpChild(gearRoot, "HoverDetail", string.Empty, 14f, font);
-        LayoutElement hoverLe = hover.GetComponent<LayoutElement>();
-        if (hoverLe == null)
-            hoverLe = hover.gameObject.AddComponent<LayoutElement>();
-        hoverLe.minHeight = 40f;
-        hoverLe.preferredHeight = 48f;
-
-        Slider progress = EnsureProgressSlider(gearRoot, chromeColor);
-        progress.gameObject.SetActive(false);
+        // Plan parity: no panel HoverDetail / Progress — DetailPanel + name-overlay bars.
+        Transform legacyHover = gearRoot.Find("HoverDetail");
+        if (legacyHover != null)
+            Object.DestroyImmediate(legacyHover.gameObject);
+        Transform legacyProgress = gearRoot.Find("Progress");
+        if (legacyProgress != null)
+            Object.DestroyImmediate(legacyProgress.gameObject);
 
         SerializedObject panelSo = new(panel);
         panelSo.FindProperty("_wieldRoot").objectReferenceValue = wieldRoot;
         panelSo.FindProperty("_wornRoot").objectReferenceValue = wornRoot;
-        panelSo.FindProperty("_hoverText").objectReferenceValue = hover;
-        panelSo.FindProperty("_progressBar").objectReferenceValue = progress;
+        SerializedProperty hoverProp = panelSo.FindProperty("_hoverText");
+        if (hoverProp != null)
+            hoverProp.objectReferenceValue = null;
+        SerializedProperty progressProp = panelSo.FindProperty("_progressBar");
+        if (progressProp != null)
+            progressProp.objectReferenceValue = null;
         panelSo.FindProperty("_filterLabel").objectReferenceValue = filterLabel;
         panelSo.FindProperty("_encTotalsText").objectReferenceValue = encTotals;
         panelSo.ApplyModifiedPropertiesWithoutUndo();
         return panel;
+    }
+
+    static RectTransform EnsureWieldRootHorizontal(Transform parent, float preferredHeight)
+    {
+        Transform existing = parent.Find("WieldRoot");
+        GameObject go;
+        RectTransform rt;
+        if (existing != null)
+        {
+            go = existing.gameObject;
+            rt = existing as RectTransform;
+        }
+        else
+        {
+            go = new GameObject("WieldRoot", typeof(RectTransform));
+            go.layer = LayerMask.NameToLayer("UI");
+            go.transform.SetParent(parent, false);
+            rt = go.GetComponent<RectTransform>();
+        }
+
+        VerticalLayoutGroup vertical = go.GetComponent<VerticalLayoutGroup>();
+        if (vertical != null)
+            Object.DestroyImmediate(vertical);
+
+        HorizontalLayoutGroup layout = go.GetComponent<HorizontalLayoutGroup>();
+        if (layout == null)
+            layout = go.AddComponent<HorizontalLayoutGroup>();
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = true;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+        layout.spacing = 8f;
+
+        LayoutElement le = go.GetComponent<LayoutElement>();
+        if (le == null)
+            le = go.AddComponent<LayoutElement>();
+        le.minHeight = preferredHeight * 0.5f;
+        le.preferredHeight = preferredHeight;
+        le.flexibleHeight = 0f;
+        return rt;
     }
 
     static RectTransform EnsureNamedVertical(Transform parent, string name, float preferredHeight)
@@ -719,8 +478,9 @@ static class PlayerStatusUISetupMenu
         LayoutElement le = go.GetComponent<LayoutElement>();
         if (le == null)
             le = go.AddComponent<LayoutElement>();
-        le.minHeight = 36f;
-        le.preferredHeight = 36f;
+        le.minHeight = GearConstants.WieldSlotHeight;
+        le.preferredHeight = GearConstants.WieldSlotHeight;
+        le.flexibleWidth = 1f;
 
         Image bg = go.GetComponent<Image>();
         if (bg == null)
@@ -728,10 +488,12 @@ static class PlayerStatusUISetupMenu
         bg.color = new Color(chromeColor.r * 0.85f, chromeColor.g * 0.85f, chromeColor.b * 0.85f, 0.95f);
         bg.raycastTarget = true;
 
-        if (go.GetComponent<UICharacterWieldSlotView>() == null)
-            go.AddComponent<UICharacterWieldSlotView>();
+        UICharacterWieldSlotView view = go.GetComponent<UICharacterWieldSlotView>();
+        if (view == null)
+            view = go.AddComponent<UICharacterWieldSlotView>();
+        view.EnsureChrome();
 
-        // Optional label child for Prefab Mode readability; runtime EnsureLabel can still use root TMP.
+        // Name Label kept invisible for ItemNameStatusBar overlay only.
         Transform labelTf = go.transform.Find("Label");
         if (labelTf == null)
         {
@@ -741,14 +503,12 @@ static class PlayerStatusUISetupMenu
             RectTransform labelRt = labelGo.GetComponent<RectTransform>();
             labelRt.anchorMin = Vector2.zero;
             labelRt.anchorMax = Vector2.one;
-            labelRt.offsetMin = new Vector2(6f, 2f);
-            labelRt.offsetMax = new Vector2(-6f, -2f);
+            labelRt.offsetMin = Vector2.zero;
+            labelRt.offsetMax = Vector2.zero;
             TextMeshProUGUI tmp = labelGo.AddComponent<TextMeshProUGUI>();
-            tmp.text = slot == WieldSlotId.Left
-                ? CharacterGearLabels.SlotLeft + ": —"
-                : CharacterGearLabels.SlotRight + ": —";
-            tmp.fontSize = 15f;
-            tmp.alignment = TextAlignmentOptions.MidlineLeft;
+            tmp.text = string.Empty;
+            tmp.fontSize = 1f;
+            tmp.color = new Color(1f, 1f, 1f, 0f);
             tmp.raycastTarget = false;
             if (font != null)
                 tmp.font = font;
@@ -898,7 +658,7 @@ static class PlayerStatusUISetupMenu
         return slider;
     }
 
-    [MenuItem("Dist/PlayerStatus/Setup Canvas In Open Scene")]
+    [MenuItem(DistMcpMenus.PlayerStatusSetupCanvas)]
     static void SetupCanvasInOpenScene()
     {
         Canvas canvas = Object.FindAnyObjectByType<Canvas>();
@@ -1297,7 +1057,7 @@ static class PlayerStatusUISetupMenu
             AssetDatabase.CreateFolder(SoGameplayFolder, "PlayerStatus");
     }
 
-    [MenuItem("Dist/PlayerStatus/Merge Localization Keys Into UI_ko")]
+    [MenuItem(DistMcpMenus.PlayerStatusMergeLocalizationKeys)]
     static void MergeLocalizationKeysMenu() => MergeLocalizationKeys();
 
     static PlayerStatusWindowLauncher EnsureHudLauncher(
@@ -1353,7 +1113,9 @@ static class PlayerStatusUISetupMenu
             AssetDatabase.LoadAssetAtPath<LocalizationTable>(LocalizationTable.AssetPath);
         if (table == null)
         {
-            Debug.LogError("[PlayerStatusUISetupMenu] UI_ko table missing. Run Dist/Localization/Select Or Create UI_ko Table.");
+            Debug.LogError(
+                "[PlayerStatusUISetupMenu] UI_ko table missing. Run " +
+                DistMcpMenus.LocalizationSelectOrCreateUiKo + ".");
             return;
         }
 

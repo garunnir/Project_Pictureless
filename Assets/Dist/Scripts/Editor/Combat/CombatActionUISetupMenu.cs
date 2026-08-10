@@ -1,5 +1,5 @@
 // ============================================================
-// CombatActionUISetupMenu — 전투 액션 HUD 씬 배선 (프리팹 로드만)
+// CombatActionUISetupMenu — Dist/MCP 전투 액션 HUD Setup (에이전트용)
 // ============================================================
 
 #if UNITY_EDITOR
@@ -13,7 +13,7 @@ static class CombatActionUISetupMenu
     const string PrefabFolder = "Assets/Dist/Visual/Prefabs/UIComponents/Combat";
     const string DisplayPrefabPath = PrefabFolder + "/Hud_CombatAction.prefab";
 
-    [MenuItem("Dist/Combat/Setup Combat Action HUD In Open Scene")]
+    [MenuItem(DistMcpMenus.CombatSetupActionHud)]
     static void SetupCanvasInOpenScene()
     {
         Canvas canvas = ResolveUiCanvas();

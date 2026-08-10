@@ -34,7 +34,7 @@ public static class InventoryListColumnLayout
             ? settings
             : throw new System.InvalidOperationException(
                 "InventoryListColumnLayoutSettings missing. " +
-                "Run Dist/Inventory/Sync List Column Layout or add " +
+                "Run Dist/MCP/Inventory/Sync List Column Layout or add " +
                 "Resources/Inventory/InventoryListColumnLayoutSettings.asset.");
     }
 }

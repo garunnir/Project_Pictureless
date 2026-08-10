@@ -49,6 +49,14 @@ public sealed class HandActionBinding
         Changed?.Invoke();
     }
 
+    public void ForEach(Action<string, WeaponAction?> visitor)
+    {
+        if (visitor == null)
+            return;
+        foreach (KeyValuePair<string, WeaponAction?> kv in _map)
+            visitor(kv.Key, kv.Value);
+    }
+
     /// <summary>Unset이면 최고 DPS 액션을 맵에 쓰고 반환. None이면 null.</summary>
     public WeaponAction? EnsureInitialized(
         ItemData item,

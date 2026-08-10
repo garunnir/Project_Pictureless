@@ -14,7 +14,7 @@ public sealed class InventoryListColumnLayoutSettingsEditor : Editor
             ApplyToAllLineLayouts();
 
         if (GUILayout.Button("Sync List Column Layout (row + window prefabs)"))
-            EditorApplication.ExecuteMenuItem("Dist/Inventory/Sync List Column Layout");
+            EditorApplication.ExecuteMenuItem(DistMcpMenus.InventorySyncListColumnLayout);
     }
 
     static void ApplyToAllLineLayouts()

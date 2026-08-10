@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterGearSetupMenu — 플레이어에 Gear 호스트·듀얼 드라이버 Ensure (Patch)
+// CharacterGearSetupMenu — Dist/MCP Gear 컴포넌트 Ensure (에이전트용)
 // ============================================================
 
 #if UNITY_EDITOR
@@ -8,7 +8,7 @@ using UnityEngine;
 
 public static class CharacterGearSetupMenu
 {
-    [MenuItem("Dist/Character/Ensure Player Gear Components")]
+    [MenuItem(DistMcpMenus.CharacterEnsurePlayerGearComponents)]
     static void EnsurePlayerGearComponents()
     {
         PlayerInventoryRuntime runtime = Object.FindAnyObjectByType<PlayerInventoryRuntime>();

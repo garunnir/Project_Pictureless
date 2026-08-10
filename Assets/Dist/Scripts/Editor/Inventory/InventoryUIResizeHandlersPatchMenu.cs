@@ -1,5 +1,5 @@
 // ============================================================
-// InventoryUIResizeHandlersPatchMenu — 구 핸들 제거 + UIWindowResizeHandles 부착
+// InventoryUIResizeHandlersPatchMenu — Dist/MCP 리사이즈 핸들 Patch (에이전트용)
 // ============================================================
 
 #if UNITY_EDITOR
@@ -10,7 +10,7 @@ static class InventoryUIResizeHandlersPatchMenu
 {
     const string WindowPath = InventoryUIHierarchyBuilder.PrefabFolder + "/Grp_InventoryListWindow.prefab";
 
-    [MenuItem("Dist/Inventory/Patch Window Resize Handlers")]
+    [MenuItem(DistMcpMenus.InventoryPatchWindowResizeHandlers)]
     static void PatchWindowResizeHandlers()
     {
         GameObject root = PrefabUtility.LoadPrefabContents(WindowPath);
