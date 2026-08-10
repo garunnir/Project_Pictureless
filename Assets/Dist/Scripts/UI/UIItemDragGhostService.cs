@@ -39,6 +39,7 @@ public sealed class UIItemDragGhostService : MonoBehaviour
         if (_instance == null)
             return;
 
+        _instance.transform.SetAsLastSibling();
         _instance.Show(icon, stackCount, screenPosition);
     }
 

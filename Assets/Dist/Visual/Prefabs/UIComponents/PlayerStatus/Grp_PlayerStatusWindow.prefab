@@ -856,6 +856,7 @@ GameObject:
   - component: {fileID: 4637339766149386724}
   - component: {fileID: 5294469718906466694}
   - component: {fileID: 7829094984377011113}
+  - component: {fileID: 4987471206684666045}
   m_Layer: 5
   m_Name: DetailPanel
   m_TagString: Untagged
@@ -878,8 +879,8 @@ RectTransform:
   - {fileID: 174918847579120868}
   m_Father: {fileID: 2698181760353360957}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 12, y: 0}
   m_SizeDelta: {x: 240, y: 320}
   m_Pivot: {x: 0, y: 1}
@@ -905,7 +906,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.1, g: 0.12, b: 0.16, a: 0.98}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -933,9 +934,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ac2826191a3bea4286c9e657af52ad4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::UIPlayerStatusDetailPanel
-  _shell: {fileID: 0}
-  _rect: {fileID: 0}
+  _shell: {fileID: 4987471206684666045}
+  _rect: {fileID: 3404658641652495083}
   _bodyText: {fileID: 6123491733657355126}
+--- !u!114 &4987471206684666045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1622536615357004036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1ad0c69f7b7775469a6ee5da027c256, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Dist.UI.ContextMenu::UIHoverPanelShell
+  _rect: {fileID: 3404658641652495083}
 --- !u!1 &1661762091135062099
 GameObject:
   m_ObjectHideFlags: 0

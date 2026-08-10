@@ -34,6 +34,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     [SerializeField] LayerMask _rangedObstructionMask = ~0;
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
     [SerializeField] WeaponAction _selectedAction = WeaponAction.Bashing;
+    [SerializeField] WieldHand _activeWieldHand = WieldHand.Right;
 
     CharacterAimIntent _aimIntent;
     CharacterSkillsHost _skillsHost;
@@ -44,6 +45,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     public event Action AvailableActionsChanged;
     public event Action SelectedActionChanged;
     public event Action PresentationChanged;
+    public event Action ActiveWieldHandChanged;
 
     /// <summary>실제로 시전된 공격(Performed/Miss)의 판정 결과. 연출 계층이 구독한다.</summary>
     public event Action<AttackOutcome> AttackResolved;
@@ -56,6 +58,24 @@ public sealed class CharacterAttacker : MonoBehaviour
     public int LoadedRounds => _loadedRounds;
     public WeaponActionMask AvailableActions { get; private set; }
     public WeaponAction SelectedAction => _selectedAction;
+    public WieldHand ActiveWieldHand => _activeWieldHand;
+
+    /// <summary>애니·시전 손. TwoHand / Left / Right.</summary>
+    public void SetActiveWieldHand(WieldHand hand)
+    {
+        if (_activeWieldHand == hand)
+            return;
+        _activeWieldHand = hand;
+        ActiveWieldHandChanged?.Invoke();
+    }
+
+    /// <summary>슬롯 → 애니 손. 양손 모드면 TwoHand.</summary>
+    public static WieldHand AnimHandFrom(WieldSlots slots, WieldSlotId slot)
+    {
+        if (slots != null && slots.IsTwoHand)
+            return WieldHand.TwoHand;
+        return slot == WieldSlotId.Left ? WieldHand.Left : WieldHand.Right;
+    }
 
     ItemData CurrentItem =>
         string.IsNullOrEmpty(_itemId) ? null : GameplayData.GetItem(_itemId);
@@ -371,6 +391,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     {
         var outcome = new AttackOutcome(
             action,
+            _activeWieldHand,
             resolveMode,
             result,
             target,

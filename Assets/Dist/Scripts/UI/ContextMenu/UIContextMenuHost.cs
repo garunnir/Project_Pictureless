@@ -122,7 +122,24 @@ public sealed class UIContextMenuHost : MonoBehaviour, IPointerClickHandler
             return;
 
         if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
             Hide();
+            return;
+        }
+
+        TryHideOnOutsidePress();
+    }
+
+    void TryHideOnOutsidePress()
+    {
+        if (!ContextMenuOutsideClick.TryGetPressScreenPosition(out Vector2 screen))
+            return;
+
+        Camera camera = UIPopupPositioner.ResolveCamera(_rootCanvas);
+        if (ContextMenuOutsideClick.IsOverAnyPanel(_openPanels, screen, camera))
+            return;
+
+        Hide();
     }
 
     public void Initialize(Canvas rootCanvas)

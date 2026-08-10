@@ -57,30 +57,72 @@ flowchart LR
 ## 3D 애니 브릿지
 
 컨트롤러: `Assets/Dist/Visual/Anim/CharacterClips/CharacterAnimController.controller`  
-드라이버: `CharacterLocomotionAnim` · 루트 회전: `CharacterFacingRotator` → `CharacterState.GetFacingDir()`  
+드라이버: `CharacterLocomotionAnim` · 클립 SSOT: `ArmAnimSlotResolver` (라이브러리→thin Override)  
+루트 회전: `CharacterFacingRotator` → `CharacterState.GetFacingDir()`  
 스프라이트 8방향: `CharacterFacingAnim` (SpriteSwap 전용, 3D와 별도)
 
-| Param / Asset | Type | Source | Layer / 역할 |
-|---------------|------|--------|----------------|
-| `Speed` | float 0..1 | `ICharacterLocomotion.CurrentSpeed / AnimSpeedReference` (Player=`RunMaxSpeed`, NPC=유효 이동속도) | Move (Locomotion 1D BlendTree: Idle→Walk→Run) |
-| `IsAiming` | bool | `CharacterState.IsAiming` | Aim 상태머신 + Aim Layer weight (1=조준 / 0=비조준 → Move 전신) |
-| `Action` | int | `CharacterAttacker.SelectedAction` (`Swing`/`Stab`/`Trigger`) | Aim: `AimSwing`/`AimStab`/`AimTrigger` (슬롯 클립) |
-| `WeaponPresentation.AnimatorOverride` | OverrideController | 장착 무기 | 공유 컨트롤러 슬롯 클립 교체 |
+**몸 애니만** Hold/Aim/Attack thin 슬롯을 쓴다. 무기 메시·외형은 애니 슬롯에 붙이지 않는다 (별 경로).
 
-Collision Inspector는 `CharacterLocomotionCollisionSettings`(`PlayerMovement`/`NpcMovement`의 `_collision`)이며, 필드 기본값은 `CharacterLocomotionDefaults` SSOT다.
+| Layer | Mask | Weight |
+|-------|------|--------|
+| Move Layer | none | 1 |
+| RightArm Layer | `RightArm.mask` | 오른손 무장·비TwoHand → 1 |
+| LeftArm Layer | `LeftArm.mask` | 왼손 무장·비TwoHand → 1 |
+| TwoHand Layer | `UpperBody.mask` | `IsTwoHand` → 1 (그때 L/R Arm = 0) |
 
-Override 템플릿: `Assets/Dist/Visual/Anim/CharacterClips/Overrides/CharacterAnim_{Pistol,Bat,Knife}.overrideController`  
-Aim 슬롯 클립: `Assets/Dist/Visual/Anim/CharacterClips/Slots/Aim{Swing,Stab,Trigger}_Slot.anim` (내용은 플레이스홀더 — 무기 Override에서 교체)
+팔 SM(손당): **Hold ↔ Aim** (`IsAiming`), **Attack** (trigger). `Action*` 파라미터·모드별 Aim/Attack 상태 없음.
 
-- 플레이어 동사는 `WeaponAction`을 유지한다. 실루엣(피스톨/배트/나이프)은 Override로만 바꾼다 — `TriggerPistol` 같은 동명 액션을 만들지 않는다.
-- 무기 Override가 없거나 비무장이면 `CharacterLocomotionAnim`의 `_defaultController`(공유 베이스)를 쓴다. `SetWeapon` → `WeaponChanged`에서 재적용·Rebind.
-- Aim 레이어: `AimIdle` ↔ `AimSwing|AimStab|AimTrigger` (`IsAiming` + `Action`). 레거시 `AimPose`는 미연결.
-- `CharacterLocomotionAnim`이 Aim Layer weight를 `IsAiming`에 맞춤 (비조준=0 → 상체도 Move 걷기 유지, 조준=1). `_aimLayerBlendSpeed`(기본 10)로 페이드, `0`이면 스냅.
-- 조준 중 루트는 에임(`SightDir`)을 본다. 스트레이프용 `AimYaw` / MoveDir-only 루트는 넣지 않는다.
-- 애니 시간은 `TimeScaleService` 채널로만 진행한다 (`CharacterLocomotionAnim`이 Animator 자동 틱을 끈다).
-- Play 중 `Animator.enabled == false`는 **정상**(수동 틱). 본 바인딩을 위해 첫 Update에서 enable→`Rebind()` 후 다시 끈다.
-- `_poseRate`(기본 10): 채널 시간 기준 초당 포즈 수로 `Animator.Update`를 양자화한다. BlendTree/레이어 유지한 채 플립북 느낌. `0`이면 매 프레임 연속 틱.
-- Locomotion/Aim 클립은 FBX `loopTime`이 켜져 있어야 한다. 꺼져 있으면 1회 재생 후 마지막 포즈에 멈춰 “안 움직이는 것처럼” 보인다.
+| Param | Type | Source |
+|-------|------|--------|
+| `MoveX` / `MoveZ` | float | facing 로컬 `MoveDir` × (`CurrentSpeed / AnimSpeedReference`); 정지·속도 0이면 `(0,0)` → Idle |
+| `Speed` | float | 동일 정규화 속도 (디버그·호환; Move 블렌드는 MoveXZ) |
+| `IsAiming` | bool | `CharacterState.IsAiming` |
+| `AttackR` / `AttackL` / `Attack2H` | trigger | `AttackResolved` 큐 → `AttackOutcome.Hand` |
+| `WeaponPresentation.AnimatorOverride` | Override | **라이브러리 키** 교체 — 외형 메시 아님 |
+| `ArmAnimSlotCatalog` + runtime Override | resolve | 라이브러리 전용/폴백 후 thin Aim/Attack/Hold에 투영 |
+
+Move Layer `Locomotion`: **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + Walk/Run × 전/후/좌/우 (Walk 링 ≈0.26). 조준 중 루트는 `SightDir` 유지, **발만** facing 대비 상대 방향.
+
+**Thin 키 (SM):** `Hold|Aim|Attack_{Left,Right,TwoHand}_Slot`  
+**라이브러리 키:** `Aim{Action}|Attack{Action}_{Hand}_Slot`, `Hold_{Hand}_Slot`  
+`WeaponAction` → 라이브러리 클립 선택 후 thin 키에 리맵. Action 전환은 **Rebind 없이** thin 키만 갱신. Presentation 교체 시에만 풀 resolve + Rebind.
+
+폴백 클립: `Slots/Fallback/*_{Left,Right}_Fallback.anim`  
+카탈로그: `ArmAnimSlotCatalog.asset`  
+메뉴: `Dist/MCP/Rebuild Arm Overlay Animator`, `Dist/MCP/Bake Arm Mirror Fallback Clips`
+
+**액션 확장:** 새 `WeaponAction` → 라이브러리 클립+카탈로그 행(+ bake). **Builder/SM 수정 없음.**
+
+### 대칭 폴백 (Animator 밖)
+
+Animator SM에는 `_FB` / `Mirror*` / `Action*` 없음. 폴백은 라이브러리 키에 대해 `ArmAnimSlotResolver`만.
+
+| 필요 손 | 전용 (무기 Override≠base) | 재생 클립 |
+|---------|---------------------------|-----------|
+| Left | 있음 | Left 라이브러리 전용 |
+| Left | 없음 + Right 전용 | `*_Left_Fallback` (Right에서 베이크) |
+| Right | 있음 | Right 전용 |
+| Right | 없음 + Left 전용 | `*_Right_Fallback` |
+| 둘 다 비전용 | — | Dominant(현재 **Right**) base; 비Dominant는 Fallback |
+
+TwoHand 폴백 없음. Dominant 교체는 **Pending**.
+
+### 시전 분기 (기어 교차)
+
+| 들기 | 시전 | 애니 |
+|------|------|------|
+| `IsTwoHand` | 1회 | TwoHand layer + `Attack2H` |
+| L·R 듀얼 | Primary→Offhand (`AttackResolved` 체인) | 양팔 overlay 동시 + 시전 트리거만 교대 (이종 Action → 손별 thin 리맵) |
+| 한 손만 | 1회 | 해당 Arm layer + AttackR/L |
+
+- 플레이어 동사는 `WeaponAction` 유지. `TriggerPistol` 동명 액션 금지.
+- 무기 Override 없거나 비무장 → `_defaultController` + catalog resolve. Presentation 변경 시 Rebind.
+- 조준 중 루트는 에임(`SightDir`). `AimYaw` / MoveDir-only 루트 없음 — 스트레이프는 **발(MoveXZ)** 만.
+- 애니 시간 = `TimeScaleService`만 (`CharacterLocomotionAnim` 수동 틱).
+- Play 중 `Animator.enabled == false`는 **정상**. `_poseRate`(기본 10) 플립북 양자화; `0`이면 연속 틱.
+- Locomotion/Arm 클립은 FBX `loopTime` 필요.
+
+Collision Inspector는 `CharacterLocomotionCollisionSettings`이며 기본값은 `CharacterLocomotionDefaults` SSOT다.
 
 ## 현재 한계
 

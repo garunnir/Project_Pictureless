@@ -48,11 +48,25 @@ public sealed class UIItemContextMenu : MonoBehaviour, IPointerClickHandler
             return;
 
         InputManager input = InputManager.Instance;
-        if (input == null)
+        if (input != null && input.TryReadCancelPerformedThisFrame(out bool canceled) && canceled)
+        {
+            Hide();
+            return;
+        }
+
+        TryHideOnOutsidePress();
+    }
+
+    void TryHideOnOutsidePress()
+    {
+        if (!ContextMenuOutsideClick.TryGetPressScreenPosition(out Vector2 screen))
             return;
 
-        if (input.TryReadCancelPerformedThisFrame(out bool canceled) && canceled)
-            Hide();
+        Camera camera = UIPopupPositioner.ResolveCamera(_rootCanvas);
+        if (ContextMenuOutsideClick.IsOverAnyPanel(_openPanels, screen, camera))
+            return;
+
+        Hide();
     }
 
     public void Initialize(InventorySession session, Canvas rootCanvas)

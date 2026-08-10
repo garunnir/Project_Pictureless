@@ -269,11 +269,14 @@ public sealed class PlayerGearHost : MonoBehaviour
                 out _))
         {
             _attacker.SetWieldedItem(string.Empty, loaded);
+            _attacker.SetActiveWieldHand(WieldHand.Right);
             return;
         }
 
         string itemId = primary.Stack?.ItemId ?? string.Empty;
         _attacker.SetWieldedItem(itemId, loaded);
+        _attacker.SetActiveWieldHand(
+            CharacterAttacker.AnimHandFrom(_service.Wield, primary.Slot));
         if (primary.Action != null)
             _attacker.TrySelectAction(primary.Action.Value);
     }

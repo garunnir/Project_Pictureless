@@ -31,6 +31,16 @@ public sealed class UICanvasLayerHost : MonoBehaviour
     {
         EnsureLayerRoots();
         AutoMigrateOrphanedChildren();
+        EnsureWindowActivate();
+    }
+
+    void EnsureWindowActivate()
+    {
+        if (TryGetComponent(out UIOverlayWindowActivate _))
+            return;
+
+        // Scene Canvas host — not a UIComponents prefab instance.
+        gameObject.AddComponent<UIOverlayWindowActivate>();
     }
 
     void OnEnable()

@@ -39,7 +39,7 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
         _iconCatalog = iconCatalog;
         _tooltipRoot = tooltipRoot;
         _tooltipText = tooltipText;
-        _tooltipShell = null;
+        _tooltipShell = tooltipRoot != null ? tooltipRoot.GetComponent<UIHoverPanelShell>() : null;
         _rootCanvas = null;
     }
 
@@ -127,6 +127,9 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
         if (_tooltipShell == null)
             return;
 
+        EnsureTooltipHoverLayout();
+        UIHoverCanvasLayer.EnsureParent(_tooltipRoot, _rootCanvas);
+        UIHoverCanvasLayer.BringToFront(_tooltipRoot);
         _tooltipShell.ShowNearAnchor(anchor, MoodHoverStyle);
     }
 
@@ -138,6 +141,14 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
             _tooltipRoot.gameObject.SetActive(false);
     }
 
+    void EnsureTooltipHoverLayout()
+    {
+        // Positioner sets anchoredPosition in parent local space — center anchors required.
+        _tooltipRoot.anchorMin = new Vector2(0.5f, 0.5f);
+        _tooltipRoot.anchorMax = new Vector2(0.5f, 0.5f);
+        _tooltipRoot.pivot = new Vector2(0.5f, 0f);
+    }
+
     void EnsureTooltipShell()
     {
         if (_tooltipRoot == null)
@@ -147,13 +158,17 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
             _rootCanvas = _tooltipRoot.GetComponentInParent<Canvas>();
 
         if (_tooltipShell == null)
-        {
             _tooltipShell = _tooltipRoot.GetComponent<UIHoverPanelShell>();
-            if (_tooltipShell == null)
-                _tooltipShell = _tooltipRoot.gameObject.AddComponent<UIHoverPanelShell>();
 
-            if (_rootCanvas != null)
-                _tooltipShell.Initialize(_rootCanvas);
+        if (_tooltipShell == null)
+        {
+            Debug.LogError(
+                "[UIPlayerStatusSummaryPanel] UIHoverPanelShell missing on Tooltip. Bake onto Grp_PlayerStatusSummary prefab.",
+                _tooltipRoot);
+            return;
         }
+
+        if (_rootCanvas != null)
+            _tooltipShell.Initialize(_rootCanvas);
     }
 }

@@ -180,12 +180,14 @@ public static class PlayerStatusUIFactory
 
         GameObject tooltipGo = CreateRect("Tooltip", root.transform, new Color(0.08f, 0.08f, 0.08f, 0.95f));
         RectTransform tooltipRect = tooltipGo.GetComponent<RectTransform>();
-        tooltipRect.anchorMin = new Vector2(1f, 1f);
-        tooltipRect.anchorMax = new Vector2(1f, 1f);
-        tooltipRect.pivot = new Vector2(1f, 0f);
+        tooltipRect.anchorMin = new Vector2(0.5f, 0.5f);
+        tooltipRect.anchorMax = new Vector2(0.5f, 0.5f);
+        tooltipRect.pivot = new Vector2(0.5f, 0f);
         tooltipRect.sizeDelta = new Vector2(180f, 28f);
-        tooltipRect.anchoredPosition = new Vector2(0f, 8f);
+        tooltipRect.anchoredPosition = Vector2.zero;
+        tooltipGo.GetComponent<Image>().raycastTarget = false;
         tooltipGo.SetActive(false);
+        tooltipGo.AddComponent<UIHoverPanelShell>();
 
         TMP_Text tooltipText = CreateTmp("Text", tooltipGo.transform, FontSizeBody, TextAlignmentOptions.Center);
         Stretch(tooltipText.rectTransform, 6f, 6f, 4f, 4f);
@@ -362,6 +364,7 @@ public static class PlayerStatusUIFactory
         body.overflowMode = TextOverflowModes.Overflow;
         body.raycastTarget = false;
 
+        panel.AddComponent<UIHoverPanelShell>();
         UIPlayerStatusDetailPanel view = panel.AddComponent<UIPlayerStatusDetailPanel>();
         view.Wire(body);
         return view;

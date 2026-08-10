@@ -7,6 +7,7 @@ using UnityEngine;
 public readonly struct AttackOutcome
 {
     public readonly WeaponAction Action;
+    public readonly WieldHand Hand;
     public readonly WeaponResolveMode ResolveMode;
     public readonly AttackPerformResult Result;
     public readonly CharacterBodyHost Target;
@@ -26,6 +27,7 @@ public readonly struct AttackOutcome
 
     public AttackOutcome(
         WeaponAction action,
+        WieldHand hand,
         WeaponResolveMode resolveMode,
         AttackPerformResult result,
         CharacterBodyHost target,
@@ -35,6 +37,7 @@ public readonly struct AttackOutcome
         Vector3 impactPoint)
     {
         Action = action;
+        Hand = hand;
         ResolveMode = resolveMode;
         Result = result;
         Target = target;

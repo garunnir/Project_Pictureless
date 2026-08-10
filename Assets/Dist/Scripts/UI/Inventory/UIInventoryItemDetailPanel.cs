@@ -24,11 +24,15 @@ public sealed class UIInventoryItemDetailPanel : MonoBehaviour
     [SerializeField] TMP_Text _containerCapacityLine;
     [SerializeField] TMP_Text _materialsLine;
 
+    Canvas _rootCanvas;
+
     public bool IsVisible => _shell != null && _shell.IsVisible;
 
     public void Initialize(Canvas rootCanvas)
     {
+        _rootCanvas = rootCanvas;
         EnsureShell();
+        UIHoverCanvasLayer.EnsureParent(transform, rootCanvas);
         _shell.Initialize(rootCanvas);
     }
 
@@ -41,6 +45,11 @@ public sealed class UIInventoryItemDetailPanel : MonoBehaviour
         }
 
         EnsureShell();
+        if (_shell == null)
+            return;
+
+        UIHoverCanvasLayer.EnsureParent(transform, _rootCanvas);
+        UIHoverCanvasLayer.BringToFront(transform);
         BindRows(stack);
         RebuildLayout();
         _shell.ShowAtScreen(screenPosition, DetailHoverStyle);
@@ -57,7 +66,11 @@ public sealed class UIInventoryItemDetailPanel : MonoBehaviour
 
         _shell = GetComponent<UIHoverPanelShell>();
         if (_shell == null)
-            _shell = gameObject.AddComponent<UIHoverPanelShell>();
+        {
+            Debug.LogError(
+                "[UIInventoryItemDetailPanel] UIHoverPanelShell missing. Bake onto InventoryItemDetailPanel prefab.",
+                this);
+        }
     }
 
     void BindRows(ItemStack stack)

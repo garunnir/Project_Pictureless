@@ -12,6 +12,7 @@
 | `ContextMenuHostEvents` | 호스트 상호 Hide |
 | `UIPopupPositioner` | 스크린 포인트 배치 (+ 호버용 offset·캔버스 clamp 오버로드) |
 | `UIHoverStyle` / `UIHoverPanelShell` | 호버 정보창 Placement 셸 — [`HOVER.md`](HOVER.md) |
+| `ContextMenuOutsideClick` | 열린 cascade 패널 밖 포인터 판정 (바깥 클릭 Hide) |
 
 ## 의존
 
@@ -25,3 +26,4 @@
 - 타일 Catalog/픽: DistScript → `UIContextMenuHost.TryShow(model, pos)`
 - 들기 슬롯 RMB: DistScript `WieldSlotContextMenuCatalog` → `UIContextMenuHost.TryShow` (인벤 Catalog와 분리)
 - ContextMenu 레이어 부모: `UICanvasLayerHost`가 `UIContextMenuHost.TryResolveParent` 등록
+- 바깥 클릭 닫기: 열린 cascade 패널 Rect 밖 좌/우 클릭 → Hide (`ContextMenuOutsideClick` + 호스트 Update). 풀스크린 루트 raycast `OnPointerClick` 병행.

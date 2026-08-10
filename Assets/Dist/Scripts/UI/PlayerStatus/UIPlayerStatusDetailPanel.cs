@@ -1,5 +1,5 @@
 // ============================================================
-// UIPlayerStatusDetailPanel ? ?? ?? ?? anatomy??? ?? ??
+// UIPlayerStatusDetailPanel — Status/Gear 호버 상세 패널
 // ============================================================
 
 using System.Collections.Generic;
@@ -20,11 +20,17 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
     readonly StringBuilder _builder = new(256);
     readonly List<BodyPartEffect> _effectBuffer = new(16);
 
+    Canvas _rootCanvas;
+
     public void Initialize(Canvas rootCanvas)
     {
+        _rootCanvas = rootCanvas;
         EnsureHoverLayout();
         EnsureShell();
-        _shell.Initialize(rootCanvas);
+        UIHoverCanvasLayer.EnsureParent(transform, rootCanvas);
+        if (_shell != null)
+            _shell.Initialize(rootCanvas);
+        Hide();
     }
 
     public void Hide()
@@ -44,6 +50,10 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
         }
 
         EnsureShell();
+        if (_shell == null)
+            return;
+
+        PrepareHoverShow();
         BindPart(body, mainPartId);
         RebuildLayout();
         _shell.ShowNearAnchor(anchor, PartHoverStyle);
@@ -59,10 +69,23 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
         }
 
         EnsureShell();
+        if (_shell == null)
+            return;
+
+        PrepareHoverShow();
         if (_bodyText != null)
             _bodyText.text = body;
         RebuildLayout();
         _shell.ShowNearAnchor(anchor, PartHoverStyle);
+    }
+
+    void PrepareHoverShow()
+    {
+        if (_rootCanvas == null)
+            _rootCanvas = GetComponentInParent<Canvas>();
+
+        UIHoverCanvasLayer.EnsureParent(transform, _rootCanvas);
+        UIHoverCanvasLayer.BringToFront(transform);
     }
 
     void BindPart(ICharacterBody body, string mainPartId)
@@ -160,7 +183,7 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
     public void Wire(TMP_Text bodyText)
     {
         _bodyText = bodyText;
-        _shell = null;
+        _shell = GetComponent<UIHoverPanelShell>();
     }
 
     void EnsureShell()
@@ -170,7 +193,11 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
 
         _shell = GetComponent<UIHoverPanelShell>();
         if (_shell == null)
-            _shell = gameObject.AddComponent<UIHoverPanelShell>();
+        {
+            Debug.LogError(
+                "[UIPlayerStatusDetailPanel] UIHoverPanelShell missing. Bake onto Grp_PlayerStatusWindow DetailPanel.",
+                this);
+        }
     }
 
     void EnsureHoverLayout()
@@ -180,7 +207,7 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
         if (_rect == null)
             return;
 
-        // Positioner sets anchoredPosition in parent local space ? center anchors required.
+        // Positioner sets anchoredPosition in parent local space — center anchors required.
         _rect.anchorMin = new Vector2(0.5f, 0.5f);
         _rect.anchorMax = new Vector2(0.5f, 0.5f);
         _rect.pivot = new Vector2(0f, 1f);

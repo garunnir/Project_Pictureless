@@ -33,7 +33,7 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 | `ItemTimedNameProgress` | Name-bar query SSOT: inv transfer → gear timed → durability |
 | `WornPocketRules` | Wear 목록 → Nested ensure / owner lookup (사이드바) |
 | `ArmorStorageNested` | Dist.Inventory — storage/pockets → Nested + draw_moves |
-| `DualWieldAttackDriver` | Primary then off-hand; OffHandDpsFactor on offense only (no UX) |
+| `DualWieldAttackDriver` | TwoHand=1회; 듀얼=Primary→Offhand (`AttackResolved`); 양팔 overlay 동시·시전 트리거 교대; OffHandDpsFactor는 offense만 |
 | `HandProficiencyIds` | `hand_l` / `hand_r` (skills.json seeded) |
 | `WearStatsAggregator` | Wear-only armor aggregates (Phase A fields); combat reads via `WearCombatDefense` |
 | `WearCombatDefense` | Phase D: ArmorEngage / ArmorAbsorb / MitigatedDamage + WearEncAccuracyFactor |

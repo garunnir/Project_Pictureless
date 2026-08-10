@@ -1,5 +1,5 @@
 // ============================================================
-// DualWieldAttackDriver — Primary 손 완료 후 보조손 순차 + OffHand 배율
+// DualWieldAttackDriver — TwoHand 1회 / 듀얼 Primary→Offhand 교대 (손별 Action)
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
@@ -13,12 +13,12 @@ public sealed class DualWieldAttackDriver : MonoBehaviour
     CharacterSkillsHost _skillsHost;
     bool _awaitingSecondary;
     CharacterBodyHost _pendingTarget;
-    string _secondaryItemId;
-    WeaponAction _secondaryAction;
+    PrimaryWieldResolver.HandScore _secondary;
     float _secondaryFactor;
     int _savedLoadedRounds;
     string _savedPrimaryItemId;
     WeaponAction _savedPrimaryAction;
+    WieldHand _savedPrimaryHand;
 
     void Awake()
     {
@@ -39,7 +39,11 @@ public sealed class DualWieldAttackDriver : MonoBehaviour
         ClearPending();
     }
 
-    /// <summary>듀얼이면 Primary→Secondary 순차 시작. 아니면 false(호출측 단발).</summary>
+    /// <summary>
+    /// TwoHand·한손·듀얼 시전. 듀얼이면 Primary Resolve 후 Offhand 교대.
+    /// 손별 HandAction이 달라도 스텝마다 Action/Hand를 독립 적용.
+    /// false면 호출측 단발(<see cref="CharacterAttacker.TryPerformSelected"/>).
+    /// </summary>
     public bool TryPerformDual(CharacterBodyHost target)
     {
         PlayerGearHost gearHost = PlayerGearHost.Active;
@@ -64,9 +68,9 @@ public sealed class DualWieldAttackDriver : MonoBehaviour
         _savedLoadedRounds = _attacker.LoadedRounds;
         _savedPrimaryItemId = primary.Stack.ItemId;
         _savedPrimaryAction = primary.Action.Value;
+        _savedPrimaryHand = CharacterAttacker.AnimHandFrom(gear.Wield, primary.Slot);
 
-        _attacker.SetWieldedItem(primary.Stack.ItemId, _savedLoadedRounds);
-        _attacker.TrySelectAction(primary.Action.Value);
+        ApplyStep(primary, _savedPrimaryHand, _savedLoadedRounds);
         AttackPerformResult result = _attacker.TryPerform(primary.Action.Value, target, 1f);
 
         bool hasSecondary = !gear.Wield.IsTwoHand
@@ -87,8 +91,7 @@ public sealed class DualWieldAttackDriver : MonoBehaviour
         WieldHand offHand = secondary.Slot == WieldSlotId.Left
             ? WieldHand.Left
             : WieldHand.Right;
-        _secondaryItemId = secondary.Stack.ItemId;
-        _secondaryAction = secondary.Action.Value;
+        _secondary = secondary;
         _secondaryFactor = PrimaryWieldResolver.OffHandFactor(skills, offHand);
         _pendingTarget = target;
         _awaitingSecondary = true;
@@ -102,28 +105,46 @@ public sealed class DualWieldAttackDriver : MonoBehaviour
 
         _awaitingSecondary = false;
         CharacterBodyHost target = _pendingTarget;
-        string secondaryId = _secondaryItemId;
-        WeaponAction secondaryAction = _secondaryAction;
+        PrimaryWieldResolver.HandScore secondary = _secondary;
         float factor = _secondaryFactor;
         int rounds = _attacker.LoadedRounds;
         ClearPending();
 
-        if (target == null || target.Body == null || target.Body.IsDeadState)
+        if (target == null
+            || target.Body == null
+            || target.Body.IsDeadState
+            || secondary.Action == null
+            || secondary.Stack?.Item == null)
         {
             RestorePrimary(rounds);
             return;
         }
 
-        _attacker.SetWieldedItem(secondaryId, rounds);
-        _attacker.TrySelectAction(secondaryAction);
-        _attacker.TryPerform(secondaryAction, target, factor);
+        WieldHand hand = secondary.Slot == WieldSlotId.Left
+            ? WieldHand.Left
+            : WieldHand.Right;
+        ApplyStep(secondary, hand, rounds);
+        _attacker.TryPerform(secondary.Action.Value, target, factor);
+        // LocAnim은 AttackResolved outcome sticky로 Hand/Action/Attack를 소비하므로
+        // 같은 스택에서 primary 복귀해도 시전 틱 애니는 유지된다.
         RestorePrimary(_attacker.LoadedRounds);
+    }
+
+    void ApplyStep(PrimaryWieldResolver.HandScore score, WieldHand hand, int loadedRounds)
+    {
+        if (_attacker == null || score.Stack == null || score.Action == null)
+            return;
+
+        _attacker.SetActiveWieldHand(hand);
+        _attacker.SetWieldedItem(score.Stack.ItemId, loadedRounds);
+        _attacker.TrySelectAction(score.Action.Value);
     }
 
     void RestorePrimary(int loadedRounds)
     {
         if (_attacker == null)
             return;
+        _attacker.SetActiveWieldHand(_savedPrimaryHand);
         _attacker.SetWieldedItem(_savedPrimaryItemId ?? string.Empty, loadedRounds);
         _attacker.TrySelectAction(_savedPrimaryAction);
         PlayerGearHost.Active?.RefreshPrimaryWield();
@@ -133,7 +154,7 @@ public sealed class DualWieldAttackDriver : MonoBehaviour
     {
         _awaitingSecondary = false;
         _pendingTarget = null;
-        _secondaryItemId = null;
         _secondaryFactor = 1f;
+        _secondary = default;
     }
 }

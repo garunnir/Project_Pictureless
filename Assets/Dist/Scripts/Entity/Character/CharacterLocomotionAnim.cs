@@ -1,16 +1,15 @@
 // ============================================================
-// CharacterLocomotionAnim — Speed/IsAiming/Action + Aim 레이어 weight + 무기 Override, TimeScale 틱
+// CharacterLocomotionAnim — MoveXZ/Speed + L/R/2H overlays + thin clip remap
 // ============================================================
+using Garunnir.Runtime.Gameplay.Data;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
 /// <summary>
-/// Drives a 3D layered Animator from <see cref="ICharacterLocomotion"/> speed,
-/// <see cref="CharacterState.IsAiming"/>, and <see cref="CharacterAttacker.SelectedAction"/>.
-/// Aim Layer weight follows IsAiming so non-aim locomotion keeps full-body Move (arm swing).
-/// Applies <see cref="WeaponPresentation.AnimatorOverride"/> when presentation changes.
-/// Animation time advances via <see cref="TimeScaleService"/> only (Animator auto-tick disabled).
-/// Optional pose rate quantizes ticks for a flipbook look without stepped clips.
+/// Drives Move (facing-relative MoveX/MoveZ) + RightArm/LeftArm/TwoHand overlays.
+/// WeaponAction selects library clips projected onto thin keys via
+/// <see cref="ArmAnimSlotResolver"/> (no Animator Action params).
+/// Animation time advances via <see cref="TimeScaleService"/> only.
 /// </summary>
 [RequireComponent(typeof(CharacterState))]
 public class CharacterLocomotionAnim : MonoBehaviour
@@ -20,48 +19,76 @@ public class CharacterLocomotionAnim : MonoBehaviour
         "Inspector에서 Animator.enabled가 꺼져 보이는 것은 정상입니다. " +
         "재생은 이 스크립트의 Update → Animator.Update(TimeScaleService.Delta)로만 진행됩니다.";
 
-    const string DefaultAimLayerName = "Aim Layer";
+    const string DefaultRightArmLayer = "RightArm Layer";
+    const string DefaultLeftArmLayer = "LeftArm Layer";
+    const string DefaultTwoHandLayer = "TwoHand Layer";
     const float DefaultPoseRate = 10f;
-    const float DefaultAimLayerBlendSpeed = 10f;
+    const float DefaultLayerBlendSpeed = 10f;
     const int MaxPoseStepsPerFrame = 8;
+    const float MoveDirEpsilonSqr = 1e-6f;
 
     [InfoBox(ManualTickHelp, InfoMessageType.Warning)]
-    [Tooltip("애니 진행에 사용할 시간 채널. 플레이어=Player, NPC·환경=World.")]
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.Player;
 
     [Header("Animator (TimeScale manual tick)")]
     [Tooltip(ManualTickHelp)]
     [SerializeField] Animator _animator;
-    [Tooltip("무기 Override가 없거나 비무장일 때 쓸 기본 컨트롤러. 비우면 Awake 시점 Animator 할당값을 캡처.")]
     [SerializeField] RuntimeAnimatorController _defaultController;
+    [SerializeField] ArmAnimSlotCatalog _armSlotCatalog;
     [SerializeField] string _paramSpeed = "Speed";
+    [SerializeField] string _paramMoveX = "MoveX";
+    [SerializeField] string _paramMoveZ = "MoveZ";
     [SerializeField] string _paramAiming = "IsAiming";
-    [SerializeField] string _paramAction = "Action";
-    [Tooltip("UpperBody Override Aim 레이어 이름. 비조준 시 weight 0 → Move 전신 유지.")]
-    [SerializeField] string _aimLayerName = DefaultAimLayerName;
-    [Tooltip("Aim 레이어 weight 초당 변화량(채널 시간). 0이면 즉시 스냅.")]
-    [SerializeField, Min(0f)] float _aimLayerBlendSpeed = DefaultAimLayerBlendSpeed;
-    [Tooltip("초당 애니 포즈 수(채널 시간 기준). 0이면 매 프레임 연속 틱. BlendTree 유지한 채 플립북 느낌.")]
+    [SerializeField] string _paramAttackR = "AttackR";
+    [SerializeField] string _paramAttackL = "AttackL";
+    [SerializeField] string _paramAttack2H = "Attack2H";
+    [SerializeField] string _rightArmLayerName = DefaultRightArmLayer;
+    [SerializeField] string _leftArmLayerName = DefaultLeftArmLayer;
+    [SerializeField] string _twoHandLayerName = DefaultTwoHandLayer;
+    [SerializeField, Min(0f)] float _layerBlendSpeed = DefaultLayerBlendSpeed;
     [SerializeField, Min(0f)] float _poseRate = DefaultPoseRate;
+
     [ShowInInspector, ReadOnly, PropertyOrder(20)]
     [LabelText("Manual tick active (Animator.enabled forced off)")]
     bool ManualTickActive => _manualControl && _animator != null && !_animator.enabled;
 
     CharacterState _characterState;
     CharacterAttacker _attacker;
+    PlayerGearHost _gearHost;
+    CharacterSkillsHost _skillsHost;
     ICharacterLocomotion _locomotion;
     bool _manualControl;
     bool _pendingBind = true;
     float _poseAccum;
-    RuntimeAnimatorController _appliedController;
+    RuntimeAnimatorController _weaponSourceController;
+    AnimatorOverrideController _resolvedOverride;
 
     int _hashSpeed;
+    int _hashMoveX;
+    int _hashMoveZ;
     int _hashAiming;
-    int _hashAction;
-    int _aimLayerIndex = -1;
+    int _hashAttackR;
+    int _hashAttackL;
+    int _hashAttack2H;
+    int _rightArmLayerIndex = -1;
+    int _leftArmLayerIndex = -1;
+    int _twoHandLayerIndex = -1;
     bool _hasSpeed;
+    bool _hasMoveX;
+    bool _hasMoveZ;
     bool _hasAiming;
-    bool _hasAction;
+    bool _hasAttackR;
+    bool _hasAttackL;
+    bool _hasAttack2H;
+
+    WeaponAction _mappedActionL = (WeaponAction)(-1);
+    WeaponAction _mappedActionR = (WeaponAction)(-1);
+    WeaponAction _mappedAction2H = (WeaponAction)(-1);
+
+    readonly WeaponAction[] _attackActionQueue = new WeaponAction[2];
+    readonly WieldHand[] _attackHandQueue = new WieldHand[2];
+    int _attackQueueHead;
+    int _attackQueueCount;
 
     public Animator Animator => _animator;
 
@@ -74,6 +101,14 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _attacker = GetComponentInParent<CharacterAttacker>();
         if (_attacker == null)
             _attacker = GetComponent<CharacterAttacker>();
+
+        _gearHost = GetComponentInParent<PlayerGearHost>();
+        if (_gearHost == null)
+            _gearHost = GetComponent<PlayerGearHost>();
+
+        _skillsHost = GetComponentInParent<CharacterSkillsHost>();
+        if (_skillsHost == null)
+            _skillsHost = GetComponent<CharacterSkillsHost>();
 
         _locomotion = GetComponentInParent<ICharacterLocomotion>();
         if (_locomotion == null)
@@ -92,13 +127,19 @@ public class CharacterLocomotionAnim : MonoBehaviour
     void OnEnable()
     {
         if (_attacker != null)
+        {
             _attacker.PresentationChanged += OnPresentationChanged;
+            _attacker.AttackResolved += OnAttackResolved;
+        }
     }
 
     void OnDisable()
     {
         if (_attacker != null)
+        {
             _attacker.PresentationChanged -= OnPresentationChanged;
+            _attacker.AttackResolved -= OnAttackResolved;
+        }
     }
 
     void Reset()
@@ -111,9 +152,15 @@ public class CharacterLocomotionAnim : MonoBehaviour
     {
         if (_poseRate < 0f)
             _poseRate = 0f;
-        if (_aimLayerBlendSpeed < 0f)
-            _aimLayerBlendSpeed = 0f;
-
+        if (_layerBlendSpeed < 0f)
+            _layerBlendSpeed = 0f;
+#if UNITY_EDITOR
+        if (_armSlotCatalog == null)
+        {
+            _armSlotCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<ArmAnimSlotCatalog>(
+                "Assets/Dist/Visual/Anim/CharacterClips/ArmAnimSlotCatalog.asset");
+        }
+#endif
         if (_animator != null)
             CacheAnimatorParameters();
     }
@@ -123,7 +170,6 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (_animator == null)
             return;
 
-        // Avatar/SkinnedMesh 준비가 끝난 첫 Update에서 bind (Awake/Start Rebind는 종종 no-op).
         bool rebound = false;
         if (_pendingBind || !_manualControl)
         {
@@ -132,20 +178,81 @@ public class CharacterLocomotionAnim : MonoBehaviour
             rebound = true;
         }
 
+        float speedNorm = ResolveNormalizedSpeed();
         if (_hasSpeed)
-            _animator.SetFloat(_hashSpeed, ResolveNormalizedSpeed());
+            _animator.SetFloat(_hashSpeed, speedNorm);
+
+        ResolveFacingMoveXZ(speedNorm, out float moveX, out float moveZ);
+        if (_hasMoveX)
+            _animator.SetFloat(_hashMoveX, moveX);
+        if (_hasMoveZ)
+            _animator.SetFloat(_hashMoveZ, moveZ);
 
         bool isAiming = _characterState != null && _characterState.IsAiming;
         if (_hasAiming)
             _animator.SetBool(_hashAiming, isAiming);
 
-        if (_hasAction)
-            _animator.SetInteger(_hashAction, ResolveAction());
+        ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H);
+        SyncThinActionRemap(actionL, actionR, action2H);
+
+        if (_attackQueueCount > 0)
+        {
+            WeaponAction attackAction = _attackActionQueue[_attackQueueHead];
+            WieldHand attackHand = _attackHandQueue[_attackQueueHead];
+            _attackQueueHead = (_attackQueueHead + 1) % _attackActionQueue.Length;
+            _attackQueueCount--;
+
+            if (attackHand == WieldHand.TwoHand)
+            {
+                SyncThinActionRemap(actionL, actionR, attackAction);
+                if (_hasAttack2H)
+                    _animator.SetTrigger(_hashAttack2H);
+            }
+            else if (attackHand == WieldHand.Left)
+            {
+                SyncThinActionRemap(attackAction, actionR, action2H);
+                if (_hasAttackL)
+                    _animator.SetTrigger(_hashAttackL);
+            }
+            else
+            {
+                SyncThinActionRemap(actionL, attackAction, action2H);
+                if (_hasAttackR)
+                    _animator.SetTrigger(_hashAttackR);
+            }
+        }
 
         float channelDelta = TimeScaleService.Delta(_timeChannel);
-        // Rebind는 레이어 weight를 컨트롤러 기본값(Aim=1)으로 되돌리므로 즉시 스냅.
-        SyncAimLayerWeight(isAiming, rebound ? 0f : channelDelta);
+        SyncArmLayerWeights(rebound ? 0f : channelDelta);
         AdvanceAnimator(channelDelta);
+    }
+
+    void SyncThinActionRemap(WeaponAction actionL, WeaponAction actionR, WeaponAction action2H)
+    {
+        if (_resolvedOverride == null || _armSlotCatalog == null)
+            return;
+
+        if (actionL == _mappedActionL &&
+            actionR == _mappedActionR &&
+            action2H == _mappedAction2H)
+            return;
+
+        ArmAnimSlotResolver.RemapThinKeys(
+            _resolvedOverride, _armSlotCatalog, actionL, actionR, action2H);
+        _mappedActionL = actionL;
+        _mappedActionR = actionR;
+        _mappedAction2H = action2H;
+    }
+
+    void OnAttackResolved(AttackOutcome outcome)
+    {
+        if (_attackQueueCount >= _attackActionQueue.Length)
+            return;
+
+        int index = (_attackQueueHead + _attackQueueCount) % _attackActionQueue.Length;
+        _attackActionQueue[index] = outcome.Action;
+        _attackHandQueue[index] = outcome.Hand;
+        _attackQueueCount++;
     }
 
     void OnPresentationChanged() => ApplyWeaponAnimOverride(forceRebind: true);
@@ -155,24 +262,50 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (_animator == null)
             return;
 
-        RuntimeAnimatorController next = _defaultController;
+        RuntimeAnimatorController source = _defaultController;
         if (_attacker != null &&
             _attacker.Presentation != null &&
             _attacker.Presentation.AnimatorOverride != null)
         {
-            next = _attacker.Presentation.AnimatorOverride;
+            source = _attacker.Presentation.AnimatorOverride;
         }
 
-        if (next == null)
+        if (source == null)
             return;
 
-        if (!forceRebind && ReferenceEquals(next, _appliedController))
+        if (!forceRebind && ReferenceEquals(source, _weaponSourceController) && _resolvedOverride != null)
             return;
+
+        if (_resolvedOverride != null)
+        {
+            if (ReferenceEquals(_animator.runtimeAnimatorController, _resolvedOverride))
+                _animator.runtimeAnimatorController = null;
+            Destroy(_resolvedOverride);
+            _resolvedOverride = null;
+        }
+
+        _weaponSourceController = source;
+        _mappedActionL = (WeaponAction)(-1);
+        _mappedActionR = (WeaponAction)(-1);
+        _mappedAction2H = (WeaponAction)(-1);
+
+        ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H);
+        if (_armSlotCatalog != null)
+        {
+            _resolvedOverride = ArmAnimSlotResolver.BuildResolvedOverride(
+                source, _armSlotCatalog, actionL, actionR, action2H);
+            _mappedActionL = actionL;
+            _mappedActionR = actionR;
+            _mappedAction2H = action2H;
+        }
+
+        RuntimeAnimatorController next = _resolvedOverride != null
+            ? (RuntimeAnimatorController)_resolvedOverride
+            : source;
 
         if (!ReferenceEquals(_animator.runtimeAnimatorController, next))
             _animator.runtimeAnimatorController = next;
 
-        _appliedController = next;
         CacheAnimatorParameters();
 
         if (forceRebind || _manualControl)
@@ -180,6 +313,16 @@ public class CharacterLocomotionAnim : MonoBehaviour
             _manualControl = false;
             _pendingBind = true;
         }
+    }
+
+    void OnDestroy()
+    {
+        if (_resolvedOverride == null)
+            return;
+        if (_animator != null && ReferenceEquals(_animator.runtimeAnimatorController, _resolvedOverride))
+            _animator.runtimeAnimatorController = _defaultController;
+        Destroy(_resolvedOverride);
+        _resolvedOverride = null;
     }
 
     static RuntimeAnimatorController ResolveBaseController(RuntimeAnimatorController controller)
@@ -221,55 +364,145 @@ public class CharacterLocomotionAnim : MonoBehaviour
     void CacheAnimatorParameters()
     {
         _hasSpeed = false;
+        _hasMoveX = false;
+        _hasMoveZ = false;
         _hasAiming = false;
-        _hasAction = false;
-        _aimLayerIndex = -1;
+        _hasAttackR = false;
+        _hasAttackL = false;
+        _hasAttack2H = false;
+        _rightArmLayerIndex = -1;
+        _leftArmLayerIndex = -1;
+        _twoHandLayerIndex = -1;
 
         if (_animator == null || _animator.runtimeAnimatorController == null)
             return;
 
-        _hashSpeed = string.IsNullOrEmpty(_paramSpeed) ? 0 : Animator.StringToHash(_paramSpeed);
-        _hashAiming = string.IsNullOrEmpty(_paramAiming) ? 0 : Animator.StringToHash(_paramAiming);
-        _hashAction = string.IsNullOrEmpty(_paramAction) ? 0 : Animator.StringToHash(_paramAction);
+        _hashSpeed = Hash(_paramSpeed);
+        _hashMoveX = Hash(_paramMoveX);
+        _hashMoveZ = Hash(_paramMoveZ);
+        _hashAiming = Hash(_paramAiming);
+        _hashAttackR = Hash(_paramAttackR);
+        _hashAttackL = Hash(_paramAttackL);
+        _hashAttack2H = Hash(_paramAttack2H);
 
         AnimatorControllerParameter[] parameters = _animator.parameters;
         for (int i = 0; i < parameters.Length; i++)
         {
             int nameHash = parameters[i].nameHash;
-            if (!string.IsNullOrEmpty(_paramSpeed) && nameHash == _hashSpeed)
-                _hasSpeed = true;
-            if (!string.IsNullOrEmpty(_paramAiming) && nameHash == _hashAiming)
-                _hasAiming = true;
-            if (!string.IsNullOrEmpty(_paramAction) && nameHash == _hashAction)
-                _hasAction = true;
+            if (Match(_paramSpeed, _hashSpeed, nameHash)) _hasSpeed = true;
+            if (Match(_paramMoveX, _hashMoveX, nameHash)) _hasMoveX = true;
+            if (Match(_paramMoveZ, _hashMoveZ, nameHash)) _hasMoveZ = true;
+            if (Match(_paramAiming, _hashAiming, nameHash)) _hasAiming = true;
+            if (Match(_paramAttackR, _hashAttackR, nameHash)) _hasAttackR = true;
+            if (Match(_paramAttackL, _hashAttackL, nameHash)) _hasAttackL = true;
+            if (Match(_paramAttack2H, _hashAttack2H, nameHash)) _hasAttack2H = true;
         }
 
-        if (!string.IsNullOrEmpty(_aimLayerName))
-            _aimLayerIndex = _animator.GetLayerIndex(_aimLayerName);
+        if (!string.IsNullOrEmpty(_rightArmLayerName))
+            _rightArmLayerIndex = _animator.GetLayerIndex(_rightArmLayerName);
+        if (!string.IsNullOrEmpty(_leftArmLayerName))
+            _leftArmLayerIndex = _animator.GetLayerIndex(_leftArmLayerName);
+        if (!string.IsNullOrEmpty(_twoHandLayerName))
+            _twoHandLayerIndex = _animator.GetLayerIndex(_twoHandLayerName);
     }
 
-    void SyncAimLayerWeight(bool isAiming, float channelDelta)
+    static int Hash(string name) =>
+        string.IsNullOrEmpty(name) ? 0 : Animator.StringToHash(name);
+
+    static bool Match(string name, int hash, int nameHash) =>
+        !string.IsNullOrEmpty(name) && nameHash == hash;
+
+    void SyncArmLayerWeights(float channelDelta)
     {
-        if (_aimLayerIndex < 0)
+        bool twoHand = false;
+        bool leftArmed = false;
+        bool rightArmed = false;
+
+        CharacterGearService gear = _gearHost != null ? _gearHost.Service : null;
+        if (gear?.Wield != null)
+        {
+            twoHand = gear.Wield.IsTwoHand;
+            leftArmed = !twoHand && gear.Wield.Left != null;
+            rightArmed = !twoHand && gear.Wield.Right != null;
+        }
+        else if (_attacker != null && !string.IsNullOrEmpty(_attacker.ItemId))
+        {
+            WieldHand hand = _attacker.ActiveWieldHand;
+            twoHand = hand == WieldHand.TwoHand;
+            leftArmed = hand == WieldHand.Left;
+            rightArmed = hand == WieldHand.Right;
+        }
+
+        SetLayerWeightToward(_rightArmLayerIndex, twoHand ? 0f : (rightArmed ? 1f : 0f), channelDelta);
+        SetLayerWeightToward(_leftArmLayerIndex, twoHand ? 0f : (leftArmed ? 1f : 0f), channelDelta);
+        SetLayerWeightToward(_twoHandLayerIndex, twoHand ? 1f : 0f, channelDelta);
+    }
+
+    void SetLayerWeightToward(int layerIndex, float target, float channelDelta)
+    {
+        if (layerIndex < 0)
             return;
 
-        float target = isAiming ? 1f : 0f;
-        float current = _animator.GetLayerWeight(_aimLayerIndex);
-        if (_aimLayerBlendSpeed <= 0f || channelDelta <= 0f)
+        float current = _animator.GetLayerWeight(layerIndex);
+        if (_layerBlendSpeed <= 0f || channelDelta <= 0f)
         {
             if (!Mathf.Approximately(current, target))
-                _animator.SetLayerWeight(_aimLayerIndex, target);
+                _animator.SetLayerWeight(layerIndex, target);
             return;
         }
 
-        float next = Mathf.MoveTowards(current, target, _aimLayerBlendSpeed * channelDelta);
+        float next = Mathf.MoveTowards(current, target, _layerBlendSpeed * channelDelta);
         if (!Mathf.Approximately(current, next))
-            _animator.SetLayerWeight(_aimLayerIndex, next);
+            _animator.SetLayerWeight(layerIndex, next);
     }
 
-    // Unity 자동 틱을 끄고 TimeScale 채널로만 진행한다.
-    // 한 번도 켠 적 없이 disabled+Rebind만 하면 본 write가 안 붙는 경우가 있어,
-    // 짧게 enable→Update(0)로 bind한 뒤 disabled 수동 틱으로 전환한다.
+    void ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H)
+    {
+        actionL = WeaponAction.Bashing;
+        actionR = WeaponAction.Bashing;
+        action2H = _attacker != null ? _attacker.SelectedAction : WeaponAction.Bashing;
+
+        CharacterGearService gear = _gearHost != null ? _gearHost.Service : null;
+        if (gear?.Wield == null || gear.HandActions == null)
+        {
+            if (_attacker != null)
+            {
+                actionL = _attacker.SelectedAction;
+                actionR = _attacker.SelectedAction;
+            }
+            return;
+        }
+
+        int rounds = _attacker != null ? _attacker.LoadedRounds : 0;
+        ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
+
+        if (gear.Wield.IsTwoHand)
+        {
+            ItemStack stack = gear.Wield.Left ?? gear.Wield.Right;
+            action2H = ActionForStack(gear, stack, rounds, skills, action2H);
+            actionL = action2H;
+            actionR = action2H;
+            return;
+        }
+
+        actionL = ActionForStack(gear, gear.Wield.Left, rounds, skills, actionL);
+        actionR = ActionForStack(gear, gear.Wield.Right, rounds, skills, actionR);
+    }
+
+    static WeaponAction ActionForStack(
+        CharacterGearService gear,
+        ItemStack stack,
+        int loadedRounds,
+        ICharacterSkills skills,
+        WeaponAction fallback)
+    {
+        if (stack?.Item == null)
+            return fallback;
+
+        WeaponAction? ensured = gear.HandActions.EnsureInitialized(stack.Item, loadedRounds, skills);
+        return ensured ?? fallback;
+    }
+
     void TakeManualControl()
     {
         if (_animator == null)
@@ -296,11 +529,32 @@ public class CharacterLocomotionAnim : MonoBehaviour
         return Mathf.Clamp01(_locomotion.CurrentSpeed / max);
     }
 
-    int ResolveAction()
+    void ResolveFacingMoveXZ(float speedNorm, out float moveX, out float moveZ)
     {
-        if (_attacker == null)
-            return (int)WeaponAction.Bashing;
+        moveX = 0f;
+        moveZ = 0f;
 
-        return (int)_attacker.SelectedAction;
+        if (speedNorm <= 1e-4f || _characterState == null)
+            return;
+
+        Vector3 wish = _characterState.MoveDir;
+        wish.y = 0f;
+        if (wish.sqrMagnitude <= MoveDirEpsilonSqr)
+            return;
+
+        Vector3 facing = _characterState.GetFacingDir();
+        facing.y = 0f;
+        if (facing.sqrMagnitude <= MoveDirEpsilonSqr)
+            return;
+
+        Quaternion facingRot = Quaternion.LookRotation(facing.normalized, Vector3.up);
+        Vector3 local = Quaternion.Inverse(facingRot) * wish.normalized;
+        local.y = 0f;
+        if (local.sqrMagnitude <= MoveDirEpsilonSqr)
+            return;
+
+        local.Normalize();
+        moveX = local.x * speedNorm;
+        moveZ = local.z * speedNorm;
     }
 }

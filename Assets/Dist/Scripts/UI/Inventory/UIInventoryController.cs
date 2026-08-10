@@ -406,7 +406,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
             return;
         }
 
-        Transform parent = ResolveLayerRoot(UICanvasLayer.Overlay);
+        Transform parent = ResolveLayerRoot(UIHoverCanvasLayer.Layer);
         _itemDetailPanel = Instantiate(_itemDetailPanelPrefab, parent);
         _itemDetailPanel.name = "InventoryItemDetailPanel";
         _itemDetailPanel.Initialize(_uiCanvas);

@@ -1,5 +1,5 @@
 // ============================================================
-// UIOverlayWindow — 창 루트 Enable/Disable 시 hit-test 등록
+// UIOverlayWindow — 창 루트 hit-test 등록 + 레이어 내 BringToFront
 // ============================================================
 
 using UnityEngine;
@@ -24,4 +24,7 @@ public sealed class UIOverlayWindow : MonoBehaviour
 
         UIOverlayWindowHitTest.Unregister(_rect);
     }
+
+    /// <summary>같은 부모(레이어 루트) 형제 중 맨 위. 레이어 승격 없음.</summary>
+    public void BringToFront() => transform.SetAsLastSibling();
 }

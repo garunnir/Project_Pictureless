@@ -36,6 +36,7 @@
 - 드래그 상태 SSOT: `InventoryDragState`는 DistScript (`Assets/Dist/Scripts/UI/`) — 창 간 Item DnD 공유.
 - 창밖 바닥 투하: `UIOverlayWindowHitTest.ContainsScreenPoint`가 false이고 `WasConsumed`가 아닐 때만 `floor-loot`로 `MoveStacks`. 등록된 Dist 창(인벤·Character·Time 등) Rect 위에서는 투하 금지.
 - 창 위 포인터 SSOT: `UIOverlayWindow` (Enable 등록) + `UIOverlayWindowHitTest`. Zoom/Aim 억제·바닥 투하 판정 동일 API.
+- 창 레이어 내 활성화: `UIOverlayWindowActivate` (Canvas/`UICanvasLayerHost`) — 포인터 프레스 raycast → parent `UIOverlayWindow.BringToFront` (같은 레이어 sibling만).
 
 - `LateUpdate`는 드래그 종료·고스트 위치가 아니라 창 위 포인터 캐시·Zoom/Aim 억제 전용이다.
 - 드래그 고스트 SSOT: `UIItemDragGhostService` (UICanvas 컴포넌트, 인스턴스는 `UICanvasLayer.TopMost`). 특정 창/컨트롤러 비소유.
@@ -110,7 +111,7 @@
 
 | `InventoryScrollDragOverlay` | 스크롤/드래그 중 전체 캔버스 레이캐스트 차단 (`UICanvas` 하위) |
 
-| `InventoryItemDetailPanel` | 리스트 행 호버 상세 보조창 (`UICanvas` Overlay, `Setup Canvas Overlays In Open Scene`) |
+| `InventoryItemDetailPanel` | 리스트 행 호버 상세 보조창 (`UICanvas` TopMost via `UIHoverCanvasLayer`, `Setup Canvas Overlays In Open Scene`) |
 
 
 
@@ -156,7 +157,7 @@
 
 - 드롭 처리: `UIInventoryListDropZone` (`IDropHandler`) → `InventorySession.MoveStacks(...)`
 - 리스트 행 더블클릭: 플레이어·루트 창이 **둘 다 열려 있을 때** 반대편 창 활성 탭으로 `InventoryDragDrop.TryQuickTransferBetweenWindows` → `MoveStacks` (드래그 후 반대 리스트 드롭과 동일). 선택에 클릭 스택이 없으면 단일 스택, 있으면 선택 전체.
-- 리스트 행 호버 보조창: `UIItemListRow.Hovered` → `UIInventoryItemDetailPanel` (`UICanvasLayer.Overlay`) + `UIHoverPanelShell` / `UIPopupPositioner` keep-in-bounds ([`docs/ui/HOVER.md`](../ui/HOVER.md)). **VerticalLayoutGroup** 행별 표시 — description·분류·유형·수납·재질 등 아이템에 따라 `SetActive`로 행 추가/제거. 내구도는 `ItemData.has_durability` + `ItemDurabilityRules` + `ItemStack.DamageLevel`. 재질명은 `GameplayData.GetMaterial`. 숨김: exit·드래그 시작·창 닫힘·우클릭 메뉴. `raycastTarget=false`. 프리팹 description 행 추가 후 `Setup Canvas Overlays In Open Scene` 재실행.
+- 리스트 행 호버 보조창: `UIItemListRow.Hovered` → `UIInventoryItemDetailPanel` (`UIHoverCanvasLayer` / `TopMost`) + `UIHoverPanelShell` / `UIPopupPositioner` keep-in-bounds ([`docs/ui/HOVER.md`](../ui/HOVER.md)). **VerticalLayoutGroup** 행별 표시 — description·분류·유형·수납·재질 등 아이템에 따라 `SetActive`로 행 추가/제거. 내구도는 `ItemData.has_durability` + `ItemDurabilityRules` + `ItemStack.DamageLevel`. 재질명은 `GameplayData.GetMaterial`. 숨김: exit·드래그 시작·창 닫힘·우클릭 메뉴. `raycastTarget=false`. 프리팹 description 행 추가 후 `Setup Canvas Overlays In Open Scene` 재실행.
 
 - 게임 데이터: `BNData/`(참조) + `GameData/`(커스텀) 듀얼. `GameDataLoader` + `GameDataJson`(Newtonsoft). `ItemData`에 BN 게임 디테일 통합(description·armor·gun·tool·comestible 등). `GameplayData.GetItem` / `GetMaterial` — 커스텀 우선 → 참조 fallback. BN 재생성: `python Tools/bn_converter/convert.py --bn-path <Cataclysm-BN> --output Assets/StreamingAssets/BNData`.
 
