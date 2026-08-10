@@ -28,7 +28,7 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 | `PrimaryWieldResolver` | DPS primary; dual secondary score |
 | `ToolUseWieldSession` | Snapshot → temp wield → restore (M0 API; consumers later) |
 | `GearActionDuration` | Wear/TakeOff/Wield/Unwield seconds (proxy) |
-| `InventoryTransferDuration` | MoveStacks / bag draw seconds — **prefer** `ContainerData.draw_moves` / pocket moves when &gt;0; else weight/volume/(storage) proxy |
+| `InventoryTransferDuration` | MoveStacks / bag draw seconds — `draw_moves`→초(`CombatMath.MovesPerSecond`) **+** weight/volume/nest handling |
 | `InventoryTimedMoveHost` | Per-stack sequential transfer (no summed delay); `ActiveStacks` = current only |
 | `ItemTimedNameProgress` | Name-bar query SSOT: inv transfer → gear timed → durability |
 | `WornPocketRules` | Wear 목록 → Nested ensure / owner lookup (사이드바) |
@@ -56,8 +56,14 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 - All Wear/TakeOff/Wield/Unwield are timed; wield/unwield short
 - Bag → gear: `GearActionDuration + InventoryTransferDuration`
 - Inventory MoveStacks / quick transfer / outside drop: `InventoryTransferDuration` (**SSOT**, same host)
-- Transfer duration: if source `ContainerData.draw_moves` &gt; 0 (from baked pocket moves), use `moves * 0.01s`; else weight/volume/(storage hint) formula. **Multi-stack = sequential** (one `SecondsForStackFrom` + move each; no summed timer). Bag = item: `ItemStack.TotalWeight` includes Nested contents (volume = shell only).
+- Transfer duration: `access`(source `draw_moves`→초 via `CombatMath.MovesPerSecond`, 0 if unset) **+** `handling`(base + weight + volume + nest). No storage-ml hint. **Multi-stack = sequential** (one `SecondsForStackFrom` + move each; no summed timer). Bag = item: `ItemStack.TotalWeight` includes Nested contents (volume = shell only).
 - **이름 겹침 바**: 조회 SSOT=`ItemTimedNameProgress` (InventoryTimedMove → Gear Timed → 내구도). 소비자: 인벤 행·사이드 중첩가방 탭·Worn·Wield. Name 셀 stretch fill이 글자 **뒤**. 패널 Progress Slider 없음.
+
+### Equip (from inventory)
+
+- Inventory `Item` drag → Character L/R slot: `TryBeginWield` (`GearInventoryDrop`; two-hand item → `WieldHand.TwoHand`)
+- Inventory `Item` drag → Worn list / worn row: `TryBeginWear` if wearable; else no-op
+- Success: `InventoryDragState.MarkConsumed` (floor drop suppressed). Drop on registered overlay window never floors.
 
 ### Unequip
 
@@ -113,7 +119,7 @@ API: `Aggregate(wear) → WearArmorTotals`, `ForPart(wear, partId) → WearPartA
 |-------|----------|
 | Capacity | `ArmorDetailData.storage` (ml) or sum of `pockets[].volume_ml` |
 | Nested | One `ItemStack.Nested` `InventoryContainer` (`armor_pocket:{itemId}`) |
-| Draw moves | `pockets[].moves` → max → `ContainerData.draw_moves`; 0 = formula fallback |
+| Draw moves | `pockets[].moves` → max → `ContainerData.draw_moves`; 0 = access 0 (handling only) |
 | Sidebar | `UIInventoryListWindow` PlayerOnly: body + nested bags + **worn pockets** |
 | Wear change | `PlayerGearHost` → `InventorySession.NotifySidebarLayoutChanged` |
 | Icon | `ContainerVisualPresenter` resolves worn owner via `WornPocketRules.TryFindOwnerStack` |
@@ -129,7 +135,7 @@ API: `Aggregate(wear) → WearArmorTotals`, `ForPart(wear, partId) → WearPartA
 
 - Existing nested bag tabs / NearbyOnly / floor promote unchanged
 - PlayerOnly sidebar show rule: bags **or** worn storage
-- Transfer duration prefer moves when present; else prior formula
+- Transfer duration: convert moves→seconds and **add** handling (not replace)
 - Checklist: `.claude/checklists/migration-parity.md` · UI: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md)
 
 ## Phase C — Armor layer + sided + wear overlap

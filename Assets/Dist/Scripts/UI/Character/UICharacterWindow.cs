@@ -57,6 +57,9 @@ public sealed class UICharacterWindow : MonoBehaviour
         if (WindowRect != null && rootCanvas != null)
             WindowRect.sizeDelta = PlayerStatusWindowLayout.ClampSize(WindowRect.sizeDelta, rootCanvas);
 
+        if (!TryGetComponent(out UIOverlayWindow _))
+            gameObject.AddComponent<UIOverlayWindow>();
+
         _detailPanel?.Initialize(rootCanvas);
         EnsureTabChrome();
         EnsureGearPanel();

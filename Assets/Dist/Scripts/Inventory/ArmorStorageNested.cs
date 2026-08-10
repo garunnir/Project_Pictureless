@@ -36,7 +36,7 @@ public static class ArmorStorageNested
         return sum;
     }
 
-    /// <summary>베이크된 pocket moves 중 최대. 0이면 duration 공식 fallback.</summary>
+    /// <summary>베이크된 pocket moves 중 최대. 0이면 access 0 (handling only).</summary>
     public static int PreferDrawMoves(ItemData item)
     {
         if (item?.armor?.pockets == null)

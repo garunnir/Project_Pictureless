@@ -1,7 +1,8 @@
 // ============================================================
-// InventoryDragState — 활성 아이템·컨테이너 탭 드래그 페이로드
+// InventoryDragState — 활성 아이템·컨테이너 탭 드래그 페이로드 (창 간 DnD SSOT)
 // ============================================================
 
+using System;
 using System.Collections.Generic;
 
 public enum InventoryDragKind
@@ -16,15 +17,17 @@ public sealed class InventoryDragPayload
 {
     public InventoryDragKind Kind { get; internal set; } = InventoryDragKind.Item;
     public InventoryContainer SourceContainer { get; internal set; }
-    public InventoryListSelection SourceSelection { get; internal set; }
+    public Action ClearSelection { get; internal set; }
     public IReadOnlyList<ItemStack> Stacks { get; internal set; }
 }
 
 public static class InventoryDragState
 {
     static InventoryDragPayload _active;
+    static bool _consumed;
 
     public static bool IsDragging => _active != null;
+    public static bool WasConsumed => _consumed;
 
     public static bool TryGetActive(out InventoryDragPayload payload)
     {
@@ -34,8 +37,8 @@ public static class InventoryDragState
 
     public static void Begin(
         InventoryContainer sourceContainer,
-        InventoryListSelection sourceSelection,
-        IReadOnlyList<ItemStack> stacks)
+        IReadOnlyList<ItemStack> stacks,
+        Action clearSelection = null)
     {
         if (sourceContainer == null || stacks == null || stacks.Count == 0)
             return;
@@ -50,11 +53,12 @@ public static class InventoryDragState
         if (snapshot.Count == 0)
             return;
 
+        _consumed = false;
         _active = new InventoryDragPayload
         {
             Kind = InventoryDragKind.Item,
             SourceContainer = sourceContainer,
-            SourceSelection = sourceSelection,
+            ClearSelection = clearSelection,
             Stacks = snapshot,
         };
     }
@@ -64,11 +68,12 @@ public static class InventoryDragState
         if (parentContainer == null || containerStack?.Item == null)
             return;
 
+        _consumed = false;
         _active = new InventoryDragPayload
         {
             Kind = InventoryDragKind.ContainerTab,
             SourceContainer = parentContainer,
-            SourceSelection = null,
+            ClearSelection = null,
             Stacks = new[] { containerStack },
         };
     }
@@ -89,16 +94,23 @@ public static class InventoryDragState
         if (snapshot.Count == 0)
             return;
 
+        _consumed = false;
         _active = new InventoryDragPayload
         {
             Kind = InventoryDragKind.ContainerContents,
             SourceContainer = sourceContainer,
-            SourceSelection = null,
+            ClearSelection = null,
             Stacks = snapshot,
         };
     }
 
-    public static void End() => _active = null;
+    public static void MarkConsumed() => _consumed = true;
+
+    public static void End()
+    {
+        _active = null;
+        _consumed = false;
+    }
 
     // End()는 UIInventoryController.FinalizeItemDrag / CleanupIfNoWindowsOpen 에서만 호출한다.
 }

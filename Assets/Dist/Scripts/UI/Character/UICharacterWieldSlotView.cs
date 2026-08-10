@@ -16,7 +16,8 @@ public sealed class UICharacterWieldSlotView :
     IPointerClickHandler,
     IBeginDragHandler,
     IDragHandler,
-    IEndDragHandler
+    IEndDragHandler,
+    IDropHandler
 {
     Image _itemIcon;
     Image _actionIcon;
@@ -34,9 +35,21 @@ public sealed class UICharacterWieldSlotView :
 
     public void EnsureChrome()
     {
+        EnsureDropRaycast();
         EnsureItemIcon();
         EnsureActionIcon();
         EnsureLabelForProgressBar();
+    }
+
+    void EnsureDropRaycast()
+    {
+        if (!TryGetComponent(out Image bg))
+        {
+            bg = gameObject.AddComponent<Image>();
+            bg.color = new Color(0.18f, 0.18f, 0.18f, 0.9f);
+        }
+
+        bg.raycastTarget = true;
     }
 
     void EnsureItemIcon()
@@ -258,6 +271,11 @@ public sealed class UICharacterWieldSlotView :
 
         if (eventData.button == PointerEventData.InputButton.Left && eventData.clickCount >= 2)
             _onUnequip?.Invoke(_slot, false);
+    }
+
+    public void OnDrop(PointerEventData eventData)
+    {
+        GearInventoryDrop.TryWieldFromActiveDrag(_slot);
     }
 
     public void OnBeginDrag(PointerEventData eventData)

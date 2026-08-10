@@ -73,6 +73,7 @@ public sealed class UICharacterGearPanel : MonoBehaviour
         EnsureFilterClearButton();
         EnsureWieldSlots();
         EnsureEncTotals();
+        UICharacterWornDropZone.Ensure(_wornRoot);
     }
 
     void EnsureFilterClearButton()

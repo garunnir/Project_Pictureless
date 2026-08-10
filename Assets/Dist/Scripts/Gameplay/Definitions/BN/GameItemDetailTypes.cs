@@ -28,7 +28,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         public bool sided;
     }
 
-    /// <summary>BN/DDA pocket 조각. moves&gt;0이면 InventoryTransferDuration이 공식보다 우선.</summary>
+    /// <summary>BN/DDA pocket 조각. moves&gt;0이면 초 변환 후 InventoryTransferDuration handling에 가산.</summary>
     [Serializable]
     public sealed class ArmorPocketData
     {

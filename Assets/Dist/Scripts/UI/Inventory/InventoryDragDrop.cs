@@ -2,6 +2,7 @@
 // InventoryDragDrop — 활성 드래그 페이로드를 대상 컨테이너로 적용
 // ============================================================
 
+using System;
 using System.Collections.Generic;
 
 public static class InventoryDragDrop
@@ -49,7 +50,7 @@ public static class InventoryDragDrop
                 payload.SourceContainer,
                 target,
                 payload.Stacks,
-                payload.SourceSelection);
+                payload.ClearSelection);
         }
 
         return TryMoveItemStacks(
@@ -65,7 +66,7 @@ public static class InventoryDragDrop
         InventoryContainer from,
         InventoryContainer to,
         IReadOnlyList<ItemStack> stacks,
-        InventoryListSelection sourceSelection = null)
+        Action clearSelection = null)
     {
         if (session == null || from == null || to == null || stacks == null || stacks.Count == 0)
             return false;
@@ -84,13 +85,13 @@ public static class InventoryDragDrop
                 from,
                 to,
                 stacks,
-                () => sourceSelection?.Clear());
+                () => clearSelection?.Invoke());
         }
 
         if (!session.MoveStacks(from, to, stacks))
             return false;
 
-        sourceSelection?.Clear();
+        clearSelection?.Invoke();
         return true;
     }
 
@@ -131,6 +132,6 @@ public static class InventoryDragDrop
             selection.SetSingle(stack);
 
         IReadOnlyList<ItemStack> stacks = selection.GetSelectedStacks();
-        return TryMoveItemStacks(session, sourceContainer, target, stacks, selection);
+        return TryMoveItemStacks(session, sourceContainer, target, stacks, () => selection.Clear());
     }
 }

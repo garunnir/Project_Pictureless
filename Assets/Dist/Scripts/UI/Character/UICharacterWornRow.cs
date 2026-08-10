@@ -16,7 +16,8 @@ public sealed class UICharacterWornRow :
     IPointerClickHandler,
     IBeginDragHandler,
     IDragHandler,
-    IEndDragHandler
+    IEndDragHandler,
+    IDropHandler
 {
     Image _icon;
     TMP_Text _label;
@@ -182,6 +183,11 @@ public sealed class UICharacterWornRow :
 
         if (eventData.button == PointerEventData.InputButton.Left && eventData.clickCount >= 2)
             _onUnequip.Invoke(_stack, false);
+    }
+
+    public void OnDrop(PointerEventData eventData)
+    {
+        GearInventoryDrop.TryWearFromActiveDrag();
     }
 
     public void OnBeginDrag(PointerEventData eventData)

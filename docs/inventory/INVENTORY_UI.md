@@ -33,7 +33,9 @@
 - 드래그 수명주기(`Begin/Commit/Cancel`)는 단일 상태 소유자에서 종료한다.
 
 - `InventoryDragState.End()`는 `UIInventoryController.FinalizeItemDrag` / `CleanupIfNoWindowsOpen`에서만 호출한다. `OnDrop`은 이동·선택 해제만 수행하고, 종료는 `OnEndDrag` → `OnItemDragEnded` 한 경로로 모은다.
-- 창 Rect 밖에서 `EndDrag`하면 `FinalizeItemDrag`가 `floor-loot` 컨테이너로 `MoveStacks`한다 (사이드바 바닥 탭 드롭과 동일 판정). 창 안 비드롭존(헤더 등)은 기존대로 취소.
+- 드래그 상태 SSOT: `InventoryDragState`는 DistScript (`Assets/Dist/Scripts/UI/`) — 창 간 Item DnD 공유.
+- 창밖 바닥 투하: `UIOverlayWindowHitTest.ContainsScreenPoint`가 false이고 `WasConsumed`가 아닐 때만 `floor-loot`로 `MoveStacks`. 등록된 Dist 창(인벤·Character·Time 등) Rect 위에서는 투하 금지.
+- 창 위 포인터 SSOT: `UIOverlayWindow` (Enable 등록) + `UIOverlayWindowHitTest`. Zoom/Aim 억제·바닥 투하 판정 동일 API.
 
 - `LateUpdate`는 드래그 종료·고스트 위치가 아니라 창 위 포인터 캐시·Zoom/Aim 억제 전용이다.
 - 드래그 고스트 SSOT: `UIItemDragGhostService` (UICanvas 컴포넌트, 인스턴스는 `UICanvasLayer.TopMost`). 특정 창/컨트롤러 비소유.
@@ -63,7 +65,7 @@
 - 루팅 파이프라인: `NearbyContainerDetector` → `LootProximityCoordinator` 이벤트 → `{ TilePresentationSystem, UIInventoryController }` 각각 구독. 컨테이너 TileView는 `EmphasisBlend`(살짝 밝게).
 - `NearbyOnly`: 사이드탭이 없으면 아이템 리스트도 비움. 활성 탭 1개만 월드 하이라이트.
 - 사이드탭 표현: `Normal` / `Selected` / `Dragging`. 중첩 가방 탭은 드래그 소스(컨테이너째), 고정 컨테이너 탭(`player-body` / `floor-loot` / 월드)은 내용물 전체 드래그(스택 순차 이동, 중량·부피 초과 시 중단). 모든 탭은 드롭 타겟.
-- Transfer duration: `InventoryTransferDuration` SSOT — MoveStacks / 퀵이동 / 창밖 투하 / 가방→Gear 인출에 적용 (`InventoryTimedMoveHost`). 소스 `ContainerData.draw_moves`&gt;0(베이크 pocket moves)이면 moves 우선, 아니면 weight/volume/(storage) 공식. **다중 스택은 합산 없이 순차**(스택마다 개별 딜레이→이동). 가방 중량 SSOT=`ItemStack.TotalWeight`(Nested 내용물 포함; `TotalVolume`은 외형만). **진행 UI**: `ItemTimedNameProgress` → 리스트 행·중첩가방 탭 Name stretch fill(idle=내구도, busy=로딩; Gear Wear/Wield도 동일). `Dist/MCP/Inventory/Patch Row Name Status Bar`. 상세: [`docs/equipment/GEAR.md`](../equipment/GEAR.md).
+- Transfer duration: `InventoryTransferDuration` SSOT — MoveStacks / 퀵이동 / 창밖 투하 / 가방→Gear 인출에 적용 (`InventoryTimedMoveHost`). 소스 `draw_moves`→초(`CombatMath.MovesPerSecond`) **+** weight/volume/nest handling (storage-ml 가산 없음). **다중 스택은 합산 없이 순차**(스택마다 개별 딜레이→이동). 가방 중량 SSOT=`ItemStack.TotalWeight`(Nested 내용물 포함; `TotalVolume`은 외형만). **진행 UI**: `ItemTimedNameProgress` → 리스트 행·중첩가방 탭 Name stretch fill(idle=내구도, busy=로딩; Gear Wear/Wield도 동일). `Dist/MCP/Inventory/Patch Row Name Status Bar`. 상세: [`docs/equipment/GEAR.md`](../equipment/GEAR.md).
 - 착용 포켓 탭: Wear 변경 시 `InventorySession.NotifySidebarLayoutChanged`로 사이드바 Sync. 착용 포켓은 고정 탭(컨테이너째 드래그 아님); 아이콘은 착용 아이템.
 - `Area_List`·`Area_Sidebar`(`SlotRoot`)는 세로 스크롤바(`Scrollbar_Vertical`, AutoHideAndExpandViewport)를 프리팹에 내장한다. 창 전체 rebake 금지 — `Dist/MCP/Inventory/Patch Window Scrollbars`로만 패치 (`Area_InvInfo` 보존). 사이드바는 `InventorySidebarScrollRect`(탭 DnD 중 스크롤 드래그 무시); 사이드바 Viewport에는 `InventoryScrollDragHandler` 없음.
 - 컨테이너 상호작용은 `Interactable`의 레거시 스프라이트 아웃라인을 사용하지 않는다. 포커스 시각효과는 타입별 전용 컴포넌트(`SpriteOutlineFocusVisual` 등)로 분리한다.
@@ -148,7 +150,7 @@
 
 - 다중 선택 SSOT: `InventoryListSelection`
 
-- 드래그 상태 SSOT: `InventoryDragState` (`InventoryDragPayload`)
+- 드래그 상태 SSOT: `InventoryDragState` / `InventoryDragPayload` (DistScript UI; `ClearSelection`·`MarkConsumed`)
 
 - 드래그 시작: `UIItemListRow` (`IBeginDragHandler`)
 
@@ -169,7 +171,7 @@
 - 사이드 탭 이동: 간이(중첩) = 컨테이너째 `MoveStacks`; 고정 탭 = 내용물 순차(용량 초과 시 중단). 소요 시간=`InventoryTransferDuration` — 스택당 순차 (`InventoryTimedMoveHost`).
 - `ConfigureDragAndDrop`: 뷰포트 DnD 배선만. 리스트/사이드바 Bind는 `Initialize`·`SyncFromChangeSet` SSOT.
 - `UIItemListView`: **고정 높이 가상화** — `_orderedStacks`(데이터)와 가시 행 LeanPool을 분리. Content 높이는 `N * stride`(+ sticky top/bottom pad, `InventoryListColumnLayout` SSOT). 스크롤·리사이즈 시 viewport+`RowOverscan` 윈도우만 Bind·배치. 프리팹 VLG/CSF는 런타임 비활성. 마퀴는 가시 GO가 아니라 인덱스 기하(`SelectRowsInRect`). 선택 SSOT는 비가시 스택도 유지. `ActiveRowCount`=가시 풀, `BoundStackCount`=데이터 수. 컨트롤러 Awake에서 `PrewarmRowPool`(`RowPoolPrewarmCount`≈viewport 상한). 패리티 계약·검증 게이트: 작업 플랜 `inventory_list_virtualization` + `.claude/checklists/migration-parity.md` §C.
-- `UIInventoryController.LateUpdate`: 포인터가 창 위에 있는지 캐시 후 변경 시에만 `SuppressPlayerAction` 호출
+- `UIInventoryController.LateUpdate`: `UIOverlayWindowHitTest`로 창 위 포인터 캐시 후 변경 시에만 `SuppressPlayerAction` 호출
 
 
 

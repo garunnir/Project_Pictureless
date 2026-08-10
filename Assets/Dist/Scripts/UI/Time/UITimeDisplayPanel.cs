@@ -75,6 +75,9 @@ public sealed class UITimeDisplayPanel : MonoBehaviour
             _resizeProximity.SetProximityEnabled(enableResize);
             _resizeProximity.SetResizeHandlesActive(enableResize);
         }
+
+        if (!TryGetComponent(out UIOverlayWindow _))
+            gameObject.AddComponent<UIOverlayWindow>();
     }
 
     public void Refresh()

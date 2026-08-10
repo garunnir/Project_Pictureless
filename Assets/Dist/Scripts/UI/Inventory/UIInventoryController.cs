@@ -137,15 +137,8 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
     void LateUpdate()
     {
-        if (!IsAnyWindowOpen)
-        {
-            if (_hasCachedSuppressState && _cachedSuppressMouseActions)
-                ApplyMouseActionSuppression(false);
-            return;
-        }
-
         bool suppressMouseActions =
-            _itemDragDepth > 0 || _scrollDragDepth > 0 || IsPointerOverAnyVisibleWindow();
+            _itemDragDepth > 0 || _scrollDragDepth > 0 || IsPointerOverAnyDistWindow();
         if (!_hasCachedSuppressState || suppressMouseActions != _cachedSuppressMouseActions)
             ApplyMouseActionSuppression(suppressMouseActions);
 
@@ -171,13 +164,16 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         _dragGhostService?.Hide();
     }
 
-    // 창 Rect 밖에서 놓으면 사이드바 floor-loot 탭 드롭과 동일 경로로 바닥 투하.
+    // 등록된 Dist 창 Rect 밖에서 놓으면 사이드바 floor-loot 탭 드롭과 동일 경로로 바닥 투하.
     void TryDropActiveDragToFloorIfOutsideWindows()
     {
         if (!InventoryDragState.TryGetActive(out InventoryDragPayload payload))
             return;
 
-        if (IsPointerOverAnyVisibleWindow())
+        if (InventoryDragState.WasConsumed)
+            return;
+
+        if (IsPointerOverAnyDistWindow())
             return;
 
         if (payload.SourceContainer == null || payload.Stacks == null || payload.Stacks.Count == 0)
@@ -568,23 +564,13 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         _hasCachedSuppressState = false;
     }
 
-    bool IsPointerOverAnyVisibleWindow()
+    bool IsPointerOverAnyDistWindow()
     {
         InputManager input = InputManager.Instance;
         if (input == null || !input.TryReadPointerScreenPosition(out Vector2 position))
             return false;
 
-        Camera uiCamera = GetCanvasCamera();
-
-        if (_primaryWindow && _primaryWindow.IsVisible &&
-            RectTransformUtility.RectangleContainsScreenPoint(_primaryWindow.WindowRect, position, uiCamera))
-            return true;
-
-        if (_lootWindow && _lootWindow.IsVisible &&
-            RectTransformUtility.RectangleContainsScreenPoint(_lootWindow.WindowRect, position, uiCamera))
-            return true;
-
-        return false;
+        return UIOverlayWindowHitTest.ContainsScreenPoint(position, GetCanvasCamera());
     }
 
     Camera GetCanvasCamera() =>

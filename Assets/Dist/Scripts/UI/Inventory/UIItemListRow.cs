@@ -197,7 +197,7 @@ public sealed class UIItemListRow : MonoBehaviour,
             _selection.SetSingle(_stack);
 
         IReadOnlyList<ItemStack> stacks = _selection.GetSelectedStacks();
-        InventoryDragState.Begin(_ownerContainer, _selection, stacks);
+        InventoryDragState.Begin(_ownerContainer, stacks, () => _selection?.Clear());
 
         _dragHost.OnItemDragStarted();
         _dragGhost?.Show(ResolveDragIcon(stacks), stacks.Count, eventData.position);

@@ -8,7 +8,7 @@ using UnityEngine;
 
 /// <summary>
 /// 인벤↔인벤·가방 인출 공통.
-/// 소스 ContainerData.draw_moves &gt; 0 이면 BN moves 우선, 아니면 weight/volume/(storage) 프록시.
+/// access = draw_moves→초(CombatMath.MovesPerSecond) + handling(weight/volume/nest).
 /// </summary>
 public static class InventoryTransferDuration
 {
@@ -16,9 +16,6 @@ public static class InventoryTransferDuration
     const float WeightSecondsPerKg = 0.12f;
     const float VolumeSecondsPerLiter = 0.06f;
     const float NestDepthSeconds = 0.1f;
-    const float StorageHintDivisor = 8f;
-    /// <summary>BN: 100 moves ≈ 1초.</summary>
-    const float SecondsPerMove = 0.01f;
 
     public static int ResolveSourceDrawMoves(InventoryContainer source)
     {
@@ -32,20 +29,16 @@ public static class InventoryTransferDuration
         if (stack?.Item == null)
             return 0f;
 
-        if (sourceDrawMoves > 0)
-            return Mathf.Max(0f, sourceDrawMoves * SecondsPerMove);
+        float accessSeconds = sourceDrawMoves > 0
+            ? sourceDrawMoves / CombatMath.MovesPerSecond
+            : 0f;
 
-        ItemData item = stack.Item;
-        float seconds = BaseSeconds
+        float handlingSeconds = BaseSeconds
             + stack.TotalWeight * WeightSecondsPerKg
             + stack.TotalVolume * VolumeSecondsPerLiter
             + Mathf.Max(0, nestDepth) * NestDepthSeconds;
 
-        // armor.storage는 용량 힌트 — moves 미bake 시 인출 가산
-        if (item.armor != null && item.armor.storage > 0)
-            seconds += item.armor.storage / StorageHintDivisor * 0.05f;
-
-        return Mathf.Max(0f, seconds);
+        return Mathf.Max(0f, accessSeconds + handlingSeconds);
     }
 
     public static float SecondsForStacks(

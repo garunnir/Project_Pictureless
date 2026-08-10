@@ -67,6 +67,14 @@ public sealed class UIInventoryListWindow : MonoBehaviour
 
         if (WindowRect != null && rootCanvas != null)
             WindowRect.sizeDelta = InventoryWindowLayout.ClampSize(WindowRect.sizeDelta, rootCanvas);
+
+        EnsureOverlayWindow();
+    }
+
+    void EnsureOverlayWindow()
+    {
+        if (!TryGetComponent(out UIOverlayWindow _))
+            gameObject.AddComponent<UIOverlayWindow>();
     }
 
     public void ConfigureWindowDrag(Canvas rootCanvas) =>
