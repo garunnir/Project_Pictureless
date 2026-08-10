@@ -27510,8 +27510,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::UIInventoryController
   _windowPrefab: {fileID: 7321731330271670947, guid: e79f6e4fcbb1ac64ba5d1b8b243725af,
     type: 3}
-  _dragGhostPrefab: {fileID: 8958468181835085515, guid: 5c3e9df0ea4268d4dacd7f9044c182f6,
-    type: 3}
   _scrollDragOverlayPrefab: {fileID: 6349088385876968644, guid: 7fd9482a95078a14eb9207399d4b30f5,
     type: 3}
   _contextMenuPrefab: {fileID: 919155482675174259, guid: 0ad45b6309042dc43b1858d843399223,
@@ -27522,7 +27520,6 @@ MonoBehaviour:
   _lootWindow: {fileID: 0}
   _uiCanvas: {fileID: 715630606}
   _layerHost: {fileID: 715630608}
-  _dragGhost: {fileID: 0}
   _scrollDragOverlay: {fileID: 0}
   _contextMenu: {fileID: 0}
   _itemDetailPanel: {fileID: 0}
@@ -36435,6 +36432,7 @@ GameObject:
   - component: {fileID: 715630609}
   - component: {fileID: 715630610}
   - component: {fileID: 715630611}
+  - component: {fileID: 715630612}
   m_Layer: 5
   m_Name: UICanvas
   m_TagString: Untagged
@@ -36578,6 +36576,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c73e1483bbec87d42a0ae29a057a3e9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::MessageLogUIBridge
+--- !u!114 &715630612
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 715630603}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f12dc39bb2c2054b8f3fde414f45b78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::UIItemDragGhostService
+  _prefab: {fileID: 8958468181835085515, guid: 5c3e9df0ea4268d4dacd7f9044c182f6, type: 3}
+  _instance: {fileID: 0}
+  _canvas: {fileID: 715630606}
+  _layerHost: {fileID: 715630608}
 --- !u!1 &717780482
 GameObject:
   m_ObjectHideFlags: 0

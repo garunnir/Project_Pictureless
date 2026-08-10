@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterLocomotionAnim — Speed/IsAiming/Action + 무기 Override, TimeScale 틱
+// CharacterLocomotionAnim — Speed/IsAiming/Action + Aim 레이어 weight + 무기 Override, TimeScale 틱
 // ============================================================
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -7,6 +7,7 @@ using UnityEngine;
 /// <summary>
 /// Drives a 3D layered Animator from <see cref="ICharacterLocomotion"/> speed,
 /// <see cref="CharacterState.IsAiming"/>, and <see cref="CharacterAttacker.SelectedAction"/>.
+/// Aim Layer weight follows IsAiming so non-aim locomotion keeps full-body Move (arm swing).
 /// Applies <see cref="WeaponPresentation.AnimatorOverride"/> when presentation changes.
 /// Animation time advances via <see cref="TimeScaleService"/> only (Animator auto-tick disabled).
 /// Optional pose rate quantizes ticks for a flipbook look without stepped clips.
@@ -19,7 +20,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         "Inspector에서 Animator.enabled가 꺼져 보이는 것은 정상입니다. " +
         "재생은 이 스크립트의 Update → Animator.Update(TimeScaleService.Delta)로만 진행됩니다.";
 
+    const string DefaultAimLayerName = "Aim Layer";
     const float DefaultPoseRate = 10f;
+    const float DefaultAimLayerBlendSpeed = 10f;
     const int MaxPoseStepsPerFrame = 8;
 
     [InfoBox(ManualTickHelp, InfoMessageType.Warning)]
@@ -34,6 +37,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
     [SerializeField] string _paramSpeed = "Speed";
     [SerializeField] string _paramAiming = "IsAiming";
     [SerializeField] string _paramAction = "Action";
+    [Tooltip("UpperBody Override Aim 레이어 이름. 비조준 시 weight 0 → Move 전신 유지.")]
+    [SerializeField] string _aimLayerName = DefaultAimLayerName;
+    [Tooltip("Aim 레이어 weight 초당 변화량(채널 시간). 0이면 즉시 스냅.")]
+    [SerializeField, Min(0f)] float _aimLayerBlendSpeed = DefaultAimLayerBlendSpeed;
     [Tooltip("초당 애니 포즈 수(채널 시간 기준). 0이면 매 프레임 연속 틱. BlendTree 유지한 채 플립북 느낌.")]
     [SerializeField, Min(0f)] float _poseRate = DefaultPoseRate;
     [ShowInInspector, ReadOnly, PropertyOrder(20)]
@@ -51,6 +58,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     int _hashSpeed;
     int _hashAiming;
     int _hashAction;
+    int _aimLayerIndex = -1;
     bool _hasSpeed;
     bool _hasAiming;
     bool _hasAction;
@@ -103,6 +111,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
     {
         if (_poseRate < 0f)
             _poseRate = 0f;
+        if (_aimLayerBlendSpeed < 0f)
+            _aimLayerBlendSpeed = 0f;
 
         if (_animator != null)
             CacheAnimatorParameters();
@@ -114,22 +124,28 @@ public class CharacterLocomotionAnim : MonoBehaviour
             return;
 
         // Avatar/SkinnedMesh 준비가 끝난 첫 Update에서 bind (Awake/Start Rebind는 종종 no-op).
+        bool rebound = false;
         if (_pendingBind || !_manualControl)
         {
             TakeManualControl();
             _pendingBind = false;
+            rebound = true;
         }
 
         if (_hasSpeed)
             _animator.SetFloat(_hashSpeed, ResolveNormalizedSpeed());
 
+        bool isAiming = _characterState != null && _characterState.IsAiming;
         if (_hasAiming)
-            _animator.SetBool(_hashAiming, _characterState != null && _characterState.IsAiming);
+            _animator.SetBool(_hashAiming, isAiming);
 
         if (_hasAction)
             _animator.SetInteger(_hashAction, ResolveAction());
 
-        AdvanceAnimator(TimeScaleService.Delta(_timeChannel));
+        float channelDelta = TimeScaleService.Delta(_timeChannel);
+        // Rebind는 레이어 weight를 컨트롤러 기본값(Aim=1)으로 되돌리므로 즉시 스냅.
+        SyncAimLayerWeight(isAiming, rebound ? 0f : channelDelta);
+        AdvanceAnimator(channelDelta);
     }
 
     void OnPresentationChanged() => ApplyWeaponAnimOverride(forceRebind: true);
@@ -207,6 +223,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _hasSpeed = false;
         _hasAiming = false;
         _hasAction = false;
+        _aimLayerIndex = -1;
 
         if (_animator == null || _animator.runtimeAnimatorController == null)
             return;
@@ -226,6 +243,28 @@ public class CharacterLocomotionAnim : MonoBehaviour
             if (!string.IsNullOrEmpty(_paramAction) && nameHash == _hashAction)
                 _hasAction = true;
         }
+
+        if (!string.IsNullOrEmpty(_aimLayerName))
+            _aimLayerIndex = _animator.GetLayerIndex(_aimLayerName);
+    }
+
+    void SyncAimLayerWeight(bool isAiming, float channelDelta)
+    {
+        if (_aimLayerIndex < 0)
+            return;
+
+        float target = isAiming ? 1f : 0f;
+        float current = _animator.GetLayerWeight(_aimLayerIndex);
+        if (_aimLayerBlendSpeed <= 0f || channelDelta <= 0f)
+        {
+            if (!Mathf.Approximately(current, target))
+                _animator.SetLayerWeight(_aimLayerIndex, target);
+            return;
+        }
+
+        float next = Mathf.MoveTowards(current, target, _aimLayerBlendSpeed * channelDelta);
+        if (!Mathf.Approximately(current, next))
+            _animator.SetLayerWeight(_aimLayerIndex, next);
     }
 
     // Unity 자동 틱을 끄고 TimeScale 채널로만 진행한다.
