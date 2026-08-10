@@ -57,13 +57,22 @@ static class InventoryUICanvasOverlaySetupMenu
         UIItemContextMenu contextMenuPrefab = EnsureContextMenuPrefab();
         UIInventoryItemDetailPanel itemDetailPanelPrefab = EnsureItemDetailPanelPrefab(canvas);
 
-        SetObjectRef(serializedController, "_dragGhostPrefab", dragGhostPrefab);
+        UIItemDragGhostService ghostService = canvas.GetComponent<UIItemDragGhostService>();
+        if (ghostService == null)
+            ghostService = Undo.AddComponent<UIItemDragGhostService>(canvas.gameObject);
+
+        SerializedObject serializedGhost = new SerializedObject(ghostService);
+        SetObjectRef(serializedGhost, "_prefab", dragGhostPrefab);
+        SetObjectRef(serializedGhost, "_instance", null);
+        SetObjectRef(serializedGhost, "_canvas", canvas);
+        SetObjectRef(serializedGhost, "_layerHost", layerHost);
+        serializedGhost.ApplyModifiedPropertiesWithoutUndo();
+
         SetObjectRef(serializedController, "_scrollDragOverlayPrefab", scrollOverlayPrefab);
         SetObjectRef(serializedController, "_contextMenuPrefab", contextMenuPrefab);
         SetObjectRef(serializedController, "_itemDetailPanelPrefab", itemDetailPanelPrefab);
 
         // Runtime instances are spawned from prefabs — clear scene instance slots.
-        SetObjectRef(serializedController, "_dragGhost", null);
         SetObjectRef(serializedController, "_scrollDragOverlay", null);
         SetObjectRef(serializedController, "_contextMenu", null);
         SetObjectRef(serializedController, "_itemDetailPanel", null);
@@ -74,7 +83,7 @@ static class InventoryUICanvasOverlaySetupMenu
         EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
 
         Debug.Log(
-            $"[InventoryUICanvasOverlaySetupMenu] Wired layer host + ephemeral prefabs on '{canvas.name}' for '{controller.name}'.",
+            $"[InventoryUICanvasOverlaySetupMenu] Wired layer host + UIItemDragGhostService + ephemeral prefabs on '{canvas.name}' for '{controller.name}'.",
             controller);
     }
 

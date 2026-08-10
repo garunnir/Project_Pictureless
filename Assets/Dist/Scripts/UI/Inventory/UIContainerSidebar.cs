@@ -20,15 +20,17 @@ public sealed class UIContainerSidebar : MonoBehaviour
         string selectedInstanceId,
         Action<InventoryContainer> onSelected,
         IInventoryItemDragHost dragHost,
+        UIItemDragGhostService dragGhost,
         UIInventoryListWindow window,
         InventorySession session) =>
-        Sync(containers, selectedInstanceId, onSelected, dragHost, window, session);
+        Sync(containers, selectedInstanceId, onSelected, dragHost, dragGhost, window, session);
 
     public void Sync(
         IReadOnlyList<InventoryContainer> containers,
         string selectedInstanceId,
         Action<InventoryContainer> onSelected,
         IInventoryItemDragHost dragHost,
+        UIItemDragGhostService dragGhost,
         UIInventoryListWindow window,
         InventorySession session)
     {
@@ -66,13 +68,14 @@ public sealed class UIContainerSidebar : MonoBehaviour
                 continue;
 
             if (!_slotsById.ContainsKey(container.InstanceId))
-                AddSlot(container, onSelected, dragHost, window, session);
+                AddSlot(container, onSelected, dragHost, dragGhost, window, session);
             else
                 _slotsById[container.InstanceId].Bind(
                     container,
                     container.InstanceId == selectedInstanceId,
                     onSelected,
                     dragHost,
+                    dragGhost,
                     window,
                     session);
         }
@@ -119,11 +122,12 @@ public sealed class UIContainerSidebar : MonoBehaviour
         InventoryContainer container,
         Action<InventoryContainer> onSelected,
         IInventoryItemDragHost dragHost,
+        UIItemDragGhostService dragGhost,
         UIInventoryListWindow window,
         InventorySession session)
     {
         UIContainerSlot slot = Instantiate(_slotPrefab, _slotRoot);
-        slot.Bind(container, false, onSelected, dragHost, window, session);
+        slot.Bind(container, false, onSelected, dragHost, dragGhost, window, session);
         _slots.Add(slot);
         _slotsById[container.InstanceId] = slot;
     }

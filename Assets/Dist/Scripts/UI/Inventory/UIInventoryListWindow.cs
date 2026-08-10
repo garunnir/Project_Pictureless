@@ -29,6 +29,7 @@ public sealed class UIInventoryListWindow : MonoBehaviour
     InventoryContainer _selectedContainer;
     InventoryWindowMode _mode = InventoryWindowMode.NearbyOnly;
     IInventoryItemDragHost _dragHost;
+    UIItemDragGhostService _dragGhost;
     bool _dragConfigured;
     Color _weightTextDefaultColor = Color.white;
     bool _weightTextColorCached;
@@ -78,12 +79,16 @@ public sealed class UIInventoryListWindow : MonoBehaviour
     /// 드래그 호스트·뷰포트 DnD 배선만 담당. 리스트/사이드바 바인딩은 Initialize·Refresh*가 SSOT.
     /// Open 경로에서는 ConfigureWindow → Initialize 순으로 호출해 Bind가 1회로 끝나게 한다.
     /// </summary>
-    public void ConfigureDragAndDrop(IInventoryItemDragHost dragHost, Canvas rootCanvas)
+    public void ConfigureDragAndDrop(
+        IInventoryItemDragHost dragHost,
+        Canvas rootCanvas,
+        UIItemDragGhostService dragGhost)
     {
         if (_listView == null)
             return;
 
         _dragHost = dragHost;
+        _dragGhost = dragGhost;
         EnsureSidebarRaycastTarget();
 
         if (_dragConfigured)
@@ -169,7 +174,7 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             SelectContainer(initialFocus, refreshList: false);
 
         if (_dragHost != null)
-            _listView?.Configure(_session, _dragHost);
+            _listView?.Configure(_session, _dragHost, _dragGhost);
 
         RefreshAll();
     }
@@ -430,7 +435,7 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         {
             IReadOnlyList<InventoryContainer> sidebar = GetSidebarContainersForMode();
             string selectedId = _selectedContainer != null ? _selectedContainer.InstanceId : string.Empty;
-            _sidebar.Sync(sidebar, selectedId, SelectContainer, _dragHost, this, _session);
+            _sidebar.Sync(sidebar, selectedId, SelectContainer, _dragHost, _dragGhost, this, _session);
         }
         else
         {

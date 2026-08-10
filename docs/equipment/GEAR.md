@@ -63,6 +63,7 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 
 - Worn row / wield slot: take off / unwield
 - Double-click → body inventory; drag outside Character window → floor (`toFloor`); slot RMB includes 바닥에 놓기
+- Drag ghost: shared `UIItemDragGhostService` (same TopMost ghost as inventory) while dragging worn/wield; hide on EndDrag
 - Worn filter: **body part click** (toggle); FilterLabel click → 전체; hover does not sticky-filter
 - Worn hover uses `AppendItemArmorHover` (Phase A/C fields)
 - Two-hand unwield once

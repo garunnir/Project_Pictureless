@@ -734,7 +734,10 @@ static class GameDataEditorDetailDrawers
     {
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField(label, GUILayout.Width(LabelWidth));
-        EditorGUILayout.LabelField(value ?? "—", EditorStyles.wordWrappedLabel);
+        EditorGUILayout.SelectableLabel(
+            value ?? "—",
+            EditorStyles.wordWrappedLabel,
+            GUILayout.Height(EditorGUIUtility.singleLineHeight));
         EditorGUILayout.EndHorizontal();
     }
 }

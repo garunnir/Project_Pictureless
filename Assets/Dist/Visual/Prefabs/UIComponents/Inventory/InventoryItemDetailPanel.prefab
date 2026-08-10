@@ -623,6 +623,7 @@ GameObject:
   - component: {fileID: 9008712365950123004}
   - component: {fileID: 6310750077490154180}
   - component: {fileID: 3261716347118538803}
+  - component: {fileID: 5643867121745766791}
   m_Layer: 5
   m_Name: InventoryItemDetailPanel
   m_TagString: Untagged
@@ -749,6 +750,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ca0701af8034aa4998e7c2a02f00c84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Dist.Inventory.UI::UIInventoryItemDetailPanel
+  _shell: {fileID: 5643867121745766791}
   _rect: {fileID: 2867700944081895240}
   _nameLine: {fileID: 6168728141893015105}
   _descriptionLine: {fileID: 5264006210700409758}
@@ -760,6 +762,19 @@ MonoBehaviour:
   _durabilityLine: {fileID: 2315359586037276308}
   _containerCapacityLine: {fileID: 5700730668035165258}
   _materialsLine: {fileID: 6946025563716998456}
+--- !u!114 &5643867121745766791
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1025965780818315760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1ad0c69f7b7775469a6ee5da027c256, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Dist.UI.ContextMenu::UIHoverPanelShell
+  _rect: {fileID: 2867700944081895240}
 --- !u!1 &1444877263127231196
 GameObject:
   m_ObjectHideFlags: 0

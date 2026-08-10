@@ -226,4 +226,4 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d89762657fdaa1f4f92e43790d30dc4b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dist.Inventory.UI::UIInventoryDragGhost
+  m_EditorClassIdentifier: DistScript::UIInventoryDragGhost

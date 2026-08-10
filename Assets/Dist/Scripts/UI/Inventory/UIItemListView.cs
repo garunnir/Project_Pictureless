@@ -31,6 +31,7 @@ public sealed class UIItemListView : MonoBehaviour
 
     InventorySession _session;
     IInventoryItemDragHost _dragHost;
+    UIItemDragGhostService _dragGhost;
     ScrollRect _scrollRect;
     InventoryContainer _boundContainer;
     int _appliedContentVersion = -1;
@@ -57,10 +58,14 @@ public sealed class UIItemListView : MonoBehaviour
         WireScrollEvents();
     }
 
-    public void Configure(InventorySession session, IInventoryItemDragHost dragHost)
+    public void Configure(
+        InventorySession session,
+        IInventoryItemDragHost dragHost,
+        UIItemDragGhostService dragGhost)
     {
         _session = session;
         _dragHost = dragHost;
+        _dragGhost = dragGhost;
 
         if (_selectionEventsWired)
             return;
@@ -324,7 +329,7 @@ public sealed class UIItemListView : MonoBehaviour
     void BindRow(UIItemListRow row, ItemStack stack)
     {
         row.gameObject.SetActive(false);
-        row.Bind(stack, _boundContainer, _selection, _dragHost, this);
+        row.Bind(stack, _boundContainer, _selection, _dragHost, _dragGhost, this);
         if (stack?.Item != null)
             row.gameObject.SetActive(true);
     }

@@ -41,6 +41,7 @@ public sealed class UIItemListRow : MonoBehaviour,
     InventoryContainer _ownerContainer;
     InventoryListSelection _selection;
     IInventoryItemDragHost _dragHost;
+    UIItemDragGhostService _dragGhost;
     UIItemListView _listView;
     ItemNameStatusBar _nameBar;
     InventoryTimedMoveHost _timedHost;
@@ -65,6 +66,7 @@ public sealed class UIItemListRow : MonoBehaviour,
         InventoryContainer ownerContainer,
         InventoryListSelection selection,
         IInventoryItemDragHost dragHost,
+        UIItemDragGhostService dragGhost,
         UIItemListView listView)
     {
         ClearHoverIfNeeded();
@@ -74,6 +76,7 @@ public sealed class UIItemListRow : MonoBehaviour,
         _ownerContainer = ownerContainer;
         _selection = selection;
         _dragHost = dragHost;
+        _dragGhost = dragGhost;
         _listView = listView;
 
         if (_backgroundImage == null)
@@ -197,7 +200,7 @@ public sealed class UIItemListRow : MonoBehaviour,
         InventoryDragState.Begin(_ownerContainer, _selection, stacks);
 
         _dragHost.OnItemDragStarted();
-        _dragHost.BeginDragGhost(eventData.position, stacks.Count);
+        _dragGhost?.Show(ResolveDragIcon(stacks), stacks.Count, eventData.position);
 
         eventData.Use();
     }
@@ -207,10 +210,7 @@ public sealed class UIItemListRow : MonoBehaviour,
         if (!InventoryDragState.IsDragging)
             return;
 
-        if (_dragHost == null)
-            return;
-
-        _dragHost.UpdateDragGhostPosition(eventData.position);
+        _dragGhost?.SetScreenPosition(eventData.position);
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -219,6 +219,18 @@ public sealed class UIItemListRow : MonoBehaviour,
             return;
 
         _dragHost.OnItemDragEnded();
+    }
+
+    static Sprite ResolveDragIcon(IReadOnlyList<ItemStack> stacks)
+    {
+        if (stacks != null &&
+            stacks.Count > 0 &&
+            stacks[0]?.Item != null)
+        {
+            return ItemVisualPresenter.GetDisplayIcon(stacks[0].ItemId);
+        }
+
+        return ItemVisualPresenter.GetDefaultIcon();
     }
 
     void EnsureNameBar()

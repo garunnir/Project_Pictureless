@@ -75929,6 +75929,14 @@ MonoBehaviour:
     Count: 1
   - ItemId: weapon_knife
     Count: 1
+  - ItemId: anbc_suit
+    Count: 1
+  - ItemId: apron_leather
+    Count: 1
+  - ItemId: aquamarine_gold_ring
+    Count: 1
+  - ItemId: aquamarine_platinum_bracelet
+    Count: 1
   _seedContainerOnStart: 1
   _useCatalogDefaultsWhenEmpty: 1
   _spawnSmallItemsOnStart: 1

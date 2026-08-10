@@ -39,6 +39,7 @@ public sealed class UIContainerSlot : MonoBehaviour,
     ItemStack _dragContainerStack;
     Action<InventoryContainer> _onSelected;
     IInventoryItemDragHost _dragHost;
+    UIItemDragGhostService _dragGhost;
     UIInventoryListWindow _window;
     InventorySession _session;
     ItemNameStatusBar _nameBar;
@@ -95,12 +96,14 @@ public sealed class UIContainerSlot : MonoBehaviour,
         bool selected,
         Action<InventoryContainer> onSelected,
         IInventoryItemDragHost dragHost,
+        UIItemDragGhostService dragGhost,
         UIInventoryListWindow window,
         InventorySession session)
     {
         _container = container;
         _onSelected = onSelected;
         _dragHost = dragHost;
+        _dragGhost = dragGhost;
         _window = window;
         _session = session;
         _canMoveContainerAsStack = false;
@@ -177,7 +180,7 @@ public sealed class UIContainerSlot : MonoBehaviour,
             InventoryDragState.BeginContainerTab(_dragParentContainer, _dragContainerStack);
             SetVisualState(ContainerSlotVisualState.Dragging);
             _dragHost.OnItemDragStarted();
-            _dragHost.BeginDragGhost(eventData.position, 1);
+            _dragGhost?.Show(ResolveStackIcon(_dragContainerStack), 1, eventData.position);
             eventData.Use();
             return;
         }
@@ -191,24 +194,29 @@ public sealed class UIContainerSlot : MonoBehaviour,
             return;
 
         int ghostCount = 0;
+        ItemStack firstStack = null;
         for (int i = 0; i < contents.Count; i++)
         {
-            if (contents[i] != null)
-                ghostCount++;
+            if (contents[i] == null)
+                continue;
+
+            ghostCount++;
+            if (firstStack == null)
+                firstStack = contents[i];
         }
 
         SetVisualState(ContainerSlotVisualState.Dragging);
         _dragHost.OnItemDragStarted();
-        _dragHost.BeginDragGhost(eventData.position, ghostCount);
+        _dragGhost?.Show(ResolveStackIcon(firstStack), ghostCount, eventData.position);
         eventData.Use();
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (!InventoryDragState.IsDragging || _dragHost == null)
+        if (!InventoryDragState.IsDragging)
             return;
 
-        _dragHost.UpdateDragGhostPosition(eventData.position);
+        _dragGhost?.SetScreenPosition(eventData.position);
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -220,6 +228,14 @@ public sealed class UIContainerSlot : MonoBehaviour,
             return;
 
         _dragHost.OnItemDragEnded();
+    }
+
+    static Sprite ResolveStackIcon(ItemStack stack)
+    {
+        if (stack?.Item != null)
+            return ItemVisualPresenter.GetDisplayIcon(stack.ItemId);
+
+        return ItemVisualPresenter.GetDefaultIcon();
     }
 
     void OnClick() => _onSelected?.Invoke(_container);

@@ -13,7 +13,6 @@ using UnityEngine.UI;
 public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayController, IInventoryScrollDragHost, IInventoryItemDragHost
 {
     [Required, SerializeField] UIInventoryListWindow _windowPrefab;
-    [SerializeField] UIInventoryDragGhost _dragGhostPrefab;
     [SerializeField] GameObject _scrollDragOverlayPrefab;
     [SerializeField] UIItemContextMenu _contextMenuPrefab;
     [SerializeField] UIInventoryItemDetailPanel _itemDetailPanelPrefab;
@@ -21,7 +20,6 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
     [SerializeField] UIInventoryListWindow _lootWindow;
     [SerializeField] Canvas _uiCanvas;
     [SerializeField] UICanvasLayerHost _layerHost;
-    [SerializeField] UIInventoryDragGhost _dragGhost;
     [SerializeField] GameObject _scrollDragOverlay;
     [SerializeField] UIItemContextMenu _contextMenu;
     [SerializeField] UIInventoryItemDetailPanel _itemDetailPanel;
@@ -31,6 +29,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
     [SerializeField] InventoryWindowLauncher _lootLauncher;
 
     PlayerInventoryRuntime _activeRuntime;
+    UIItemDragGhostService _dragGhostService;
     int _itemDragDepth;
     int _scrollDragDepth;
     bool _isPrimaryOpen;
@@ -52,7 +51,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         EnsureWindows();
         _primaryWindow?.ListView?.PrewarmRowPool();
         EnsureScrollDragOverlay();
-        EnsureDragGhost();
+        EnsureDragGhostService();
         EnsureContextMenu();
         WireScrollDragHandler(_primaryWindow);
         WireScrollDragHandler(_lootWindow);
@@ -166,6 +165,12 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         RefreshVisibleWindowsAfterDrag();
     }
 
+    void HideDragGhost()
+    {
+        EnsureDragGhostService();
+        _dragGhostService?.Hide();
+    }
+
     // 창 Rect 밖에서 놓으면 사이드바 floor-loot 탭 드롭과 동일 경로로 바닥 투하.
     void TryDropActiveDragToFloorIfOutsideWindows()
     {
@@ -266,72 +271,6 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         FinalizeItemDrag();
     }
 
-    public void BeginDragGhost(Vector2 screenPosition, int stackCount)
-    {
-        EnsureDragGhost();
-        if (!_dragGhost)
-            return;
-
-        _dragGhost.Show(ResolveDragIcon(), stackCount, screenPosition);
-    }
-
-    public void UpdateDragGhostPosition(Vector2 screenPosition)
-    {
-        EnsureDragGhost();
-        if (!_dragGhost)
-            return;
-
-        _dragGhost.SetScreenPosition(screenPosition);
-    }
-
-    Sprite ResolveDragIcon()
-    {
-        if (InventoryDragState.TryGetActive(out InventoryDragPayload payload) &&
-            payload.Stacks != null &&
-            payload.Stacks.Count > 0 &&
-            payload.Stacks[0]?.Item != null)
-        {
-            return ItemVisualPresenter.GetDisplayIcon(payload.Stacks[0].Item.id);
-        }
-
-        return ItemVisualPresenter.GetDefaultIcon();
-    }
-
-    public void HideDragGhost()
-    {
-        if (!_dragGhost)
-            return;
-
-        _dragGhost.Hide();
-    }
-
-    void EnsureDragGhost()
-    {
-        EnsureReferences();
-        if (_uiCanvas == null)
-            return;
-
-        if (_dragGhost)
-        {
-            _dragGhost.EnsureReady(_uiCanvas);
-            return;
-        }
-
-        if (_dragGhostPrefab == null)
-        {
-            Debug.LogError(
-                "[UIInventoryController] Drag ghost prefab is not assigned. Run Dist/MCP/Inventory/Setup Canvas Overlays In Open Scene.",
-                this);
-            return;
-        }
-
-        Transform parent = ResolveLayerRoot(UICanvasLayer.TopMost);
-        _dragGhost = Instantiate(_dragGhostPrefab, parent);
-        _dragGhost.name = "InventoryDragGhost";
-        _dragGhost.EnsureReady(_uiCanvas);
-        _dragGhost.Hide();
-    }
-
     void ConfigureWindow(UIInventoryListWindow window)
     {
         if (window == null || _uiCanvas == null)
@@ -342,7 +281,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
         ApplyWindowSizeClamp(window, minSize, maxSize);
         window.ConfigureWindowChrome(_uiCanvas, minSize, maxSize);
-        window.ConfigureDragAndDrop(this, _uiCanvas);
+        window.ConfigureDragAndDrop(this, _uiCanvas, EnsureDragGhostService());
     }
 
     void ApplyWindowSizeClamp(UIInventoryListWindow window, Vector2 minSize, Vector2 maxSize)
@@ -361,6 +300,27 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
     {
         if (!_uiCanvas) _uiCanvas = FindAnyObjectByType<Canvas>();
         if (!_layerHost && _uiCanvas) _layerHost = _uiCanvas.GetComponent<UICanvasLayerHost>();
+    }
+
+    UIItemDragGhostService EnsureDragGhostService()
+    {
+        EnsureReferences();
+        if (_dragGhostService != null)
+            return _dragGhostService;
+
+        if (_uiCanvas == null)
+            return null;
+
+        if (!UIItemDragGhostService.TryGet(_uiCanvas, out _dragGhostService) || _dragGhostService == null)
+        {
+            Debug.LogError(
+                "[UIInventoryController] UIItemDragGhostService missing on UICanvas. Run Dist/MCP/Inventory/Setup Canvas Overlays In Open Scene.",
+                this);
+            return null;
+        }
+
+        _dragGhostService.EnsureReady();
+        return _dragGhostService;
     }
 
     void EnsureWindows()

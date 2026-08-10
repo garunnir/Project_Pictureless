@@ -36,7 +36,8 @@
 - 창 Rect 밖에서 `EndDrag`하면 `FinalizeItemDrag`가 `floor-loot` 컨테이너로 `MoveStacks`한다 (사이드바 바닥 탭 드롭과 동일 판정). 창 안 비드롭존(헤더 등)은 기존대로 취소.
 
 - `LateUpdate`는 드래그 종료·고스트 위치가 아니라 창 위 포인터 캐시·Zoom/Aim 억제 전용이다.
-- 드래그 고스트 위치는 `OnBeginDrag` → `BeginDragGhost`, `OnDrag` → `UpdateDragGhostPosition` 이벤트 경로만 사용한다.
+- 드래그 고스트 SSOT: `UIItemDragGhostService` (UICanvas 컴포넌트, 인스턴스는 `UICanvasLayer.TopMost`). 특정 창/컨트롤러 비소유.
+- 드래그 고스트 위치는 `OnBeginDrag` → `Show`, `OnDrag` → `SetScreenPosition` 이벤트 경로만 사용한다. 종료 시 `Hide` (`FinalizeItemDrag` / `CleanupIfNoWindowsOpen` 포함).
 - 아이템 드래그는 스크롤 오버레이(`InventoryScrollDragOverlay`)를 켜지 않는다. 오버레이는 리스트 스크롤 드래그 전용이다.
 
 
@@ -103,7 +104,7 @@
 
 | `Grp_ContainerSlot` | 사이드바 컨테이너 슬롯 — 아이콘 SSOT는 `ContainerVisualPresenter` (월드 타일 thumbnail → provider SpriteRenderer → 중첩 가방은 item icon, `floor-loot`는 숨김) |
 
-| `Grp_InventoryDragGhost` | 드래그 고스트 (`UICanvas` 하위, bake 또는 `Setup Canvas Overlays In Open Scene`) |
+| `Grp_InventoryDragGhost` | 드래그 고스트 비주얼 (`UIInventoryDragGhost`). 소유: Canvas `UIItemDragGhostService` → 런타임 TopMost. `Setup Canvas Overlays In Open Scene` |
 
 | `InventoryScrollDragOverlay` | 스크롤/드래그 중 전체 캔버스 레이캐스트 차단 (`UICanvas` 하위) |
 

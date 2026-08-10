@@ -8,6 +8,9 @@ using UnityEngine.UI;
 
 public sealed class UIInventoryDragGhost : MonoBehaviour
 {
+    /// <summary>Must match InventoryWindowLabels stack-count loc key.</summary>
+    const string StackCountLocKey = "Inventory.StackCount";
+
     Image _iconImage;
     TMP_Text _countLabel;
     Canvas _rootCanvas;
@@ -55,7 +58,7 @@ public sealed class UIInventoryDragGhost : MonoBehaviour
 
         if (_countLabel != null)
             _countLabel.text = stackCount > 1
-                ? InventoryWindowLabels.FormatStackCount(stackCount)
+                ? Loc.Format(StackCountLocKey, stackCount)
                 : string.Empty;
 
         gameObject.SetActive(true);

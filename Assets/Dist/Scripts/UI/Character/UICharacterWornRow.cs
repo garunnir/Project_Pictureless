@@ -27,6 +27,7 @@ public sealed class UICharacterWornRow :
     Action<string, RectTransform> _onHover;
     Action _onExit;
     Action<ItemStack, bool> _onUnequip;
+    UIItemDragGhostService _dragGhost;
     bool _dragging;
 
     public void EnsureChrome()
@@ -187,16 +188,31 @@ public sealed class UICharacterWornRow :
     {
         if (eventData.button != PointerEventData.InputButton.Left)
             return;
+        if (_stack?.Item == null)
+            return;
+
         _dragging = true;
+        EnsureDragGhost()?.Show(
+            ItemVisualPresenter.GetDisplayIcon(_stack.ItemId),
+            1,
+            eventData.position);
     }
 
-    public void OnDrag(PointerEventData eventData) { }
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (!_dragging)
+            return;
+
+        _dragGhost?.SetScreenPosition(eventData.position);
+    }
 
     public void OnEndDrag(PointerEventData eventData)
     {
         if (!_dragging)
             return;
         _dragging = false;
+        _dragGhost?.Hide();
+
         if (_stack == null || _onUnequip == null)
             return;
 
@@ -211,5 +227,23 @@ public sealed class UICharacterWornRow :
             : null;
         if (!RectTransformUtility.RectangleContainsScreenPoint(windowRt, eventData.position, cam))
             _onUnequip.Invoke(_stack, true);
+    }
+
+    UIItemDragGhostService EnsureDragGhost()
+    {
+        if (_dragGhost != null)
+            return _dragGhost;
+
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (!UIItemDragGhostService.TryGet(canvas, out _dragGhost) || _dragGhost == null)
+        {
+            Debug.LogError(
+                "[UICharacterWornRow] UIItemDragGhostService missing on UICanvas. Run Dist/MCP/Inventory/Setup Canvas Overlays In Open Scene.",
+                this);
+            return null;
+        }
+
+        _dragGhost.EnsureReady();
+        return _dragGhost;
     }
 }

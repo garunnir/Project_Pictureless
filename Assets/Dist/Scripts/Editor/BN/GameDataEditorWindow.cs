@@ -837,7 +837,10 @@ public sealed class GameDataEditorWindow : EditorWindow
     {
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField(label, GUILayout.Width(120));
-        EditorGUILayout.LabelField(value ?? "—", EditorStyles.wordWrappedLabel);
+        EditorGUILayout.SelectableLabel(
+            value ?? "—",
+            EditorStyles.wordWrappedLabel,
+            GUILayout.Height(EditorGUIUtility.singleLineHeight));
         EditorGUILayout.EndHorizontal();
     }
 }
