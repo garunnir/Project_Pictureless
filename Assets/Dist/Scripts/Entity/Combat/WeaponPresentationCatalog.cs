@@ -21,8 +21,10 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
     [SerializeField] Binding[] _byItemId = Array.Empty<Binding>();
     [SerializeField] Binding[] _byCategoryId = Array.Empty<Binding>();
     [SerializeField] WeaponPresentation _unarmed;
+    [SerializeField] WeaponActionVfxDefaults _actionVfxDefaults;
 
     public WeaponPresentation Unarmed => _unarmed;
+    public WeaponActionVfxDefaults ActionVfxDefaults => _actionVfxDefaults;
 
     public WeaponPresentation Resolve(string itemId, ItemData item)
     {

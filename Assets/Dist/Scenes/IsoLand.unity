@@ -64204,7 +64204,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61be8fe37b26d634992d4f94106a786f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::PlayerMovement
-  _moveSpeed: 3
+  _moveSpeed: 2
   _sprintMultiplier: 2
   _acceleration: 10
   _initialVelocity: -1
@@ -64498,6 +64498,7 @@ MonoBehaviour:
     m_Bits: 55
   _timeChannel: 2
   _selectedAction: 0
+  _activeWieldHand: 1
 --- !u!114 &1383865933
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -64595,9 +64596,18 @@ MonoBehaviour:
   _timeChannel: 2
   _animator: {fileID: 543450653236232290}
   _defaultController: {fileID: 9100000, guid: 340c7b66e1595a44db858530dc6283b7, type: 2}
+  _armSlotCatalog: {fileID: 11400000, guid: 05420430cc89c3d44bdb6b6edb99740c, type: 2}
   _paramSpeed: Speed
+  _paramMoveX: MoveX
+  _paramMoveZ: MoveZ
   _paramAiming: IsAiming
-  _paramAction: Action
+  _paramAttackR: AttackR
+  _paramAttackL: AttackL
+  _paramAttack2H: Attack2H
+  _rightArmLayerName: RightArm Layer
+  _leftArmLayerName: LeftArm Layer
+  _twoHandLayerName: TwoHand Layer
+  _layerBlendSpeed: 10
   _poseRate: 10
 --- !u!114 &1383865940
 MonoBehaviour:
@@ -105624,6 +105634,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1759737640}
     m_Modifications:
+    - target: {fileID: 626806252378597420, guid: d37475c6e3368db4c9e212b9bcee3831,
+        type: 3}
+      propertyPath: _moveSpeed
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 1739471889252474793, guid: d37475c6e3368db4c9e212b9bcee3831,
         type: 3}
       propertyPath: _state

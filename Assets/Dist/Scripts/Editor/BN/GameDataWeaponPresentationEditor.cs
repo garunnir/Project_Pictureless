@@ -12,14 +12,72 @@ static class GameDataWeaponPresentationEditor
         "Assets/Dist/SOData/Combat/WeaponPresentations/WeaponPresentationCatalog.asset";
     public const string PresentationsFolder =
         "Assets/Dist/SOData/Combat/WeaponPresentations";
+    public const string ActionVfxDefaultsPath =
+        "Assets/Dist/SOData/Combat/WeaponPresentations/WeaponActionVfxDefaults.asset";
 
+    static bool _foldActionVfxFallback;
+    static bool _foldWeaponPresentation;
+
+    /// <summary>
+    /// Combat Presentation 카테고리 안 내용. 부모 foldout은 GameDataEditorWindow가 담당.
+    /// </summary>
     public static void DrawSection(ItemData item, bool editable)
     {
         if (item == null || string.IsNullOrEmpty(item.id))
             return;
 
-        EditorGUILayout.Space(6);
-        EditorGUILayout.LabelField("Weapon Presentation", EditorStyles.boldLabel);
+        DrawActionVfxFallbackSection();
+        DrawWeaponPresentationBody(item, editable);
+    }
+
+    /// <summary>전역 태그 VFX 폴백 진입점 (아이템 전용 아님). 기본 접힘.</summary>
+    public static void DrawActionVfxFallbackSection()
+    {
+        _foldActionVfxFallback = EditorGUILayout.Foldout(
+            _foldActionVfxFallback,
+            "Action VFX Fallback (global tag defaults)",
+            true,
+            EditorStyles.foldoutHeader);
+        if (!_foldActionVfxFallback)
+            return;
+
+        EditorGUI.indentLevel++;
+        EditorGUILayout.HelpBox(
+            "Not item-specific. Empty WeaponPresentation Entry VFX slots fall back here. Not stored in ItemData JSON.",
+            MessageType.Info);
+
+        WeaponActionVfxDefaults defaults =
+            AssetDatabase.LoadAssetAtPath<WeaponActionVfxDefaults>(ActionVfxDefaultsPath);
+        EditorGUI.BeginDisabledGroup(true);
+        EditorGUILayout.ObjectField(
+            "Defaults",
+            defaults,
+            typeof(WeaponActionVfxDefaults),
+            false);
+        EditorGUI.EndDisabledGroup();
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (defaults != null && GUILayout.Button("Edit Defaults", GUILayout.Width(120)))
+                Selection.activeObject = defaults;
+            else if (defaults == null)
+                EditorGUILayout.HelpBox($"Missing: {ActionVfxDefaultsPath}", MessageType.Warning);
+        }
+
+        EditorGUI.indentLevel--;
+    }
+
+    static void DrawWeaponPresentationBody(ItemData item, bool editable)
+    {
+        _foldWeaponPresentation = EditorGUILayout.Foldout(
+            _foldWeaponPresentation,
+            "Weapon Presentation (per item)",
+            true,
+            EditorStyles.foldoutHeader);
+        if (!_foldWeaponPresentation)
+            return;
+
+        EditorGUI.indentLevel++;
 
         WeaponPresentationCatalog catalog =
             AssetDatabase.LoadAssetAtPath<WeaponPresentationCatalog>(CatalogPath);
@@ -28,6 +86,7 @@ static class GameDataWeaponPresentationEditor
             EditorGUILayout.HelpBox(
                 $"Catalog missing: {CatalogPath}",
                 MessageType.Warning);
+            EditorGUI.indentLevel--;
             return;
         }
 
@@ -57,6 +116,8 @@ static class GameDataWeaponPresentationEditor
                 AssetDatabase.SaveAssets();
             }
         }
+
+        EditorGUI.indentLevel--;
     }
 
     static WeaponPresentation EnsurePresentationAsset(string itemId)

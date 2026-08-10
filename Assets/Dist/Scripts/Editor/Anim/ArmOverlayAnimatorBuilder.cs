@@ -41,6 +41,7 @@ public static class ArmOverlayAnimatorBuilder
         for (int h = 0; h < Hands.Length; h++)
         {
             string hand = Hands[h];
+            EnsureClipCopy($"HoldBashing_{hand}_Slot", $"Hold_{hand}_Slot");
             EnsureClipCopy($"AimBashing_{hand}_Slot", $"Aim_{hand}_Slot");
             EnsureClipCopy($"AttackBashing_{hand}_Slot", $"Attack_{hand}_Slot");
         }

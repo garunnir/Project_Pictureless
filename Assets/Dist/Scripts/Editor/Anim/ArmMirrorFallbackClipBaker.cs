@@ -7,7 +7,7 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// 라이브러리 Aim/Attack{Action} 및 Hold에 대해 반대손 미러 Fallback을 베이크하고 catalog를 채운다.
+/// 라이브러리 Hold|Aim|Attack{Action} 및 thin Hold에 대해 반대손 미러 Fallback을 베이크하고 catalog를 채운다.
 /// </summary>
 public static class ArmMirrorFallbackClipBaker
 {
@@ -25,7 +25,7 @@ public static class ArmMirrorFallbackClipBaker
 
     static readonly string[] LibraryPoseStems =
     {
-        "Hold",
+        "HoldBashing", "HoldCutting", "HoldGun",
         "AimBashing", "AimCutting", "AimGun",
         "AttackBashing", "AttackCutting", "AttackGun"
     };
@@ -44,6 +44,7 @@ public static class ArmMirrorFallbackClipBaker
             AssetDatabase.CreateFolder(SlotDir, "Fallback");
         }
 
+        EnsureActionHoldSlots();
         EnsureThinSlots();
 
         int ok = 0;
@@ -61,8 +62,23 @@ public static class ArmMirrorFallbackClipBaker
         Debug.Log($"[ArmMirrorFallbackClipBaker] Baked/updated {ok} fallback clips + catalog.");
     }
 
+    /// <summary>기존 Hold_* 를 시드로 Hold{Action}_* 라이브러리 슬롯을 만든다 (이미 있으면 유지).</summary>
+    static void EnsureActionHoldSlots()
+    {
+        string[] hands = { "Left", "Right", "TwoHand" };
+        for (int a = 0; a < Actions.Length; a++)
+        {
+            string action = Actions[a].ToString();
+            for (int h = 0; h < hands.Length; h++)
+                EnsureCopy($"Hold_{hands[h]}_Slot", $"Hold{action}_{hands[h]}_Slot");
+        }
+    }
+
     static void EnsureThinSlots()
     {
+        EnsureCopy("HoldBashing_Left_Slot", "Hold_Left_Slot");
+        EnsureCopy("HoldBashing_Right_Slot", "Hold_Right_Slot");
+        EnsureCopy("HoldBashing_TwoHand_Slot", "Hold_TwoHand_Slot");
         EnsureCopy("AimBashing_Left_Slot", "Aim_Left_Slot");
         EnsureCopy("AimBashing_Right_Slot", "Aim_Right_Slot");
         EnsureCopy("AimBashing_TwoHand_Slot", "Aim_TwoHand_Slot");
@@ -99,7 +115,7 @@ public static class ArmMirrorFallbackClipBaker
             AssetDatabase.CreateAsset(catalog, CatalogPath);
         }
 
-        catalog.SetHold(LoadHandClips("Hold"));
+        catalog.SetHoldThin(LoadThinHandClips("Hold"));
         catalog.SetAimThin(LoadThinHandClips("Aim"));
         catalog.SetAttackThin(LoadThinHandClips("Attack"));
 
@@ -110,6 +126,7 @@ public static class ArmMirrorFallbackClipBaker
             entries[i] = new ArmAnimSlotCatalog.ActionLibraryEntry
             {
                 action = Actions[i],
+                hold = LoadHandClips("Hold" + name),
                 aim = LoadHandClips("Aim" + name),
                 attack = LoadHandClips("Attack" + name)
             };

@@ -22,41 +22,77 @@ static class GameDataEditorDetailDrawers
         DrawBookGatingReadOnly(item);
     }
 
+    static bool _foldEditGeneral;
+    static bool _foldEditCombat;
+    static bool _foldEditContainer;
+    static bool _foldEditBook;
+    static bool _foldEditTyped;
+
     public static void DrawItemDetailEditable(ItemData item, Action markDirty)
     {
         if (item == null)
             return;
 
-        EditorGUILayout.Space(4);
-        EditorGUILayout.LabelField("Game Detail", EditorStyles.boldLabel);
+        _foldEditGeneral = EditorGUILayout.Foldout(
+            _foldEditGeneral, "General", true, EditorStyles.foldoutHeader);
+        if (_foldEditGeneral)
+        {
+            EditorGUI.indentLevel++;
+            EditInt(markDirty, "Max stack", ref item.max_stack);
+            EditField(markDirty, "Subcategory", ref item.subcategory);
+            EditTextArea(markDirty, "Description", ref item.description);
+            EditBool(markDirty, "Has durability", ref item.has_durability);
+            EditField(markDirty, "Repairs like", ref item.repairs_like);
+            EditInt(markDirty, "Repair difficulty", ref item.repair_difficulty);
+            EditStringList(markDirty, "Materials", ref item.materials);
+            EditStringList(markDirty, "Flags", ref item.flags);
+            EditQualityList(markDirty, "Qualities", ref item.qualities);
+            EditorGUI.indentLevel--;
+        }
 
-        EditInt(markDirty, "Max stack", ref item.max_stack);
-        EditField(markDirty, "Subcategory", ref item.subcategory);
-        EditTextArea(markDirty, "Description", ref item.description);
-        EditBool(markDirty, "Has durability", ref item.has_durability);
-        EditField(markDirty, "Repairs like", ref item.repairs_like);
-        EditInt(markDirty, "Repair difficulty", ref item.repair_difficulty);
-        EditInt(markDirty, "Bashing", ref item.bashing);
-        EditInt(markDirty, "Cutting", ref item.cutting);
-        EditInt(markDirty, "To hit", ref item.to_hit);
+        _foldEditCombat = EditorGUILayout.Foldout(
+            _foldEditCombat, "Combat stats", true, EditorStyles.foldoutHeader);
+        if (_foldEditCombat)
+        {
+            EditorGUI.indentLevel++;
+            EditInt(markDirty, "Bashing", ref item.bashing);
+            EditInt(markDirty, "Cutting", ref item.cutting);
+            EditInt(markDirty, "To hit", ref item.to_hit);
+            EditStringList(markDirty, "Weapon category", ref item.weapon_category);
+            EditStringList(markDirty, "Techniques", ref item.techniques);
+            EditorGUI.indentLevel--;
+        }
 
-        EditStringList(markDirty, "Weapon category", ref item.weapon_category);
-        EditStringList(markDirty, "Techniques", ref item.techniques);
-        EditStringList(markDirty, "Materials", ref item.materials);
-        EditStringList(markDirty, "Flags", ref item.flags);
-        EditQualityList(markDirty, "Qualities", ref item.qualities);
+        _foldEditContainer = EditorGUILayout.Foldout(
+            _foldEditContainer, "Container / Comestible", true, EditorStyles.foldoutHeader);
+        if (_foldEditContainer)
+        {
+            EditorGUI.indentLevel++;
+            EditField(markDirty, "Comestible type", ref item.comestible_type);
+            EditBool(markDirty, "Is container", ref item.is_container);
+            EditField(markDirty, "Container id", ref item.container_id);
+            EditorGUI.indentLevel--;
+        }
 
-        EditField(markDirty, "Comestible type", ref item.comestible_type);
-        EditBool(markDirty, "Is container", ref item.is_container);
-        EditField(markDirty, "Container id", ref item.container_id);
+        _foldEditBook = EditorGUILayout.Foldout(
+            _foldEditBook, "Book gating", true, EditorStyles.foldoutHeader);
+        if (_foldEditBook)
+        {
+            EditorGUI.indentLevel++;
+            EditField(markDirty, "Book skill", ref item.book_skill);
+            EditInt(markDirty, "Book required level", ref item.book_required_level);
+            EditInt(markDirty, "Book max level", ref item.book_max_level);
+            EditorGUI.indentLevel--;
+        }
 
-        EditorGUILayout.Space(4);
-        EditorGUILayout.LabelField("Book gating", EditorStyles.miniBoldLabel);
-        EditField(markDirty, "Book skill", ref item.book_skill);
-        EditInt(markDirty, "Book required level", ref item.book_required_level);
-        EditInt(markDirty, "Book max level", ref item.book_max_level);
-
-        DrawNestedDetailEditable(item, markDirty);
+        _foldEditTyped = EditorGUILayout.Foldout(
+            _foldEditTyped, "Type detail (armor/gun/tool/…)", true, EditorStyles.foldoutHeader);
+        if (_foldEditTyped)
+        {
+            EditorGUI.indentLevel++;
+            DrawNestedDetailEditable(item, markDirty);
+            EditorGUI.indentLevel--;
+        }
     }
 
     public static void DrawRecipeDetailReadOnly(RecipeData recipe)

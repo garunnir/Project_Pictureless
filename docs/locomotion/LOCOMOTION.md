@@ -84,14 +84,16 @@ flowchart LR
 Move Layer `Locomotion`: **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + Walk/Run × 전/후/좌/우 (Walk 링 ≈0.26). 조준 중 루트는 `SightDir` 유지, **발만** facing 대비 상대 방향.
 
 **Thin 키 (SM):** `Hold|Aim|Attack_{Left,Right,TwoHand}_Slot`  
-**라이브러리 키:** `Aim{Action}|Attack{Action}_{Hand}_Slot`, `Hold_{Hand}_Slot`  
-`WeaponAction` → 라이브러리 클립 선택 후 thin 키에 리맵. Action 전환은 **Rebind 없이** thin 키만 갱신. Presentation 교체 시에만 풀 resolve + Rebind.
+**라이브러리 키:** `Hold{Action}|Aim{Action}|Attack{Action}_{Hand}_Slot`  
+`WeaponAction` → 라이브러리 클립 선택 후 thin 키에 리맵 (파지·조준·공격 모두). Action 전환은 **Rebind 없이** thin 키만 갱신. Presentation 교체 시에만 풀 resolve + Rebind.
+
+무기 `AnimatorOverride`는 **라이브러리 키**를 교체한다 (`HoldGun_Right_Slot` 등). thin 키를 직접 바꾸지 않는다.
 
 폴백 클립: `Slots/Fallback/*_{Left,Right}_Fallback.anim`  
 카탈로그: `ArmAnimSlotCatalog.asset`  
 메뉴: `Dist/MCP/Rebuild Arm Overlay Animator`, `Dist/MCP/Bake Arm Mirror Fallback Clips`
 
-**액션 확장:** 새 `WeaponAction` → 라이브러리 클립+카탈로그 행(+ bake). **Builder/SM 수정 없음.**
+**액션 확장:** 새 `WeaponAction` → 라이브러리 클립(`Hold|Aim|Attack{Action}`)+카탈로그 행(+ bake). **Builder/SM 수정 없음.**
 
 ### 대칭 폴백 (Animator 밖)
 

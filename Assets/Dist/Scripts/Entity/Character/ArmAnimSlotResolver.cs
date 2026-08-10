@@ -6,8 +6,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 라이브러리 키(Aim{Action}/Attack{Action}/Hold)에서 전용·대칭 폴백을 풀고,
-/// 현재 WeaponAction으로 thin Aim/Attack/Hold 슬롯에 주입한다.
+/// 라이브러리 키(Hold|Aim|Attack{Action})에서 전용·대칭 폴백을 풀고,
+/// 현재 WeaponAction으로 thin Hold/Aim/Attack 슬롯에 주입한다.
 /// TwoHand는 폴백 없음. Dominant(현재 Right)는 양쪽 비전용일 때 기준.
 /// </summary>
 public static class ArmAnimSlotResolver
@@ -68,8 +68,6 @@ public static class ArmAnimSlotResolver
         ArmAnimSlotCatalog catalog,
         AnimatorOverrideController weaponOvr)
     {
-        ApplyHandClipsFallback(resolved, catalog.Hold, weaponOvr);
-
         ArmAnimSlotCatalog.ActionLibraryEntry[] actions = catalog.Actions;
         if (actions == null)
             return;
@@ -79,6 +77,7 @@ public static class ArmAnimSlotResolver
             ArmAnimSlotCatalog.ActionLibraryEntry e = actions[i];
             if (e == null)
                 continue;
+            ApplyHandClipsFallback(resolved, e.hold, weaponOvr);
             ApplyHandClipsFallback(resolved, e.aim, weaponOvr);
             ApplyHandClipsFallback(resolved, e.attack, weaponOvr);
         }
@@ -117,30 +116,13 @@ public static class ArmAnimSlotResolver
         WeaponAction actionR,
         WeaponAction action2H)
     {
-        ProjectHold(resolved, catalog.Hold, catalog.Hold);
-
         ArmAnimSlotCatalog.ActionLibraryEntry libL = catalog.FindAction(actionL);
         ArmAnimSlotCatalog.ActionLibraryEntry libR = catalog.FindAction(actionR);
         ArmAnimSlotCatalog.ActionLibraryEntry lib2H = catalog.FindAction(action2H);
 
-        ProjectPose(resolved, catalog.AimThin, libL?.aim, libR?.aim, lib2H?.aim, catalog.Hold);
-        ProjectPose(resolved, catalog.AttackThin, libL?.attack, libR?.attack, lib2H?.attack, catalog.Hold);
-    }
-
-    static void ProjectHold(
-        AnimatorOverrideController resolved,
-        ArmAnimSlotCatalog.HandClips thin,
-        ArmAnimSlotCatalog.HandClips holdLib)
-    {
-        if (thin == null || holdLib == null)
-            return;
-
-        if (thin.leftBase != null)
-            resolved[thin.leftBase] = EffectiveClip(holdLib.leftBase, resolved);
-        if (thin.rightBase != null)
-            resolved[thin.rightBase] = EffectiveClip(holdLib.rightBase, resolved);
-        if (thin.twoHandBase != null)
-            resolved[thin.twoHandBase] = EffectiveClip(holdLib.twoHandBase, resolved);
+        ProjectPose(resolved, catalog.HoldThin, libL?.hold, libR?.hold, lib2H?.hold, null);
+        ProjectPose(resolved, catalog.AimThin, libL?.aim, libR?.aim, lib2H?.aim, catalog.HoldThin);
+        ProjectPose(resolved, catalog.AttackThin, libL?.attack, libR?.attack, lib2H?.attack, catalog.HoldThin);
     }
 
     static void ProjectPose(
@@ -149,24 +131,24 @@ public static class ArmAnimSlotResolver
         ArmAnimSlotCatalog.HandClips libL,
         ArmAnimSlotCatalog.HandClips libR,
         ArmAnimSlotCatalog.HandClips lib2H,
-        ArmAnimSlotCatalog.HandClips holdFallback)
+        ArmAnimSlotCatalog.HandClips poseFallback)
     {
         if (thin == null)
             return;
 
         if (thin.leftBase != null)
-            resolved[thin.leftBase] = PickLibClip(resolved, libL, WieldHand.Left, holdFallback);
+            resolved[thin.leftBase] = PickLibClip(resolved, libL, WieldHand.Left, poseFallback);
         if (thin.rightBase != null)
-            resolved[thin.rightBase] = PickLibClip(resolved, libR, WieldHand.Right, holdFallback);
+            resolved[thin.rightBase] = PickLibClip(resolved, libR, WieldHand.Right, poseFallback);
         if (thin.twoHandBase != null)
-            resolved[thin.twoHandBase] = PickLibClip(resolved, lib2H, WieldHand.TwoHand, holdFallback);
+            resolved[thin.twoHandBase] = PickLibClip(resolved, lib2H, WieldHand.TwoHand, poseFallback);
     }
 
     static AnimationClip PickLibClip(
         AnimatorOverrideController resolved,
         ArmAnimSlotCatalog.HandClips lib,
         WieldHand hand,
-        ArmAnimSlotCatalog.HandClips holdFallback)
+        ArmAnimSlotCatalog.HandClips poseFallback)
     {
         AnimationClip baseClip = null;
         if (lib != null)
@@ -180,11 +162,11 @@ public static class ArmAnimSlotResolver
         if (clip != null)
             return clip;
 
-        if (holdFallback == null)
+        if (poseFallback == null)
             return null;
-        if (hand == WieldHand.Left) return EffectiveClip(holdFallback.leftBase, resolved);
-        if (hand == WieldHand.Right) return EffectiveClip(holdFallback.rightBase, resolved);
-        return EffectiveClip(holdFallback.twoHandBase, resolved);
+        if (hand == WieldHand.Left) return EffectiveClip(poseFallback.leftBase, resolved);
+        if (hand == WieldHand.Right) return EffectiveClip(poseFallback.rightBase, resolved);
+        return EffectiveClip(poseFallback.twoHandBase, resolved);
     }
 
     public static ResolveResult ResolveForHand(

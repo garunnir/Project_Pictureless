@@ -29,15 +29,17 @@ public sealed class CharacterCombatVfx : MonoBehaviour
 
     void OnAttackResolved(AttackOutcome outcome)
     {
-        WeaponPresentation presentation = _attacker.Presentation;
-        if (presentation == null ||
-            !presentation.TryGetEntry(outcome.Action, out WeaponPresentation.Entry entry) ||
-            entry.vfx == null)
-        {
-            return;
-        }
+        WeaponActionVfxDefaults defaults = _attacker.Catalog != null
+            ? _attacker.Catalog.ActionVfxDefaults
+            : null;
 
-        WeaponActionVfx vfx = entry.vfx;
+        WeaponActionVfx vfx = WeaponActionVfxResolver.Resolve(
+            _attacker.Presentation,
+            outcome.Action,
+            defaults);
+        if (vfx == null)
+            return;
+
         Spawn(vfx.actionVfx, outcome.OriginPoint, outcome.Direction);
 
         if (outcome.ResolveMode == WeaponResolveMode.RangedRay)

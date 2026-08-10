@@ -21,3 +21,4 @@ MonoBehaviour:
     presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
   _byCategoryId: []
   _unarmed: {fileID: 11400000, guid: eec33d4af901fe740af3be7bb81abd2e, type: 2}
+  _actionVfxDefaults: {fileID: 11400000, guid: 148757be15f15604586d338417aaa357, type: 2}

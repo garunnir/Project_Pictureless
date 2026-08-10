@@ -4,6 +4,7 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(
     fileName = "ArmAnimSlotCatalog",
@@ -24,21 +25,26 @@ public sealed class ArmAnimSlotCatalog : ScriptableObject
     public sealed class ActionLibraryEntry
     {
         public WeaponAction action;
+        public HandClips hold = new HandClips();
         public HandClips aim = new HandClips();
         public HandClips attack = new HandClips();
     }
 
-    [SerializeField] HandClips _hold = new HandClips();
+    [FormerlySerializedAs("_hold")]
+    [SerializeField] HandClips _holdThin = new HandClips();
     [SerializeField] HandClips _aimThin = new HandClips();
     [SerializeField] HandClips _attackThin = new HandClips();
     [SerializeField] ActionLibraryEntry[] _actions = Array.Empty<ActionLibraryEntry>();
 
-    public HandClips Hold => _hold;
+    /// <summary>Thin SM Hold 슬롯. 라이브러리 파지는 <see cref="ActionLibraryEntry.hold"/>.</summary>
+    public HandClips HoldThin => _holdThin;
+    public HandClips Hold => _holdThin;
     public HandClips AimThin => _aimThin;
     public HandClips AttackThin => _attackThin;
     public ActionLibraryEntry[] Actions => _actions;
 
-    public void SetHold(HandClips hold) => _hold = hold ?? new HandClips();
+    public void SetHoldThin(HandClips holdThin) => _holdThin = holdThin ?? new HandClips();
+    public void SetHold(HandClips hold) => SetHoldThin(hold);
     public void SetAimThin(HandClips aimThin) => _aimThin = aimThin ?? new HandClips();
     public void SetAttackThin(HandClips attackThin) => _attackThin = attackThin ?? new HandClips();
     public void SetActions(ActionLibraryEntry[] actions) =>

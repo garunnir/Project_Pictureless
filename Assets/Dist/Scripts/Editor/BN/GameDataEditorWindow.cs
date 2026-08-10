@@ -323,27 +323,149 @@ public sealed class GameDataEditorWindow : EditorWindow
         EditorGUILayout.EndVertical();
     }
 
+    bool _foldIdentity = true;
+    bool _foldGameDetail;
+    bool _foldPresentation;
+    bool _foldIcon;
+    bool _foldRelations;
+
     void DrawItemDetail()
     {
         if (_selectedIndex >= _filteredItems.Count) return;
         var item = _filteredItems[_selectedIndex];
         var db = ActiveDb;
 
+        _foldIdentity = EditorGUILayout.Foldout(
+            _foldIdentity,
+            IsCustom ? "Identity (editable)" : "Identity (read-only)",
+            true,
+            EditorStyles.foldoutHeader);
+        if (_foldIdentity)
+        {
+            EditorGUI.indentLevel++;
+            if (IsCustom)
+            {
+                EditField("ID", ref item.id);
+                EditField("Name", ref item.name);
+                EditField("Type", ref item.type);
+                EditField("Category", ref item.category);
+                EditIntField("Weight (g)", ref item.weight_g);
+                EditIntField("Volume (ml)", ref item.volume_ml);
+            }
+            else
+            {
+                ReadField("ID", item.id);
+                ReadField("Name", item.name);
+                ReadField("Type", item.type);
+                ReadField("Category", item.category);
+                ReadField("Weight", $"{item.weight_g} g");
+                ReadField("Volume", $"{item.volume_ml} ml");
+                if (item.materials is { Count: > 0 })
+                    ReadField("Materials", string.Join(", ", item.materials));
+                if (!string.IsNullOrEmpty(item.comestible_type))
+                    ReadField("Comestible type", item.comestible_type);
+            }
+
+            EditorGUI.indentLevel--;
+        }
+
+        _foldGameDetail = EditorGUILayout.Foldout(
+            _foldGameDetail,
+            "Game Detail",
+            true,
+            EditorStyles.foldoutHeader);
+        if (_foldGameDetail)
+        {
+            EditorGUI.indentLevel++;
+            if (IsCustom)
+                GameDataEditorDetailDrawers.DrawItemDetailEditable(item, MarkDirty);
+            else
+            {
+                GameDataEditorDetailDrawers.DrawItemDetailReadOnly(item);
+                if (item.qualities is { Count: > 0 })
+                {
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.LabelField("Qualities", EditorStyles.miniBoldLabel);
+                    foreach (var q in item.qualities)
+                        EditorGUILayout.LabelField($"  {q.id} lv{q.level}");
+                }
+
+                if (item.flags is { Count: > 0 })
+                {
+                    EditorGUILayout.Space(4);
+                    EditorGUILayout.LabelField("Flags", EditorStyles.miniBoldLabel);
+                    EditorGUILayout.LabelField(
+                        $"  {string.Join(", ", item.flags)}",
+                        EditorStyles.wordWrappedLabel);
+                }
+            }
+
+            EditorGUI.indentLevel--;
+        }
+
+        _foldPresentation = EditorGUILayout.Foldout(
+            _foldPresentation,
+            "Combat Presentation",
+            true,
+            EditorStyles.foldoutHeader);
+        if (_foldPresentation)
+        {
+            EditorGUI.indentLevel++;
+            GameDataWeaponPresentationEditor.DrawSection(item, editable: IsCustom);
+            EditorGUI.indentLevel--;
+        }
+
+        _foldIcon = EditorGUILayout.Foldout(
+            _foldIcon,
+            "Icon",
+            true,
+            EditorStyles.foldoutHeader);
+        if (_foldIcon)
+        {
+            EditorGUI.indentLevel++;
+            DrawItemIconSection(item);
+            EditorGUI.indentLevel--;
+        }
+
+        _foldRelations = EditorGUILayout.Foldout(
+            _foldRelations,
+            "Recipes / Relations",
+            true,
+            EditorStyles.foldoutHeader);
+        if (_foldRelations)
+        {
+            EditorGUI.indentLevel++;
+            var recipes = db.GetRecipesForResult(item.id);
+            if (recipes.Count > 0)
+            {
+                EditorGUILayout.LabelField("Recipes producing this", EditorStyles.miniBoldLabel);
+                foreach (var r in recipes)
+                    EditorGUILayout.LabelField($"  {r.id}  [{r.category}]");
+            }
+            else
+            {
+                EditorGUILayout.LabelField("(none produce this)", EditorStyles.miniLabel);
+            }
+
+            var usedIn = db.GetRecipesUsingIngredient(item.id);
+            if (usedIn.Count > 0)
+            {
+                EditorGUILayout.Space(4);
+                EditorGUILayout.LabelField(
+                    $"Used as ingredient ({usedIn.Count})",
+                    EditorStyles.miniBoldLabel);
+                foreach (var r in usedIn.Take(20))
+                    EditorGUILayout.LabelField($"  {r.id}");
+                if (usedIn.Count > 20)
+                    EditorGUILayout.LabelField($"  ... +{usedIn.Count - 20} more");
+            }
+
+            EditorGUI.indentLevel--;
+        }
+
         if (IsCustom)
         {
-            EditorGUILayout.LabelField("Item (editable)", EditorStyles.boldLabel);
-            EditorGUILayout.Space(4);
-            EditField("ID", ref item.id);
-            EditField("Name", ref item.name);
-            EditField("Type", ref item.type);
-            EditField("Category", ref item.category);
-            EditIntField("Weight (g)", ref item.weight_g);
-            EditIntField("Volume (ml)", ref item.volume_ml);
-
-            GameDataEditorDetailDrawers.DrawItemDetailEditable(item, MarkDirty);
-            GameDataWeaponPresentationEditor.DrawSection(item, editable: true);
-
-            EditorGUILayout.Space(4);
+            EditorGUILayout.Space(8);
             if (GUILayout.Button("Delete Item", GUILayout.Width(100)))
             {
                 _customItemsRoot.items.Remove(item);
@@ -351,67 +473,7 @@ public sealed class GameDataEditorWindow : EditorWindow
                 _selectedIndex = -1;
             }
         }
-        else
-        {
-            EditorGUILayout.LabelField("Item (read-only)", EditorStyles.boldLabel);
-            EditorGUILayout.Space(4);
-            ReadField("ID", item.id);
-            ReadField("Name", item.name);
-            ReadField("Type", item.type);
-            ReadField("Category", item.category);
-            ReadField("Weight", $"{item.weight_g} g");
-            ReadField("Volume", $"{item.volume_ml} ml");
-        }
-
-        if (item.materials is { Count: > 0 } && !IsCustom)
-            ReadField("Materials", string.Join(", ", item.materials));
-
-        if (!string.IsNullOrEmpty(item.comestible_type) && !IsCustom)
-            ReadField("Comestible type", item.comestible_type);
-
-        if (!IsCustom)
-            GameDataEditorDetailDrawers.DrawItemDetailReadOnly(item);
-
-        GameDataWeaponPresentationEditor.DrawSection(item, editable: IsCustom);
-
-        DrawItemIconSection(item);
-
-        if (!IsCustom && item.qualities is { Count: > 0 })
-        {
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField("Qualities", EditorStyles.miniBoldLabel);
-            foreach (var q in item.qualities)
-                EditorGUILayout.LabelField($"  {q.id} lv{q.level}");
-        }
-
-        if (!IsCustom && item.flags is { Count: > 0 })
-        {
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField("Flags", EditorStyles.miniBoldLabel);
-            EditorGUILayout.LabelField($"  {string.Join(", ", item.flags)}", EditorStyles.wordWrappedLabel);
-        }
-
-        EditorGUILayout.Space(8);
-        var recipes = db.GetRecipesForResult(item.id);
-        if (recipes.Count > 0)
-        {
-            EditorGUILayout.LabelField("Recipes producing this", EditorStyles.boldLabel);
-            foreach (var r in recipes)
-                EditorGUILayout.LabelField($"  {r.id}  [{r.category}]");
-        }
-
-        var usedIn = db.GetRecipesUsingIngredient(item.id);
-        if (usedIn.Count > 0)
-        {
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField($"Used as ingredient ({usedIn.Count})", EditorStyles.boldLabel);
-            foreach (var r in usedIn.Take(20))
-                EditorGUILayout.LabelField($"  {r.id}");
-            if (usedIn.Count > 20)
-                EditorGUILayout.LabelField($"  ... +{usedIn.Count - 20} more");
-        }
-
-        if (!IsCustom && !string.IsNullOrEmpty(item.id))
+        else if (!string.IsNullOrEmpty(item.id))
         {
             EditorGUILayout.Space(8);
             if (GUILayout.Button("Copy to Custom", GUILayout.Width(120)))
@@ -424,8 +486,6 @@ public sealed class GameDataEditorWindow : EditorWindow
         if (item == null || string.IsNullOrEmpty(item.id))
             return;
 
-        EditorGUILayout.Space(8);
-        EditorGUILayout.LabelField("Icon (ItemIconCatalog)", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
             "아이콘은 JSON이 아니라 ItemIconCatalog SO에 저장됩니다. BN/Custom 공통으로 itemId 매핑합니다.",
             MessageType.None);

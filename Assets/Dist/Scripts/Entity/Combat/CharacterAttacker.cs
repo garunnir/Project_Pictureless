@@ -54,6 +54,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     public static event Action<AttackOutcome> AnyAttackResolved;
 
     public WeaponPresentation Presentation => _presentation;
+    public WeaponPresentationCatalog Catalog => _catalog;
     public string ItemId => _itemId;
     public int LoadedRounds => _loadedRounds;
     public WeaponActionMask AvailableActions { get; private set; }

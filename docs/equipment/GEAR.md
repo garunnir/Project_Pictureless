@@ -13,6 +13,7 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 | Character window | Tabs: 상태 \| 장비 \| 방해 \| 체온. Key = existing `StatusToggle` (`C`) |
 | Primary | Highest DPS hand → `CharacterAttacker.SetWieldedItem` |
 | HandActionBinding | `itemId → WeaponAction?` (null = 없음), persists across unequip + `HandActionBindingPersistence` disk JSON |
+| Action VFX fallback | Tag defaults SO `WeaponActionVfxDefaults` (Bashing/Cutting/Gun). Weapon `Presentation.Entry.vfx` null slots coalesce → tag defaults. Edit: Game Data Items detail → **Action VFX Fallback** (above Presentation) → Edit Defaults. Not in ItemData JSON. |
 
 ## Domain SSOT
 
@@ -43,6 +44,7 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 | `HelmetVision` | Phase G: head covers → VisionFactor (host + Character UI + camera) |
 | `GearEnvPenalties` | Phase H: BodyTemp feeling + wetness → move / HitChance factors |
 | `WearOverlapRules` | Phase C: same part + layer(/sided) conflict → Wear **reject** |
+| `WeaponActionVfxDefaults` | Tag (Bashing/Cutting/Gun) default VFX; null Entry slots coalesce via `WeaponActionVfxResolver` |
 
 ### CanLift
 
