@@ -258,14 +258,18 @@ public sealed class UICharacterWieldSlotView :
 
         if (eventData.button == PointerEventData.InputButton.Right)
         {
-            Canvas canvas = GetComponentInParent<Canvas>();
-            UICharacterHandActionMenu.Show(
-                _gear,
-                stack.ItemId,
-                _slot,
-                eventData.position,
-                canvas,
-                () => Bind(_gear, _slot, _strength, _onHover, _onExit, _onUnequip));
+            if (!WieldSlotContextMenuBuilder.TryShow(
+                    _gear,
+                    stack.ItemId,
+                    _slot,
+                    eventData.position,
+                    () => Bind(_gear, _slot, _strength, _onHover, _onExit, _onUnequip)))
+            {
+                Debug.LogError(
+                    "[UICharacterWieldSlotView] UIContextMenuHost failed to show wield slot menu.",
+                    this);
+            }
+
             return;
         }
 

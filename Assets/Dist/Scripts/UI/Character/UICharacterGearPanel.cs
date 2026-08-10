@@ -262,7 +262,7 @@ public sealed class UICharacterGearPanel : MonoBehaviour
         if (_gearHost != null)
             _gearHost.Changed -= Refresh;
         _gearHost = null;
-        UICharacterHandActionMenu.HideActive();
+        ContextMenuHostEvents.RequestHide();
     }
 
     public void SetCoverFilter(string partId)

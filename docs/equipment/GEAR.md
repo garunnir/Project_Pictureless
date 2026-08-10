@@ -517,7 +517,7 @@ Last run: **2026-08-06 post-P0** (Play MCP smoke Pass).
 | S2 | Wield: **action icon** corner (none = none icon) | Pass | `ActionIcon` + B/C/G/— |
 | S3 | Worn: **icon** + name + covers + name-overlay bar | Pass | `UICharacterWornRow` Icon + Label + `ItemNameStatusBar` |
 | H1 | Hover = DetailPanel (strain/need Str hover-only) | Pass | `ShowText` + Worn `AppendItemArmorHover` |
-| A1 | Slot RMB = context Bash/Cut/Gun/None (+ unwield/floor) | Pass | `UICharacterHandActionMenu` + DropFloor |
+| A1 | Slot RMB = **사용 액션** group (AvailableModes+None) + unwield/floor | Pass | `WieldSlotActionsContributor` → `HandActionGroup` |
 | F1 | Worn filter by body **click** (toggle); FilterLabel clears | Pass | `OnPartClick` / not hover sticky |
 | T1 | Enc tab: enc body + worn; wield hidden | Pass | `showWield` Equipment-only |
 | T2 | BodyTemp tab: warmth + BodyTemp totals | Pass | `FormatBodyTempTotals` |

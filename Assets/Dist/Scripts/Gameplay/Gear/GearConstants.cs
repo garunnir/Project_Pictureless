@@ -61,9 +61,6 @@ public static class GearConstants
     /// <summary>들기 액션 코너 라벨 TMP 크기.</summary>
     public const float UiFontSizeActionIcon = 11f;
 
-    /// <summary>HandAction 미니메뉴 행 TMP 크기.</summary>
-    public const float UiFontSizeContextRow = 14f;
-
     public static float OffHandDpsFactor(int handSkillLevel)
     {
         float t = Mathf.Clamp01(handSkillLevel / (float)OffHandDpsFactorCapLevel);

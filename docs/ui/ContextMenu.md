@@ -23,4 +23,5 @@
 - **넣지 말 것**: Craft/OpenLoot 등 도메인 Action·Contributor
 - 아이템 Host: `Dist.Inventory.UI` (`UIItemContextMenu`)
 - 타일 Catalog/픽: DistScript → `UIContextMenuHost.TryShow(model, pos)`
+- 들기 슬롯 RMB: DistScript `WieldSlotContextMenuCatalog` → `UIContextMenuHost.TryShow` (인벤 Catalog와 분리)
 - ContextMenu 레이어 부모: `UICanvasLayerHost`가 `UIContextMenuHost.TryResolveParent` 등록
