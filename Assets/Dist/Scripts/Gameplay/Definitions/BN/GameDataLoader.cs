@@ -75,6 +75,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         {
             _refDatabase = null;
             _gameDatabase = null;
+            ItemNameTable.Unload();
         }
 
         public static void ReloadGameData()

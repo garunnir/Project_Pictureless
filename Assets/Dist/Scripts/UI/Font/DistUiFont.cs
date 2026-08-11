@@ -1,12 +1,12 @@
 // ============================================================
-// DistUiFont — Dist UI TMP Katuri SDF SSOT (ui-font.mdc)
+// DistUiFont — Dist UI TMP 폰트 (Language/LocalizationBundle SSOT)
 // ============================================================
 
 using TMPro;
 using UnityEngine;
 
 /// <summary>
-/// Path SSOT: docs/ui/UI_Scripts.md §Font · InventoryUIHierarchyBuilder.DefaultUIFontPath
+/// Path SSOT: docs/ui/UI_Scripts.md §Font · LocalizationBundle language fonts
 /// </summary>
 public static class DistUiFont
 {
@@ -15,28 +15,54 @@ public static class DistUiFont
     /// <summary>Resources.Load 보조 키 (빌드용). Font 폴더에 Resources 복제가 있을 때만.</summary>
     public const string ResourcesKey = "Katuri SDF";
 
-    static TMP_FontAsset _cached;
-    static bool _warnedMissing;
+    static TMP_FontAsset _katuriFallback;
+    static bool _warnedMissingKaturi;
 
     public static TMP_FontAsset Get()
     {
-        if (_cached != null)
-            return _cached;
-
-#if UNITY_EDITOR
-        _cached = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(AssetPath);
-#endif
-        if (_cached == null)
-            _cached = Resources.Load<TMP_FontAsset>(ResourcesKey);
-
-        if (_cached == null && !_warnedMissing)
+        LocalizationBundle bundle = LocalizationBundle.Get();
+        if (bundle != null)
         {
-            _warnedMissing = true;
-            Debug.LogError(
-                $"[DistUiFont] Katuri SDF missing. Assign '{AssetPath}' or Resources '{ResourcesKey}'.");
+            TMP_FontAsset fromBundle = bundle.GetActiveFont();
+            if (fromBundle != null)
+                return fromBundle;
         }
 
-        return _cached;
+        return GetKaturiFallback();
+    }
+
+    public static TMP_FontAsset GetFor(DisplayLanguage language)
+    {
+        LocalizationBundle bundle = LocalizationBundle.Get();
+        if (bundle != null)
+        {
+            TMP_FontAsset fromBundle = bundle.GetFont(language);
+            if (fromBundle != null)
+                return fromBundle;
+        }
+
+        return GetKaturiFallback();
+    }
+
+    static TMP_FontAsset GetKaturiFallback()
+    {
+        if (_katuriFallback != null)
+            return _katuriFallback;
+
+#if UNITY_EDITOR
+        _katuriFallback = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(AssetPath);
+#endif
+        if (_katuriFallback == null)
+            _katuriFallback = Resources.Load<TMP_FontAsset>(ResourcesKey);
+
+        if (_katuriFallback == null && !_warnedMissingKaturi)
+        {
+            _warnedMissingKaturi = true;
+            Debug.LogError(
+                $"[DistUiFont] Katuri SDF missing. Assign LocalizationBundle fonts or '{AssetPath}'.");
+        }
+
+        return _katuriFallback;
     }
 
     public static void Apply(TMP_Text text)

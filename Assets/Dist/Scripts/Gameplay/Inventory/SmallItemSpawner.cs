@@ -92,7 +92,7 @@ public static class SmallItemSpawner
         if (instance == null)
             return;
 
-        instance.name = $"SmallItem_{definition.name}";
+        instance.name = $"SmallItem_{definition.id}";
         instance.Configure(definition, count);
 
         if (worldGrid != null)
@@ -106,7 +106,7 @@ public static class SmallItemSpawner
         if (instance == null)
             return;
 
-        instance.name = $"SmallItem_{stack.Item.name}";
+        instance.name = $"SmallItem_{stack.Item.id}";
         instance.BindStack(stack);
 
         if (worldGrid != null)

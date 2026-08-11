@@ -244,18 +244,21 @@ UI.cs 상속, ContentSizeFitter 필수
 ## Font/
 
 ### Katuri (.otf / .ttf / SDF)
-**역할:** 프로젝트 전용 한글 폰트
+**역할:** 프로젝트 기본 한글(및 en) TMP 폰트
 
 - `Katuri.otf` / `Katuri.ttf` — 원본 폰트 파일
-- `Katuri SDF.asset` — TextMeshPro용 SDF 렌더링 에셋 (`Assets/Dist/Scripts/UI/Font/Katuri SDF.asset`)
+- `Katuri SDF.asset` — TextMeshPro용 SDF (`Assets/Dist/Scripts/UI/Font/Katuri SDF.asset`)
 
-**런타임 SSOT:** `DistUiFont` (`Assets/Dist/Scripts/UI/Font/DistUiFont.cs`) — Character 등 동적 TMP에 Katuri 적용. Editor 빌더는 `DefaultUIFontPath` 유지.
+**런타임 SSOT:** `LocalizationBundle` (활성 언어 + 언어별 TMP) → `DistUiFont.Get()` / `Apply()`.  
+기본 매핑: `ko`/`en` → Katuri; `ja` → Bundle JA 슬롯(미할당 시 Katuri 폴백 + Warning).  
+편집: `LocalizationBundle` Inspector (Definitions `Loc Bundle`로 핑). 허브에 언어/폰트 인라인 없음.  
+아이템 표시명: [`docs/inventory/ITEM_NAMES.md`](../inventory/ITEM_NAMES.md).
 
-- 신규 UI 프리팹·일회 bake(후 삭제) 스크립트: 위 경로의 `Katuri SDF.asset` 참조
-- 인벤 UI (`Visual/Prefabs/UIComponents/Inventory/`): `Grp_ItemListRow`, `Grp_ContainerSlot`의 TMP가 Katuri SDF를 참조
-- Editor 빌더 상수: `InventoryUIHierarchyBuilder.DefaultUIFontPath` (Patch/빌더용 — 상시 full bake 메뉴 없음)
+- 신규 UI 프리팹·일회 bake(후 삭제) 스크립트: Katuri 또는 Bundle이 고른 활성 폰트
+- 인벤 UI TMP: Katuri SDF (ko 기본)
+- Editor 빌더 상수: `InventoryUIHierarchyBuilder.DefaultUIFontPath` (Patch/빌더용)
 
-**효용:** UIVerticalView, UISender 등에서 `UILocalizationManager.localizedFonts`를 통해 언어별 TMP 폰트로 사용됨. 신규 UI도 동일 폰트를 기본으로 맞춘다.
+**효용:** 언어 전환 시 문구와 글리프를 같이 맞춤. Liberation Sans / font null 금지 (`ui-font.mdc`).
 
 ---
 

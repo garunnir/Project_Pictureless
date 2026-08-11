@@ -69,7 +69,10 @@ namespace Garunnir.Runtime.Gameplay.Data
         RecipeView ToView(RecipeData r)
         {
             var resultItem = _db.GetItem(r.result);
-            string resultName = resultItem?.name ?? r.result;
+            DisplayLanguage lang = LocalizationBundle.Get()?.ActiveLanguage ?? DisplayLanguage.Ko;
+            string resultName = resultItem != null
+                ? ItemNameTable.Get(resultItem.id, lang)
+                : ItemNameTable.Get(r.result, lang);
 
             List<ComponentSlotView> compSlots = null;
             if (r.components is { Count: > 0 })
@@ -82,10 +85,10 @@ namespace Garunnir.Runtime.Gameplay.Data
                     foreach (ComponentAlt alt in slot.alternatives)
                     {
                         var altItem = _db.GetItem(alt.item);
-                        alts.Add(new ComponentAltView(
-                            alt.item,
-                            altItem?.name ?? alt.item,
-                            alt.count));
+                        string altName = altItem != null
+                            ? ItemNameTable.Get(altItem.id, lang)
+                            : ItemNameTable.Get(alt.item, lang);
+                        alts.Add(new ComponentAltView(alt.item, altName, alt.count));
                     }
                     compSlots.Add(new ComponentSlotView(alts));
                 }

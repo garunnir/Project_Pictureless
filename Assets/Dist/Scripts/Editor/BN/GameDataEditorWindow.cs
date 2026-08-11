@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Garunnir.Runtime.Gameplay.Data;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,8 +16,8 @@ public sealed class GameDataEditorWindow : EditorWindow
     enum Source { Reference, Custom }
     enum Tab { Items, Recipes }
 
-    [MenuItem("Tools/Game Data Browser")]
-    static void Open() => GetWindow<GameDataEditorWindow>("Game Data");
+    [MenuItem("Tools/Data Definitions")]
+    static void Open() => GetWindow<GameDataEditorWindow>("Data Definitions");
 
     Source _source;
     Tab _tab;
@@ -38,8 +39,10 @@ public sealed class GameDataEditorWindow : EditorWindow
     string _lastCategory = "\0";
     Tab _lastTab;
     Source _lastSource;
+    DisplayLanguage _lastLanguage = (DisplayLanguage)(-1);
     bool _dirty;
     ItemIconCatalog _iconCatalog;
+    LocalizationBundle _bundle;
 
     static readonly string[] _recipeCategories =
     {
@@ -64,18 +67,74 @@ public sealed class GameDataEditorWindow : EditorWindow
 
     int _categoryIndex;
 
+    DisplayLanguage ActiveDisplayLanguage =>
+        _bundle != null ? _bundle.ActiveLanguage : DisplayLanguage.Ko;
+
+    bool HasUnsavedChanges => _dirty || ItemNameTable.IsGameDirty;
+
     void OnEnable() => ReloadAll();
 
     void ReloadAll()
     {
+        _bundle = EnsureLocalizationBundle();
+        LocalizationBundle.ClearCache();
+        _bundle = LocalizationBundle.Get();
+
+        ItemNameTable.Reload();
+
         string bnPath = GameDataLoader.GetRefDataPath();
         _bnDb = GameDataLoader.LoadFromPaths(
             Path.Combine(bnPath, "items.json"),
             Path.Combine(bnPath, "recipes.json"));
 
         LoadCustomData();
+        SeedCustomItemNames();
         _iconCatalog = EnsureIconCatalog();
         InvalidateFilter();
+    }
+
+    void SeedCustomItemNames()
+    {
+        if (_customItemsRoot?.items == null)
+            return;
+
+        for (int i = 0; i < _customItemsRoot.items.Count; i++)
+        {
+            ItemData item = _customItemsRoot.items[i];
+            if (item == null || string.IsNullOrEmpty(item.id))
+                continue;
+            if (!string.IsNullOrEmpty(item.name))
+                ItemNameTable.SeedFromItemNameIfMissing(item.id, item.name, DisplayLanguage.Ko);
+        }
+    }
+
+    static LocalizationBundle EnsureLocalizationBundle()
+    {
+        LocalizationBundle bundle =
+            AssetDatabase.LoadAssetAtPath<LocalizationBundle>(LocalizationBundle.AssetPath);
+        if (bundle != null)
+            return bundle;
+
+        string dir = Path.GetDirectoryName(LocalizationBundle.AssetPath)?.Replace('\\', '/');
+        if (!string.IsNullOrEmpty(dir) && !AssetDatabase.IsValidFolder(dir))
+        {
+            Directory.CreateDirectory(dir);
+            AssetDatabase.Refresh();
+        }
+
+        bundle = ScriptableObject.CreateInstance<LocalizationBundle>();
+        TMP_FontAsset katuri =
+            AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(DistUiFont.AssetPath);
+        if (katuri != null)
+        {
+            bundle.EditorSetFont(DisplayLanguage.En, katuri);
+            bundle.EditorSetFont(DisplayLanguage.Ko, katuri);
+        }
+
+        AssetDatabase.CreateAsset(bundle, LocalizationBundle.AssetPath);
+        AssetDatabase.SaveAssets();
+        Debug.Log($"[GameDataEditor] Created {LocalizationBundle.AssetPath}");
+        return bundle;
     }
 
     void LoadCustomData()
@@ -166,19 +225,33 @@ public sealed class GameDataEditorWindow : EditorWindow
 
         GUILayout.FlexibleSpace();
 
-        if (_dirty)
+        if (HasUnsavedChanges)
         {
             var prev = GUI.backgroundColor;
             GUI.backgroundColor = new Color(1f, 0.8f, 0.3f);
             if (GUILayout.Button("Save Changes", EditorStyles.toolbarButton, GUILayout.Width(100)))
-                SaveCustomData();
+                SaveAll();
             GUI.backgroundColor = prev;
         }
 
         if (GUILayout.Button("Reload", EditorStyles.toolbarButton, GUILayout.Width(60)))
             ReloadAll();
 
+        if (GUILayout.Button("Loc Bundle", EditorStyles.toolbarButton, GUILayout.Width(80)))
+            PingLocalizationBundle();
+
         EditorGUILayout.EndHorizontal();
+    }
+
+    void PingLocalizationBundle()
+    {
+        if (_bundle == null)
+            _bundle = EnsureLocalizationBundle();
+        if (_bundle == null)
+            return;
+
+        Selection.activeObject = _bundle;
+        EditorGUIUtility.PingObject(_bundle);
     }
 
     void DrawToolbar()
@@ -230,13 +303,16 @@ public sealed class GameDataEditorWindow : EditorWindow
 
     void RebuildFilterIfNeeded()
     {
+        DisplayLanguage lang = ActiveDisplayLanguage;
         if (_lastSearch == _searchText && _lastCategory == _categoryFilter
-            && _lastTab == _tab && _lastSource == _source) return;
+            && _lastTab == _tab && _lastSource == _source && _lastLanguage == lang)
+            return;
 
         _lastSearch = _searchText;
         _lastCategory = _categoryFilter;
         _lastTab = _tab;
         _lastSource = _source;
+        _lastLanguage = lang;
 
         var db = ActiveDb;
         if (db == null) return;
@@ -250,10 +326,13 @@ public sealed class GameDataEditorWindow : EditorWindow
                 if (!string.IsNullOrEmpty(_categoryFilter) &&
                     !string.Equals(item.type, _categoryFilter, StringComparison.OrdinalIgnoreCase))
                     continue;
-                if (!string.IsNullOrEmpty(lower) &&
-                    !(item.id ?? "").Contains(lower) &&
-                    !(item.name ?? "").ToLowerInvariant().Contains(lower))
-                    continue;
+                if (!string.IsNullOrEmpty(lower))
+                {
+                    string displayName = ItemNameTable.Get(item.id, lang);
+                    if (!(item.id ?? "").ToLowerInvariant().Contains(lower) &&
+                        !(displayName ?? "").ToLowerInvariant().Contains(lower))
+                        continue;
+                }
                 _filteredItems.Add(item);
             }
         }
@@ -267,7 +346,8 @@ public sealed class GameDataEditorWindow : EditorWindow
                     continue;
                 if (!string.IsNullOrEmpty(lower) &&
                     !(recipe.id ?? "").Contains(lower) &&
-                    !(recipe.result ?? "").Contains(lower))
+                    !(recipe.result ?? "").Contains(lower) &&
+                    !(ItemNameTable.Get(recipe.result, lang) ?? "").ToLowerInvariant().Contains(lower))
                     continue;
                 _filteredRecipes.Add(recipe);
             }
@@ -291,7 +371,7 @@ public sealed class GameDataEditorWindow : EditorWindow
         {
             bool selected = i == _selectedIndex;
             string label = _tab == Tab.Items
-                ? $"{_filteredItems[i].id}  —  {_filteredItems[i].name}"
+                ? $"{_filteredItems[i].id}  —  {ItemNameTable.Get(_filteredItems[i].id, ActiveDisplayLanguage)}"
                 : $"{_filteredRecipes[i].id}  [{_filteredRecipes[i].category}]";
 
             if (GUILayout.Toggle(selected, label, "SelectionRect"))
@@ -346,7 +426,7 @@ public sealed class GameDataEditorWindow : EditorWindow
             if (IsCustom)
             {
                 EditField("ID", ref item.id);
-                EditField("Name", ref item.name);
+                EditLocalizedItemName(item.id);
                 EditField("Type", ref item.type);
                 EditField("Category", ref item.category);
                 EditIntField("Weight (g)", ref item.weight_g);
@@ -355,7 +435,7 @@ public sealed class GameDataEditorWindow : EditorWindow
             else
             {
                 ReadField("ID", item.id);
-                ReadField("Name", item.name);
+                EditLocalizedItemName(item.id);
                 ReadField("Type", item.type);
                 ReadField("Category", item.category);
                 ReadField("Weight", $"{item.weight_g} g");
@@ -624,7 +704,10 @@ public sealed class GameDataEditorWindow : EditorWindow
             ReadField("ID", recipe.id);
             ReadField("Result", recipe.result);
             var resultItem = db.GetItem(recipe.result);
-            if (resultItem != null) ReadField("Result Name", resultItem.name);
+            if (resultItem != null)
+                ReadField("Result Name", ItemNameTable.Get(resultItem.id, ActiveDisplayLanguage));
+            else if (!string.IsNullOrEmpty(recipe.result))
+                ReadField("Result Name", ItemNameTable.Get(recipe.result, ActiveDisplayLanguage));
             ReadField("Category", recipe.category);
             ReadField("Subcategory", recipe.subcategory);
             ReadField("Skill", recipe.skill_used);
@@ -766,7 +849,7 @@ public sealed class GameDataEditorWindow : EditorWindow
 
     void DrawFooter()
     {
-        if (!_dirty) return;
+        if (!HasUnsavedChanges) return;
         EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
         GUILayout.FlexibleSpace();
         EditorGUILayout.LabelField("unsaved changes", EditorStyles.miniLabel, GUILayout.Width(100));
@@ -777,10 +860,11 @@ public sealed class GameDataEditorWindow : EditorWindow
 
     void AddNewItem()
     {
+        string id = $"custom_item_{_customItemsRoot.items.Count}";
         var item = new ItemData
         {
-            id = $"custom_item_{_customItemsRoot.items.Count}",
-            name = "New Item",
+            id = id,
+            name = string.Empty,
             type = "GENERIC",
             category = "other",
             weight_g = 100,
@@ -790,6 +874,7 @@ public sealed class GameDataEditorWindow : EditorWindow
             qualities = new List<QualityEntry>(),
         };
         _customItemsRoot.items.Add(item);
+        ItemNameTable.Set(id, ActiveDisplayLanguage, "New Item");
         RebuildCustomDb();
         _dirty = true;
     }
@@ -820,7 +905,12 @@ public sealed class GameDataEditorWindow : EditorWindow
     {
         var copy = GameDataJson.Clone(src);
         copy.id = $"{src.id}_custom";
+        copy.name = string.Empty;
         _customItemsRoot.items.Add(copy);
+        DisplayLanguage lang = ActiveDisplayLanguage;
+        string display = ItemNameTable.Get(src.id, lang);
+        if (!string.IsNullOrEmpty(display) && !display.StartsWith("[Missing:", StringComparison.Ordinal))
+            ItemNameTable.Set(copy.id, lang, display);
         RebuildCustomDb();
         _dirty = true;
         _source = Source.Custom;
@@ -848,6 +938,20 @@ public sealed class GameDataEditorWindow : EditorWindow
 
     // ── Save ───────────────────────────────────────────────────
 
+    void SaveAll()
+    {
+        if (_dirty)
+            SaveCustomData();
+
+        if (ItemNameTable.IsGameDirty)
+        {
+            ItemNameTable.SaveGameOverlay();
+            Debug.Log($"[GameDataEditor] Item names saved to {ItemNameTable.GetGameOverlayPath()}");
+        }
+
+        AssetDatabase.Refresh();
+    }
+
     void SaveCustomData()
     {
         string gamePath = GameDataLoader.GetGameDataPath();
@@ -861,10 +965,29 @@ public sealed class GameDataEditorWindow : EditorWindow
 
         _dirty = false;
         Debug.Log($"[GameDataEditor] Custom data saved to {gamePath}");
-        AssetDatabase.Refresh();
     }
 
     // ── Field helpers ──────────────────────────────────────────
+
+    void EditLocalizedItemName(string itemId)
+    {
+        DisplayLanguage lang = ActiveDisplayLanguage;
+        string langCode = DisplayLanguageCodes.ToCode(lang);
+        string current = ItemNameTable.TryGetRaw(itemId, lang, out string raw)
+            ? raw
+            : string.Empty;
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField($"Name ({langCode})", GUILayout.Width(120));
+        string newVal = EditorGUILayout.TextField(current ?? string.Empty);
+        EditorGUILayout.EndHorizontal();
+
+        if (newVal != (current ?? string.Empty))
+        {
+            ItemNameTable.Set(itemId, lang, newVal);
+            InvalidateFilter();
+        }
+    }
 
     void EditField(string label, ref string value)
     {

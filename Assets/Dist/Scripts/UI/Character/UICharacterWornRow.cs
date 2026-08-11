@@ -130,8 +130,8 @@ public sealed class UICharacterWornRow :
             ? string.Join(",", stack.Item.armor.covers)
             : string.Empty;
         _label.text = string.IsNullOrEmpty(covers)
-            ? stack.Item.name
-            : $"{stack.Item.name} ({covers})";
+            ? UITextPresenter.GetItemName(stack.Item)
+            : $"{UITextPresenter.GetItemName(stack.Item)} ({covers})";
 
         RefreshNameBar();
     }
@@ -168,7 +168,7 @@ public sealed class UICharacterWornRow :
         int required = GearHandleRules.RequiredStrForWear(_stack.Item);
         bool strain = GearHandleRules.HasLiftStrain(_strength, _stack.Item, false);
         var sb = new StringBuilder(220);
-        sb.Append(_stack.Item.name).Append('\n');
+        sb.Append(UITextPresenter.GetItemName(_stack.Item)).Append('\n');
         sb.Append(CharacterGearLabels.FormatRequiredStr(required, _strength, strain));
         CharacterGearLabels.AppendItemArmorHover(sb, _stack.Item.armor);
         _onHover?.Invoke(sb.ToString(), transform as RectTransform);

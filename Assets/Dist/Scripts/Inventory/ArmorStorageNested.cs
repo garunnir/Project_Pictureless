@@ -87,7 +87,9 @@ public static class ArmorStorageNested
         var definition = new ContainerData
         {
             id = PocketIdPrefix + stack.Item.id,
-            name = stack.Item.name,
+            name = ItemNameTable.Get(
+                stack.Item.id,
+                LocalizationBundle.Get()?.ActiveLanguage ?? DisplayLanguage.Ko),
             max_weight = weightKg,
             max_volume = volumeLiters,
             draw_moves = PreferDrawMoves(stack.Item),

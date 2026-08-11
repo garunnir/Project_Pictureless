@@ -240,7 +240,7 @@ public sealed class UICharacterWieldSlotView :
         int required = GearHandleRules.RequiredStr(stack.Item, twoHand);
         bool strain = GearHandleRules.HasLiftStrain(_strength, stack.Item, twoHand);
         var sb = new StringBuilder(160);
-        sb.Append(stack.Item.name).Append('\n');
+        sb.Append(UITextPresenter.GetItemName(stack.Item)).Append('\n');
         sb.Append(CharacterGearLabels.FormatRequiredStr(required, _strength, strain));
         _onHover?.Invoke(sb.ToString(), transform as RectTransform);
     }

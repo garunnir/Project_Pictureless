@@ -106,6 +106,8 @@ public class ConstDataTable
             /// 신규 UI 키 테이블 Resources.Load 경로 (확장자 제외). Loc / LocalizationTable SSOT.
             /// </summary>
             public const string UI = "Localization/UI_ko";
+            /// <summary>활성 언어 + 언어별 TMP 폰트. LocalizationBundle.ResourcesLoadName SSOT.</summary>
+            public const string Bundle = LocalizationBundle.ResourcesLoadName;
         }
     }
 }

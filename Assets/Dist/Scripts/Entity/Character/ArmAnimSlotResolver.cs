@@ -8,7 +8,8 @@ using UnityEngine;
 /// <summary>
 /// 라이브러리 키(Hold|Aim|Attack{Action})에서 전용·대칭 폴백을 풀고,
 /// 현재 WeaponAction으로 thin Hold/Aim/Attack 슬롯에 주입한다.
-/// TwoHand는 폴백 없음. Dominant(현재 Right)는 양쪽 비전용일 때 기준.
+/// L/R는 반대손 전용 시 대칭 Fallback. TwoHand는 L↔R 교차 없음 —
+/// 비전용 시 twoHandFallback(자기 슬롯 미러 = 주손 반전). Dominant(현재 Right)는 L/R 양쪽 비전용 기준.
 /// </summary>
 public static class ArmAnimSlotResolver
 {
@@ -103,10 +104,47 @@ public static class ArmAnimSlotResolver
 
         if (clips.twoHandBase != null)
         {
-            AnimationClip two = EffectiveClip(clips.twoHandBase, weaponOvr);
-            if (two != null)
-                resolved[clips.twoHandBase] = two;
+            ResolveResult two = ResolveForTwoHand(
+                clips.twoHandBase, clips.twoHandFallback, weaponOvr);
+            if (two.Clip != null)
+                resolved[clips.twoHandBase] = two.Clip;
         }
+    }
+
+    /// <summary>
+    /// TwoHand: 전용 → twoHandFallback(주손 반전 미러) → base. L/R 대칭 교차 없음.
+    /// </summary>
+    public static ResolveResult ResolveForTwoHand(
+        AnimationClip twoHandBase,
+        AnimationClip twoHandFallback,
+        AnimatorOverrideController overrideController)
+    {
+        if (twoHandBase == null)
+            return new ResolveResult { Clip = null, UsedFallback = false };
+
+        if (IsDedicated(twoHandBase, overrideController))
+        {
+            return new ResolveResult
+            {
+                Clip = EffectiveClip(twoHandBase, overrideController),
+                UsedFallback = false
+            };
+        }
+
+        if (twoHandFallback != null)
+        {
+            return new ResolveResult
+            {
+                Clip = twoHandFallback,
+                UsedFallback = true
+            };
+        }
+
+        return new ResolveResult
+        {
+            Clip = twoHandBase,
+            UsedFallback = false
+        };
     }
 
     static void ProjectThinKeys(

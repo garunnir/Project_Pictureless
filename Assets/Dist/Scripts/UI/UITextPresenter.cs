@@ -17,13 +17,26 @@ public static class UITextPresenter
         if (item == null)
             return string.Empty;
 
-        string sourceName = item.name ?? string.Empty;
         if (string.IsNullOrEmpty(item.id))
-            return sourceName;
+            return string.Empty;
 
-        return Loc.TryGet(KeyItemPrefix + item.id, out string localizedName)
-            ? localizedName
-            : sourceName;
+        if (Loc.TryGet(KeyItemPrefix + item.id, out string forced) && !string.IsNullOrEmpty(forced))
+            return forced;
+
+        DisplayLanguage language = LocalizationBundle.Get()?.ActiveLanguage ?? DisplayLanguage.Ko;
+        return ItemNameTable.Get(item.id, language);
+    }
+
+    public static string GetItemName(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId))
+            return string.Empty;
+
+        if (Loc.TryGet(KeyItemPrefix + itemId, out string forced) && !string.IsNullOrEmpty(forced))
+            return forced;
+
+        DisplayLanguage language = LocalizationBundle.Get()?.ActiveLanguage ?? DisplayLanguage.Ko;
+        return ItemNameTable.Get(itemId, language);
     }
 
     public static string GetContainerName(ContainerData definition)
@@ -31,12 +44,14 @@ public static class UITextPresenter
         if (definition == null)
             return string.Empty;
 
-        string sourceName = definition.name ?? string.Empty;
         if (string.IsNullOrEmpty(definition.id))
-            return sourceName;
+            return string.Empty;
 
-        return Loc.TryGet(KeyContainerPrefix + definition.id, out string localizedName)
-            ? localizedName
-            : sourceName;
+        if (Loc.TryGet(KeyContainerPrefix + definition.id, out string localizedName) &&
+            !string.IsNullOrEmpty(localizedName))
+            return localizedName;
+
+        // Containers are not in item_names yet — Dist Loc override or missing marker via id
+        return ItemNameTable.Get(definition.id, LocalizationBundle.Get()?.ActiveLanguage ?? DisplayLanguage.Ko);
     }
 }

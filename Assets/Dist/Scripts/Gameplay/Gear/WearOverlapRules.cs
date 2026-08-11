@@ -92,8 +92,10 @@ public static class WearOverlapRules
         if (!TryFindConflict(wear, candidate, out ItemStack conflict) || conflict == null)
             return null;
 
-        string otherName = conflict.Item?.name;
-        if (string.IsNullOrEmpty(otherName))
+        string otherName = conflict.Item != null
+            ? UITextPresenter.GetItemName(conflict.Item)
+            : null;
+        if (string.IsNullOrEmpty(otherName) || otherName.StartsWith("[Missing:", StringComparison.Ordinal))
             otherName = conflict.Item?.id ?? "?";
         return CharacterGearLabels.FormatWearOverlap(otherName);
     }

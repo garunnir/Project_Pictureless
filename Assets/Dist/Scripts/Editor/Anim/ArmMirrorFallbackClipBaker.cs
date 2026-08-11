@@ -7,7 +7,8 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// 라이브러리 Hold|Aim|Attack{Action} 및 thin Hold에 대해 반대손 미러 Fallback을 베이크하고 catalog를 채운다.
+/// 라이브러리 Hold|Aim|Attack{Action}에 대해 L/R 반대손 미러 Fallback과
+/// TwoHand 자기미러 Fallback(주손 반전)을 베이크하고 catalog를 채운다.
 /// </summary>
 public static class ArmMirrorFallbackClipBaker
 {
@@ -50,9 +51,13 @@ public static class ArmMirrorFallbackClipBaker
         int ok = 0;
         for (int i = 0; i < LibraryPoseStems.Length; i++)
         {
-            if (BakePair(LibraryPoseStems[i], "Left", "Right"))
+            string stem = LibraryPoseStems[i];
+            if (BakePair(stem, "Left", "Right"))
                 ok++;
-            if (BakePair(LibraryPoseStems[i], "Right", "Left"))
+            if (BakePair(stem, "Right", "Left"))
+                ok++;
+            // TwoHand: 한손에서 끌어오지 않음. 자기 슬롯 미러 = 주손(Dominant lead) 반전.
+            if (BakeSelfMirror(stem, "TwoHand"))
                 ok++;
         }
 
@@ -143,7 +148,8 @@ public static class ArmMirrorFallbackClipBaker
             rightBase = LoadSlot(stem, "Right"),
             twoHandBase = LoadSlot(stem, "TwoHand"),
             leftFallback = LoadFallback(stem, "Left"),
-            rightFallback = LoadFallback(stem, "Right")
+            rightFallback = LoadFallback(stem, "Right"),
+            twoHandFallback = LoadFallback(stem, "TwoHand")
         };
 
     static ArmAnimSlotCatalog.HandClips LoadThinHandClips(string stem) =>
@@ -153,7 +159,8 @@ public static class ArmMirrorFallbackClipBaker
             rightBase = LoadSlot(stem, "Right"),
             twoHandBase = LoadSlot(stem, "TwoHand"),
             leftFallback = null,
-            rightFallback = null
+            rightFallback = null,
+            twoHandFallback = null
         };
 
     static AnimationClip LoadSlot(string stem, string hand) =>
@@ -167,10 +174,31 @@ public static class ArmMirrorFallbackClipBaker
         if (other == null)
             return false;
 
+        return WriteFallbackFromSource(other, fallbackPath, $"{stem}_{ownHand}_Fallback");
+    }
+
+    /// <summary>TwoHand_Slot → TwoHand_Fallback (L↔R 미러 = 주손 반전).</summary>
+    static bool BakeSelfMirror(string stem, string hand)
+    {
+        string sourcePath = $"{SlotDir}/{stem}_{hand}_Slot.anim";
+        string fallbackPath = $"{FallbackDir}/{stem}_{hand}_Fallback.anim";
+        var source = AssetDatabase.LoadAssetAtPath<AnimationClip>(sourcePath);
+        if (source == null)
+            return false;
+
+        return WriteFallbackFromSource(source, fallbackPath, $"{stem}_{hand}_Fallback");
+    }
+
+    static bool WriteFallbackFromSource(
+        AnimationClip source,
+        string fallbackPath,
+        string fallbackName)
+    {
         var existing = AssetDatabase.LoadAssetAtPath<AnimationClip>(fallbackPath);
         if (existing == null)
         {
-            if (!AssetDatabase.CopyAsset(otherPath, fallbackPath))
+            string sourcePath = AssetDatabase.GetAssetPath(source);
+            if (string.IsNullOrEmpty(sourcePath) || !AssetDatabase.CopyAsset(sourcePath, fallbackPath))
                 return false;
             existing = AssetDatabase.LoadAssetAtPath<AnimationClip>(fallbackPath);
         }
@@ -178,8 +206,8 @@ public static class ArmMirrorFallbackClipBaker
         if (existing == null)
             return false;
 
-        WriteMirroredCurves(other, existing);
-        existing.name = $"{stem}_{ownHand}_Fallback";
+        WriteMirroredCurves(source, existing);
+        existing.name = fallbackName;
         EditorUtility.SetDirty(existing);
         return true;
     }

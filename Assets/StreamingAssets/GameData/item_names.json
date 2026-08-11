@@ -1,0 +1,36 @@
+{
+  "_license": "Project proprietary (overrides) + BN-derived where applicable",
+  "_source": "Data Definitions / GameData",
+  "names": {
+    "consumable_egg": {
+      "ko": "계란"
+    },
+    "weapon_killing_sword": {
+      "ko": "죽이는 칼"
+    },
+    "weapon_bat": {
+      "ko": "야구방망이"
+    },
+    "weapon_knife": {
+      "ko": "나이프"
+    },
+    "weapon_pistol": {
+      "ko": "권총"
+    },
+    "clothing_plain": {
+      "ko": "그냥 옷"
+    },
+    "clothing_jacket": {
+      "ko": "재킷"
+    },
+    "clothing_undershirt": {
+      "ko": "속옷"
+    },
+    "clothing_glove": {
+      "ko": "장갑"
+    },
+    "container_bag": {
+      "ko": "가방"
+    }
+  }
+}

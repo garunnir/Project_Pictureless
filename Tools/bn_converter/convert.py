@@ -1165,6 +1165,103 @@ def normalize_tools(tools: list, requirements: dict[str, dict]) -> list[dict]:
     return result
 
 
+# ── Localization (gettext → item id names) ───────────────────────────
+
+LICENSE = "CC BY-SA 3.0 — derived from Cataclysm: Bright Nights"
+SOURCE = "https://github.com/cataclysmbnteam/Cataclysm-BN"
+
+
+def _po_unescape(s: str) -> str:
+    return (
+        s.replace(r"\\", "\0")
+        .replace(r"\n", "\n")
+        .replace(r"\t", "\t")
+        .replace(r"\"", '"')
+        .replace("\0", "\\")
+    )
+
+
+def parse_po_translations(po_path: Path) -> dict[str, str]:
+    """msgid (singular) → msgstr / msgstr[0]. Empty msgstr skipped."""
+    if not po_path.is_file():
+        return {}
+
+    text = po_path.read_text(encoding="utf-8", errors="replace")
+    translations: dict[str, str] = {}
+    msgid: list[str] = []
+    msgstr: list[str] = []
+    msgstr0: list[str] = []
+    mode = None  # None | msgid | msgstr | msgstr0
+
+    def flush():
+        nonlocal msgid, msgstr, msgstr0, mode
+        if not msgid:
+            msgid, msgstr, msgstr0, mode = [], [], [], None
+            return
+        key = _po_unescape("".join(msgid))
+        if key:
+            val = _po_unescape("".join(msgstr0 if msgstr0 else msgstr))
+            if val:
+                translations[key] = val
+        msgid, msgstr, msgstr0, mode = [], [], [], None
+
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("msgid_plural"):
+            mode = None
+            continue
+        if line.startswith("msgid "):
+            flush()
+            mode = "msgid"
+            msgid.append(line[6:].strip().strip('"'))
+            continue
+        if line.startswith("msgstr["):
+            # plural forms — use [0] only
+            if line.startswith("msgstr[0]"):
+                mode = "msgstr0"
+                msgstr0.append(line.split("]", 1)[1].strip().strip('"'))
+            else:
+                mode = None
+            continue
+        if line.startswith("msgstr "):
+            mode = "msgstr"
+            msgstr.append(line[7:].strip().strip('"'))
+            continue
+        if line.startswith('"') and mode == "msgid":
+            msgid.append(line.strip('"'))
+        elif line.startswith('"') and mode == "msgstr":
+            msgstr.append(line.strip('"'))
+        elif line.startswith('"') and mode == "msgstr0":
+            msgstr0.append(line.strip('"'))
+
+    flush()
+    return translations
+
+
+def export_item_names(
+    items_out: list[dict],
+    ko_map: dict[str, str],
+    ja_map: dict[str, str],
+) -> dict[str, dict[str, str]]:
+    names: dict[str, dict[str, str]] = {}
+    for item in items_out:
+        item_id = item.get("id")
+        en = item.get("name") or ""
+        if not item_id or not en:
+            continue
+        entry: dict[str, str] = {"en": en}
+        ko = ko_map.get(en)
+        if ko:
+            entry["ko"] = ko
+        ja = ja_map.get(en)
+        if ja:
+            entry["ja"] = ja
+        names[item_id] = entry
+    return names
+
+
 # ── Main ────────────────────────────────────────────────────────────
 
 def main():
@@ -1198,13 +1295,24 @@ def main():
     # 4) Recipes
     recipes_out, uncraft_out = load_recipes(bn_path, requirements)
 
+    # 5) Item display names (id → en/ko/ja); po is import-only
+    ko_po = bn_path / "lang" / "po" / "ko.po"
+    ja_po = bn_path / "lang" / "po" / "ja.po"
+    ko_map = parse_po_translations(ko_po)
+    ja_map = parse_po_translations(ja_po)
+    if not ko_map:
+        print(f"[WARN] no ko translations from {ko_po}")
+    if not ja_map:
+        print(f"[WARN] no ja translations from {ja_po}")
+    item_names = export_item_names(items_out, ko_map, ja_map)
+
     # ── Write output ────────────────────────────────────────────────
 
     items_file = out_dir / "items.json"
     with open(items_file, "w", encoding="utf-8") as f:
         json.dump({
-            "_license": "CC BY-SA 3.0 — derived from Cataclysm: Bright Nights",
-            "_source": "https://github.com/cataclysmbnteam/Cataclysm-BN",
+            "_license": LICENSE,
+            "_source": SOURCE,
             "materials": materials,
             "qualities": qualities,
             "skills": skills_out,
@@ -1216,12 +1324,26 @@ def main():
     recipes_file = out_dir / "recipes.json"
     with open(recipes_file, "w", encoding="utf-8") as f:
         json.dump({
-            "_license": "CC BY-SA 3.0 — derived from Cataclysm: Bright Nights",
-            "_source": "https://github.com/cataclysmbnteam/Cataclysm-BN",
+            "_license": LICENSE,
+            "_source": SOURCE,
             "recipes": recipes_out,
             "uncraft": uncraft_out,
         }, f, ensure_ascii=False, indent=2)
     print(f"[output] {recipes_file}  ({len(recipes_out)} recipes, {len(uncraft_out)} uncraft)")
+
+    names_file = out_dir / "item_names.json"
+    with open(names_file, "w", encoding="utf-8") as f:
+        json.dump({
+            "_license": LICENSE,
+            "_source": SOURCE,
+            "names": item_names,
+        }, f, ensure_ascii=False, indent=2)
+    ko_hits = sum(1 for v in item_names.values() if "ko" in v)
+    ja_hits = sum(1 for v in item_names.values() if "ja" in v)
+    print(
+        f"[output] {names_file}  ({len(item_names)} ids, "
+        f"ko={ko_hits}, ja={ja_hits})"
+    )
 
     # 통계 요약
     categories = set()
@@ -1237,6 +1359,7 @@ def main():
     print(f"  Qualities:  {len(qualities)}")
     print(f"  Recipes:    {len(recipes_out)}")
     print(f"  Uncraft:    {len(uncraft_out)}")
+    print(f"  ItemNames:  {len(item_names)}")
     print(f"  Categories: {sorted(categories)}")
     print(f"  Skills:     {sorted(skills)}")
 

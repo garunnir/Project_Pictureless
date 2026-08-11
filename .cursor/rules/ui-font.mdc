@@ -1,5 +1,5 @@
 ---
-description: Dist UI TMP는 Katuri SDF만 — Liberation Sans/미지정 금지
+description: Dist UI TMP 폰트 — LocalizationBundle 언어별 SSOT, Liberation/미지정 금지
 globs: Assets/Dist/Scripts/UI/**/*,Assets/Dist/Visual/Prefabs/UIComponents/**/*,Assets/Dist/Scripts/Editor/Inventory/**/*
 alwaysApply: false
 ---
@@ -12,15 +12,19 @@ Dist UI TMP·UI 프리팹·인벤 Editor 빌더/패치.
 ## SSOT
 | What | Where |
 |------|--------|
-| Font asset | `Assets/Dist/Scripts/UI/Font/Katuri SDF.asset` |
+| Language + fonts | `LocalizationBundle` (`Assets/Dist/Resources/Localization/LocalizationBundle.asset`) |
+| Runtime apply | `DistUiFont.Get` / `Apply` (reads active language font) |
+| Default ko/en glyph | `Assets/Dist/Scripts/UI/Font/Katuri SDF.asset` |
 | Builder const | `InventoryUIHierarchyBuilder.DefaultUIFontPath` |
 
-Docs: `docs/ui/UI_Scripts.md` §Font
+Docs: `docs/ui/UI_Scripts.md` §Font · `docs/inventory/ITEM_NAMES.md`
 
 ## MUST
-- 신규/수정 프리팹·Instantiate 라벨·Editor 빌더 TMP `font` = **Katuri SDF**
-- 한글 깨짐 → Liberation Sans / font null 여부 먼저 확인
+- 신규/수정 프리팹·Instantiate 라벨·Editor 빌더 TMP `font` = Bundle 활성 폰트 또는 **Katuri SDF** (ko 기본)
+- 언어별 폰트 변경은 `LocalizationBundle` Inspector만 (Definitions에 인라인 두지 않음)
+- 한글 깨짐 → Liberation Sans / font null / Bundle 미할당 여부 먼저 확인
 
 ## MUST NOT
 - Liberation Sans 또는 font 미지정
-- UI마다 임의 SDF 혼용 (localization 전용 교체 경로만 예외)
+- UI마다 임의 SDF 혼용 (Bundle/`DistUiFont` 우회)
+- LanguageConfig 등 두 번째 폰트 SO로 분산
