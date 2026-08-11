@@ -19,6 +19,118 @@ MonoBehaviour:
     presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
   - id: weapon_pistol
     presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
-  _byCategoryId: []
+  _byCategoryId:
+  - id: BAT
+    presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}
+  - id: SAPS
+    presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}
+  - id: BATONS
+    presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}
+  - id: TONFAS
+    presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}
+  - id: CLUBS
+    presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}
+  - id: QUARTERSTAVES
+    presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}
+  - id: MACES
+    presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}
+  - id: MORNINGSTARS
+    presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}
+  - id: FLAILS
+    presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}
+  - id: 1H_HAMMERS
+    presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}
+  - id: 2H_HAMMERS
+    presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}
+  - id: WHIPS
+    presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}
+  - id: KNIFE
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: STILETTOS
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: KNIVES
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: SHORT_SWORDS
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: 1H_SWORDS
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: 2H_SWORDS
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: DUELING_SWORDS
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: BIONIC_SWORDS
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: 1H_AXES
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: 2H_AXES
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: 1H_HOOKED
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: HOOKED_POLES
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: SPEARS
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: PIKES
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: GLAIVES
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: MEDIEVAL_SWORDS
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: JAPANESE_SWORDS
+    presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
+  - id: PISTOL
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: BOWS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: M_XBOWS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: S_XBOWS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: SLINGSHOTS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: SLINGS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: PISTOLS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: REVOLVERS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: SUBMACHINE_GUNS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: RIFLES
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: MACHINE_GUNS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: GATLING_GUNS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: SHOTGUNS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: GRENADE_LAUNCHERS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: ROCKET_LAUNCHERS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: FLAMETHROWERS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: WATER_CANNONS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: SPRAY_GUNS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: 1SHOT
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: AUTOLOADING
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: MANUAL_ACTION
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: ENERGY_WEAPONS
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: MAGNETIC
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: PNEUMATIC
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: ELASTIC
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: FIST_WEAPONS
+    presentation: {fileID: 11400000, guid: eec33d4af901fe740af3be7bb81abd2e, type: 2}
+  - id: BIONIC_WEAPONRY
+    presentation: {fileID: 11400000, guid: eec33d4af901fe740af3be7bb81abd2e, type: 2}
   _unarmed: {fileID: 11400000, guid: eec33d4af901fe740af3be7bb81abd2e, type: 2}
   _actionVfxDefaults: {fileID: 11400000, guid: 148757be15f15604586d338417aaa357, type: 2}
