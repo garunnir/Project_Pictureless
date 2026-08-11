@@ -17,10 +17,6 @@ public sealed class ArmAnimSlotCatalog : ScriptableObject
         public AnimationClip leftBase;
         public AnimationClip rightBase;
         public AnimationClip twoHandBase;
-        public AnimationClip leftFallback;
-        public AnimationClip rightFallback;
-        /// <summary>TwoHand 슬롯 미러. L↔R 대칭 채우기 아님 — 주손(Dominant lead) 반전.</summary>
-        public AnimationClip twoHandFallback;
     }
 
     [Serializable]

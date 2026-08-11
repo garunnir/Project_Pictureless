@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -16,87 +16,51 @@ MonoBehaviour:
     leftBase: {fileID: 7400000, guid: 81104ace6eb63684ea6ca38ba31e6a57, type: 2}
     rightBase: {fileID: 7400000, guid: 2b78989c83d29ab4d894f4741a2b055b, type: 2}
     twoHandBase: {fileID: 7400000, guid: 413d8999532831a4d9b9fd668f0202ea, type: 2}
-    leftFallback: {fileID: 0}
-    rightFallback: {fileID: 0}
-    twoHandFallback: {fileID: 0}
   _aimThin:
     leftBase: {fileID: 7400000, guid: d59f566e79371084aa76319bc309d73c, type: 2}
     rightBase: {fileID: 7400000, guid: 9bc3e14c5f8a46e46b62af7eb8b48eef, type: 2}
     twoHandBase: {fileID: 7400000, guid: 45b8ecec50f0bbf4e9f30d6b4cec0a8f, type: 2}
-    leftFallback: {fileID: 0}
-    rightFallback: {fileID: 0}
-    twoHandFallback: {fileID: 0}
   _attackThin:
     leftBase: {fileID: 7400000, guid: 2747b411713c0b74ea4ef5f96dec91f4, type: 2}
     rightBase: {fileID: 7400000, guid: cd7c75f85c14ce1429d543636d8a523c, type: 2}
     twoHandBase: {fileID: 7400000, guid: 191d9ec53665f174f8788a813f2869b5, type: 2}
-    leftFallback: {fileID: 0}
-    rightFallback: {fileID: 0}
-    twoHandFallback: {fileID: 0}
   _actions:
   - action: 0
     hold:
       leftBase: {fileID: 7400000, guid: d38a4aa424dc6344499471a4632223d9, type: 2}
       rightBase: {fileID: 7400000, guid: 29a79fae00dab8746b7579baf1d13124, type: 2}
       twoHandBase: {fileID: 7400000, guid: b31445c1118bfe44ca7e75a956454325, type: 2}
-      leftFallback: {fileID: 7400000, guid: b3b5e32598442784fa6fc3d4fbc38ec3, type: 2}
-      rightFallback: {fileID: 7400000, guid: 998e96edc76380944a8b77fa1e4c6bb5, type: 2}
-      twoHandFallback: {fileID: 7400000, guid: 18ebb2f2392331444b4a49a7e7a88306, type: 2}
     aim:
       leftBase: {fileID: 7400000, guid: 5a6933df02c2a8d4ba55e675fea51953, type: 2}
       rightBase: {fileID: 7400000, guid: f35f816680716f64b8746b9f6152fd18, type: 2}
       twoHandBase: {fileID: 7400000, guid: a83c65a9a8cbab74f9466f5865e37b8b, type: 2}
-      leftFallback: {fileID: 7400000, guid: 93eccc909e9e31946889d93b5357464a, type: 2}
-      rightFallback: {fileID: 7400000, guid: 33080b73f259c524ab747b479476044e, type: 2}
-      twoHandFallback: {fileID: 7400000, guid: 1bc197da6a710234698ce68527c3908f, type: 2}
     attack:
       leftBase: {fileID: 7400000, guid: 7895e19070389314b96c27bbdf724cf1, type: 2}
       rightBase: {fileID: 7400000, guid: 39f7587b52354d64d954a8644339771d, type: 2}
       twoHandBase: {fileID: 7400000, guid: 82b3138c8fcfaa84891aad23329991bf, type: 2}
-      leftFallback: {fileID: 7400000, guid: e798673f8e23bc44e8f01f841f743e7c, type: 2}
-      rightFallback: {fileID: 7400000, guid: a02c204555cf16948bcf1792339fb8de, type: 2}
-      twoHandFallback: {fileID: 7400000, guid: 326a51af21cbb1b4f9715418e85ce441, type: 2}
   - action: 1
     hold:
       leftBase: {fileID: 7400000, guid: fc1fddd7110cde7419a7798f59945378, type: 2}
       rightBase: {fileID: 7400000, guid: 4919ed51440ed5c4db656afb6acac73e, type: 2}
       twoHandBase: {fileID: 7400000, guid: e1a828bf0bc9b0a4896c14cc8a29f6a9, type: 2}
-      leftFallback: {fileID: 7400000, guid: ce7c97db72aed2447a33e7582d1b62d5, type: 2}
-      rightFallback: {fileID: 7400000, guid: 5ee32df4f765ef14185816e7c5bcdfc0, type: 2}
-      twoHandFallback: {fileID: 7400000, guid: 6e4ad32c703d43642ab2c96fcd21b21b, type: 2}
     aim:
       leftBase: {fileID: 7400000, guid: ebb735beb84158c4a804dc14caedc776, type: 2}
       rightBase: {fileID: 7400000, guid: 0ba4dd1f6ee40214c80472e1e7c17997, type: 2}
       twoHandBase: {fileID: 7400000, guid: e2b26be27024c284989ec15ef3b54925, type: 2}
-      leftFallback: {fileID: 7400000, guid: b7ca9ca28723da4438bee612a02e6177, type: 2}
-      rightFallback: {fileID: 7400000, guid: 96008a461181a254599f3cd7b72733c0, type: 2}
-      twoHandFallback: {fileID: 7400000, guid: dac32684aaa1fcd419a9836aa9fdde06, type: 2}
     attack:
       leftBase: {fileID: 7400000, guid: 14823cdd7bded024a92e8e1989420444, type: 2}
       rightBase: {fileID: 7400000, guid: 2d93410440db9e647aefe33c1136a0e6, type: 2}
       twoHandBase: {fileID: 7400000, guid: 5dd96d86da29305489d5da1c801697eb, type: 2}
-      leftFallback: {fileID: 7400000, guid: bd64d25a256b5f941acff734b32cb915, type: 2}
-      rightFallback: {fileID: 7400000, guid: ccb50b738bf74fd47819152b099ee77a, type: 2}
-      twoHandFallback: {fileID: 7400000, guid: c82d18153d361da4da3aa96fca99795a, type: 2}
   - action: 2
     hold:
       leftBase: {fileID: 7400000, guid: 7df3c8d690625654b87867c73d93cbc6, type: 2}
       rightBase: {fileID: 7400000, guid: ad6c965f6428c9f4eba1bfc3035d36e1, type: 2}
       twoHandBase: {fileID: 7400000, guid: 540f9bbe56680e14bad5e6f6e9cc4643, type: 2}
-      leftFallback: {fileID: 7400000, guid: ea8482b95f652ba499eebfa27d039b48, type: 2}
-      rightFallback: {fileID: 7400000, guid: 84d0cb64dc045ba43a7b010f83b1851c, type: 2}
-      twoHandFallback: {fileID: 7400000, guid: c4cb8ff9c0ab3e746bdbe2ee175d2e6b, type: 2}
     aim:
       leftBase: {fileID: 7400000, guid: 2b1c69d0e592f994d98ebc73ff5155d5, type: 2}
       rightBase: {fileID: 7400000, guid: 88211e258bce31443937b44d2ea0a8f3, type: 2}
       twoHandBase: {fileID: 7400000, guid: 57f4223492d04434dbba6ca5a6bdf8fa, type: 2}
-      leftFallback: {fileID: 7400000, guid: 0c94a5154b8c4664690e2689d4b5f14f, type: 2}
-      rightFallback: {fileID: 7400000, guid: 992e1bab732f4204da483e755b002f34, type: 2}
-      twoHandFallback: {fileID: 7400000, guid: 8c088857599946349829a7379850073d, type: 2}
     attack:
       leftBase: {fileID: 7400000, guid: 59c053c859e25c347b54bd3840df473c, type: 2}
       rightBase: {fileID: 7400000, guid: d942876c8b4a59446817e7a3b8df2d64, type: 2}
       twoHandBase: {fileID: 7400000, guid: 3e4249ea6fce1754486d436530819ad1, type: 2}
-      leftFallback: {fileID: 7400000, guid: 804c92cf1c11e2b4f98a4d1dbf069622, type: 2}
-      rightFallback: {fileID: 7400000, guid: 3688e02507f2d2749bf4fdb937ba3304, type: 2}
-      twoHandFallback: {fileID: 7400000, guid: 9521f9897c06c9745aaeaa3cce76eb7c, type: 2}

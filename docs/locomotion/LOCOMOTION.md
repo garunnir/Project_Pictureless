@@ -79,7 +79,7 @@ flowchart LR
 | `IsAiming` | bool | `CharacterState.IsAiming` |
 | `AttackR` / `AttackL` / `Attack2H` | trigger | `AttackResolved` 큐 → `AttackOutcome.Hand` |
 | `WeaponPresentation.AnimatorOverride` | Override | **라이브러리 키** 교체 — 외형 메시 아님 |
-| `ArmAnimSlotCatalog` + runtime Override | resolve | 라이브러리 전용/폴백 후 thin Aim/Attack/Hold에 투영 |
+| `ArmAnimSlotCatalog` + runtime Override | resolve | 라이브러리 base(무기 Override 반영)를 thin Aim/Attack/Hold에 투영 |
 
 Move Layer `Locomotion`: **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + Walk/Run × 전/후/좌/우 (Walk 링 ≈0.26). 조준 중 루트는 `SightDir` 유지, **발만** facing 대비 상대 방향.
 
@@ -89,27 +89,21 @@ Move Layer `Locomotion`: **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + W
 
 무기 `AnimatorOverride`는 **라이브러리 키**를 교체한다 (`HoldGun_Right_Slot` 등). thin 키를 직접 바꾸지 않는다.
 
-폴백 클립: `Slots/Fallback/*_{Left,Right,TwoHand}_Fallback.anim`  
 카탈로그: `ArmAnimSlotCatalog.asset`  
-메뉴: `Dist/MCP/Rebuild Arm Overlay Animator`, `Dist/MCP/Bake Arm Mirror Fallback Clips`
+메뉴: `Dist/MCP/Rebuild Arm Overlay Animator`, `Dist/MCP/Ensure Arm Anim Slot Catalog`
 
 **액션 확장:** 새 `WeaponAction` → 라이브러리 클립(`Hold|Aim|Attack{Action}`)+카탈로그 행(+ bake). **Builder/SM 수정 없음.**
 
-### 대칭·미러 폴백 (Animator 밖)
+### 클립 resolve (Animator 밖)
 
-Animator SM에는 `_FB` / `Mirror*` / `Action*` 없음. 폴백은 라이브러리 키에 대해 `ArmAnimSlotResolver`만.
+Animator SM에는 `_FB` / `Mirror*` / `Action*` 없음. 손별 클립은 라이브러리 **base만**.
 
 | 필요 손 | 전용 (무기 Override≠base) | 재생 클립 |
 |---------|---------------------------|-----------|
-| Left | 있음 | Left 라이브러리 전용 |
-| Left | 없음 + Right 전용 | `*_Left_Fallback` (Right에서 베이크) |
-| Right | 있음 | Right 전용 |
-| Right | 없음 + Left 전용 | `*_Right_Fallback` |
-| 둘 다 비전용 | — | Dominant(현재 **Right**) base; 비Dominant는 Fallback |
-| TwoHand | 있음 | TwoHand 라이브러리 전용 |
-| TwoHand | 없음 | `*_TwoHand_Fallback` (TwoHand_Slot 자기미러) → 없으면 base 슬롯 |
+| Left / Right / TwoHand | 있음 | 해당 손 라이브러리 전용 |
+| Left / Right / TwoHand | 없음 | 해당 손 라이브러리 base |
 
-TwoHand는 L↔R **대칭 교차 없음**. TwoHand 미러는 한손 Fallback과 다름 — `WriteMirroredCurves`로 L↔R을 뒤집으면 **주손(Dominant lead)이 반전**된다 (Right-주손 양손 → Left-주손 양손). Dominant 교체는 **Pending**.
+Aim/Attack 라이브러리 클립이 없으면 같은 손 Hold thin으로 내린다. L↔R·TwoHand 자기미러 폴백 없음. Dominant 교체는 **Pending**.
 
 ### 시전 분기 (기어 교차)
 
