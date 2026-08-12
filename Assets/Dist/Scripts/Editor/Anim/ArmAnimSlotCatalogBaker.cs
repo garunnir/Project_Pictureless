@@ -7,13 +7,16 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// 라이브러리 Hold|Aim|Attack{Action} 슬롯과 thin 키를 시드하고 catalog를 채운다.
+/// 라이브러리 Hold|Aim|Attack{Swing|Thrust|Trigger|Raise} 슬롯과 thin 키를 시드하고 catalog를 채운다.
 /// </summary>
 public static class ArmAnimSlotCatalogBaker
 {
     const string SlotDir = "Assets/Dist/Visual/Anim/CharacterClips/Slots";
     const string CatalogPath =
         "Assets/Dist/Visual/Anim/CharacterClips/ArmAnimSlotCatalog.asset";
+
+    static readonly string[] Hands = { "Left", "Right", "TwoHand" };
+    static readonly string[] Phases = { "Hold", "Aim", "Attack" };
 
     static readonly WeaponAction[] Actions =
     {
@@ -32,37 +35,71 @@ public static class ArmAnimSlotCatalogBaker
             return;
         }
 
-        EnsureActionHoldSlots();
+        EnsureActionLibrarySlots();
         EnsureThinSlots();
+        DeleteOrphanHandlessSlots();
         EnsureCatalog();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("[ArmAnimSlotCatalogBaker] Ensured library/thin slots + catalog.");
     }
 
-    /// <summary>기존 Hold_* 를 시드로 Hold{Action}_* 라이브러리 슬롯을 만든다 (이미 있으면 유지).</summary>
-    static void EnsureActionHoldSlots()
+    /// <summary>
+    /// 동사별 Hold/Aim/Attack × 손. 없으면 Swing 라이브러리(또는 thin Hold)에서 복사.
+    /// </summary>
+    static void EnsureActionLibrarySlots()
     {
-        string[] hands = { "Left", "Right", "TwoHand" };
         for (int a = 0; a < Actions.Length; a++)
         {
             string action = ClipStem(Actions[a]);
-            for (int h = 0; h < hands.Length; h++)
-                EnsureCopy($"Hold_{hands[h]}_Slot", $"Hold{action}_{hands[h]}_Slot");
+            for (int p = 0; p < Phases.Length; p++)
+            {
+                string phase = Phases[p];
+                for (int h = 0; h < Hands.Length; h++)
+                {
+                    string hand = Hands[h];
+                    string dest = $"{phase}{action}_{hand}_Slot";
+                    if (AssetDatabase.LoadAssetAtPath<AnimationClip>($"{SlotDir}/{dest}.anim") != null)
+                        continue;
+
+                    string seed = $"{phase}Swing_{hand}_Slot";
+                    if (AssetDatabase.LoadAssetAtPath<AnimationClip>($"{SlotDir}/{seed}.anim") == null)
+                        seed = $"{phase}_{hand}_Slot";
+                    EnsureCopy(seed, dest);
+                }
+            }
         }
     }
 
     static void EnsureThinSlots()
     {
-        EnsureCopy("HoldBashing_Left_Slot", "Hold_Left_Slot");
-        EnsureCopy("HoldBashing_Right_Slot", "Hold_Right_Slot");
-        EnsureCopy("HoldBashing_TwoHand_Slot", "Hold_TwoHand_Slot");
-        EnsureCopy("AimBashing_Left_Slot", "Aim_Left_Slot");
-        EnsureCopy("AimBashing_Right_Slot", "Aim_Right_Slot");
-        EnsureCopy("AimBashing_TwoHand_Slot", "Aim_TwoHand_Slot");
-        EnsureCopy("AttackBashing_Left_Slot", "Attack_Left_Slot");
-        EnsureCopy("AttackBashing_Right_Slot", "Attack_Right_Slot");
-        EnsureCopy("AttackBashing_TwoHand_Slot", "Attack_TwoHand_Slot");
+        for (int h = 0; h < Hands.Length; h++)
+        {
+            string hand = Hands[h];
+            EnsureCopy($"HoldSwing_{hand}_Slot", $"Hold_{hand}_Slot");
+            EnsureCopy($"AimSwing_{hand}_Slot", $"Aim_{hand}_Slot");
+            EnsureCopy($"AttackSwing_{hand}_Slot", $"Attack_{hand}_Slot");
+        }
+    }
+
+    /// <summary>손 접미사 없는 레거시 Aim*_Slot (AimBashing_Slot 등) 제거.</summary>
+    static void DeleteOrphanHandlessSlots()
+    {
+        string[] orphans =
+        {
+            "AimSwing_Slot",
+            "AimTrigger_Slot",
+            "AimBashing_Slot",
+            "AimGun_Slot",
+            "AimCutting_Slot"
+        };
+        for (int i = 0; i < orphans.Length; i++)
+        {
+            string path = $"{SlotDir}/{orphans[i]}.anim";
+            if (AssetDatabase.LoadAssetAtPath<AnimationClip>(path) == null)
+                continue;
+            AssetDatabase.DeleteAsset(path);
+        }
     }
 
     static void EnsureCopy(string sourceName, string destName)
@@ -114,19 +151,19 @@ public static class ArmAnimSlotCatalogBaker
         EditorUtility.SetDirty(catalog);
     }
 
-    /// <summary>기존 슬롯 파일명. 동사 rename과 분리.</summary>
+    /// <summary>라이브러리 슬롯 스템 = WeaponAction 동사명.</summary>
     static string ClipStem(WeaponAction action)
     {
         switch (WeaponActionUtil.Normalize(action))
         {
             case WeaponAction.Trigger:
-                return "Gun";
+                return "Trigger";
             case WeaponAction.Thrust:
                 return "Thrust";
             case WeaponAction.Raise:
                 return "Raise";
             default:
-                return "Bashing";
+                return "Swing";
         }
     }
 

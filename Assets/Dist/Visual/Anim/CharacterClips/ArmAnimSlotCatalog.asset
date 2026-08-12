@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -38,19 +38,19 @@ MonoBehaviour:
       leftBase: {fileID: 7400000, guid: 7895e19070389314b96c27bbdf724cf1, type: 2}
       rightBase: {fileID: 7400000, guid: 39f7587b52354d64d954a8644339771d, type: 2}
       twoHandBase: {fileID: 7400000, guid: 82b3138c8fcfaa84891aad23329991bf, type: 2}
-  - action: 1
+  - action: 3
     hold:
-      leftBase: {fileID: 7400000, guid: fc1fddd7110cde7419a7798f59945378, type: 2}
-      rightBase: {fileID: 7400000, guid: 4919ed51440ed5c4db656afb6acac73e, type: 2}
-      twoHandBase: {fileID: 7400000, guid: e1a828bf0bc9b0a4896c14cc8a29f6a9, type: 2}
+      leftBase: {fileID: 7400000, guid: 8e7df5dc0311bdd4cb3ecb6fe5152c22, type: 2}
+      rightBase: {fileID: 7400000, guid: 82e727c506879be4ea599107b8996efb, type: 2}
+      twoHandBase: {fileID: 7400000, guid: 826657aab5a41ce48b44e7f5d800d9b6, type: 2}
     aim:
-      leftBase: {fileID: 7400000, guid: ebb735beb84158c4a804dc14caedc776, type: 2}
-      rightBase: {fileID: 7400000, guid: 0ba4dd1f6ee40214c80472e1e7c17997, type: 2}
-      twoHandBase: {fileID: 7400000, guid: e2b26be27024c284989ec15ef3b54925, type: 2}
+      leftBase: {fileID: 7400000, guid: 828d0c49db7e3c3448578a90e9044931, type: 2}
+      rightBase: {fileID: 7400000, guid: 95f08762767a33a41883efa7520cf988, type: 2}
+      twoHandBase: {fileID: 7400000, guid: ce5609fe35f4ae345ba679c2fc085610, type: 2}
     attack:
-      leftBase: {fileID: 7400000, guid: 14823cdd7bded024a92e8e1989420444, type: 2}
-      rightBase: {fileID: 7400000, guid: 2d93410440db9e647aefe33c1136a0e6, type: 2}
-      twoHandBase: {fileID: 7400000, guid: 5dd96d86da29305489d5da1c801697eb, type: 2}
+      leftBase: {fileID: 7400000, guid: 90a4e615ba1bd0f43a342a19a941fb82, type: 2}
+      rightBase: {fileID: 7400000, guid: 046c3f85271ba6d4c8bd452fa812e55a, type: 2}
+      twoHandBase: {fileID: 7400000, guid: ab43ee4509cc6dd44b3c9be6a84bd01f, type: 2}
   - action: 2
     hold:
       leftBase: {fileID: 7400000, guid: 7df3c8d690625654b87867c73d93cbc6, type: 2}
@@ -64,3 +64,16 @@ MonoBehaviour:
       leftBase: {fileID: 7400000, guid: 59c053c859e25c347b54bd3840df473c, type: 2}
       rightBase: {fileID: 7400000, guid: d942876c8b4a59446817e7a3b8df2d64, type: 2}
       twoHandBase: {fileID: 7400000, guid: 3e4249ea6fce1754486d436530819ad1, type: 2}
+  - action: 4
+    hold:
+      leftBase: {fileID: 7400000, guid: 6614c992968a66b44829d956ef83f4ad, type: 2}
+      rightBase: {fileID: 7400000, guid: 759fbca7ffbd00648ac5aba2128ade2c, type: 2}
+      twoHandBase: {fileID: 7400000, guid: 1bedfc2b962e7f9469bf36b5575a6ab4, type: 2}
+    aim:
+      leftBase: {fileID: 7400000, guid: 08e14c26574209a4e864e78f127ddd65, type: 2}
+      rightBase: {fileID: 7400000, guid: 83a414d70bd5f3c47be39e38a7424585, type: 2}
+      twoHandBase: {fileID: 7400000, guid: ea34a025255ab67479f24ed9a6b4d3b1, type: 2}
+    attack:
+      leftBase: {fileID: 7400000, guid: 61d5753220f90774b9a2fe8e2158a05c, type: 2}
+      rightBase: {fileID: 7400000, guid: ae9dcf7076878ca4da8575bd8e285dc2, type: 2}
+      twoHandBase: {fileID: 7400000, guid: 037b3e7a608758146936d6825ee07ae0, type: 2}
