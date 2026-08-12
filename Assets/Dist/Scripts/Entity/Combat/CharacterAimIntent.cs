@@ -13,8 +13,13 @@ public sealed class CharacterAimIntent : MonoBehaviour
     public string PreferredPartId =>
         string.IsNullOrEmpty(_preferredPartId) ? BodyPartIds.Torso : _preferredPartId;
 
+    /// <summary>NPC 조준 유지. 플레이어는 CharacterState.IsAiming이 SSOT.</summary>
+    public bool AimHeld { get; private set; }
+
     public void SetPreferredPart(string partId)
     {
         _preferredPartId = string.IsNullOrEmpty(partId) ? BodyPartIds.Torso : partId;
     }
+
+    public void SetAimHeld(bool held) => AimHeld = held;
 }

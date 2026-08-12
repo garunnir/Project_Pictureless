@@ -22,9 +22,14 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
     [SerializeField] Binding[] _byCategoryId = Array.Empty<Binding>();
     [SerializeField] WeaponPresentation _unarmed;
     [SerializeField] WeaponActionVfxDefaults _actionVfxDefaults;
+    [SerializeField] WeaponImpactVfxDefaults _impactVfxDefaults;
+    [Tooltip("Attack에 프리팹이 없을 때 spawn_projectile 기본 발사체.")]
+    [SerializeField] DistProjectile _defaultProjectile;
 
     public WeaponPresentation Unarmed => _unarmed;
     public WeaponActionVfxDefaults ActionVfxDefaults => _actionVfxDefaults;
+    public WeaponImpactVfxDefaults ImpactVfxDefaults => _impactVfxDefaults;
+    public DistProjectile DefaultProjectile => _defaultProjectile;
 
     public WeaponPresentation Resolve(string itemId, ItemData item)
     {

@@ -188,8 +188,8 @@ public sealed class UICharacterWieldSlotView :
             _itemIcon.color = Color.white;
         }
 
-        WeaponAction? action = null;
-        gear.HandActions.TryGet(stack.ItemId, out action);
+        WeaponPresentation presentation = WeaponActionRows.Resolve(gear.PresentationCatalog, stack);
+        WeaponAction action = WeaponActionRows.ResolveSelected(stack.Instance, presentation);
         SetActionVisual(action);
         RefreshNameBar();
     }
@@ -202,23 +202,7 @@ public sealed class UICharacterWieldSlotView :
         if (action == null)
             _actionLabel.text = "—";
         else
-        {
-            switch (action.Value)
-            {
-                case WeaponAction.Bashing:
-                    _actionLabel.text = "B";
-                    break;
-                case WeaponAction.Cutting:
-                    _actionLabel.text = "C";
-                    break;
-                case WeaponAction.Gun:
-                    _actionLabel.text = "G";
-                    break;
-                default:
-                    _actionLabel.text = "—";
-                    break;
-            }
-        }
+            _actionLabel.text = CharacterGearLabels.ActionLabel(action.Value);
     }
 
     public void RefreshNameBar()

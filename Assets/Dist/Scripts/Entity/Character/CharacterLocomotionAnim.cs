@@ -26,6 +26,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     const float DefaultLayerBlendSpeed = 10f;
     const int MaxPoseStepsPerFrame = 8;
     const float MoveDirEpsilonSqr = 1e-6f;
+    const string AttackOverlayStateName = "Attack";
 
     [InfoBox(ManualTickHelp, InfoMessageType.Warning)]
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.Player;
@@ -80,6 +81,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
     bool _hasAttackR;
     bool _hasAttackL;
     bool _hasAttack2H;
+    int _hashAttackState;
+
+    public bool HasAttackTrigger => _hasAttackR || _hasAttackL || _hasAttack2H;
 
     WeaponAction _mappedActionL = (WeaponAction)(-1);
     WeaponAction _mappedActionR = (WeaponAction)(-1);
@@ -225,6 +229,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         float channelDelta = TimeScaleService.Delta(_timeChannel);
         SyncArmLayerWeights(rebound ? 0f : channelDelta);
         AdvanceAnimator(channelDelta);
+        TickAttackCues();
     }
 
     void SyncThinActionRemap(WeaponAction actionL, WeaponAction actionR, WeaponAction action2H)
@@ -246,6 +251,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void OnAttackResolved(AttackOutcome outcome)
     {
+        if (WeaponActionUtil.SuppressesAttackTrigger(outcome.Action))
+            return;
         if (_attackQueueCount >= _attackActionQueue.Length)
             return;
 
@@ -336,6 +343,43 @@ public class CharacterLocomotionAnim : MonoBehaviour
         return controller;
     }
 
+    void TickAttackCues()
+    {
+        if (_attacker == null || !_attacker.HasPendingAttackCue || _animator == null)
+            return;
+
+        TickAttackCueHand(WieldHand.Right, _rightArmLayerIndex);
+        TickAttackCueHand(WieldHand.Left, _leftArmLayerIndex);
+        TickAttackCueHand(WieldHand.TwoHand, _twoHandLayerIndex);
+    }
+
+    void TickAttackCueHand(WieldHand hand, int layerIndex)
+    {
+        if (!_attacker.HasPendingFor(hand))
+            return;
+
+        if (layerIndex < 0)
+        {
+            _attacker.NotifyAttackCueForHand(hand);
+            return;
+        }
+
+        AnimatorStateInfo current = _animator.GetCurrentAnimatorStateInfo(layerIndex);
+        bool inAttack = current.shortNameHash == _hashAttackState;
+        float normalizedTime = current.normalizedTime;
+        if (_animator.IsInTransition(layerIndex))
+        {
+            AnimatorStateInfo next = _animator.GetNextAnimatorStateInfo(layerIndex);
+            if (next.shortNameHash == _hashAttackState)
+            {
+                inAttack = true;
+                normalizedTime = next.normalizedTime;
+            }
+        }
+
+        _attacker.NotifyAttackOverlayTick(hand, inAttack, normalizedTime);
+    }
+
     void AdvanceAnimator(float channelDelta)
     {
         if (channelDelta <= 0f)
@@ -373,6 +417,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _rightArmLayerIndex = -1;
         _leftArmLayerIndex = -1;
         _twoHandLayerIndex = -1;
+        _hashAttackState = Hash(AttackOverlayStateName);
 
         if (_animator == null || _animator.runtimeAnimatorController == null)
             return;
@@ -458,12 +503,12 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H)
     {
-        actionL = WeaponAction.Bashing;
-        actionR = WeaponAction.Bashing;
-        action2H = _attacker != null ? _attacker.SelectedAction : WeaponAction.Bashing;
+        actionL = WeaponAction.Swing;
+        actionR = WeaponAction.Swing;
+        action2H = _attacker != null ? _attacker.SelectedAction : WeaponAction.Swing;
 
         CharacterGearService gear = _gearHost != null ? _gearHost.Service : null;
-        if (gear?.Wield == null || gear.HandActions == null)
+        if (gear?.Wield == null)
         {
             if (_attacker != null)
             {
@@ -473,34 +518,32 @@ public class CharacterLocomotionAnim : MonoBehaviour
             return;
         }
 
-        int rounds = _attacker != null ? _attacker.LoadedRounds : 0;
-        ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
+        WeaponPresentationCatalog catalog = gear.PresentationCatalog
+            ?? (_attacker != null ? _attacker.Catalog : null);
 
         if (gear.Wield.IsTwoHand)
         {
             ItemStack stack = gear.Wield.Left ?? gear.Wield.Right;
-            action2H = ActionForStack(gear, stack, rounds, skills, action2H);
+            action2H = ActionForStack(catalog, stack, action2H);
             actionL = action2H;
             actionR = action2H;
             return;
         }
 
-        actionL = ActionForStack(gear, gear.Wield.Left, rounds, skills, actionL);
-        actionR = ActionForStack(gear, gear.Wield.Right, rounds, skills, actionR);
+        actionL = ActionForStack(catalog, gear.Wield.Left, actionL);
+        actionR = ActionForStack(catalog, gear.Wield.Right, actionR);
     }
 
     static WeaponAction ActionForStack(
-        CharacterGearService gear,
+        WeaponPresentationCatalog catalog,
         ItemStack stack,
-        int loadedRounds,
-        ICharacterSkills skills,
         WeaponAction fallback)
     {
         if (stack?.Item == null)
             return fallback;
 
-        WeaponAction? ensured = gear.HandActions.EnsureInitialized(stack.Item, loadedRounds, skills);
-        return ensured ?? fallback;
+        WeaponPresentation presentation = WeaponActionRows.Resolve(catalog, stack);
+        return WeaponActionRows.ResolveSelected(stack.Instance, presentation);
     }
 
     void TakeManualControl()

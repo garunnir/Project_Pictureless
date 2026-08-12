@@ -68,8 +68,6 @@ public sealed class PlayerGearHost : MonoBehaviour
     {
         if (_service != null)
         {
-            _service.HandActions.Changed -= PersistHandActions;
-            HandActionBindingPersistence.SaveFrom(_service.HandActions);
             _service.LiftStrainChanged -= ApplyLiftStrainMovement;
             _service.Changed -= OnServiceChanged;
             _service.Unbind();
@@ -173,17 +171,10 @@ public sealed class PlayerGearHost : MonoBehaviour
             BodyContainer,
             FloorContainer,
             RefreshPrimaryWield);
-        HandActionBindingPersistence.LoadInto(_service.HandActions);
-        _service.HandActions.Changed += PersistHandActions;
+        _service.SetPresentationCatalog(_attacker != null ? _attacker.Catalog : null);
         _service.LiftStrainChanged += ApplyLiftStrainMovement;
         _service.Changed += OnServiceChanged;
         _bound = true;
-    }
-
-    void PersistHandActions()
-    {
-        if (_service != null)
-            HandActionBindingPersistence.SaveFrom(_service.HandActions);
     }
 
     int Strength()
@@ -259,25 +250,20 @@ public sealed class PlayerGearHost : MonoBehaviour
         if (_attacker == null || _service == null)
             return;
 
-        int loaded = _attacker.LoadedRounds;
         if (!PrimaryWieldResolver.TryResolvePrimary(
                 _service.Wield,
-                _service.HandActions,
+                _attacker.Catalog,
                 Skills(),
-                loaded,
                 out PrimaryWieldResolver.HandScore primary,
                 out _))
         {
-            _attacker.SetWieldedItem(string.Empty, loaded);
+            _attacker.SetWieldedItem((ItemStack)null);
             _attacker.SetActiveWieldHand(WieldHand.Right);
             return;
         }
 
-        string itemId = primary.Stack?.ItemId ?? string.Empty;
-        _attacker.SetWieldedItem(itemId, loaded);
+        _attacker.SetWieldedItem(primary.Stack);
         _attacker.SetActiveWieldHand(
             CharacterAttacker.AnimHandFrom(_service.Wield, primary.Slot));
-        if (primary.Action != null)
-            _attacker.TrySelectAction(primary.Action.Value);
     }
 }

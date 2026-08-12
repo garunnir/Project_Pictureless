@@ -11,7 +11,7 @@ public static class WieldSlotContextMenuBuilder
     public static ContextMenuModel Build(WieldSlotContextRequest request)
     {
         var roots = new List<ContextMenuEntry>();
-        if (request?.Gear == null || string.IsNullOrEmpty(request.ItemId))
+        if (request?.Gear == null)
             return new ContextMenuModel(roots);
 
         IReadOnlyList<IWieldSlotContextMenuContributor> contributors = WieldSlotContextMenuCatalog.All;

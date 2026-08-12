@@ -29,7 +29,7 @@ public sealed class MessageLogPlayerCombatSink : MonoBehaviour
         if (_subscribed)
             return;
 
-        CharacterAttacker.AnyAttackResolved += OnAnyAttackResolved;
+        CharacterAttacker.AnyAttackJudged += OnAnyAttackJudged;
         ICharacterDefeat defeat = GameplayData.Defeat;
         if (defeat != null)
         {
@@ -45,7 +45,7 @@ public sealed class MessageLogPlayerCombatSink : MonoBehaviour
         if (!_subscribed)
             return;
 
-        CharacterAttacker.AnyAttackResolved -= OnAnyAttackResolved;
+        CharacterAttacker.AnyAttackJudged -= OnAnyAttackJudged;
         ICharacterDefeat defeat = GameplayData.Defeat;
         if (defeat != null)
             defeat.Changed -= OnDefeatChanged;
@@ -53,7 +53,7 @@ public sealed class MessageLogPlayerCombatSink : MonoBehaviour
         _subscribed = false;
     }
 
-    void OnAnyAttackResolved(AttackOutcome outcome)
+    void OnAnyAttackJudged(AttackOutcome outcome)
     {
         if (!outcome.DidHit)
             return;

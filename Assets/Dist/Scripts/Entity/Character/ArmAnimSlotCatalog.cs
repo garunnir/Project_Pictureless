@@ -54,7 +54,8 @@ public sealed class ArmAnimSlotCatalog : ScriptableObject
             return null;
         for (int i = 0; i < _actions.Length; i++)
         {
-            if (_actions[i] != null && _actions[i].action == action)
+            if (_actions[i] != null &&
+                WeaponActionUtil.Normalize(_actions[i].action) == WeaponActionUtil.Normalize(action))
                 return _actions[i];
         }
 

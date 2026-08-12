@@ -2,18 +2,12 @@
 // PrimaryWieldResolver — DPS 최대 손 → SetWieldedItem / 최고 액션
 // ============================================================
 
+using System;
 using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
 public static class PrimaryWieldResolver
 {
-    static readonly WeaponAction[] ActionOrder =
-    {
-        WeaponAction.Bashing,
-        WeaponAction.Cutting,
-        WeaponAction.Gun
-    };
-
     public struct HandScore
     {
         public WieldSlotId Slot;
@@ -25,13 +19,12 @@ public static class PrimaryWieldResolver
 
     /// <summary>
     /// Occupied 손별 score 최대. 동점 Right → Left.
-    /// 양손은 스택 1개·액션 1개.
+    /// 손 액션은 ItemInstance + Presentation default (DPS 최고 액션 아님).
     /// </summary>
     public static bool TryResolvePrimary(
         WieldSlots slots,
-        HandActionBinding bindings,
+        WeaponPresentationCatalog catalog,
         ICharacterSkills skills,
-        int loadedRounds,
         out HandScore primary,
         out HandScore secondary)
     {
@@ -46,22 +39,21 @@ public static class PrimaryWieldResolver
             if (stack?.Item == null)
                 return false;
 
-            WeaponAction? action = bindings?.EnsureInitialized(stack.Item, loadedRounds, skills);
+            WeaponPresentation presentation = WeaponActionRows.Resolve(catalog, stack);
+            WeaponAction action = WeaponActionRows.ResolveSelected(stack.Instance, presentation);
             primary = new HandScore
             {
                 Slot = WieldSlotId.Right,
                 Stack = stack,
                 Action = action,
-                Score = ScoreHand(stack.Item, action, loadedRounds, skills, offHandFactor: 1f),
+                Score = ScoreHand(stack, action, presentation, skills, offHandFactor: 1f),
                 IsOffHand = false
             };
-            return action != null;
+            return true;
         }
 
-        HandScore left = EvaluateSlot(
-            WieldSlotId.Left, slots.Left, bindings, skills, loadedRounds);
-        HandScore right = EvaluateSlot(
-            WieldSlotId.Right, slots.Right, bindings, skills, loadedRounds);
+        HandScore left = EvaluateSlot(WieldSlotId.Left, slots.Left, catalog, skills);
+        HandScore right = EvaluateSlot(WieldSlotId.Right, slots.Right, catalog, skills);
 
         bool leftOk = left.Stack != null && left.Action != null;
         bool rightOk = right.Stack != null && right.Action != null;
@@ -77,9 +69,9 @@ public static class PrimaryWieldResolver
                 secondary = left;
                 secondary.IsOffHand = true;
                 secondary.Score = ScoreHand(
-                    secondary.Stack.Item,
+                    secondary.Stack,
                     secondary.Action,
-                    loadedRounds,
+                    WeaponActionRows.Resolve(catalog, secondary.Stack),
                     skills,
                     OffHandFactor(skills, WieldHand.Left));
             }
@@ -89,9 +81,9 @@ public static class PrimaryWieldResolver
                 secondary = right;
                 secondary.IsOffHand = true;
                 secondary.Score = ScoreHand(
-                    secondary.Stack.Item,
+                    secondary.Stack,
                     secondary.Action,
-                    loadedRounds,
+                    WeaponActionRows.Resolve(catalog, secondary.Stack),
                     skills,
                     OffHandFactor(skills, WieldHand.Right));
             }
@@ -105,32 +97,13 @@ public static class PrimaryWieldResolver
         return true;
     }
 
+    [Obsolete("Do not pick select by DPS. Use WeaponActionRows.ResolveSelected.")]
     public static WeaponAction? BestActionForItem(
         ItemData item,
-        int loadedRounds,
         ICharacterSkills skills)
     {
-        WeaponActionMask mask = CombatMath.AvailableModes(item);
-        WeaponAction? best = null;
-        float bestScore = -1f;
-
-        for (int i = 0; i < ActionOrder.Length; i++)
-        {
-            WeaponAction action = ActionOrder[i];
-            if ((mask & WeaponActionUtil.ToMask(action)) == 0)
-                continue;
-            if (action == WeaponAction.Gun && !CombatMath.CanFireGun(item, loadedRounds))
-                continue;
-
-            float score = Dps(item, action, loadedRounds, skills, 1f);
-            if (score > bestScore)
-            {
-                bestScore = score;
-                best = action;
-            }
-        }
-
-        return best;
+        WeaponPresentation presentation = null;
+        return WeaponActionRows.Default(presentation);
     }
 
     public static float OffHandFactor(ICharacterSkills skills, WieldHand hand)
@@ -145,44 +118,52 @@ public static class PrimaryWieldResolver
     static HandScore EvaluateSlot(
         WieldSlotId slot,
         ItemStack stack,
-        HandActionBinding bindings,
-        ICharacterSkills skills,
-        int loadedRounds)
+        WeaponPresentationCatalog catalog,
+        ICharacterSkills skills)
     {
         if (stack?.Item == null)
             return default;
 
-        WeaponAction? action = bindings?.EnsureInitialized(stack.Item, loadedRounds, skills);
+        WeaponPresentation presentation = WeaponActionRows.Resolve(catalog, stack);
+        WeaponAction action = WeaponActionRows.ResolveSelected(stack.Instance, presentation);
         return new HandScore
         {
             Slot = slot,
             Stack = stack,
             Action = action,
-            Score = ScoreHand(stack.Item, action, loadedRounds, skills, 1f),
+            Score = ScoreHand(stack, action, presentation, skills, 1f),
             IsOffHand = false
         };
     }
 
     static float ScoreHand(
-        ItemData item,
+        ItemStack stack,
         WeaponAction? action,
-        int loadedRounds,
+        WeaponPresentation presentation,
         ICharacterSkills skills,
         float offHandFactor)
     {
+        ItemData item = stack?.Item;
         if (item == null || action == null)
             return 0f;
-        return Dps(item, action.Value, loadedRounds, skills, offHandFactor);
+        return Dps(stack, action.Value, presentation, skills, offHandFactor);
     }
 
     static float Dps(
-        ItemData item,
+        ItemStack stack,
         WeaponAction action,
-        int loadedRounds,
+        WeaponPresentation presentation,
         ICharacterSkills skills,
         float offHandFactor)
     {
-        if (action == WeaponAction.Gun && !CombatMath.CanFireGun(item, loadedRounds))
+        ItemData item = stack.Item;
+        WeaponAttack attack = null;
+        if (presentation != null &&
+            presentation.TryGetEntry(action, out WeaponPresentation.Entry entry))
+            attack = entry.attack;
+
+        if (WeaponActionUtil.Normalize(action) == WeaponAction.Trigger &&
+            !WeaponChamber.CanCommitFire(item, stack.Instance, stack, attack))
             return 0f;
 
         float interval = CombatMath.AttackIntervalSeconds(item, action);
@@ -194,7 +175,7 @@ public static class PrimaryWieldResolver
         int skillLevel = skills != null && !string.IsNullOrEmpty(skillId)
             ? skills.Level(skillId)
             : 0;
-        int damage = CombatMath.Damage(item, action, strength, skillLevel);
+        int damage = CombatMath.Damage(item, attack, action, strength, skillLevel);
         return damage / interval * Mathf.Max(0f, offHandFactor);
     }
 }

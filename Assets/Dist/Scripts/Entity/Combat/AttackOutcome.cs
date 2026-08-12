@@ -23,6 +23,11 @@ public readonly struct AttackOutcome
     /// <summary>Origin에서 Impact를 향하는 정규화 방향.</summary>
     public readonly Vector3 Direction;
 
+    /// <summary>임팩트 태그 (Attack 판정). Action 시그널은 비움.</summary>
+    public readonly string ImpactTag;
+
+    public readonly WeaponAttack Attack;
+
     public bool DidHit => Result == AttackPerformResult.Performed;
 
     public AttackOutcome(
@@ -34,7 +39,9 @@ public readonly struct AttackOutcome
         string aimedPartId,
         int damage,
         Vector3 originPoint,
-        Vector3 impactPoint)
+        Vector3 impactPoint,
+        string impactTag = null,
+        WeaponAttack attack = null)
     {
         Action = action;
         Hand = hand;
@@ -45,6 +52,8 @@ public readonly struct AttackOutcome
         Damage = damage;
         OriginPoint = originPoint;
         ImpactPoint = impactPoint;
+        ImpactTag = impactTag ?? string.Empty;
+        Attack = attack;
 
         Vector3 offset = impactPoint - originPoint;
         Direction = offset.sqrMagnitude > 1e-6f ? offset.normalized : Vector3.forward;

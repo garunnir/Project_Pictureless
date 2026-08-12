@@ -326,7 +326,7 @@ public sealed class InventorySession
         for (int i = 0; i < to.MutableStacks.Count; i++)
         {
             ItemStack existing = to.MutableStacks[i];
-            if (existing.Item != stack.Item)
+            if (!ItemMergePolicy.CanMerge(existing, stack))
                 continue;
 
             int merged = existing.Count + stack.Count;

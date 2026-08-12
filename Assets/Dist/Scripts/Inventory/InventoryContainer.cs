@@ -99,7 +99,7 @@ public sealed class InventoryContainer : IItemContainer
         for (int i = 0; i < _stacks.Count && remaining > 0; i++)
         {
             ItemStack existing = _stacks[i];
-            if (existing.Item != item || existing.DamageLevel != incomingDamage)
+            if (!ItemMergePolicy.CanMerge(existing, item, incomingDamage))
                 continue;
 
             int space = item.MaxStack - existing.Count;

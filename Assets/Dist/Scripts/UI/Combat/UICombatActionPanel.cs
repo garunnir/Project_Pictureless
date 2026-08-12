@@ -23,7 +23,7 @@ public sealed class UICombatActionPanel : MonoBehaviour
         _actionText.text = _viewModel != null
             ? _viewModel.DisplayText
             : CombatActionDisplayFormat.Format(
-                WeaponAction.Bashing,
+                WeaponAction.Swing,
                 WeaponActionMask.None,
                 string.Empty);
     }

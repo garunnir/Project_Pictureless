@@ -46,11 +46,19 @@ public static class WearCombatDefense
     /// ArmorAbsorb = thickness×ThicknessAbsorbPerUnit + resist×MaterialResistAbsorbPerUnit.
     /// MitigatedDamage = engage ? max(0, raw − ArmorAbsorb) : raw.
     /// </summary>
+    [System.Obsolete("Use MitigateDamage(..., damageTag). Action enum is not resist SSOT.")]
     public static int MitigateDamage(
         EquipmentWearState wear,
         string aimedPartId,
         int rawDamage,
-        WeaponAction action)
+        WeaponAction action) =>
+        MitigateDamage(wear, aimedPartId, rawDamage, AttackDamageTags.DefaultFor(action));
+
+    public static int MitigateDamage(
+        EquipmentWearState wear,
+        string aimedPartId,
+        int rawDamage,
+        string damageTag)
     {
         if (rawDamage <= 0 || wear == null)
             return Mathf.Max(0, rawDamage);
@@ -69,7 +77,7 @@ public static class WearCombatDefense
         if (engageChance <= 0f || Random.value >= engageChance)
             return rawDamage;
 
-        int resist = MaterialResistForPart(wear, partId, action);
+        int resist = MaterialResistForPart(wear, partId, damageTag);
         int absorb = ArmorAbsorb(stats.MaterialThickness, resist);
         return Mathf.Max(0, rawDamage - absorb);
     }
@@ -88,10 +96,17 @@ public static class WearCombatDefense
     /// Covering worn pieces의 materials 중 해당 액션 resist 최댓값.
     /// materials/MaterialData 없으면 0.
     /// </summary>
+    [System.Obsolete("Use MaterialResistForPart(..., damageTag). Action enum is not resist SSOT.")]
     public static int MaterialResistForPart(
         EquipmentWearState wear,
         string partId,
-        WeaponAction action)
+        WeaponAction action) =>
+        MaterialResistForPart(wear, partId, AttackDamageTags.DefaultFor(action));
+
+    public static int MaterialResistForPart(
+        EquipmentWearState wear,
+        string partId,
+        string damageTag)
     {
         if (wear == null || string.IsNullOrEmpty(partId))
             return 0;
@@ -105,7 +120,7 @@ public static class WearCombatDefense
             if (item == null || !GearHandleRules.CoversPart(item, partId))
                 continue;
 
-            int piece = MaxMaterialResist(item, action);
+            int piece = MaxMaterialResist(item, damageTag);
             if (piece > best)
                 best = piece;
         }
@@ -113,7 +128,7 @@ public static class WearCombatDefense
         return best;
     }
 
-    static int MaxMaterialResist(ItemData item, WeaponAction action)
+    static int MaxMaterialResist(ItemData item, string damageTag)
     {
         if (item?.materials == null || item.materials.Count == 0)
             return 0;
@@ -129,7 +144,7 @@ public static class WearCombatDefense
             if (material == null)
                 continue;
 
-            int resist = ResistForAction(material, action);
+            int resist = ResistForTag(material, damageTag);
             if (resist > best)
                 best = resist;
         }
@@ -137,16 +152,12 @@ public static class WearCombatDefense
         return best;
     }
 
-    static int ResistForAction(MaterialData material, WeaponAction action)
+    static int ResistForTag(MaterialData material, string damageTag)
     {
-        switch (action)
-        {
-            case WeaponAction.Cutting:
-                return material.cut_resist;
-            case WeaponAction.Gun:
-                return material.bullet_resist;
-            default:
-                return material.bash_resist;
-        }
+        if (string.Equals(damageTag, AttackDamageTags.Cut, System.StringComparison.Ordinal))
+            return material.cut_resist;
+        if (string.Equals(damageTag, AttackDamageTags.Bullet, System.StringComparison.Ordinal))
+            return material.bullet_resist;
+        return material.bash_resist;
     }
 }

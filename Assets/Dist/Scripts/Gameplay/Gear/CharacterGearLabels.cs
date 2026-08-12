@@ -25,9 +25,10 @@ public static class CharacterGearLabels
     const string KeyDropFloor = "Character.DropFloor";
     const string KeyHandActionGroup = "Character.HandActionGroup";
     const string KeyActionNone = "Character.ActionNone";
-    const string KeyActionBash = "Character.ActionBash";
-    const string KeyActionCut = "Character.ActionCut";
-    const string KeyActionGun = "Character.ActionGun";
+    const string DisplaySwing = "SWING";
+    const string DisplayTrigger = "TRIGGER";
+    const string DisplayThrust = "THRUST";
+    const string DisplayRaise = "RAISE";
     const string KeySlotLeft = "Character.SlotLeft";
     const string KeySlotRight = "Character.SlotRight";
     const string KeyWornFilterAll = "Character.WornFilterAll";
@@ -89,9 +90,28 @@ public static class CharacterGearLabels
     public static string DropFloor => GetOr(KeyDropFloor, "바닥에 놓기");
     public static string HandActionGroup => GetOr(KeyHandActionGroup, "사용 액션");
     public static string ActionNone => GetOr(KeyActionNone, "없음");
-    public static string ActionBash => GetOr(KeyActionBash, "타격");
-    public static string ActionCut => GetOr(KeyActionCut, "절단");
-    public static string ActionGun => GetOr(KeyActionGun, "발사");
+    public static string ActionSwing => ActionLabel(WeaponAction.Swing);
+    public static string ActionThrust => ActionLabel(WeaponAction.Thrust);
+    public static string ActionTrigger => ActionLabel(WeaponAction.Trigger);
+    public static string ActionRaise => ActionLabel(WeaponAction.Raise);
+
+    /// <summary>동작 동사 표시. bash/cut은 Attack 속성이지 여기 없음.</summary>
+    public static string ActionLabel(WeaponAction action)
+    {
+        switch (WeaponActionUtil.Normalize(action))
+        {
+            case WeaponAction.Swing:
+                return DisplaySwing;
+            case WeaponAction.Trigger:
+                return DisplayTrigger;
+            case WeaponAction.Thrust:
+                return DisplayThrust;
+            case WeaponAction.Raise:
+                return DisplayRaise;
+            default:
+                return ActionNone;
+        }
+    }
     public static string SlotLeft => GetOr(KeySlotLeft, "L");
     public static string SlotRight => GetOr(KeySlotRight, "R");
     public static string WornFilterAll => GetOr(KeyWornFilterAll, "전체");

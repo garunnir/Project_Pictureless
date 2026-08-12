@@ -64492,7 +64492,6 @@ MonoBehaviour:
   _presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
   _itemId: weapon_knife
   _catalog: {fileID: 11400000, guid: f7556fd63dd29cf4fb45651a5765b2d1, type: 2}
-  _loadedRounds: 0
   _rangedObstructionMask:
     serializedVersion: 2
     m_Bits: 55

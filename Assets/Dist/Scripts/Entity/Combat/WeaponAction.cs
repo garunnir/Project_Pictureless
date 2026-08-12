@@ -1,24 +1,6 @@
 // ============================================================
-// WeaponAction — 캐릭터 무기 활용 동사 / 마스크 (Bashing/Cutting/Gun)
+// WeaponActionUtil — ResolveMode / 마스크 순회 (동사 enum: Dist.Gameplay.Data)
 // ============================================================
-
-using System;
-
-[Flags]
-public enum WeaponActionMask
-{
-    None = 0,
-    Bashing = 1,
-    Cutting = 2,
-    Gun = 4
-}
-
-public enum WeaponAction
-{
-    Bashing = 0,
-    Cutting = 1,
-    Gun = 2
-}
 
 public enum WeaponResolveMode
 {
@@ -39,21 +21,42 @@ public enum AttackPerformResult
 
 public static class WeaponActionUtil
 {
+    public const int LegacyCuttingValue = 1;
+
+    public static readonly WeaponAction[] All =
+    {
+        WeaponAction.Swing,
+        WeaponAction.Thrust,
+        WeaponAction.Trigger,
+        WeaponAction.Raise
+    };
+
+    public static WeaponAction Normalize(WeaponAction action)
+    {
+        if ((int)action == LegacyCuttingValue)
+            return WeaponAction.Swing;
+        return action;
+    }
+
     public static WeaponActionMask ToMask(WeaponAction action)
     {
-        switch (action)
+        switch (Normalize(action))
         {
-            case WeaponAction.Bashing: return WeaponActionMask.Bashing;
-            case WeaponAction.Cutting: return WeaponActionMask.Cutting;
-            case WeaponAction.Gun: return WeaponActionMask.Gun;
+            case WeaponAction.Swing: return WeaponActionMask.Swing;
+            case WeaponAction.Trigger: return WeaponActionMask.Trigger;
+            case WeaponAction.Thrust: return WeaponActionMask.Thrust;
+            case WeaponAction.Raise: return WeaponActionMask.Raise;
             default: return WeaponActionMask.None;
         }
     }
 
     public static WeaponResolveMode ResolveMode(WeaponAction action) =>
-        action == WeaponAction.Gun
+        Normalize(action) == WeaponAction.Trigger
             ? WeaponResolveMode.RangedRay
             : WeaponResolveMode.MeleeReach;
+
+    public static bool SuppressesAttackTrigger(WeaponAction action) =>
+        Normalize(action) == WeaponAction.Raise;
 
     public static bool TryNextAvailable(
         WeaponActionMask available,
@@ -64,10 +67,20 @@ public static class WeaponActionUtil
         if (available == WeaponActionMask.None)
             return false;
 
-        for (int step = 1; step <= 3; step++)
+        WeaponAction normalized = Normalize(current);
+        int count = All.Length;
+        int currentIndex = 0;
+        for (int i = 0; i < count; i++)
         {
-            int index = ((int)current + step) % 3;
-            var candidate = (WeaponAction)index;
+            if (All[i] != normalized)
+                continue;
+            currentIndex = i;
+            break;
+        }
+
+        for (int step = 1; step <= count; step++)
+        {
+            WeaponAction candidate = All[(currentIndex + step) % count];
             if ((available & ToMask(candidate)) == 0)
                 continue;
             next = candidate;
@@ -79,25 +92,16 @@ public static class WeaponActionUtil
 
     public static bool TryFirstAvailable(WeaponActionMask available, out WeaponAction action)
     {
-        if ((available & WeaponActionMask.Bashing) != 0)
+        for (int i = 0; i < All.Length; i++)
         {
-            action = WeaponAction.Bashing;
+            WeaponAction candidate = All[i];
+            if ((available & ToMask(candidate)) == 0)
+                continue;
+            action = candidate;
             return true;
         }
 
-        if ((available & WeaponActionMask.Cutting) != 0)
-        {
-            action = WeaponAction.Cutting;
-            return true;
-        }
-
-        if ((available & WeaponActionMask.Gun) != 0)
-        {
-            action = WeaponAction.Gun;
-            return true;
-        }
-
-        action = WeaponAction.Bashing;
+        action = WeaponAction.Swing;
         return false;
     }
 }

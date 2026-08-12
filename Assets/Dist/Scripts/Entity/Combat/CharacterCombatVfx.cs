@@ -17,14 +17,18 @@ public sealed class CharacterCombatVfx : MonoBehaviour
 
     void OnEnable()
     {
-        if (_attacker != null)
-            _attacker.AttackResolved += OnAttackResolved;
+        if (_attacker == null)
+            return;
+        _attacker.AttackResolved += OnAttackResolved;
+        _attacker.AttackJudged += OnAttackJudged;
     }
 
     void OnDisable()
     {
-        if (_attacker != null)
-            _attacker.AttackResolved -= OnAttackResolved;
+        if (_attacker == null)
+            return;
+        _attacker.AttackResolved -= OnAttackResolved;
+        _attacker.AttackJudged -= OnAttackJudged;
     }
 
     void OnAttackResolved(AttackOutcome outcome)
@@ -41,6 +45,20 @@ public sealed class CharacterCombatVfx : MonoBehaviour
             return;
 
         Spawn(vfx.actionVfx, outcome.OriginPoint, outcome.Direction);
+    }
+
+    void OnAttackJudged(AttackOutcome outcome)
+    {
+        WeaponImpactVfxDefaults impactDefaults = _attacker.Catalog != null
+            ? _attacker.Catalog.ImpactVfxDefaults
+            : null;
+
+        WeaponActionVfx vfx = WeaponActionVfxResolver.ResolveImpact(
+            outcome.Attack,
+            impactDefaults,
+            outcome.ImpactTag);
+        if (vfx == null)
+            return;
 
         if (outcome.ResolveMode == WeaponResolveMode.RangedRay)
             SpawnTracer(vfx.tracerVfx, outcome);

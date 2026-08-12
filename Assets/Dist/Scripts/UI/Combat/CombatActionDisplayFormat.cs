@@ -13,29 +13,30 @@ public static class CombatActionDisplayFormat
         return $"{weapon}  [{ActionLabel(selected)}]  {MaskLabel(available)}";
     }
 
-    public static string ActionLabel(WeaponAction action)
-    {
-        switch (action)
-        {
-            case WeaponAction.Bashing: return "Bashing";
-            case WeaponAction.Cutting: return "Cutting";
-            case WeaponAction.Gun: return "Gun";
-            default: return "?";
-        }
-    }
+    public static string ActionLabel(WeaponAction action) =>
+        CharacterGearLabels.ActionLabel(action);
 
     public static string MaskLabel(WeaponActionMask mask)
     {
         if (mask == WeaponActionMask.None)
             return "(none)";
 
-        var parts = new System.Collections.Generic.List<string>(3);
-        if ((mask & WeaponActionMask.Bashing) != 0)
-            parts.Add("Bashing");
-        if ((mask & WeaponActionMask.Cutting) != 0)
-            parts.Add("Cutting");
-        if ((mask & WeaponActionMask.Gun) != 0)
-            parts.Add("Gun");
+        var parts = new System.Collections.Generic.List<string>(WeaponActionUtil.All.Length);
+        for (int i = 0; i < WeaponActionUtil.All.Length; i++)
+            TryAddMaskPart(parts, mask, WeaponActionUtil.All[i]);
         return string.Join("|", parts);
+    }
+
+    static void TryAddMaskPart(
+        System.Collections.Generic.List<string> parts,
+        WeaponActionMask mask,
+        WeaponAction action)
+    {
+        if ((mask & WeaponActionUtil.ToMask(action)) == 0)
+            return;
+
+        string label = CharacterGearLabels.ActionLabel(action);
+        if (!parts.Contains(label))
+            parts.Add(label);
     }
 }

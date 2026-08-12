@@ -134,3 +134,6 @@ MonoBehaviour:
     presentation: {fileID: 11400000, guid: eec33d4af901fe740af3be7bb81abd2e, type: 2}
   _unarmed: {fileID: 11400000, guid: eec33d4af901fe740af3be7bb81abd2e, type: 2}
   _actionVfxDefaults: {fileID: 11400000, guid: 148757be15f15604586d338417aaa357, type: 2}
+  _impactVfxDefaults: {fileID: 11400000, guid: 90d173c6fe84ab9d062531b9fc487ae6, type: 2}
+  _defaultProjectile: {fileID: 3439977824323346792, guid: 82cc010aac92f8b4eb11b4ffbe7dc5ce,
+    type: 3}

@@ -1,5 +1,5 @@
 // ============================================================
-// DualWieldAttackDriver — TwoHand 1회 / 듀얼 Primary→Offhand 교대 (손별 Action)
+// DualWieldAttackDriver — TwoHand 1회 / 듀얼 양손 Action (손별 판정)
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
@@ -15,9 +15,7 @@ public sealed class DualWieldAttackDriver : MonoBehaviour
     CharacterBodyHost _pendingTarget;
     PrimaryWieldResolver.HandScore _secondary;
     float _secondaryFactor;
-    int _savedLoadedRounds;
-    string _savedPrimaryItemId;
-    WeaponAction _savedPrimaryAction;
+    ItemStack _savedPrimaryStack;
     WieldHand _savedPrimaryHand;
 
     void Awake()
@@ -40,113 +38,114 @@ public sealed class DualWieldAttackDriver : MonoBehaviour
     }
 
     /// <summary>
-    /// TwoHand·한손·듀얼 시전. 듀얼이면 Primary Resolve 후 Offhand 교대.
-    /// 손별 HandAction이 달라도 스텝마다 Action/Hand를 독립 적용.
+    /// TwoHand·한손·듀얼 시전. 듀얼이면 Primary Resolve 후 Offhand.
+    /// Primary Gate(NoAmmo/NoTarget/OutOfRange/Cooling)와 무관하게 양손 Action.
+    /// target null(조준점)이어도 양손 시전. Unsupported 손만 스킵.
     /// false면 호출측 단발(<see cref="CharacterAttacker.TryPerformSelected"/>).
     /// </summary>
     public bool TryPerformDual(CharacterBodyHost target)
     {
         PlayerGearHost gearHost = PlayerGearHost.Active;
         CharacterGearService gear = gearHost != null ? gearHost.Service : null;
-        if (gear == null || _attacker == null || target == null)
+        if (gear == null || _attacker == null)
             return false;
 
         ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
         if (!PrimaryWieldResolver.TryResolvePrimary(
                 gear.Wield,
-                gear.HandActions,
+                _attacker.Catalog,
                 skills,
-                _attacker.LoadedRounds,
                 out PrimaryWieldResolver.HandScore primary,
                 out PrimaryWieldResolver.HandScore secondary))
             return false;
 
-        if (primary.Action == null || primary.Stack?.Item == null)
-            return false;
-
-        ClearPending();
-        _savedLoadedRounds = _attacker.LoadedRounds;
-        _savedPrimaryItemId = primary.Stack.ItemId;
-        _savedPrimaryAction = primary.Action.Value;
-        _savedPrimaryHand = CharacterAttacker.AnimHandFrom(gear.Wield, primary.Slot);
-
-        ApplyStep(primary, _savedPrimaryHand, _savedLoadedRounds);
-        AttackPerformResult result = _attacker.TryPerform(primary.Action.Value, target, 1f);
-
+        bool hasPrimary = primary.Action != null && primary.Stack?.Item != null;
         bool hasSecondary = !gear.Wield.IsTwoHand
             && secondary.Stack?.Item != null
             && secondary.Action != null
             && secondary.IsOffHand;
 
-        if (!hasSecondary)
-            return true;
+        if (!hasPrimary && !hasSecondary)
+            return false;
 
-        if (result == AttackPerformResult.Cooling
-            || result == AttackPerformResult.Unsupported
-            || result == AttackPerformResult.NoAmmo
-            || result == AttackPerformResult.OutOfRange
-            || result == AttackPerformResult.NoTarget)
-            return true;
+        ClearPending();
+        _savedPrimaryStack = primary.Stack;
+        _savedPrimaryHand = CharacterAttacker.AnimHandFrom(gear.Wield, primary.Slot);
 
-        WieldHand offHand = secondary.Slot == WieldSlotId.Left
-            ? WieldHand.Left
-            : WieldHand.Right;
-        _secondary = secondary;
-        _secondaryFactor = PrimaryWieldResolver.OffHandFactor(skills, offHand);
-        _pendingTarget = target;
-        _awaitingSecondary = true;
+        if (hasSecondary)
+            QueueSecondary(secondary, target, skills);
+
+        if (hasPrimary)
+        {
+            ApplyStep(primary, _savedPrimaryHand);
+            _attacker.TryPerform(primary.Action.Value, target, 1f);
+        }
+
+        // Unsupported는 AttackResolved를 안 올림 — 대기 중이면 Offhand를 여기서 시전.
+        if (_awaitingSecondary)
+            PerformPendingSecondary();
+
         return true;
     }
 
     void OnAttackResolved(AttackOutcome outcome)
     {
-        if (!_awaitingSecondary || _pendingTarget == null || _attacker == null)
+        if (!_awaitingSecondary || _attacker == null)
             return;
 
-        _awaitingSecondary = false;
+        PerformPendingSecondary();
+    }
+
+    void QueueSecondary(
+        PrimaryWieldResolver.HandScore secondary,
+        CharacterBodyHost target,
+        ICharacterSkills skills)
+    {
+        WieldHand offHand = HandFromSlot(secondary.Slot);
+        _secondary = secondary;
+        _secondaryFactor = PrimaryWieldResolver.OffHandFactor(skills, offHand);
+        _pendingTarget = target;
+        _awaitingSecondary = true;
+    }
+
+    void PerformPendingSecondary()
+    {
+        if (!_awaitingSecondary || _attacker == null)
+            return;
+
         CharacterBodyHost target = _pendingTarget;
         PrimaryWieldResolver.HandScore secondary = _secondary;
         float factor = _secondaryFactor;
-        int rounds = _attacker.LoadedRounds;
         ClearPending();
 
-        if (target == null
-            || target.Body == null
-            || target.Body.IsDeadState
-            || secondary.Action == null
-            || secondary.Stack?.Item == null)
+        if (secondary.Action == null || secondary.Stack?.Item == null)
         {
-            RestorePrimary(rounds);
+            RestorePrimary();
             return;
         }
 
-        WieldHand hand = secondary.Slot == WieldSlotId.Left
-            ? WieldHand.Left
-            : WieldHand.Right;
-        ApplyStep(secondary, hand, rounds);
+        ApplyStep(secondary, HandFromSlot(secondary.Slot));
         _attacker.TryPerform(secondary.Action.Value, target, factor);
         // LocAnim은 AttackResolved outcome sticky로 Hand/Action/Attack를 소비하므로
         // 같은 스택에서 primary 복귀해도 시전 틱 애니는 유지된다.
-        RestorePrimary(_attacker.LoadedRounds);
+        RestorePrimary();
     }
 
-    void ApplyStep(PrimaryWieldResolver.HandScore score, WieldHand hand, int loadedRounds)
+    void ApplyStep(PrimaryWieldResolver.HandScore score, WieldHand hand)
     {
         if (_attacker == null || score.Stack == null || score.Action == null)
             return;
 
         _attacker.SetActiveWieldHand(hand);
-        _attacker.SetWieldedItem(score.Stack.ItemId, loadedRounds);
-        _attacker.TrySelectAction(score.Action.Value);
+        _attacker.SetWieldedItem(score.Stack);
     }
 
-    void RestorePrimary(int loadedRounds)
+    void RestorePrimary()
     {
         if (_attacker == null)
             return;
         _attacker.SetActiveWieldHand(_savedPrimaryHand);
-        _attacker.SetWieldedItem(_savedPrimaryItemId ?? string.Empty, loadedRounds);
-        _attacker.TrySelectAction(_savedPrimaryAction);
+        _attacker.SetWieldedItem(_savedPrimaryStack);
         PlayerGearHost.Active?.RefreshPrimaryWield();
     }
 
@@ -157,4 +156,7 @@ public sealed class DualWieldAttackDriver : MonoBehaviour
         _secondaryFactor = 1f;
         _secondary = default;
     }
+
+    static WieldHand HandFromSlot(WieldSlotId slot) =>
+        slot == WieldSlotId.Left ? WieldHand.Left : WieldHand.Right;
 }

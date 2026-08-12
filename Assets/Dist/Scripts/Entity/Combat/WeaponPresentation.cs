@@ -22,13 +22,17 @@ public sealed class WeaponPresentation : ScriptableObject
     [Serializable]
     public sealed class Entry
     {
-        public WeaponAction action = WeaponAction.Bashing;
+        public WeaponAction action = WeaponAction.Swing;
+        [Tooltip("Attack 튜닝 (페이로드·핸들러). 비우면 액션 매핑 폴백.")]
+        public WeaponAttack attack;
         public EffectSeed[] effectSeeds;
         public WeaponActionVfx vfx = new();
     }
 
     [SerializeField] Entry[] _entries = Array.Empty<Entry>();
     [SerializeField] WeaponActionMask _supportedActions;
+    [Tooltip("기본 선택 행. 범위 밖이거나 빈 행이면 첫 유효 행.")]
+    [SerializeField] int _defaultEntryIndex;
     [Tooltip("공유 CharacterAnimController 슬롯에 덮어쓸 클립 묶음. 비우면 캐릭터 기본 컨트롤러 유지.")]
     [SerializeField] AnimatorOverrideController _animatorOverride;
 
@@ -36,7 +40,46 @@ public sealed class WeaponPresentation : ScriptableObject
     public Entry[] Entries => _entries;
     public AnimatorOverrideController AnimatorOverride => _animatorOverride;
 
-    void OnValidate() => RebuildSupportedActions();
+    public int DefaultEntryIndex
+    {
+        get
+        {
+            int first = FirstValidEntryIndex();
+            if (first < 0)
+                return 0;
+            if (_defaultEntryIndex < 0 ||
+                _entries == null ||
+                _defaultEntryIndex >= _entries.Length ||
+                _entries[_defaultEntryIndex] == null)
+                return first;
+            return _defaultEntryIndex;
+        }
+    }
+
+    void OnValidate()
+    {
+        RebuildSupportedActions();
+        int first = FirstValidEntryIndex();
+        if (first < 0)
+            _defaultEntryIndex = 0;
+        else if (_defaultEntryIndex < 0 ||
+                 _defaultEntryIndex >= _entries.Length ||
+                 _entries[_defaultEntryIndex] == null)
+            _defaultEntryIndex = first;
+    }
+
+    int FirstValidEntryIndex()
+    {
+        if (_entries == null)
+            return -1;
+        for (int i = 0; i < _entries.Length; i++)
+        {
+            if (_entries[i] != null)
+                return i;
+        }
+
+        return -1;
+    }
 
     public void RebuildSupportedActions()
     {
@@ -67,7 +110,8 @@ public sealed class WeaponPresentation : ScriptableObject
         for (int i = 0; i < _entries.Length; i++)
         {
             Entry candidate = _entries[i];
-            if (candidate == null || candidate.action != action)
+            if (candidate == null ||
+                WeaponActionUtil.Normalize(candidate.action) != WeaponActionUtil.Normalize(action))
                 continue;
             entry = candidate;
             return true;

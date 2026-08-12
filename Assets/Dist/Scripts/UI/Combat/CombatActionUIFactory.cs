@@ -33,7 +33,7 @@ public static class CombatActionUIFactory
             TextAlignmentOptions.Center);
         Stretch(actionText.rectTransform, 8f, 8f, 4f, 4f);
         actionText.text = CombatActionDisplayFormat.Format(
-            WeaponAction.Bashing,
+            WeaponAction.Swing,
             WeaponActionMask.None,
             string.Empty);
 

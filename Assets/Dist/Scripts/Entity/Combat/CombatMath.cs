@@ -32,24 +32,22 @@ public static class CombatMath
     public static WeaponActionMask AvailableModes(ItemData item)
     {
         if (item == null)
-            return WeaponActionMask.Bashing;
+            return WeaponActionMask.Swing;
 
         WeaponActionMask mask = WeaponActionMask.None;
-        if (item.bashing > 0)
-            mask |= WeaponActionMask.Bashing;
-        if (item.cutting > 0)
-            mask |= WeaponActionMask.Cutting;
+        if (item.bashing > 0 || item.cutting > 0)
+            mask |= WeaponActionMask.Swing;
         if (item.gun != null)
-            mask |= WeaponActionMask.Gun;
+            mask |= WeaponActionMask.Trigger;
 
         return mask == WeaponActionMask.None
-            ? WeaponActionMask.Bashing
+            ? WeaponActionMask.Swing
             : mask;
     }
 
     public static string SkillId(ItemData item, WeaponAction action)
     {
-        if (action == WeaponAction.Gun)
+        if (WeaponActionUtil.Normalize(action) == WeaponAction.Trigger)
             return CombatSkillIds.Gun;
 
         if (item == null)
@@ -62,7 +60,7 @@ public static class CombatMath
 
     public static float RangeMeters(ItemData item, WeaponAction action)
     {
-        if (action == WeaponAction.Gun)
+        if (WeaponActionUtil.Normalize(action) == WeaponAction.Trigger)
         {
             int range = item?.gun != null ? item.gun.range : 0;
             return range > 0 ? range : MeleeReachMeters;
@@ -73,7 +71,7 @@ public static class CombatMath
 
     public static int AttackMoves(ItemData item, WeaponAction action)
     {
-        if (action == WeaponAction.Gun)
+        if (WeaponActionUtil.Normalize(action) == WeaponAction.Trigger)
             return GunFireMoves;
 
         int weight = item != null ? Mathf.Max(0, item.weight_g) : 0;
@@ -86,13 +84,35 @@ public static class CombatMath
     public static float AttackIntervalSeconds(ItemData item, WeaponAction action) =>
         AttackMoves(item, action) / MovesPerSecond;
 
+    [System.Obsolete("Use Damage(item, attack, ...) or DamageForTag. Action enum is not bash/cut SSOT.")]
     public static int Damage(
         ItemData item,
         WeaponAction action,
         int strength,
+        int skillLevel) =>
+        DamageForTag(item, AttackDamageTags.DefaultFor(action), strength, skillLevel);
+
+    public static int Damage(
+        ItemData item,
+        WeaponAttack attack,
+        WeaponAction action,
+        int strength,
         int skillLevel)
     {
-        if (action == WeaponAction.Gun)
+        string tag = attack != null
+            ? attack.DamageTag
+            : AttackDamageTags.DefaultFor(action);
+        return DamageForTag(item, tag, strength, skillLevel);
+    }
+
+    /// <summary>Attack SO 페이로드 태그 기준 피해. Action enum으로 bash/cut을 고르지 않음.</summary>
+    public static int DamageForTag(
+        ItemData item,
+        string damageTag,
+        int strength,
+        int skillLevel)
+    {
+        if (string.Equals(damageTag, AttackDamageTags.Bullet, System.StringComparison.Ordinal))
         {
             int gunDmg = item?.gun != null ? item.gun.ranged_damage : 0;
             return Mathf.Max(0, gunDmg + skillLevel / 2);
@@ -105,11 +125,22 @@ public static class CombatMath
                 strength / 2 + skillLevel / 2);
         }
 
-        int baseDmg = action == WeaponAction.Cutting
+        int baseDmg = string.Equals(damageTag, AttackDamageTags.Cut, System.StringComparison.Ordinal)
             ? item.cutting
             : item.bashing;
         int strBonus = Mathf.Max(0, (strength - StrengthBaseline) / 2);
         return Mathf.Max(0, baseDmg + strBonus + skillLevel / 4);
+    }
+
+    public static string SkillIdForTag(ItemData item, string damageTag)
+    {
+        if (string.Equals(damageTag, AttackDamageTags.Bullet, System.StringComparison.Ordinal))
+            return CombatSkillIds.Gun;
+
+        if (item == null)
+            return CombatSkillIds.Unarmed;
+
+        return CombatSkillIds.Melee;
     }
 
     public static float HitChance(
@@ -119,7 +150,7 @@ public static class CombatMath
         string aimedPartId)
     {
         float chance;
-        if (action == WeaponAction.Gun)
+        if (WeaponActionUtil.Normalize(action) == WeaponAction.Trigger)
         {
             int dispersion = item?.gun != null ? item.gun.dispersion : 300;
             chance = Mathf.Clamp01(1f - dispersion / GunDispersionScale)
@@ -136,7 +167,7 @@ public static class CombatMath
         return Mathf.Clamp01(chance * BodyPartHitDifficulty.Get(aimedPartId));
     }
 
-    /// <summary>탄약/장전 시스템 전: loadedRounds는 Attacker 스텁. 자동 장전 없음.</summary>
-    public static bool CanFireGun(ItemData item, int loadedRounds) =>
-        item?.gun != null && loadedRounds > 0;
+    /// <summary>약실에 1발 이상. 메거진 보급·자동 장전은 WeaponChamber.</summary>
+    public static bool CanFireGun(ItemData item, ItemInstance instance) =>
+        item?.gun != null && instance != null && instance.ChamberRounds > 0;
 }

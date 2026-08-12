@@ -46,8 +46,6 @@ public sealed class NpcCombatBehavior : MonoBehaviour
     int _patrolIndex;
     float _alertTimer;
     Vector3 _homePosition;
-    WeaponAction _pendingAction = WeaponAction.Bashing;
-
     public NpcCombatState State => _state;
     public bool SuppressMode
     {
@@ -88,6 +86,7 @@ public sealed class NpcCombatBehavior : MonoBehaviour
             _defeat.Changed -= OnDefeatChanged;
         _defeat = null;
         _steer?.ClearDestination();
+        _aimIntent?.SetAimHeld(false);
     }
 
     void Update()
@@ -176,9 +175,8 @@ public sealed class NpcCombatBehavior : MonoBehaviour
 
         CharacterBodyHost target = _senses.Target;
         float distance = _senses.DistanceToTarget;
-        if (_attacker.TryGetBestAction(distance, out WeaponAction action))
+        if (IsSelectedActionInRange(distance))
         {
-            _pendingAction = action;
             EnterAttack();
             return;
         }
@@ -197,20 +195,23 @@ public sealed class NpcCombatBehavior : MonoBehaviour
 
         CharacterBodyHost target = _senses.Target;
         float distance = _senses.DistanceToTarget;
-        if (!_attacker.TryGetBestAction(distance, out WeaponAction action))
+        if (!IsSelectedActionInRange(distance))
         {
             EnterChase();
             return;
         }
 
-        _pendingAction = action;
         _movement.SetActiveMovementStyle(_holdStyle);
         if (distance > _attackStandDistance)
             _steer.SetTarget(target.transform);
         else
             _steer.ClearDestination();
 
-        AttackPerformResult result = _attacker.TryPerform(_pendingAction, target);
+        WeaponAction action = _attacker.SelectedAction;
+        if (action == WeaponAction.Raise)
+            return;
+
+        AttackPerformResult result = _attacker.TryPerformSelected(target);
         if (result == AttackPerformResult.OutOfRange)
             EnterChase();
     }
@@ -229,9 +230,23 @@ public sealed class NpcCombatBehavior : MonoBehaviour
             EnterPatrol();
     }
 
+    bool IsSelectedActionInRange(float distance)
+    {
+        if (_attacker == null)
+            return false;
+        WeaponAction action = _attacker.SelectedAction;
+        if (!_attacker.CanPerform(action))
+            return false;
+        ItemData item = _attacker.ItemFor(_attacker.ItemId);
+        return distance <= CombatMath.RangeMeters(item, action);
+    }
+
+    void SetAimHeld(bool held) => _aimIntent?.SetAimHeld(held);
+
     void EnterIdle()
     {
         _state = NpcCombatState.Idle;
+        SetAimHeld(false);
         _steer.ClearDestination();
         _movement.SetActiveMovementStyle(_holdStyle);
     }
@@ -239,6 +254,7 @@ public sealed class NpcCombatBehavior : MonoBehaviour
     void EnterPatrol()
     {
         _state = NpcCombatState.Patrol;
+        SetAimHeld(false);
         _movement.SetActiveMovementStyle(_patrolStyle);
         if (_patrolWaypoints == null || _patrolWaypoints.Length == 0)
             EnterIdle();
@@ -247,6 +263,7 @@ public sealed class NpcCombatBehavior : MonoBehaviour
     void EnterAlert()
     {
         _state = NpcCombatState.Alert;
+        SetAimHeld(false);
         _alertTimer = _alertSeconds;
         _steer.ClearDestination();
         _movement.SetActiveMovementStyle(_holdStyle);
@@ -255,18 +272,21 @@ public sealed class NpcCombatBehavior : MonoBehaviour
     void EnterChase()
     {
         _state = NpcCombatState.Chase;
+        SetAimHeld(false);
         _movement.SetActiveMovementStyle(_chaseStyle);
     }
 
     void EnterAttack()
     {
         _state = NpcCombatState.Attack;
+        SetAimHeld(true);
         _movement.SetActiveMovementStyle(_holdStyle);
     }
 
     void EnterReturn()
     {
         _state = NpcCombatState.Return;
+        SetAimHeld(false);
         _movement.SetActiveMovementStyle(_patrolStyle);
         _steer.SetDestination(_homePosition);
     }
@@ -274,6 +294,7 @@ public sealed class NpcCombatBehavior : MonoBehaviour
     void EnterDead()
     {
         _state = NpcCombatState.Dead;
+        SetAimHeld(false);
         _steer.ClearDestination();
         _movement.SetActiveMovementStyle(_holdStyle);
         _movement.SetDesiredWorldDir(Vector3.zero);

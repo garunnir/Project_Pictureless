@@ -22,15 +22,6 @@ MonoBehaviour:
         type: 3}
       missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
         type: 3}
-  - action: 1
-    vfx:
-      actionVfx: {fileID: 3393811213086816214, guid: df92d15a593607146b78ad219988cefb,
-        type: 3}
-      tracerVfx: {fileID: 0}
-      hitVfx: {fileID: 6057288306708094213, guid: cb318ac2831369344a1de983e348b81a,
-        type: 3}
-      missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
-        type: 3}
   - action: 2
     vfx:
       actionVfx: {fileID: 7028231510786012215, guid: e20c2743283bdeb4690bae5e30086fdd,
@@ -41,3 +32,18 @@ MonoBehaviour:
         type: 3}
       missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
         type: 3}
+  - action: 3
+    vfx:
+      actionVfx: {fileID: 3393811213086816214, guid: df92d15a593607146b78ad219988cefb,
+        type: 3}
+      tracerVfx: {fileID: 0}
+      hitVfx: {fileID: 6057288306708094213, guid: cb318ac2831369344a1de983e348b81a,
+        type: 3}
+      missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
+        type: 3}
+  - action: 4
+    vfx:
+      actionVfx: {fileID: 0}
+      tracerVfx: {fileID: 0}
+      hitVfx: {fileID: 0}
+      missVfx: {fileID: 0}

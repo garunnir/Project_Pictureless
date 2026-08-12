@@ -13,6 +13,7 @@ public sealed class CharacterGearService
     readonly WieldSlots _wield = new();
     readonly HandActionBinding _handActions = new();
     readonly GearTimedAction _timed = new();
+    WeaponPresentationCatalog _presentationCatalog;
     readonly ToolUseWieldSession _toolSession = new();
     readonly List<ItemStack> _filterScratch = new(16);
 
@@ -26,6 +27,7 @@ public sealed class CharacterGearService
     public EquipmentWearState Wear => _wear;
     public WieldSlots Wield => _wield;
     public HandActionBinding HandActions => _handActions;
+    public WeaponPresentationCatalog PresentationCatalog => _presentationCatalog;
     public GearTimedAction Timed => _timed;
     public ToolUseWieldSession ToolSession => _toolSession;
     public bool IsBusy => _timed.IsRunning;
@@ -55,6 +57,11 @@ public sealed class CharacterGearService
         _timed.Completed += ClearActiveStack;
         _timed.Cancelled += ClearActiveStack;
         _toolSession.Changed += OnDomainChanged;
+    }
+
+    public void SetPresentationCatalog(WeaponPresentationCatalog catalog)
+    {
+        _presentationCatalog = catalog;
     }
 
     public void Unbind()
@@ -202,7 +209,6 @@ public sealed class CharacterGearService
 
             DepositDisplaced(dL);
             DepositDisplaced(dR);
-            _handActions.EnsureInitialized(captured.Item, 0, Skills());
             NotifyPrimaryDirty();
         });
     }
@@ -229,11 +235,22 @@ public sealed class CharacterGearService
         return TryBeginUnwield(stack, toFloor);
     }
 
-    public bool TrySetHandAction(string itemId, WeaponAction? action)
+    /// <summary>메거진 보급 1발 → 약실. Action row 아님.</summary>
+    public bool TryReload(ItemStack weapon)
     {
-        if (string.IsNullOrEmpty(itemId))
+        if (weapon?.Instance == null)
             return false;
-        _handActions.Set(itemId, action);
+        if (!WeaponChamber.TryReload(weapon.Instance, weapon, weapon.Item))
+            return false;
+        Changed?.Invoke();
+        return true;
+    }
+
+    public bool TrySetHandAction(ItemStack stack, WeaponAction? action)
+    {
+        if (stack?.Instance == null)
+            return false;
+        stack.Instance.SelectedAction = action;
         NotifyPrimaryDirty();
         return true;
     }

@@ -52,7 +52,7 @@ public sealed class CombatActionViewModel
     {
         if (_attacker == null)
         {
-            SelectedAction = WeaponAction.Bashing;
+            SelectedAction = WeaponAction.Swing;
             AvailableActions = WeaponActionMask.None;
             WeaponName = string.Empty;
             return;

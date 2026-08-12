@@ -19,9 +19,6 @@ public class InputManager : SceneSingleton<InputManager>
     InputAction _statusToggle;
     InputAction _combatCycle;
     InputAction _combatAttack;
-    InputAction _combatSelectBashing;
-    InputAction _combatSelectCutting;
-    InputAction _combatSelectGun;
 
     public bool IsUiMenuInputActive => _uiMenuInputOwners.Count > 0;
     public bool IsDebugInputActive => _debugInputOwners.Count > 0;
@@ -49,9 +46,6 @@ public class InputManager : SceneSingleton<InputManager>
     public event Action<InputAction.CallbackContext> PlayerStatusTogglePerformed;
     public event Action<InputAction.CallbackContext> PlayerCombatCyclePerformed;
     public event Action<InputAction.CallbackContext> PlayerCombatAttackPerformed;
-    public event Action<InputAction.CallbackContext> PlayerCombatSelectBashingPerformed;
-    public event Action<InputAction.CallbackContext> PlayerCombatSelectCuttingPerformed;
-    public event Action<InputAction.CallbackContext> PlayerCombatSelectGunPerformed;
 
     public event Action<InputAction.CallbackContext> UiNavigateStarted;
     public event Action<InputAction.CallbackContext> UiNavigateCanceled;
@@ -72,12 +66,6 @@ public class InputManager : SceneSingleton<InputManager>
         // 조준(RMB Hold) 중 LMB 시전. Interact는 E라 충돌 없음.
         _combatAttack = new InputAction("CombatAttack", InputActionType.Button, "<Mouse>/leftButton");
         _combatAttack.performed += ForwardPlayerCombatAttackPerformed;
-        _combatSelectBashing = new InputAction("CombatSelectBashing", InputActionType.Button, "<Keyboard>/1");
-        _combatSelectBashing.performed += ForwardPlayerCombatSelectBashingPerformed;
-        _combatSelectCutting = new InputAction("CombatSelectCutting", InputActionType.Button, "<Keyboard>/2");
-        _combatSelectCutting.performed += ForwardPlayerCombatSelectCuttingPerformed;
-        _combatSelectGun = new InputAction("CombatSelectGun", InputActionType.Button, "<Keyboard>/3");
-        _combatSelectGun.performed += ForwardPlayerCombatSelectGunPerformed;
         _actions.Player.Enable();
         EnableCombatRuntimeActions();
         _actions.Debug.Disable();
@@ -354,30 +342,6 @@ public class InputManager : SceneSingleton<InputManager>
         PlayerCombatAttackPerformed?.Invoke(ctx);
     }
 
-    void ForwardPlayerCombatSelectBashingPerformed(InputAction.CallbackContext ctx)
-    {
-        if (IsGameplayBlocked)
-            return;
-
-        PlayerCombatSelectBashingPerformed?.Invoke(ctx);
-    }
-
-    void ForwardPlayerCombatSelectCuttingPerformed(InputAction.CallbackContext ctx)
-    {
-        if (IsGameplayBlocked)
-            return;
-
-        PlayerCombatSelectCuttingPerformed?.Invoke(ctx);
-    }
-
-    void ForwardPlayerCombatSelectGunPerformed(InputAction.CallbackContext ctx)
-    {
-        if (IsGameplayBlocked)
-            return;
-
-        PlayerCombatSelectGunPerformed?.Invoke(ctx);
-    }
-
     void ForwardUiNavigateStarted(InputAction.CallbackContext ctx)
     {
         if (!IsUiMenuInputActive)
@@ -460,9 +424,6 @@ public class InputManager : SceneSingleton<InputManager>
         _statusToggle?.Enable();
         _combatCycle?.Enable();
         _combatAttack?.Enable();
-        _combatSelectBashing?.Enable();
-        _combatSelectCutting?.Enable();
-        _combatSelectGun?.Enable();
     }
 
     void DisableCombatRuntimeActions()
@@ -470,9 +431,6 @@ public class InputManager : SceneSingleton<InputManager>
         _statusToggle?.Disable();
         _combatCycle?.Disable();
         _combatAttack?.Disable();
-        _combatSelectBashing?.Disable();
-        _combatSelectCutting?.Disable();
-        _combatSelectGun?.Disable();
     }
 
     protected override void OnDestroy()
@@ -481,9 +439,6 @@ public class InputManager : SceneSingleton<InputManager>
         DisposeRuntimeAction(ref _statusToggle, ForwardPlayerStatusTogglePerformed);
         DisposeRuntimeAction(ref _combatCycle, ForwardPlayerCombatCyclePerformed);
         DisposeRuntimeAction(ref _combatAttack, ForwardPlayerCombatAttackPerformed);
-        DisposeRuntimeAction(ref _combatSelectBashing, ForwardPlayerCombatSelectBashingPerformed);
-        DisposeRuntimeAction(ref _combatSelectCutting, ForwardPlayerCombatSelectCuttingPerformed);
-        DisposeRuntimeAction(ref _combatSelectGun, ForwardPlayerCombatSelectGunPerformed);
 
         _actions?.Dispose();
         _actions = null;

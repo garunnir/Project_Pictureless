@@ -2,8 +2,6 @@
 // SetHandActionContextAction / UnwieldSlotContextAction — 들기 슬롯 RMB
 // ============================================================
 
-using Garunnir.Runtime.Gameplay.Data;
-
 public sealed class SetHandActionContextAction : IContextMenuAction
 {
     readonly WieldSlotContextRequest _request;
@@ -17,16 +15,19 @@ public sealed class SetHandActionContextAction : IContextMenuAction
 
     public string GetDisabledReason()
     {
-        if (_request?.Gear == null || string.IsNullOrEmpty(_request.ItemId))
+        if (_request?.Gear == null)
             return "missing";
         if (_action == null)
             return null;
 
-        ItemData item = _request.Gear.Wield?.Get(_request.Slot)?.Item;
-        if (item == null)
+        ItemStack stack = _request.Gear.Wield?.Get(_request.Slot);
+        if (stack?.Item == null)
             return "missing";
 
-        WeaponActionMask mask = CombatMath.AvailableModes(item);
+        WeaponPresentation presentation = WeaponActionRows.Resolve(
+            _request.Gear.PresentationCatalog,
+            stack);
+        WeaponActionMask mask = WeaponActionRows.Available(presentation);
         return (mask & WeaponActionUtil.ToMask(_action.Value)) == 0
             ? CharacterGearLabels.BlockedInvalid
             : null;
@@ -37,7 +38,8 @@ public sealed class SetHandActionContextAction : IContextMenuAction
         if (_request?.Gear == null || !string.IsNullOrEmpty(GetDisabledReason()))
             return;
 
-        _request.Gear.TrySetHandAction(_request.ItemId, _action);
+        ItemStack stack = _request.Gear.Wield?.Get(_request.Slot);
+        _request.Gear.TrySetHandAction(stack, _action);
         _request.OnChanged?.Invoke();
     }
 }

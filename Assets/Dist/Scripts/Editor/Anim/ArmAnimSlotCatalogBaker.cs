@@ -17,9 +17,10 @@ public static class ArmAnimSlotCatalogBaker
 
     static readonly WeaponAction[] Actions =
     {
-        WeaponAction.Bashing,
-        WeaponAction.Cutting,
-        WeaponAction.Gun
+        WeaponAction.Swing,
+        WeaponAction.Thrust,
+        WeaponAction.Trigger,
+        WeaponAction.Raise
     };
 
     [MenuItem("Dist/MCP/Ensure Arm Anim Slot Catalog")]
@@ -45,7 +46,7 @@ public static class ArmAnimSlotCatalogBaker
         string[] hands = { "Left", "Right", "TwoHand" };
         for (int a = 0; a < Actions.Length; a++)
         {
-            string action = Actions[a].ToString();
+            string action = ClipStem(Actions[a]);
             for (int h = 0; h < hands.Length; h++)
                 EnsureCopy($"Hold_{hands[h]}_Slot", $"Hold{action}_{hands[h]}_Slot");
         }
@@ -99,7 +100,7 @@ public static class ArmAnimSlotCatalogBaker
         var entries = new ArmAnimSlotCatalog.ActionLibraryEntry[Actions.Length];
         for (int i = 0; i < Actions.Length; i++)
         {
-            string name = Actions[i].ToString();
+            string name = ClipStem(Actions[i]);
             entries[i] = new ArmAnimSlotCatalog.ActionLibraryEntry
             {
                 action = Actions[i],
@@ -111,6 +112,22 @@ public static class ArmAnimSlotCatalogBaker
 
         catalog.SetActions(entries);
         EditorUtility.SetDirty(catalog);
+    }
+
+    /// <summary>기존 슬롯 파일명. 동사 rename과 분리.</summary>
+    static string ClipStem(WeaponAction action)
+    {
+        switch (WeaponActionUtil.Normalize(action))
+        {
+            case WeaponAction.Trigger:
+                return "Gun";
+            case WeaponAction.Thrust:
+                return "Thrust";
+            case WeaponAction.Raise:
+                return "Raise";
+            default:
+                return "Bashing";
+        }
     }
 
     static ArmAnimSlotCatalog.HandClips LoadHandClips(string stem) =>

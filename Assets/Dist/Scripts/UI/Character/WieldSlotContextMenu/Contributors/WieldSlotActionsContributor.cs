@@ -3,23 +3,26 @@
 // ============================================================
 
 using System.Collections.Generic;
-using Garunnir.Runtime.Gameplay.Data;
 
 public sealed class WieldSlotActionsContributor : IWieldSlotContextMenuContributor
 {
     public void Contribute(WieldSlotContextRequest request, List<ContextMenuEntry> roots)
     {
-        if (request?.Gear == null || roots == null || string.IsNullOrEmpty(request.ItemId))
+        if (request?.Gear == null || roots == null)
             return;
 
-        ItemData item = request.Gear.Wield?.Get(request.Slot)?.Item;
-        if (item != null)
+        ItemStack stack = request.Gear.Wield?.Get(request.Slot);
+        if (stack?.Item != null)
         {
-            WeaponActionMask mask = CombatMath.AvailableModes(item);
-            var actionChildren = new List<ContextMenuEntry>(4);
-            TryAddAction(actionChildren, request, mask, WeaponAction.Bashing, "hand-bash", CharacterGearLabels.ActionBash);
-            TryAddAction(actionChildren, request, mask, WeaponAction.Cutting, "hand-cut", CharacterGearLabels.ActionCut);
-            TryAddAction(actionChildren, request, mask, WeaponAction.Gun, "hand-gun", CharacterGearLabels.ActionGun);
+            WeaponPresentation presentation = WeaponActionRows.Resolve(
+                request.Gear.PresentationCatalog,
+                stack);
+            WeaponActionMask mask = WeaponActionRows.Available(presentation);
+            var actionChildren = new List<ContextMenuEntry>(WeaponActionUtil.All.Length + 1);
+            TryAddAction(actionChildren, request, mask, WeaponAction.Swing, "hand-swing", CharacterGearLabels.ActionSwing);
+            TryAddAction(actionChildren, request, mask, WeaponAction.Thrust, "hand-thrust", CharacterGearLabels.ActionThrust);
+            TryAddAction(actionChildren, request, mask, WeaponAction.Trigger, "hand-trigger", CharacterGearLabels.ActionTrigger);
+            TryAddAction(actionChildren, request, mask, WeaponAction.Raise, "hand-raise", CharacterGearLabels.ActionRaise);
             actionChildren.Add(ContextMenuEntry.Leaf(
                 "hand-none",
                 CharacterGearLabels.ActionNone,

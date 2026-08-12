@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::WeaponPresentation
   _entries:
   - action: 0
+    attack: {fileID: 11400000, guid: 5c9d3f82ba406759c2e1f7d5b80436a2, type: 2}
     effectSeeds: []
     vfx:
       actionVfx: {fileID: 3393811213086816214, guid: df92d15a593607146b78ad219988cefb,
@@ -23,11 +24,9 @@ MonoBehaviour:
         type: 3}
       missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
         type: 3}
-  - action: 1
-    effectSeeds:
-    - effectId: bleed
-      intensity: 1
-      remainingSeconds: 8
+  - action: 3
+    attack: {fileID: 11400000, guid: 7e4c2a91b8d64f0e9c3a15f6d2e8b470, type: 2}
+    effectSeeds: []
     vfx:
       actionVfx: {fileID: 3393811213086816214, guid: df92d15a593607146b78ad219988cefb,
         type: 3}
@@ -36,5 +35,6 @@ MonoBehaviour:
         type: 3}
       missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
         type: 3}
-  _supportedActions: 3
+  _supportedActions: 9
+  _defaultEntryIndex: 0
   _animatorOverride: {fileID: 22100000, guid: 48a3c46dae2eabd46abf894f757f571b, type: 2}
