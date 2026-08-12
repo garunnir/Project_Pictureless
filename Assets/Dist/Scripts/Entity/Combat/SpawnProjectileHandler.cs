@@ -126,7 +126,7 @@ public sealed class SpawnProjectileHandler : IActionHandler
             attacker.EmitJudged(
                 context,
                 mode,
-                AttackPerformResult.Miss,
+                AttackPerformResult.Obstructed,
                 targetHost,
                 string.Empty,
                 0,

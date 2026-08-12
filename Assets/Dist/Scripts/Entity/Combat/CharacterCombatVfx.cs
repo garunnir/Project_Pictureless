@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterCombatVfx — 공격 판정 결과를 받아 무기 액션 연출을 스폰
+// CharacterCombatVfx — 공격 판정·Impact Kind 연출 스폰
 // ============================================================
 
 using Lean.Pool;
@@ -21,6 +21,7 @@ public sealed class CharacterCombatVfx : MonoBehaviour
             return;
         _attacker.AttackResolved += OnAttackResolved;
         _attacker.AttackJudged += OnAttackJudged;
+        _attacker.AttackCueFired += OnAttackCueFired;
     }
 
     void OnDisable()
@@ -29,18 +30,16 @@ public sealed class CharacterCombatVfx : MonoBehaviour
             return;
         _attacker.AttackResolved -= OnAttackResolved;
         _attacker.AttackJudged -= OnAttackJudged;
+        _attacker.AttackCueFired -= OnAttackCueFired;
     }
 
     void OnAttackResolved(AttackOutcome outcome)
     {
-        WeaponActionVfxDefaults defaults = _attacker.Catalog != null
-            ? _attacker.Catalog.ActionVfxDefaults
-            : null;
-
+        ArmAnimSlotCatalog pipeline = ResolvePipeline();
         WeaponActionVfx vfx = WeaponActionVfxResolver.Resolve(
             _attacker.Presentation,
             outcome.Action,
-            defaults);
+            pipeline);
         if (vfx == null)
             return;
 
@@ -49,6 +48,12 @@ public sealed class CharacterCombatVfx : MonoBehaviour
 
     void OnAttackJudged(AttackOutcome outcome)
     {
+        if (outcome.Result == AttackPerformResult.Obstructed)
+        {
+            SpawnImpactKind(ArmImpactKind.Blocked, outcome.OriginPoint, outcome.Direction);
+            return;
+        }
+
         WeaponImpactVfxDefaults impactDefaults = _attacker.Catalog != null
             ? _attacker.Catalog.ImpactVfxDefaults
             : null;
@@ -65,6 +70,29 @@ public sealed class CharacterCombatVfx : MonoBehaviour
 
         GameObject impactPrefab = outcome.DidHit ? vfx.hitVfx : vfx.missVfx;
         Spawn(impactPrefab, outcome.ImpactPoint, -outcome.Direction);
+    }
+
+    void OnAttackCueFired(WieldHand hand, WeaponAction action)
+    {
+        SpawnImpactKind(ArmImpactKind.Recoil, _attacker.ResolveOrigin(), transform.forward);
+    }
+
+    void SpawnImpactKind(ArmImpactKind kind, Vector3 origin, Vector3 forward)
+    {
+        WeaponActionVfx vfx = WeaponActionVfxResolver.ResolveImpactKind(ResolvePipeline(), kind);
+        if (vfx == null)
+            return;
+        Spawn(vfx.actionVfx, origin, forward);
+    }
+
+    ArmAnimSlotCatalog ResolvePipeline()
+    {
+        if (_attacker?.Catalog != null && _attacker.Catalog.AnimPipeline != null)
+            return _attacker.Catalog.AnimPipeline;
+        CharacterLocomotionAnim loc = GetComponent<CharacterLocomotionAnim>();
+        if (loc == null)
+            loc = GetComponentInParent<CharacterLocomotionAnim>();
+        return loc != null ? loc.ArmSlotCatalog : null;
     }
 
     GameObject Spawn(GameObject prefab, Vector3 position, Vector3 forward)

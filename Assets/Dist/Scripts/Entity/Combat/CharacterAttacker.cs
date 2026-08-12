@@ -57,6 +57,9 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     public static event Action<AttackOutcome> AnyAttackJudged;
 
+    /// <summary>공격 클립 cue 도달. Impact Recoil 연출용.</summary>
+    public event Action<WieldHand, WeaponAction> AttackCueFired;
+
     public bool HasPendingAttackCue
     {
         get
@@ -668,6 +671,8 @@ public sealed class CharacterAttacker : MonoBehaviour
         pending.CueFired = true;
         pending.Armed = false;
         _pendingCues[index] = pending;
+
+        AttackCueFired?.Invoke(pending.Hand, pending.Action);
 
         var context = new ActionHandlerContext(
             pending.Action,

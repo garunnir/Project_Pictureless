@@ -16,7 +16,9 @@ public enum AttackPerformResult
     OutOfRange = 3,
     Cooling = 4,
     NoTarget = 5,
-    NoAmmo = 6
+    NoAmmo = 6,
+    /// <summary>장애물에 막힘 (빗나감 Miss와 구분 — Impact Blocked).</summary>
+    Obstructed = 7
 }
 
 public static class WeaponActionUtil

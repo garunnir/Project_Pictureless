@@ -1,14 +1,14 @@
 // ============================================================
-// CharacterLocomotionAnim — MoveXZ/Speed + L/R/2H overlays + thin clip remap
+// CharacterLocomotionAnim — MoveXZ/Speed + L/R/2H overlays + Impact + thin remap
 // ============================================================
 using Garunnir.Runtime.Gameplay.Data;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
 /// <summary>
-/// Drives Move (facing-relative MoveX/MoveZ) + RightArm/LeftArm/TwoHand overlays.
+/// Drives Move (facing-relative MoveX/MoveZ) + RightArm/LeftArm/TwoHand overlays + Impact.
 /// WeaponAction selects library clips projected onto thin keys via
-/// <see cref="ArmAnimSlotResolver"/> (no Animator Action params).
+/// <see cref="ArmAnimSlotResolver"/>; Impact Kind via <see cref="ArmImpactSlotResolver"/>.
 /// Animation time advances via <see cref="TimeScaleService"/> only.
 /// </summary>
 [RequireComponent(typeof(CharacterState))]
@@ -27,6 +27,12 @@ public class CharacterLocomotionAnim : MonoBehaviour
     const int MaxPoseStepsPerFrame = 8;
     const float MoveDirEpsilonSqr = 1e-6f;
     const string AttackOverlayStateName = "Attack";
+    const string ImpactLayerName = "Impact Layer";
+    const string ParamImpactRecoil = "ImpactRecoil";
+    const string ParamImpactBlocked = "ImpactBlocked";
+    const string ImpactRecoilStateName = "Recoil";
+    const string ImpactBlockedStateName = "Blocked";
+    const string ImpactEmptyStateName = "Empty";
 
     [InfoBox(ManualTickHelp, InfoMessageType.Warning)]
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.Player;
@@ -74,6 +80,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     int _rightArmLayerIndex = -1;
     int _leftArmLayerIndex = -1;
     int _twoHandLayerIndex = -1;
+    int _impactLayerIndex = -1;
     bool _hasSpeed;
     bool _hasMoveX;
     bool _hasMoveZ;
@@ -81,7 +88,15 @@ public class CharacterLocomotionAnim : MonoBehaviour
     bool _hasAttackR;
     bool _hasAttackL;
     bool _hasAttack2H;
+    bool _hasImpactRecoil;
+    bool _hasImpactBlocked;
     int _hashAttackState;
+    int _hashImpactRecoil;
+    int _hashImpactBlocked;
+    int _hashImpactEmpty;
+    int _hashImpactRecoilState;
+    int _hashImpactBlockedState;
+    float _impactWeightTarget;
 
     public bool HasAttackTrigger => _hasAttackR || _hasAttackL || _hasAttack2H;
 
@@ -95,6 +110,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     int _attackQueueCount;
 
     public Animator Animator => _animator;
+    public ArmAnimSlotCatalog ArmSlotCatalog => _armSlotCatalog;
 
     void Awake()
     {
@@ -134,6 +150,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
         {
             _attacker.PresentationChanged += OnPresentationChanged;
             _attacker.AttackResolved += OnAttackResolved;
+            _attacker.AttackJudged += OnAttackJudged;
+            _attacker.AttackCueFired += OnAttackCueFired;
         }
     }
 
@@ -143,6 +161,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
         {
             _attacker.PresentationChanged -= OnPresentationChanged;
             _attacker.AttackResolved -= OnAttackResolved;
+            _attacker.AttackJudged -= OnAttackJudged;
+            _attacker.AttackCueFired -= OnAttackCueFired;
         }
     }
 
@@ -228,8 +248,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
         float channelDelta = TimeScaleService.Delta(_timeChannel);
         SyncArmLayerWeights(rebound ? 0f : channelDelta);
+        SyncImpactLayerWeight(rebound ? 0f : channelDelta);
         AdvanceAnimator(channelDelta);
         TickAttackCues();
+        TickImpactEmpty();
     }
 
     void SyncThinActionRemap(WeaponAction actionL, WeaponAction actionR, WeaponAction action2H)
@@ -260,6 +282,64 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _attackActionQueue[index] = outcome.Action;
         _attackHandQueue[index] = outcome.Hand;
         _attackQueueCount++;
+    }
+
+    void OnAttackCueFired(WieldHand hand, WeaponAction action) =>
+        PlayImpact(ArmImpactKind.Recoil, hand);
+
+    void OnAttackJudged(AttackOutcome outcome)
+    {
+        if (outcome.Result != AttackPerformResult.Obstructed)
+            return;
+        PlayImpact(ArmImpactKind.Blocked, outcome.Hand);
+    }
+
+    void PlayImpact(ArmImpactKind kind, WieldHand hand)
+    {
+        if (_animator == null || _armSlotCatalog == null || _resolvedOverride == null)
+            return;
+        if (_impactLayerIndex < 0)
+            return;
+
+        ArmImpactSlotResolver.ProjectImpact(_resolvedOverride, _armSlotCatalog, kind, hand);
+        _impactWeightTarget = 1f;
+        _animator.SetLayerWeight(_impactLayerIndex, 1f);
+
+        if (kind == ArmImpactKind.Blocked)
+        {
+            if (_hasImpactBlocked)
+                _animator.SetTrigger(_hashImpactBlocked);
+        }
+        else if (_hasImpactRecoil)
+        {
+            _animator.SetTrigger(_hashImpactRecoil);
+        }
+    }
+
+    void SyncImpactLayerWeight(float channelDelta)
+    {
+        SetLayerWeightToward(_impactLayerIndex, _impactWeightTarget, channelDelta);
+    }
+
+    void TickImpactEmpty()
+    {
+        if (_impactLayerIndex < 0 || _animator == null || _impactWeightTarget <= 0f)
+            return;
+
+        AnimatorStateInfo current = _animator.GetCurrentAnimatorStateInfo(_impactLayerIndex);
+        bool inImpact =
+            current.shortNameHash == _hashImpactRecoilState ||
+            current.shortNameHash == _hashImpactBlockedState;
+        if (_animator.IsInTransition(_impactLayerIndex))
+        {
+            AnimatorStateInfo next = _animator.GetNextAnimatorStateInfo(_impactLayerIndex);
+            if (next.shortNameHash == _hashImpactRecoilState ||
+                next.shortNameHash == _hashImpactBlockedState)
+                inImpact = true;
+        }
+
+        if (!inImpact && current.shortNameHash == _hashImpactEmpty)
+            _impactWeightTarget = 0f;
     }
 
     void OnPresentationChanged() => ApplyWeaponAnimOverride(forceRebind: true);
@@ -414,10 +494,18 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _hasAttackR = false;
         _hasAttackL = false;
         _hasAttack2H = false;
+        _hasImpactRecoil = false;
+        _hasImpactBlocked = false;
         _rightArmLayerIndex = -1;
         _leftArmLayerIndex = -1;
         _twoHandLayerIndex = -1;
+        _impactLayerIndex = -1;
         _hashAttackState = Hash(AttackOverlayStateName);
+        _hashImpactRecoil = Hash(ParamImpactRecoil);
+        _hashImpactBlocked = Hash(ParamImpactBlocked);
+        _hashImpactEmpty = Hash(ImpactEmptyStateName);
+        _hashImpactRecoilState = Hash(ImpactRecoilStateName);
+        _hashImpactBlockedState = Hash(ImpactBlockedStateName);
 
         if (_animator == null || _animator.runtimeAnimatorController == null)
             return;
@@ -441,6 +529,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
             if (Match(_paramAttackR, _hashAttackR, nameHash)) _hasAttackR = true;
             if (Match(_paramAttackL, _hashAttackL, nameHash)) _hasAttackL = true;
             if (Match(_paramAttack2H, _hashAttack2H, nameHash)) _hasAttack2H = true;
+            if (Match(ParamImpactRecoil, _hashImpactRecoil, nameHash)) _hasImpactRecoil = true;
+            if (Match(ParamImpactBlocked, _hashImpactBlocked, nameHash)) _hasImpactBlocked = true;
         }
 
         if (!string.IsNullOrEmpty(_rightArmLayerName))
@@ -449,6 +539,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
             _leftArmLayerIndex = _animator.GetLayerIndex(_leftArmLayerName);
         if (!string.IsNullOrEmpty(_twoHandLayerName))
             _twoHandLayerIndex = _animator.GetLayerIndex(_twoHandLayerName);
+        _impactLayerIndex = _animator.GetLayerIndex(ImpactLayerName);
     }
 
     static int Hash(string name) =>

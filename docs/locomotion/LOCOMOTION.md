@@ -57,11 +57,11 @@ flowchart LR
 ## 3D 애니 브릿지
 
 컨트롤러: `Assets/Dist/Visual/Anim/CharacterClips/CharacterAnimController.controller`  
-드라이버: `CharacterLocomotionAnim` · 클립 SSOT: `ArmAnimSlotResolver` (라이브러리→thin Override)  
+드라이버: `CharacterLocomotionAnim` · 클립+VFX SSOT: `ArmAnimSlotCatalog` (Pipeline) + `ArmAnimSlotResolver` / `ArmImpactSlotResolver`  
 루트 회전: `CharacterFacingRotator` → `CharacterState.GetFacingDir()`  
 스프라이트 8방향: `CharacterFacingAnim` (SpriteSwap 전용, 3D와 별도)
 
-**몸 애니만** Hold/Aim/Attack thin 슬롯을 쓴다. 무기 메시·외형은 애니 슬롯에 붙이지 않는다 (별 경로).
+**몸 애니만** Hold/Aim/Attack thin 슬롯과 Impact thin을 쓴다. 무기 메시·외형은 애니 슬롯에 붙이지 않는다 (별 경로).
 
 | Layer | Mask | Weight |
 |-------|------|--------|
@@ -69,8 +69,13 @@ flowchart LR
 | RightArm Layer | `RightArm.mask` | 오른손 무장·비TwoHand → 1 |
 | LeftArm Layer | `LeftArm.mask` | 왼손 무장·비TwoHand → 1 |
 | TwoHand Layer | `UpperBody.mask` | `IsTwoHand` → 1 (그때 L/R Arm = 0) |
+| Impact Layer | none (v1) | Recoil/Blocked 재생 중 → 1, 평시 0 |
 
-팔 SM(손당): **Hold ↔ Aim** (`IsAiming`), **Attack** (trigger). `Action*` 파라미터·모드별 Aim/Attack 상태 없음.
+**Action vs Impact:** Action = 동사 자세·시전 (`Hold`/`Aim`/`Attack`). Impact = 반동·막힘 등 결과 반응. Impact Kind는 `WeaponAction`이 아니다.  
+**태그 VFX ≠ 애니 Impact:** `WeaponImpactVfxDefaults`(bash/cut/bullet hit·miss·tracer)는 판정 ImpactTag 축. Pipeline Impact 행(Recoil/Blocked)과 섞지 않는다. 편집 진입은 `WeaponPresentationCatalog`(비주얼 허브) → Edit Pipeline / Edit Tag VFX.
+
+팔 SM(손당): **Hold ↔ Aim** (`IsAiming`), **Attack** (trigger). `Action*` 파라미터·모드별 Aim/Attack 상태 없음.  
+Impact SM: **Empty** → **Recoil** / **Blocked** (`ImpactRecoil` / `ImpactBlocked` trigger) → ExitTime → Empty.
 
 | Param | Type | Source |
 |-------|------|--------|
@@ -78,21 +83,24 @@ flowchart LR
 | `Speed` | float | 동일 정규화 속도 (디버그·호환; Move 블렌드는 MoveXZ) |
 | `IsAiming` | bool | `CharacterState.IsAiming` |
 | `AttackR` / `AttackL` / `Attack2H` | trigger | `AttackResolved` 큐 → `AttackOutcome.Hand` |
+| `ImpactRecoil` / `ImpactBlocked` | trigger | cue → Recoil; `Obstructed` → Blocked |
 | `WeaponPresentation.AnimatorOverride` | Override | **라이브러리 키** 교체 — 외형 메시 아님 |
-| `ArmAnimSlotCatalog` + runtime Override | resolve | 라이브러리 base(무기 Override 반영)를 thin Aim/Attack/Hold에 투영 |
+| `ArmAnimSlotCatalog` + runtime Override | resolve | 동사 행 클립→Action thin, Impact 행→Impact thin. 동사/Impact **VFX는 같은 행** |
 
 Move Layer `Locomotion`: **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + Walk/Run × 전/후/좌/우 (Walk 링 ≈0.26). 조준 중 루트는 `SightDir` 유지, **발만** facing 대비 상대 방향.
 
-**Thin 키 (SM):** `Hold|Aim|Attack_{Left,Right,TwoHand}_Slot`  
-**라이브러리 키:** `Hold{Action}|Aim{Action}|Attack{Action}_{Hand}_Slot`  
-`WeaponAction` → 라이브러리 클립 선택 후 thin 키에 리맵 (파지·조준·공격 모두). Action 전환은 **Rebind 없이** thin 키만 갱신. Presentation 교체 시에만 풀 resolve + Rebind.
+**Thin 키 (Action SM):** `Hold|Aim|Attack_{Left,Right,TwoHand}_Slot`  
+**Thin 키 (Impact SM):** `ImpactRecoil_Slot`, `ImpactBlocked_Slot`  
+**라이브러리 키:** `Hold|Aim|Attack{Verb}_{Hand}_Slot`, `Impact{Recoil\|Blocked}_{Hand}_Slot`  
+`WeaponAction` → 동사 행 클립을 thin에 리맵. `ArmImpactKind` → Impact thin. Action 전환은 **Rebind 없이** thin 키만 갱신. Presentation 교체 시에만 풀 resolve + Rebind.
 
-무기 `AnimatorOverride`는 **라이브러리 키**를 교체한다 (`HoldGun_Right_Slot` 등). thin 키를 직접 바꾸지 않는다.
+무기 `AnimatorOverride`는 **라이브러리 키**를 교체한다. thin 키를 직접 바꾸지 않는다.
 
-카탈로그: `ArmAnimSlotCatalog.asset`  
-메뉴: `Dist/MCP/Rebuild Arm Overlay Animator`, `Dist/MCP/Ensure Arm Anim Slot Catalog`
+- Pipeline: `ArmAnimSlotCatalog.asset` (동사 행 = stance+strike+vfx, Impact 행 = clips+thin+vfx)  
+- 메뉴: `Dist/MCP/Rebuild Arm Overlay Animator`, `Dist/MCP/Ensure Arm Anim Pipeline`
 
-**액션 확장:** 새 `WeaponAction` → 라이브러리 클립(`Hold|Aim|Attack{Action}`)+카탈로그 행(+ bake). **Builder/SM 수정 없음.**
+**액션 확장:** `WeaponAction`(+`WeaponActionMask`) → [`WeaponActionUtil.All`](Assets/Dist/Scripts/Entity/Combat/WeaponAction.cs)에 추가 → `Ensure Arm Anim Pipeline` (클립 시드·행 Ensure). 슬롯 스템 = enum 이름. **Builder/SM 수정 없음.**  
+**Impact Kind 확장:** `ArmImpactKind` + Impact SM 상태·trigger·행. thin은 행의 `thin` 또는 catalog 폴백.
 
 ### 클립 resolve (Animator 밖)
 
@@ -119,6 +127,7 @@ Aim/Attack 라이브러리 클립이 없으면 같은 손 Hold thin으로 내린
 - 애니 시간 = `TimeScaleService`만 (`CharacterLocomotionAnim` 수동 틱).
 - Play 중 `Animator.enabled == false`는 **정상**. `_poseRate`(기본 10) 플립북 양자화; `0`이면 연속 틱.
 - Locomotion/Arm 클립은 FBX `loopTime` 필요.
+- 장애물 판정은 `AttackPerformResult.Obstructed` (Miss와 구분) → Impact `Blocked`.
 
 Collision Inspector는 `CharacterLocomotionCollisionSettings`이며 기본값은 `CharacterLocomotionDefaults` SSOT다.
 

@@ -1,72 +1,95 @@
 // ============================================================
-// ArmAnimSlotCatalogBaker — 라이브러리·thin 슬롯 시드 + catalog (MCP)
+// ArmAnimSlotCatalogBaker — Pipeline 동사·Impact 시드 + catalog (MCP)
 // ============================================================
 
 #if UNITY_EDITOR
+using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// 라이브러리 Hold|Aim|Attack{Swing|Thrust|Trigger|Raise} 슬롯과 thin 키를 시드하고 catalog를 채운다.
+/// WeaponActionUtil.All / ArmImpactKind 기준으로 슬롯·Pipeline 행을 Ensure한다.
+/// 동사 추가 시 All(+Mask)만 갱신한 뒤 이 메뉴를 다시 돌리면 된다.
 /// </summary>
 public static class ArmAnimSlotCatalogBaker
 {
     const string SlotDir = "Assets/Dist/Visual/Anim/CharacterClips/Slots";
     const string CatalogPath =
         "Assets/Dist/Visual/Anim/CharacterClips/ArmAnimSlotCatalog.asset";
+    const string PresentationCatalogPath =
+        "Assets/Dist/SOData/Combat/WeaponPresentations/WeaponPresentationCatalog.asset";
 
     static readonly string[] Hands = { "Left", "Right", "TwoHand" };
     static readonly string[] Phases = { "Hold", "Aim", "Attack" };
 
-    static readonly WeaponAction[] Actions =
-    {
-        WeaponAction.Swing,
-        WeaponAction.Thrust,
-        WeaponAction.Trigger,
-        WeaponAction.Raise
-    };
-
+    [MenuItem("Dist/MCP/Ensure Arm Anim Pipeline")]
     [MenuItem("Dist/MCP/Ensure Arm Anim Slot Catalog")]
     public static void Bake()
     {
         if (!AssetDatabase.IsValidFolder(SlotDir))
         {
-            Debug.LogError("[ArmAnimSlotCatalogBaker] Slots folder missing.");
+            Debug.LogError("[ArmAnimSlotCatalogBaker]Slots folder missing.");
             return;
         }
 
         EnsureActionLibrarySlots();
+        EnsureImpactLibrarySlots();
         EnsureThinSlots();
+        EnsureImpactThinSlots();
         DeleteOrphanHandlessSlots();
         EnsureCatalog();
+        WirePresentationCatalog();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("[ArmAnimSlotCatalogBaker] Ensured library/thin slots + catalog.");
+        Debug.Log(
+            "[ArmAnimSlotCatalogBaker] Ensured Pipeline verbs=" +
+            WeaponActionUtil.All.Length +
+            " impacts=" +
+            Enum.GetValues(typeof(ArmImpactKind)).Length);
     }
 
-    /// <summary>
-    /// 동사별 Hold/Aim/Attack × 손. 없으면 Swing 라이브러리(또는 thin Hold)에서 복사.
-    /// </summary>
     static void EnsureActionLibrarySlots()
     {
-        for (int a = 0; a < Actions.Length; a++)
+        WeaponAction[] actions = WeaponActionUtil.All;
+        for (int a = 0; a < actions.Length; a++)
         {
-            string action = ClipStem(Actions[a]);
+            string action = ClipStem(actions[a]);
             for (int p = 0; p < Phases.Length; p++)
             {
                 string phase = Phases[p];
                 for (int h = 0; h < Hands.Length; h++)
                 {
                     string hand = Hands[h];
-                    string dest = $"{phase}{action}_{hand}_Slot";
-                    if (AssetDatabase.LoadAssetAtPath<AnimationClip>($"{SlotDir}/{dest}.anim") != null)
+                    string dest = phase + action + "_" + hand + "_Slot";
+                    if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + dest + ".anim") != null)
                         continue;
 
-                    string seed = $"{phase}Swing_{hand}_Slot";
-                    if (AssetDatabase.LoadAssetAtPath<AnimationClip>($"{SlotDir}/{seed}.anim") == null)
-                        seed = $"{phase}_{hand}_Slot";
+                    string seed = phase + "Swing_" + hand + "_Slot";
+                    if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + seed + ".anim") == null)
+                        seed = phase + "_" + hand + "_Slot";
                     EnsureCopy(seed, dest);
                 }
+            }
+        }
+    }
+
+    static void EnsureImpactLibrarySlots()
+    {
+        foreach (ArmImpactKind kindEnum in Enum.GetValues(typeof(ArmImpactKind)))
+        {
+            string kind = kindEnum.ToString();
+            for (int h = 0; h < Hands.Length; h++)
+            {
+                string hand = Hands[h];
+                string dest = "Impact" + kind + "_" + hand + "_Slot";
+                if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + dest + ".anim") != null)
+                    continue;
+
+                string seed = "AttackSwing_" + hand + "_Slot";
+                if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + seed + ".anim") == null)
+                    seed = "Attack_" + hand + "_Slot";
+                EnsureCopy(seed, dest);
             }
         }
     }
@@ -76,13 +99,25 @@ public static class ArmAnimSlotCatalogBaker
         for (int h = 0; h < Hands.Length; h++)
         {
             string hand = Hands[h];
-            EnsureCopy($"HoldSwing_{hand}_Slot", $"Hold_{hand}_Slot");
-            EnsureCopy($"AimSwing_{hand}_Slot", $"Aim_{hand}_Slot");
-            EnsureCopy($"AttackSwing_{hand}_Slot", $"Attack_{hand}_Slot");
+            EnsureCopy("HoldSwing_" + hand + "_Slot", "Hold_" + hand + "_Slot");
+            EnsureCopy("AimSwing_" + hand + "_Slot", "Aim_" + hand + "_Slot");
+            EnsureCopy("AttackSwing_" + hand + "_Slot", "Attack_" + hand + "_Slot");
         }
     }
 
-    /// <summary>손 접미사 없는 레거시 Aim*_Slot (AimBashing_Slot 등) 제거.</summary>
+    static void EnsureImpactThinSlots()
+    {
+        foreach (ArmImpactKind kindEnum in Enum.GetValues(typeof(ArmImpactKind)))
+        {
+            string kind = kindEnum.ToString();
+            string thin = "Impact" + kind + "_Slot";
+            string seed = "Impact" + kind + "_Right_Slot";
+            EnsureCopy(seed, thin);
+            if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + thin + ".anim") == null)
+                EnsureCopy("Attack_Right_Slot", thin);
+        }
+    }
+
     static void DeleteOrphanHandlessSlots()
     {
         string[] orphans =
@@ -95,7 +130,7 @@ public static class ArmAnimSlotCatalogBaker
         };
         for (int i = 0; i < orphans.Length; i++)
         {
-            string path = $"{SlotDir}/{orphans[i]}.anim";
+            string path = SlotDir + "/" + orphans[i] + ".anim";
             if (AssetDatabase.LoadAssetAtPath<AnimationClip>(path) == null)
                 continue;
             AssetDatabase.DeleteAsset(path);
@@ -104,11 +139,11 @@ public static class ArmAnimSlotCatalogBaker
 
     static void EnsureCopy(string sourceName, string destName)
     {
-        string destPath = $"{SlotDir}/{destName}.anim";
+        string destPath = SlotDir + "/" + destName + ".anim";
         if (AssetDatabase.LoadAssetAtPath<AnimationClip>(destPath) != null)
             return;
 
-        string sourcePath = $"{SlotDir}/{sourceName}.anim";
+        string sourcePath = SlotDir + "/" + sourceName + ".anim";
         if (AssetDatabase.LoadAssetAtPath<AnimationClip>(sourcePath) == null)
             return;
 
@@ -133,39 +168,115 @@ public static class ArmAnimSlotCatalogBaker
         catalog.SetHoldThin(LoadHandClips("Hold"));
         catalog.SetAimThin(LoadHandClips("Aim"));
         catalog.SetAttackThin(LoadHandClips("Attack"));
+        catalog.SetImpactThin(
+            LoadFlatSlot("ImpactRecoil_Slot"),
+            LoadFlatSlot("ImpactBlocked_Slot"));
 
-        var entries = new ArmAnimSlotCatalog.ActionLibraryEntry[Actions.Length];
-        for (int i = 0; i < Actions.Length; i++)
+        var verbs = new List<ArmAnimSlotCatalog.ActionLibraryEntry>();
+        var seen = new HashSet<int>();
+        WeaponAction[] all = WeaponActionUtil.All;
+        for (int i = 0; i < all.Length; i++)
+            verbs.Add(BuildVerbEntry(catalog, all[i], seen));
+
+        if (catalog.Verbs != null)
         {
-            string name = ClipStem(Actions[i]);
-            entries[i] = new ArmAnimSlotCatalog.ActionLibraryEntry
+            for (int i = 0; i < catalog.Verbs.Length; i++)
             {
-                action = Actions[i],
-                hold = LoadHandClips("Hold" + name),
-                aim = LoadHandClips("Aim" + name),
-                attack = LoadHandClips("Attack" + name)
-            };
+                ArmAnimSlotCatalog.ActionLibraryEntry orphan = catalog.Verbs[i];
+                if (orphan == null)
+                    continue;
+                int key = (int)WeaponActionUtil.Normalize(orphan.action);
+                if (seen.Contains(key))
+                    continue;
+                verbs.Add(BuildVerbEntry(catalog, orphan.action, seen));
+            }
         }
 
-        catalog.SetActions(entries);
+        catalog.SetVerbs(verbs.ToArray());
+
+        var impacts = new List<ArmAnimSlotCatalog.ImpactLibraryEntry>();
+        var seenKinds = new HashSet<ArmImpactKind>();
+        foreach (ArmImpactKind kind in Enum.GetValues(typeof(ArmImpactKind)))
+            impacts.Add(BuildImpactEntry(catalog, kind, seenKinds));
+
+        if (catalog.Impacts != null)
+        {
+            for (int i = 0; i < catalog.Impacts.Length; i++)
+            {
+                ArmAnimSlotCatalog.ImpactLibraryEntry orphan = catalog.Impacts[i];
+                if (orphan == null || seenKinds.Contains(orphan.kind))
+                    continue;
+                impacts.Add(BuildImpactEntry(catalog, orphan.kind, seenKinds));
+            }
+        }
+
+        catalog.SetImpacts(impacts.ToArray());
         EditorUtility.SetDirty(catalog);
     }
 
-    /// <summary>라이브러리 슬롯 스템 = WeaponAction 동사명.</summary>
-    static string ClipStem(WeaponAction action)
+    static ArmAnimSlotCatalog.ActionLibraryEntry BuildVerbEntry(
+        ArmAnimSlotCatalog catalog,
+        WeaponAction action,
+        HashSet<int> seen)
     {
-        switch (WeaponActionUtil.Normalize(action))
+        WeaponAction normalized = WeaponActionUtil.Normalize(action);
+        seen.Add((int)normalized);
+        string name = ClipStem(normalized);
+
+        ArmAnimSlotCatalog.ActionLibraryEntry existing = catalog.FindAction(normalized);
+        WeaponActionVfx vfx = existing?.vfx != null && HasAnyVfx(existing.vfx)
+            ? existing.vfx
+            : new WeaponActionVfx();
+
+        return new ArmAnimSlotCatalog.ActionLibraryEntry
         {
-            case WeaponAction.Trigger:
-                return "Trigger";
-            case WeaponAction.Thrust:
-                return "Thrust";
-            case WeaponAction.Raise:
-                return "Raise";
-            default:
-                return "Swing";
-        }
+            action = normalized,
+            hold = LoadHandClips("Hold" + name),
+            aim = LoadHandClips("Aim" + name),
+            attack = LoadHandClips("Attack" + name),
+            vfx = vfx
+        };
     }
+
+    static ArmAnimSlotCatalog.ImpactLibraryEntry BuildImpactEntry(
+        ArmAnimSlotCatalog catalog,
+        ArmImpactKind kind,
+        HashSet<ArmImpactKind> seen)
+    {
+        seen.Add(kind);
+        ArmAnimSlotCatalog.ImpactLibraryEntry existing = catalog.FindImpact(kind);
+        AnimationClip thin = existing != null && existing.thin != null
+            ? existing.thin
+            : LoadFlatSlot("Impact" + kind + "_Slot");
+        return new ArmAnimSlotCatalog.ImpactLibraryEntry
+        {
+            kind = kind,
+            clips = LoadHandClips("Impact" + kind),
+            thin = thin,
+            vfx = existing?.vfx ?? new WeaponActionVfx()
+        };
+    }
+
+    static bool HasAnyVfx(WeaponActionVfx vfx) =>
+        vfx.actionVfx != null ||
+        vfx.tracerVfx != null ||
+        vfx.hitVfx != null ||
+        vfx.missVfx != null;
+
+    static void WirePresentationCatalog()
+    {
+        var presentation = AssetDatabase.LoadAssetAtPath<WeaponPresentationCatalog>(
+            PresentationCatalogPath);
+        var pipeline = AssetDatabase.LoadAssetAtPath<ArmAnimSlotCatalog>(CatalogPath);
+        if (presentation == null || pipeline == null)
+            return;
+        presentation.SetAnimPipeline(pipeline);
+        EditorUtility.SetDirty(presentation);
+    }
+
+    /// <summary>슬롯 파일 스템 = Normalize 후 enum 이름. 새 동사도 switch 없이 동작.</summary>
+    static string ClipStem(WeaponAction action) =>
+        WeaponActionUtil.Normalize(action).ToString();
 
     static ArmAnimSlotCatalog.HandClips LoadHandClips(string stem) =>
         new ArmAnimSlotCatalog.HandClips
@@ -176,6 +287,10 @@ public static class ArmAnimSlotCatalogBaker
         };
 
     static AnimationClip LoadSlot(string stem, string hand) =>
-        AssetDatabase.LoadAssetAtPath<AnimationClip>($"{SlotDir}/{stem}_{hand}_Slot.anim");
+        AssetDatabase.LoadAssetAtPath<AnimationClip>(
+            SlotDir + "/" + stem + "_" + hand + "_Slot.anim");
+
+    static AnimationClip LoadFlatSlot(string fileName) =>
+        AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + fileName + ".anim");
 }
 #endif

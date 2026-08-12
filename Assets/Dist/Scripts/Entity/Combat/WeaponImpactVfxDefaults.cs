@@ -3,6 +3,7 @@
 // ============================================================
 
 using System;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 [CreateAssetMenu(
@@ -13,10 +14,17 @@ public sealed class WeaponImpactVfxDefaults : ScriptableObject
     [Serializable]
     public sealed class Entry
     {
+        [HorizontalGroup("Row", Width = 120)]
+        [LabelText("Tag")]
         public string impactTag = AttackImpactTags.Fallback;
+
+        [HorizontalGroup("Row")]
+        [HideLabel]
         public WeaponActionVfx vfx = new WeaponActionVfx();
     }
 
+    [InfoBox("판정 ImpactTag → hit / miss / tracer. 비주얼 허브 Catalog 탭「맞힌 결과」에서도 편집.", InfoMessageType.None)]
+    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "impactTag")]
     [SerializeField] Entry[] _entries = Array.Empty<Entry>();
 
     public Entry[] Entries => _entries;

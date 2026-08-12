@@ -13,7 +13,8 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 | Character window | Tabs: 상태 \| 장비 \| 방해 \| 체온. Key = existing `StatusToggle` (`C`) |
 | Primary | Highest DPS hand → `CharacterAttacker.SetWieldedItem` |
 | HandActionBinding | `itemId → WeaponAction?` (null = 없음), persists across unequip + `HandActionBindingPersistence` disk JSON |
-| Action VFX fallback | Tag defaults SO `WeaponActionVfxDefaults` (Bashing/Cutting/Gun). Weapon `Presentation.Entry.vfx` null slots coalesce → tag defaults. Edit: Game Data Items detail → **Action VFX Fallback** (above Presentation) → Edit Defaults. Not in ItemData JSON. |
+| Action VFX fallback | Pipeline `ArmAnimSlotCatalog` 동사 행 `vfx`. Presentation Entry 빈 슬롯이 coalesce. Edit: Game Data → **Visual Hub** (`WeaponPresentationCatalog`) → Edit Pipeline. Not in ItemData JSON. |
+| Visual hub | `WeaponPresentationCatalog` — Pipeline / Tag Impact VFX / per-item Presentation 중간 진입점. 잎 SO는 분리 유지. |
 
 ## Domain SSOT
 
@@ -44,7 +45,9 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 | `HelmetVision` | Phase G: head covers → VisionFactor (host + Character UI + camera) |
 | `GearEnvPenalties` | Phase H: BodyTemp feeling + wetness → move / HitChance factors |
 | `WearOverlapRules` | Phase C: same part + layer(/sided) conflict → Wear **reject** |
-| `WeaponActionVfxDefaults` | Tag (Bashing/Cutting/Gun) default VFX; null Entry slots coalesce via `WeaponActionVfxResolver` |
+| `WeaponPresentationCatalog` | 비주얼 보조 허브 (Pipeline + Tag VFX + item bindings) |
+| `ArmAnimSlotCatalog` | 동사·Impact 연출 Pipeline (클립+VFX). Presentation Entry 빈 VFX → 동사 행 coalesce |
+| `WeaponImpactVfxDefaults` | 데미지 태그(bash/cut/bullet) hit/miss·tracer — Catalog → Edit Tag VFX |
 
 ### CanLift
 

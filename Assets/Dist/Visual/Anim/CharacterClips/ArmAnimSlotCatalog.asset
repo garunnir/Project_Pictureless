@@ -12,19 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 409b62d290c8ae844a4a505e0750e173, type: 3}
   m_Name: ArmAnimSlotCatalog
   m_EditorClassIdentifier: DistScript::ArmAnimSlotCatalog
-  _holdThin:
-    leftBase: {fileID: 7400000, guid: 81104ace6eb63684ea6ca38ba31e6a57, type: 2}
-    rightBase: {fileID: 7400000, guid: 2b78989c83d29ab4d894f4741a2b055b, type: 2}
-    twoHandBase: {fileID: 7400000, guid: 413d8999532831a4d9b9fd668f0202ea, type: 2}
-  _aimThin:
-    leftBase: {fileID: 7400000, guid: d59f566e79371084aa76319bc309d73c, type: 2}
-    rightBase: {fileID: 7400000, guid: 9bc3e14c5f8a46e46b62af7eb8b48eef, type: 2}
-    twoHandBase: {fileID: 7400000, guid: 45b8ecec50f0bbf4e9f30d6b4cec0a8f, type: 2}
-  _attackThin:
-    leftBase: {fileID: 7400000, guid: 2747b411713c0b74ea4ef5f96dec91f4, type: 2}
-    rightBase: {fileID: 7400000, guid: cd7c75f85c14ce1429d543636d8a523c, type: 2}
-    twoHandBase: {fileID: 7400000, guid: 191d9ec53665f174f8788a813f2869b5, type: 2}
-  _actions:
+  _inspectorPad: 0
+  _verbs:
   - action: 0
     hold:
       leftBase: {fileID: 7400000, guid: d38a4aa424dc6344499471a4632223d9, type: 2}
@@ -38,6 +27,14 @@ MonoBehaviour:
       leftBase: {fileID: 7400000, guid: 7895e19070389314b96c27bbdf724cf1, type: 2}
       rightBase: {fileID: 7400000, guid: 39f7587b52354d64d954a8644339771d, type: 2}
       twoHandBase: {fileID: 7400000, guid: 82b3138c8fcfaa84891aad23329991bf, type: 2}
+    vfx:
+      actionVfx: {fileID: 3393811213086816214, guid: df92d15a593607146b78ad219988cefb,
+        type: 3}
+      tracerVfx: {fileID: 0}
+      hitVfx: {fileID: 6057288306708094213, guid: cb318ac2831369344a1de983e348b81a,
+        type: 3}
+      missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
+        type: 3}
   - action: 3
     hold:
       leftBase: {fileID: 7400000, guid: 8e7df5dc0311bdd4cb3ecb6fe5152c22, type: 2}
@@ -51,6 +48,14 @@ MonoBehaviour:
       leftBase: {fileID: 7400000, guid: 90a4e615ba1bd0f43a342a19a941fb82, type: 2}
       rightBase: {fileID: 7400000, guid: 046c3f85271ba6d4c8bd452fa812e55a, type: 2}
       twoHandBase: {fileID: 7400000, guid: ab43ee4509cc6dd44b3c9be6a84bd01f, type: 2}
+    vfx:
+      actionVfx: {fileID: 3393811213086816214, guid: df92d15a593607146b78ad219988cefb,
+        type: 3}
+      tracerVfx: {fileID: 0}
+      hitVfx: {fileID: 6057288306708094213, guid: cb318ac2831369344a1de983e348b81a,
+        type: 3}
+      missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
+        type: 3}
   - action: 2
     hold:
       leftBase: {fileID: 7400000, guid: 7df3c8d690625654b87867c73d93cbc6, type: 2}
@@ -64,6 +69,15 @@ MonoBehaviour:
       leftBase: {fileID: 7400000, guid: 59c053c859e25c347b54bd3840df473c, type: 2}
       rightBase: {fileID: 7400000, guid: d942876c8b4a59446817e7a3b8df2d64, type: 2}
       twoHandBase: {fileID: 7400000, guid: 3e4249ea6fce1754486d436530819ad1, type: 2}
+    vfx:
+      actionVfx: {fileID: 7028231510786012215, guid: e20c2743283bdeb4690bae5e30086fdd,
+        type: 3}
+      tracerVfx: {fileID: 8876588044502325577, guid: 2784fb31ddcb89f42ade740d5eb5e879,
+        type: 3}
+      hitVfx: {fileID: 6057288306708094213, guid: cb318ac2831369344a1de983e348b81a,
+        type: 3}
+      missVfx: {fileID: 5385037390951120458, guid: 5934fd5a0367d9544b68b8c08b386d86,
+        type: 3}
   - action: 4
     hold:
       leftBase: {fileID: 7400000, guid: 6614c992968a66b44829d956ef83f4ad, type: 2}
@@ -77,3 +91,45 @@ MonoBehaviour:
       leftBase: {fileID: 7400000, guid: 61d5753220f90774b9a2fe8e2158a05c, type: 2}
       rightBase: {fileID: 7400000, guid: ae9dcf7076878ca4da8575bd8e285dc2, type: 2}
       twoHandBase: {fileID: 7400000, guid: 037b3e7a608758146936d6825ee07ae0, type: 2}
+    vfx:
+      actionVfx: {fileID: 0}
+      tracerVfx: {fileID: 0}
+      hitVfx: {fileID: 0}
+      missVfx: {fileID: 0}
+  _impacts:
+  - kind: 0
+    clips:
+      leftBase: {fileID: 7400000, guid: 6b9953af89d511d469df28281a17e072, type: 2}
+      rightBase: {fileID: 7400000, guid: 7922c6a21494ca844b28d4beedd90bde, type: 2}
+      twoHandBase: {fileID: 7400000, guid: 1c4bb88c2d4f82b4daf00cefc6eaf386, type: 2}
+    thin: {fileID: 7400000, guid: fc1ec7230d256504da1e7e02bb59c953, type: 2}
+    vfx:
+      actionVfx: {fileID: 0}
+      tracerVfx: {fileID: 0}
+      hitVfx: {fileID: 0}
+      missVfx: {fileID: 0}
+  - kind: 1
+    clips:
+      leftBase: {fileID: 7400000, guid: 88fef9795c2c1af43ac0b7e8e97e0e30, type: 2}
+      rightBase: {fileID: 7400000, guid: ab0077ba2c3ef3d4ca1581f7beb2fede, type: 2}
+      twoHandBase: {fileID: 7400000, guid: 74be33602df9ee24daf15e59dde2a2cf, type: 2}
+    thin: {fileID: 7400000, guid: c647b8797ec89504cba57bb18620df3f, type: 2}
+    vfx:
+      actionVfx: {fileID: 0}
+      tracerVfx: {fileID: 0}
+      hitVfx: {fileID: 0}
+      missVfx: {fileID: 0}
+  _holdThin:
+    leftBase: {fileID: 7400000, guid: 81104ace6eb63684ea6ca38ba31e6a57, type: 2}
+    rightBase: {fileID: 7400000, guid: 2b78989c83d29ab4d894f4741a2b055b, type: 2}
+    twoHandBase: {fileID: 7400000, guid: 413d8999532831a4d9b9fd668f0202ea, type: 2}
+  _aimThin:
+    leftBase: {fileID: 7400000, guid: d59f566e79371084aa76319bc309d73c, type: 2}
+    rightBase: {fileID: 7400000, guid: 9bc3e14c5f8a46e46b62af7eb8b48eef, type: 2}
+    twoHandBase: {fileID: 7400000, guid: 45b8ecec50f0bbf4e9f30d6b4cec0a8f, type: 2}
+  _attackThin:
+    leftBase: {fileID: 7400000, guid: 2747b411713c0b74ea4ef5f96dec91f4, type: 2}
+    rightBase: {fileID: 7400000, guid: cd7c75f85c14ce1429d543636d8a523c, type: 2}
+    twoHandBase: {fileID: 7400000, guid: 191d9ec53665f174f8788a813f2869b5, type: 2}
+  _impactRecoilThin: {fileID: 7400000, guid: fc1ec7230d256504da1e7e02bb59c953, type: 2}
+  _impactBlockedThin: {fileID: 7400000, guid: c647b8797ec89504cba57bb18620df3f, type: 2}

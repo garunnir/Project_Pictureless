@@ -142,7 +142,7 @@ public sealed class DistProjectile : MonoBehaviour
         _attacker.EmitJudged(
             _context,
             WeaponResolveMode.RangedRay,
-            AttackPerformResult.Miss,
+            AttackPerformResult.Obstructed,
             _context.Target,
             string.Empty,
             0,

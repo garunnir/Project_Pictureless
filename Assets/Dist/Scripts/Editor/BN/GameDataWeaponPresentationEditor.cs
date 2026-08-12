@@ -1,5 +1,5 @@
 // ============================================================
-// GameDataWeaponPresentationEditor — GameData 아이템↔연출 Ensure/Edit
+// GameDataWeaponPresentationEditor — GameData → 비주얼 허브 진입
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
@@ -12,10 +12,8 @@ static class GameDataWeaponPresentationEditor
         "Assets/Dist/SOData/Combat/WeaponPresentations/WeaponPresentationCatalog.asset";
     public const string PresentationsFolder =
         "Assets/Dist/SOData/Combat/WeaponPresentations";
-    public const string ActionVfxDefaultsPath =
-        "Assets/Dist/SOData/Combat/WeaponPresentations/WeaponActionVfxDefaults.asset";
 
-    static bool _foldActionVfxFallback;
+    static bool _foldVisualHub;
     static bool _foldWeaponPresentation;
 
     /// <summary>
@@ -26,52 +24,58 @@ static class GameDataWeaponPresentationEditor
         if (item == null || string.IsNullOrEmpty(item.id))
             return;
 
-        DrawActionVfxFallbackSection();
-        DrawWeaponPresentationBody(item, editable);
+        WeaponPresentationCatalog catalog =
+            AssetDatabase.LoadAssetAtPath<WeaponPresentationCatalog>(CatalogPath);
+
+        DrawVisualHubSection(catalog);
+        DrawWeaponPresentationBody(item, editable, catalog);
     }
 
-    /// <summary>전역 태그 VFX 폴백 진입점 (아이템 전용 아님). 기본 접힘.</summary>
-    public static void DrawActionVfxFallbackSection()
+    /// <summary>허브 SO만 연다. 잎 편집은 Catalog Odin 탭에서.</summary>
+    public static void DrawVisualHubSection(WeaponPresentationCatalog catalog)
     {
-        _foldActionVfxFallback = EditorGUILayout.Foldout(
-            _foldActionVfxFallback,
-            "Action VFX Fallback (global tag defaults)",
+        _foldVisualHub = EditorGUILayout.Foldout(
+            _foldVisualHub,
+            "Visual Hub",
             true,
             EditorStyles.foldoutHeader);
-        if (!_foldActionVfxFallback)
+        if (!_foldVisualHub)
             return;
 
         EditorGUI.indentLevel++;
         EditorGUILayout.HelpBox(
-            "Not item-specific. Empty WeaponPresentation Entry VFX slots fall back here. Not stored in ItemData JSON.",
-            MessageType.Info);
+            "WeaponPresentationCatalog 한곳에서 Pipeline / Tag VFX / 바인딩을 탭·인라인 편집.",
+            MessageType.None);
 
-        WeaponActionVfxDefaults defaults =
-            AssetDatabase.LoadAssetAtPath<WeaponActionVfxDefaults>(ActionVfxDefaultsPath);
+        if (catalog == null)
+        {
+            EditorGUILayout.HelpBox($"Catalog missing: {CatalogPath}", MessageType.Warning);
+            EditorGUI.indentLevel--;
+            return;
+        }
+
         EditorGUI.BeginDisabledGroup(true);
         EditorGUILayout.ObjectField(
-            "Defaults",
-            defaults,
-            typeof(WeaponActionVfxDefaults),
+            "Catalog",
+            catalog,
+            typeof(WeaponPresentationCatalog),
             false);
         EditorGUI.EndDisabledGroup();
 
-        using (new EditorGUILayout.HorizontalScope())
-        {
-            if (defaults != null && GUILayout.Button("Edit Defaults", GUILayout.Width(120)))
-                Selection.activeObject = defaults;
-            else if (defaults == null)
-                EditorGUILayout.HelpBox($"Missing: {ActionVfxDefaultsPath}", MessageType.Warning);
-        }
+        if (GUILayout.Button("Open Visual Hub", GUILayout.Width(140)))
+            Selection.activeObject = catalog;
 
         EditorGUI.indentLevel--;
     }
 
-    static void DrawWeaponPresentationBody(ItemData item, bool editable)
+    static void DrawWeaponPresentationBody(
+        ItemData item,
+        bool editable,
+        WeaponPresentationCatalog catalog)
     {
         _foldWeaponPresentation = EditorGUILayout.Foldout(
             _foldWeaponPresentation,
-            "Weapon Presentation (per item)",
+            "Weapon Presentation (this item)",
             true,
             EditorStyles.foldoutHeader);
         if (!_foldWeaponPresentation)
@@ -79,8 +83,6 @@ static class GameDataWeaponPresentationEditor
 
         EditorGUI.indentLevel++;
 
-        WeaponPresentationCatalog catalog =
-            AssetDatabase.LoadAssetAtPath<WeaponPresentationCatalog>(CatalogPath);
         if (catalog == null)
         {
             EditorGUILayout.HelpBox(

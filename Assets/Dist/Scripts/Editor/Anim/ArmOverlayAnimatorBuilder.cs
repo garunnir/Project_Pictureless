@@ -29,11 +29,12 @@ public static class ArmOverlayAnimatorBuilder
         }
 
         EnsureThinSlotClips();
+        EnsureImpactThinClips();
         EnsureParameters(controller);
         RebuildLayers(controller);
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
-        Debug.Log("[ArmOverlayAnimatorBuilder] Rebuilt thin Hold/Aim/Attack arm layers (no Action params).");
+        Debug.Log("[ArmOverlayAnimatorBuilder] Rebuilt arm + Impact layers.");
     }
 
     static void EnsureThinSlotClips()
@@ -44,6 +45,18 @@ public static class ArmOverlayAnimatorBuilder
             EnsureClipCopy($"HoldSwing_{hand}_Slot", $"Hold_{hand}_Slot");
             EnsureClipCopy($"AimSwing_{hand}_Slot", $"Aim_{hand}_Slot");
             EnsureClipCopy($"AttackSwing_{hand}_Slot", $"Attack_{hand}_Slot");
+        }
+    }
+
+    static void EnsureImpactThinClips()
+    {
+        foreach (ArmImpactKind kindEnum in System.Enum.GetValues(typeof(ArmImpactKind)))
+        {
+            string kind = kindEnum.ToString();
+            string thin = "Impact" + kind + "_Slot";
+            EnsureClipCopy("Impact" + kind + "_Right_Slot", thin);
+            if (AssetDatabase.LoadAssetAtPath<AnimationClip>($"{SlotDir}/{thin}.anim") == null)
+                EnsureClipCopy("Attack_Right_Slot", thin);
         }
     }
 
@@ -90,6 +103,8 @@ public static class ArmOverlayAnimatorBuilder
         EnsureParam(controller, "AttackR", AnimatorControllerParameterType.Trigger);
         EnsureParam(controller, "AttackL", AnimatorControllerParameterType.Trigger);
         EnsureParam(controller, "Attack2H", AnimatorControllerParameterType.Trigger);
+        EnsureParam(controller, "ImpactRecoil", AnimatorControllerParameterType.Trigger);
+        EnsureParam(controller, "ImpactBlocked", AnimatorControllerParameterType.Trigger);
     }
 
     static void RemoveParam(AnimatorController controller, string name)
@@ -126,7 +141,56 @@ public static class ArmOverlayAnimatorBuilder
         AddArmLayer(controller, "RightArm Layer", rightMask, "Right", "AttackR");
         AddArmLayer(controller, "LeftArm Layer", leftMask, "Left", "AttackL");
         AddTwoHandLayer(controller, upperMask);
+        AddImpactLayer(controller);
     }
+
+    static void AddImpactLayer(AnimatorController controller)
+    {
+        controller.AddLayer("Impact Layer");
+        AnimatorControllerLayer[] layers = controller.layers;
+        int index = layers.Length - 1;
+        AnimatorControllerLayer layer = layers[index];
+        layer.defaultWeight = 0f;
+        layer.blendingMode = AnimatorLayerBlendingMode.Override;
+        layer.avatarMask = null;
+        layers[index] = layer;
+        controller.layers = layers;
+
+        AnimatorStateMachine sm = controller.layers[index].stateMachine;
+        ClearStateMachine(sm);
+
+        AnimationClip emptyMotion = null;
+        AnimatorState empty = AddState(sm, "Empty", emptyMotion, new Vector3(200, 0, 0));
+        AnimatorState recoil = AddState(
+            sm,
+            "Recoil",
+            FlatClip("ImpactRecoil_Slot"),
+            new Vector3(420, 0, 0));
+        AnimatorState blocked = AddState(
+            sm,
+            "Blocked",
+            FlatClip("ImpactBlocked_Slot"),
+            new Vector3(420, 120, 0));
+        sm.defaultState = empty;
+
+        AddAttackFrom(empty, recoil, "ImpactRecoil");
+        AddAttackFrom(empty, blocked, "ImpactBlocked");
+        AddAttackFrom(recoil, blocked, "ImpactBlocked");
+        AddAttackFrom(blocked, recoil, "ImpactRecoil");
+        AddExitToEmpty(recoil, empty);
+        AddExitToEmpty(blocked, empty);
+    }
+
+    static void AddExitToEmpty(AnimatorState from, AnimatorState empty)
+    {
+        var t = from.AddTransition(empty);
+        t.hasExitTime = true;
+        t.exitTime = 0.85f;
+        t.duration = 0.05f;
+    }
+
+    static AnimationClip FlatClip(string fileName) =>
+        AssetDatabase.LoadAssetAtPath<AnimationClip>($"{SlotDir}/{fileName}.anim");
 
     static void AddArmLayer(
         AnimatorController controller,

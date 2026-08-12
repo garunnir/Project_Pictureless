@@ -1,35 +1,104 @@
 // ============================================================
-// WeaponPresentationCatalog — itemId → category → Unarmed resolve
+// WeaponPresentationCatalog — 비주얼 허브 + itemId → category → Unarmed resolve
 // ============================================================
 
 using System;
 using Garunnir.Runtime.Gameplay.Data;
+using Sirenix.OdinInspector;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 [CreateAssetMenu(
     fileName = "WeaponPresentationCatalog",
     menuName = "Dist/Combat/Weapon Presentation Catalog")]
 public sealed class WeaponPresentationCatalog : ScriptableObject
 {
+    const string TabAttack = "공격 전·중";
+    const string TabHit = "맞힌 결과";
+    const string TabBind = "무기 바인딩";
+    const string TabMisc = "기타";
+
     [Serializable]
     public sealed class Binding
     {
+        [HorizontalGroup("Row", Width = 0.4f)]
+        [HideLabel]
         public string id;
+
+        [HorizontalGroup("Row")]
+        [HideLabel]
         public WeaponPresentation presentation;
     }
 
-    [SerializeField] Binding[] _byItemId = Array.Empty<Binding>();
-    [SerializeField] Binding[] _byCategoryId = Array.Empty<Binding>();
-    [SerializeField] WeaponPresentation _unarmed;
-    [SerializeField] WeaponActionVfxDefaults _actionVfxDefaults;
+    [InfoBox(
+        "비주얼 보조 허브. 탭에서 잎 SO를 인라인으로 편집한다.\n" +
+        "· 공격 전·중 = Pipeline (동사·Recoil/Blocked)\n" +
+        "· 맞힌 결과 = 태그 hit/miss/tracer\n" +
+        "· 무기 바인딩 = 아이템/카테고리 Presentation",
+        InfoMessageType.None)]
+    [SerializeField, HideInInspector] int _inspectorPad;
+
+    [TabGroup(TabAttack)]
+    [Title("Arm Anim Pipeline", "동사 클립+VFX · Impact 반응", horizontalLine: false)]
+    [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
+    [LabelText("Pipeline")]
+    [SerializeField] ArmAnimSlotCatalog _animPipeline;
+
+    [TabGroup(TabAttack)]
+    [Button("Pipeline 에셋만 선택", ButtonSizes.Medium)]
+    [EnableIf(nameof(_animPipeline))]
+    void SelectPipelineAsset()
+    {
+#if UNITY_EDITOR
+        if (_animPipeline != null)
+            Selection.activeObject = _animPipeline;
+#endif
+    }
+
+    [TabGroup(TabHit)]
+    [Title("Impact Tag VFX", "bash / cut / bullet → hit·miss·tracer", horizontalLine: false)]
+    [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
+    [LabelText("Tag Defaults")]
     [SerializeField] WeaponImpactVfxDefaults _impactVfxDefaults;
+
+    [TabGroup(TabHit)]
+    [Button("Tag VFX 에셋만 선택", ButtonSizes.Medium)]
+    [EnableIf(nameof(_impactVfxDefaults))]
+    void SelectImpactVfxAsset()
+    {
+#if UNITY_EDITOR
+        if (_impactVfxDefaults != null)
+            Selection.activeObject = _impactVfxDefaults;
+#endif
+    }
+
+    [TabGroup(TabBind)]
+    [LabelText("Unarmed")]
+    [SerializeField] WeaponPresentation _unarmed;
+
+    [TabGroup(TabBind)]
+    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "id")]
+    [LabelText("By Item Id")]
+    [SerializeField] Binding[] _byItemId = Array.Empty<Binding>();
+
+    [TabGroup(TabBind)]
+    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "id")]
+    [LabelText("By Category Id")]
+    [SerializeField] Binding[] _byCategoryId = Array.Empty<Binding>();
+
+    [TabGroup(TabMisc)]
     [Tooltip("Attack에 프리팹이 없을 때 spawn_projectile 기본 발사체.")]
+    [LabelText("Default Projectile")]
     [SerializeField] DistProjectile _defaultProjectile;
 
     public WeaponPresentation Unarmed => _unarmed;
-    public WeaponActionVfxDefaults ActionVfxDefaults => _actionVfxDefaults;
+    public ArmAnimSlotCatalog AnimPipeline => _animPipeline;
     public WeaponImpactVfxDefaults ImpactVfxDefaults => _impactVfxDefaults;
     public DistProjectile DefaultProjectile => _defaultProjectile;
+
+    public void SetAnimPipeline(ArmAnimSlotCatalog pipeline) => _animPipeline = pipeline;
 
     public WeaponPresentation Resolve(string itemId, ItemData item)
     {
