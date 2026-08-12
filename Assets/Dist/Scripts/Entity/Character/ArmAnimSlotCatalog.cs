@@ -73,8 +73,8 @@ public sealed class ArmAnimSlotCatalog : ScriptableObject
     }
 
     [InfoBox(
-        "동사·Impact 행 = 클립+VFX. 비주얼 중간 허브는 WeaponPresentationCatalog.\n" +
-        "태그 hit/miss(WeaponImpactVfxDefaults)는 Catalog → Edit Tag VFX.\n" +
+        "동사 행 = Action 클립+VFX. Impact 행 = Reaction(Recoil/Blocked).\n" +
+        "Hit VFX(bash/cut/bullet)는 WeaponImpactVfxDefaults. Catalog → Fallbacks.\n" +
         "동사 추가: WeaponAction(+Mask) → WeaponActionUtil.All → Dist/MCP/Ensure Arm Anim Pipeline.",
         InfoMessageType.None)]
     [SerializeField, HideInInspector] int _inspectorPad;

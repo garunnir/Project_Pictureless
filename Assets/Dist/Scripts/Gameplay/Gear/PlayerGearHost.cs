@@ -35,7 +35,6 @@ public sealed class PlayerGearHost : MonoBehaviour
     public CharacterGearService Service => _service;
     public EquipmentWearState Wear => _service?.Wear;
     public WieldSlots Wield => _service?.Wield;
-    public HandActionBinding HandActions => _service?.HandActions;
     public GearTimedAction Timed => _service?.Timed;
     public WearEnvExposure EnvExposure => _envExposure;
     public BodyTemp BodyTemperature => _bodyTemp;

@@ -23,6 +23,9 @@ public sealed class ItemInstance
     /// <summary>약실 잔여. 발사 SSOT. 메거진 보급과 별개.</summary>
     public int ChamberRounds { get; private set; }
 
+    /// <summary>약실에 들어간 탄 ItemData.id. 잔여 0이면 비움.</summary>
+    public string ChamberAmmoId { get; private set; }
+
     /// <summary>메거진 아이템의 보급 잔여. 약실이 아님.</summary>
     public int SupplyRounds { get; private set; }
 
@@ -33,20 +36,27 @@ public sealed class ItemInstance
         Uid = Guid.NewGuid();
         SelectedAction = null;
         ChamberRounds = 0;
+        ChamberAmmoId = null;
         SupplyRounds = 0;
     }
 
-    public void SetChamberRounds(int rounds) =>
+    public void SetChamberRounds(int rounds)
+    {
         ChamberRounds = Math.Max(0, rounds);
+        if (ChamberRounds <= 0)
+            ChamberAmmoId = null;
+    }
 
     public void SetSupplyRounds(int rounds) =>
         SupplyRounds = Math.Max(0, rounds);
 
-    public bool TryAddChamberRound(int capacity)
+    public bool TryAddChamberRound(int capacity, string ammoId = null)
     {
         if (capacity <= 0 || ChamberRounds >= capacity)
             return false;
         ChamberRounds++;
+        if (!string.IsNullOrEmpty(ammoId))
+            ChamberAmmoId = ammoId;
         return true;
     }
 
@@ -55,6 +65,8 @@ public sealed class ItemInstance
         if (ChamberRounds <= 0)
             return false;
         ChamberRounds--;
+        if (ChamberRounds <= 0)
+            ChamberAmmoId = null;
         return true;
     }
 

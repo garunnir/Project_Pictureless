@@ -1278,11 +1278,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "10mm",
-        "damage": 0,
+        "damage": 34,
+        "pierce": 19,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 50,
         "recoil": 750,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "10mm_casing"
       }
     },
     {
@@ -1302,10 +1308,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "120mm",
-        "damage": 0,
+        "damage": 40,
+        "pierce": 10,
+        "damage_type": "stab",
         "range": 80,
         "dispersion": 5,
-        "recoil": 30
+        "recoil": 30,
+        "effects": [
+          "EXPLOSIVE_HUGE",
+          "TRAIL"
+        ]
       }
     },
     {
@@ -1327,7 +1339,9 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "12mm",
-        "damage": 0,
+        "damage": 50,
+        "pierce": 40,
+        "damage_type": "bullet",
         "dispersion": 45,
         "recoil": 100,
         "count": 20
@@ -1532,10 +1546,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "20x66mm",
-        "damage": 0,
+        "damage": 6,
+        "damage_type": "bash",
         "range": 12,
         "recoil": 1000,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "NEVER_MISFIRES",
+          "LARGE_BEANBAG",
+          "NOGIB"
+        ]
       }
     },
     {
@@ -1556,10 +1578,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "20x66mm",
-        "damage": 0,
+        "damage": 38,
+        "pierce": 36,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 2500,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "RECYCLED"
+        ]
       }
     },
     {
@@ -1580,10 +1609,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "20x66mm",
-        "damage": 0,
+        "damage": 54,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "RECYCLED"
+        ]
       }
     },
     {
@@ -1604,10 +1639,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "20x66mm",
-        "damage": 0,
+        "damage": 43,
+        "pierce": 21,
+        "damage_type": "bullet",
         "range": 24,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ]
       }
     },
     {
@@ -1630,11 +1671,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "20x66mm",
-        "damage": 0,
+        "damage": 16,
+        "pierce": 4,
+        "damage_type": "bullet",
         "range": 20,
         "dispersion": 120,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "EXPLOSIVE_TINY",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -1657,11 +1705,15 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "20x66mm",
-        "damage": 0,
+        "damage": 16,
+        "damage_type": "bullet",
         "range": 20,
         "dispersion": 200,
         "recoil": 100,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "NO_EMBED"
+        ]
       }
     },
     {
@@ -1684,10 +1736,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "20x66mm",
-        "damage": 0,
+        "damage": 42,
+        "pierce": 36,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 2500,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -1710,10 +1769,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "20x66mm",
-        "damage": 0,
+        "damage": 12,
+        "pierce": 5,
+        "damage_type": "bullet",
         "range": 24,
         "recoil": 2500,
-        "count": 5
+        "count": 5,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "FRAG_SMALL"
+        ]
       }
     },
     {
@@ -1736,10 +1802,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "20x66mm",
-        "damage": 0,
+        "damage": 60,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 2500,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "NEVER_MISFIRES",
+          "INCENDIARY"
+        ]
       }
     },
     {
@@ -1762,10 +1835,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "20x66mm",
-        "damage": 0,
+        "damage": 60,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -1788,10 +1867,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "20x66mm",
-        "damage": 0,
+        "damage": 48,
+        "pierce": 21,
+        "damage_type": "bullet",
         "range": 24,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -1814,11 +1899,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "223",
-        "damage": 0,
+        "damage": 42,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 36,
         "dispersion": 30,
         "recoil": 1500,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "223_casing"
       }
     },
     {
@@ -1911,11 +2002,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "22",
-        "damage": 0,
-        "range": 7,
+        "damage": 8,
+        "pierce": 9,
+        "damage_type": "bullet",
+        "range": 8,
         "dispersion": 72,
         "recoil": 39,
-        "count": 100
+        "count": 100,
+        "effects": [
+          "COOKOFF",
+          "NOGIB"
+        ],
+        "casing": "22_casing"
       }
     },
     {
@@ -1939,11 +2037,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "22",
-        "damage": 0,
+        "damage": 20,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 60,
         "recoil": 225,
-        "count": 80
+        "count": 80,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "22_casing"
       }
     },
     {
@@ -1979,11 +2082,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "22",
-        "damage": 0,
+        "damage": 16,
+        "pierce": 9,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 60,
         "recoil": 150,
-        "count": 80
+        "count": 80,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "22_casing"
       }
     },
     {
@@ -2007,11 +2116,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "22",
-        "damage": 0,
+        "damage": 20,
+        "damage_type": "bullet",
         "range": 7,
         "dispersion": 0,
         "recoil": 75,
-        "count": 100
+        "count": 100,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "NOGIB"
+        ],
+        "casing": "22_casing"
       }
     },
     {
@@ -2084,11 +2200,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "270win",
-        "damage": 0,
+        "damage": 60,
+        "pierce": 26,
+        "damage_type": "bullet",
         "range": 65,
         "dispersion": 10,
         "recoil": 3800,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ],
+        "casing": "270win_casing"
       }
     },
     {
@@ -2313,11 +2436,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "3006",
-        "damage": 0,
+        "damage": 62,
+        "pierce": 27,
+        "damage_type": "bullet",
         "range": 61,
         "dispersion": 20,
         "recoil": 3800,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "3006_casing"
       }
     },
     {
@@ -2378,11 +2507,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "3006",
-        "damage": 0,
+        "damage": 62,
+        "pierce": 27,
+        "damage_type": "bullet",
         "range": 61,
         "dispersion": 20,
         "recoil": 3800,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "INCENDIARY"
+        ],
+        "casing": "3006_casing"
       }
     },
     {
@@ -2405,11 +2541,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "3006",
-        "damage": 0,
+        "damage": 54,
+        "pierce": 46,
+        "damage_type": "bullet",
         "range": 61,
         "dispersion": 20,
         "recoil": 3800,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "3006_casing"
       }
     },
     {
@@ -2447,11 +2589,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "300",
-        "damage": 0,
+        "damage": 70,
+        "pierce": 17,
+        "damage_type": "bullet",
         "range": 65,
         "dispersion": 15,
         "recoil": 4000,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "300_casing"
       }
     },
     {
@@ -2474,11 +2622,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "300blk",
-        "damage": 0,
+        "damage": 43,
+        "pierce": 19,
+        "damage_type": "bullet",
         "range": 45,
         "dispersion": 30,
         "recoil": 2000,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "300blk_casing"
       }
     },
     {
@@ -2516,11 +2670,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "300blk",
-        "damage": 0,
+        "damage": 26,
+        "pierce": 19,
+        "damage_type": "bullet",
         "range": 40,
         "dispersion": 30,
         "recoil": 1700,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "300blk_casing"
       }
     },
     {
@@ -2543,11 +2703,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "308",
-        "damage": 0,
+        "damage": 55,
+        "pierce": 24,
+        "damage_type": "bullet",
         "range": 65,
         "dispersion": 15,
         "recoil": 3000,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "308_casing"
       }
     },
     {
@@ -2662,11 +2828,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "32",
-        "damage": 0,
+        "damage": 21,
+        "pierce": 12,
+        "damage_type": "bullet",
         "range": 12,
         "dispersion": 70,
         "recoil": 150,
-        "count": 80
+        "count": 80,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "32_casing"
       }
     },
     {
@@ -2719,11 +2891,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "357mag",
-        "damage": 0,
+        "damage": 34,
+        "pierce": 19,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 30,
         "recoil": 700,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "357mag_casing"
       }
     },
     {
@@ -2746,11 +2924,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "357mag",
-        "damage": 0,
+        "damage": 42,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 30,
         "recoil": 700,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "357mag_casing"
       }
     },
     {
@@ -2788,11 +2971,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "357sig",
-        "damage": 0,
+        "damage": 34,
+        "pierce": 19,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 30,
         "recoil": 600,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "357sig_casing"
       }
     },
     {
@@ -2815,11 +3004,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "357sig",
-        "damage": 0,
+        "damage": 42,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 30,
         "recoil": 600,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "357sig_casing"
       }
     },
     {
@@ -2853,11 +3047,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "36paper",
-        "damage": 0,
+        "damage": 25,
+        "pierce": 7,
+        "damage_type": "bullet",
         "range": 15,
         "dispersion": 80,
         "recoil": 210,
-        "count": 25
+        "count": 25,
+        "effects": [
+          "COOKOFF",
+          "MUZZLE_SMOKE",
+          "BLACKPOWDER"
+        ]
       }
     },
     {
@@ -2880,11 +3081,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "380",
-        "damage": 0,
+        "damage": 21,
+        "pierce": 12,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 60,
         "recoil": 300,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "380_casing"
       }
     },
     {
@@ -2907,11 +3114,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "380",
-        "damage": 0,
+        "damage": 26,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 60,
         "recoil": 300,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "380_casing"
       }
     },
     {
@@ -2949,11 +3161,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "380",
-        "damage": 0,
+        "damage": 30,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 45,
         "recoil": 600,
-        "count": 25
+        "count": 25,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "380_casing"
       }
     },
     {
@@ -2991,11 +3208,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "38",
-        "damage": 0,
+        "damage": 24,
+        "pierce": 14,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 30,
         "recoil": 250,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "38_casing"
       }
     },
     {
@@ -3018,11 +3241,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "38",
-        "damage": 0,
+        "damage": 30,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 30,
         "recoil": 250,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "38_casing"
       }
     },
     {
@@ -3117,11 +3345,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "38super",
-        "damage": 0,
+        "damage": 40,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 30,
         "recoil": 250,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "38super_casing"
       }
     },
     {
@@ -3159,11 +3392,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "38super",
-        "damage": 0,
+        "damage": 32,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 30,
         "recoil": 250,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "38super_casing"
       }
     },
     {
@@ -3225,11 +3464,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40",
-        "damage": 0,
+        "damage": 28,
+        "pierce": 16,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 50,
         "recoil": 560,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "40_casing"
       }
     },
     {
@@ -3300,11 +3545,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x46mm",
-        "damage": 0,
+        "damage": 80,
+        "damage_type": "bullet",
         "range": 60,
         "dispersion": 30,
         "recoil": 225,
-        "count": 6
+        "count": 6,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "TRAIL",
+          "NO_EMBED"
+        ]
       }
     },
     {
@@ -3327,11 +3579,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x46mm",
-        "damage": 0,
+        "damage": 80,
+        "damage_type": "bullet",
         "range": 60,
         "dispersion": 30,
         "recoil": 225,
-        "count": 6
+        "count": 6,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "FLASHBANG"
+        ]
       }
     },
     {
@@ -3378,11 +3636,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x46mm",
-        "damage": 0,
+        "damage": 80,
+        "damage_type": "bullet",
         "range": 60,
         "dispersion": 30,
         "recoil": 225,
-        "count": 6
+        "count": 6,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "NAPALM"
+        ]
       }
     },
     {
@@ -3417,11 +3681,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x46mm",
-        "damage": 0,
+        "damage": 130,
+        "damage_type": "bullet",
         "range": 60,
         "dispersion": 30,
         "recoil": 875,
-        "count": 6
+        "count": 6,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "LARGE_BEANBAG"
+        ]
       }
     },
     {
@@ -3444,11 +3714,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x46mm",
-        "damage": 0,
+        "damage": 80,
+        "damage_type": "bullet",
         "range": 60,
         "dispersion": 30,
         "recoil": 225,
-        "count": 6
+        "count": 6,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "TRAIL",
+          "NO_EMBED"
+        ]
       }
     },
     {
@@ -3495,11 +3772,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40",
-        "damage": 0,
+        "damage": 35,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 50,
         "recoil": 560,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "40_casing"
       }
     },
     {
@@ -3522,11 +3804,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x46mm",
-        "damage": 0,
+        "damage": 120,
+        "damage_type": "bullet",
         "range": 10,
         "dispersion": 30,
         "recoil": 1000,
-        "count": 6
+        "count": 6,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "SHOT"
+        ],
+        "casing": "40x46mm_m118_casing"
       }
     },
     {
@@ -3561,11 +3850,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x46mm",
-        "damage": 0,
+        "damage": 84,
+        "pierce": 72,
+        "damage_type": "bullet",
         "range": 10,
         "dispersion": 30,
         "recoil": 1000,
-        "count": 6
+        "count": 6,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "SHOT"
+        ],
+        "casing": "40x46mm_m118_casing"
       }
     },
     {
@@ -3588,11 +3885,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x46mm",
-        "damage": 0,
+        "damage": 84,
+        "pierce": 72,
+        "damage_type": "bullet",
         "range": 10,
         "dispersion": 30,
         "recoil": 1000,
-        "count": 6
+        "count": 6,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "SHOT"
+        ],
+        "casing": "40x46mm_m199_casing"
       }
     },
     {
@@ -3615,11 +3920,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x46mm",
-        "damage": 0,
+        "damage": 20,
+        "damage_type": "bash",
         "range": 60,
         "dispersion": 30,
         "recoil": 225,
-        "count": 6
+        "count": 6,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "LARGE_BEANBAG"
+        ],
+        "casing": "40x46mm_m212_casing"
       }
     },
     {
@@ -3702,11 +4014,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x46mm",
-        "damage": 0,
+        "damage": 200,
+        "pierce": 30,
+        "damage_type": "bullet",
         "range": 60,
         "dispersion": 30,
         "recoil": 225,
-        "count": 6
+        "count": 6,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "FRAG"
+        ],
+        "casing": "40x46mm_m118_casing"
       }
     },
     {
@@ -3729,11 +4049,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x46mm",
-        "damage": 0,
+        "damage": 120,
+        "damage_type": "bullet",
         "range": 12,
         "dispersion": 30,
         "recoil": 1000,
-        "count": 6
+        "count": 6,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "SHOT"
+        ],
+        "casing": "40x46mm_m199_casing"
       }
     },
     {
@@ -3756,11 +4083,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x46mm",
-        "damage": 0,
+        "damage": 15,
+        "damage_type": "bullet",
         "range": 60,
         "dispersion": 30,
         "recoil": 225,
-        "count": 6
+        "count": 6,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "NO_EMBED"
+        ],
+        "casing": "40x46mm_m195_casing"
       }
     },
     {
@@ -3783,11 +4117,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x46mm",
-        "damage": 0,
+        "damage": 96,
+        "pierce": 42,
+        "damage_type": "bullet",
         "range": 10,
         "dispersion": 30,
         "recoil": 1000,
-        "count": 6
+        "count": 6,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ],
+        "casing": "40x46mm_m118_casing"
       }
     },
     {
@@ -3810,11 +4151,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x46mm",
-        "damage": 0,
+        "damage": 96,
+        "pierce": 42,
+        "damage_type": "bullet",
         "range": 10,
         "dispersion": 30,
         "recoil": 1000,
-        "count": 6
+        "count": 6,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ],
+        "casing": "40x46mm_m199_casing"
       }
     },
     {
@@ -3837,11 +4185,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x53mm",
-        "damage": 0,
+        "damage": 130,
+        "damage_type": "bullet",
         "range": 10,
         "dispersion": 30,
         "recoil": 1200,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "SHOT"
+        ],
+        "casing": "40x53mm_m169_casing"
       }
     },
     {
@@ -3876,11 +4231,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x53mm",
-        "damage": 0,
+        "damage": 91,
+        "pierce": 78,
+        "damage_type": "bullet",
         "range": 60,
         "dispersion": 30,
         "recoil": 1000,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "SHOT"
+        ],
+        "casing": "40x53mm_m169_casing"
       }
     },
     {
@@ -3918,11 +4281,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x53mm",
-        "damage": 0,
+        "damage": 250,
+        "pierce": 45,
+        "damage_type": "bullet",
         "range": 60,
         "dispersion": 30,
         "recoil": 225,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "FRAG"
+        ],
+        "casing": "40x53mm_m169_casing"
       }
     },
     {
@@ -3945,11 +4316,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40x53mm",
-        "damage": 0,
+        "damage": 104,
+        "pierce": 46,
+        "damage_type": "bullet",
         "range": 10,
         "dispersion": 30,
         "recoil": 1200,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ],
+        "casing": "40x53mm_m169_casing"
       }
     },
     {
@@ -3972,10 +4350,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "410shot",
-        "damage": 0,
+        "damage": 30,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 1350,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT"
+        ],
+        "casing": "410shot_hull",
+        "loudness": 90
       }
     },
     {
@@ -4050,11 +4435,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "44paper",
-        "damage": 0,
+        "damage": 33,
+        "pierce": 9,
+        "damage_type": "bullet",
         "range": 18,
         "dispersion": 70,
         "recoil": 580,
-        "count": 25
+        "count": 25,
+        "effects": [
+          "COOKOFF",
+          "MUZZLE_SMOKE",
+          "BLACKPOWDER"
+        ]
       }
     },
     {
@@ -4077,11 +4469,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "44",
-        "damage": 0,
+        "damage": 40,
+        "pierce": 23,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 30,
         "recoil": 1570,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "44_casing"
       }
     },
     {
@@ -4104,11 +4502,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "44",
-        "damage": 0,
+        "damage": 50,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 30,
         "recoil": 1570,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "44_casing"
       }
     },
     {
@@ -4131,11 +4534,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "454",
-        "damage": 0,
+        "damage": 48,
+        "pierce": 8,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 30,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "454_casing"
       }
     },
     {
@@ -4238,11 +4647,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "4570",
-        "damage": 0,
+        "damage": 43,
+        "damage_type": "bullet",
         "range": 40,
         "dispersion": 20,
         "recoil": 3400,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "4570_casing"
       }
     },
     {
@@ -4265,11 +4679,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "4570",
-        "damage": 0,
+        "damage": 71,
+        "pierce": 25,
+        "damage_type": "bullet",
         "range": 50,
         "dispersion": 20,
         "recoil": 4600,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "4570_casing"
       }
     },
     {
@@ -4292,11 +4712,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "4570",
-        "damage": 0,
+        "damage": 57,
+        "pierce": 25,
+        "damage_type": "bullet",
         "range": 48,
         "dispersion": 20,
         "recoil": 4300,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "4570_casing"
       }
     },
     {
@@ -4319,11 +4745,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "45",
-        "damage": 0,
+        "damage": 33,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 50,
         "recoil": 600,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "45_casing"
       }
     },
     {
@@ -4361,11 +4793,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "45",
-        "damage": 0,
+        "damage": 41,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 50,
         "recoil": 600,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "45_casing"
       }
     },
     {
@@ -4388,11 +4825,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "45",
-        "damage": 0,
+        "damage": 41,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 40,
         "recoil": 1200,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "45_casing"
       }
     },
     {
@@ -4430,11 +4873,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "45colt",
-        "damage": 0,
+        "damage": 38,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 50,
         "recoil": 600,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "45colt_casing"
       }
     },
     {
@@ -4472,11 +4920,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "460",
-        "damage": 0,
+        "damage": 44,
+        "pierce": 8,
+        "damage_type": "bullet",
         "range": 15,
         "dispersion": 30,
-        "recoil": 1491,
-        "count": 20
+        "recoil": 1492,
+        "count": 20,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "460_casing"
       }
     },
     {
@@ -4499,11 +4953,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "460",
-        "damage": 0,
+        "damage": 48,
+        "damage_type": "bullet",
         "range": 15,
         "dispersion": 30,
-        "recoil": 1491,
-        "count": 20
+        "recoil": 1492,
+        "count": 20,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "460_casing"
       }
     },
     {
@@ -4538,11 +4997,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "46",
-        "damage": 0,
+        "damage": 24,
+        "pierce": 24,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 40,
         "recoil": 90,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "46mm_casing"
       }
     },
     {
@@ -4580,11 +5045,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "500",
-        "damage": 0,
+        "damage": 55,
+        "pierce": 8,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 30,
         "recoil": 3000,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "500_casing"
       }
     },
     {
@@ -4660,11 +5131,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "50",
-        "damage": 0,
+        "damage": 100,
+        "pierce": 44,
+        "damage_type": "bullet",
         "range": 110,
         "dispersion": 310,
         "recoil": 5000,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "INCENDIARY"
+        ],
+        "casing": "50_casing"
       }
     },
     {
@@ -4687,11 +5164,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "50",
-        "damage": 0,
+        "damage": 150,
+        "pierce": 69,
+        "damage_type": "bullet",
         "range": 110,
         "dispersion": 100,
         "recoil": 5000,
-        "count": 25
+        "count": 25,
+        "effects": [
+          "INCENDIARY",
+          "EXPLOSIVE_BIG"
+        ],
+        "casing": "50_casing"
       }
     },
     {
@@ -4714,11 +5198,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "50",
-        "damage": 0,
+        "damage": 100,
+        "pierce": 44,
+        "damage_type": "bullet",
         "range": 110,
         "dispersion": 150,
         "recoil": 5000,
-        "count": 25
+        "count": 25,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ],
+        "casing": "50_casing"
       }
     },
     {
@@ -4741,11 +5232,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "50",
-        "damage": 0,
+        "damage": 102,
+        "pierce": 40,
+        "damage_type": "bullet",
         "range": 110,
         "dispersion": 100,
         "recoil": 5000,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ],
+        "casing": "50_casing"
       }
     },
     {
@@ -4768,11 +5266,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "50",
-        "damage": 0,
+        "damage": 88,
+        "pierce": 75,
+        "damage_type": "bullet",
         "range": 110,
         "dispersion": 600,
         "recoil": 5000,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ],
+        "casing": "50_casing"
       }
     },
     {
@@ -4795,11 +5300,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "545x39",
-        "damage": 0,
+        "damage": 40,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 37,
         "dispersion": 30,
         "recoil": 1400,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "545_casing"
       }
     },
     {
@@ -4822,11 +5333,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "545x39",
-        "damage": 0,
+        "damage": 35,
+        "pierce": 30,
+        "damage_type": "bullet",
         "range": 37,
         "dispersion": 30,
         "recoil": 1400,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "545_casing"
       }
     },
     {
@@ -4864,11 +5381,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "223",
-        "damage": 0,
+        "damage": 37,
+        "pierce": 32,
+        "damage_type": "bullet",
         "range": 36,
         "dispersion": 20,
         "recoil": 1650,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ],
+        "casing": "223_casing"
       }
     },
     {
@@ -4891,11 +5415,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "223",
-        "damage": 0,
+        "damage": 37,
+        "pierce": 32,
+        "damage_type": "bullet",
         "range": 36,
         "dispersion": 20,
         "recoil": 1650,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "INCENDIARY"
+        ],
+        "casing": "223_casing"
       }
     },
     {
@@ -4967,11 +5499,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "57",
-        "damage": 0,
+        "damage": 26,
+        "pierce": 26,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 40,
         "recoil": 90,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "57mm_casing"
       }
     },
     {
@@ -5077,11 +5615,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "5x50",
-        "damage": 0,
+        "damage": 30,
+        "pierce": 26,
+        "damage_type": "bullet",
         "range": 60,
         "dispersion": 60,
         "recoil": 400,
-        "count": 100
+        "count": 100,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ],
+        "casing": "5x50_hull"
       }
     },
     {
@@ -5105,11 +5650,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "5x50",
-        "damage": 0,
+        "damage": 38,
+        "pierce": 39,
+        "damage_type": "bullet",
         "range": 50,
         "dispersion": 90,
         "recoil": 600,
-        "count": 100
+        "count": 100,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ],
+        "casing": "5x50_hull"
       }
     },
     {
@@ -5131,10 +5683,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "66mm",
-        "damage": 0,
+        "damage": 30,
+        "damage_type": "bullet",
         "range": 80,
         "dispersion": 30,
-        "recoil": 225
+        "recoil": 225,
+        "effects": [
+          "COOKOFF",
+          "EXPLOSIVE_BIG",
+          "TRAIL"
+        ]
       }
     },
     {
@@ -5157,11 +5715,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "700nx",
-        "damage": 0,
+        "damage": 90,
+        "pierce": 39,
+        "damage_type": "bullet",
         "range": 42,
         "dispersion": 15,
         "recoil": 12100,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "700nx_casing"
       }
     },
     {
@@ -5237,11 +5801,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "762x25",
-        "damage": 0,
+        "damage": 37,
+        "pierce": 16,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 120,
         "recoil": 540,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "762_25_casing"
       }
     },
     {
@@ -5279,11 +5849,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "762x25",
-        "damage": 0,
+        "damage": 43,
+        "pierce": 16,
+        "damage_type": "bullet",
         "range": 15,
         "dispersion": 120,
         "recoil": 756,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "762_25_casing"
       }
     },
     {
@@ -5306,11 +5882,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "762x25",
-        "damage": 0,
+        "damage": 32,
+        "pierce": 32,
+        "damage_type": "bullet",
         "range": 12,
         "dispersion": 120,
         "recoil": 270,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "762_25_casing"
       }
     },
     {
@@ -5333,11 +5915,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "308",
-        "damage": 0,
+        "damage": 48,
+        "pierce": 41,
+        "damage_type": "bullet",
         "range": 65,
         "dispersion": 5,
         "recoil": 3300,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ],
+        "casing": "762_51_casing"
       }
     },
     {
@@ -5375,11 +5964,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "308",
-        "damage": 0,
+        "damage": 48,
+        "pierce": 41,
+        "damage_type": "bullet",
         "range": 65,
         "dispersion": 5,
         "recoil": 3300,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "INCENDIARY"
+        ],
+        "casing": "762_51_casing"
       }
     },
     {
@@ -5402,11 +5999,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "762R",
-        "damage": 0,
+        "damage": 54,
+        "pierce": 24,
+        "damage_type": "bullet",
         "range": 75,
         "dispersion": 15,
         "recoil": 2650,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "762R_casing"
       }
     },
     {
@@ -5444,11 +6047,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "762",
-        "damage": 0,
+        "damage": 45,
+        "pierce": 20,
+        "damage_type": "bullet",
         "range": 30,
         "dispersion": 35,
         "recoil": 2036,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ],
+        "casing": "762_casing"
       }
     },
     {
@@ -5471,11 +6081,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "762",
-        "damage": 0,
+        "damage": 49,
+        "pierce": 22,
+        "damage_type": "bullet",
         "range": 30,
         "dispersion": 35,
         "recoil": 2036,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ],
+        "casing": "762_casing"
       }
     },
     {
@@ -5521,11 +6138,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "84x246mm",
-        "damage": 0,
+        "damage": 60,
+        "pierce": 10,
+        "damage_type": "bullet",
         "range": 120,
         "dispersion": 60,
         "recoil": 45,
-        "count": 4
+        "count": 4,
+        "effects": [
+          "COOKOFF",
+          "EXPLOSIVE_BIG",
+          "FRAG",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -5548,11 +6173,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "84x246mm",
-        "damage": 0,
+        "damage": 30,
+        "pierce": 10,
+        "damage_type": "bullet",
         "range": 100,
         "dispersion": 75,
         "recoil": 60,
-        "count": 4
+        "count": 4,
+        "effects": [
+          "COOKOFF",
+          "EXPLOSIVE_HUGE",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -5575,11 +6207,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "84x246mm",
-        "damage": 0,
+        "damage": 60,
+        "pierce": 10,
+        "damage_type": "bullet",
         "range": 140,
         "dispersion": 30,
         "recoil": 45,
-        "count": 4
+        "count": 4,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "SMOKE_BIG"
+        ]
       }
     },
     {
@@ -5600,11 +6239,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "8x40mm",
-        "damage": 0,
+        "damage": 50,
+        "pierce": 3,
+        "damage_type": "bullet",
         "range": 42,
         "dispersion": 82,
         "recoil": 2200,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "RECYCLED"
+        ]
       }
     },
     {
@@ -5639,11 +6283,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "8x40mm",
-        "damage": 0,
+        "damage": 45,
+        "pierce": 25,
+        "damage_type": "bullet",
         "range": 42,
         "dispersion": 75,
         "recoil": 2200,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -5664,7 +6313,9 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "8x40mm",
-        "damage": 0,
+        "damage": 22,
+        "pierce": 12,
+        "damage_type": "bullet",
         "range": 42,
         "dispersion": 90,
         "recoil": 1100,
@@ -5703,11 +6354,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "8x40mm",
-        "damage": 0,
+        "damage": 49,
+        "pierce": 59,
+        "damage_type": "bullet",
         "range": 42,
         "dispersion": 112,
         "recoil": 3300,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -5730,11 +6386,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "8x40mm",
-        "damage": 0,
+        "damage": 45,
+        "pierce": 25,
+        "damage_type": "bullet",
         "range": 42,
         "dispersion": 60,
         "recoil": 2200,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "NEVER_MISFIRES",
+          "INCENDIARY"
+        ]
       }
     },
     {
@@ -5757,11 +6419,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "8x40mm",
-        "damage": 0,
+        "damage": 56,
+        "pierce": 3,
+        "damage_type": "bullet",
         "range": 42,
         "dispersion": 75,
         "recoil": 2200,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -6039,11 +6706,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9mm",
-        "damage": 0,
+        "damage": 34,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 60,
         "recoil": 500,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "9mm_casing"
       }
     },
     {
@@ -6066,11 +6738,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9mm",
-        "damage": 0,
+        "damage": 34,
+        "pierce": 15,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 45,
         "recoil": 1000,
-        "count": 25
+        "count": 25,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "9mm_casing"
       }
     },
     {
@@ -6093,11 +6771,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9mm",
-        "damage": 0,
+        "damage": 36,
+        "pierce": 17,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 30,
         "recoil": 1500,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "9mm_casing"
       }
     },
     {
@@ -6147,11 +6831,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9mm",
-        "damage": 0,
+        "damage": 27,
+        "pierce": 15,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 60,
         "recoil": 500,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "9mm_casing"
       }
     },
     {
@@ -6174,11 +6864,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9x18",
-        "damage": 0,
+        "damage": 21,
+        "pierce": 12,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 60,
         "recoil": 300,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "9x18mm_casing"
       }
     },
     {
@@ -6201,11 +6897,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9x18",
-        "damage": 0,
+        "damage": 25,
+        "pierce": 12,
+        "damage_type": "bullet",
         "range": 15,
         "dispersion": 50,
         "recoil": 330,
-        "count": 25
+        "count": 25,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "9x18mm_casing"
       }
     },
     {
@@ -6243,11 +6945,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9x18",
-        "damage": 0,
+        "damage": 18,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 60,
         "recoil": 300,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "9x18mm_casing"
       }
     },
     {
@@ -6935,10 +7643,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "RPG-7",
-        "damage": 0,
+        "damage": 30,
+        "damage_type": "bullet",
         "range": 60,
         "dispersion": 75,
-        "recoil": 450
+        "recoil": 450,
+        "effects": [
+          "COOKOFF",
+          "EXPLOSIVE_BIG",
+          "TRAIL",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -6960,10 +7675,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "RPG-7",
-        "damage": 0,
+        "damage": 10,
+        "pierce": 10,
+        "damage_type": "bullet",
         "range": 60,
         "dispersion": 50,
-        "recoil": 350
+        "recoil": 350,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES",
+          "FRAG_BIG"
+        ]
       }
     },
     {
@@ -6985,10 +7707,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "RPG-7",
-        "damage": 0,
+        "damage": 30,
+        "damage_type": "bullet",
         "range": 60,
         "dispersion": 75,
-        "recoil": 450
+        "recoil": 450,
+        "effects": [
+          "COOKOFF",
+          "EXPLOSIVE",
+          "FRAG",
+          "TRAIL",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -7010,10 +7740,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "RPG-7",
-        "damage": 0,
+        "damage": 10,
+        "pierce": 10,
+        "damage_type": "bullet",
         "range": 60,
         "dispersion": 50,
-        "recoil": 450
+        "recoil": 450,
+        "effects": [
+          "COOKOFF",
+          "EXPLOSIVE",
+          "TRAIL",
+          "NEVER_MISFIRES",
+          "PYROPHORIC"
+        ]
       }
     },
     {
@@ -7033,10 +7772,15 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "pebble",
-        "damage": 0,
+        "damage": 1,
+        "damage_type": "bash",
         "range": 20,
         "dispersion": 15,
-        "count": 7
+        "count": 7,
+        "effects": [
+          "NEVER_MISFIRES"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -7122,7 +7866,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 380,
         "durability": 6,
         "clip_size": 9
@@ -7485,7 +8229,7 @@
       "has_durability": true,
       "gun": {
         "skill": "rifle",
-        "ranged_damage": 0,
+        "ranged_damage": 4,
         "range": 100,
         "dispersion": 1000,
         "durability": 10
@@ -7798,7 +8542,7 @@
         "ammo": [
           "223"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 150,
         "durability": 8
       }
@@ -7825,7 +8569,7 @@
         "ammo": [
           "300blk"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 150,
         "durability": 8
       }
@@ -8463,7 +9207,7 @@
         "ammo": [
           "fishspear"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 12,
         "range": 2,
         "dispersion": 105,
         "durability": 8,
@@ -9405,7 +10149,7 @@
         "ammo": [
           "22"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 4,
         "dispersion": 280,
         "durability": 6
       }
@@ -11045,7 +11789,7 @@
         "ammo": [
           "308"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 150,
         "durability": 7
       }
@@ -11173,7 +11917,7 @@
         "ammo": [
           "223"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -9,
         "range": -6,
         "dispersion": 380,
         "durability": 6
@@ -12403,9 +13147,14 @@
       "ammo": {
         "ammo_type": "arrow",
         "damage": 0,
+        "damage_type": "stab",
         "range": 4,
         "dispersion": 50,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_30"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12428,8 +13177,13 @@
       "ammo": {
         "ammo_type": "arrow",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 285,
-        "count": 5
+        "count": 5,
+        "effects": [
+          "EXPLOSIVE_SMALL"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12464,8 +13218,14 @@
       "ammo": {
         "ammo_type": "arrow",
         "damage": 0,
+        "pierce": 5,
+        "damage_type": "stab",
         "dispersion": 150,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_30"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12499,8 +13259,13 @@
       "ammo": {
         "ammo_type": "arrow",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 250,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_2"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12522,8 +13287,13 @@
       "ammo": {
         "ammo_type": "arrow",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 285,
-        "count": 5
+        "count": 5,
+        "effects": [
+          "IGNITE"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12558,8 +13328,14 @@
       "ammo": {
         "ammo_type": "arrow",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 150,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_35",
+          "NOGIB"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12593,8 +13369,13 @@
       "ammo": {
         "ammo_type": "arrow",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 150,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_6"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12619,7 +13400,11 @@
         "ammo_type": "arrow",
         "range": 2,
         "dispersion": 75,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_35"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12643,9 +13428,15 @@
       "ammo": {
         "ammo_type": "arrow",
         "damage": 0,
+        "pierce": 5,
+        "damage_type": "stab",
         "range": 2,
         "dispersion": 75,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_40"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12679,8 +13470,13 @@
       "ammo": {
         "ammo_type": "arrow",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 100,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_20"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12704,9 +13500,15 @@
       "ammo": {
         "ammo_type": "arrow",
         "damage": 0,
+        "damage_type": "stab",
         "range": 2,
         "dispersion": 75,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_45",
+          "NOGIB"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12730,8 +13532,14 @@
       "ammo": {
         "ammo_type": "arrow",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 250,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_35",
+          "BEANBAG"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12765,8 +13573,14 @@
       "ammo": {
         "ammo_type": "arrow",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 150,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_10",
+          "NOGIB"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12790,7 +13604,11 @@
       "ammo": {
         "ammo_type": "arrow",
         "dispersion": 110,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_25"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12813,8 +13631,13 @@
       "ammo": {
         "ammo_type": "arrow",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 150,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_8"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -12905,7 +13728,7 @@
         "ammo": [
           "50"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -5,
         "range": 115,
         "dispersion": 80,
         "durability": 7,
@@ -12982,7 +13805,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -6,
         "dispersion": 900,
         "durability": 6,
         "clip_size": 1,
@@ -13030,9 +13853,15 @@
       "bashing": 1,
       "ammo": {
         "ammo_type": "atgm",
-        "damage": 0,
+        "damage": 30,
+        "damage_type": "bullet",
         "range": 100,
-        "recoil": 6000
+        "recoil": 6000,
+        "effects": [
+          "EXPLOSIVE_HUGE",
+          "NEVER_MISFIRES"
+        ],
+        "casing": "atgm_spent"
       }
     },
     {
@@ -13623,9 +14452,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "avgas",
-        "damage": 0,
+        "damage": 5,
+        "pierce": 5,
+        "damage_type": "heat",
         "range": 4,
-        "count": 250
+        "count": 250,
+        "effects": [
+          "FLAME",
+          "STREAM",
+          "INCENDIARY",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -14957,9 +15794,15 @@
       "cutting": 2,
       "ammo": {
         "ammo_type": "barb",
-        "damage": 0,
+        "damage": 5,
+        "pierce": 5,
+        "damage_type": "stab",
         "dispersion": 120,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "PARALYZEPOISON"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -15545,7 +16388,10 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "battery",
-        "count": 100
+        "count": 100,
+        "effects": [
+          "COOKOFF"
+        ]
       }
     },
     {
@@ -15936,9 +16782,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "BB",
-        "damage": 0,
+        "damage": 2,
+        "damage_type": "bullet",
         "dispersion": 100,
-        "count": 500
+        "count": 500,
+        "effects": [
+          "NOGIB",
+          "NEVER_MISFIRES",
+          "NON-FOULING"
+        ],
+        "loudness": 9
       }
     },
     {
@@ -15966,7 +16819,7 @@
         "ammo": [
           "BB"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 2,
         "range": 12,
         "dispersion": 150,
         "durability": 7,
@@ -16154,10 +17007,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "pebble",
-        "damage": 0,
+        "damage": 6,
+        "pierce": 1,
+        "damage_type": "bash",
         "range": 15,
         "dispersion": 14,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "NEVER_MISFIRES",
+          "NON-FOULING"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -16736,7 +17596,7 @@
         "ammo": [
           "50"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -5,
         "range": 45,
         "dispersion": 110,
         "durability": 8,
@@ -16792,7 +17652,7 @@
         "ammo": [
           "4570"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -15,
         "dispersion": 180,
         "durability": 8,
         "clip_size": 5
@@ -16820,7 +17680,7 @@
         "ammo": [
           "500"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 2,
         "dispersion": 180,
         "durability": 8,
         "clip_size": 7
@@ -17521,7 +18381,7 @@
       "has_durability": true,
       "gun": {
         "skill": "rifle",
-        "ranged_damage": 0,
+        "ranged_damage": 22,
         "range": 30,
         "dispersion": 30,
         "durability": 10,
@@ -17933,7 +18793,7 @@
       "to_hit": -1,
       "gun": {
         "skill": "rifle",
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "range": 10,
         "durability": 10
       }
@@ -18405,7 +19265,7 @@
       "has_durability": true,
       "gun": {
         "skill": "pistol",
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "range": 30,
         "dispersion": 10,
         "durability": 10
@@ -18490,7 +19350,7 @@
       "has_durability": true,
       "gun": {
         "skill": "rifle",
-        "ranged_damage": 0,
+        "ranged_damage": 16,
         "range": 10,
         "dispersion": 10,
         "durability": 10
@@ -18921,7 +19781,7 @@
       "has_durability": true,
       "gun": {
         "skill": "rifle",
-        "ranged_damage": 0,
+        "ranged_damage": 22,
         "range": 30,
         "durability": 10
       }
@@ -19321,7 +20181,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 2,
         "dispersion": 500,
         "durability": 6,
         "clip_size": 4,
@@ -19860,9 +20720,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "diesel",
-        "damage": 0,
+        "damage": 5,
+        "pierce": 4,
+        "damage_type": "heat",
         "range": 4,
-        "count": 250
+        "count": 250,
+        "effects": [
+          "FLAME",
+          "STREAM",
+          "INCENDIARY",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -20951,9 +21819,16 @@
       "bashing": 1,
       "ammo": {
         "ammo_type": "blunderbuss",
-        "damage": 0,
+        "damage": 44,
+        "pierce": 24,
+        "damage_type": "bullet",
         "range": 10,
-        "recoil": 840
+        "recoil": 840,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "RECYCLED"
+        ]
       }
     },
     {
@@ -20974,9 +21849,15 @@
       "bashing": 1,
       "ammo": {
         "ammo_type": "blunderbuss",
-        "damage": 0,
+        "damage": 55,
+        "damage_type": "bullet",
         "range": 6,
-        "recoil": 780
+        "recoil": 780,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "RECYCLED"
+        ]
       }
     },
     {
@@ -20997,10 +21878,16 @@
       "bashing": 1,
       "ammo": {
         "ammo_type": "blunderbuss",
-        "damage": 0,
+        "damage": 44,
+        "pierce": 12,
+        "damage_type": "bullet",
         "range": 12,
         "dispersion": 60,
-        "recoil": 840
+        "recoil": 840,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ]
       }
     },
     {
@@ -21281,9 +22168,14 @@
       "ammo": {
         "ammo_type": "bolt",
         "damage": 0,
+        "damage_type": "stab",
         "range": 4,
         "dispersion": 60,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_30"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -21305,8 +22197,13 @@
       "ammo": {
         "ammo_type": "bolt",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 250,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_2"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -21328,9 +22225,15 @@
       "bashing": 1,
       "ammo": {
         "ammo_type": "bolt",
-        "damage": 0,
+        "damage": 5,
+        "damage_type": "stab",
         "range": 8,
-        "dispersion": 135
+        "dispersion": 135,
+        "effects": [
+          "COOKOFF",
+          "EXPLOSIVE_SMALL"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -21353,8 +22256,13 @@
       "ammo": {
         "ammo_type": "bolt",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 180,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_8"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -21376,8 +22284,13 @@
       "ammo": {
         "ammo_type": "bolt",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 100,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_20"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -21399,8 +22312,14 @@
       "ammo": {
         "ammo_type": "bolt",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 210,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_10",
+          "NOGIB"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -21422,8 +22341,13 @@
       "ammo": {
         "ammo_type": "bolt",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 180,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_6"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -21447,7 +22371,11 @@
         "ammo_type": "bolt",
         "range": 2,
         "dispersion": 70,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_35"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -21471,9 +22399,15 @@
       "ammo": {
         "ammo_type": "bolt",
         "damage": 0,
+        "pierce": 5,
+        "damage_type": "stab",
         "range": 2,
         "dispersion": 65,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_40"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -21497,9 +22431,15 @@
       "ammo": {
         "ammo_type": "bolt",
         "damage": 0,
+        "damage_type": "stab",
         "range": 2,
         "dispersion": 70,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_45",
+          "NOGIB"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -21522,7 +22462,11 @@
       "ammo": {
         "ammo_type": "bolt",
         "dispersion": 110,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_25"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -21545,8 +22489,14 @@
       "ammo": {
         "ammo_type": "bolt",
         "damage": 0,
+        "pierce": 5,
+        "damage_type": "stab",
         "dispersion": 100,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_30"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -21569,8 +22519,14 @@
       "ammo": {
         "ammo_type": "bolt",
         "damage": 0,
+        "damage_type": "stab",
         "dispersion": 130,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECOVER_35",
+          "NOGIB"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -24219,11 +25175,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "10mm",
-        "damage": 0,
+        "damage": 26,
+        "pierce": 10,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 60,
         "recoil": 570,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "10mm_casing"
       }
     },
     {
@@ -24244,11 +25209,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "223",
-        "damage": 0,
+        "damage": 24,
+        "pierce": 9,
+        "damage_type": "bullet",
         "range": 36,
         "dispersion": 36,
-        "recoil": 854,
-        "count": 30
+        "recoil": 855,
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "223_casing"
       }
     },
     {
@@ -24270,11 +25244,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "22",
-        "damage": 0,
+        "damage": 11,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 72,
         "recoil": 128,
-        "count": 80
+        "count": 80,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "22_casing"
       }
     },
     {
@@ -24308,11 +25290,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "22",
-        "damage": 0,
+        "damage": 9,
+        "pierce": 4,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 72,
         "recoil": 85,
-        "count": 80
+        "count": 80,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "22_casing"
       }
     },
     {
@@ -24333,11 +25324,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "270win",
-        "damage": 0,
+        "damage": 42,
+        "pierce": 13,
+        "damage_type": "bullet",
         "range": 65,
         "dispersion": 12,
         "recoil": 2660,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "270win_casing"
       }
     },
     {
@@ -24358,11 +25358,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "3006",
-        "damage": 0,
+        "damage": 47,
+        "pierce": 14,
+        "damage_type": "bullet",
         "range": 61,
         "dispersion": 24,
         "recoil": 2888,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "3006_casing"
       }
     },
     {
@@ -24383,11 +25392,21 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "3006",
-        "damage": 0,
+        "damage": 47,
+        "pierce": 14,
+        "damage_type": "bullet",
         "range": 61,
         "dispersion": 24,
         "recoil": 2888,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "INCENDIARY",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "3006_casing"
       }
     },
     {
@@ -24408,11 +25427,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "3006",
-        "damage": 0,
+        "damage": 41,
+        "pierce": 23,
+        "damage_type": "bullet",
         "range": 61,
         "dispersion": 24,
         "recoil": 2888,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "3006_casing"
       }
     },
     {
@@ -24433,11 +25461,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "300",
-        "damage": 0,
+        "damage": 53,
+        "pierce": 8,
+        "damage_type": "bullet",
         "range": 65,
         "dispersion": 18,
         "recoil": 3040,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "300_casing"
       }
     },
     {
@@ -24458,11 +25495,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "300blk",
-        "damage": 0,
+        "damage": 33,
+        "pierce": 10,
+        "damage_type": "bullet",
         "range": 45,
         "dispersion": 36,
         "recoil": 1520,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "300blk_casing"
       }
     },
     {
@@ -24483,11 +25529,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "308",
-        "damage": 0,
+        "damage": 42,
+        "pierce": 12,
+        "damage_type": "bullet",
         "range": 65,
         "dispersion": 18,
         "recoil": 2280,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "308_casing"
       }
     },
     {
@@ -24508,11 +25563,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "32",
-        "damage": 0,
+        "damage": 16,
+        "pierce": 6,
+        "damage_type": "bullet",
         "range": 12,
         "dispersion": 84,
         "recoil": 114,
-        "count": 80
+        "count": 80,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "32_casing"
       }
     },
     {
@@ -24533,11 +25597,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "357mag",
-        "damage": 0,
+        "damage": 26,
+        "pierce": 10,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 36,
         "recoil": 532,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "357mag_casing"
       }
     },
     {
@@ -24558,11 +25631,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "357mag",
-        "damage": 0,
+        "damage": 32,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 36,
         "recoil": 532,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "357mag_casing"
       }
     },
     {
@@ -24583,11 +25664,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "380",
-        "damage": 0,
+        "damage": 16,
+        "pierce": 6,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 72,
         "recoil": 228,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "380_casing"
       }
     },
     {
@@ -24608,11 +25698,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "380",
-        "damage": 0,
+        "damage": 20,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 72,
         "recoil": 228,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "380_casing"
       }
     },
     {
@@ -24633,11 +25731,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "38",
-        "damage": 0,
+        "damage": 18,
+        "pierce": 7,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 36,
         "recoil": 190,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "38_casing"
       }
     },
     {
@@ -24658,11 +25765,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "38",
-        "damage": 0,
+        "damage": 23,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 36,
         "recoil": 190,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "38_casing"
       }
     },
     {
@@ -24683,11 +25798,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40",
-        "damage": 0,
+        "damage": 21,
+        "pierce": 8,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 60,
-        "recoil": 425,
-        "count": 40
+        "recoil": 426,
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "40_casing"
       }
     },
     {
@@ -24708,11 +25832,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40",
-        "damage": 0,
+        "damage": 27,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 60,
-        "recoil": 425,
-        "count": 40
+        "recoil": 426,
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "40_casing"
       }
     },
     {
@@ -24733,11 +25865,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "44",
-        "damage": 0,
+        "damage": 30,
+        "pierce": 12,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 36,
         "recoil": 1193,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "44_casing"
       }
     },
     {
@@ -24758,11 +25899,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "44",
-        "damage": 0,
+        "damage": 38,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 36,
         "recoil": 1193,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "44_casing"
       }
     },
     {
@@ -24783,11 +25932,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "454",
-        "damage": 0,
+        "damage": 36,
+        "pierce": 4,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 36,
         "recoil": 1900,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "454_casing"
       }
     },
     {
@@ -24808,11 +25966,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "45",
-        "damage": 0,
+        "damage": 25,
+        "pierce": 9,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 60,
         "recoil": 456,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "45_casing"
       }
     },
     {
@@ -24833,11 +26000,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "45",
-        "damage": 0,
+        "damage": 31,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 60,
         "recoil": 456,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "45_casing"
       }
     },
     {
@@ -24858,11 +26033,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "45colt",
-        "damage": 0,
+        "damage": 29,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 60,
         "recoil": 456,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "45colt_casing"
       }
     },
     {
@@ -24883,11 +26066,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "460",
-        "damage": 0,
+        "damage": 33,
+        "pierce": 4,
+        "damage_type": "bullet",
         "range": 15,
         "dispersion": 36,
-        "recoil": 1133,
-        "count": 20
+        "recoil": 1134,
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "460_casing"
       }
     },
     {
@@ -24908,11 +26100,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "460",
-        "damage": 0,
+        "damage": 36,
+        "damage_type": "bullet",
         "range": 15,
         "dispersion": 36,
-        "recoil": 1133,
-        "count": 20
+        "recoil": 1134,
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "460_casing"
       }
     },
     {
@@ -24933,11 +26133,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "46",
-        "damage": 0,
+        "damage": 11,
+        "pierce": 2,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 48,
         "recoil": 41,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "46mm_casing"
       }
     },
     {
@@ -24958,11 +26167,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "500",
-        "damage": 0,
+        "damage": 42,
+        "pierce": 4,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 36,
         "recoil": 2280,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "500_casing"
       }
     },
     {
@@ -24983,11 +26201,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "223",
-        "damage": 0,
+        "damage": 21,
+        "pierce": 16,
+        "damage_type": "bullet",
         "range": 36,
         "dispersion": 24,
         "recoil": 940,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "223_casing"
       }
     },
     {
@@ -25008,11 +26235,21 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "223",
-        "damage": 0,
+        "damage": 21,
+        "pierce": 16,
+        "damage_type": "bullet",
         "range": 36,
         "dispersion": 24,
         "recoil": 940,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "INCENDIARY",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "223_casing"
       }
     },
     {
@@ -25033,11 +26270,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "57",
-        "damage": 0,
+        "damage": 15,
+        "pierce": 3,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 48,
         "recoil": 50,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "57mm_casing"
       }
     },
     {
@@ -25058,11 +26304,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "762x25",
-        "damage": 0,
+        "damage": 33,
+        "pierce": 8,
+        "damage_type": "bullet",
         "range": 15,
         "dispersion": 144,
-        "recoil": 574,
-        "count": 40
+        "recoil": 575,
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "762_25_casing"
       }
     },
     {
@@ -25083,11 +26338,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "308",
-        "damage": 0,
+        "damage": 36,
+        "pierce": 20,
+        "damage_type": "bullet",
         "range": 65,
         "dispersion": 6,
         "recoil": 2508,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "762_51_casing"
       }
     },
     {
@@ -25108,11 +26372,21 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "308",
-        "damage": 0,
+        "damage": 36,
+        "pierce": 20,
+        "damage_type": "bullet",
         "range": 65,
         "dispersion": 6,
         "recoil": 2508,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "INCENDIARY",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "762_51_casing"
       }
     },
     {
@@ -25133,11 +26407,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9mm",
-        "damage": 0,
+        "damage": 26,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 72,
         "recoil": 380,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "9mm_casing"
       }
     },
     {
@@ -25158,11 +26440,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9mm",
-        "damage": 0,
+        "damage": 21,
+        "pierce": 8,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 72,
         "recoil": 380,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "9mm_casing"
       }
     },
     {
@@ -25183,11 +26474,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9x18",
-        "damage": 0,
+        "damage": 16,
+        "pierce": 6,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 72,
         "recoil": 228,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "9x18mm_casing"
       }
     },
     {
@@ -25208,11 +26508,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9x18",
-        "damage": 0,
+        "damage": 14,
+        "pierce": 9,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 72,
         "recoil": 228,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "BLACKPOWDER",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "9x18mm_casing"
       }
     },
     {
@@ -25233,10 +26542,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 50,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "RECYCLED",
+          "MUZZLE_SMOKE",
+          "BLACKPOWDER"
+        ],
+        "casing": "shot_hull",
+        "loudness": 160
       }
     },
     {
@@ -25257,11 +26576,22 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 16,
+        "damage_type": "bullet",
         "range": 0,
         "dispersion": 1200,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "NOGIB",
+          "RECYCLED",
+          "MUZZLE_SMOKE",
+          "BLACKPOWDER"
+        ],
+        "casing": "shot_hull",
+        "loudness": 80
       }
     },
     {
@@ -25282,10 +26612,23 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 8,
+        "damage_type": "bullet",
         "range": 6,
         "recoil": 1500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "INCENDIARY",
+          "STREAM",
+          "NOGIB",
+          "RECYCLED",
+          "MUZZLE_SMOKE",
+          "BLACKPOWDER"
+        ],
+        "casing": "shot_hull",
+        "loudness": 128
       }
     },
     {
@@ -25306,10 +26649,21 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 28,
+        "pierce": 24,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 2500,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "RECYCLED",
+          "MUZZLE_SMOKE",
+          "BLACKPOWDER"
+        ],
+        "casing": "shot_hull",
+        "loudness": 160
       }
     },
     {
@@ -25330,10 +26684,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 24,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "RECYCLED",
+          "RECYCLED",
+          "MUZZLE_SMOKE"
+        ],
+        "casing": "shot_hull",
+        "loudness": 160
       }
     },
     {
@@ -25354,11 +26718,21 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 32,
+        "pierce": 14,
+        "damage_type": "bullet",
         "range": 24,
         "dispersion": 120,
         "recoil": 3500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED",
+          "MUZZLE_SMOKE",
+          "BLACKPOWDER"
+        ],
+        "casing": "shot_hull",
+        "loudness": 160
       }
     },
     {
@@ -27416,7 +28790,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 425,
         "durability": 6,
         "clip_size": 5
@@ -27444,7 +28818,7 @@
         "ammo": [
           "3006"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 90,
         "durability": 7
       }
@@ -27653,7 +29027,7 @@
         "ammo": [
           "pebble"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 15,
         "range": 10,
         "dispersion": 55,
         "durability": 6,
@@ -28294,10 +29668,16 @@
       "bashing": 1,
       "ammo": {
         "ammo_type": "fishspear",
-        "damage": 0,
+        "damage": 14,
+        "pierce": 12,
+        "damage_type": "stab",
         "range": 10,
         "dispersion": 90,
-        "count": 4
+        "count": 4,
+        "effects": [
+          "RECOVER_3"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -28551,7 +29931,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 2,
         "dispersion": 280,
         "durability": 6
       }
@@ -29919,7 +31299,7 @@
         "ammo": [
           "flintlock"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 6,
         "range": 4,
         "dispersion": 243,
         "durability": 6,
@@ -29953,9 +31333,9 @@
         "ammo": [
           "flintlock"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 4,
         "range": 3,
-        "dispersion": 315,
+        "dispersion": 316,
         "durability": 6,
         "clip_size": 2,
         "reload": 720
@@ -36031,7 +37411,7 @@
         "ammo": [
           "nail"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 4,
         "range": 12,
         "dispersion": 180,
         "durability": 5
@@ -36269,7 +37649,7 @@
         "ammo": [
           "45colt"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 5,
         "dispersion": 180,
         "durability": 7,
         "clip_size": 14
@@ -36371,10 +37751,15 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "nail",
-        "damage": 0,
+        "damage": 12,
+        "pierce": 9,
+        "damage_type": "stab",
         "range": 3,
         "dispersion": 120,
-        "count": 100
+        "count": 100,
+        "effects": [
+          "NON-FOULING"
+        ]
       }
     },
     {
@@ -36601,7 +37986,7 @@
         "ammo": [
           "arrow"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 36,
         "range": 18,
         "dispersion": 850,
         "durability": 6,
@@ -36637,7 +38022,7 @@
         "ammo": [
           "arrow"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 40,
         "range": 20,
         "dispersion": 850,
         "durability": 6,
@@ -36673,7 +38058,7 @@
         "ammo": [
           "arrow"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 32,
         "range": 16,
         "dispersion": 850,
         "durability": 6,
@@ -36705,7 +38090,7 @@
         "ammo": [
           "bolt"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 60,
         "range": 22,
         "dispersion": 325,
         "durability": 6,
@@ -36741,7 +38126,7 @@
         "ammo": [
           "arrow"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 50,
         "range": 26,
         "dispersion": 1000,
         "durability": 8,
@@ -36784,7 +38169,7 @@
         "ammo": [
           "arrow"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 44,
         "range": 12,
         "dispersion": 950,
         "durability": 6,
@@ -36816,7 +38201,7 @@
         "ammo": [
           "bolt"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 55,
         "range": 16,
         "dispersion": 350,
         "durability": 6,
@@ -38773,7 +40158,7 @@
         "ammo": [
           "bolt"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 45,
         "range": 9,
         "dispersion": 375,
         "durability": 6,
@@ -39618,7 +41003,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 2,
         "range": 20,
         "dispersion": 180,
         "durability": 10
@@ -40217,7 +41602,7 @@
         "ammo": [
           "44"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 480,
         "durability": 7
       }
@@ -41426,9 +42811,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "diesel",
-        "damage": 0,
+        "damage": 5,
+        "pierce": 4,
+        "damage_type": "heat",
         "range": 4,
-        "count": 250
+        "count": 250,
+        "effects": [
+          "FLAME",
+          "STREAM",
+          "INCENDIARY",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -42037,7 +43430,7 @@
         "ammo": [
           "fishspear"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 6,
         "range": 4,
         "dispersion": 120,
         "durability": 7,
@@ -42160,7 +43553,7 @@
         "ammo": [
           "762"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -5,
         "dispersion": 240,
         "durability": 7
       }
@@ -45309,7 +46702,7 @@
       "to_hit": 1,
       "gun": {
         "skill": "pistol",
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "range": 12,
         "dispersion": 150,
         "durability": 8
@@ -45339,7 +46732,7 @@
       "to_hit": -1,
       "gun": {
         "skill": "rifle",
-        "ranged_damage": 0,
+        "ranged_damage": 45,
         "range": 35,
         "dispersion": 10,
         "durability": 10,
@@ -45809,10 +47202,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "homebrew_rocket",
-        "damage": 0,
+        "damage": 500,
+        "pierce": 125,
+        "damage_type": "stab",
         "range": 23,
         "dispersion": 170,
-        "recoil": 130
+        "recoil": 130,
+        "effects": [
+          "COOKOFF",
+          "TRAIL",
+          "EXPLOSIVE"
+        ]
       }
     },
     {
@@ -46452,7 +47852,7 @@
         "ammo": [
           "223"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -2,
         "dispersion": 180,
         "durability": 8
       }
@@ -48479,10 +49879,16 @@
       "bashing": 1,
       "ammo": {
         "ammo_type": "fishspear",
-        "damage": 0,
+        "damage": 12,
+        "pierce": 4,
+        "damage_type": "stab",
         "range": 6,
         "dispersion": 150,
-        "count": 4
+        "count": 4,
+        "effects": [
+          "RECOVER_5"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -48684,9 +50090,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "flammable",
-        "damage": 0,
+        "damage": 5,
+        "pierce": 5,
+        "damage_type": "heat",
         "range": 0,
-        "count": 250
+        "count": 250,
+        "effects": [
+          "FLAME",
+          "STREAM",
+          "INCENDIARY",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -49050,11 +50464,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "flintlock",
-        "damage": 0,
+        "damage": 50,
+        "pierce": 22,
+        "damage_type": "bullet",
         "range": 6,
         "dispersion": 90,
         "recoil": 1500,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "MUZZLE_SMOKE",
+          "BLACKPOWDER"
+        ],
+        "loudness": 70
       }
     },
     {
@@ -49103,11 +50525,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "flintlock",
-        "damage": 0,
+        "damage": 63,
+        "damage_type": "bullet",
         "range": 4,
         "dispersion": 20,
         "recoil": 1500,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "MUZZLE_SMOKE",
+          "SHOT",
+          "BLACKPOWDER"
+        ],
+        "loudness": 90
       }
     },
     {
@@ -49436,7 +50866,7 @@
         "ammo": [
           "57"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -2,
         "dispersion": 440,
         "durability": 8
       }
@@ -49487,7 +50917,7 @@
         "ammo": [
           "308"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 150,
         "durability": 8
       }
@@ -51035,7 +52465,10 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "components",
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF"
+        ]
       }
     },
     {
@@ -51834,7 +53267,12 @@
       "ammo": {
         "ammo_type": "chemical_spray",
         "range": 4,
-        "count": 100
+        "count": 100,
+        "effects": [
+          "TOXICGAS",
+          "NEVER_MISFIRES",
+          "JET"
+        ]
       }
     },
     {
@@ -51855,7 +53293,13 @@
       "ammo": {
         "ammo_type": "chemical_spray",
         "range": 4,
-        "count": 100
+        "count": 100,
+        "effects": [
+          "GAS_FUNGICIDAL",
+          "STREAM_GAS_FUNGICIDAL",
+          "NEVER_MISFIRES",
+          "JET"
+        ]
       }
     },
     {
@@ -51876,7 +53320,13 @@
       "ammo": {
         "ammo_type": "chemical_spray",
         "range": 4,
-        "count": 100
+        "count": 100,
+        "effects": [
+          "GAS_INSECTICIDAL",
+          "STREAM_GAS_INSECTICIDAL",
+          "NEVER_MISFIRES",
+          "JET"
+        ]
       }
     },
     {
@@ -52107,9 +53557,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "gasoline",
-        "damage": 0,
+        "damage": 5,
+        "pierce": 5,
+        "damage_type": "heat",
         "range": 4,
-        "count": 250
+        "count": 250,
+        "effects": [
+          "FLAME",
+          "STREAM",
+          "INCENDIARY",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -52224,7 +53682,7 @@
       "to_hit": -4,
       "gun": {
         "skill": "rifle",
-        "ranged_damage": 0,
+        "ranged_damage": 20,
         "range": 30,
         "dispersion": 100,
         "durability": 8,
@@ -52501,9 +53959,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "flammable",
-        "damage": 0,
+        "damage": 10,
+        "pierce": 10,
+        "damage_type": "heat",
         "range": 3,
-        "count": 250
+        "count": 250,
+        "effects": [
+          "FLAME",
+          "STREAM",
+          "INCENDIARY",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -53330,7 +54796,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 480,
         "durability": 6
       }
@@ -53357,7 +54823,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 480,
         "durability": 6
       }
@@ -53384,7 +54850,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 480,
         "durability": 6
       }
@@ -53485,7 +54951,7 @@
         "ammo": [
           "40"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 480,
         "durability": 6
       }
@@ -53512,7 +54978,7 @@
         "ammo": [
           "357sig"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 480,
         "durability": 6
       }
@@ -55931,7 +57397,7 @@
         "ammo": [
           "bolt"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 28,
         "range": 8,
         "dispersion": 387,
         "durability": 10,
@@ -55961,7 +57427,7 @@
         "ammo": [
           "bolt"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 28,
         "range": 8,
         "dispersion": 387,
         "durability": 10,
@@ -56003,7 +57469,10 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "components",
-        "count": 454
+        "count": 454,
+        "effects": [
+          "COOKOFF"
+        ]
       }
     },
     {
@@ -56040,7 +57509,7 @@
         "ammo": [
           "223"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -2,
         "dispersion": 180,
         "durability": 8
       }
@@ -56664,7 +58133,7 @@
         "ammo": [
           "bolt"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 40,
         "range": 6,
         "dispersion": 400,
         "durability": 6,
@@ -57963,7 +59432,7 @@
         "ammo": [
           "metal_rail"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 40,
         "range": 40,
         "dispersion": 100,
         "durability": 7,
@@ -58947,7 +60416,7 @@
         "ammo": [
           "bolt"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 35,
         "range": 16,
         "dispersion": 400,
         "recoil": 350,
@@ -58978,7 +60447,7 @@
         "ammo": [
           "44"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 2,
         "dispersion": 180,
         "durability": 8,
         "clip_size": 10
@@ -59669,7 +61138,7 @@
         "ammo": [
           "308"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -4,
         "dispersion": 180,
         "durability": 8
       }
@@ -59855,7 +61324,7 @@
         "ammo": [
           "308"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -2,
         "dispersion": 150,
         "durability": 8
       }
@@ -59960,7 +61429,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 240,
         "durability": 8
       }
@@ -60041,7 +61510,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 240,
         "durability": 8
       }
@@ -60106,7 +61575,7 @@
         "ammo": [
           "45"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 240,
         "durability": 8
       }
@@ -62378,7 +63847,7 @@
         "ammo": [
           "bolt"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 75,
         "range": 30,
         "dispersion": 300,
         "recoil": 30,
@@ -62645,7 +64114,7 @@
         "ammo": [
           "arrow"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 38,
         "range": 14,
         "dispersion": 850,
         "durability": 6,
@@ -63363,7 +64832,10 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "components",
-        "count": 200
+        "count": 200,
+        "effects": [
+          "COOKOFF"
+        ]
       }
     },
     {
@@ -63383,10 +64855,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "homebrew_rocket",
-        "damage": 0,
+        "damage": 50,
+        "pierce": 15,
+        "damage_type": "stab",
         "range": 13,
         "dispersion": 200,
-        "recoil": 130
+        "recoil": 130,
+        "effects": [
+          "COOKOFF",
+          "TRAIL",
+          "NAPALM"
+        ]
       }
     },
     {
@@ -67088,9 +68567,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "jp8",
-        "damage": 0,
+        "damage": 5,
+        "pierce": 5,
+        "damage_type": "heat",
         "range": 4,
-        "count": 250
+        "count": 250,
+        "effects": [
+          "FLAME",
+          "STREAM",
+          "INCENDIARY",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -69524,7 +71011,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 480,
         "durability": 8
       }
@@ -69638,7 +71125,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 425,
         "durability": 7,
         "clip_size": 7
@@ -69669,7 +71156,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 5,
         "dispersion": 425,
         "durability": 7,
         "clip_size": 12
@@ -69697,7 +71184,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 5,
         "dispersion": 425,
         "durability": 7,
         "clip_size": 12,
@@ -69726,7 +71213,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 425,
         "durability": 7,
         "clip_size": 7,
@@ -69755,7 +71242,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 3,
         "range": 18,
         "dispersion": 180,
         "durability": 7
@@ -69783,7 +71270,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 3,
         "range": 18,
         "dispersion": 180,
         "durability": 7,
@@ -69957,7 +71444,7 @@
         "ammo": [
           "223"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -16,
         "range": -6,
         "dispersion": 380,
         "durability": 8,
@@ -70221,9 +71708,15 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "lamp_oil",
-        "damage": 0,
+        "damage": 2,
+        "pierce": 2,
+        "damage_type": "heat",
         "range": 6,
-        "count": 250
+        "count": 250,
+        "effects": [
+          "FLAME",
+          "STREAM"
+        ]
       }
     },
     {
@@ -70657,7 +72150,7 @@
       "to_hit": -1,
       "gun": {
         "skill": "rifle",
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "range": 30,
         "dispersion": 90,
         "durability": 7,
@@ -70687,7 +72180,7 @@
       "to_hit": -1,
       "gun": {
         "skill": "rifle",
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "range": 30,
         "dispersion": 90,
         "durability": 7,
@@ -70718,7 +72211,7 @@
       "to_hit": -1,
       "gun": {
         "skill": "rifle",
-        "ranged_damage": 0,
+        "ranged_damage": 25,
         "range": 30,
         "dispersion": 10,
         "durability": 8,
@@ -71925,7 +73418,7 @@
         "ammo": [
           "shotpaper"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -12,
         "range": -2,
         "dispersion": 600,
         "durability": 10,
@@ -72187,7 +73680,10 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "components",
-        "count": 200
+        "count": 200,
+        "effects": [
+          "COOKOFF"
+        ]
       }
     },
     {
@@ -72208,7 +73704,10 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "components",
-        "count": 200
+        "count": 200,
+        "effects": [
+          "COOKOFF"
+        ]
       }
     },
     {
@@ -73469,7 +74968,7 @@
         "ammo": [
           "arrow"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 34,
         "range": 22,
         "dispersion": 1000,
         "durability": 6,
@@ -73501,7 +75000,7 @@
         "ammo": [
           "flintlock"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "range": 8,
         "dispersion": 90,
         "durability": 6,
@@ -74209,7 +75708,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 345,
         "durability": 9,
         "clip_size": 8
@@ -74238,7 +75737,7 @@
         "ammo": [
           "50"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -5,
         "range": 100,
         "dispersion": 130,
         "durability": 8
@@ -74291,7 +75790,7 @@
         "ammo": [
           "308"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 120,
         "durability": 8
       }
@@ -74320,7 +75819,7 @@
         "ammo": [
           "308"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 300,
         "durability": 9,
         "reload": 400
@@ -74385,7 +75884,7 @@
         "ammo": [
           "308"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 110,
         "durability": 8
       }
@@ -74412,7 +75911,7 @@
         "ammo": [
           "308"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 110,
         "durability": 8,
         "clip_size": 300
@@ -74851,7 +76350,7 @@
         "ammo": [
           "308"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 110,
         "durability": 8
       }
@@ -75014,11 +76513,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "m235",
-        "damage": 0,
+        "damage": 60,
+        "pierce": 10,
+        "damage_type": "bullet",
         "range": 70,
         "dispersion": 150,
         "recoil": 150,
-        "count": 4
+        "count": 4,
+        "effects": [
+          "COOKOFF",
+          "PYROPHORIC",
+          "TRAIL",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -75097,7 +76604,7 @@
         "ammo": [
           "223"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 180,
         "durability": 9
       }
@@ -75155,6 +76662,7 @@
         "ammo": [
           "50"
         ],
+        "ranged_damage": -4,
         "range": 110,
         "dispersion": 310,
         "durability": 8,
@@ -75301,7 +76809,7 @@
         "ammo": [
           "223"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -2,
         "dispersion": 180,
         "durability": 6
       }
@@ -75328,7 +76836,7 @@
         "ammo": [
           "308"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 180,
         "durability": 7,
         "reload": 400
@@ -75381,7 +76889,7 @@
         "ammo": [
           "40x46mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 3,
         "dispersion": 150,
         "durability": 8,
         "clip_size": 1,
@@ -75482,10 +76990,16 @@
       "bashing": 1,
       "ammo": {
         "ammo_type": "fishspear",
-        "damage": 0,
+        "damage": 14,
+        "pierce": 8,
+        "damage_type": "stab",
         "range": 6,
         "dispersion": 120,
-        "count": 4
+        "count": 4,
+        "effects": [
+          "RECOVER_15"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -78891,10 +80405,15 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "pebble",
-        "damage": 0,
+        "damage": 3,
+        "damage_type": "bash",
         "range": 18,
         "dispersion": 12,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "NEVER_MISFIRES"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -78920,7 +80439,7 @@
         "ammo": [
           "40x53mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "range": 30,
         "dispersion": 180,
         "durability": 8,
@@ -78951,7 +80470,7 @@
         "ammo": [
           "22"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 5,
         "dispersion": 90,
         "durability": 8,
         "clip_size": 19
@@ -81308,10 +82827,15 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "pebble",
-        "damage": 0,
+        "damage": 3,
+        "damage_type": "bash",
         "range": 15,
         "dispersion": 10,
-        "count": 7
+        "count": 7,
+        "effects": [
+          "NEVER_MISFIRES"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -81698,7 +83222,7 @@
       "has_durability": true,
       "gun": {
         "skill": "rifle",
-        "ranged_damage": 0,
+        "ranged_damage": 30,
         "range": 100,
         "dispersion": 1000,
         "durability": 10
@@ -82491,7 +84015,12 @@
       "bashing": 8,
       "ammo": {
         "ammo_type": "mininuke_mod",
-        "damage": 0
+        "damage": 14,
+        "damage_type": "stab",
+        "effects": [
+          "MININUKE_MOD",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -83630,6 +85159,7 @@
         "ammo": [
           "762R"
         ],
+        "ranged_damage": -3,
         "range": -3,
         "dispersion": 150,
         "durability": 10,
@@ -83740,7 +85270,7 @@
         "ammo": [
           "22"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -2,
         "dispersion": 520,
         "durability": 6,
         "clip_size": 4
@@ -83772,7 +85302,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 4,
         "dispersion": 325,
         "durability": 9,
         "clip_size": 6
@@ -83804,7 +85334,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 375,
         "durability": 9,
         "clip_size": 6
@@ -83836,7 +85366,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 375,
         "durability": 9,
         "clip_size": 9
@@ -83867,7 +85397,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 345,
         "durability": 7,
         "clip_size": 8
@@ -83955,9 +85485,15 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "motor_oil",
-        "damage": 0,
+        "damage": 2,
+        "pierce": 2,
+        "damage_type": "heat",
         "range": 6,
-        "count": 250
+        "count": 250,
+        "effects": [
+          "FLAME",
+          "STREAM"
+        ]
       }
     },
     {
@@ -85841,7 +87377,7 @@
       "has_durability": true,
       "gun": {
         "skill": "shotgun",
-        "ranged_damage": 0,
+        "ranged_damage": 6,
         "range": 4,
         "dispersion": 600,
         "durability": 10
@@ -87021,10 +88557,15 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "nail",
-        "damage": 0,
+        "damage": 4,
+        "pierce": 3,
+        "damage_type": "stab",
         "range": 3,
         "dispersion": 120,
-        "count": 100
+        "count": 100,
+        "effects": [
+          "NON-FOULING"
+        ]
       }
     },
     {
@@ -87148,6 +88689,8 @@
         "ammo": [
           "nail"
         ],
+        "ranged_damage": 4,
+        "range": 3,
         "dispersion": 400,
         "durability": 8,
         "clip_size": 0,
@@ -87220,9 +88763,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "flammable",
-        "damage": 0,
+        "damage": 15,
+        "pierce": 30,
+        "damage_type": "heat",
         "range": 6,
-        "count": 250
+        "count": 250,
+        "effects": [
+          "FLAME",
+          "STREAM_BIG",
+          "INCENDIARY",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -87438,7 +88989,7 @@
         "ammo": [
           "5x50"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "range": 10,
         "dispersion": 220,
         "durability": 9
@@ -88889,7 +90440,7 @@
         "ammo": [
           "223"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -11,
         "range": -6,
         "dispersion": 380,
         "durability": 6
@@ -89963,7 +91514,10 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "components",
-        "count": 200
+        "count": 200,
+        "effects": [
+          "COOKOFF"
+        ]
       }
     },
     {
@@ -90015,7 +91569,10 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "weldgas",
-        "count": 100
+        "count": 100,
+        "effects": [
+          "COOKOFF"
+        ]
       }
     },
     {
@@ -90406,9 +91963,15 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "paintball",
-        "damage": 0,
+        "damage": 2,
+        "damage_type": "bullet",
         "dispersion": 100,
-        "count": 100
+        "count": 100,
+        "effects": [
+          "NOGIB",
+          "NEVER_MISFIRES"
+        ],
+        "loudness": 9
       }
     },
     {
@@ -90436,7 +91999,7 @@
         "ammo": [
           "paintball"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "range": 8,
         "dispersion": 150,
         "durability": 7,
@@ -91612,10 +93175,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "pebble",
-        "damage": 0,
+        "damage": 2,
+        "damage_type": "bash",
         "range": 10,
         "dispersion": 14,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "NEVER_MISFIRES",
+          "NON-FOULING"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -91635,10 +93204,15 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "pebble",
-        "damage": 0,
+        "damage": 1,
+        "damage_type": "bash",
         "range": 20,
         "dispersion": 12,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "NEVER_MISFIRES"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -93398,7 +94972,7 @@
         "ammo": [
           "3006"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 550,
         "durability": 6,
         "clip_size": 1,
@@ -93431,7 +95005,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 2,
         "dispersion": 855,
         "durability": 6,
         "clip_size": 2,
@@ -93510,7 +95084,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 2,
         "dispersion": 855,
         "durability": 6,
         "clip_size": 1,
@@ -93660,7 +95234,7 @@
         "ammo": [
           "flintlock"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 2,
         "range": 2,
         "dispersion": 620,
         "durability": 6,
@@ -93941,9 +95515,14 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "plasma",
-        "damage": 0,
+        "damage": 35,
+        "pierce": 8,
+        "damage_type": "heat",
         "range": 12,
-        "count": 25
+        "count": 25,
+        "effects": [
+          "INCENDIARY"
+        ]
       }
     },
     {
@@ -93985,7 +95564,7 @@
         "ammo": [
           "plasma"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 22,
         "range": 25,
         "dispersion": 90,
         "durability": 6,
@@ -94018,7 +95597,7 @@
         "ammo": [
           "plasma"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 5,
         "dispersion": 60,
         "durability": 8,
         "clip_size": 25,
@@ -94796,7 +96375,11 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "plutonium",
-        "count": 5
+        "count": 5,
+        "effects": [
+          "COOKOFF",
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -94867,7 +96450,7 @@
         "ammo": [
           "shotcanister"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 15,
         "range": 3,
         "dispersion": 350,
         "durability": 7,
@@ -97183,7 +98766,7 @@
         "ammo": [
           "762x25"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 2,
         "range": 2,
         "dispersion": 120,
         "durability": 8
@@ -97873,7 +99456,7 @@
         "ammo": [
           "40x46mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "range": 30,
         "dispersion": 300,
         "durability": 10,
@@ -99587,7 +101170,7 @@
         "ammo": [
           "arrow"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 3,
         "range": 5,
         "dispersion": 210,
         "durability": 6,
@@ -99701,10 +101284,16 @@
       "to_hit": -1,
       "ammo": {
         "ammo_type": "metal_rail",
-        "damage": 0,
+        "damage": 70,
+        "pierce": 25,
+        "damage_type": "stab",
         "range": 40,
         "dispersion": 150,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "RECYCLED",
+          "NON-FOULING"
+        ]
       }
     },
     {
@@ -100513,7 +102102,7 @@
       "to_hit": -2,
       "gun": {
         "skill": "rifle",
-        "ranged_damage": 0,
+        "ranged_damage": 30,
         "range": 45,
         "dispersion": 15,
         "durability": 8,
@@ -100654,7 +102243,7 @@
         "ammo": [
           "arrow"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 32,
         "range": 14,
         "dispersion": 850,
         "durability": 6,
@@ -100866,7 +102455,7 @@
         "ammo": [
           "arrow"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 33,
         "range": 12,
         "dispersion": 950,
         "durability": 6,
@@ -100908,7 +102497,7 @@
         "ammo": [
           "arrow"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 30,
         "range": 18,
         "dispersion": 950,
         "durability": 6,
@@ -101182,11 +102771,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "10mm",
-        "damage": 0,
+        "damage": 31,
+        "pierce": 19,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 55,
         "recoil": 750,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "10mm_casing"
       }
     },
     {
@@ -101207,11 +102803,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "223",
-        "damage": 0,
+        "damage": 38,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 36,
         "dispersion": 33,
         "recoil": 1500,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "223_casing"
       }
     },
     {
@@ -101233,11 +102836,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "22",
-        "damage": 0,
+        "damage": 18,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 66,
         "recoil": 225,
-        "count": 80
+        "count": 80,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "22_casing"
       }
     },
     {
@@ -101271,11 +102880,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "22",
-        "damage": 0,
+        "damage": 14,
+        "pierce": 9,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 66,
         "recoil": 150,
-        "count": 80
+        "count": 80,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "22_casing"
       }
     },
     {
@@ -101308,11 +102924,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "270win",
-        "damage": 0,
+        "damage": 54,
+        "pierce": 26,
+        "damage_type": "bullet",
         "range": 65,
         "dispersion": 11,
         "recoil": 3800,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "270win_casing"
       }
     },
     {
@@ -101333,11 +102956,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "3006",
-        "damage": 0,
+        "damage": 56,
+        "pierce": 27,
+        "damage_type": "bullet",
         "range": 61,
         "dispersion": 22,
         "recoil": 3800,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "3006_casing"
       }
     },
     {
@@ -101358,11 +102988,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "3006",
-        "damage": 0,
+        "damage": 56,
+        "pierce": 27,
+        "damage_type": "bullet",
         "range": 61,
         "dispersion": 22,
         "recoil": 3800,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "INCENDIARY",
+          "RECYCLED"
+        ],
+        "casing": "3006_casing"
       }
     },
     {
@@ -101383,11 +103021,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "3006",
-        "damage": 0,
+        "damage": 49,
+        "pierce": 46,
+        "damage_type": "bullet",
         "range": 61,
         "dispersion": 22,
         "recoil": 3800,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "3006_casing"
       }
     },
     {
@@ -101408,11 +103053,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "300",
-        "damage": 0,
+        "damage": 63,
+        "pierce": 17,
+        "damage_type": "bullet",
         "range": 65,
         "dispersion": 16,
         "recoil": 4000,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "300_casing"
       }
     },
     {
@@ -101433,11 +103085,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "300blk",
-        "damage": 0,
+        "damage": 39,
+        "pierce": 19,
+        "damage_type": "bullet",
         "range": 45,
         "dispersion": 33,
         "recoil": 2000,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "300blk_casing"
       }
     },
     {
@@ -101458,11 +103117,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "308",
-        "damage": 0,
+        "damage": 50,
+        "pierce": 24,
+        "damage_type": "bullet",
         "range": 65,
         "dispersion": 16,
         "recoil": 3000,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "308_casing"
       }
     },
     {
@@ -101483,11 +103149,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "32",
-        "damage": 0,
+        "damage": 19,
+        "pierce": 12,
+        "damage_type": "bullet",
         "range": 12,
         "dispersion": 77,
         "recoil": 150,
-        "count": 80
+        "count": 80,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "32_casing"
       }
     },
     {
@@ -101510,11 +103183,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "357mag",
-        "damage": 0,
+        "damage": 31,
+        "pierce": 19,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 33,
         "recoil": 630,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "357mag_casing"
       }
     },
     {
@@ -101537,11 +103216,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "357mag",
-        "damage": 0,
+        "damage": 38,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 33,
         "recoil": 630,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "357mag_casing"
       }
     },
     {
@@ -101562,11 +103246,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "357sig",
-        "damage": 0,
+        "damage": 31,
+        "pierce": 19,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 33,
         "recoil": 600,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "357sig_casing"
       }
     },
     {
@@ -101587,11 +103278,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "357sig",
-        "damage": 0,
+        "damage": 38,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 33,
         "recoil": 600,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "357sig_casing"
       }
     },
     {
@@ -101612,11 +103309,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "380",
-        "damage": 0,
+        "damage": 19,
+        "pierce": 12,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 66,
         "recoil": 300,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "380_casing"
       }
     },
     {
@@ -101637,11 +103341,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "380",
-        "damage": 0,
+        "damage": 23,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 66,
         "recoil": 300,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "380_casing"
       }
     },
     {
@@ -101662,11 +103372,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "380",
-        "damage": 0,
+        "damage": 27,
+        "damage_type": "bullet",
         "range": 13,
-        "dispersion": 49,
+        "dispersion": 50,
         "recoil": 600,
-        "count": 25
+        "count": 25,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "380_casing"
       }
     },
     {
@@ -101687,11 +103403,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "38",
-        "damage": 0,
+        "damage": 22,
+        "pierce": 14,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 33,
         "recoil": 250,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "38_casing"
       }
     },
     {
@@ -101712,11 +103435,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "38",
-        "damage": 0,
+        "damage": 27,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 33,
         "recoil": 250,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "38_casing"
       }
     },
     {
@@ -101737,11 +103466,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "38super",
-        "damage": 0,
+        "damage": 36,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 33,
         "recoil": 250,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "38super_casing"
       }
     },
     {
@@ -101762,11 +103497,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "38super",
-        "damage": 0,
+        "damage": 29,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 33,
         "recoil": 250,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "38super_casing"
       }
     },
     {
@@ -101787,11 +103529,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40",
-        "damage": 0,
+        "damage": 25,
+        "pierce": 16,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 55,
         "recoil": 560,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "40_casing"
       }
     },
     {
@@ -101836,11 +103585,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "40",
-        "damage": 0,
+        "damage": 32,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 55,
         "recoil": 560,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "40_casing"
       }
     },
     {
@@ -101861,10 +103616,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "410shot",
-        "damage": 0,
+        "damage": 27,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 1350,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "RECYCLED"
+        ],
+        "casing": "410shot_hull",
+        "loudness": 90
       }
     },
     {
@@ -101885,11 +103648,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "44",
-        "damage": 0,
+        "damage": 36,
+        "pierce": 23,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 33,
         "recoil": 1570,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "44_casing"
       }
     },
     {
@@ -101910,11 +103680,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "44",
-        "damage": 0,
+        "damage": 45,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 33,
         "recoil": 1570,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "44_casing"
       }
     },
     {
@@ -101935,11 +103711,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "454",
-        "damage": 0,
+        "damage": 43,
+        "pierce": 8,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 33,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "454_casing"
       }
     },
     {
@@ -101960,11 +103743,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "4570",
-        "damage": 0,
+        "damage": 39,
+        "damage_type": "bullet",
         "range": 40,
         "dispersion": 22,
         "recoil": 3400,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "4570_casing"
       }
     },
     {
@@ -101985,11 +103774,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "4570",
-        "damage": 0,
+        "damage": 64,
+        "pierce": 25,
+        "damage_type": "bullet",
         "range": 50,
         "dispersion": 22,
         "recoil": 4600,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "4570_casing"
       }
     },
     {
@@ -102010,11 +103806,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "4570",
-        "damage": 0,
+        "damage": 51,
+        "pierce": 25,
+        "damage_type": "bullet",
         "range": 48,
         "dispersion": 22,
         "recoil": 4300,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "4570_casing"
       }
     },
     {
@@ -102035,11 +103838,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "45",
-        "damage": 0,
+        "damage": 30,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 55,
         "recoil": 600,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "45_casing"
       }
     },
     {
@@ -102060,11 +103870,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "45",
-        "damage": 0,
+        "damage": 37,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 55,
         "recoil": 600,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "45_casing"
       }
     },
     {
@@ -102085,11 +103901,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "45",
-        "damage": 0,
+        "damage": 37,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 44,
         "recoil": 1200,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "45_casing"
       }
     },
     {
@@ -102110,11 +103933,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "45colt",
-        "damage": 0,
+        "damage": 34,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 55,
         "recoil": 600,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "45colt_casing"
       }
     },
     {
@@ -102135,11 +103964,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "460",
-        "damage": 0,
+        "damage": 39,
+        "pierce": 8,
+        "damage_type": "bullet",
         "range": 15,
         "dispersion": 33,
-        "recoil": 1491,
-        "count": 20
+        "recoil": 1492,
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "460_casing"
       }
     },
     {
@@ -102160,11 +103996,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "460",
-        "damage": 0,
+        "damage": 43,
+        "damage_type": "bullet",
         "range": 15,
         "dispersion": 33,
-        "recoil": 1491,
-        "count": 20
+        "recoil": 1492,
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "460_casing"
       }
     },
     {
@@ -102185,11 +104027,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "46",
-        "damage": 0,
+        "damage": 22,
+        "pierce": 5,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 44,
         "recoil": 90,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "46mm_casing"
       }
     },
     {
@@ -102210,11 +104059,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "500",
-        "damage": 0,
+        "damage": 50,
+        "pierce": 8,
+        "damage_type": "bullet",
         "range": 16,
         "dispersion": 33,
         "recoil": 3000,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "500_casing"
       }
     },
     {
@@ -102235,11 +104091,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "50",
-        "damage": 0,
+        "damage": 90,
+        "pierce": 44,
+        "damage_type": "bullet",
         "range": 110,
         "dispersion": 341,
         "recoil": 5000,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "INCENDIARY",
+          "RECYCLED"
+        ],
+        "casing": "50_casing"
       }
     },
     {
@@ -102260,11 +104123,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "50",
-        "damage": 0,
+        "damage": 92,
+        "pierce": 40,
+        "damage_type": "bullet",
         "range": 110,
         "dispersion": 110,
         "recoil": 5000,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "50_casing"
       }
     },
     {
@@ -102285,11 +104155,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "50",
-        "damage": 0,
+        "damage": 79,
+        "pierce": 75,
+        "damage_type": "bullet",
         "range": 110,
         "dispersion": 660,
         "recoil": 5000,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "50_casing"
       }
     },
     {
@@ -102310,11 +104187,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "545x39",
-        "damage": 0,
+        "damage": 36,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 37,
         "dispersion": 33,
         "recoil": 1400,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "545_casing"
       }
     },
     {
@@ -102335,11 +104219,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "545x39",
-        "damage": 0,
+        "damage": 32,
+        "pierce": 30,
+        "damage_type": "bullet",
         "range": 37,
         "dispersion": 33,
         "recoil": 1400,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "545_casing"
       }
     },
     {
@@ -102360,11 +104251,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "223",
-        "damage": 0,
+        "damage": 33,
+        "pierce": 32,
+        "damage_type": "bullet",
         "range": 36,
         "dispersion": 22,
         "recoil": 1650,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "223_casing"
       }
     },
     {
@@ -102385,11 +104283,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "223",
-        "damage": 0,
+        "damage": 33,
+        "pierce": 32,
+        "damage_type": "bullet",
         "range": 36,
         "dispersion": 22,
         "recoil": 1650,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "INCENDIARY",
+          "RECYCLED"
+        ],
+        "casing": "223_casing"
       }
     },
     {
@@ -102410,11 +104316,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "57",
-        "damage": 0,
+        "damage": 23,
+        "pierce": 5,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 44,
         "recoil": 90,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "57mm_casing"
       }
     },
     {
@@ -102438,11 +104351,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "5x50",
-        "damage": 0,
+        "damage": 27,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 45,
         "dispersion": 100,
         "recoil": 360,
-        "count": 100
+        "count": 100,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "5x50_hull"
       }
     },
     {
@@ -102463,11 +104383,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "700nx",
-        "damage": 0,
+        "damage": 81,
+        "pierce": 39,
+        "damage_type": "bullet",
         "range": 42,
         "dispersion": 16,
         "recoil": 12100,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "700nx_casing"
       }
     },
     {
@@ -102490,11 +104417,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "762x25",
-        "damage": 0,
+        "damage": 39,
+        "pierce": 14,
+        "damage_type": "bullet",
         "range": 15,
         "dispersion": 132,
         "recoil": 756,
-        "count": 40
+        "count": 40,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "762_25_casing"
       }
     },
     {
@@ -102515,11 +104448,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "308",
-        "damage": 0,
+        "damage": 43,
+        "pierce": 41,
+        "damage_type": "bullet",
         "range": 65,
-        "dispersion": 5,
+        "dispersion": 6,
         "recoil": 3300,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "762_51_casing"
       }
     },
     {
@@ -102540,11 +104480,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "308",
-        "damage": 0,
+        "damage": 43,
+        "pierce": 41,
+        "damage_type": "bullet",
         "range": 65,
-        "dispersion": 5,
+        "dispersion": 6,
         "recoil": 3300,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "INCENDIARY",
+          "RECYCLED"
+        ],
+        "casing": "762_51_casing"
       }
     },
     {
@@ -102565,11 +104513,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "762R",
-        "damage": 0,
+        "damage": 49,
+        "pierce": 24,
+        "damage_type": "bullet",
         "range": 75,
         "dispersion": 16,
         "recoil": 2650,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "762R_casing"
       }
     },
     {
@@ -102590,11 +104545,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "762",
-        "damage": 0,
+        "damage": 40,
+        "pierce": 20,
+        "damage_type": "bullet",
         "range": 30,
         "dispersion": 38,
         "recoil": 2036,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "762_casing"
       }
     },
     {
@@ -102615,11 +104577,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "762",
-        "damage": 0,
+        "damage": 44,
+        "pierce": 22,
+        "damage_type": "bullet",
         "range": 30,
         "dispersion": 38,
         "recoil": 2036,
-        "count": 30
+        "count": 30,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "762_casing"
       }
     },
     {
@@ -102640,11 +104609,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9mm",
-        "damage": 0,
+        "damage": 31,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 66,
         "recoil": 500,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "9mm_casing"
       }
     },
     {
@@ -102665,11 +104640,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9mm",
-        "damage": 0,
+        "damage": 31,
+        "pierce": 15,
+        "damage_type": "bullet",
         "range": 14,
-        "dispersion": 49,
+        "dispersion": 50,
         "recoil": 1000,
-        "count": 25
+        "count": 25,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "9mm_casing"
       }
     },
     {
@@ -102690,11 +104672,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9mm",
-        "damage": 0,
+        "damage": 32,
+        "pierce": 17,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 33,
         "recoil": 1500,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "9mm_casing"
       }
     },
     {
@@ -102715,11 +104704,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9mm",
-        "damage": 0,
+        "damage": 24,
+        "pierce": 15,
+        "damage_type": "bullet",
         "range": 14,
         "dispersion": 66,
         "recoil": 500,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "9mm_casing"
       }
     },
     {
@@ -102740,11 +104736,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9x18",
-        "damage": 0,
+        "damage": 19,
+        "pierce": 12,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 66,
         "recoil": 300,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "9x18mm_casing"
       }
     },
     {
@@ -102765,11 +104768,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9x18",
-        "damage": 0,
+        "damage": 22,
+        "pierce": 12,
+        "damage_type": "bullet",
         "range": 15,
         "dispersion": 55,
         "recoil": 330,
-        "count": 25
+        "count": 25,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "9x18mm_casing"
       }
     },
     {
@@ -102790,11 +104800,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "9x18",
-        "damage": 0,
+        "damage": 16,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 13,
         "dispersion": 66,
         "recoil": 300,
-        "count": 50
+        "count": 50,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "9x18mm_casing"
       }
     },
     {
@@ -102815,10 +104832,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 45,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "RECYCLED"
+        ],
+        "casing": "shot_hull",
+        "loudness": 160
       }
     },
     {
@@ -102839,11 +104864,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 18,
+        "damage_type": "bullet",
         "range": 0,
         "dispersion": 1100,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "NOGIB",
+          "RECYCLED"
+        ],
+        "casing": "shot_hull",
+        "loudness": 80
       }
     },
     {
@@ -102864,10 +104898,21 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 9,
+        "damage_type": "bullet",
         "range": 6,
         "recoil": 1500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "INCENDIARY",
+          "STREAM",
+          "NOGIB",
+          "RECYCLED"
+        ],
+        "casing": "shot_hull",
+        "loudness": 128
       }
     },
     {
@@ -102888,10 +104933,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 32,
+        "pierce": 30,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 2500,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "RECYCLED"
+        ],
+        "casing": "shot_hull",
+        "loudness": 160
       }
     },
     {
@@ -102924,11 +104978,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 36,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 24,
         "dispersion": 110,
         "recoil": 3500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "RECYCLED"
+        ],
+        "casing": "shot_hull",
+        "loudness": 160
       }
     },
     {
@@ -102997,7 +105059,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 6,
         "dispersion": 315,
         "durability": 8,
         "clip_size": 10
@@ -103058,7 +105120,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 6,
         "dispersion": 305,
         "durability": 8,
         "clip_size": 5
@@ -103089,7 +105151,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -3,
         "dispersion": 305,
         "durability": 8,
         "clip_size": 4
@@ -103120,7 +105182,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 345,
         "durability": 8,
         "clip_size": 7
@@ -103197,7 +105259,7 @@
         "ammo": [
           "bolt"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 30,
         "range": 8,
         "dispersion": 500,
         "recoil": 30,
@@ -103558,7 +105620,7 @@
         "ammo": [
           "22"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 550,
         "durability": 6,
         "clip_size": 1,
@@ -103589,7 +105651,7 @@
         "ammo": [
           "223"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -2,
         "dispersion": 550,
         "durability": 6,
         "clip_size": 1,
@@ -103620,7 +105682,7 @@
         "ammo": [
           "3006"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -2,
         "dispersion": 550,
         "durability": 6,
         "clip_size": 1,
@@ -103649,7 +105711,7 @@
         "ammo": [
           "308"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -5,
         "dispersion": 550,
         "durability": 6,
         "reload": 200
@@ -103679,7 +105741,7 @@
         "ammo": [
           "38"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 550,
         "durability": 6,
         "clip_size": 1,
@@ -103710,7 +105772,7 @@
         "ammo": [
           "40"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 550,
         "durability": 6,
         "clip_size": 1,
@@ -103741,7 +105803,7 @@
         "ammo": [
           "44"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 550,
         "durability": 6,
         "clip_size": 1,
@@ -103772,7 +105834,7 @@
         "ammo": [
           "45"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 550,
         "durability": 6,
         "clip_size": 1,
@@ -103803,7 +105865,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 550,
         "durability": 6,
         "clip_size": 1,
@@ -103835,7 +105897,7 @@
         "ammo": [
           "flintlock"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "range": 6,
         "dispersion": 180,
         "durability": 6,
@@ -104072,7 +106134,7 @@
         "ammo": [
           "8x40mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "range": 20,
         "dispersion": 10,
         "durability": 9
@@ -104105,7 +106167,7 @@
         "ammo": [
           "20x66mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 4,
         "range": 6,
         "dispersion": 285,
         "durability": 9,
@@ -104404,7 +106466,7 @@
         "ammo": [
           "8x40mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "range": -6,
         "dispersion": 90,
         "durability": 9,
@@ -104498,7 +106560,7 @@
         "ammo": [
           "flammable"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "range": 10,
         "dispersion": 240,
         "durability": 9,
@@ -104530,7 +106592,7 @@
         "ammo": [
           "8x40mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 5,
         "dispersion": 50,
         "durability": 9
       }
@@ -104560,7 +106622,7 @@
         "ammo": [
           "8x40mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 5,
         "dispersion": 70,
         "durability": 9,
         "reload": 200
@@ -104622,7 +106684,7 @@
         "ammo": [
           "8x40mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "dispersion": 30,
         "durability": 9
       }
@@ -104653,7 +106715,7 @@
         "ammo": [
           "8x40mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "dispersion": 175,
         "durability": 9,
         "clip_size": 5
@@ -104888,9 +106950,16 @@
       "to_hit": -1,
       "ammo": {
         "ammo_type": "rock",
-        "damage": 0,
+        "damage": 7,
+        "damage_type": "bash",
         "range": 10,
-        "dispersion": 14
+        "dispersion": 14,
+        "effects": [
+          "NEVER_MISFIRES",
+          "NON-FOULING",
+          "RECOVER_80"
+        ],
+        "loudness": 0
       }
     },
     {
@@ -106189,7 +108258,7 @@
         "ammo": [
           "22"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 4,
         "dispersion": 110,
         "durability": 8
       }
@@ -106221,7 +108290,7 @@
         "ammo": [
           "22"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -2,
         "dispersion": 480,
         "durability": 10,
         "clip_size": 8
@@ -106254,7 +108323,7 @@
         "ammo": [
           "38"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -2,
         "dispersion": 480,
         "durability": 10,
         "clip_size": 5
@@ -106307,7 +108376,7 @@
         "ammo": [
           "223"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 100,
         "durability": 8
       }
@@ -108295,7 +110364,7 @@
         "ammo": [
           "308"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -3,
         "dispersion": 150,
         "durability": 8
       }
@@ -108322,7 +110391,7 @@
         "ammo": [
           "223"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -2,
         "dispersion": 150,
         "durability": 8
       }
@@ -111359,7 +113428,7 @@
         "ammo": [
           "arrow"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 26,
         "range": 8,
         "dispersion": 1250,
         "durability": 4,
@@ -111667,7 +113736,7 @@
         "ammo": [
           "4570"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 4,
         "dispersion": 100,
         "durability": 8,
         "clip_size": 1
@@ -112723,7 +114792,7 @@
         "ammo": [
           "arrow"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 32,
         "range": 10,
         "dispersion": 1000,
         "durability": 6,
@@ -112838,10 +114907,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 50,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT"
+        ],
+        "casing": "shot_hull",
+        "loudness": 160
       }
     },
     {
@@ -112864,10 +114940,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 5,
+        "damage_type": "bash",
         "range": 12,
         "recoil": 1000,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "BEANBAG",
+          "NOGIB"
+        ],
+        "casing": "shot_hull",
+        "loudness": 96
       }
     },
     {
@@ -112890,11 +114975,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 20,
+        "damage_type": "bullet",
         "range": 0,
         "dispersion": 1000,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "NOGIB"
+        ],
+        "casing": "shot_hull",
+        "loudness": 80
       }
     },
     {
@@ -112917,10 +115010,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 10,
+        "damage_type": "bullet",
         "range": 6,
         "recoil": 1500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "INCENDIARY",
+          "STREAM",
+          "NOGIB"
+        ],
+        "casing": "shot_hull",
+        "loudness": 128
       }
     },
     {
@@ -112943,10 +115046,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 35,
+        "pierce": 30,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 2500,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "COOKOFF",
+          "SHOT"
+        ],
+        "casing": "shot_hull",
+        "loudness": 160
       }
     },
     {
@@ -112969,11 +115080,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 10,
+        "damage_type": "bullet",
         "range": 24,
         "dispersion": 100,
         "recoil": 3500,
-        "count": 5
+        "count": 5,
+        "effects": [
+          "COOKOFF",
+          "EXPLOSIVE"
+        ],
+        "casing": "shot_hull",
+        "loudness": 160
       }
     },
     {
@@ -113010,10 +115128,19 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shotpaper",
-        "damage": 0,
+        "damage": 40,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 2000,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "MUZZLE_SMOKE",
+          "BLACKPOWDER"
+        ],
+        "casing": "shot_hull",
+        "loudness": 128
       }
     },
     {
@@ -113035,10 +115162,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shotpaper",
-        "damage": 0,
+        "damage": 10,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 1200,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "MUZZLE_SMOKE",
+          "BLACKPOWDER",
+          "NOGIB"
+        ],
+        "casing": "shot_hull",
+        "loudness": 102
       }
     },
     {
@@ -113060,10 +115197,22 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shotpaper",
-        "damage": 0,
+        "damage": 8,
+        "damage_type": "bullet",
         "range": 6,
         "recoil": 1200,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "MUZZLE_SMOKE",
+          "BLACKPOWDER",
+          "INCENDIARY",
+          "STREAM",
+          "NOGIB"
+        ],
+        "casing": "shot_hull",
+        "loudness": 102
       }
     },
     {
@@ -113085,11 +115234,20 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shotpaper",
-        "damage": 0,
+        "damage": 32,
+        "pierce": 14,
+        "damage_type": "bullet",
         "range": 24,
         "dispersion": 100,
         "recoil": 2000,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "MUZZLE_SMOKE",
+          "BLACKPOWDER"
+        ],
+        "casing": "shot_hull",
+        "loudness": 128
       }
     },
     {
@@ -113110,10 +115268,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 30,
+        "damage_type": "bullet",
         "range": 12,
         "recoil": 2500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF",
+          "SHOT",
+          "RECYCLED"
+        ],
+        "casing": "shot_hull",
+        "loudness": 160
       }
     },
     {
@@ -113148,11 +115314,18 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "shot",
-        "damage": 0,
+        "damage": 40,
+        "pierce": 18,
+        "damage_type": "bullet",
         "range": 24,
         "dispersion": 100,
         "recoil": 3500,
-        "count": 20
+        "count": 20,
+        "effects": [
+          "COOKOFF"
+        ],
+        "casing": "shot_hull",
+        "loudness": 160
       }
     },
     {
@@ -113272,10 +115445,13 @@
       "cutting": 1,
       "ammo": {
         "ammo_type": "shotcanister",
-        "damage": 0,
+        "damage": 12,
+        "pierce": 2,
+        "damage_type": "stab",
         "range": 2,
         "dispersion": 100,
-        "count": 10
+        "count": 10,
+        "loudness": 0
       }
     },
     {
@@ -113297,10 +115473,13 @@
       "cutting": 1,
       "ammo": {
         "ammo_type": "shotcanister",
-        "damage": 0,
+        "damage": 13,
+        "pierce": 7,
+        "damage_type": "stab",
         "range": 3,
         "dispersion": 50,
-        "count": 10
+        "count": 10,
+        "loudness": 0
       }
     },
     {
@@ -113322,10 +115501,13 @@
       "cutting": 1,
       "ammo": {
         "ammo_type": "shotcanister",
-        "damage": 0,
+        "damage": 7,
+        "pierce": 1,
+        "damage_type": "stab",
         "range": 2,
         "dispersion": 80,
-        "count": 10
+        "count": 10,
+        "loudness": 0
       }
     },
     {
@@ -113347,10 +115529,12 @@
       "cutting": 1,
       "ammo": {
         "ammo_type": "shotcanister",
-        "damage": 0,
+        "damage": 10,
+        "damage_type": "stab",
         "range": 1,
         "dispersion": 250,
-        "count": 10
+        "count": 10,
+        "loudness": 0
       }
     },
     {
@@ -113432,7 +115616,10 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "components",
-        "count": 200
+        "count": 200,
+        "effects": [
+          "COOKOFF"
+        ]
       }
     },
     {
@@ -113740,7 +115927,7 @@
         "ammo": [
           "22"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 480,
         "durability": 8
       }
@@ -113846,11 +116033,17 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "signal_flare",
-        "damage": 0,
+        "damage": 16,
+        "damage_type": "bullet",
         "range": 30,
         "dispersion": 200,
         "recoil": 100,
-        "count": 4
+        "count": 4,
+        "effects": [
+          "NEVER_MISFIRES",
+          "NO_EMBED"
+        ],
+        "casing": "shot_hull"
       }
     },
     {
@@ -114437,7 +116630,7 @@
         "ammo": [
           "762"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 90,
         "durability": 8,
         "clip_size": 10
@@ -115004,7 +117197,7 @@
         "ammo": [
           "pebble"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 6,
         "range": 8,
         "dispersion": 150,
         "durability": 6,
@@ -115070,7 +117263,7 @@
         "ammo": [
           "pebble"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 3,
         "range": 5,
         "dispersion": 75,
         "durability": 6,
@@ -115721,7 +117914,7 @@
         "ammo": [
           "40"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -4,
         "dispersion": 590,
         "durability": 4
       }
@@ -115772,7 +117965,7 @@
         "ammo": [
           "45"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -4,
         "dispersion": 590,
         "durability": 4
       }
@@ -115823,7 +118016,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -3,
         "dispersion": 590,
         "durability": 4
       }
@@ -115942,7 +118135,10 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "components",
-        "count": 200
+        "count": 200,
+        "effects": [
+          "COOKOFF"
+        ]
       }
     },
     {
@@ -115963,7 +118159,10 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "components",
-        "count": 200
+        "count": 200,
+        "effects": [
+          "COOKOFF"
+        ]
       }
     },
     {
@@ -117741,7 +119940,7 @@
         "ammo": [
           "fishspear"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 6,
         "range": 4,
         "dispersion": 90,
         "durability": 8,
@@ -117951,10 +120150,16 @@
       "has_durability": false,
       "ammo": {
         "ammo_type": "homebrew_rocket",
-        "damage": 0,
+        "damage": 80,
+        "pierce": 80,
+        "damage_type": "stab",
         "range": 18,
         "dispersion": 180,
-        "recoil": 130
+        "recoil": 130,
+        "effects": [
+          "COOKOFF",
+          "TRAIL"
+        ]
       }
     },
     {
@@ -118398,7 +120603,7 @@
         "ammo": [
           "rock"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "range": 10,
         "dispersion": 200,
         "durability": 8,
@@ -119028,10 +121233,16 @@
       "to_hit": -1,
       "ammo": {
         "ammo_type": "metal_rail",
-        "damage": 0,
+        "damage": 65,
+        "pierce": 40,
+        "damage_type": "stab",
         "range": 50,
         "dispersion": 0,
-        "count": 10
+        "count": 10,
+        "effects": [
+          "NEVER_MISFIRES",
+          "NON-FOULING"
+        ]
       }
     },
     {
@@ -119055,7 +121266,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 360,
         "durability": 5
       }
@@ -120597,7 +122808,7 @@
         "ammo": [
           "223"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -4,
         "dispersion": 550,
         "durability": 6,
         "reload": 200
@@ -120628,7 +122839,7 @@
         "ammo": [
           "45"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 2,
         "dispersion": 620,
         "durability": 7,
         "clip_size": 5
@@ -120700,7 +122911,7 @@
         "ammo": [
           "40"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 620,
         "durability": 6,
         "clip_size": 6,
@@ -121670,7 +123881,7 @@
         "ammo": [
           "44"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 280,
         "durability": 8,
         "clip_size": 6
@@ -121761,7 +123972,7 @@
           "10mm",
           "40"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 320,
         "durability": 8,
         "clip_size": 6
@@ -122486,7 +124697,7 @@
         "ammo": [
           "50"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -5,
         "range": 45,
         "dispersion": 50,
         "durability": 8,
@@ -123303,7 +125514,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 320,
         "durability": 6,
         "clip_size": 5
@@ -125570,7 +127781,7 @@
         "ammo": [
           "pebble"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 15,
         "range": 15,
         "dispersion": 350,
         "recoil": 300,
@@ -125686,7 +127897,10 @@
       "bashing": 1,
       "ammo": {
         "ammo_type": "tinder",
-        "count": 50
+        "count": 50,
+        "effects": [
+          "NEVER_MISFIRES"
+        ]
       }
     },
     {
@@ -126224,7 +128438,7 @@
         "ammo": [
           "45"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 2,
         "dispersion": 360,
         "durability": 7
       }
@@ -128285,7 +130499,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 320,
         "durability": 6,
         "clip_size": 5,
@@ -128314,7 +130528,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 320,
         "durability": 6,
         "clip_size": 5,
@@ -129248,7 +131462,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -1,
         "dispersion": 400,
         "durability": 9
       }
@@ -129274,7 +131488,7 @@
         "ammo": [
           "9mm"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 1,
         "dispersion": 360,
         "durability": 7
       }
@@ -129357,7 +131571,7 @@
       "to_hit": -2,
       "gun": {
         "skill": "pistol",
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "range": 30,
         "dispersion": 180,
         "durability": 8,
@@ -129385,7 +131599,7 @@
       "to_hit": -2,
       "gun": {
         "skill": "pistol",
-        "ranged_damage": 0,
+        "ranged_damage": 10,
         "range": 30,
         "dispersion": 180,
         "durability": 4,
@@ -131544,7 +133758,8 @@
       "description": "Fancy mineral water, so fancy it makes you feel fancy just holding it.",
       "has_durability": false,
       "comestible": {
-        "quench": 60
+        "quench": 60,
+        "fun": 1
       }
     },
     {
@@ -133219,7 +135434,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": -3,
         "dispersion": 860,
         "durability": 6,
         "clip_size": 6,
@@ -133250,7 +135465,7 @@
         "ammo": [
           "shot"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 2,
         "dispersion": 360,
         "durability": 8,
         "clip_size": 6
@@ -133983,7 +136198,7 @@
         "ammo": [
           "arrow"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 50,
         "range": 20,
         "dispersion": 1000,
         "durability": 8,
@@ -134208,7 +136423,7 @@
         "ammo": [
           "pebble"
         ],
-        "ranged_damage": 0,
+        "ranged_damage": 5,
         "range": 8,
         "dispersion": 45,
         "durability": 7,

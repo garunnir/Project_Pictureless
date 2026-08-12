@@ -23,4 +23,4 @@ MonoBehaviour:
       missVfx: {fileID: 0}
   _supportedActions: 1
   _defaultEntryIndex: 0
-  _animatorOverride: {fileID: 0}
+  _animatorOverride: {fileID: 22100000, guid: a797d5132a0a14344a3c6abe8f4079bf, type: 2}

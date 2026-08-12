@@ -40,6 +40,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     Collider _selfCollider;
     readonly float[] _cooldownRemaining = new float[HandCooldownSlotCount];
     readonly PendingAttack[] _pendingCues = new PendingAttack[PendingCueSlotCount];
+    readonly string[] _hitChannelScratch = new string[AttackDamageTags.MaxChannels];
 
     public event Action AvailableActionsChanged;
     public event Action SelectedActionChanged;
@@ -257,7 +258,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (GetCooldown(_activeWieldHand) > 0f)
             return false;
 
-        float range = CombatMath.RangeMeters(CurrentItem, _selectedAction);
+        float range = CombatMath.RangeMeters(CurrentItem, _selectedAction, WeaponChamber.ResolveAmmo(_wieldedStack, _wieldedInstance));
         return distance <= range;
     }
 
@@ -319,7 +320,7 @@ public sealed class CharacterAttacker : MonoBehaviour
 
         Vector3 toTarget = targetHost.transform.position - transform.position;
         toTarget.y = 0f;
-        float range = CombatMath.RangeMeters(item, action);
+        float range = CombatMath.RangeMeters(item, action, WeaponChamber.ResolveAmmo(_wieldedStack, _wieldedInstance));
         if (toTarget.magnitude > range)
             return AttackPerformResult.OutOfRange;
 
@@ -417,7 +418,10 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (fallbackDir.sqrMagnitude < 1e-6f)
             fallbackDir = Vector3.forward;
 
-        float fallbackDist = CombatMath.RangeMeters(item, action);
+        float fallbackDist = CombatMath.RangeMeters(
+            item,
+            action,
+            WeaponChamber.ResolveAmmo(_wieldedStack, _wieldedInstance));
         if (fallbackDist <= 0f)
             fallbackDist = FallbackImpactRadius;
         return origin + fallbackDir.normalized * fallbackDist;
@@ -728,7 +732,8 @@ public sealed class CharacterAttacker : MonoBehaviour
             string.Empty,
             0,
             origin,
-            impact);
+            impact,
+            item);
     }
 
     public void ResolveCommittedHit(
@@ -736,7 +741,8 @@ public sealed class CharacterAttacker : MonoBehaviour
         WeaponResolveMode resolveMode,
         ItemData item,
         Vector3 origin,
-        bool consumeAmmo)
+        bool consumeAmmo,
+        ItemData ammo = null)
     {
         CharacterBodyHost targetHost = context.Target;
         Collider targetCollider = targetHost.GetComponentInChildren<Collider>();
@@ -752,19 +758,22 @@ public sealed class CharacterAttacker : MonoBehaviour
         }
 
         Vector3 impact = ResolveImpactPoint(targetCollider, targetCenter, origin);
-        CommitAttempt(context, item, consumeAmmo);
+        ammo ??= WeaponChamber.ResolveAmmo(context.Stack, context.Instance);
+        CommitAttempt(context, item, consumeAmmo, ammo);
 
         ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
-        string damageTag = context.Attack != null
-            ? context.Attack.DamageTag
-            : AttackDamageTags.DefaultFor(context.Action);
-        string skillId = CombatMath.SkillIdForTag(item, damageTag);
+        int channelCount = AttackDamageTags.WriteChannels(
+            item, context.Action, _hitChannelScratch, ammo);
+        string hitTag = channelCount > 0
+            ? _hitChannelScratch[0]
+            : AttackDamageTags.Fallback;
+        string skillId = CombatMath.SkillIdForTag(item, hitTag);
         int skillLevel = skills != null && !string.IsNullOrEmpty(skillId)
             ? skills.Level(skillId)
             : 0;
         int strength = skills != null ? skills.Level(AttributeIds.Str) : StrengthBaselineFallback;
         float factor = context.OffenseFactor;
-        float hitChance = CombatMath.HitChance(item, context.Action, skillLevel, aimedPart)
+        float hitChance = CombatMath.HitChance(item, context.Action, skillLevel, aimedPart, ammo)
             * factor
             * ResolveAttackerWearEncAccuracyFactor()
             * ResolveAttackerEnvAccuracyFactor();
@@ -779,20 +788,34 @@ public sealed class CharacterAttacker : MonoBehaviour
                 aimedPart,
                 0,
                 origin,
-                impact);
+                impact,
+                item,
+                ammo);
             return;
         }
 
-        int damage = Mathf.Max(
-            0,
-            Mathf.RoundToInt(CombatMath.DamageForTag(item, damageTag, strength, skillLevel) * factor));
-        damage = WearCombatDefense.MitigateDamage(
-            ResolveTargetWear(targetHost),
-            aimedPart,
-            damage,
-            damageTag);
-        BodyPartEffect[] seeds = BuildSeeds(context.Attack);
-        BodyDamageService.ApplyHit(targetHost.Body, aimedPart, damage, seeds);
+        EquipmentWearState wear = ResolveTargetWear(targetHost);
+        int damage = 0;
+        for (int i = 0; i < channelCount; i++)
+        {
+            string damageTag = _hitChannelScratch[i];
+            int channelDamage = Mathf.Max(
+                0,
+                Mathf.RoundToInt(
+                    CombatMath.DamageForTag(item, damageTag, strength, skillLevel, ammo) * factor));
+            channelDamage = WearCombatDefense.MitigateDamage(
+                wear,
+                aimedPart,
+                channelDamage,
+                damageTag);
+            BodyPartEffect[] seeds =
+                string.Equals(damageTag, AttackDamageTags.Cut, StringComparison.Ordinal)
+                    ? BuildSeeds(_presentation, context.Action, context.Attack)
+                    : null;
+            BodyDamageService.ApplyHit(targetHost.Body, aimedPart, channelDamage, seeds);
+            damage += channelDamage;
+        }
+
         EmitJudged(
             context,
             resolveMode,
@@ -801,19 +824,22 @@ public sealed class CharacterAttacker : MonoBehaviour
             aimedPart,
             damage,
             origin,
-            impact);
+            impact,
+            item,
+            ammo);
     }
 
     public void CommitAttempt(
         in ActionHandlerContext context,
         ItemData item,
-        bool consumeAmmo)
+        bool consumeAmmo,
+        ItemData ammo = null)
     {
         float cooldown = CombatMath.AttackIntervalSeconds(item, context.Action);
         BeginCooldown(context.Hand, cooldown);
         if (consumeAmmo)
             WeaponChamber.TryConsume(context.Instance);
-        Practice(item, context.Attack, context.Action);
+        Practice(item, context.Attack, context.Action, ammo);
     }
 
     public void EmitJudged(
@@ -824,9 +850,15 @@ public sealed class CharacterAttacker : MonoBehaviour
         string aimedPartId,
         int damage,
         Vector3 origin,
-        Vector3 impact)
+        Vector3 impact,
+        ItemData item = null,
+        ItemData ammo = null)
     {
-        string impactTag = ResolveImpactTag(context.Attack, null);
+        if (item == null)
+            item = ItemFor(context.ItemId);
+        ammo ??= WeaponChamber.ResolveAmmo(context.Stack, context.Instance);
+        int n = AttackDamageTags.WriteChannels(item, context.Action, _hitChannelScratch, ammo);
+        string hitTag = n > 0 ? _hitChannelScratch[0] : AttackDamageTags.Fallback;
         var outcome = new AttackOutcome(
             context.Action,
             context.Hand,
@@ -837,25 +869,10 @@ public sealed class CharacterAttacker : MonoBehaviour
             damage,
             origin,
             impact,
-            impactTag,
+            hitTag,
             context.Attack);
         AttackJudged?.Invoke(outcome);
         AnyAttackJudged?.Invoke(outcome);
-    }
-
-    static string ResolveImpactTag(WeaponAttack attack, string emitted)
-    {
-        if (!string.IsNullOrEmpty(emitted))
-            return emitted;
-        if (attack != null)
-        {
-            if (!string.IsNullOrEmpty(attack.ImpactTag))
-                return attack.ImpactTag;
-            if (!string.IsNullOrEmpty(attack.FallbackImpactTag))
-                return attack.FallbackImpactTag;
-        }
-
-        return AttackImpactTags.Fallback;
     }
 
     void BeginCooldown(WieldHand hand, float seconds) =>
@@ -869,13 +886,12 @@ public sealed class CharacterAttacker : MonoBehaviour
         return index;
     }
 
-    void Practice(ItemData item, WeaponAttack attack, WeaponAction action)
+    void Practice(ItemData item, WeaponAttack attack, WeaponAction action, ItemData ammo = null)
     {
         if (_skillsHost == null)
             return;
-        string damageTag = attack != null
-            ? attack.DamageTag
-            : AttackDamageTags.DefaultFor(action);
+        _ = attack;
+        string damageTag = AttackDamageTags.Resolve(item, action, ammo);
         string skillId = CombatMath.SkillIdForTag(item, damageTag);
         int xp = CombatMath.PracticeXp(action);
         if (string.IsNullOrEmpty(skillId) || xp <= 0)
@@ -883,30 +899,57 @@ public sealed class CharacterAttacker : MonoBehaviour
         _skillsHost.Skills?.AddPractice(skillId, xp);
     }
 
-    static BodyPartEffect[] BuildSeeds(WeaponAttack attack)
+    static BodyPartEffect[] BuildSeeds(
+        WeaponPresentation presentation,
+        WeaponAction action,
+        WeaponAttack attack)
     {
+        if (presentation != null &&
+            presentation.TryGetEntry(action, out WeaponPresentation.Entry entry) &&
+            entry?.effectSeeds != null &&
+            entry.effectSeeds.Length > 0)
+        {
+            var seeds = new BodyPartEffect[entry.effectSeeds.Length];
+            for (int i = 0; i < entry.effectSeeds.Length; i++)
+            {
+                WeaponPresentation.EffectSeed seed = entry.effectSeeds[i];
+                if (seed == null)
+                {
+                    seeds[i] = default;
+                    continue;
+                }
+
+                seeds[i] = new BodyPartEffect(
+                    seed.effectId,
+                    seed.intensity,
+                    seed.remainingSeconds);
+            }
+
+            return seeds;
+        }
+
         if (attack == null ||
             attack.EffectSeeds == null ||
             attack.EffectSeeds.Length == 0)
             return null;
 
-        var seeds = new BodyPartEffect[attack.EffectSeeds.Length];
+        var attackSeeds = new BodyPartEffect[attack.EffectSeeds.Length];
         for (int i = 0; i < attack.EffectSeeds.Length; i++)
         {
             WeaponAttack.EffectSeed seed = attack.EffectSeeds[i];
             if (seed == null)
             {
-                seeds[i] = default;
+                attackSeeds[i] = default;
                 continue;
             }
 
-            seeds[i] = new BodyPartEffect(
+            attackSeeds[i] = new BodyPartEffect(
                 seed.effectId,
                 seed.intensity,
                 seed.remainingSeconds);
         }
 
-        return seeds;
+        return attackSeeds;
     }
 
     struct PendingAttack

@@ -14,13 +14,20 @@ public readonly struct ItemMergeKey
     public readonly string KindId;
     public readonly int DamageLevel;
     public readonly int ChamberRounds;
+    public readonly string ChamberAmmoId;
     public readonly bool HasMagazine;
 
-    public ItemMergeKey(string kindId, int damageLevel, int chamberRounds, bool hasMagazine)
+    public ItemMergeKey(
+        string kindId,
+        int damageLevel,
+        int chamberRounds,
+        bool hasMagazine,
+        string chamberAmmoId = null)
     {
         KindId = kindId ?? string.Empty;
         DamageLevel = Math.Max(0, damageLevel);
         ChamberRounds = Math.Max(0, chamberRounds);
+        ChamberAmmoId = chamberAmmoId ?? string.Empty;
         HasMagazine = hasMagazine;
     }
 
@@ -34,7 +41,8 @@ public readonly struct ItemMergeKey
             stack.ItemId,
             instance.DamageLevel,
             instance.ChamberRounds,
-            HasMagazineShallow(stack));
+            HasMagazineShallow(stack),
+            instance.ChamberAmmoId);
     }
 
     public static ItemMergeKey From(ItemData item, int damageLevel)

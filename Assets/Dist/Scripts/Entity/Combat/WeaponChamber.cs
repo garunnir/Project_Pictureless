@@ -95,9 +95,9 @@ public static class WeaponChamber
         int capacity = ChamberCapacity(item, hasMagazine: true);
         if (capacity <= 0 || instance.ChamberRounds >= capacity)
             return false;
-        if (!TryTakeOneFromMagazine(magazine))
+        if (!TryTakeOneFromMagazine(magazine, out string ammoId))
             return false;
-        return instance.TryAddChamberRound(capacity);
+        return instance.TryAddChamberRound(capacity, ammoId);
     }
 
     public static bool TryConsume(ItemInstance instance) =>
@@ -107,21 +107,45 @@ public static class WeaponChamber
     public static bool TryReload(ItemInstance instance, ItemStack weapon, ItemData item) =>
         TryFeedFromMagazine(instance, weapon, item);
 
-    public static int ResolvePierce(ItemStack weapon)
+    /// <summary>약실에 기록된 탄, 없으면 메거진/총 Nested의 탄 스택.</summary>
+    public static ItemData ResolveAmmo(ItemStack weapon, ItemInstance instance = null)
     {
-        if (!TryGetMagazine(weapon, out ItemStack magazine))
-            return 0;
+        instance ??= weapon?.Instance;
+        if (instance != null && !string.IsNullOrEmpty(instance.ChamberAmmoId))
+        {
+            ItemData loaded = GameplayData.GetItem(instance.ChamberAmmoId);
+            if (loaded?.ammo != null)
+                return loaded;
+        }
 
-        ItemStack ammo = FindAmmoStack(magazine.Nested);
-        int pierce = ammo?.Item?.ammo != null ? ammo.Item.ammo.pierce : 0;
+        if (TryGetMagazine(weapon, out ItemStack magazine))
+        {
+            ItemStack magAmmo = FindAmmoStack(magazine.Nested);
+            if (magAmmo?.Item?.ammo != null)
+                return magAmmo.Item;
+        }
+
+        ItemStack loose = FindAmmoStack(weapon?.Nested);
+        return loose?.Item?.ammo != null ? loose.Item : null;
+    }
+
+    public static int ResolvePierce(ItemStack weapon, ItemInstance instance = null)
+    {
+        ItemData ammo = ResolveAmmo(weapon, instance);
+        int pierce = ammo?.ammo != null ? ammo.ammo.pierce : 0;
         return pierce > 0 ? pierce : 0;
     }
 
-    static bool TryTakeOneFromMagazine(ItemStack magazine)
+    static bool TryTakeOneFromMagazine(ItemStack magazine, out string ammoId)
     {
+        ammoId = null;
         ItemStack ammo = FindAmmoStack(magazine?.Nested);
         if (ammo?.Item != null && magazine.Nested.RemoveItem(ammo.Item, 1) > 0)
+        {
+            ammoId = ammo.Item.id;
             return true;
+        }
+
         return magazine?.Instance != null && magazine.Instance.TryTakeSupplyRound();
     }
 

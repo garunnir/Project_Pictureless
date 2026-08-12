@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterCombatVfx — 공격 판정·Impact Kind 연출 스폰
+// CharacterCombatVfx — Action 시전 VFX + Hit(특성) + Reaction(Recoil/Blocked)
 // ============================================================
 
 using Lean.Pool;
@@ -60,8 +60,11 @@ public sealed class CharacterCombatVfx : MonoBehaviour
 
         WeaponActionVfx vfx = WeaponActionVfxResolver.ResolveImpact(
             outcome.Attack,
+            _attacker.Presentation,
+            outcome.Action,
+            ResolvePipeline(),
             impactDefaults,
-            outcome.ImpactTag);
+            outcome.HitTag);
         if (vfx == null)
             return;
 

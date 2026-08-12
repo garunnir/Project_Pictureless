@@ -44,7 +44,8 @@ static class GameDataWeaponPresentationEditor
 
         EditorGUI.indentLevel++;
         EditorGUILayout.HelpBox(
-            "WeaponPresentationCatalog 한곳에서 Pipeline / Tag VFX / 바인딩을 탭·인라인 편집.",
+            "Catalog = 진입점(무기→Presentation). 폴백(팔 애니·타격 VFX·발사체)은 " +
+            "Catalog 하단 Fallbacks에 격리되어 있습니다.",
             MessageType.None);
 
         if (catalog == null)
@@ -91,6 +92,12 @@ static class GameDataWeaponPresentationEditor
             EditorGUI.indentLevel--;
             return;
         }
+
+        EditorGUILayout.HelpBox(
+            "이 아이템 전용 동작 목록입니다. 비어 있으면 카탈로그가 무기 카테고리, " +
+            "그래도 없으면 맨손을 씁니다.\n" +
+            "Ensure Presentation: 전용 에셋을 만들고 연결합니다. Unlink: 연결만 끊고 에셋은 남깁니다.",
+            MessageType.None);
 
         catalog.TryGetByItemId(item.id, out WeaponPresentation bound);
         EditorGUI.BeginDisabledGroup(true);

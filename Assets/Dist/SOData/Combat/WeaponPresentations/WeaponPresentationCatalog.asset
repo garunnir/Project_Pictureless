@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 091462ca46e1ec746830efa11bf418ee, type: 3}
   m_Name: WeaponPresentationCatalog
   m_EditorClassIdentifier: DistScript::WeaponPresentationCatalog
+  _inspectorPad: 0
+  _unarmed: {fileID: 11400000, guid: eec33d4af901fe740af3be7bb81abd2e, type: 2}
   _byItemId:
   - id: weapon_bat
     presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}
@@ -132,8 +134,4 @@ MonoBehaviour:
     presentation: {fileID: 11400000, guid: eec33d4af901fe740af3be7bb81abd2e, type: 2}
   - id: BIONIC_WEAPONRY
     presentation: {fileID: 11400000, guid: eec33d4af901fe740af3be7bb81abd2e, type: 2}
-  _unarmed: {fileID: 11400000, guid: eec33d4af901fe740af3be7bb81abd2e, type: 2}
-  _animPipeline: {fileID: 11400000, guid: 05420430cc89c3d44bdb6b6edb99740c, type: 2}
-  _impactVfxDefaults: {fileID: 11400000, guid: 90d173c6fe84ab9d062531b9fc487ae6, type: 2}
-  _defaultProjectile: {fileID: 3439977824323346792, guid: 82cc010aac92f8b4eb11b4ffbe7dc5ce,
-    type: 3}
+  _fallbacks: {fileID: 11400000, guid: c5727c9e87f7f4e48b1d14e67dab5fa2, type: 2}

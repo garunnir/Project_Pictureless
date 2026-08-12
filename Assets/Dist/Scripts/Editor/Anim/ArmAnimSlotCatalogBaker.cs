@@ -272,6 +272,8 @@ public static class ArmAnimSlotCatalogBaker
             return;
         presentation.SetAnimPipeline(pipeline);
         EditorUtility.SetDirty(presentation);
+        if (presentation.Fallbacks != null)
+            EditorUtility.SetDirty(presentation.Fallbacks);
     }
 
     /// <summary>슬롯 파일 스템 = Normalize 후 enum 이름. 새 동사도 switch 없이 동작.</summary>

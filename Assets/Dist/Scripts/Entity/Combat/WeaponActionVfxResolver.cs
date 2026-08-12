@@ -36,40 +36,47 @@ public static class WeaponActionVfxResolver
     }
 
     /// <summary>
-    /// Attack SO 슬롯을 우선하고, null은 임팩트 태그 폴백으로 채운다.
-    /// 태그가 비면 fallback 태그를 쓴다 (무음 금지).
+    /// Hit VFX: Entry(+Pipeline) → Attack VFX → Defaults[특성 키] → fallback.
+    /// Reaction(Recoil/Blocked)은 ResolveImpactKind.
     /// </summary>
     public static WeaponActionVfx ResolveImpact(
         WeaponAttack attack,
+        WeaponPresentation presentation,
+        WeaponAction action,
+        ArmAnimSlotCatalog pipeline,
         WeaponImpactVfxDefaults defaults,
         string impactTag)
     {
+        WeaponActionVfx entry = Resolve(presentation, action, pipeline);
         WeaponActionVfx weapon = attack != null ? attack.AttackVfx : null;
-        string tag = impactTag;
-        if (string.IsNullOrEmpty(tag) && attack != null)
-            tag = attack.ImpactTag;
-        if (string.IsNullOrEmpty(tag) && attack != null)
-            tag = attack.FallbackImpactTag;
-        if (string.IsNullOrEmpty(tag))
-            tag = AttackImpactTags.Fallback;
+
+        string tag = string.IsNullOrEmpty(impactTag)
+            ? AttackImpactTags.Fallback
+            : impactTag;
 
         WeaponActionVfx tagVfx = null;
         if (defaults != null && !defaults.TryGetVfx(tag, out tagVfx))
             defaults.TryGetVfx(AttackImpactTags.Fallback, out tagVfx);
 
-        if (weapon == null && tagVfx == null)
+        if (entry == null && weapon == null && tagVfx == null)
             return null;
 
         return new WeaponActionVfx
         {
             actionVfx = null,
-            tracerVfx = Coalesce(weapon?.tracerVfx, tagVfx?.tracerVfx),
-            hitVfx = Coalesce(weapon?.hitVfx, tagVfx?.hitVfx),
-            missVfx = Coalesce(weapon?.missVfx, tagVfx?.missVfx)
+            tracerVfx = Coalesce(
+                entry?.tracerVfx,
+                Coalesce(weapon?.tracerVfx, tagVfx?.tracerVfx)),
+            hitVfx = Coalesce(
+                entry?.hitVfx,
+                Coalesce(weapon?.hitVfx, tagVfx?.hitVfx)),
+            missVfx = Coalesce(
+                entry?.missVfx,
+                Coalesce(weapon?.missVfx, tagVfx?.missVfx))
         };
     }
 
-    /// <summary>Pipeline Impact Kind 행 VFX.</summary>
+    /// <summary>Pipeline Reaction Kind 행 VFX (Recoil/Blocked).</summary>
     public static WeaponActionVfx ResolveImpactKind(
         ArmAnimSlotCatalog pipeline,
         ArmImpactKind kind)

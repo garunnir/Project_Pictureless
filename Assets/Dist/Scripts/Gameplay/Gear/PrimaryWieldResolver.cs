@@ -175,7 +175,13 @@ public static class PrimaryWieldResolver
         int skillLevel = skills != null && !string.IsNullOrEmpty(skillId)
             ? skills.Level(skillId)
             : 0;
-        int damage = CombatMath.Damage(item, attack, action, strength, skillLevel);
+        int damage = CombatMath.Damage(
+            item,
+            attack,
+            action,
+            strength,
+            skillLevel,
+            WeaponChamber.ResolveAmmo(stack, stack.Instance));
         return damage / interval * Mathf.Max(0f, offHandFactor);
     }
 }

@@ -41,7 +41,8 @@ public sealed class SpawnProjectileHandler : IActionHandler
         Vector3 toTarget = targetHost.transform.position - attacker.transform.position;
         toTarget.y = 0f;
         float distance = toTarget.magnitude;
-        float range = CombatMath.RangeMeters(item, context.Action);
+        ItemData ammo = WeaponChamber.ResolveAmmo(context.Stack, context.Instance);
+        float range = CombatMath.RangeMeters(item, context.Action, ammo);
         if (distance > range)
         {
             attacker.EmitJudgedGate(context, mode, AttackPerformResult.OutOfRange, item, origin);
@@ -54,21 +55,22 @@ public sealed class SpawnProjectileHandler : IActionHandler
         float rayDist = dir.magnitude;
         if (rayDist <= CharacterAttacker.MinRayDistance)
         {
-            attacker.ResolveCommittedHit(context, mode, item, origin, consumeAmmo: true);
+            attacker.ResolveCommittedHit(context, mode, item, origin, consumeAmmo: true, ammo);
             return;
         }
 
         dir /= rayDist;
-        if (TrySpawnProjectile(attacker, context, item, origin, dir, range))
+        if (TrySpawnProjectile(attacker, context, item, ammo, origin, dir, range))
             return;
 
-        ExecuteRayStub(attacker, context, item, origin, dir, rayDist, targetHost, mode);
+        ExecuteRayStub(attacker, context, item, ammo, origin, dir, rayDist, targetHost, mode);
     }
 
     static bool TrySpawnProjectile(
         CharacterAttacker attacker,
         in ActionHandlerContext context,
         ItemData item,
+        ItemData ammo,
         Vector3 origin,
         Vector3 direction,
         float range)
@@ -81,15 +83,17 @@ public sealed class SpawnProjectileHandler : IActionHandler
         if (projectile == null)
             return false;
 
-        attacker.CommitAttempt(context, item, consumeAmmo: true);
+        attacker.CommitAttempt(context, item, consumeAmmo: true, ammo);
+        int pierce = ammo?.ammo != null ? Mathf.Max(0, ammo.ammo.pierce) : 0;
         projectile.Launch(
             attacker,
             context,
             item,
+            ammo,
             origin,
             direction,
             range,
-            WeaponChamber.ResolvePierce(context.Stack),
+            pierce,
             attacker.RangedObstructionMask);
         return true;
     }
@@ -105,6 +109,7 @@ public sealed class SpawnProjectileHandler : IActionHandler
         CharacterAttacker attacker,
         in ActionHandlerContext context,
         ItemData item,
+        ItemData ammo,
         Vector3 origin,
         Vector3 dir,
         float rayDist,
@@ -122,7 +127,7 @@ public sealed class SpawnProjectileHandler : IActionHandler
             blocker.collider.transform != targetHost.transform &&
             !blocker.collider.transform.IsChildOf(targetHost.transform))
         {
-            attacker.CommitAttempt(context, item, consumeAmmo: true);
+            attacker.CommitAttempt(context, item, consumeAmmo: true, ammo);
             attacker.EmitJudged(
                 context,
                 mode,
@@ -131,10 +136,12 @@ public sealed class SpawnProjectileHandler : IActionHandler
                 string.Empty,
                 0,
                 origin,
-                blocker.point);
+                blocker.point,
+                item,
+                ammo);
             return;
         }
 
-        attacker.ResolveCommittedHit(context, mode, item, origin, consumeAmmo: true);
+        attacker.ResolveCommittedHit(context, mode, item, origin, consumeAmmo: true, ammo);
     }
 }

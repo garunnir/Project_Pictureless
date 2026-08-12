@@ -56,18 +56,30 @@ def deep_merge(base: dict, override: dict) -> dict:
             continue
         if key == "proportional":
             for pk, pv in val.items():
-                if pk in result and isinstance(result[pk], (int, float)):
-                    result[pk] = result[pk] * pv
+                if pk in result:
+                    result[pk] = _apply_scale(result[pk], pv)
             continue
         if key == "relative":
             for rk, rv in val.items():
-                if rk in result and isinstance(result[rk], (int, float)):
-                    result[rk] = result[rk] + rv
+                if rk in result:
+                    result[rk] = _apply_add(result[rk], rv)
+                elif isinstance(rv, dict) or _is_number(rv):
+                    result[rk] = copy.deepcopy(rv)
             continue
         if key == "delete":
             for dk, dv in val.items():
                 if dk in result and isinstance(result[dk], list):
                     result[dk] = [x for x in result[dk] if x not in dv]
+            continue
+        if (
+            key in _DAMAGE_MERGE_KEYS
+            and key in result
+            and isinstance(result[key], dict)
+            and isinstance(val, dict)
+        ):
+            merged = copy.deepcopy(result[key])
+            merged.update(copy.deepcopy(val))
+            result[key] = merged
             continue
         result[key] = copy.deepcopy(val)
     return result
@@ -275,6 +287,100 @@ def _float_or_zero(value) -> float:
         return 0.0
 
 
+def _is_number(value) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _as_int(value) -> int:
+    if not _is_number(value):
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return 0
+    return int(round(float(value)))
+
+
+# copy-from 시 부분 덮어쓰기. 통째 치환하면 damage_type이 유실된다.
+_DAMAGE_MERGE_KEYS = frozenset({"damage", "ranged_damage", "shot_damage"})
+
+
+def _apply_scale(target, factor):
+    """proportional: 숫자×배수, damage 객체는 필드별 또는 전 수치 필드."""
+    if _is_number(target) and _is_number(factor):
+        return target * factor
+    if isinstance(target, dict) and isinstance(factor, dict):
+        out = copy.deepcopy(target)
+        for key, val in factor.items():
+            if key in out:
+                out[key] = _apply_scale(out[key], val)
+        return out
+    if isinstance(target, dict) and _is_number(factor):
+        out = copy.deepcopy(target)
+        for key, val in out.items():
+            if _is_number(val):
+                out[key] = val * factor
+        return out
+    return target
+
+
+def _apply_add(target, delta):
+    """relative: 숫자 가산, damage 객체는 필드별 또는 amount만."""
+    if _is_number(target) and _is_number(delta):
+        return target + delta
+    if isinstance(target, dict) and isinstance(delta, dict):
+        out = copy.deepcopy(target)
+        for key, val in delta.items():
+            if key in out:
+                out[key] = _apply_add(out[key], val)
+            elif _is_number(val):
+                out[key] = val
+        return out
+    if isinstance(target, dict) and _is_number(delta):
+        out = copy.deepcopy(target)
+        if "amount" in out and _is_number(out["amount"]):
+            out["amount"] = out["amount"] + delta
+        return out
+    return target
+
+
+def _damage_units(value) -> list[dict]:
+    """BN damage: int | unit dict | {values:[...]} | list → unit dict 목록."""
+    if value is None or isinstance(value, bool):
+        return []
+    if _is_number(value):
+        return [{"amount": value}]
+    if isinstance(value, list):
+        units: list[dict] = []
+        for item in value:
+            units.extend(_damage_units(item))
+        return units
+    if isinstance(value, dict):
+        if "values" in value:
+            return _damage_units(value.get("values"))
+        return [value]
+    return []
+
+
+def flatten_damage(value) -> dict:
+    """BN 피해 객체 → Dist 스칼라 {amount, pierce, damage_type}."""
+    amount = 0.0
+    pierce = 0.0
+    damage_type = ""
+    for unit in _damage_units(value):
+        if "amount" in unit:
+            amount += _float_or_zero(unit.get("amount"))
+        ap = unit.get("armor_penetration", unit.get("pierce"))
+        if ap is not None:
+            pierce += _float_or_zero(ap)
+        if not damage_type and unit.get("damage_type"):
+            damage_type = str(unit.get("damage_type"))
+    return {
+        "amount": int(round(amount)),
+        "pierce": int(round(pierce)),
+        "damage_type": damage_type,
+    }
+
+
 # Dist BodyPartIds — BN plural / either covers → L/R parts.
 _BN_COVER_EXPAND: dict[str, list[str]] = {
     "arms": ["arm_l", "arm_r"],
@@ -466,12 +572,14 @@ def export_gun_detail(entry: dict, item_type: str) -> dict | None:
     ammo = source.get("ammo")
     if ammo:
         gun["ammo"] = ammo if isinstance(ammo, list) else [ammo]
+    if "ranged_damage" in source:
+        gun["ranged_damage"] = flatten_damage(source.get("ranged_damage"))["amount"]
     for key in (
-        "ranged_damage", "range", "dispersion", "recoil", "durability",
+        "range", "dispersion", "recoil", "durability",
         "clip_size", "reload", "burst",
     ):
         if key in source:
-            gun[key] = _int_or_zero(source.get(key))
+            gun[key] = _as_int(source.get(key))
     return gun or None
 
 
@@ -513,9 +621,31 @@ def export_ammo_detail(entry: dict, item_type: str) -> dict | None:
     ammo = {}
     if entry.get("ammo_type"):
         ammo["ammo_type"] = str(entry.get("ammo_type"))
-    for key in ("damage", "pierce", "range", "dispersion", "recoil", "count"):
+    if "damage" in entry:
+        flat = flatten_damage(entry.get("damage"))
+        ammo["damage"] = flat["amount"]
+        if flat["pierce"]:
+            ammo["pierce"] = flat["pierce"]
+        if flat["damage_type"]:
+            ammo["damage_type"] = flat["damage_type"]
+    if "pierce" in entry and "pierce" not in ammo:
+        ammo["pierce"] = _as_int(entry.get("pierce"))
+    for key in ("range", "dispersion", "recoil", "count"):
         if key in entry:
-            ammo[key] = _int_or_zero(entry.get(key))
+            ammo[key] = _as_int(entry.get(key))
+    if "shot_damage" in entry:
+        ammo["shot_damage"] = flatten_damage(entry.get("shot_damage"))["amount"]
+    if "projectile_count" in entry:
+        ammo["projectile_count"] = _as_int(entry.get("projectile_count"))
+    if "shot_spread" in entry:
+        ammo["shot_spread"] = _as_int(entry.get("shot_spread"))
+    effects = entry.get("effects")
+    if effects:
+        ammo["effects"] = effects if isinstance(effects, list) else [str(effects)]
+    if entry.get("casing"):
+        ammo["casing"] = str(entry.get("casing"))
+    if "loudness" in entry:
+        ammo["loudness"] = _as_int(entry.get("loudness"))
     return ammo or None
 
 

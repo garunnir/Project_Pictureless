@@ -11,7 +11,6 @@ public sealed class CharacterGearService
 {
     readonly EquipmentWearState _wear = new();
     readonly WieldSlots _wield = new();
-    readonly HandActionBinding _handActions = new();
     readonly GearTimedAction _timed = new();
     WeaponPresentationCatalog _presentationCatalog;
     readonly ToolUseWieldSession _toolSession = new();
@@ -26,7 +25,6 @@ public sealed class CharacterGearService
 
     public EquipmentWearState Wear => _wear;
     public WieldSlots Wield => _wield;
-    public HandActionBinding HandActions => _handActions;
     public WeaponPresentationCatalog PresentationCatalog => _presentationCatalog;
     public GearTimedAction Timed => _timed;
     public ToolUseWieldSession ToolSession => _toolSession;
@@ -52,7 +50,6 @@ public sealed class CharacterGearService
 
         _wear.Changed += OnDomainChanged;
         _wield.Changed += OnDomainChanged;
-        _handActions.Changed += OnDomainChanged;
         _timed.Changed += OnTimedChanged;
         _timed.Completed += ClearActiveStack;
         _timed.Cancelled += ClearActiveStack;
@@ -68,7 +65,6 @@ public sealed class CharacterGearService
     {
         _wear.Changed -= OnDomainChanged;
         _wield.Changed -= OnDomainChanged;
-        _handActions.Changed -= OnDomainChanged;
         _timed.Changed -= OnTimedChanged;
         _timed.Completed -= ClearActiveStack;
         _timed.Cancelled -= ClearActiveStack;

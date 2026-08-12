@@ -1,5 +1,5 @@
 // ============================================================
-// WeaponPresentationCatalog — 비주얼 허브 + itemId → category → Unarmed resolve
+// WeaponPresentationCatalog — 진입점 바인딩 (item → category → Unarmed)
 // ============================================================
 
 using System;
@@ -15,90 +15,88 @@ using UnityEditor;
     menuName = "Dist/Combat/Weapon Presentation Catalog")]
 public sealed class WeaponPresentationCatalog : ScriptableObject
 {
-    const string TabAttack = "공격 전·중";
-    const string TabHit = "맞힌 결과";
-    const string TabBind = "무기 바인딩";
-    const string TabMisc = "기타";
+    const string FallbacksAssetPath =
+        "Assets/Dist/SOData/Combat/WeaponPresentations/WeaponCombatFallbacks.asset";
 
     [Serializable]
     public sealed class Binding
     {
-        [HorizontalGroup("Row", Width = 0.4f)]
-        [HideLabel]
+        [Tooltip("아이템 id 또는 무기 카테고리 id.")]
+        [LabelText("Id")]
         public string id;
 
-        [HorizontalGroup("Row")]
-        [HideLabel]
+        [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
+        [Tooltip("이 id가 쓸 동작 목록. 여러 줄이 같은 Presentation 파일을 가리킬 수 있습니다.")]
+        [LabelText("Presentation")]
         public WeaponPresentation presentation;
     }
 
     [InfoBox(
-        "비주얼 보조 허브. 탭에서 잎 SO를 인라인으로 편집한다.\n" +
-        "· 공격 전·중 = Pipeline (동사·Recoil/Blocked)\n" +
-        "· 맞힌 결과 = 태그 hit/miss/tracer\n" +
-        "· 무기 바인딩 = 아이템/카테고리 Presentation",
+        "【진입점】 무기가 들릴 때 Presentation(동작 목록)을 고릅니다.\n" +
+        "순서: 아이템 전용 → 카테고리 → 맨손. 동작·Attack·Override는 Presentation을 펼쳐 편집.\n" +
+        "팔 애니·타격 VFX·발사체 공용 기본은 아래 Fallbacks(거의 안 건드림)에 격리되어 있습니다.",
         InfoMessageType.None)]
     [SerializeField, HideInInspector] int _inspectorPad;
 
-    [TabGroup(TabAttack)]
-    [Title("Arm Anim Pipeline", "동사 클립+VFX · Impact 반응", horizontalLine: false)]
+    [Title("Unarmed", "아이템·카테고리 모두 없을 때 (마지막 진입점)", horizontalLine: false)]
     [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
-    [LabelText("Pipeline")]
-    [SerializeField] ArmAnimSlotCatalog _animPipeline;
-
-    [TabGroup(TabAttack)]
-    [Button("Pipeline 에셋만 선택", ButtonSizes.Medium)]
-    [EnableIf(nameof(_animPipeline))]
-    void SelectPipelineAsset()
-    {
-#if UNITY_EDITOR
-        if (_animPipeline != null)
-            Selection.activeObject = _animPipeline;
-#endif
-    }
-
-    [TabGroup(TabHit)]
-    [Title("Impact Tag VFX", "bash / cut / bullet → hit·miss·tracer", horizontalLine: false)]
-    [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
-    [LabelText("Tag Defaults")]
-    [SerializeField] WeaponImpactVfxDefaults _impactVfxDefaults;
-
-    [TabGroup(TabHit)]
-    [Button("Tag VFX 에셋만 선택", ButtonSizes.Medium)]
-    [EnableIf(nameof(_impactVfxDefaults))]
-    void SelectImpactVfxAsset()
-    {
-#if UNITY_EDITOR
-        if (_impactVfxDefaults != null)
-            Selection.activeObject = _impactVfxDefaults;
-#endif
-    }
-
-    [TabGroup(TabBind)]
-    [LabelText("Unarmed")]
+    [Tooltip("아이템·카테고리 연결이 없을 때 쓰는 맨손 동작 목록입니다.")]
+    [LabelText("맨손 Presentation")]
     [SerializeField] WeaponPresentation _unarmed;
 
-    [TabGroup(TabBind)]
     [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "id")]
+    [Tooltip("특정 아이템 id에만 쓰는 동작 목록입니다. 찾을 때 가장 먼저 봅니다.")]
     [LabelText("By Item Id")]
     [SerializeField] Binding[] _byItemId = Array.Empty<Binding>();
 
-    [TabGroup(TabBind)]
     [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "id")]
+    [Tooltip("아이템의 weapon_category에 맞춰 쓰는 동작 목록입니다. 아이템 전용이 없을 때 사용합니다.")]
     [LabelText("By Category Id")]
     [SerializeField] Binding[] _byCategoryId = Array.Empty<Binding>();
 
-    [TabGroup(TabMisc)]
-    [Tooltip("Attack에 프리팹이 없을 때 spawn_projectile 기본 발사체.")]
-    [LabelText("Default Projectile")]
-    [SerializeField] DistProjectile _defaultProjectile;
+    [FoldoutGroup("폴백 (거의 안 건드림)", Expanded = false)]
+    [InfoBox(
+        "공용 기본값 묶음입니다. 평소에는 접어 두고, 필요할 때만 엽니다.",
+        InfoMessageType.None)]
+    [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
+    [LabelText("Fallbacks")]
+    [SerializeField] WeaponCombatFallbacks _fallbacks;
+
+    [FoldoutGroup("폴백 (거의 안 건드림)")]
+    [Button("Fallbacks 에셋만 선택", ButtonSizes.Medium)]
+    [EnableIf(nameof(_fallbacks))]
+    void SelectFallbacksAsset()
+    {
+#if UNITY_EDITOR
+        if (_fallbacks != null)
+            Selection.activeObject = _fallbacks;
+#endif
+    }
 
     public WeaponPresentation Unarmed => _unarmed;
-    public ArmAnimSlotCatalog AnimPipeline => _animPipeline;
-    public WeaponImpactVfxDefaults ImpactVfxDefaults => _impactVfxDefaults;
-    public DistProjectile DefaultProjectile => _defaultProjectile;
+    public WeaponCombatFallbacks Fallbacks => _fallbacks;
+    public ArmAnimSlotCatalog AnimPipeline =>
+        _fallbacks != null ? _fallbacks.AnimPipeline : null;
+    public WeaponImpactVfxDefaults ImpactVfxDefaults =>
+        _fallbacks != null ? _fallbacks.ImpactVfxDefaults : null;
+    public DistProjectile DefaultProjectile =>
+        _fallbacks != null ? _fallbacks.DefaultProjectile : null;
 
-    public void SetAnimPipeline(ArmAnimSlotCatalog pipeline) => _animPipeline = pipeline;
+    public void SetFallbacks(WeaponCombatFallbacks fallbacks) => _fallbacks = fallbacks;
+
+    public void SetAnimPipeline(ArmAnimSlotCatalog pipeline)
+    {
+        if (_fallbacks == null)
+        {
+#if UNITY_EDITOR
+            _fallbacks = AssetDatabase.LoadAssetAtPath<WeaponCombatFallbacks>(FallbacksAssetPath);
+#endif
+            if (_fallbacks == null)
+                return;
+        }
+
+        _fallbacks.SetAnimPipeline(pipeline);
+    }
 
     public WeaponPresentation Resolve(string itemId, ItemData item)
     {

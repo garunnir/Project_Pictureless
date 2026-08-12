@@ -23,8 +23,8 @@ public readonly struct AttackOutcome
     /// <summary>Origin에서 Impact를 향하는 정규화 방향.</summary>
     public readonly Vector3 Direction;
 
-    /// <summary>임팩트 태그 (Attack 판정). Action 시그널은 비움.</summary>
-    public readonly string ImpactTag;
+    /// <summary>Hit 특성 키 (bash/cut/bullet). Action 시그널·Reaction은 비움.</summary>
+    public readonly string HitTag;
 
     public readonly WeaponAttack Attack;
 
@@ -40,7 +40,7 @@ public readonly struct AttackOutcome
         int damage,
         Vector3 originPoint,
         Vector3 impactPoint,
-        string impactTag = null,
+        string hitTag = null,
         WeaponAttack attack = null)
     {
         Action = action;
@@ -52,7 +52,7 @@ public readonly struct AttackOutcome
         Damage = damage;
         OriginPoint = originPoint;
         ImpactPoint = impactPoint;
-        ImpactTag = impactTag ?? string.Empty;
+        HitTag = hitTag ?? string.Empty;
         Attack = attack;
 
         Vector3 offset = impactPoint - originPoint;

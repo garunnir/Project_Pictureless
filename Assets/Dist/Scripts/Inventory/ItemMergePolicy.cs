@@ -47,7 +47,8 @@ public static class ItemMergePolicy
                 return false;
             if (have.HasMagazine || incoming.HasMagazine)
                 return false;
-            return have.ChamberRounds == incoming.ChamberRounds;
+            return have.ChamberRounds == incoming.ChamberRounds
+                && string.Equals(have.ChamberAmmoId, incoming.ChamberAmmoId, StringComparison.Ordinal);
         }
 
         return SameKind(have, incoming) && have.DamageLevel == incoming.DamageLevel;

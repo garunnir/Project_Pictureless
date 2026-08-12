@@ -238,7 +238,8 @@ public sealed class NpcCombatBehavior : MonoBehaviour
         if (!_attacker.CanPerform(action))
             return false;
         ItemData item = _attacker.ItemFor(_attacker.ItemId);
-        return distance <= CombatMath.RangeMeters(item, action);
+        ItemData ammo = WeaponChamber.ResolveAmmo(_attacker.WieldedStack, _attacker.WieldedInstance);
+        return distance <= CombatMath.RangeMeters(item, action, ammo);
     }
 
     void SetAimHeld(bool held) => _aimIntent?.SetAimHeld(held);

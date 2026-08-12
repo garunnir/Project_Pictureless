@@ -356,12 +356,19 @@ static class GameDataEditorDetailDrawers
 
         var ammo = item.ammo;
         EditField(markDirty, "  Ammo type", ref ammo.ammo_type);
+        EditField(markDirty, "  Damage type", ref ammo.damage_type);
         EditInt(markDirty, "  Damage", ref ammo.damage);
         EditInt(markDirty, "  Pierce", ref ammo.pierce);
         EditInt(markDirty, "  Range", ref ammo.range);
         EditInt(markDirty, "  Dispersion", ref ammo.dispersion);
         EditInt(markDirty, "  Recoil", ref ammo.recoil);
         EditInt(markDirty, "  Count", ref ammo.count);
+        EditInt(markDirty, "  Shot damage", ref ammo.shot_damage);
+        EditInt(markDirty, "  Projectile count", ref ammo.projectile_count);
+        EditInt(markDirty, "  Shot spread", ref ammo.shot_spread);
+        EditStringList(markDirty, "  Effects", ref ammo.effects);
+        EditField(markDirty, "  Casing", ref ammo.casing);
+        EditInt(markDirty, "  Loudness", ref ammo.loudness);
     }
 
     static void DrawMagazineBlock(ItemData item, Action markDirty)
@@ -419,7 +426,9 @@ static class GameDataEditorDetailDrawers
         EditorGUILayout.Space(4);
         EditorGUILayout.LabelField("Ammo", EditorStyles.miniBoldLabel);
         if (!string.IsNullOrEmpty(ammo.ammo_type)) ReadField("  Type", ammo.ammo_type);
+        if (!string.IsNullOrEmpty(ammo.damage_type)) ReadField("  Damage type", ammo.damage_type);
         ReadField("  Damage", ammo.damage.ToString());
+        if (ammo.pierce != 0) ReadField("  Pierce", ammo.pierce.ToString());
         ReadField("  Count", ammo.count.ToString());
     }
 

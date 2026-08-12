@@ -79,12 +79,20 @@ namespace Garunnir.Runtime.Gameplay.Data
     public sealed class AmmoDetailData
     {
         public string ammo_type;
+        /// <summary>BN damage.damage_type (bullet/bash/cut/…). Empty if source was a bare int.</summary>
+        public string damage_type;
         public int damage;
         public int pierce;
         public int range;
         public int dispersion;
         public int recoil;
         public int count;
+        public int shot_damage;
+        public int projectile_count;
+        public int shot_spread;
+        public List<string> effects;
+        public string casing;
+        public int loudness;
     }
 
     [Serializable]

@@ -71,8 +71,9 @@ flowchart LR
 | TwoHand Layer | `UpperBody.mask` | `IsTwoHand` → 1 (그때 L/R Arm = 0) |
 | Impact Layer | none (v1) | Recoil/Blocked 재생 중 → 1, 평시 0 |
 
-**Action vs Impact:** Action = 동사 자세·시전 (`Hold`/`Aim`/`Attack`). Impact = 반동·막힘 등 결과 반응. Impact Kind는 `WeaponAction`이 아니다.  
-**태그 VFX ≠ 애니 Impact:** `WeaponImpactVfxDefaults`(bash/cut/bullet hit·miss·tracer)는 판정 ImpactTag 축. Pipeline Impact 행(Recoil/Blocked)과 섞지 않는다. 편집 진입은 `WeaponPresentationCatalog`(비주얼 허브) → Edit Pipeline / Edit Tag VFX.
+**Action vs Reaction vs Hit:** Action = 동사 자세·시전. Reaction = Recoil/Blocked (`ArmImpactKind`, 애니 Impact Layer). Hit = 특성(bash/cut/bullet) 타격 결과 — `WeaponImpactVfxDefaults`.  
+**Hit 키 = 채널 문자열.** 계산기와 Hit 테이블이 같은 키를 쓴다. Action이 채널을 고르지 않는다.  
+**Entry 소유권:** `WeaponPresentation.Entry` = 동사 라우팅 행(가용·`attack`·Action VFX). Hit coalesce = Entry → Attack VFX → Defaults[HitTag]. Reaction과 섞지 않음.
 
 팔 SM(손당): **Hold ↔ Aim** (`IsAiming`), **Attack** (trigger). `Action*` 파라미터·모드별 Aim/Attack 상태 없음.  
 Impact SM: **Empty** → **Recoil** / **Blocked** (`ImpactRecoil` / `ImpactBlocked` trigger) → ExitTime → Empty.
@@ -100,7 +101,7 @@ Move Layer `Locomotion`: **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + W
 - 메뉴: `Dist/MCP/Rebuild Arm Overlay Animator`, `Dist/MCP/Ensure Arm Anim Pipeline`
 
 **액션 확장:** `WeaponAction`(+`WeaponActionMask`) → [`WeaponActionUtil.All`](Assets/Dist/Scripts/Entity/Combat/WeaponAction.cs)에 추가 → `Ensure Arm Anim Pipeline` (클립 시드·행 Ensure). 슬롯 스템 = enum 이름. **Builder/SM 수정 없음.**  
-**Impact Kind 확장:** `ArmImpactKind` + Impact SM 상태·trigger·행. thin은 행의 `thin` 또는 catalog 폴백.
+**Impact Kind 확장:** `ArmImpactKind` (Reaction: Recoil/Blocked) + Impact SM 상태·trigger·행.
 
 ### 클립 resolve (Animator 밖)
 

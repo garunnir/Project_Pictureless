@@ -11,6 +11,7 @@
 | Inventory UI | [`inventory/INVENTORY_UI.md`](inventory/INVENTORY_UI.md) | `inventory-ui.mdc` |
 | Item display names / loc | [`inventory/ITEM_NAMES.md`](inventory/ITEM_NAMES.md) | (Data Definitions hub · LocalizationBundle) |
 | Equipment / Wear·Wield | [`equipment/GEAR.md`](equipment/GEAR.md) | (Character window · transfer duration) |
+| BN converter whitelist | [`equipment/BN_BAKE.md`](equipment/BN_BAKE.md) | (`convert.py` → BNData; promote when Dist has a consumer) |
 | UI MVC / font | [`ui/UI_Scripts.md`](ui/UI_Scripts.md) | `ui-prefab-layout.mdc` · `ui-font.mdc` |
 | UI hover placement | [`ui/HOVER.md`](ui/HOVER.md) | (ContextMenu asm · keep-in-bounds) |
 | Message log HUD | [`ui/MESSAGE_LOG.md`](ui/MESSAGE_LOG.md) | (UI 레이아웃·폰트 룰 공유) |

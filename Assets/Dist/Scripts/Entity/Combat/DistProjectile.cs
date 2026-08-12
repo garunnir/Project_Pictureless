@@ -19,6 +19,7 @@ public sealed class DistProjectile : MonoBehaviour
     CharacterAttacker _attacker;
     ActionHandlerContext _context;
     ItemData _item;
+    ItemData _ammo;
     Vector3 _direction;
     float _rangeRemaining;
     float _lifeRemaining;
@@ -32,6 +33,7 @@ public sealed class DistProjectile : MonoBehaviour
         CharacterAttacker attacker,
         in ActionHandlerContext context,
         ItemData item,
+        ItemData ammo,
         Vector3 origin,
         Vector3 direction,
         float range,
@@ -47,6 +49,7 @@ public sealed class DistProjectile : MonoBehaviour
         _attacker = attacker;
         _context = context;
         _item = item;
+        _ammo = ammo;
         _direction = direction.normalized;
         _rangeRemaining = Mathf.Max(0f, range);
         _lifeRemaining = Mathf.Max(0.01f, _maxLifetime);
@@ -123,7 +126,8 @@ public sealed class DistProjectile : MonoBehaviour
             WeaponResolveMode.RangedRay,
             _item,
             origin,
-            consumeAmmo: false);
+            consumeAmmo: false,
+            _ammo);
 
         if (_pierceRemaining <= 0)
         {

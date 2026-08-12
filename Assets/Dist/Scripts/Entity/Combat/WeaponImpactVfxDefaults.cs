@@ -1,5 +1,5 @@
 // ============================================================
-// WeaponImpactVfxDefaults — 임팩트 태그별 hit/miss/tracer 폴백
+// WeaponImpactVfxDefaults — Hit 특성 키(bash/cut/bullet) hit/miss/tracer
 // ============================================================
 
 using System;
@@ -15,7 +15,7 @@ public sealed class WeaponImpactVfxDefaults : ScriptableObject
     public sealed class Entry
     {
         [HorizontalGroup("Row", Width = 120)]
-        [LabelText("Tag")]
+        [LabelText("Hit")]
         public string impactTag = AttackImpactTags.Fallback;
 
         [HorizontalGroup("Row")]
@@ -23,7 +23,9 @@ public sealed class WeaponImpactVfxDefaults : ScriptableObject
         public WeaponActionVfx vfx = new WeaponActionVfx();
     }
 
-    [InfoBox("판정 ImpactTag → hit / miss / tracer. 비주얼 허브 Catalog 탭「맞힌 결과」에서도 편집.", InfoMessageType.None)]
+    [InfoBox(
+        "Hit 특성 키(bash/cut/bullet) → hit/miss/tracer. 없으면 fallback. Recoil/Blocked(Reaction)과 다름.",
+        InfoMessageType.None)]
     [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "impactTag")]
     [SerializeField] Entry[] _entries = Array.Empty<Entry>();
 

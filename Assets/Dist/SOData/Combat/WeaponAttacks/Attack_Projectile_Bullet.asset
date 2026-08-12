@@ -10,12 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 039abd13db0bc7d45ba48c910e01a23b, type: 3}
-  m_Name: Attack_Pistol_Trigger
+  m_Name: Attack_Projectile_Bullet
   m_EditorClassIdentifier: DistScript::WeaponAttack
   _logicId: spawn_projectile
-  _damageTag: bullet
-  _impactTag: bullet
-  _fallbackImpactTag: fallback
   _effectSeeds: []
   _attackVfx:
     actionVfx: {fileID: 0}

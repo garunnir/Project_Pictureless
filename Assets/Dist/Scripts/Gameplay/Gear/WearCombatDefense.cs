@@ -46,14 +46,6 @@ public static class WearCombatDefense
     /// ArmorAbsorb = thickness×ThicknessAbsorbPerUnit + resist×MaterialResistAbsorbPerUnit.
     /// MitigatedDamage = engage ? max(0, raw − ArmorAbsorb) : raw.
     /// </summary>
-    [System.Obsolete("Use MitigateDamage(..., damageTag). Action enum is not resist SSOT.")]
-    public static int MitigateDamage(
-        EquipmentWearState wear,
-        string aimedPartId,
-        int rawDamage,
-        WeaponAction action) =>
-        MitigateDamage(wear, aimedPartId, rawDamage, AttackDamageTags.DefaultFor(action));
-
     public static int MitigateDamage(
         EquipmentWearState wear,
         string aimedPartId,
@@ -93,16 +85,9 @@ public static class WearCombatDefense
     }
 
     /// <summary>
-    /// Covering worn pieces의 materials 중 해당 액션 resist 최댓값.
+    /// Covering worn pieces의 materials 중 해당 채널 resist 최댓값.
     /// materials/MaterialData 없으면 0.
     /// </summary>
-    [System.Obsolete("Use MaterialResistForPart(..., damageTag). Action enum is not resist SSOT.")]
-    public static int MaterialResistForPart(
-        EquipmentWearState wear,
-        string partId,
-        WeaponAction action) =>
-        MaterialResistForPart(wear, partId, AttackDamageTags.DefaultFor(action));
-
     public static int MaterialResistForPart(
         EquipmentWearState wear,
         string partId,

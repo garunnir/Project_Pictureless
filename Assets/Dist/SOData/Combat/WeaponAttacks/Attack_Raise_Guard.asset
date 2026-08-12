@@ -13,9 +13,6 @@ MonoBehaviour:
   m_Name: Attack_Raise_Guard
   m_EditorClassIdentifier: DistScript::WeaponAttack
   _logicId: raise_guard
-  _damageTag: bash
-  _impactTag: bash
-  _fallbackImpactTag: fallback
   _effectSeeds: []
   _attackVfx:
     actionVfx: {fileID: 0}

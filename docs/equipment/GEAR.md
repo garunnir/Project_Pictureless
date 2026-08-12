@@ -12,9 +12,10 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 | Wield | L/R hand slots (weapons/tools). Two-hand = same stack on both slots; **no extra UI cell** |
 | Character window | Tabs: 상태 \| 장비 \| 방해 \| 체온. Key = existing `StatusToggle` (`C`) |
 | Primary | Highest DPS hand → `CharacterAttacker.SetWieldedItem` |
-| HandActionBinding | `itemId → WeaponAction?` (null = 없음), persists across unequip + `HandActionBindingPersistence` disk JSON |
-| Action VFX fallback | Pipeline `ArmAnimSlotCatalog` 동사 행 `vfx`. Presentation Entry 빈 슬롯이 coalesce. Edit: Game Data → **Visual Hub** (`WeaponPresentationCatalog`) → Edit Pipeline. Not in ItemData JSON. |
-| Visual hub | `WeaponPresentationCatalog` — Pipeline / Tag Impact VFX / per-item Presentation 중간 진입점. 잎 SO는 분리 유지. |
+| SelectedAction | `ItemInstance.SelectedAction` — 손별 선택 동사 (영속은 인스턴스) |
+| Action rows | `WeaponPresentation` Entry = **동사 라우팅 행** (가용 마스크 + Attack 참조 + 연출). 가용 SSOT = Entry 존재 → `WeaponActionRows.Available` |
+| Action VFX coalesce | Action: Entry.vfx → Pipeline 동사. Hit: Entry → Attack VFX → Defaults[bash/cut/bullet] → fallback |
+| Visual hub | `WeaponPresentationCatalog` — Pipeline / Tag Impact VFX / per-item Presentation 중간 진입점 |
 
 ## Domain SSOT
 
@@ -26,7 +27,8 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 | `WieldSlots` | L/R (+ two-hand mode) |
 | `CharacterGearService` | Timed Wear/Wield/Unequip + deposit |
 | `PlayerGearHost` | Player host + Primary + LiftStrain + EnvExposure + BodyTemp + Weather + VisionFactor |
-| `HandActionBinding` | Per-item action map |
+| `ItemInstance.SelectedAction` | 선택 동사 SSOT |
+| `WeaponActionRows` | Presentation 행 → available / default / instance select |
 | `PrimaryWieldResolver` | DPS primary; dual secondary score |
 | `ToolUseWieldSession` | Snapshot → temp wield → restore (M0 API; consumers later) |
 | `GearActionDuration` | Wear/TakeOff/Wield/Unwield seconds (proxy) |
@@ -45,9 +47,11 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 | `HelmetVision` | Phase G: head covers → VisionFactor (host + Character UI + camera) |
 | `GearEnvPenalties` | Phase H: BodyTemp feeling + wetness → move / HitChance factors |
 | `WearOverlapRules` | Phase C: same part + layer(/sided) conflict → Wear **reject** |
-| `WeaponPresentationCatalog` | 비주얼 보조 허브 (Pipeline + Tag VFX + item bindings) |
+| `WeaponPresentationCatalog` | 허브 (Pipeline + Tag VFX + item→Presentation). Entry는 연출만이 아니라 **동사 라우팅**(가용·Attack·VFX) |
 | `ArmAnimSlotCatalog` | 동사·Impact 연출 Pipeline (클립+VFX). Presentation Entry 빈 VFX → 동사 행 coalesce |
-| `WeaponImpactVfxDefaults` | 데미지 태그(bash/cut/bullet) hit/miss·tracer — Catalog → Edit Tag VFX |
+| `WeaponAttack` | 핸들러·cue·캐리어 VFX·탄 (`Attack_MeleeHit` = logic 이름, **채널 아님**) |
+| `AttackDamageTags` | 특성 채널. Trigger→탄 `damage_type`(없으면 bullet). 근접은 양 있는 채널 전부(cut+bash 가능). 원거리 양 = 탄 `damage` + 총 `ranged_damage`. 계산기·Hit 키 공유 |
+| `WeaponImpactVfxDefaults` | Hit 테이블(bash/cut/bullet + fallback). Recoil/Blocked(Reaction) 아님 |
 
 ### CanLift
 
@@ -190,30 +194,15 @@ Gate: `CharacterGearService.GetWearBlockedReason` → context menu disabled reas
 
 ## BN Bake Omissions
 
-Intentional Dist omissions from BN (sync when changing `Tools/bn_converter/convert.py` `export_*` whitelists):
+Catalog SSOT: [`BN_BAKE.md`](BN_BAKE.md) (converter whitelist + not-baked list + rebake log). Gear-only Dist stand-ins:
 
-| BN source | Dist status | Reintroduce |
-|-----------|-------------|-------------|
-| armor **layer** / sided | **Phase C baked** — field or **flags→layer**; sided field or infer; runtime default layer `NORMAL` | done (C + flag map) |
-| covers plural / either | **baked expand** — `arms`/`legs`/`hands`/`feet`/`*_either` → Dist L/R parts | done |
-| **pocket** defs / draw **moves** | **Phase B baked** — `storage` (ml) when BN has legacy `storage`; `pockets[{volume_ml,moves}]` when `pocket_data` present (**BN tree currently has ~0 pocket_data**) | done (B); pockets await BN/DDA pocket_data |
-| wear/wield dedicated **move cost** | not baked — runtime `GearActionDuration` proxy | when formula→field |
-| use_action / tool action JSON | not baked | tool-action milestone |
-| flags subset / qualities extras | partial (layer flags consumed; others not) | as needed |
-| material resist detail | partial (`MaterialData`); **Phase D consumes** when `ItemData.materials` present | done (D consume); fuller bake as needed |
-| weather / overmap climate | **not baked** — Dist `WeatherKind` enum stand-in (Phase G) | map/weather system when present |
-| helmet / vision / FOV JSON | **not baked** — Dist `HelmetVision` head-cover factor; **camera consumer wired** (Phase G/H) | optional BN vision bake later |
+| Dist stand-in | BN not baked |
+|---------------|--------------|
+| `GearActionDuration` | wear/wield move-cost field |
+| `WeatherKind` | overmap climate JSON |
+| `HelmetVision` | helmet / visor FOV JSON |
 
-### Rebake log (converter → `Assets/StreamingAssets/BNData`)
-
-| Run | Scope | Result |
-|-----|-------|--------|
-| Full `convert.py` | items+materials+qualities+skills+recipes/uncraft | 5591 items, 862 armor; layer≈423 (flags), sided≈48 (infer), storage≈194, pockets=0 (no BN `pocket_data`) |
-| Not overwritten | `GameData/items.json` demo seeds | custom Dist demo armor kept |
-
-Command: `python Tools/bn_converter/convert.py --bn-path <Cataclysm-BN> --output Assets/StreamingAssets/BNData`.
-
-Converter note: keep this table next to whitelist changes — do not re-discover via playtests alone. Residual (not gear bake): wear/wield move-cost field, use_action JSON, fuller material resist, climate bake, BN pocket_data when upstream adds it.
+Promote fields in `BN_BAKE.md` + `convert.py` together — do not grow a second table here.
 
 ## Phase D — Coverage / thickness combat + WearEnc hit hook
 
@@ -239,7 +228,7 @@ Boundary SSOT: `CombatMath` = offense numbers; `WearCombatDefense` = Wear defens
 | `ArmorEngageChance` | `Clamp01(coverage / CoveragePercentScale)` — roll; miss → raw damage |
 | `ArmorAbsorb` | `thickness × ThicknessAbsorbPerUnit + materialResist × MaterialResistAbsorbPerUnit` |
 | `MitigatedDamage` | engage ? `max(0, raw − ArmorAbsorb)` : raw |
-| `MaterialResistForPart` | max resist among covering pieces' `ItemData.materials` → `MaterialData` (`bash`/`cut`/`bullet` by `WeaponAction`); missing data → 0 |
+| `MaterialResistForPart` | max resist among covering pieces' `ItemData.materials` → `MaterialData` (`bash`/`cut`/`bullet` by `AttackDamageTags.Resolve(item, action)`); missing data → 0 |
 
 Consts: `CoveragePercentScale=100`, `ThicknessAbsorbPerUnit=1`, `MaterialResistAbsorbPerUnit=1`, `WearEncHitPenaltyPerPoint=0.01`, `WearEncHitPenaltyCap=0.35`.
 
@@ -522,7 +511,7 @@ Last run: **2026-08-06 post-P0** (Play MCP smoke Pass).
 | S2 | Wield: **action icon** corner (none = none icon) | Pass | `ActionIcon` + B/C/G/— |
 | S3 | Worn: **icon** + name + covers + name-overlay bar | Pass | `UICharacterWornRow` Icon + Label + `ItemNameStatusBar` |
 | H1 | Hover = DetailPanel (strain/need Str hover-only) | Pass | `ShowText` + Worn `AppendItemArmorHover` |
-| A1 | Slot RMB = **사용 액션** group (AvailableModes+None) + unwield/floor | Pass | `WieldSlotActionsContributor` → `HandActionGroup` |
+| A1 | Slot RMB = **사용 액션** group (WeaponActionRows.Available+None) + unwield/floor | Pass | `WieldSlotActionsContributor` → `HandActionGroup` |
 | F1 | Worn filter by body **click** (toggle); FilterLabel clears | Pass | `OnPartClick` / not hover sticky |
 | T1 | Enc tab: enc body + worn; wield hidden | Pass | `showWield` Equipment-only |
 | T2 | BodyTemp tab: warmth + BodyTemp totals | Pass | `FormatBodyTempTotals` |
