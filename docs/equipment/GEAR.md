@@ -51,9 +51,41 @@ Anim/VFX 폴더 맵: [`WEAPON_VISUAL.md`](WEAPON_VISUAL.md).
 | `WearOverlapRules` | Phase C: same part + layer(/sided) conflict → Wear **reject** |
 | `WeaponPresentationCatalog` | 허브 (Fallbacks Catalog + Tag VFX + item→Presentation). Entry = **Leaf** 라우팅(가용·Attack·VFX) |
 | `ArmAnimSlotCatalog` | **Leaf마다** 기본 동사 폴백(클립+VFX). Semi/Burst/Auto 줄 필수. Entry 빈 VFX → 같은 Leaf 행. 표시=Melee/Trigger 묶음 |
-| `WeaponAttack` | 핸들러·cue·캐리어 VFX·탄 + **Recoil/Blocked on/off** (`Attack_MeleeHit` = logic 이름, **채널 아님**) |
+| `WeaponAttack` | 핸들러·cue·캐리어 VFX·탄 + **Recoil/Blocked on/off** + 근접 히트박스 반폭/반높이 (`Attack_MeleeHit` = logic 이름, **채널 아님**) |
 | `AttackDamageTags` | 특성 채널. Trigger→탄 `damage_type`(없으면 bullet). 근접은 양 있는 채널 전부(cut+bash 가능). 원거리 양 = 탄 `damage` + 총 `ranged_damage`. 계산기·Hit 키 공유 |
+| `MeleeHitbox` | 근접 cue OverlapBox. 겹침 = 확정 히트. `WeaponReach01` 기록(치명타 Pending) |
 | `WeaponImpactVfxDefaults` | Hit 테이블(bash/cut/bullet + fallback). Recoil/Blocked(Reaction) 아님 |
+
+### Melee connect (cue 히트박스)
+
+**변경 전:** `GateAction`이 타깃·사거리를 막으면 스윙 없음. cue에서 잠긴 1명에게 `HitChance` 굴림.
+
+**변경 후 (기본 경로):**
+
+| 항목 | 계약 |
+|------|------|
+| 모션 | Cooling/pending/Unsupported만 시전 게이트. 근접 `NoTarget`/`OutOfRange`는 스윙을 막지 않음 |
+| 판정 시점 | Attack 클립 cue (`CueNormalizedTime` / Animation Event) |
+| 연결 | `MeleeHitbox` OverlapBox (조준 축, 길이 `CombatMath.RangeMeters`, 반폭/반높이 `WeaponAttack`) |
+| 확정 | 겹친 `CharacterBodyHost`마다 `HitChance` 없이 피해. 방어는 `WearCombatDefense.MitigateDamage` 유지 |
+| 허공 | 쿨·연습치만. `AttackJudged` Miss 없음 |
+| 치명타 | `AttackOutcome.WeaponReach01` (0=손/자루 … 1=끝)만 기록. **로직 Pending** |
+| 디버그 | `DebugLogController` Player → Melee Hitbox (`Config.DebugMode.MeleeHitbox`). GL 와이어. 노랑=현재 자세, 주황=cue 허공, 초록=cue 히트 + 접촉점 |
+
+NPC는 여전히 사거리 안에서만 `TryPerform` (AI). 플레이어 시전은 조준(RMB) 입력 게이트 유지.
+
+```mermaid
+flowchart LR
+  input[TryPerform]
+  gate[Gate_Cooling_only_for_melee]
+  anim[AttackResolved_overlay]
+  cue[Attack_cue]
+  box[MeleeHitbox_Overlap]
+  hit[ResolveCommittedHit_no_chance]
+  input --> gate --> anim --> cue --> box --> hit
+```
+
+Checklist: `.claude/checklists/migration-parity.md`.
 
 ### CanLift
 
@@ -208,13 +240,13 @@ Promote fields in `BN_BAKE.md` + `convert.py` together — do not grow a second 
 
 ## Phase D — Coverage / thickness combat + WearEnc hit hook
 
-**Scope:** On hit, mitigate damage with worn coverage + thickness (+ material resist when baked). Attacker WearEnc multiplies HitChance. **No** E env/wetness, F BodyTemp, G weather/vision.
+**Scope:** On hit, mitigate damage with worn coverage + thickness (+ material resist when baked). Attacker WearEnc multiplies **ranged** HitChance. Melee connect is overlap (no HitChance). **No** E env/wetness, F BodyTemp, G weather/vision.
 
 ### Parity contract (combat path) — before switch defaults
 
 | Before D | After D (default) |
 |----------|-------------------|
-| `HitChance` = `CombatMath.HitChance` × `offenseFactor` only | × **`WearEncAccuracyFactor`** (attacker `WearStatsAggregator.Aggregate.TotalEncumbrance`) |
+| `HitChance` = `CombatMath.HitChance` × `offenseFactor` only | × **`WearEncAccuracyFactor`** (attacker `WearStatsAggregator.Aggregate.TotalEncumbrance`) — **원거리만**. 근접은 cue Overlap 확정 |
 | Hit damage = `CombatMath.Damage` raw → `BodyDamageService.ApplyHit` | Same raw, then **`WearCombatDefense.MitigateDamage`** using **target** Wear |
 | Aggregator unused by combat | Coverage/thickness via `ForPart`; material resist scanned on covering pieces only |
 | No Wear → unchanged hit/damage | No `PlayerGearHost` / empty Wear → factor 1 / no mitigate (NPC targets OK) |
@@ -423,14 +455,14 @@ flowchart LR
 
 **Scope:** Consume Phase F/E state for locomotion speed and attacker HitChance. Named consts in `GearEnvPenalties`. **No** Gear redesign; **no** new UI.
 
-Boundary SSOT: `BodyTemp.Feeling` + `WearEnvExposure.Wetness01` → `GearEnvPenalties`; `PlayerGearHost` → `PlayerMovement.SetEnvMovement`; `CharacterAttacker` multiplies HitChance. Checklist: `.claude/checklists/migration-parity.md`. See [`docs/locomotion/LOCOMOTION.md`](../locomotion/LOCOMOTION.md).
+Boundary SSOT: `BodyTemp.Feeling` + `WearEnvExposure.Wetness01` → `GearEnvPenalties`; `PlayerGearHost` → `PlayerMovement.SetEnvMovement`; `CharacterAttacker` multiplies **ranged** HitChance. 근접 확정 히트는 미적용. Checklist: `.claude/checklists/migration-parity.md`. See [`docs/locomotion/LOCOMOTION.md`](../locomotion/LOCOMOTION.md).
 
 ### Parity contract (move / combat path)
 
 | Before H | After H (default) |
 |----------|-------------------|
 | Move = base × enc × LiftStrain | × **`GearEnvPenalties.MoveSpeedFactor`** |
-| HitChance = CombatMath × offense × WearEnc | × **`GearEnvPenalties.HitAccuracyFactor`** |
+| HitChance = CombatMath × offense × WearEnc | × **`GearEnvPenalties.HitAccuracyFactor`** (원거리만) |
 | Feeling / wetness UI-only (E/F) | Consumed for gameplay penalties |
 | No gear host | factors = 1 |
 

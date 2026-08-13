@@ -38,6 +38,12 @@ public sealed class CharacterAttacker : MonoBehaviour
     PlayerAimController _aimController;
     CharacterLocomotionAnim _locAnim;
     Collider _selfCollider;
+    readonly Collider[] _meleeColliders = new Collider[MeleeHitbox.BufferSize];
+    readonly Vector3[] _debugContacts = new Vector3[MeleeHitbox.BufferSize];
+    MeleeHitboxPose _debugCuePose;
+    int _debugCueHitCount;
+    int _debugContactCount;
+    float _debugCueUntilUnscaled;
     readonly float[] _cooldownRemaining = new float[HandCooldownSlotCount];
     readonly PendingAttack[] _pendingCues = new PendingAttack[PendingCueSlotCount];
     readonly string[] _hitChannelScratch = new string[AttackDamageTags.MaxChannels];
@@ -144,10 +150,12 @@ public sealed class CharacterAttacker : MonoBehaviour
         ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
         if (skills != null)
             skills.Refreshed += OnSkillsRefreshed;
+        Camera.onPostRender += OnCameraPostRender;
     }
 
     void OnDisable()
     {
+        Camera.onPostRender -= OnCameraPostRender;
         ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
         if (skills != null)
             skills.Refreshed -= OnSkillsRefreshed;
@@ -157,6 +165,8 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     void Update()
     {
+        DrawMeleeHitboxDebugLines();
+
         float dt = TimeScaleService.Delta(_timeChannel);
         if (dt <= 0f)
             return;
@@ -169,6 +179,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         }
 
         TickRaiseGuard();
+        DrawMeleeHitboxDebugLines();
     }
 
     /// <summary>들기(Wield) 훅. 카탈로그로 Presentation resolve. 선택은 ItemInstance. 약실은 인스턴스.</summary>
@@ -288,8 +299,8 @@ public sealed class CharacterAttacker : MonoBehaviour
         WeaponResolveMode resolveMode = WeaponActionUtil.ResolveMode(action);
         Vector3 origin = ResolveBodyCenter(transform, _selfCollider);
         AttackPerformResult gate = GateAction(action, item, targetHost);
-        // Cooling/사거리 실패 등은 시그널·cue·연출을 올리지 않는다.
-        // (NPC가 매 프레임 TryPerform해도 pending 재장전·VFX 폭주 방지)
+        // Cooling/원거리 사거리·탄약 실패 등은 시그널·cue·연출을 올리지 않는다.
+        // 근접은 타깃·사거리를 여기서 막지 않는다 (cue 히트박스).
         if (gate != AttackPerformResult.Performed)
             return gate;
 
@@ -322,6 +333,9 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (WeaponActionUtil.IsRanged(action) &&
             !WeaponChamber.CanCommitFire(item, _wieldedInstance, _wieldedStack, AttackFor(action)))
             return AttackPerformResult.NoAmmo;
+
+        if (!WeaponActionUtil.IsRanged(action))
+            return AttackPerformResult.Performed;
 
         if (targetHost == null || targetHost.Body == null)
             return AttackPerformResult.NoTarget;
@@ -561,6 +575,57 @@ public sealed class CharacterAttacker : MonoBehaviour
     public Vector3 ResolveOrigin() =>
         ResolveBodyCenter(transform, _selfCollider);
 
+    public Vector3 ResolveSwingAxis()
+    {
+        Vector3 dir = Vector3.zero;
+        if (_characterState != null)
+        {
+            dir = _characterState.SightDir;
+            if (dir.sqrMagnitude < 1e-6f)
+                dir = _characterState.InteractionDir;
+        }
+
+        if (dir.sqrMagnitude < 1e-6f)
+            dir = transform.forward;
+
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 1e-6f)
+            return Vector3.forward;
+        return dir.normalized;
+    }
+
+    public bool IsOwnCollider(Collider collider)
+    {
+        if (collider == null)
+            return false;
+        Transform root = transform;
+        return collider.transform == root || collider.transform.IsChildOf(root);
+    }
+
+    public int CollectMeleeHits(
+        ItemData item,
+        WeaponAction action,
+        WeaponAttack attack,
+        CharacterBodyHost[] hosts,
+        MeleeHitContact[] contacts)
+    {
+        int hitCount = MeleeHitbox.Collect(
+            this, item, action, attack, _meleeColliders, hosts, contacts);
+        if (ShouldDrawMeleeHitbox &&
+            MeleeHitbox.TryGetPose(this, item, action, attack, out MeleeHitboxPose pose))
+        {
+            _debugCuePose = pose;
+            _debugCueHitCount = hitCount;
+            _debugContactCount = hitCount;
+            int cap = hitCount < _debugContacts.Length ? hitCount : _debugContacts.Length;
+            for (int i = 0; i < cap; i++)
+                _debugContacts[i] = contacts[i].WorldPoint;
+            _debugCueUntilUnscaled = Time.unscaledTime + MeleeHitbox.DebugCueHoldSeconds;
+        }
+
+        return hitCount;
+    }
+
     /// <summary>Animator Animation Event. 클립 이벤트가 있으면 정규화 시각보다 우선.</summary>
     public void NotifyAttackCue()
     {
@@ -756,9 +821,19 @@ public sealed class CharacterAttacker : MonoBehaviour
         Vector3 origin,
         bool consumeAmmo,
         ItemData ammo = null,
-        bool applyCooldown = true)
+        bool applyCooldown = true,
+        bool rollHitChance = true,
+        bool practice = true,
+        float weaponReach01 = 0f,
+        Vector3? impactOverride = null)
     {
         CharacterBodyHost targetHost = context.Target;
+        if (targetHost == null || targetHost.Body == null)
+        {
+            EmitJudgedGate(context, resolveMode, AttackPerformResult.NoTarget, item, origin);
+            return;
+        }
+
         Collider targetCollider = targetHost.GetComponentInChildren<Collider>();
         Vector3 targetCenter = ResolveBodyCenter(targetHost.transform, targetCollider);
 
@@ -771,9 +846,9 @@ public sealed class CharacterAttacker : MonoBehaviour
             return;
         }
 
-        Vector3 impact = ResolveImpactPoint(targetCollider, targetCenter, origin);
+        Vector3 impact = impactOverride ?? ResolveImpactPoint(targetCollider, targetCenter, origin);
         ammo ??= WeaponChamber.ResolveAmmo(context.Stack, context.Instance);
-        CommitAttempt(context, item, consumeAmmo, ammo, applyCooldown: applyCooldown);
+        CommitAttempt(context, item, consumeAmmo, ammo, applyCooldown: applyCooldown, practice: practice);
 
         ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
         int channelCount = AttackDamageTags.WriteChannels(
@@ -787,25 +862,30 @@ public sealed class CharacterAttacker : MonoBehaviour
             : 0;
         int strength = skills != null ? skills.Level(AttributeIds.Str) : StrengthBaselineFallback;
         float factor = context.OffenseFactor;
-        float hitChance = CombatMath.HitChance(item, context.Action, skillLevel, aimedPart, ammo)
-            * factor
-            * ResolveAttackerWearEncAccuracyFactor()
-            * ResolveAttackerEnvAccuracyFactor();
 
-        if (UnityEngine.Random.value > hitChance)
+        if (rollHitChance)
         {
-            EmitJudged(
-                context,
-                resolveMode,
-                AttackPerformResult.Miss,
-                targetHost,
-                aimedPart,
-                0,
-                origin,
-                impact,
-                item,
-                ammo);
-            return;
+            float hitChance = CombatMath.HitChance(item, context.Action, skillLevel, aimedPart, ammo)
+                * factor
+                * ResolveAttackerWearEncAccuracyFactor()
+                * ResolveAttackerEnvAccuracyFactor();
+
+            if (UnityEngine.Random.value > hitChance)
+            {
+                EmitJudged(
+                    context,
+                    resolveMode,
+                    AttackPerformResult.Miss,
+                    targetHost,
+                    aimedPart,
+                    0,
+                    origin,
+                    impact,
+                    item,
+                    ammo,
+                    weaponReach01);
+                return;
+            }
         }
 
         EquipmentWearState wear = ResolveTargetWear(targetHost);
@@ -840,7 +920,8 @@ public sealed class CharacterAttacker : MonoBehaviour
             origin,
             impact,
             item,
-            ammo);
+            ammo,
+            weaponReach01);
     }
 
     public void CommitAttempt(
@@ -873,7 +954,8 @@ public sealed class CharacterAttacker : MonoBehaviour
         Vector3 origin,
         Vector3 impact,
         ItemData item = null,
-        ItemData ammo = null)
+        ItemData ammo = null,
+        float weaponReach01 = 0f)
     {
         if (item == null)
             item = ItemFor(context.ItemId);
@@ -891,7 +973,8 @@ public sealed class CharacterAttacker : MonoBehaviour
             origin,
             impact,
             hitTag,
-            context.Attack);
+            context.Attack,
+            weaponReach01);
         AttackJudged?.Invoke(outcome);
         AnyAttackJudged?.Invoke(outcome);
     }
@@ -1030,5 +1113,84 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (_wieldedInstance == null)
             return;
         _wieldedInstance.SelectedAction = action;
+    }
+
+    bool ShouldDrawMeleeHitbox => Config.DebugMode.MeleeHitbox;
+
+    void DrawMeleeHitboxDebugLines()
+    {
+        if (!ShouldDrawMeleeHitbox)
+            return;
+        if (!TryGetMeleeHitboxDebugDraw(out MeleeHitboxPose pose, out Color color, out bool cueHold))
+            return;
+
+        MeleeHitbox.DrawDebugWire(pose, color, 0f);
+        if (!cueHold)
+            return;
+        for (int i = 0; i < _debugContactCount; i++)
+            MeleeHitbox.DrawDebugContact(_debugContacts[i], 0f);
+    }
+
+    void OnDrawGizmos()
+    {
+        if (!ShouldDrawMeleeHitbox)
+            return;
+        if (!TryGetMeleeHitboxDebugDraw(out MeleeHitboxPose pose, out Color color, out bool cueHold))
+            return;
+
+        MeleeHitbox.DrawGizmoWire(pose, color);
+        if (!cueHold)
+            return;
+        for (int i = 0; i < _debugContactCount; i++)
+            MeleeHitbox.DrawGizmoContact(_debugContacts[i]);
+    }
+
+    void OnCameraPostRender(Camera cam)
+    {
+        if (cam == null)
+            return;
+        if (cam.cameraType == CameraType.Preview || cam.cameraType == CameraType.Reflection)
+            return;
+        if ((cam.cullingMask & (1 << gameObject.layer)) == 0)
+            return;
+        if (!ShouldDrawMeleeHitbox)
+            return;
+        if (!TryGetMeleeHitboxDebugDraw(out MeleeHitboxPose pose, out Color color, out bool cueHold))
+            return;
+
+        MeleeHitbox.DrawGl(
+            pose,
+            color,
+            cueHold ? _debugContacts : null,
+            cueHold ? _debugContactCount : 0,
+            cam);
+    }
+
+    bool TryGetMeleeHitboxDebugDraw(out MeleeHitboxPose pose, out Color color, out bool cueHold)
+    {
+        pose = default;
+        color = MeleeHitbox.PreviewWire;
+        cueHold = Time.unscaledTime < _debugCueUntilUnscaled && _debugCuePose.IsValid;
+        if (cueHold)
+        {
+            pose = _debugCuePose;
+            color = _debugCueHitCount > 0 ? MeleeHitbox.CueHitWire : MeleeHitbox.CueMissWire;
+            return true;
+        }
+
+        if (WeaponActionUtil.IsRanged(_selectedAction) ||
+            WeaponActionUtil.SuppressesAttackTrigger(_selectedAction))
+            return false;
+
+        if (!MeleeHitbox.TryGetPose(
+                this,
+                CurrentItem,
+                _selectedAction,
+                AttackFor(_selectedAction),
+                out pose))
+            return false;
+
+        color = MeleeHitbox.PreviewWire;
+        return true;
     }
 }

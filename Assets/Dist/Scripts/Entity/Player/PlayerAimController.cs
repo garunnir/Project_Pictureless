@@ -15,8 +15,6 @@ public class PlayerAimController : MonoBehaviour
     [SerializeField] private float _maxAimDistance = 15f;
     [Tooltip("켜면 조준 월드점 Y를 플레이어 발높이 + Cast Origin Y Offset으로 고정(오클루전·몸 기준 거리와 맞춤).")]
     [SerializeField] private bool _flattenAimYToPlayerHeight = true;
-    [Tooltip("조준 중 원점→조준점 기즈모/DrawLine. Config.PlayerSight가 켜져도 표시.")]
-    [SerializeField] private bool _drawAimDebug = true;
     [Tooltip("막힘 검사 레이어(플레이어 본체 레이어는 제외하는 것을 권장)")]
     [SerializeField] private LayerMask _aimObstructionMask = ~0;
 
@@ -25,8 +23,7 @@ public class PlayerAimController : MonoBehaviour
     private bool _isAiming;
     private bool _connected;
 
-    bool ShouldDrawAimDebug =>
-        _drawAimDebug || Config.DebugMode.PlayerSight;
+    bool ShouldDrawAimDebug => Config.DebugMode.PlayerSight;
 
     public float CastOriginYOffset => _castOriginYOffset;
     public float SphereRadius => _sphereRadius;

@@ -1,5 +1,5 @@
 // ============================================================
-// WeaponAttack — Attack 튜닝 (logicId·cue·캐리어 VFX·탄·Impact 반응 on/off)
+// WeaponAttack — Attack 튜닝 (logicId·cue·캐리어 VFX·탄·근접 히트박스·Impact 반응)
 // ============================================================
 
 using System;
@@ -17,6 +17,8 @@ using UnityEditor;
 public sealed class WeaponAttack : ScriptableObject
 {
     public const float DefaultCueNormalizedTime = 0.35f;
+    public const float DefaultHitboxHalfWidth = 0.35f;
+    public const float DefaultHitboxHalfHeight = 0.45f;
 
     const string MeleeHandlerPath =
         "Assets/Dist/Scripts/Entity/Combat/MeleeHitHandler.cs";
@@ -57,6 +59,14 @@ public sealed class WeaponAttack : ScriptableObject
         "Default Projectile → 그래도 없으면 레이만. 근접 Attack에는 비워 둡니다.")]
     [SerializeField] DistProjectile _projectilePrefab;
 
+    [Title("근접 히트박스", "cue 시 Overlap. 길이 = CombatMath.RangeMeters. 원거리는 무시.", horizontalLine: false)]
+    [Tooltip("조준 축 좌우 반폭(미터). 근접 cue Overlap만.")]
+    [LabelText("Half Width")]
+    [SerializeField, Min(0.05f)] float _hitboxHalfWidth = DefaultHitboxHalfWidth;
+    [Tooltip("조준 축 상하 반높이(미터). 근접 cue Overlap만.")]
+    [LabelText("Half Height")]
+    [SerializeField, Min(0.05f)] float _hitboxHalfHeight = DefaultHitboxHalfHeight;
+
     [Title("Impact 반응", "팔 Recoil/Blocked + Reaction VFX. 애니 파이프라인과 별개로 Attack이 on/off.", horizontalLine: false)]
     [Tooltip("공격 클립 cue 도달 시 Recoil 애니·Reaction VFX. 끄면 둘 다 생략.")]
     [LabelText("Recoil")]
@@ -78,6 +88,18 @@ public sealed class WeaponAttack : ScriptableObject
     public bool FeedsChamberOnFire => _feedsChamberOnFire;
 
     public DistProjectile ProjectilePrefab => _projectilePrefab;
+
+    public float HitboxHalfWidth =>
+        _hitboxHalfWidth > 0f ? _hitboxHalfWidth : DefaultHitboxHalfWidth;
+
+    public float HitboxHalfHeight =>
+        _hitboxHalfHeight > 0f ? _hitboxHalfHeight : DefaultHitboxHalfHeight;
+
+    public static float HitboxHalfWidthOf(WeaponAttack attack) =>
+        attack != null ? attack.HitboxHalfWidth : DefaultHitboxHalfWidth;
+
+    public static float HitboxHalfHeightOf(WeaponAttack attack) =>
+        attack != null ? attack.HitboxHalfHeight : DefaultHitboxHalfHeight;
 
     public bool PlayRecoilImpact => _playRecoilImpact;
 

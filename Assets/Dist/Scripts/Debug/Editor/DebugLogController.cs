@@ -17,17 +17,16 @@ public class DebugLogController : MonoBehaviour
     [SerializeField] bool playerPosUpdate = false;
     [SerializeField] bool tileMapRuntime = false;
     [SerializeField] bool playerSight = false;
+    [SerializeField] bool playerMeleeHitbox = false;
     [SerializeField] bool inventory = false;
     [SerializeField] bool inventoryProximityScan = false;
 
-    void Start()
-    {
-        ApplyDebugFlags();
-    }
+    void Start() => ApplyDebugFlags();
+
+    void OnValidate() => ApplyDebugFlags();
 
     private void ApplyDebugFlags()
     {
-        // Master switch is evaluated at startup only (no runtime hot-apply requirement).
         bool globalEnabled = isDebugMode;
         bool tileRuntimeEnabled = globalEnabled && tileMapRuntime;
         bool playerEnabled = globalEnabled && player;
@@ -44,6 +43,7 @@ public class DebugLogController : MonoBehaviour
         Config.DebugMode.PlayerMovement = playerEnabled && playerMovement;
         Config.DebugMode.PlayerPosUpdate = playerEnabled && playerPosUpdate;
         Config.DebugMode.PlayerSight = playerEnabled && playerSight;
+        Config.DebugMode.MeleeHitbox = playerEnabled && playerMeleeHitbox;
 
         bool inventoryEnabled = globalEnabled && inventory;
         Config.DebugMode.Inventory = inventoryEnabled;

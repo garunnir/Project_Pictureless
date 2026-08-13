@@ -10,6 +10,7 @@ public static class Config
         public static bool PlayerMovement = false;
         public static bool PlayerSight = false;
         public static bool PlayerPosUpdate = false;
+        public static bool MeleeHitbox = false;
 
         public static bool Inventory = false;
         public static bool InventoryProximityScan = false;

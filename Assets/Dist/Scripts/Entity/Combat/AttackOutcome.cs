@@ -28,6 +28,9 @@ public readonly struct AttackOutcome
 
     public readonly WeaponAttack Attack;
 
+    /// <summary>무기 축 접촉 0=손/자루 ~ 1=끝. 근접 히트박스만. 치명타 Pending.</summary>
+    public readonly float WeaponReach01;
+
     public bool DidHit => Result == AttackPerformResult.Performed;
 
     public AttackOutcome(
@@ -41,7 +44,8 @@ public readonly struct AttackOutcome
         Vector3 originPoint,
         Vector3 impactPoint,
         string hitTag = null,
-        WeaponAttack attack = null)
+        WeaponAttack attack = null,
+        float weaponReach01 = 0f)
     {
         Action = action;
         Hand = hand;
@@ -54,6 +58,7 @@ public readonly struct AttackOutcome
         ImpactPoint = impactPoint;
         HitTag = hitTag ?? string.Empty;
         Attack = attack;
+        WeaponReach01 = Mathf.Clamp01(weaponReach01);
 
         Vector3 offset = impactPoint - originPoint;
         Direction = offset.sqrMagnitude > 1e-6f ? offset.normalized : Vector3.forward;

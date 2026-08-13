@@ -60314,12 +60314,13 @@ MonoBehaviour:
   tileBuildingIdLabels: 1
   tileIndoorOutdoorOverlay: 1
   tileSightLineBuildingOverlay: 1
-  player: 0
+  player: 1
   playerInteraction: 1
   playerMovement: 1
   playerPosUpdate: 1
   tileMapRuntime: 1
   playerSight: 1
+  playerMeleeHitbox: 1
   inventory: 1
   inventoryProximityScan: 1
 --- !u!1001 &1291993868
