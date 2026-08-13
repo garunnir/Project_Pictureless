@@ -16,7 +16,7 @@ using UnityEditor;
 public sealed class WeaponPresentationCatalog : ScriptableObject
 {
     const string FallbacksAssetPath =
-        "Assets/Dist/SOData/Combat/WeaponPresentations/WeaponCombatFallbacks.asset";
+        "Assets/Dist/SOData/Combat/Fallbacks/WeaponCombatFallbacks.asset";
 
     [Serializable]
     public sealed class Binding
@@ -32,9 +32,9 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
     }
 
     [InfoBox(
-        "【진입점】 무기가 들릴 때 Presentation(동작 목록)을 고릅니다.\n" +
-        "순서: 아이템 전용 → 카테고리 → 맨손. 동작·Attack·Override는 Presentation을 펼쳐 편집.\n" +
-        "팔 애니·타격 VFX·발사체 공용 기본은 아래 Fallbacks(거의 안 건드림)에 격리되어 있습니다.",
+        "【진입점】 무기가 들릴 때 Presentation(Leaf 목록)을 고릅니다.\n" +
+        "순서: 아이템 전용 → 카테고리 → 맨손. Leaf·Attack·Override는 Presentation을 펼쳐 편집.\n" +
+        "Fallbacks = AnimVerb Pipeline·Hit VFX·발사체 공용(거의 안 건드림). Semi/Burst/Auto는 Presentation Leaf.",
         InfoMessageType.None)]
     [SerializeField, HideInInspector] int _inspectorPad;
 
@@ -56,7 +56,7 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
 
     [FoldoutGroup("폴백 (거의 안 건드림)", Expanded = false)]
     [InfoBox(
-        "공용 기본값 묶음입니다. 평소에는 접어 두고, 필요할 때만 엽니다.",
+        "AnimVerb Pipeline·Hit VFX·발사체 공용. Leaf(fire-mode) 행은 여기 없음. 평소 접어두세요.",
         InfoMessageType.None)]
     [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
     [LabelText("Fallbacks")]
@@ -75,6 +75,8 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
 
     public WeaponPresentation Unarmed => _unarmed;
     public WeaponCombatFallbacks Fallbacks => _fallbacks;
+    public Binding[] ByItemId => _byItemId;
+    public Binding[] ByCategoryId => _byCategoryId;
     public ArmAnimSlotCatalog AnimPipeline =>
         _fallbacks != null ? _fallbacks.AnimPipeline : null;
     public WeaponImpactVfxDefaults ImpactVfxDefaults =>

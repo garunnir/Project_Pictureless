@@ -26,9 +26,12 @@ public static class CharacterGearLabels
     const string KeyHandActionGroup = "Character.HandActionGroup";
     const string KeyActionNone = "Character.ActionNone";
     const string DisplaySwing = "SWING";
-    const string DisplayTrigger = "TRIGGER";
     const string DisplayThrust = "THRUST";
+    const string DisplaySemi = "SEMI";
+    const string DisplayBurst = "BURST";
+    const string DisplayAuto = "AUTO";
     const string DisplayRaise = "RAISE";
+    const string DisplayTrigger = "TRIGGER";
     const string KeySlotLeft = "Character.SlotLeft";
     const string KeySlotRight = "Character.SlotRight";
     const string KeyWornFilterAll = "Character.WornFilterAll";
@@ -89,23 +92,29 @@ public static class CharacterGearLabels
     public static string Unwield => GetOr(KeyUnwield, "내려놓기");
     public static string DropFloor => GetOr(KeyDropFloor, "바닥에 놓기");
     public static string HandActionGroup => GetOr(KeyHandActionGroup, "사용 액션");
+    public static string FamilyMelee => "Melee";
+    public static string FamilyTrigger => "Trigger";
     public static string ActionNone => GetOr(KeyActionNone, "없음");
     public static string ActionSwing => ActionLabel(WeaponAction.Swing);
     public static string ActionThrust => ActionLabel(WeaponAction.Thrust);
-    public static string ActionTrigger => ActionLabel(WeaponAction.Trigger);
+    public static string ActionTrigger => ActionLabel(WeaponAction.Semi);
     public static string ActionRaise => ActionLabel(WeaponAction.Raise);
 
-    /// <summary>동작 동사 표시. bash/cut은 Attack 속성이지 여기 없음.</summary>
+    /// <summary>Leaf 표시. AnimVerb/Override와 별개.</summary>
     public static string ActionLabel(WeaponAction action)
     {
         switch (WeaponActionUtil.Normalize(action))
         {
             case WeaponAction.Swing:
                 return DisplaySwing;
-            case WeaponAction.Trigger:
-                return DisplayTrigger;
             case WeaponAction.Thrust:
                 return DisplayThrust;
+            case WeaponAction.Semi:
+                return DisplaySemi;
+            case WeaponAction.Burst:
+                return DisplayBurst;
+            case WeaponAction.Auto:
+                return DisplayAuto;
             case WeaponAction.Raise:
                 return DisplayRaise;
             default:

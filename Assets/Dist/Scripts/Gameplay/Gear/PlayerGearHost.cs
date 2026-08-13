@@ -257,7 +257,8 @@ public sealed class PlayerGearHost : MonoBehaviour
                 out _))
         {
             _attacker.SetWieldedItem((ItemStack)null);
-            _attacker.SetActiveWieldHand(WieldHand.Right);
+            // 비무장: 한손 슬롯이 아니라 UpperBody TwoHand overlay.
+            _attacker.SetActiveWieldHand(WieldHand.TwoHand);
             return;
         }
 

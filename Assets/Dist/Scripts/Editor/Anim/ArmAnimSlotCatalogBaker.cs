@@ -1,5 +1,5 @@
 // ============================================================
-// ArmAnimSlotCatalogBaker — Pipeline 동사·Impact 시드 + catalog (MCP)
+// ArmAnimSlotCatalogBaker — Leaf마다 폴백 행·슬롯 Ensure (MCP)
 // ============================================================
 
 #if UNITY_EDITOR
@@ -9,16 +9,16 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// WeaponActionUtil.All / ArmImpactKind 기준으로 슬롯·Pipeline 행을 Ensure한다.
-/// 동사 추가 시 All(+Mask)만 갱신한 뒤 이 메뉴를 다시 돌리면 된다.
+/// WeaponActionUtil.All(Leaf) / ArmImpactKind 기준으로 슬롯·Catalog 행을 Ensure한다.
+/// Semi/Burst/Auto도 각자 폴백 줄이 있어야 한다. 표시는 DropdownPath(Melee/Trigger).
 /// </summary>
 public static class ArmAnimSlotCatalogBaker
 {
-    const string SlotDir = "Assets/Dist/Visual/Anim/CharacterClips/Slots";
+    const string SlotDir = "Assets/Dist/Visual/Anim/CharacterAnimator/Slots";
     const string CatalogPath =
-        "Assets/Dist/Visual/Anim/CharacterClips/ArmAnimSlotCatalog.asset";
+        "Assets/Dist/SOData/Combat/Fallbacks/ArmAnimSlotCatalog.asset";
     const string PresentationCatalogPath =
-        "Assets/Dist/SOData/Combat/WeaponPresentations/WeaponPresentationCatalog.asset";
+        "Assets/Dist/SOData/Combat/Catalog/WeaponPresentationCatalog.asset";
 
     static readonly string[] Hands = { "Left", "Right", "TwoHand" };
     static readonly string[] Phases = { "Hold", "Aim", "Attack" };
@@ -43,7 +43,7 @@ public static class ArmAnimSlotCatalogBaker
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log(
-            "[ArmAnimSlotCatalogBaker] Ensured Pipeline verbs=" +
+            "[ArmAnimSlotCatalogBaker] Ensured Leaf fallback verbs=" +
             WeaponActionUtil.All.Length +
             " impacts=" +
             Enum.GetValues(typeof(ArmImpactKind)).Length);
@@ -65,13 +65,27 @@ public static class ArmAnimSlotCatalogBaker
                     if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + dest + ".anim") != null)
                         continue;
 
-                    string seed = phase + "Swing_" + hand + "_Slot";
-                    if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + seed + ".anim") == null)
-                        seed = phase + "_" + hand + "_Slot";
+                    string seed = PickSeedClip(phase, hand, actions[a]);
                     EnsureCopy(seed, dest);
                 }
             }
         }
+    }
+
+    static string PickSeedClip(string phase, string hand, WeaponAction leaf)
+    {
+        if (WeaponActionUtil.IsRanged(leaf))
+        {
+            string trigger = phase + "Trigger_" + hand + "_Slot";
+            if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + trigger + ".anim") != null)
+                return trigger;
+        }
+
+        string swing = phase + "Swing_" + hand + "_Slot";
+        if (AssetDatabase.LoadAssetAtPath<AnimationClip>(SlotDir + "/" + swing + ".anim") != null)
+            return swing;
+
+        return phase + "_" + hand + "_Slot";
     }
 
     static void EnsureImpactLibrarySlots()
@@ -172,11 +186,14 @@ public static class ArmAnimSlotCatalogBaker
             LoadFlatSlot("ImpactRecoil_Slot"),
             LoadFlatSlot("ImpactBlocked_Slot"));
 
+        WeaponActionVfx rangedVfxTemplate = FindRangedVfxTemplate(catalog);
+        WeaponActionVfx meleeVfxTemplate = FindMeleeVfxTemplate(catalog);
+
         var verbs = new List<ArmAnimSlotCatalog.ActionLibraryEntry>();
         var seen = new HashSet<int>();
         WeaponAction[] all = WeaponActionUtil.All;
         for (int i = 0; i < all.Length; i++)
-            verbs.Add(BuildVerbEntry(catalog, all[i], seen));
+            verbs.Add(BuildVerbEntry(catalog, all[i], seen, rangedVfxTemplate, meleeVfxTemplate));
 
         if (catalog.Verbs != null)
         {
@@ -185,10 +202,12 @@ public static class ArmAnimSlotCatalogBaker
                 ArmAnimSlotCatalog.ActionLibraryEntry orphan = catalog.Verbs[i];
                 if (orphan == null)
                     continue;
-                int key = (int)WeaponActionUtil.Normalize(orphan.action);
-                if (seen.Contains(key))
+                WeaponAction leaf = WeaponActionUtil.Normalize(orphan.action);
+                if (leaf == WeaponAction.Trigger)
+                    leaf = WeaponAction.Semi;
+                if (seen.Contains((int)leaf))
                     continue;
-                verbs.Add(BuildVerbEntry(catalog, orphan.action, seen));
+                verbs.Add(BuildVerbEntry(catalog, leaf, seen, rangedVfxTemplate, meleeVfxTemplate));
             }
         }
 
@@ -214,28 +233,90 @@ public static class ArmAnimSlotCatalogBaker
         EditorUtility.SetDirty(catalog);
     }
 
+    static WeaponActionVfx FindRangedVfxTemplate(ArmAnimSlotCatalog catalog)
+    {
+        if (catalog.Verbs == null)
+            return null;
+        for (int i = 0; i < catalog.Verbs.Length; i++)
+        {
+            ArmAnimSlotCatalog.ActionLibraryEntry e = catalog.Verbs[i];
+            if (e == null || e.vfx == null || !HasAnyVfx(e.vfx))
+                continue;
+            if (WeaponActionUtil.IsRanged(e.action) || e.action == WeaponAction.Trigger)
+                return CloneVfx(e.vfx);
+        }
+
+        return null;
+    }
+
+    static WeaponActionVfx FindMeleeVfxTemplate(ArmAnimSlotCatalog catalog)
+    {
+        if (catalog.Verbs == null)
+            return null;
+        for (int i = 0; i < catalog.Verbs.Length; i++)
+        {
+            ArmAnimSlotCatalog.ActionLibraryEntry e = catalog.Verbs[i];
+            if (e == null || e.vfx == null || !HasAnyVfx(e.vfx))
+                continue;
+            WeaponAction leaf = WeaponActionUtil.Normalize(e.action);
+            if (leaf == WeaponAction.Swing || leaf == WeaponAction.Thrust)
+                return CloneVfx(e.vfx);
+        }
+
+        return null;
+    }
+
     static ArmAnimSlotCatalog.ActionLibraryEntry BuildVerbEntry(
         ArmAnimSlotCatalog catalog,
         WeaponAction action,
-        HashSet<int> seen)
+        HashSet<int> seen,
+        WeaponActionVfx rangedVfxTemplate,
+        WeaponActionVfx meleeVfxTemplate)
     {
-        WeaponAction normalized = WeaponActionUtil.Normalize(action);
-        seen.Add((int)normalized);
-        string name = ClipStem(normalized);
+        WeaponAction leaf = WeaponActionUtil.Normalize(action);
+        seen.Add((int)leaf);
+        string name = ClipStem(leaf);
 
-        ArmAnimSlotCatalog.ActionLibraryEntry existing = catalog.FindAction(normalized);
+        ArmAnimSlotCatalog.ActionLibraryEntry existing = FindExact(catalog, leaf);
         WeaponActionVfx vfx = existing?.vfx != null && HasAnyVfx(existing.vfx)
-            ? existing.vfx
+            ? CloneVfx(existing.vfx)
             : new WeaponActionVfx();
+
+        if (!HasAnyVfx(vfx) && WeaponActionUtil.IsRanged(leaf) && rangedVfxTemplate != null)
+            vfx = CloneVfx(rangedVfxTemplate);
+        if (!HasAnyVfx(vfx) &&
+            (leaf == WeaponAction.Raise || leaf == WeaponAction.Swing || leaf == WeaponAction.Thrust) &&
+            meleeVfxTemplate != null)
+            vfx = CloneVfx(meleeVfxTemplate);
 
         return new ArmAnimSlotCatalog.ActionLibraryEntry
         {
-            action = normalized,
+            action = leaf,
             hold = LoadHandClips("Hold" + name),
             aim = LoadHandClips("Aim" + name),
             attack = LoadHandClips("Attack" + name),
             vfx = vfx
         };
+    }
+
+    static ArmAnimSlotCatalog.ActionLibraryEntry FindExact(
+        ArmAnimSlotCatalog catalog,
+        WeaponAction leaf)
+    {
+        if (catalog.Verbs == null)
+            return null;
+        for (int i = 0; i < catalog.Verbs.Length; i++)
+        {
+            ArmAnimSlotCatalog.ActionLibraryEntry e = catalog.Verbs[i];
+            if (e == null)
+                continue;
+            if (WeaponActionUtil.Normalize(e.action) == leaf)
+                return e;
+            if (leaf == WeaponAction.Semi && e.action == WeaponAction.Trigger)
+                return e;
+        }
+
+        return null;
     }
 
     static ArmAnimSlotCatalog.ImpactLibraryEntry BuildImpactEntry(
@@ -253,15 +334,29 @@ public static class ArmAnimSlotCatalogBaker
             kind = kind,
             clips = LoadHandClips("Impact" + kind),
             thin = thin,
-            vfx = existing?.vfx ?? new WeaponActionVfx()
+            vfx = existing?.vfx != null ? CloneVfx(existing.vfx) : new WeaponActionVfx()
+        };
+    }
+
+    static WeaponActionVfx CloneVfx(WeaponActionVfx src)
+    {
+        if (src == null)
+            return new WeaponActionVfx();
+        return new WeaponActionVfx
+        {
+            actionVfx = src.actionVfx,
+            tracerVfx = src.tracerVfx,
+            hitVfx = src.hitVfx,
+            missVfx = src.missVfx
         };
     }
 
     static bool HasAnyVfx(WeaponActionVfx vfx) =>
-        vfx.actionVfx != null ||
-        vfx.tracerVfx != null ||
-        vfx.hitVfx != null ||
-        vfx.missVfx != null;
+        vfx != null &&
+        (vfx.actionVfx != null ||
+         vfx.tracerVfx != null ||
+         vfx.hitVfx != null ||
+         vfx.missVfx != null);
 
     static void WirePresentationCatalog()
     {
@@ -276,7 +371,7 @@ public static class ArmAnimSlotCatalogBaker
             EditorUtility.SetDirty(presentation.Fallbacks);
     }
 
-    /// <summary>슬롯 파일 스템 = Normalize 후 enum 이름. 새 동사도 switch 없이 동작.</summary>
+    /// <summary>슬롯 파일 스템 = Normalize(Leaf) 이름.</summary>
     static string ClipStem(WeaponAction action) =>
         WeaponActionUtil.Normalize(action).ToString();
 

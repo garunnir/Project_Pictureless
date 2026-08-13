@@ -9,9 +9,9 @@ using UnityEngine;
 static class GameDataWeaponPresentationEditor
 {
     public const string CatalogPath =
-        "Assets/Dist/SOData/Combat/WeaponPresentations/WeaponPresentationCatalog.asset";
+        "Assets/Dist/SOData/Combat/Catalog/WeaponPresentationCatalog.asset";
     public const string PresentationsFolder =
-        "Assets/Dist/SOData/Combat/WeaponPresentations";
+        "Assets/Dist/SOData/Combat/Presentations";
 
     static bool _foldVisualHub;
     static bool _foldWeaponPresentation;

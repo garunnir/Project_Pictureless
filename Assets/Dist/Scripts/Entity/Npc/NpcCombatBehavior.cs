@@ -211,6 +211,11 @@ public sealed class NpcCombatBehavior : MonoBehaviour
         if (action == WeaponAction.Raise)
             return;
 
+        // 쿨·cue 대기 중 매 프레임 TryPerform 생략 (Attacker 게이트와 이중 방어)
+        if (_attacker.GetCooldown(_attacker.ActiveWieldHand) > 0f ||
+            _attacker.HasPendingFor(_attacker.ActiveWieldHand))
+            return;
+
         AttackPerformResult result = _attacker.TryPerformSelected(target);
         if (result == AttackPerformResult.OutOfRange)
             EnterChase();

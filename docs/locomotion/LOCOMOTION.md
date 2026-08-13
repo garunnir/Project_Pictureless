@@ -56,26 +56,29 @@ flowchart LR
 
 ## 3D 애니 브릿지
 
-컨트롤러: `Assets/Dist/Visual/Anim/CharacterClips/CharacterAnimController.controller`  
+컨트롤러: `Assets/Dist/Visual/Anim/CharacterAnimator/CharacterAnimController.controller`  
 드라이버: `CharacterLocomotionAnim` · 클립+VFX SSOT: `ArmAnimSlotCatalog` (Pipeline) + `ArmAnimSlotResolver` / `ArmImpactSlotResolver`  
 루트 회전: `CharacterFacingRotator` → `CharacterState.GetFacingDir()`  
 스프라이트 8방향: `CharacterFacingAnim` (SpriteSwap 전용, 3D와 별도)
 
 **몸 애니만** Hold/Aim/Attack thin 슬롯과 Impact thin을 쓴다. 무기 메시·외형은 애니 슬롯에 붙이지 않는다 (별 경로).
 
+**불변 (에이전트·Rebuild):** 컨트롤러에 동작 이름·`LibraryKeys` 금지. Catalog는 **Leaf마다 폴백 행**. Override는 thin만. 룰: `.cursor/rules/arm-anim-layers.mdc`.
+
 | Layer | Mask | Weight |
 |-------|------|--------|
 | Move Layer | none | 1 |
-| RightArm Layer | `RightArm.mask` | 오른손 무장·비TwoHand → 1 |
-| LeftArm Layer | `LeftArm.mask` | 왼손 무장·비TwoHand → 1 |
-| TwoHand Layer | `UpperBody.mask` | `IsTwoHand` → 1 (그때 L/R Arm = 0) |
+| RightArm Layer | `RightArm.mask` | 오른손 무장·비TwoHand → 1 (`useHold`·Aim/Attack 게이트) |
+| LeftArm Layer | `LeftArm.mask` | 왼손 무장·비TwoHand → 1 (동일) |
+| TwoHand Layer | `UpperBody.mask` | TwoHand 모드/`ActiveWieldHand` → 1 (동일 게이트; 그때 L/R Arm = 0) |
 | Impact Layer | none (v1) | Recoil/Blocked 재생 중 → 1, 평시 0 |
 
 **Action vs Reaction vs Hit:** Action = 동사 자세·시전. Reaction = Recoil/Blocked (`ArmImpactKind`, 애니 Impact Layer). Hit = 특성(bash/cut/bullet) 타격 결과 — `WeaponImpactVfxDefaults`.  
 **Hit 키 = 채널 문자열.** 계산기와 Hit 테이블이 같은 키를 쓴다. Action이 채널을 고르지 않는다.  
-**Entry 소유권:** `WeaponPresentation.Entry` = 동사 라우팅 행(가용·`attack`·Action VFX). Hit coalesce = Entry → Attack VFX → Defaults[HitTag]. Reaction과 섞지 않음.
+**Entry 소유권:** `WeaponPresentation.Entry` = 동사 라우팅 행(가용·`attack`·Action VFX·`useHold`). Hit coalesce = Entry → Attack VFX → Defaults[HitTag]. Reaction과 섞지 않음.
 
 팔 SM(손당): **Hold ↔ Aim** (`IsAiming`), **Attack** (trigger). `Action*` 파라미터·모드별 Aim/Attack 상태 없음.  
+`Entry.useHold=false`면 비조준·비Attack일 때 해당 손 arm overlay weight 0 (몸 Locomotion Idle). Aim/Attack 중에는 overlay 유지.  
 Impact SM: **Empty** → **Recoil** / **Blocked** (`ImpactRecoil` / `ImpactBlocked` trigger) → ExitTime → Empty.
 
 | Param | Type | Source |
@@ -85,32 +88,38 @@ Impact SM: **Empty** → **Recoil** / **Blocked** (`ImpactRecoil` / `ImpactBlock
 | `IsAiming` | bool | `CharacterState.IsAiming` |
 | `AttackR` / `AttackL` / `Attack2H` | trigger | `AttackResolved` 큐 → `AttackOutcome.Hand` |
 | `ImpactRecoil` / `ImpactBlocked` | trigger | cue → Recoil; `Obstructed` → Blocked |
-| `WeaponPresentation.AnimatorOverride` | Override | **라이브러리 키** 교체 — 외형 메시 아님 |
+| `WeaponPresentation.AnimatorOverride` | Override | **thin** Hold/Aim/Attack 덮어쓰기 — 외형 메시 아님. 컨트롤러에 AnimVerb 키 없음 |
 | `ArmAnimSlotCatalog` + runtime Override | resolve | 동사 행 클립→Action thin, Impact 행→Impact thin. 동사/Impact **VFX는 같은 행** |
 
 Move Layer `Locomotion`: **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + Walk/Run × 전/후/좌/우 (Walk 링 ≈0.26). 조준 중 루트는 `SightDir` 유지, **발만** facing 대비 상대 방향.
 
-**Thin 키 (Action SM):** `Hold|Aim|Attack_{Left,Right,TwoHand}_Slot`  
+**Thin 키 (Action SM):** `Hold|Aim|Attack_{Left,Right,TwoHand}_Slot` — 컨트롤러가 아는 전부(동작 이름 없음).  
 **Thin 키 (Impact SM):** `ImpactRecoil_Slot`, `ImpactBlocked_Slot`  
-**라이브러리 키:** `Hold|Aim|Attack{Verb}_{Hand}_Slot`, `Impact{Recoil\|Blocked}_{Hand}_Slot`  
-`WeaponAction` → 동사 행 클립을 thin에 리맵. `ArmImpactKind` → Impact thin. Action 전환은 **Rebind 없이** thin 키만 갱신. Presentation 교체 시에만 풀 resolve + Rebind.
+**Pipeline 라이브러리 (컨트롤러 밖):** `Hold|Aim|Attack{Leaf}_{Hand}_Slot` — Catalog Leaf 행. SM에 동작 이름/LibraryKeys 없음.
 
-무기 `AnimatorOverride`는 **라이브러리 키**를 교체한다. thin 키를 직접 바꾸지 않는다.
+`WeaponAction` **Leaf** → Catalog **같은 Leaf** 행 클립을 thin에 리맵. `ArmImpactKind` → Impact thin. Action 전환은 **Rebind 없이** thin 키만 갱신. Presentation 교체 시에만 풀 resolve + Rebind.
 
-- Pipeline: `ArmAnimSlotCatalog.asset` (동사 행 = stance+strike+vfx, Impact 행 = clips+thin+vfx)  
-- 메뉴: `Dist/MCP/Rebuild Arm Overlay Animator`, `Dist/MCP/Ensure Arm Anim Pipeline`
+**층:** Family(UI 묶음) / Leaf(선택·Catalog 폴백 행) / Override(thin 덮어쓰기). Terms: [`GEAR.md`](../equipment/GEAR.md). Semi/Burst/Auto는 각자 Catalog 행(클릭 볼리; Auto 홀드 Pending).
 
-**액션 확장:** `WeaponAction`(+`WeaponActionMask`) → [`WeaponActionUtil.All`](Assets/Dist/Scripts/Entity/Combat/WeaponAction.cs)에 추가 → `Ensure Arm Anim Pipeline` (클립 시드·행 Ensure). 슬롯 스템 = enum 이름. **Builder/SM 수정 없음.**  
+무기 `AnimatorOverride`는 **thin**만 교체 (`WeaponAnimOverrideEditor`). Override thin이 있으면 Catalog Leaf보다 우선.
+
+- Pipeline(Fallbacks): `Assets/Dist/SOData/Combat/Fallbacks/ArmAnimSlotCatalog.asset` — **Leaf 전부** 행 (Semi/Burst/Auto 포함).  
+- 폴더 맵: [`docs/equipment/WEAPON_VISUAL.md`](../equipment/WEAPON_VISUAL.md)  
+- 메뉴: `Dist/MCP/Rebuild Arm Overlay Animator` (LibraryKeys **재생성 안 함**), `Dist/MCP/Ensure Arm Anim Pipeline`
+
+**액션 확장 (Leaf):** `WeaponActionUtil.All` + Ensure Pipeline → Catalog 행·슬롯. **컨트롤러 슬롯 증설 없음.**  
 **Impact Kind 확장:** `ArmImpactKind` (Reaction: Recoil/Blocked) + Impact SM 상태·trigger·행.
+
+**Pending:** BN `modes` JSON bake → Leaf 마스크 자동 매핑 ([`BN_BAKE.md`](../equipment/BN_BAKE.md)). Auto 홀드 연사(현재 클릭 볼리).
 
 ### 클립 resolve (Animator 밖)
 
 Animator SM에는 `_FB` / `Mirror*` / `Action*` 없음. 손별 클립은 라이브러리 **base만**.
 
-| 필요 손 | 전용 (무기 Override≠base) | 재생 클립 |
-|---------|---------------------------|-----------|
-| Left / Right / TwoHand | 있음 | 해당 손 라이브러리 전용 |
-| Left / Right / TwoHand | 없음 | 해당 손 라이브러리 base |
+| 필요 손 | 무기 Override thin | 재생 클립 |
+|---------|---------------------|-----------|
+| Left / Right / TwoHand | 있음 | Override thin |
+| Left / Right / TwoHand | 없음 | Catalog Leaf 손 base → thin |
 
 Aim/Attack 라이브러리 클립이 없으면 같은 손 Hold thin으로 내린다. L↔R·TwoHand 자기미러 폴백 없음. Dominant 교체는 **Pending**.
 

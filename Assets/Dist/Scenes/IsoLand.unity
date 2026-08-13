@@ -41631,6 +41631,19 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 845173794}
   m_PrefabAsset: {fileID: 0}
+--- !u!134 &846059839
+PhysicsMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 2
+  m_DynamicFriction: 0.6
+  m_StaticFriction: 0.6
+  m_Bounciness: 0
+  m_FrictionCombine: 0
+  m_BounceCombine: 0
 --- !u!1001 &849165648
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -64369,7 +64382,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::PlayerAimController
   _refCam: {fileID: 210656668}
   _sphereRadius: 0.1
-  _castOriginYOffset: 0.35
+  _castOriginYOffset: 0.5
   _maxAimDistance: 15
   _flattenAimYToPlayerHeight: 1
   _aimObstructionMask:
@@ -89785,7 +89798,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
+  m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 543450653236232289}
@@ -105633,6 +105646,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1759737640}
     m_Modifications:
+    - target: {fileID: 208125999193700478, guid: d37475c6e3368db4c9e212b9bcee3831,
+        type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 846059839}
+    - target: {fileID: 601006274607903793, guid: d37475c6e3368db4c9e212b9bcee3831,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 601006274607903793, guid: d37475c6e3368db4c9e212b9bcee3831,
+        type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 601006274607903793, guid: d37475c6e3368db4c9e212b9bcee3831,
+        type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 626806252378597420, guid: d37475c6e3368db4c9e212b9bcee3831,
         type: 3}
       propertyPath: _moveSpeed

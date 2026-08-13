@@ -35,6 +35,9 @@ public sealed class CharacterCombatVfx : MonoBehaviour
 
     void OnAttackResolved(AttackOutcome outcome)
     {
+        if (outcome.Result != AttackPerformResult.Performed)
+            return;
+
         ArmAnimSlotCatalog pipeline = ResolvePipeline();
         WeaponActionVfx vfx = WeaponActionVfxResolver.Resolve(
             _attacker.Presentation,
@@ -50,9 +53,15 @@ public sealed class CharacterCombatVfx : MonoBehaviour
     {
         if (outcome.Result == AttackPerformResult.Obstructed)
         {
-            SpawnImpactKind(ArmImpactKind.Blocked, outcome.OriginPoint, outcome.Direction);
+            if (WeaponAttack.AllowsImpactReaction(outcome.Attack, ArmImpactKind.Blocked))
+                SpawnImpactKind(ArmImpactKind.Blocked, outcome.OriginPoint, outcome.Direction);
             return;
         }
+
+        // Cooling/NoTarget 등 게이트 실패는 Hit/Miss 연출 대상이 아님 (실제 명중 굴림 Miss만)
+        if (outcome.Result != AttackPerformResult.Performed &&
+            outcome.Result != AttackPerformResult.Miss)
+            return;
 
         WeaponImpactVfxDefaults impactDefaults = _attacker.Catalog != null
             ? _attacker.Catalog.ImpactVfxDefaults
@@ -77,6 +86,9 @@ public sealed class CharacterCombatVfx : MonoBehaviour
 
     void OnAttackCueFired(WieldHand hand, WeaponAction action)
     {
+        if (_attacker != null &&
+            !_attacker.AllowsImpactReaction(action, ArmImpactKind.Recoil))
+            return;
         SpawnImpactKind(ArmImpactKind.Recoil, _attacker.ResolveOrigin(), transform.forward);
     }
 

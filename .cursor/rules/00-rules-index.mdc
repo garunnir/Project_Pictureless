@@ -21,6 +21,8 @@ alwaysApply: true
 | `migration-parity.mdc` | 경로 교체·하이브리드·기능 불변 최적화 — 패리티·기능 체크리스트, 재현 뺑뺑이 금지 |
 | `ui-prefab-bake.mdc` | UI 프리팹 full bake는 일회성 — 베이크 후 스크립트 삭제 |
 | `vendor-packages.mdc` | 서드파티·벤더 원본 인플레이스 수정 금지 — Dist 포크/래퍼 |
+| `inspector-exposure.mdc` | Inspector — 무의미 비노출 / 유의미 필수 노출 |
+| `arm-anim-layers.mdc` | 팔 애니 — 컨트롤러는 동작 모름 · Override=thin · AnimVerb=Pipeline (Glob) |
 
 `00-rules-index.mdc` §**Dist UI path gate**: UI 경로 수정 시 `ui-font`/`ui-prefab-layout` 로드 스위치 (전문 Always 아님).
 
@@ -36,6 +38,7 @@ alwaysApply: true
 | `map-system.mdc` | `Assets/Dist/Scripts/Map/**` · `docs/map/**` |
 | `inventory-ui.mdc` | Inventory 스크립트·프리팹 · `docs/inventory/**` |
 | `locomotion.mdc` | `Entity/Locomotion` · `docs/locomotion/**` |
+| `arm-anim-layers.mdc` | CharacterAnimator · Combat 팔 resolve/Override · Editor/Anim · GEAR/WEAPON_VISUAL · locomotion docs |
 | `legacy.mdc` | `Assets/Dist/Legacy/**` · `docs/legacy/**` |
 | `game-time.mdc` | `Gameplay/Time` · `Static/Time` · `UI/Time` · `Editor/Time` · `SOData/.../Time` · `docs/time/**` |
 

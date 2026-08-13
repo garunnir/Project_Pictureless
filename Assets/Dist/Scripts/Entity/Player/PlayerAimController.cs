@@ -13,8 +13,10 @@ public class PlayerAimController : MonoBehaviour
     [SerializeField] private float _castOriginYOffset = 0.35f;
     [Tooltip("마우스 거리와 무관하게 조준·상호작용 SphereCast가 닿는 최대 거리.")]
     [SerializeField] private float _maxAimDistance = 15f;
-    [Tooltip("켜면 조준 월드점 Y를 플레이어 transform.position.y로 고정(오클루전·몸 기준 거리와 맞춤).")]
+    [Tooltip("켜면 조준 월드점 Y를 플레이어 발높이 + Cast Origin Y Offset으로 고정(오클루전·몸 기준 거리와 맞춤).")]
     [SerializeField] private bool _flattenAimYToPlayerHeight = true;
+    [Tooltip("조준 중 원점→조준점 기즈모/DrawLine. Config.PlayerSight가 켜져도 표시.")]
+    [SerializeField] private bool _drawAimDebug = true;
     [Tooltip("막힘 검사 레이어(플레이어 본체 레이어는 제외하는 것을 권장)")]
     [SerializeField] private LayerMask _aimObstructionMask = ~0;
 
@@ -22,6 +24,9 @@ public class PlayerAimController : MonoBehaviour
     private MapTopologyLineCast _topologyLineCast;
     private bool _isAiming;
     private bool _connected;
+
+    bool ShouldDrawAimDebug =>
+        _drawAimDebug || Config.DebugMode.PlayerSight;
 
     public float CastOriginYOffset => _castOriginYOffset;
     public float SphereRadius => _sphereRadius;
@@ -91,7 +96,8 @@ public class PlayerAimController : MonoBehaviour
         Camera cam = _refCam != null ? _refCam : Camera.main;
         Vector3 origin = transform.position + Vector3.up * _castOriginYOffset;
 
-        if (!ScreenRaycaster.TryGetMouseWorldPosition(cam, transform.position.y, out Vector3 mousePlanePos)) return;
+        // 마우스 교차 평면을 조준 높이(origin.y)에 맞춤 — 발 평면 교차 후 올리면 아이소에서 커서와 어긋남.
+        if (!ScreenRaycaster.TryGetMouseWorldPosition(cam, origin.y, out Vector3 mousePlanePos)) return;
 
         Vector3 flatTarget = mousePlanePos;
         flatTarget.y = origin.y;
@@ -119,19 +125,26 @@ public class PlayerAimController : MonoBehaviour
             aimPoint = origin + dir * maxDist;
 
         if (_flattenAimYToPlayerHeight)
-            aimPoint.y = transform.position.y;
+            aimPoint.y = transform.position.y + _castOriginYOffset;
 
         Vector3 sightFlat = aimPoint - origin;
         sightFlat.y = 0f;
         if (sightFlat.sqrMagnitude < 1e-4f) return;
         _characterState.SetAimDir(sightFlat.normalized, aimPoint, sightFlat.magnitude);
+
+        if (ShouldDrawAimDebug)
+            Debug.DrawLine(origin, aimPoint, Color.red, 0f, false);
     }
 
     void OnDrawGizmos()
     {
-        if (_characterState == null || !_characterState.IsAiming) return;
+        if (!ShouldDrawAimDebug) return;
+        if (_characterState == null && !TryGetComponent(out _characterState)) return;
+        if (!_characterState.IsAiming) return;
+        Vector3 origin = transform.position + Vector3.up * _castOriginYOffset;
+        Vector3 aim = _characterState.AimWorldPoint;
         Gizmos.color = Color.red;
-        Gizmos.DrawLine(transform.position, _characterState.AimWorldPoint);
-        Gizmos.DrawWireSphere(_characterState.AimWorldPoint, 0.1f);
+        Gizmos.DrawLine(origin, aim);
+        Gizmos.DrawWireSphere(aim, 0.1f);
     }
 }

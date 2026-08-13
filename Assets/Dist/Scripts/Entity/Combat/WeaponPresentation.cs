@@ -3,6 +3,7 @@
 // ============================================================
 
 using System;
+using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -23,7 +24,9 @@ public sealed class WeaponPresentation : ScriptableObject
     [Serializable]
     public sealed class Entry
     {
-        [LabelText("동작")]
+        [LabelText("동작 (Leaf)")]
+        [ValueDropdown(nameof(LeafDropdown))]
+        [Tooltip("Family 있으면 Melee/…·Trigger/… 로 묶임. Raise는 평면.")]
         public WeaponAction action = WeaponAction.Swing;
 
         [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
@@ -32,13 +35,32 @@ public sealed class WeaponPresentation : ScriptableObject
         [LabelText("Attack")]
         public WeaponAttack attack;
 
+        [LabelText("Hold(아이들)")]
+        [Tooltip(
+            "끄면 비조준·비Attack일 때 해당 손 팔 overlay weight 0 (몸 Locomotion Idle만). " +
+            "Aim/Attack 재생 중에는 overlay를 켠다.")]
+        public bool useHold = true;
+
         public EffectSeed[] effectSeeds;
         public WeaponActionVfx vfx = new();
+
+        static IEnumerable<ValueDropdownItem<WeaponAction>> LeafDropdown()
+        {
+            WeaponAction[] all = WeaponActionUtil.All;
+            for (int i = 0; i < all.Length; i++)
+            {
+                WeaponAction leaf = all[i];
+                yield return new ValueDropdownItem<WeaponAction>(
+                    WeaponActionUtil.DropdownPath(leaf),
+                    leaf);
+            }
+        }
     }
 
     [InfoBox(
-        "이 무기가 할 수 있는 동작 목록입니다. 각 줄의 Attack이 “어떻게 때리는지” 레시피입니다.\n" +
-        "Catalog 무기 바인딩에서 이 파일을 여러 id가 공유할 수 있습니다.",
+        "Leaf = 선택·시전 단위(실체). Family(Melee/Trigger)는 에디터·UI 묶음만.\n" +
+        "기본 동사 폴백은 ArmAnimSlotCatalog에 Leaf마다 행. Entry 비면 그 행 사용.\n" +
+        "Hold(아이들)=Entry.useHold. Override=thin 클립 덮어쓰기(분류 아님).",
         InfoMessageType.None)]
     [LabelText("동작 줄")]
     [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "action")]
@@ -53,7 +75,8 @@ public sealed class WeaponPresentation : ScriptableObject
     [SerializeField] int _defaultEntryIndex;
 
     [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
-    [Tooltip("공유 CharacterAnimController 슬롯에 덮어쓸 클립 묶음. 비우면 캐릭터 기본 컨트롤러 유지.")]
+    [Tooltip(
+        "thin Hold/Aim/Attack 클립 덮어쓰기(분류 아님). 컨트롤러는 동작 모름. 비우면 Pipeline→thin.")]
     [LabelText("Animator Override")]
     [SerializeField] AnimatorOverrideController _animatorOverride;
 
@@ -79,6 +102,7 @@ public sealed class WeaponPresentation : ScriptableObject
 
     void OnValidate()
     {
+        MigrateLegacyTriggerLeaves();
         RebuildSupportedActions();
         int first = FirstValidEntryIndex();
         if (first < 0)
@@ -87,6 +111,20 @@ public sealed class WeaponPresentation : ScriptableObject
                  _defaultEntryIndex >= _entries.Length ||
                  _entries[_defaultEntryIndex] == null)
             _defaultEntryIndex = first;
+    }
+
+    void MigrateLegacyTriggerLeaves()
+    {
+        if (_entries == null)
+            return;
+        for (int i = 0; i < _entries.Length; i++)
+        {
+            Entry entry = _entries[i];
+            if (entry == null)
+                continue;
+            if (entry.action == WeaponAction.Trigger)
+                entry.action = WeaponAction.Semi;
+        }
     }
 
     int FirstValidEntryIndex()
@@ -122,22 +160,37 @@ public sealed class WeaponPresentation : ScriptableObject
         _supportedActions = mask;
     }
 
+    public void SetEntries(Entry[] entries)
+    {
+        _entries = entries ?? System.Array.Empty<Entry>();
+        RebuildSupportedActions();
+    }
+
     public bool TryGetEntry(WeaponAction action, out Entry entry)
     {
         entry = null;
         if (_entries == null)
             return false;
 
+        WeaponAction want = WeaponActionUtil.Normalize(action);
         for (int i = 0; i < _entries.Length; i++)
         {
             Entry candidate = _entries[i];
             if (candidate == null ||
-                WeaponActionUtil.Normalize(candidate.action) != WeaponActionUtil.Normalize(action))
+                WeaponActionUtil.Normalize(candidate.action) != want)
                 continue;
             entry = candidate;
             return true;
         }
 
         return false;
+    }
+
+    /// <summary>Entry 없거나 useHold면 true. 비조준·비Attack 팔 overlay 게이트.</summary>
+    public bool UsesHold(WeaponAction action)
+    {
+        if (!TryGetEntry(action, out Entry entry) || entry == null)
+            return true;
+        return entry.useHold;
     }
 }

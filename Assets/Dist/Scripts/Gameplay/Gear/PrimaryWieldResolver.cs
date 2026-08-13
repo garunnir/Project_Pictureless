@@ -162,7 +162,7 @@ public static class PrimaryWieldResolver
             presentation.TryGetEntry(action, out WeaponPresentation.Entry entry))
             attack = entry.attack;
 
-        if (WeaponActionUtil.Normalize(action) == WeaponAction.Trigger &&
+        if (WeaponActionUtil.IsRanged(action) &&
             !WeaponChamber.CanCommitFire(item, stack.Instance, stack, attack))
             return 0f;
 

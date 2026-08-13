@@ -105,6 +105,7 @@ Feature SSOT when touching that area — **read the Doc before editing related s
 | Game time / scale / day clock | `docs/time/TIME.md` | `.cursor/rules/game-time.mdc` |
 | Map / TileMap / bake / visibility | `docs/map/SYSTEM.md` (+ `TILEMAP*.md`) | `.cursor/rules/map-system.mdc` |
 | Inventory UI | `docs/inventory/INVENTORY_UI.md` | `.cursor/rules/inventory-ui.mdc` |
+| Equipment / weapon visual folders | `docs/equipment/GEAR.md` · `WEAPON_VISUAL.md` | (Wear·Wield · anim/VFX 맵) |
 | UI MVC / font | `docs/ui/UI_Scripts.md` | `.cursor/rules/ui-prefab-layout.mdc` · `ui-font.mdc` |
 | UI hover placement | `docs/ui/HOVER.md` | (ContextMenu asm · keep-in-bounds) |
 | Locomotion | `docs/locomotion/LOCOMOTION.md` | `.cursor/rules/locomotion.mdc` |

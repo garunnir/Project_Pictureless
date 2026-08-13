@@ -1,5 +1,5 @@
 // ============================================================
-// WeaponAttack — Attack 튜닝 (logicId·cue·캐리어 VFX·탄). 데미지 채널 없음
+// WeaponAttack — Attack 튜닝 (logicId·cue·캐리어 VFX·탄·Impact 반응 on/off)
 // ============================================================
 
 using System;
@@ -57,6 +57,14 @@ public sealed class WeaponAttack : ScriptableObject
         "Default Projectile → 그래도 없으면 레이만. 근접 Attack에는 비워 둡니다.")]
     [SerializeField] DistProjectile _projectilePrefab;
 
+    [Title("Impact 반응", "팔 Recoil/Blocked + Reaction VFX. 애니 파이프라인과 별개로 Attack이 on/off.", horizontalLine: false)]
+    [Tooltip("공격 클립 cue 도달 시 Recoil 애니·Reaction VFX. 끄면 둘 다 생략.")]
+    [LabelText("Recoil")]
+    [SerializeField] bool _playRecoilImpact = true;
+    [Tooltip("Obstructed 시 Blocked 애니·Reaction VFX. 끄면 둘 다 생략.")]
+    [LabelText("Blocked")]
+    [SerializeField] bool _playBlockedImpact = true;
+
     /// <summary>비우면 레지스트리가 WeaponAction 기본 핸들러를 씁니다.</summary>
     public string LogicId => _logicId ?? string.Empty;
 
@@ -70,6 +78,20 @@ public sealed class WeaponAttack : ScriptableObject
     public bool FeedsChamberOnFire => _feedsChamberOnFire;
 
     public DistProjectile ProjectilePrefab => _projectilePrefab;
+
+    public bool PlayRecoilImpact => _playRecoilImpact;
+
+    public bool PlayBlockedImpact => _playBlockedImpact;
+
+    /// <summary>null Attack은 기존과 같이 반응 on (표급 패리티).</summary>
+    public static bool AllowsImpactReaction(WeaponAttack attack, ArmImpactKind kind)
+    {
+        if (attack == null)
+            return true;
+        return kind == ArmImpactKind.Blocked
+            ? attack._playBlockedImpact
+            : attack._playRecoilImpact;
+    }
 
     static IEnumerable<ValueDropdownItem<string>> LogicIdChoices()
     {

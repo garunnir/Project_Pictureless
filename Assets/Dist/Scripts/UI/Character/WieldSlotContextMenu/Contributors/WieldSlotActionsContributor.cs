@@ -1,5 +1,5 @@
 // ============================================================
-// WieldSlotActionsContributor — HandAction 그룹 + Unwield/Floor
+// WieldSlotActionsContributor — HandAction Family 폴다운 + Unwield/Floor
 // ============================================================
 
 using System.Collections.Generic;
@@ -18,11 +18,50 @@ public sealed class WieldSlotActionsContributor : IWieldSlotContextMenuContribut
                 request.Gear.PresentationCatalog,
                 stack);
             WeaponActionMask mask = WeaponActionRows.Available(presentation);
-            var actionChildren = new List<ContextMenuEntry>(WeaponActionUtil.All.Length + 1);
-            TryAddAction(actionChildren, request, mask, WeaponAction.Swing, "hand-swing", CharacterGearLabels.ActionSwing);
-            TryAddAction(actionChildren, request, mask, WeaponAction.Thrust, "hand-thrust", CharacterGearLabels.ActionThrust);
-            TryAddAction(actionChildren, request, mask, WeaponAction.Trigger, "hand-trigger", CharacterGearLabels.ActionTrigger);
-            TryAddAction(actionChildren, request, mask, WeaponAction.Raise, "hand-raise", CharacterGearLabels.ActionRaise);
+            var actionChildren = new List<ContextMenuEntry>(WeaponActionUtil.All.Length + 4);
+
+            var melee = new List<ContextMenuEntry>(2);
+            var trigger = new List<ContextMenuEntry>(3);
+            var leaves = new List<WeaponAction>(WeaponActionUtil.All.Length);
+            WeaponActionUtil.CollectAvailableLeaves(mask, leaves);
+            for (int i = 0; i < leaves.Count; i++)
+            {
+                WeaponAction leaf = leaves[i];
+                string id = "hand-" + WeaponActionUtil.LeafLabel(leaf).ToLowerInvariant();
+                string label = CharacterGearLabels.ActionLabel(leaf);
+                var entry = ContextMenuEntry.Leaf(
+                    id,
+                    label,
+                    new SetHandActionContextAction(request, leaf));
+
+                if (!WeaponActionUtil.TryGetFamily(leaf, out WeaponActionFamily family))
+                {
+                    actionChildren.Add(entry);
+                    continue;
+                }
+
+                if (family == WeaponActionFamily.Melee)
+                    melee.Add(entry);
+                else if (family == WeaponActionFamily.Trigger)
+                    trigger.Add(entry);
+            }
+
+            if (melee.Count > 0)
+            {
+                actionChildren.Add(ContextMenuEntry.Group(
+                    "hand-family-melee",
+                    CharacterGearLabels.FamilyMelee,
+                    melee));
+            }
+
+            if (trigger.Count > 0)
+            {
+                actionChildren.Add(ContextMenuEntry.Group(
+                    "hand-family-trigger",
+                    CharacterGearLabels.FamilyTrigger,
+                    trigger));
+            }
+
             actionChildren.Add(ContextMenuEntry.Leaf(
                 "hand-none",
                 CharacterGearLabels.ActionNone,
@@ -42,22 +81,5 @@ public sealed class WieldSlotActionsContributor : IWieldSlotContextMenuContribut
             "drop-floor",
             CharacterGearLabels.DropFloor,
             new UnwieldSlotContextAction(request, toFloor: true)));
-    }
-
-    static void TryAddAction(
-        List<ContextMenuEntry> children,
-        WieldSlotContextRequest request,
-        WeaponActionMask mask,
-        WeaponAction action,
-        string id,
-        string label)
-    {
-        if ((mask & WeaponActionUtil.ToMask(action)) == 0)
-            return;
-
-        children.Add(ContextMenuEntry.Leaf(
-            id,
-            label,
-            new SetHandActionContextAction(request, action)));
     }
 }

@@ -19,20 +19,21 @@ public sealed class WeaponCombatFallbacks : ScriptableObject
     const string ProjectilePrefabPath =
         "Assets/Dist/Visual/Prefabs/Combat/DistProjectile.prefab";
     const string ExampleProjectileAttackPath =
-        "Assets/Dist/SOData/Combat/WeaponAttacks/Attack_Projectile_Bullet.asset";
+        "Assets/Dist/SOData/Combat/Attacks/Attack_Projectile_Bullet.asset";
 
     [InfoBox(
         "【폴백 · 거의 안 건드림】 Presentation/Attack이 비운 칸을 채우는 공용 기본값입니다.\n" +
-        "무기별 동작 목록(진입점)은 WeaponPresentationCatalog 바인딩에서 편집하세요.",
+        "Pipeline = Leaf마다 행(Swing/Thrust/Semi/Burst/Auto/Raise). 표시는 Melee/Trigger 묶음.\n" +
+        "무기별 Leaf 목록은 WeaponPresentationCatalog 바인딩에서 편집하세요.",
         InfoMessageType.None)]
     [SerializeField, HideInInspector] int _inspectorPad;
 
     [TabGroup(TabAttack)]
     [InfoBox(
-        "개별 Presentation이 비운 팔 애니·동작 VFX를 채웁니다.\n" +
-        "휘두름·사격 클립/이펙트, Recoil·Blocked 반응.",
+        "개별 Presentation이 비운 팔 애니·동작 VFX를 **같은 Leaf** Catalog 행으로 채웁니다.\n" +
+        "Recoil·Blocked는 Impact 반응.",
         InfoMessageType.None)]
-    [Title("Arm Anim Pipeline", "공용 기본 — Presentation이 비울 때", horizontalLine: false)]
+    [Title("Arm Anim Pipeline", "Leaf 폴백 — Presentation이 비울 때", horizontalLine: false)]
     [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
     [LabelText("Pipeline")]
     [SerializeField] ArmAnimSlotCatalog _animPipeline;

@@ -27,7 +27,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     [SerializeField] LayerMask _rangedObstructionMask = ~0;
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
     [SerializeField] WeaponAction _selectedAction = WeaponAction.Swing;
-    [SerializeField] WieldHand _activeWieldHand = WieldHand.Right;
+    [SerializeField] WieldHand _activeWieldHand = WieldHand.TwoHand;
     ItemInstance _wieldedInstance;
     ItemStack _wieldedStack;
 
@@ -288,6 +288,10 @@ public sealed class CharacterAttacker : MonoBehaviour
         WeaponResolveMode resolveMode = WeaponActionUtil.ResolveMode(action);
         Vector3 origin = ResolveBodyCenter(transform, _selfCollider);
         AttackPerformResult gate = GateAction(action, item, targetHost);
+        // Cooling/사거리 실패 등은 시그널·cue·연출을 올리지 않는다.
+        // (NPC가 매 프레임 TryPerform해도 pending 재장전·VFX 폭주 방지)
+        if (gate != AttackPerformResult.Performed)
+            return gate;
 
         ArmPendingCue(action, targetHost, offenseFactor);
 
@@ -308,10 +312,14 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (GetCooldown(_activeWieldHand) > 0f)
             return AttackPerformResult.Cooling;
 
+        // cue 대기 중 재시전 → pending 리셋·시전 VFX 연타 방지
+        if (HasPendingFor(_activeWieldHand))
+            return AttackPerformResult.Cooling;
+
         if (action == WeaponAction.Raise)
             return AttackPerformResult.Performed;
 
-        if (WeaponActionUtil.Normalize(action) == WeaponAction.Trigger &&
+        if (WeaponActionUtil.IsRanged(action) &&
             !WeaponChamber.CanCommitFire(item, _wieldedInstance, _wieldedStack, AttackFor(action)))
             return AttackPerformResult.NoAmmo;
 
@@ -636,6 +644,11 @@ public sealed class CharacterAttacker : MonoBehaviour
         };
     }
 
+    public WeaponAttack ResolveAttack(WeaponAction action) => AttackFor(action);
+
+    public bool AllowsImpactReaction(WeaponAction action, ArmImpactKind kind) =>
+        WeaponAttack.AllowsImpactReaction(AttackFor(action), kind);
+
     WeaponAttack AttackFor(WeaponAction action)
     {
         if (_presentation != null &&
@@ -742,7 +755,8 @@ public sealed class CharacterAttacker : MonoBehaviour
         ItemData item,
         Vector3 origin,
         bool consumeAmmo,
-        ItemData ammo = null)
+        ItemData ammo = null,
+        bool applyCooldown = true)
     {
         CharacterBodyHost targetHost = context.Target;
         Collider targetCollider = targetHost.GetComponentInChildren<Collider>();
@@ -759,7 +773,7 @@ public sealed class CharacterAttacker : MonoBehaviour
 
         Vector3 impact = ResolveImpactPoint(targetCollider, targetCenter, origin);
         ammo ??= WeaponChamber.ResolveAmmo(context.Stack, context.Instance);
-        CommitAttempt(context, item, consumeAmmo, ammo);
+        CommitAttempt(context, item, consumeAmmo, ammo, applyCooldown: applyCooldown);
 
         ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
         int channelCount = AttackDamageTags.WriteChannels(
@@ -833,13 +847,20 @@ public sealed class CharacterAttacker : MonoBehaviour
         in ActionHandlerContext context,
         ItemData item,
         bool consumeAmmo,
-        ItemData ammo = null)
+        ItemData ammo = null,
+        bool applyCooldown = true,
+        bool practice = true)
     {
-        float cooldown = CombatMath.AttackIntervalSeconds(item, context.Action);
-        BeginCooldown(context.Hand, cooldown);
+        if (applyCooldown)
+        {
+            float cooldown = CombatMath.AttackIntervalSeconds(item, context.Action);
+            BeginCooldown(context.Hand, cooldown);
+        }
+
         if (consumeAmmo)
             WeaponChamber.TryConsume(context.Instance);
-        Practice(item, context.Attack, context.Action, ammo);
+        if (practice)
+            Practice(item, context.Attack, context.Action, ammo);
     }
 
     public void EmitJudged(

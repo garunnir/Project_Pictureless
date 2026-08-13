@@ -10,11 +10,11 @@ using UnityEngine;
 public static class ArmOverlayAnimatorBuilder
 {
     const string ControllerPath =
-        "Assets/Dist/Visual/Anim/CharacterClips/CharacterAnimController.controller";
-    const string SlotDir = "Assets/Dist/Visual/Anim/CharacterClips/Slots";
-    const string RightMaskPath = "Assets/Dist/Visual/Anim/CharacterClips/RightArm.mask";
-    const string LeftMaskPath = "Assets/Dist/Visual/Anim/CharacterClips/LeftArm.mask";
-    const string UpperMaskPath = "Assets/Dist/Visual/Anim/CharacterClips/UpperBody.mask";
+        "Assets/Dist/Visual/Anim/CharacterAnimator/CharacterAnimController.controller";
+    const string SlotDir = "Assets/Dist/Visual/Anim/CharacterAnimator/Slots";
+    const string RightMaskPath = "Assets/Dist/Visual/Anim/CharacterAnimator/RightArm.mask";
+    const string LeftMaskPath = "Assets/Dist/Visual/Anim/CharacterAnimator/LeftArm.mask";
+    const string UpperMaskPath = "Assets/Dist/Visual/Anim/CharacterAnimator/UpperBody.mask";
 
     static readonly string[] Hands = { "Left", "Right", "TwoHand" };
 
@@ -32,9 +32,18 @@ public static class ArmOverlayAnimatorBuilder
         EnsureImpactThinClips();
         EnsureParameters(controller);
         RebuildLayers(controller);
+        RemoveLibraryKeyLayer(controller);
+        if (!AssertControllerHasNoAnimVerb(controller))
+        {
+            Debug.LogError(
+                "[ArmOverlayAnimatorBuilder] FAIL: controller still encodes AnimVerb " +
+                "(Swing/Thrust/Trigger/Raise or LibraryKeys). Fix before shipping.");
+            return;
+        }
+
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
-        Debug.Log("[ArmOverlayAnimatorBuilder] Rebuilt arm + Impact layers.");
+        Debug.Log("[ArmOverlayAnimatorBuilder] Rebuilt arm + Impact (no AnimVerb on controller).");
     }
 
     static void EnsureThinSlotClips()
@@ -142,6 +151,127 @@ public static class ArmOverlayAnimatorBuilder
         AddArmLayer(controller, "LeftArm Layer", leftMask, "Left", "AttackL");
         AddTwoHandLayer(controller, upperMask);
         AddImpactLayer(controller);
+    }
+
+    /// <summary>
+    /// 컨트롤러는 thin만 안다. AnimVerb(LibraryKeys) 레이어가 있으면 제거.
+    /// </summary>
+    static void RemoveLibraryKeyLayer(AnimatorController controller)
+    {
+        const string layerName = "LibraryKeys";
+        AnimatorControllerLayer[] layers = controller.layers;
+        int index = -1;
+        for (int i = 0; i < layers.Length; i++)
+        {
+            if (layers[i].name == layerName)
+            {
+                index = i;
+                break;
+            }
+        }
+
+        if (index < 0)
+            return;
+
+        var next = new AnimatorControllerLayer[layers.Length - 1];
+        for (int i = 0, w = 0; i < layers.Length; i++)
+        {
+            if (i == index)
+                continue;
+            next[w++] = layers[i];
+        }
+
+        controller.layers = next;
+    }
+
+    /// <summary>
+    /// 컨트롤러에 동작 이름·LibraryKeys가 남아 있으면 false.
+    /// </summary>
+    static bool AssertControllerHasNoAnimVerb(AnimatorController controller)
+    {
+        bool ok = true;
+        AnimatorControllerLayer[] layers = controller.layers;
+        for (int i = 0; i < layers.Length; i++)
+        {
+            string layerName = layers[i].name;
+            if (NameEncodesAnimVerb(layerName))
+            {
+                Debug.LogError(
+                    "[ArmOverlayAnimatorBuilder] Forbidden layer name: " + layerName);
+                ok = false;
+            }
+
+            AnimatorStateMachine sm = layers[i].stateMachine;
+            if (sm != null && !AssertStateMachineHasNoAnimVerb(sm, layerName))
+                ok = false;
+        }
+
+        return ok;
+    }
+
+    static bool AssertStateMachineHasNoAnimVerb(AnimatorStateMachine sm, string path)
+    {
+        bool ok = true;
+        ChildAnimatorState[] states = sm.states;
+        for (int i = 0; i < states.Length; i++)
+        {
+            AnimatorState state = states[i].state;
+            if (state == null)
+                continue;
+            if (NameEncodesAnimVerb(state.name))
+            {
+                Debug.LogError(
+                    "[ArmOverlayAnimatorBuilder] Forbidden state: " + path + "/" + state.name);
+                ok = false;
+            }
+
+            Motion motion = state.motion;
+            if (motion != null && NameEncodesAnimVerb(motion.name))
+            {
+                Debug.LogError(
+                    "[ArmOverlayAnimatorBuilder] Forbidden motion on " +
+                    path + "/" + state.name + ": " + motion.name);
+                ok = false;
+            }
+        }
+
+        ChildAnimatorStateMachine[] children = sm.stateMachines;
+        for (int i = 0; i < children.Length; i++)
+        {
+            AnimatorStateMachine child = children[i].stateMachine;
+            if (child == null)
+                continue;
+            string childPath = path + "/" + child.name;
+            if (NameEncodesAnimVerb(child.name))
+            {
+                Debug.LogError(
+                    "[ArmOverlayAnimatorBuilder] Forbidden state machine: " + childPath);
+                ok = false;
+            }
+
+            if (!AssertStateMachineHasNoAnimVerb(child, childPath))
+                ok = false;
+        }
+
+        return ok;
+    }
+
+    static bool NameEncodesAnimVerb(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return false;
+        if (name == "LibraryKeys" || name.Contains("LibraryKeys"))
+            return true;
+        // Thin ImpactRecoil / ImpactBlocked 허용. AttackTrigger_ 등 AnimVerb 슬롯 금지.
+        if (name.Contains("Swing") ||
+            name.Contains("Thrust") ||
+            name.Contains("Trigger") ||
+            name.Contains("Raise") ||
+            name.Contains("Semi") ||
+            name.Contains("Burst") ||
+            name.Contains("Auto"))
+            return true;
+        return false;
     }
 
     static void AddImpactLayer(AnimatorController controller)

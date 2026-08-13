@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00900423e44b6474a9b7ac9e5c311606, type: 3}
+  m_Name: Weapon_Unarmed
+  m_EditorClassIdentifier: DistScript::WeaponPresentation
+  _entries:
+  - action: 0
+    attack: {fileID: 11400000, guid: 6dae4093cb51786ad3f208e6c91547b3, type: 2}
+    useHold: 0
+    effectSeeds: []
+    vfx:
+      actionVfx: {fileID: 0}
+      tracerVfx: {fileID: 0}
+      hitVfx: {fileID: 0}
+      missVfx: {fileID: 0}
+  _supportedActions: 1
+  _defaultEntryIndex: 0
+  _animatorOverride: {fileID: 22100000, guid: a797d5132a0a14344a3c6abe8f4079bf, type: 2}

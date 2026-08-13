@@ -26,7 +26,7 @@ Item common: `id`, `name`(singular), `type`, `category`, `subcategory`, `descrip
 | Block | Fields |
 |-------|--------|
 | armor | covers (L/R expand), coverage, encumbrance, max_encumbrance, warmth, environmental_protection, material_thickness, power_armor, storage, pockets[{volume_ml,moves}], layer, sided |
-| gun | skill, ammo, ranged_damage (flatten amount), range, dispersion, recoil, durability, clip_size, reload, burst |
+| gun | skill, ammo, ranged_damage (flatten amount), range, dispersion, recoil, durability, clip_size, reload, **burst** (Dist: Burst Leaf 샷 수; 0이면 `WeaponActionUtil.DefaultBurstShots`) |
 | ammo | ammo_type, damage (flatten amount), pierce (AP), damage_type, range, dispersion, recoil, count, shot_damage, projectile_count, shot_spread, effects, casing, loudness |
 | magazine | ammo_type, capacity, default_ammo, reliability, reload_time |
 | tool | max/initial charges, charges_per_use, turns_per_charge, ammo, revert_to |
@@ -80,7 +80,19 @@ Parked is everything in the next section. Weather JSON / visor FOV stay Parked (
 
 ### Gun (beyond current `GunDetailData`)
 
-`loudness`, `handling`, `modes`, `valid_mod_locations`, `built_in_mods`, `default_mods`, `magazines`, `magazine_well`, `ups_charges`, `ammo_effects`, `sight_dispersion`, `aim_speed`, `barrel_length` / `barrel_volume`, `reload_noise`, `blackpowder_tolerance`, `min_cycle_recoil`.
+`loudness`, `handling`, **`modes`**, `valid_mod_locations`, `built_in_mods`, `default_mods`, `magazines`, `magazine_well`, `ups_charges`, `ammo_effects`, `sight_dispersion`, `aim_speed`, `barrel_length` / `barrel_volume`, `reload_noise`, `blackpowder_tolerance`, `min_cycle_recoil`.
+
+**`modes` (Parked) vs Dist Leaf (interim):**
+
+| BN / Dist | Status |
+|-----------|--------|
+| `gun.burst` | **Baked** — Burst Leaf `ShotsPerPerform` (= burst, else default 3) |
+| `gun.clip_size` | **Baked** — Auto Leaf 클릭 볼리 상한(`AutoClickVolleyMax`와 min) |
+| `gun.modes` JSON | **Parked** — 아직 컨버터 미반입. Dist는 Presentation Leaf(Semi/Burst/Auto) + UI Family `Trigger`로 대체 |
+| Leaf Ensure | Presentation: `Ensure Ranged Leaf Entries`. Catalog 폴백: `Ensure Arm Anim Pipeline` — **Semi/Burst/Auto 행 필수** |
+| Semi / Burst / Auto 시전 | `SpawnProjectileHandler` 볼리. Catalog는 Leaf마다 폴백 행 ([`LOCOMOTION.md`](../locomotion/LOCOMOTION.md)) |
+| Auto 홀드 연사 | **Pending** — 현재는 클릭당 볼리 |
+| `modes` bake | Promote when Dist maps BN mode ids → Leaf mask without manual Ensure |
 
 Chamber finds magazines by nested `magazine` block (not `gun.magazines` list). Combat already uses baked ammo `damage` / `damage_type` / `pierce` / `range` / `dispersion`.
 

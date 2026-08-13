@@ -109,6 +109,12 @@ public class CharacterLocomotionAnim : MonoBehaviour
     int _attackQueueHead;
     int _attackQueueCount;
 
+    /// <summary>useHold=false일 때 Attack 큐→재생 동안 overlay 유지. 0=off 1=armed 2=playing.</summary>
+    readonly byte[] _attackOverlayLatch = new byte[3];
+    const byte AttackLatchOff = 0;
+    const byte AttackLatchArmed = 1;
+    const byte AttackLatchPlaying = 2;
+
     public Animator Animator => _animator;
     public ArmAnimSlotCatalog ArmSlotCatalog => _armSlotCatalog;
 
@@ -182,7 +188,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (_armSlotCatalog == null)
         {
             _armSlotCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<ArmAnimSlotCatalog>(
-                "Assets/Dist/Visual/Anim/CharacterClips/ArmAnimSlotCatalog.asset");
+                "Assets/Dist/SOData/Combat/Fallbacks/ArmAnimSlotCatalog.asset");
         }
 #endif
         if (_animator != null)
@@ -229,18 +235,21 @@ public class CharacterLocomotionAnim : MonoBehaviour
             if (attackHand == WieldHand.TwoHand)
             {
                 SyncThinActionRemap(actionL, actionR, attackAction);
+                ArmAttackOverlay(attackHand);
                 if (_hasAttack2H)
                     _animator.SetTrigger(_hashAttack2H);
             }
             else if (attackHand == WieldHand.Left)
             {
                 SyncThinActionRemap(attackAction, actionR, action2H);
+                ArmAttackOverlay(attackHand);
                 if (_hasAttackL)
                     _animator.SetTrigger(_hashAttackL);
             }
             else
             {
                 SyncThinActionRemap(actionL, attackAction, action2H);
+                ArmAttackOverlay(attackHand);
                 if (_hasAttackR)
                     _animator.SetTrigger(_hashAttackR);
             }
@@ -250,6 +259,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         SyncArmLayerWeights(rebound ? 0f : channelDelta);
         SyncImpactLayerWeight(rebound ? 0f : channelDelta);
         AdvanceAnimator(channelDelta);
+        TickAttackOverlayLatches();
         TickAttackCues();
         TickImpactEmpty();
     }
@@ -265,7 +275,12 @@ public class CharacterLocomotionAnim : MonoBehaviour
             return;
 
         ArmAnimSlotResolver.RemapThinKeys(
-            _resolvedOverride, _armSlotCatalog, actionL, actionR, action2H);
+            _resolvedOverride,
+            _weaponSourceController,
+            _armSlotCatalog,
+            actionL,
+            actionR,
+            action2H);
         _mappedActionL = actionL;
         _mappedActionR = actionR;
         _mappedAction2H = action2H;
@@ -273,6 +288,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void OnAttackResolved(AttackOutcome outcome)
     {
+        if (outcome.Result != AttackPerformResult.Performed)
+            return;
         if (WeaponActionUtil.SuppressesAttackTrigger(outcome.Action))
             return;
         if (_attackQueueCount >= _attackActionQueue.Length)
@@ -284,12 +301,19 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _attackQueueCount++;
     }
 
-    void OnAttackCueFired(WieldHand hand, WeaponAction action) =>
+    void OnAttackCueFired(WieldHand hand, WeaponAction action)
+    {
+        if (_attacker != null &&
+            !_attacker.AllowsImpactReaction(action, ArmImpactKind.Recoil))
+            return;
         PlayImpact(ArmImpactKind.Recoil, hand);
+    }
 
     void OnAttackJudged(AttackOutcome outcome)
     {
         if (outcome.Result != AttackPerformResult.Obstructed)
+            return;
+        if (!WeaponAttack.AllowsImpactReaction(outcome.Attack, ArmImpactKind.Blocked))
             return;
         PlayImpact(ArmImpactKind.Blocked, outcome.Hand);
     }
@@ -560,18 +584,168 @@ public class CharacterLocomotionAnim : MonoBehaviour
             twoHand = gear.Wield.IsTwoHand;
             leftArmed = !twoHand && gear.Wield.Left != null;
             rightArmed = !twoHand && gear.Wield.Right != null;
+            // 양손 비움 = 비무장 Presentation. 아이템 유무로 끄면 Attack overlay가 안 보인다.
+            if (!twoHand && !leftArmed && !rightArmed)
+                ApplyActiveWieldHandFlags(ref twoHand, ref leftArmed, ref rightArmed);
         }
-        else if (_attacker != null && !string.IsNullOrEmpty(_attacker.ItemId))
+        else if (_attacker != null)
         {
-            WieldHand hand = _attacker.ActiveWieldHand;
-            twoHand = hand == WieldHand.TwoHand;
-            leftArmed = hand == WieldHand.Left;
-            rightArmed = hand == WieldHand.Right;
+            // ItemId 유무와 무관 — 비무장(빈 id)도 ActiveWieldHand overlay 사용.
+            ApplyActiveWieldHandFlags(ref twoHand, ref leftArmed, ref rightArmed);
         }
 
-        SetLayerWeightToward(_rightArmLayerIndex, twoHand ? 0f : (rightArmed ? 1f : 0f), channelDelta);
-        SetLayerWeightToward(_leftArmLayerIndex, twoHand ? 0f : (leftArmed ? 1f : 0f), channelDelta);
-        SetLayerWeightToward(_twoHandLayerIndex, twoHand ? 1f : 0f, channelDelta);
+        ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H);
+        WeaponPresentationCatalog catalog = gear?.PresentationCatalog
+            ?? (_attacker != null ? _attacker.Catalog : null);
+        bool isAiming = _characterState != null && _characterState.IsAiming;
+
+        float rightTarget = twoHand
+            ? 0f
+            : ArmOverlayWeight(
+                rightArmed,
+                WieldHand.Right,
+                PresentationForHand(gear, catalog, WieldHand.Right),
+                actionR,
+                isAiming);
+        float leftTarget = twoHand
+            ? 0f
+            : ArmOverlayWeight(
+                leftArmed,
+                WieldHand.Left,
+                PresentationForHand(gear, catalog, WieldHand.Left),
+                actionL,
+                isAiming);
+        float twoHandTarget = ArmOverlayWeight(
+            twoHand,
+            WieldHand.TwoHand,
+            PresentationForHand(gear, catalog, WieldHand.TwoHand),
+            action2H,
+            isAiming);
+
+        SetLayerWeightToward(_rightArmLayerIndex, rightTarget, channelDelta);
+        SetLayerWeightToward(_leftArmLayerIndex, leftTarget, channelDelta);
+        SetLayerWeightToward(_twoHandLayerIndex, twoHandTarget, channelDelta);
+    }
+
+    float ArmOverlayWeight(
+        bool armed,
+        WieldHand hand,
+        WeaponPresentation presentation,
+        WeaponAction action,
+        bool isAiming)
+    {
+        if (!armed)
+            return 0f;
+        if (isAiming || IsInAttackOverlay(hand) || HasQueuedAttack(hand) || HasAttackOverlayLatch(hand))
+            return 1f;
+        if (presentation != null && !presentation.UsesHold(action))
+            return 0f;
+        return 1f;
+    }
+
+    static int AttackLatchIndex(WieldHand hand)
+    {
+        if (hand == WieldHand.Left)
+            return 0;
+        if (hand == WieldHand.TwoHand)
+            return 2;
+        return 1;
+    }
+
+    void ArmAttackOverlay(WieldHand hand)
+    {
+        _attackOverlayLatch[AttackLatchIndex(hand)] = AttackLatchArmed;
+    }
+
+    bool HasAttackOverlayLatch(WieldHand hand) =>
+        _attackOverlayLatch[AttackLatchIndex(hand)] != AttackLatchOff;
+
+    void TickAttackOverlayLatches()
+    {
+        TickAttackOverlayLatch(WieldHand.Left);
+        TickAttackOverlayLatch(WieldHand.Right);
+        TickAttackOverlayLatch(WieldHand.TwoHand);
+    }
+
+    void TickAttackOverlayLatch(WieldHand hand)
+    {
+        int index = AttackLatchIndex(hand);
+        byte state = _attackOverlayLatch[index];
+        if (state == AttackLatchOff)
+            return;
+
+        if (state == AttackLatchArmed)
+        {
+            if (IsInAttackOverlay(hand))
+                _attackOverlayLatch[index] = AttackLatchPlaying;
+            return;
+        }
+
+        if (!IsInAttackOverlay(hand) && !HasQueuedAttack(hand))
+            _attackOverlayLatch[index] = AttackLatchOff;
+    }
+
+    bool IsInAttackOverlay(WieldHand hand)
+    {
+        int layerIndex = hand == WieldHand.Left
+            ? _leftArmLayerIndex
+            : hand == WieldHand.TwoHand
+                ? _twoHandLayerIndex
+                : _rightArmLayerIndex;
+        if (layerIndex < 0 || _animator == null)
+            return false;
+
+        AnimatorStateInfo current = _animator.GetCurrentAnimatorStateInfo(layerIndex);
+        if (current.shortNameHash == _hashAttackState)
+            return true;
+        if (!_animator.IsInTransition(layerIndex))
+            return false;
+        AnimatorStateInfo next = _animator.GetNextAnimatorStateInfo(layerIndex);
+        return next.shortNameHash == _hashAttackState;
+    }
+
+    bool HasQueuedAttack(WieldHand hand)
+    {
+        for (int i = 0; i < _attackQueueCount; i++)
+        {
+            int index = (_attackQueueHead + i) % _attackHandQueue.Length;
+            if (_attackHandQueue[index] == hand)
+                return true;
+        }
+
+        return false;
+    }
+
+    WeaponPresentation PresentationForHand(
+        CharacterGearService gear,
+        WeaponPresentationCatalog catalog,
+        WieldHand hand)
+    {
+        if (gear?.Wield != null)
+        {
+            if (hand == WieldHand.TwoHand || gear.Wield.IsTwoHand)
+            {
+                ItemStack stack = gear.Wield.Left ?? gear.Wield.Right;
+                if (stack?.Item != null)
+                    return WeaponActionRows.Resolve(catalog, stack);
+            }
+            else if (hand == WieldHand.Left && gear.Wield.Left != null)
+                return WeaponActionRows.Resolve(catalog, gear.Wield.Left);
+            else if (hand == WieldHand.Right && gear.Wield.Right != null)
+                return WeaponActionRows.Resolve(catalog, gear.Wield.Right);
+        }
+
+        return _attacker != null ? _attacker.Presentation : null;
+    }
+
+    void ApplyActiveWieldHandFlags(ref bool twoHand, ref bool leftArmed, ref bool rightArmed)
+    {
+        if (_attacker == null)
+            return;
+        WieldHand hand = _attacker.ActiveWieldHand;
+        twoHand = hand == WieldHand.TwoHand;
+        leftArmed = hand == WieldHand.Left;
+        rightArmed = hand == WieldHand.Right;
     }
 
     void SetLayerWeightToward(int layerIndex, float target, float channelDelta)

@@ -31,7 +31,7 @@ public static class CombatMath
 
     public static string SkillId(ItemData item, WeaponAction action)
     {
-        if (WeaponActionUtil.Normalize(action) == WeaponAction.Trigger)
+        if (WeaponActionUtil.IsRanged(action))
             return CombatSkillIds.Gun;
 
         if (item == null)
@@ -44,7 +44,7 @@ public static class CombatMath
 
     public static float RangeMeters(ItemData item, WeaponAction action, ItemData ammo = null)
     {
-        if (WeaponActionUtil.Normalize(action) == WeaponAction.Trigger)
+        if (WeaponActionUtil.IsRanged(action))
         {
             int gunRange = item?.gun != null ? item.gun.range : 0;
             int ammoRange = ammo?.ammo != null ? ammo.ammo.range : 0;
@@ -57,7 +57,7 @@ public static class CombatMath
 
     public static int AttackMoves(ItemData item, WeaponAction action)
     {
-        if (WeaponActionUtil.Normalize(action) == WeaponAction.Trigger)
+        if (WeaponActionUtil.IsRanged(action))
             return GunFireMoves;
 
         int weight = item != null ? Mathf.Max(0, item.weight_g) : 0;
@@ -136,7 +136,7 @@ public static class CombatMath
         ItemData ammo = null)
     {
         float chance;
-        if (WeaponActionUtil.Normalize(action) == WeaponAction.Trigger)
+        if (WeaponActionUtil.IsRanged(action))
         {
             int dispersion = item?.gun != null ? item.gun.dispersion : 300;
             if (ammo?.ammo != null)

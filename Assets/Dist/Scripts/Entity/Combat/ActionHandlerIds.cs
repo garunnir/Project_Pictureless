@@ -13,7 +13,7 @@ public static class ActionHandlerIds
 
     public static string DefaultFor(WeaponAction action)
     {
-        switch (WeaponActionUtil.Normalize(action))
+        switch (WeaponActionUtil.ToAnimVerb(action))
         {
             case WeaponAction.Trigger:
                 return SpawnProjectile;
@@ -59,7 +59,7 @@ public static class AttackDamageTags
         if (dest == null || dest.Length == 0)
             return 0;
 
-        if (WeaponActionUtil.Normalize(action) == WeaponAction.Trigger)
+        if (WeaponActionUtil.IsRanged(action))
         {
             dest[0] = FromAmmoDamageType(ammo);
             return 1;

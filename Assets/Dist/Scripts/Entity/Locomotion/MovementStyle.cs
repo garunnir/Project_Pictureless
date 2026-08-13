@@ -6,7 +6,7 @@ using UnityEngine;
 
 [CreateAssetMenu(
     fileName = "MovementStyle",
-    menuName = "Dist/Combat/Movement Style")]
+    menuName = "Dist/Locomotion/Movement Style")]
 public sealed class MovementStyle : ScriptableObject
 {
     [SerializeField, Min(0f)] float _moveSpeed = 3f;

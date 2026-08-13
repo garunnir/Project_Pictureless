@@ -2,7 +2,8 @@
 
 Canonical for BN-style **착용(Wear)** vs **들기(Wield)** and the Character window equipment tab.
 
-Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Status parity lives in Character **상태** tab (`UICharacterWindow`).
+Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Status parity lives in Character **상태** tab (`UICharacterWindow`).  
+Anim/VFX 폴더 맵: [`WEAPON_VISUAL.md`](WEAPON_VISUAL.md).
 
 ## Terms
 
@@ -12,9 +13,10 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 | Wield | L/R hand slots (weapons/tools). Two-hand = same stack on both slots; **no extra UI cell** |
 | Character window | Tabs: 상태 \| 장비 \| 방해 \| 체온. Key = existing `StatusToggle` (`C`) |
 | Primary | Highest DPS hand → `CharacterAttacker.SetWieldedItem` |
-| SelectedAction | `ItemInstance.SelectedAction` — 손별 선택 동사 (영속은 인스턴스) |
-| Action rows | `WeaponPresentation` Entry = **동사 라우팅 행** (가용 마스크 + Attack 참조 + 연출). 가용 SSOT = Entry 존재 → `WeaponActionRows.Available` |
-| Action VFX coalesce | Action: Entry.vfx → Pipeline 동사. Hit: Entry → Attack VFX → Defaults[bash/cut/bullet] → fallback |
+| SelectedAction | `ItemInstance.SelectedAction` — 손별 선택 **Leaf** (`WeaponAction`). 영속은 인스턴스 |
+| Action layers | **Family** = 에디터·UI 묶음(Melee, Trigger; 없으면 평면). **Leaf** = 선택·시전·**Catalog 폴백 행**(Swing/Thrust/Raise/Semi/Burst/Auto — 줄 필수). **Override** = thin 덮어쓰기만(분류 아님·컨트롤러는 동작 모름). 구 `Trigger`→Semi. [`BN_BAKE.md`](BN_BAKE.md) |
+| Action rows | `WeaponPresentation` Entry = **Leaf** 라우팅 행 (가용 마스크 + Attack + 연출 + `useHold`). 가용 SSOT = Entry 존재 → `WeaponActionRows.Available` |
+| Action VFX coalesce | Action: Entry.vfx → Catalog **같은 Leaf** 행. Hit: Entry → Attack VFX → Defaults[bash/cut/bullet] → fallback |
 | Visual hub | `WeaponPresentationCatalog` — Pipeline / Tag Impact VFX / per-item Presentation 중간 진입점 |
 
 ## Domain SSOT
@@ -47,9 +49,9 @@ Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Sta
 | `HelmetVision` | Phase G: head covers → VisionFactor (host + Character UI + camera) |
 | `GearEnvPenalties` | Phase H: BodyTemp feeling + wetness → move / HitChance factors |
 | `WearOverlapRules` | Phase C: same part + layer(/sided) conflict → Wear **reject** |
-| `WeaponPresentationCatalog` | 허브 (Pipeline + Tag VFX + item→Presentation). Entry는 연출만이 아니라 **동사 라우팅**(가용·Attack·VFX) |
-| `ArmAnimSlotCatalog` | 동사·Impact 연출 Pipeline (클립+VFX). Presentation Entry 빈 VFX → 동사 행 coalesce |
-| `WeaponAttack` | 핸들러·cue·캐리어 VFX·탄 (`Attack_MeleeHit` = logic 이름, **채널 아님**) |
+| `WeaponPresentationCatalog` | 허브 (Fallbacks Catalog + Tag VFX + item→Presentation). Entry = **Leaf** 라우팅(가용·Attack·VFX) |
+| `ArmAnimSlotCatalog` | **Leaf마다** 기본 동사 폴백(클립+VFX). Semi/Burst/Auto 줄 필수. Entry 빈 VFX → 같은 Leaf 행. 표시=Melee/Trigger 묶음 |
+| `WeaponAttack` | 핸들러·cue·캐리어 VFX·탄 + **Recoil/Blocked on/off** (`Attack_MeleeHit` = logic 이름, **채널 아님**) |
 | `AttackDamageTags` | 특성 채널. Trigger→탄 `damage_type`(없으면 bullet). 근접은 양 있는 채널 전부(cut+bash 가능). 원거리 양 = 탄 `damage` + 총 `ranged_damage`. 계산기·Hit 키 공유 |
 | `WeaponImpactVfxDefaults` | Hit 테이블(bash/cut/bullet + fallback). Recoil/Blocked(Reaction) 아님 |
 
