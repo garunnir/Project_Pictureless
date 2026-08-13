@@ -45,7 +45,7 @@ MessageLogUIBridge → MessageLogViewModel → UIMessageLogController → UIMess
                                                               (UICanvasLayer.HUD)
 ```
 
-Time / Combat HUD와 동일: Bridge → ViewModel → Controller → Panel.
+Time HUD와 동일: Bridge → ViewModel → Controller → Panel.
 
 ---
 

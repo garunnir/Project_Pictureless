@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: LocalizationBundle
   m_EditorClassIdentifier: Config::LocalizationBundle
   _activeLanguage: 1
-  _fontEn: {fileID: 11400000, guid: 7747a49fbb2297a4999023ad4f30ce14, type: 2}
-  _fontKo: {fileID: 11400000, guid: 7747a49fbb2297a4999023ad4f30ce14, type: 2}
-  _fontJa: {fileID: 0}
+  _fontEn: {fileID: 11400000, guid: 9ec9f3998f138bb4ea5423f566b47898, type: 2}
+  _fontKo: {fileID: 11400000, guid: 9ec9f3998f138bb4ea5423f566b47898, type: 2}
+  _fontJa: {fileID: 11400000, guid: 9ec9f3998f138bb4ea5423f566b47898, type: 2}
