@@ -342,7 +342,8 @@ public sealed class CharacterAttacker : MonoBehaviour
 
         Vector3 toTarget = targetHost.transform.position - transform.position;
         toTarget.y = 0f;
-        float range = CombatMath.RangeMeters(item, action, WeaponChamber.ResolveAmmo(_wieldedStack, _wieldedInstance));
+        ItemData ammo = WeaponChamber.ResolveAmmo(_wieldedStack, _wieldedInstance);
+        float range = CombatHitscan.EffectiveRange(item, action, ammo, ResolveOrigin());
         if (toTarget.magnitude > range)
             return AttackPerformResult.OutOfRange;
 

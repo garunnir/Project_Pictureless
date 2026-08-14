@@ -10,7 +10,7 @@ alwaysApply: false
 `TileMapChunkStreamer` 등 맵 스트리밍·언로드.
 
 ## MUST — desired chunks
-카메라 지면 footprint + `CameraChunkMargin`만. **카메라-only.**
+`CameraGroundView` 지면 footprint + `CameraChunkMargin`만. **카메라-only.**
 
 ## MUST NOT
 `IStreamFocus` / `PlayerStreamFocus` / `_playerChunkRadius` / `AppendPlayerChunks`  
@@ -29,7 +29,7 @@ alwaysApply: false
 - 재활성/텔레포트 → 범위 확인 또는 `TileMapChunkStreamer.SyncNow()`
 
 ## Types
-`TileMapChunkStreamer`, `TileMapStreamingVisualizer`, `TileViewportBounds`, `TilePoolStreamEstimate`
+`TileMapChunkStreamer`, `TileMapStreamingVisualizer`, `CameraGroundView`, `TileViewportBounds`, `TilePoolStreamEstimate`
 
 ## See also
 `map-system.mdc` · `docs/map/SYSTEM.md` · `docs/map/TILEMAP.md`

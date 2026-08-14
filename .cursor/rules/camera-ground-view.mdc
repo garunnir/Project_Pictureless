@@ -1,0 +1,31 @@
+---
+description: 카메라 지면 가시·최대 범위는 CameraGroundView만
+globs: Assets/Dist/Scripts/Camera/**/*,Assets/Dist/Scripts/Map/Components/TileMapChunkStreamer.cs,Assets/Dist/Scripts/Map/TileMap/TileViewportBounds.cs,Assets/Dist/Scripts/Map/TileMap/Pooling/TilePoolBudgetBuilder.cs,Assets/Dist/Scripts/Entity/Combat/CombatHitscan.cs,Assets/Dist/Scripts/Entity/Combat/SpawnProjectileHandler.cs,Assets/Dist/Scripts/Entity/Player/PlayerCombatController.cs
+alwaysApply: false
+---
+
+# Camera Ground View
+
+## When
+카메라 지면 footprint·가시 도달 거리·청크 desired 입력·원거리 EffectiveRange 하한.
+
+## MUST
+1. 지면 AABB / `ReachFrom` / 최대 줌 footprint는 **`CameraGroundView`만** 계산
+2. 청크 집합 변환은 `TileViewportBounds.AppendChunksForWorldBounds` (+ margin)
+3. 렌즈 min/max ortho·VisionFactor·줌 입력은 `CameraZoomController`
+
+## MUST NOT
+- 소비자 본문에 ortho×aspect footprint 재계산
+- `TileViewportBounds`에 footprint 수학 되돌리기
+- `IStreamFocus` / player chunk radius 재도입 (`tile-chunk-streaming.mdc`)
+
+## Roles
+| Type | Role |
+|------|------|
+| `CameraGroundView` | 현재/최대 지면 AABB, ReachFrom |
+| `CameraZoomController` | 렌즈 ortho 상한·VisionFactor |
+| `TileViewportBounds` | AABB → 청크 |
+| `TileMapChunkStreamer` | desired = CameraGroundView AABB + margin |
+
+## See also
+`tile-chunk-streaming.mdc` · `map-system.mdc`

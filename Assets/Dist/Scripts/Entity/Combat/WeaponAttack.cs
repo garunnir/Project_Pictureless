@@ -54,9 +54,7 @@ public sealed class WeaponAttack : ScriptableObject
     [SerializeField, Range(0f, 1f)] float _cueNormalizedTime = DefaultCueNormalizedTime;
     [Tooltip("켜면 발사 큐에서 약실이 비었을 때 메거진 1발을 올린 뒤 소모. 끄면 펌프/수동(빈 약실=NoAmmo).")]
     [SerializeField] bool _feedsChamberOnFire = true;
-    [Tooltip(
-        "날아가는 총알(DistProjectile Prefab). 비우면 WeaponCombatFallbacks의 " +
-        "Default Projectile → 그래도 없으면 레이만. 근접 Attack에는 비워 둡니다.")]
+    [HideInInspector]
     [SerializeField] DistProjectile _projectilePrefab;
 
     [Title("근접 히트박스", "cue 시 Overlap. 길이 = CombatMath.RangeMeters. 원거리는 무시.", horizontalLine: false)]
@@ -124,7 +122,7 @@ public sealed class WeaponAttack : ScriptableObject
             "근접 타격 → MeleeHitHandler (melee_hit)",
             ActionHandlerIds.MeleeHit);
         yield return new ValueDropdownItem<string>(
-            "사격·발사체 → SpawnProjectileHandler (spawn_projectile)",
+            "사격·히트스캔 → SpawnProjectileHandler (spawn_projectile)",
             ActionHandlerIds.SpawnProjectile);
         yield return new ValueDropdownItem<string>(
             "가드 → RaiseGuardHandler (raise_guard)",

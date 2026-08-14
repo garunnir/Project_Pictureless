@@ -72,15 +72,11 @@ public sealed class WeaponCombatFallbacks : ScriptableObject
 
     [TabGroup(TabProjectile)]
     [InfoBox(
-        "날아가는 총알 Prefab 공용 기본.\n" +
-        "① 생성: Prefabs/Combat (예: DistProjectile.prefab)\n" +
-        "② 개별: WeaponAttack.Projectile Prefab → 비면 여기 → 둘 다 없으면 레이만\n" +
-        "(타격 태그 bullet / 히트 VFX와는 별개)",
+        "미사일/탄도 Pending. spawn_projectile은 히트스캔만 쓰므로 런타임 무시.\n" +
+        "탄도 핸들러가 생길 때까지 Inspector 비노출(직렬화 유지).",
         InfoMessageType.None)]
-    [Title("Default Projectile", "Attack에 비어 있을 때만", horizontalLine: false)]
-    [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
-    [Tooltip("spawn_projectile Attack이 Projectile Prefab을 비웠을 때 쓰는 DistProjectile.")]
-    [LabelText("Default Projectile")]
+    [Title("Default Projectile", "미사일 Pending — 히트스캔은 무시", horizontalLine: false)]
+    [HideInInspector]
     [SerializeField] DistProjectile _defaultProjectile;
 
     [TabGroup(TabProjectile)]

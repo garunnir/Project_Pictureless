@@ -3,6 +3,7 @@
     "rootNamespace": "",
     "references": [
         "Config",
+        "Dist.Camera",
         "Dist.Map",
         "Dist.Inventory",
         "Dist.Gameplay.Data",

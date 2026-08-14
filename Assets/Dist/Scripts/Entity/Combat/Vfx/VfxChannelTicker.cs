@@ -18,6 +18,7 @@ public sealed class VfxChannelTicker : MonoBehaviour
 
     ParticleSystem[] _systems;
     float _elapsed;
+    float _lifetimeOverride;
 
     void Awake()
     {
@@ -31,9 +32,21 @@ public sealed class VfxChannelTicker : MonoBehaviour
 
     public void SetChannel(TimeScaleChannel channel) => _timeChannel = channel;
 
+    /// <summary>이동 트레이서처럼 기본 수명보다 길어야 할 때 호출. OnEnable에서 리셋.</summary>
+    public void EnsureLifetimeAtLeast(float seconds)
+    {
+        float need = Mathf.Max(0.05f, seconds);
+        if (need > _lifetimeOverride)
+            _lifetimeOverride = need;
+    }
+
+    float ActiveLifetime =>
+        _lifetimeOverride > _maxLifetimeSeconds ? _lifetimeOverride : _maxLifetimeSeconds;
+
     void OnEnable()
     {
         _elapsed = 0f;
+        _lifetimeOverride = 0f;
         if (_systems == null)
             return;
 
@@ -57,7 +70,7 @@ public sealed class VfxChannelTicker : MonoBehaviour
             }
         }
 
-        if (_elapsed < _maxLifetimeSeconds)
+        if (_elapsed < ActiveLifetime)
             return;
 
         LeanPool.Despawn(gameObject);

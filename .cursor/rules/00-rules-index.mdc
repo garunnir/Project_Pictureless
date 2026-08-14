@@ -35,6 +35,7 @@ alwaysApply: true
 | `ui-prefab-layout.mdc` | Dist UI 스크립트·UI 프리팹 |
 | `ui-font.mdc` | Dist UI 스크립트·UI 프리팹 |
 | `tile-chunk-streaming.mdc` | `Assets/Dist/Scripts/Map/**` |
+| `camera-ground-view.mdc` | Camera · ChunkStreamer · CombatHitscan · 조준 픽 |
 | `map-system.mdc` | `Assets/Dist/Scripts/Map/**` · `docs/map/**` |
 | `inventory-ui.mdc` | Inventory 스크립트·프리팹 · `docs/inventory/**` |
 | `locomotion.mdc` | `Entity/Locomotion` · `docs/locomotion/**` |

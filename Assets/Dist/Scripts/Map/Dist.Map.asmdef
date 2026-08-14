@@ -1,23 +1,24 @@
-{
-    "name": "Dist.Map",
-    "rootNamespace": "",
-    "references": [
-        "Config",
-        "Dist.Visual",
-        "UniTask",
-        "Unity.Cinemachine",
-        "Unity.RenderPipelines.Universal.Runtime",
-        "Unity.RenderPipelines.Core.Runtime"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [
-        "Sirenix.OdinInspector.Attributes.dll"
-    ],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
-}
+{
+    "name": "Dist.Map",
+    "rootNamespace": "",
+    "references": [
+        "Config",
+        "Dist.Camera",
+        "Dist.Visual",
+        "UniTask",
+        "Unity.Cinemachine",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+        "Sirenix.OdinInspector.Attributes.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

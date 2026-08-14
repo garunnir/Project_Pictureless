@@ -98,6 +98,8 @@ graph TD
     Builder -.implements.-> IBuilder
 ```
 
+**청크 스트리밍 desired** = `CameraGroundView` 지면 footprint + `CameraChunkMargin` (`TileMapChunkStreamer`). 지면 AABB 수학은 `CameraGroundView`, 청크 변환만 `TileViewportBounds`.
+
 ---
 
 ## 데이터 흐름 요약

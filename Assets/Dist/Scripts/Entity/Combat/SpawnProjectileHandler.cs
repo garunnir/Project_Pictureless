@@ -1,5 +1,5 @@
 // ============================================================
-// SpawnProjectileHandler — spawn_projectile: Dist 발사체, 실패 시 레이 스텁
+// SpawnProjectileHandler — spawn_projectile: cue 히트스캔 명중
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
@@ -7,6 +7,11 @@ using UnityEngine;
 
 public sealed class SpawnProjectileHandler : IActionHandler
 {
+    readonly RaycastHit[] _hits = new RaycastHit[CombatHitscan.BufferSize];
+    readonly Collider[] _overlaps = new Collider[CombatHitscan.BufferSize];
+    readonly CharacterBodyHost[] _hosts = new CharacterBodyHost[CombatHitscan.BufferSize];
+    readonly Vector3[] _impacts = new Vector3[CombatHitscan.BufferSize];
+
     public string LogicId => ActionHandlerIds.SpawnProjectile;
 
     public void Execute(CharacterAttacker attacker, in ActionHandlerContext context)
@@ -35,7 +40,7 @@ public sealed class SpawnProjectileHandler : IActionHandler
         toTarget.y = 0f;
         float distance = toTarget.magnitude;
         ItemData ammoProbe = WeaponChamber.ResolveAmmo(context.Stack, context.Instance);
-        float range = CombatMath.RangeMeters(item, context.Action, ammoProbe);
+        float range = CombatHitscan.EffectiveRange(item, context.Action, ammoProbe, origin);
         if (distance > range)
         {
             attacker.EmitJudgedGate(context, mode, AttackPerformResult.OutOfRange, item, origin);
@@ -75,7 +80,7 @@ public sealed class SpawnProjectileHandler : IActionHandler
         }
     }
 
-    static bool FireOne(
+    bool FireOne(
         CharacterAttacker attacker,
         in ActionHandlerContext context,
         ItemData item,
@@ -88,86 +93,72 @@ public sealed class SpawnProjectileHandler : IActionHandler
         Collider targetCollider = targetHost.GetComponentInChildren<Collider>();
         Vector3 targetCenter = CharacterAttacker.ResolveBodyCenter(targetHost.transform, targetCollider);
         Vector3 dir = targetCenter - origin;
-        float rayDist = dir.magnitude;
-        if (rayDist <= CharacterAttacker.MinRayDistance)
-        {
-            attacker.ResolveCommittedHit(
-                context, mode, item, origin, consumeAmmo: true, ammo, applyCooldown: false);
-            return true;
-        }
-
-        dir /= rayDist;
-        if (TrySpawnProjectile(attacker, context, item, ammo, origin, dir, range))
-            return true;
-
-        return ExecuteRayStub(
-            attacker, context, item, ammo, origin, dir, rayDist, targetHost, mode);
-    }
-
-    static bool TrySpawnProjectile(
-        CharacterAttacker attacker,
-        in ActionHandlerContext context,
-        ItemData item,
-        ItemData ammo,
-        Vector3 origin,
-        Vector3 direction,
-        float range)
-    {
-        DistProjectile prefab = ResolvePrefab(attacker, context);
-        if (prefab == null)
-            return false;
-
-        DistProjectile projectile = Object.Instantiate(prefab, origin, Quaternion.LookRotation(direction));
-        if (projectile == null)
-            return false;
-
-        attacker.CommitAttempt(
-            context, item, consumeAmmo: true, ammo, applyCooldown: false, practice: true);
-        int pierce = ammo?.ammo != null ? Mathf.Max(0, ammo.ammo.pierce) : 0;
-        projectile.Launch(
-            attacker,
-            context,
-            item,
-            ammo,
-            origin,
-            direction,
-            range,
-            pierce,
-            attacker.RangedObstructionMask);
-        return true;
-    }
-
-    static DistProjectile ResolvePrefab(CharacterAttacker attacker, in ActionHandlerContext context)
-    {
-        if (context.Attack != null && context.Attack.ProjectilePrefab != null)
-            return context.Attack.ProjectilePrefab;
-        return attacker.Catalog != null ? attacker.Catalog.DefaultProjectile : null;
-    }
-
-    static bool ExecuteRayStub(
-        CharacterAttacker attacker,
-        in ActionHandlerContext context,
-        ItemData item,
-        ItemData ammo,
-        Vector3 origin,
-        Vector3 dir,
-        float rayDist,
-        CharacterBodyHost targetHost,
-        WeaponResolveMode mode)
-    {
-        if (Physics.Raycast(
-                origin,
-                dir,
-                out RaycastHit blocker,
-                rayDist,
-                attacker.RangedObstructionMask,
-                QueryTriggerInteraction.Ignore) &&
-            blocker.collider != null &&
-            blocker.collider.transform != targetHost.transform &&
-            !blocker.collider.transform.IsChildOf(targetHost.transform))
+        float aimDist = dir.magnitude;
+        if (aimDist <= CharacterAttacker.MinRayDistance)
         {
             attacker.CommitAttempt(
                 context, item, consumeAmmo: true, ammo, applyCooldown: false, practice: true);
+            attacker.ResolveCommittedHit(
+                context,
+                mode,
+                item,
+                origin,
+                consumeAmmo: false,
+                ammo,
+                applyCooldown: false,
+                practice: false,
+                impactOverride: targetCenter);
+            return true;
+        }
+
+        dir /= aimDist;
+        attacker.CommitAttempt(
+            context, item, consumeAmmo: true, ammo, applyCooldown: false, practice: true);
+
+        int pierce = WeaponChamber.ResolvePierce(context.Stack, context.Instance);
+        CombatHitscan.Trace(
+            attacker,
+            origin,
+            dir,
+            range,
+            attacker.RangedObstructionMask,
+            pierce,
+            _hits,
+            _overlaps,
+            _hosts,
+            _impacts,
+            out int bodyHitCount,
+            out bool obstructed,
+            out Vector3 obstructImpact,
+            out bool missAtRangeEnd,
+            out Vector3 missImpact);
+
+        for (int i = 0; i < bodyHitCount; i++)
+        {
+            CharacterBodyHost host = _hosts[i];
+            var hitContext = new ActionHandlerContext(
+                context.Action,
+                context.Hand,
+                context.Attack,
+                host,
+                context.OffenseFactor,
+                context.ItemId,
+                context.Instance,
+                context.Stack);
+            attacker.ResolveCommittedHit(
+                hitContext,
+                mode,
+                item,
+                origin,
+                consumeAmmo: false,
+                ammo,
+                applyCooldown: false,
+                practice: false,
+                impactOverride: _impacts[i]);
+        }
+
+        if (obstructed)
+        {
             attacker.EmitJudged(
                 context,
                 mode,
@@ -176,14 +167,27 @@ public sealed class SpawnProjectileHandler : IActionHandler
                 string.Empty,
                 0,
                 origin,
-                blocker.point,
+                obstructImpact,
                 item,
                 ammo);
             return true;
         }
 
-        attacker.ResolveCommittedHit(
-            context, mode, item, origin, consumeAmmo: true, ammo, applyCooldown: false);
+        if (missAtRangeEnd)
+        {
+            attacker.EmitJudged(
+                context,
+                mode,
+                AttackPerformResult.Miss,
+                targetHost,
+                string.Empty,
+                0,
+                origin,
+                missImpact,
+                item,
+                ammo);
+        }
+
         return true;
     }
 }

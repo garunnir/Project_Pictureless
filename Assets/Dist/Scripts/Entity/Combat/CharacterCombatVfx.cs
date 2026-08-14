@@ -51,15 +51,16 @@ public sealed class CharacterCombatVfx : MonoBehaviour
 
     void OnAttackJudged(AttackOutcome outcome)
     {
-        if (outcome.Result == AttackPerformResult.Obstructed)
+        bool obstructed = outcome.Result == AttackPerformResult.Obstructed;
+        if (obstructed)
         {
             if (WeaponAttack.AllowsImpactReaction(outcome.Attack, ArmImpactKind.Blocked))
                 SpawnImpactKind(ArmImpactKind.Blocked, outcome.OriginPoint, outcome.Direction);
-            return;
         }
 
-        // Cooling/NoTarget 등 게이트 실패는 Hit/Miss 연출 대상이 아님 (실제 명중 굴림 Miss만)
-        if (outcome.Result != AttackPerformResult.Performed &&
+        // Cooling/NoTarget 등 게이트 실패는 Hit/Miss 연출 대상이 아님
+        if (!obstructed &&
+            outcome.Result != AttackPerformResult.Performed &&
             outcome.Result != AttackPerformResult.Miss)
             return;
 
@@ -77,10 +78,14 @@ public sealed class CharacterCombatVfx : MonoBehaviour
         if (vfx == null)
             return;
 
-        if (outcome.ResolveMode == WeaponResolveMode.RangedRay)
-            SpawnTracer(vfx.tracerVfx, outcome);
-
         GameObject impactPrefab = outcome.DidHit ? vfx.hitVfx : vfx.missVfx;
+        if (outcome.ResolveMode == WeaponResolveMode.RangedRay)
+        {
+            if (!SpawnTracer(vfx.tracerVfx, outcome, impactPrefab) && impactPrefab != null)
+                Spawn(impactPrefab, outcome.ImpactPoint, -outcome.Direction);
+            return;
+        }
+
         Spawn(impactPrefab, outcome.ImpactPoint, -outcome.Direction);
     }
 
@@ -126,14 +131,18 @@ public sealed class CharacterCombatVfx : MonoBehaviour
         return instance;
     }
 
-    void SpawnTracer(GameObject prefab, AttackOutcome outcome)
+    /// <summary>true = 트레이서가 착탄 VFX를 맡음. false = 호출측이 즉시 스폰.</summary>
+    bool SpawnTracer(GameObject prefab, AttackOutcome outcome, GameObject impactPrefab)
     {
         GameObject instance = Spawn(prefab, outcome.OriginPoint, outcome.Direction);
         if (instance == null)
-            return;
+            return false;
 
         VfxTracerLine tracer = instance.GetComponent<VfxTracerLine>();
-        if (tracer != null)
-            tracer.SetEndpoints(outcome.OriginPoint, outcome.ImpactPoint);
+        if (tracer == null)
+            return false;
+
+        tracer.Play(outcome.OriginPoint, outcome.ImpactPoint, impactPrefab, _timeChannel);
+        return true;
     }
 }

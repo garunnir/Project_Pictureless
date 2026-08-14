@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: ClipSpeeds
   m_EditorClassIdentifier: DistScript::WeaponAnimClipSpeeds
   _entries:
+  - clip: {fileID: 7400000, guid: 184e9d34afb00f64d9648b86daa2e806, type: 2}
+    speed: 2
   - clip: {fileID: 7400000, guid: 60e74730ee2e7604fb9452edb47e8560, type: 2}
-    speed: 3
+    speed: 2
 --- !u!221 &22100000
 AnimatorOverrideController:
   m_ObjectHideFlags: 0
@@ -63,7 +65,7 @@ AnimatorOverrideController:
   - m_OriginalClip: {fileID: 7400000, guid: d59f566e79371084aa76319bc309d73c, type: 2}
     m_OverrideClip: {fileID: 7400000, guid: a79349179dc525249832d480730c0000, type: 2}
   - m_OriginalClip: {fileID: 7400000, guid: 191d9ec53665f174f8788a813f2869b5, type: 2}
-    m_OverrideClip: {fileID: 7400000, guid: 60e74730ee2e7604fb9452edb47e8560, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 184e9d34afb00f64d9648b86daa2e806, type: 2}
   - m_OriginalClip: {fileID: 7400000, guid: 45b8ecec50f0bbf4e9f30d6b4cec0a8f, type: 2}
     m_OverrideClip: {fileID: 7400000, guid: a79349179dc525249832d480730c0000, type: 2}
   - m_OriginalClip: {fileID: 7400000, guid: 413d8999532831a4d9b9fd668f0202ea, type: 2}

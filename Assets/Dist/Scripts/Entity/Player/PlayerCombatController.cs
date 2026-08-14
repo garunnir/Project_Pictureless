@@ -3,6 +3,7 @@
 // ============================================================
 
 using System.Collections.Generic;
+using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -115,9 +116,16 @@ public sealed class PlayerCombatController : MonoBehaviour
 
         direction.Normalize();
 
+        ItemData item = _attacker.ItemFor(_attacker.ItemId);
+        ItemData ammo = WeaponChamber.ResolveAmmo(_attacker.WieldedStack, _attacker.WieldedInstance);
+        float effective = CombatHitscan.EffectiveRange(
+            item,
+            _attacker.SelectedAction,
+            ammo,
+            _attacker.ResolveOrigin());
         float maxDistance = Mathf.Max(
-            _characterState.InteractionReach,
-            _aimController.MaxAimDistance);
+            Mathf.Max(_characterState.InteractionReach, _aimController.MaxAimDistance),
+            effective);
 
         if (TrySphereCastBody(origin, direction, maxDistance, out target))
             return true;
