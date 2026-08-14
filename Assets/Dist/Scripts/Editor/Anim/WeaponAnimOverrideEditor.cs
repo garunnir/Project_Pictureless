@@ -14,6 +14,7 @@ public sealed class WeaponAnimOverrideEditor : Editor
     const string CharacterControllerGuid = "340c7b66e1595a44db858530dc6283b7";
     const string SlotDir = "Assets/Dist/Visual/Anim/CharacterAnimator/Slots";
 
+    static readonly GUIContent SpeedContent = new GUIContent("Speed");
     static readonly string[] PosePrefixes = { "Hold", "Aim", "Attack" };
     static readonly string[] Hands = { "Left", "Right", "TwoHand" };
 
@@ -29,7 +30,8 @@ public sealed class WeaponAnimOverrideEditor : Editor
         EditorGUILayout.HelpBox(
             "Override = thin 클립 덮어쓰기(분류 아님).\n" +
             "컨트롤러는 Hold/Aim/Attack만 압니다. AnimVerb는 Pipeline → resolve.\n" +
-            "비우면 Pipeline 폴백.",
+            "비우면 Pipeline 폴백·배속 1.\n" +
+            "할당한 클립 옆 Speed = 그 클립 재생 배속 (슬롯 속도 아님).",
             MessageType.Info);
 
         var catalog = AssetDatabase.LoadAssetAtPath<ArmAnimSlotCatalog>(CatalogPath);
@@ -43,7 +45,9 @@ public sealed class WeaponAnimOverrideEditor : Editor
             map[pairs[i].Key] = pairs[i].Value;
         }
 
+        WeaponAnimClipSpeeds speeds = FindClipSpeeds(ovr);
         bool dirty = false;
+        bool speedsDirty = false;
         EditorGUI.BeginChangeCheck();
 
         EditorGUILayout.LabelField("Action thin", EditorStyles.boldLabel);
@@ -57,31 +61,32 @@ public sealed class WeaponAnimOverrideEditor : Editor
                 if (original == null)
                     continue;
 
-                map.TryGetValue(original, out AnimationClip mapped);
-                AnimationClip next = (AnimationClip)EditorGUILayout.ObjectField(
+                dirty |= DrawClipRow(
+                    ovr,
                     PosePrefixes[p] + " / " + Hands[h],
-                    mapped == null || mapped == original ? null : mapped,
-                    typeof(AnimationClip),
-                    false);
-                if (next == null)
-                    next = original;
-                if (next != mapped)
-                {
-                    map[original] = next;
-                    dirty = true;
-                }
+                    original,
+                    map,
+                    ref speeds,
+                    ref speedsDirty);
             }
         }
 
         EditorGUILayout.Space(6f);
         EditorGUILayout.LabelField("Impact thin", EditorStyles.boldLabel);
-        dirty |= DrawImpactThin(map, catalog);
+        dirty |= DrawImpactThin(ovr, map, catalog, ref speeds, ref speedsDirty);
 
-        if (EditorGUI.EndChangeCheck() || dirty)
+        if (EditorGUI.EndChangeCheck() || dirty || speedsDirty)
         {
             Undo.RecordObject(ovr, "Edit weapon anim override");
             ApplyThinOnly(ovr, map, catalog);
             EditorUtility.SetDirty(ovr);
+            if (speeds != null)
+            {
+                Undo.RecordObject(speeds, "Edit override clip speed");
+                PruneClipSpeeds(speeds, map);
+                EditorUtility.SetDirty(speeds);
+                WirePresentations(ovr, speeds);
+            }
         }
 
         if (GUILayout.Button("Clear non-thin mappings"))
@@ -93,8 +98,11 @@ public sealed class WeaponAnimOverrideEditor : Editor
     }
 
     static bool DrawImpactThin(
+        AnimatorOverrideController ovr,
         Dictionary<AnimationClip, AnimationClip> map,
-        ArmAnimSlotCatalog catalog)
+        ArmAnimSlotCatalog catalog,
+        ref WeaponAnimClipSpeeds speeds,
+        ref bool speedsDirty)
     {
         bool dirty = false;
         AnimationClip[] impacts =
@@ -112,22 +120,166 @@ public sealed class WeaponAnimOverrideEditor : Editor
             if (original == null || !seen.Add(original))
                 continue;
 
-            map.TryGetValue(original, out AnimationClip mapped);
-            AnimationClip next = (AnimationClip)EditorGUILayout.ObjectField(
-                original.name,
-                mapped == null || mapped == original ? null : mapped,
-                typeof(AnimationClip),
-                false);
-            if (next == null)
-                next = original;
-            if (next != mapped)
-            {
-                map[original] = next;
-                dirty = true;
-            }
+            dirty |= DrawClipRow(ovr, original.name, original, map, ref speeds, ref speedsDirty);
         }
 
         return dirty;
+    }
+
+    static bool DrawClipRow(
+        AnimatorOverrideController ovr,
+        string label,
+        AnimationClip original,
+        Dictionary<AnimationClip, AnimationClip> map,
+        ref WeaponAnimClipSpeeds speeds,
+        ref bool speedsDirty)
+    {
+        map.TryGetValue(original, out AnimationClip mapped);
+        bool hasOverride = mapped != null && mapped != original;
+        AnimationClip displayed = hasOverride ? mapped : null;
+
+        Rect total = EditorGUILayout.GetControlRect();
+        Rect field = EditorGUI.PrefixLabel(total, new GUIContent(label));
+        int indent = EditorGUI.indentLevel;
+        EditorGUI.indentLevel = 0;
+
+        AnimationClip next;
+        if (hasOverride)
+        {
+            float gap = EditorGUIUtility.standardVerticalSpacing;
+            float speedLabelW = EditorStyles.label.CalcSize(SpeedContent).x;
+            float speedFieldW = EditorGUIUtility.fieldWidth;
+            float speedBlock = speedLabelW + gap + speedFieldW;
+            float minClip = EditorGUIUtility.fieldWidth;
+            if (speedBlock + gap + minClip > field.width)
+                speedBlock = Mathf.Max(speedFieldW, field.width - minClip - gap);
+
+            Rect speedArea = new Rect(field.xMax - speedBlock, field.y, speedBlock, field.height);
+            field.xMax = speedArea.x - gap;
+
+            next = (AnimationClip)EditorGUI.ObjectField(
+                field, displayed, typeof(AnimationClip), false);
+            if (next == null)
+                next = original;
+
+            if (next != original)
+            {
+                float speed = speeds != null
+                    ? speeds.GetSpeed(next)
+                    : WeaponAnimClipSpeeds.DefaultSpeed;
+                Rect labelRect = new Rect(speedArea.x, speedArea.y, speedLabelW, speedArea.height);
+                Rect valueRect = new Rect(
+                    labelRect.xMax + gap,
+                    speedArea.y,
+                    Mathf.Max(0f, speedArea.xMax - labelRect.xMax - gap),
+                    speedArea.height);
+                EditorGUI.LabelField(labelRect, SpeedContent);
+                float nextSpeed = EditorGUI.FloatField(valueRect, speed);
+                if (nextSpeed < 0f)
+                    nextSpeed = 0f;
+                if (!Mathf.Approximately(nextSpeed, speed))
+                {
+                    if (speeds == null)
+                        speeds = GetOrCreateClipSpeeds(ovr);
+                    if (speeds != null)
+                    {
+                        speeds.SetSpeed(next, nextSpeed);
+                        speedsDirty = true;
+                    }
+                }
+            }
+        }
+        else
+        {
+            next = (AnimationClip)EditorGUI.ObjectField(
+                field, displayed, typeof(AnimationClip), false);
+            if (next == null)
+                next = original;
+        }
+
+        EditorGUI.indentLevel = indent;
+
+        bool clipDirty = next != mapped;
+        if (clipDirty)
+            map[original] = next;
+        return clipDirty;
+    }
+
+    static void PruneClipSpeeds(
+        WeaponAnimClipSpeeds speeds,
+        Dictionary<AnimationClip, AnimationClip> map)
+    {
+        if (speeds == null || map == null)
+            return;
+
+        var keep = new List<AnimationClip>(map.Count);
+        foreach (var kv in map)
+        {
+            if (kv.Value == null || kv.Value == kv.Key)
+                continue;
+            keep.Add(kv.Value);
+        }
+
+        speeds.RetainOnly(keep.ToArray());
+    }
+
+    static WeaponAnimClipSpeeds FindClipSpeeds(AnimatorOverrideController ovr)
+    {
+        string path = AssetDatabase.GetAssetPath(ovr);
+        if (string.IsNullOrEmpty(path))
+            return null;
+        UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+        for (int i = 0; i < assets.Length; i++)
+        {
+            if (assets[i] is WeaponAnimClipSpeeds speeds)
+                return speeds;
+        }
+
+        return null;
+    }
+
+    static WeaponAnimClipSpeeds GetOrCreateClipSpeeds(AnimatorOverrideController ovr)
+    {
+        WeaponAnimClipSpeeds existing = FindClipSpeeds(ovr);
+        if (existing != null)
+        {
+            WirePresentations(ovr, existing);
+            return existing;
+        }
+
+        string path = AssetDatabase.GetAssetPath(ovr);
+        if (string.IsNullOrEmpty(path))
+            return null;
+
+        var speeds = ScriptableObject.CreateInstance<WeaponAnimClipSpeeds>();
+        speeds.name = "ClipSpeeds";
+        AssetDatabase.AddObjectToAsset(speeds, ovr);
+        Undo.RegisterCreatedObjectUndo(speeds, "Create override clip speeds");
+        EditorUtility.SetDirty(ovr);
+        EditorUtility.SetDirty(speeds);
+        AssetDatabase.SaveAssets();
+        WirePresentations(ovr, speeds);
+        return speeds;
+    }
+
+    static void WirePresentations(AnimatorOverrideController ovr, WeaponAnimClipSpeeds speeds)
+    {
+        if (ovr == null || speeds == null)
+            return;
+
+        string[] guids = AssetDatabase.FindAssets("t:WeaponPresentation");
+        for (int i = 0; i < guids.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+            var presentation = AssetDatabase.LoadAssetAtPath<WeaponPresentation>(path);
+            if (presentation == null || presentation.AnimatorOverride != ovr)
+                continue;
+            if (ReferenceEquals(presentation.AnimClipSpeeds, speeds))
+                continue;
+            Undo.RecordObject(presentation, "Wire anim clip speeds");
+            presentation.SetAnimClipSpeeds(speeds);
+            EditorUtility.SetDirty(presentation);
+        }
     }
 
     static void ApplyThinOnly(

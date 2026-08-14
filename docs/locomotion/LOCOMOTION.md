@@ -89,7 +89,8 @@ Impact SM: **Empty** → **Recoil** / **Blocked** (`ImpactRecoil` / `ImpactBlock
 | `IsAiming` | bool | `CharacterState.IsAiming` |
 | `AttackR` / `AttackL` / `Attack2H` | trigger | `AttackResolved` 큐 → `AttackOutcome.Hand` |
 | `ImpactRecoil` / `ImpactBlocked` | trigger | cue → Recoil; `Obstructed` → Blocked |
-| `WeaponPresentation.AnimatorOverride` | Override | **thin** Hold/Aim/Attack 덮어쓰기 — 외형 메시 아님. 컨트롤러에 AnimVerb 키 없음 |
+| `WeaponPresentation.AnimatorOverride` | Override | **thin** Hold/Aim/Attack 덮어쓰기 — 외형 메시 아님. 컨트롤러에 AnimVerb 키 없음. 할당한 클립 Speed=`WeaponAnimClipSpeeds`(슬롯 속도 아님) |
+| `ArmSpeedR` / `ArmSpeedL` / `ArmSpeed2H` / `ImpactSpeed` | float | Override 클립 배속. 표에 없거나 Catalog 폴백이면 `1`. `Animator.speed` 아님 |
 | `ArmAnimSlotCatalog` + runtime Override | resolve | 동사 행 클립→Action thin, Impact 행→Impact thin. 동사/Impact **VFX는 같은 행** |
 
 Move Layer `Locomotion`: **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + Walk/Run × 전/후/좌/우 (Walk 링 ≈0.26). 조준 중 루트는 `SightDir` 유지, **발만** facing 대비 상대 방향.
@@ -102,7 +103,7 @@ Move Layer `Locomotion`: **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + W
 
 **층:** Family(UI 묶음) / Leaf(선택·Catalog 폴백 행) / Override(thin 덮어쓰기). Terms: [`GEAR.md`](../equipment/GEAR.md). Semi/Burst/Auto는 각자 Catalog 행(클릭 볼리; Auto 홀드 Pending).
 
-무기 `AnimatorOverride`는 **thin**만 교체 (`WeaponAnimOverrideEditor`). Override thin이 있으면 Catalog Leaf보다 우선.
+무기 `AnimatorOverride`는 **thin**만 교체 (`WeaponAnimOverrideEditor`). Override thin이 있으면 Catalog Leaf보다 우선. 재생 배속은 할당한 클립 기준(`WeaponAnimClipSpeeds`, 기본 1) — thin 슬롯 속도가 아님. cue는 `CueNormalizedTime`이라 정규화 시점은 같고 실제 초만 배속에 비례한다.
 
 - Pipeline(Fallbacks): `Assets/Dist/SOData/Combat/Fallbacks/ArmAnimSlotCatalog.asset` — **Leaf 전부** 행 (Semi/Burst/Auto 포함).  
 - 폴더 맵: [`docs/equipment/WEAPON_VISUAL.md`](../equipment/WEAPON_VISUAL.md)  

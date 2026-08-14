@@ -60,7 +60,8 @@ public sealed class WeaponPresentation : ScriptableObject
     [InfoBox(
         "Leaf = 선택·시전 단위(실체). Family(Melee/Trigger)는 에디터·UI 묶음만.\n" +
         "기본 동사 폴백은 ArmAnimSlotCatalog에 Leaf마다 행. Entry 비면 그 행 사용.\n" +
-        "Hold(아이들)=Entry.useHold. Override=thin 클립 덮어쓰기(분류 아님).",
+        "Hold(아이들)=Entry.useHold. Override=thin 클립 덮어쓰기(분류 아님).\n" +
+        "클립 배속은 Override Inspector에서 할당한 클립 옆 Speed (슬롯 속도 아님).",
         InfoMessageType.None)]
     [LabelText("동작 줄")]
     [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "action")]
@@ -80,9 +81,15 @@ public sealed class WeaponPresentation : ScriptableObject
     [LabelText("Animator Override")]
     [SerializeField] AnimatorOverrideController _animatorOverride;
 
+    [HideInInspector]
+    [SerializeField] WeaponAnimClipSpeeds _animClipSpeeds;
+
     public WeaponActionMask SupportedActions => _supportedActions;
     public Entry[] Entries => _entries;
     public AnimatorOverrideController AnimatorOverride => _animatorOverride;
+    public WeaponAnimClipSpeeds AnimClipSpeeds => _animClipSpeeds;
+
+    public void SetAnimClipSpeeds(WeaponAnimClipSpeeds speeds) => _animClipSpeeds = speeds;
 
     public int DefaultEntryIndex
     {
@@ -111,7 +118,30 @@ public sealed class WeaponPresentation : ScriptableObject
                  _defaultEntryIndex >= _entries.Length ||
                  _entries[_defaultEntryIndex] == null)
             _defaultEntryIndex = first;
+#if UNITY_EDITOR
+        TryWireClipSpeedsFromOverride();
+#endif
     }
+
+#if UNITY_EDITOR
+    void TryWireClipSpeedsFromOverride()
+    {
+        if (_animClipSpeeds != null || _animatorOverride == null)
+            return;
+        string path = UnityEditor.AssetDatabase.GetAssetPath(_animatorOverride);
+        if (string.IsNullOrEmpty(path))
+            return;
+        UnityEngine.Object[] assets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path);
+        for (int i = 0; i < assets.Length; i++)
+        {
+            if (assets[i] is WeaponAnimClipSpeeds speeds)
+            {
+                _animClipSpeeds = speeds;
+                return;
+            }
+        }
+    }
+#endif
 
     void MigrateLegacyTriggerLeaves()
     {

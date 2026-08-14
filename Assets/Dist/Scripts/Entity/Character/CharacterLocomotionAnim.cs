@@ -27,6 +27,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
     const int MaxPoseStepsPerFrame = 8;
     const float MoveDirEpsilonSqr = 1e-6f;
     const string AttackOverlayStateName = "Attack";
+    const string HoldOverlayStateName = "Hold";
+    const string AimOverlayStateName = "Aim";
     const string ImpactLayerName = "Impact Layer";
     const string ParamImpactRecoil = "ImpactRecoil";
     const string ParamImpactBlocked = "ImpactBlocked";
@@ -90,13 +92,34 @@ public class CharacterLocomotionAnim : MonoBehaviour
     bool _hasAttack2H;
     bool _hasImpactRecoil;
     bool _hasImpactBlocked;
+    bool _hasArmSpeedR;
+    bool _hasArmSpeedL;
+    bool _hasArmSpeed2H;
+    bool _hasImpactSpeed;
     int _hashAttackState;
+    int _hashHoldState;
+    int _hashAimState;
+    int _hashArmSpeedR;
+    int _hashArmSpeedL;
+    int _hashArmSpeed2H;
+    int _hashImpactSpeed;
     int _hashImpactRecoil;
     int _hashImpactBlocked;
     int _hashImpactEmpty;
     int _hashImpactRecoilState;
     int _hashImpactBlockedState;
     float _impactWeightTarget;
+    float _speedHoldR = WeaponAnimClipSpeeds.DefaultSpeed;
+    float _speedAimR = WeaponAnimClipSpeeds.DefaultSpeed;
+    float _speedAttackR = WeaponAnimClipSpeeds.DefaultSpeed;
+    float _speedHoldL = WeaponAnimClipSpeeds.DefaultSpeed;
+    float _speedAimL = WeaponAnimClipSpeeds.DefaultSpeed;
+    float _speedAttackL = WeaponAnimClipSpeeds.DefaultSpeed;
+    float _speedHold2H = WeaponAnimClipSpeeds.DefaultSpeed;
+    float _speedAim2H = WeaponAnimClipSpeeds.DefaultSpeed;
+    float _speedAttack2H = WeaponAnimClipSpeeds.DefaultSpeed;
+    float _speedImpactRecoil = WeaponAnimClipSpeeds.DefaultSpeed;
+    float _speedImpactBlocked = WeaponAnimClipSpeeds.DefaultSpeed;
 
     public bool HasAttackTrigger => _hasAttackR || _hasAttackL || _hasAttack2H;
 
@@ -258,6 +281,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         float channelDelta = TimeScaleService.Delta(_timeChannel);
         SyncArmLayerWeights(rebound ? 0f : channelDelta);
         SyncImpactLayerWeight(rebound ? 0f : channelDelta);
+        ApplyClipSpeedParams();
         AdvanceAnimator(channelDelta);
         TickAttackOverlayLatches();
         TickAttackCues();
@@ -284,6 +308,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _mappedActionL = actionL;
         _mappedActionR = actionR;
         _mappedAction2H = action2H;
+        RefreshActionClipSpeeds();
     }
 
     void OnAttackResolved(AttackOutcome outcome)
@@ -326,6 +351,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
             return;
 
         ArmImpactSlotResolver.ProjectImpact(_resolvedOverride, _armSlotCatalog, kind, hand);
+        RefreshImpactClipSpeeds();
         _impactWeightTarget = 1f;
         _animator.SetLayerWeight(_impactLayerIndex, 1f);
 
@@ -408,6 +434,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
             _mappedActionL = actionL;
             _mappedActionR = actionR;
             _mappedAction2H = action2H;
+            RefreshActionClipSpeeds();
+            RefreshImpactClipSpeeds();
         }
 
         RuntimeAnimatorController next = _resolvedOverride != null
@@ -484,6 +512,115 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _attacker.NotifyAttackOverlayTick(hand, inAttack, normalizedTime);
     }
 
+    // Update: SetFloat only. No alloc. Clip table lookup is cached on remap/Impact.
+    void ApplyClipSpeedParams()
+    {
+        if (_animator == null)
+            return;
+        if (_hasArmSpeedR)
+            _animator.SetFloat(
+                _hashArmSpeedR,
+                SpeedForArmLayer(_rightArmLayerIndex, _speedHoldR, _speedAimR, _speedAttackR));
+        if (_hasArmSpeedL)
+            _animator.SetFloat(
+                _hashArmSpeedL,
+                SpeedForArmLayer(_leftArmLayerIndex, _speedHoldL, _speedAimL, _speedAttackL));
+        if (_hasArmSpeed2H)
+            _animator.SetFloat(
+                _hashArmSpeed2H,
+                SpeedForArmLayer(_twoHandLayerIndex, _speedHold2H, _speedAim2H, _speedAttack2H));
+        if (_hasImpactSpeed)
+            _animator.SetFloat(_hashImpactSpeed, SpeedForImpactLayer());
+    }
+
+    float SpeedForArmLayer(int layerIndex, float hold, float aim, float attack)
+    {
+        if (layerIndex < 0)
+            return WeaponAnimClipSpeeds.DefaultSpeed;
+        AnimatorStateInfo info = _animator.GetCurrentAnimatorStateInfo(layerIndex);
+        if (_animator.IsInTransition(layerIndex))
+        {
+            AnimatorStateInfo next = _animator.GetNextAnimatorStateInfo(layerIndex);
+            int nextHash = next.shortNameHash;
+            if (nextHash == _hashAttackState ||
+                nextHash == _hashAimState ||
+                nextHash == _hashHoldState)
+                info = next;
+        }
+
+        if (info.shortNameHash == _hashAttackState)
+            return attack;
+        if (info.shortNameHash == _hashAimState)
+            return aim;
+        return hold;
+    }
+
+    float SpeedForImpactLayer()
+    {
+        if (_impactLayerIndex < 0)
+            return WeaponAnimClipSpeeds.DefaultSpeed;
+        AnimatorStateInfo info = _animator.GetCurrentAnimatorStateInfo(_impactLayerIndex);
+        if (_animator.IsInTransition(_impactLayerIndex))
+        {
+            AnimatorStateInfo next = _animator.GetNextAnimatorStateInfo(_impactLayerIndex);
+            int nextHash = next.shortNameHash;
+            if (nextHash == _hashImpactRecoilState || nextHash == _hashImpactBlockedState)
+                info = next;
+        }
+
+        if (info.shortNameHash == _hashImpactBlockedState)
+            return _speedImpactBlocked;
+        if (info.shortNameHash == _hashImpactRecoilState)
+            return _speedImpactRecoil;
+        return WeaponAnimClipSpeeds.DefaultSpeed;
+    }
+
+    void RefreshActionClipSpeeds()
+    {
+        WeaponAnimClipSpeeds table = ResolveClipSpeedTable();
+        ArmAnimSlotCatalog.HandClips hold = _armSlotCatalog != null ? _armSlotCatalog.HoldThin : null;
+        ArmAnimSlotCatalog.HandClips aim = _armSlotCatalog != null ? _armSlotCatalog.AimThin : null;
+        ArmAnimSlotCatalog.HandClips attack = _armSlotCatalog != null ? _armSlotCatalog.AttackThin : null;
+        _speedHoldR = SpeedOfThin(hold != null ? hold.rightBase : null, table);
+        _speedAimR = SpeedOfThin(aim != null ? aim.rightBase : null, table);
+        _speedAttackR = SpeedOfThin(attack != null ? attack.rightBase : null, table);
+        _speedHoldL = SpeedOfThin(hold != null ? hold.leftBase : null, table);
+        _speedAimL = SpeedOfThin(aim != null ? aim.leftBase : null, table);
+        _speedAttackL = SpeedOfThin(attack != null ? attack.leftBase : null, table);
+        _speedHold2H = SpeedOfThin(hold != null ? hold.twoHandBase : null, table);
+        _speedAim2H = SpeedOfThin(aim != null ? aim.twoHandBase : null, table);
+        _speedAttack2H = SpeedOfThin(attack != null ? attack.twoHandBase : null, table);
+    }
+
+    void RefreshImpactClipSpeeds()
+    {
+        WeaponAnimClipSpeeds table = ResolveClipSpeedTable();
+        if (_armSlotCatalog == null)
+        {
+            _speedImpactRecoil = WeaponAnimClipSpeeds.DefaultSpeed;
+            _speedImpactBlocked = WeaponAnimClipSpeeds.DefaultSpeed;
+            return;
+        }
+
+        _speedImpactRecoil = SpeedOfThin(_armSlotCatalog.ImpactRecoilThin, table);
+        _speedImpactBlocked = SpeedOfThin(_armSlotCatalog.ImpactBlockedThin, table);
+    }
+
+    WeaponAnimClipSpeeds ResolveClipSpeedTable()
+    {
+        if (_attacker == null || _attacker.Presentation == null)
+            return null;
+        return _attacker.Presentation.AnimClipSpeeds;
+    }
+
+    float SpeedOfThin(AnimationClip thin, WeaponAnimClipSpeeds table)
+    {
+        if (thin == null || table == null || _resolvedOverride == null)
+            return WeaponAnimClipSpeeds.DefaultSpeed;
+        AnimationClip playing = ArmAnimSlotResolver.EffectiveClip(thin, _resolvedOverride);
+        return table.GetSpeed(playing);
+    }
+
     void AdvanceAnimator(float channelDelta)
     {
         if (channelDelta <= 0f)
@@ -520,11 +657,21 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _hasAttack2H = false;
         _hasImpactRecoil = false;
         _hasImpactBlocked = false;
+        _hasArmSpeedR = false;
+        _hasArmSpeedL = false;
+        _hasArmSpeed2H = false;
+        _hasImpactSpeed = false;
         _rightArmLayerIndex = -1;
         _leftArmLayerIndex = -1;
         _twoHandLayerIndex = -1;
         _impactLayerIndex = -1;
         _hashAttackState = Hash(AttackOverlayStateName);
+        _hashHoldState = Hash(HoldOverlayStateName);
+        _hashAimState = Hash(AimOverlayStateName);
+        _hashArmSpeedR = Hash(WeaponAnimClipSpeeds.ParamRight);
+        _hashArmSpeedL = Hash(WeaponAnimClipSpeeds.ParamLeft);
+        _hashArmSpeed2H = Hash(WeaponAnimClipSpeeds.ParamTwoHand);
+        _hashImpactSpeed = Hash(WeaponAnimClipSpeeds.ParamImpact);
         _hashImpactRecoil = Hash(ParamImpactRecoil);
         _hashImpactBlocked = Hash(ParamImpactBlocked);
         _hashImpactEmpty = Hash(ImpactEmptyStateName);
@@ -555,6 +702,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
             if (Match(_paramAttack2H, _hashAttack2H, nameHash)) _hasAttack2H = true;
             if (Match(ParamImpactRecoil, _hashImpactRecoil, nameHash)) _hasImpactRecoil = true;
             if (Match(ParamImpactBlocked, _hashImpactBlocked, nameHash)) _hasImpactBlocked = true;
+            if (Match(WeaponAnimClipSpeeds.ParamRight, _hashArmSpeedR, nameHash)) _hasArmSpeedR = true;
+            if (Match(WeaponAnimClipSpeeds.ParamLeft, _hashArmSpeedL, nameHash)) _hasArmSpeedL = true;
+            if (Match(WeaponAnimClipSpeeds.ParamTwoHand, _hashArmSpeed2H, nameHash)) _hasArmSpeed2H = true;
+            if (Match(WeaponAnimClipSpeeds.ParamImpact, _hashImpactSpeed, nameHash)) _hasImpactSpeed = true;
         }
 
         if (!string.IsNullOrEmpty(_rightArmLayerName))

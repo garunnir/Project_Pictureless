@@ -114,6 +114,10 @@ public static class ArmOverlayAnimatorBuilder
         EnsureParam(controller, "Attack2H", AnimatorControllerParameterType.Trigger);
         EnsureParam(controller, "ImpactRecoil", AnimatorControllerParameterType.Trigger);
         EnsureParam(controller, "ImpactBlocked", AnimatorControllerParameterType.Trigger);
+        EnsureFloatParam(controller, WeaponAnimClipSpeeds.ParamRight, WeaponAnimClipSpeeds.DefaultSpeed);
+        EnsureFloatParam(controller, WeaponAnimClipSpeeds.ParamLeft, WeaponAnimClipSpeeds.DefaultSpeed);
+        EnsureFloatParam(controller, WeaponAnimClipSpeeds.ParamTwoHand, WeaponAnimClipSpeeds.DefaultSpeed);
+        EnsureFloatParam(controller, WeaponAnimClipSpeeds.ParamImpact, WeaponAnimClipSpeeds.DefaultSpeed);
     }
 
     static void RemoveParam(AnimatorController controller, string name)
@@ -136,6 +140,31 @@ public static class ArmOverlayAnimatorBuilder
         }
 
         controller.AddParameter(name, type);
+    }
+
+    static void EnsureFloatParam(AnimatorController controller, string name, float defaultValue)
+    {
+        AnimatorControllerParameter[] parameters = controller.parameters;
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            if (parameters[i].name != name)
+                continue;
+            if (parameters[i].type == AnimatorControllerParameterType.Float)
+            {
+                parameters[i].defaultFloat = defaultValue;
+                controller.parameters = parameters;
+            }
+
+            return;
+        }
+
+        var parameter = new AnimatorControllerParameter
+        {
+            name = name,
+            type = AnimatorControllerParameterType.Float,
+            defaultFloat = defaultValue
+        };
+        controller.AddParameter(parameter);
     }
 
     static void RebuildLayers(AnimatorController controller)
@@ -295,12 +324,14 @@ public static class ArmOverlayAnimatorBuilder
             sm,
             "Recoil",
             FlatClip("ImpactRecoil_Slot"),
-            new Vector3(420, 0, 0));
+            new Vector3(420, 0, 0),
+            WeaponAnimClipSpeeds.ParamImpact);
         AnimatorState blocked = AddState(
             sm,
             "Blocked",
             FlatClip("ImpactBlocked_Slot"),
-            new Vector3(420, 120, 0));
+            new Vector3(420, 120, 0),
+            WeaponAnimClipSpeeds.ParamImpact);
         sm.defaultState = empty;
 
         AddAttackFrom(empty, recoil, "ImpactRecoil");
@@ -377,9 +408,13 @@ public static class ArmOverlayAnimatorBuilder
 
     static void BuildThinStateMachine(AnimatorStateMachine sm, string ownHand, string attackParam)
     {
-        AnimatorState hold = AddState(sm, "Hold", Clip("Hold", ownHand), new Vector3(200, 0, 0));
-        AnimatorState aim = AddState(sm, "Aim", Clip("Aim", ownHand), new Vector3(420, 0, 0));
-        AnimatorState atk = AddState(sm, "Attack", Clip("Attack", ownHand), new Vector3(700, 0, 0));
+        string speedParam = SpeedParamForHand(ownHand);
+        AnimatorState hold = AddState(
+            sm, "Hold", Clip("Hold", ownHand), new Vector3(200, 0, 0), speedParam);
+        AnimatorState aim = AddState(
+            sm, "Aim", Clip("Aim", ownHand), new Vector3(420, 0, 0), speedParam);
+        AnimatorState atk = AddState(
+            sm, "Attack", Clip("Attack", ownHand), new Vector3(700, 0, 0), speedParam);
         sm.defaultState = hold;
 
         AddBoolTransition(hold, aim, "IsAiming", true);
@@ -390,11 +425,32 @@ public static class ArmOverlayAnimatorBuilder
         AddExitAttack(atk, aim, hold);
     }
 
-    static AnimatorState AddState(AnimatorStateMachine sm, string name, AnimationClip clip, Vector3 pos)
+    static string SpeedParamForHand(string ownHand)
+    {
+        if (ownHand == "Left")
+            return WeaponAnimClipSpeeds.ParamLeft;
+        if (ownHand == "TwoHand")
+            return WeaponAnimClipSpeeds.ParamTwoHand;
+        return WeaponAnimClipSpeeds.ParamRight;
+    }
+
+    static AnimatorState AddState(
+        AnimatorStateMachine sm,
+        string name,
+        AnimationClip clip,
+        Vector3 pos,
+        string speedParam = null)
     {
         AnimatorState state = sm.AddState(name, pos);
         state.motion = clip;
         state.mirror = false;
+        if (!string.IsNullOrEmpty(speedParam))
+        {
+            state.speed = WeaponAnimClipSpeeds.DefaultSpeed;
+            state.speedParameter = speedParam;
+            state.speedParameterActive = true;
+        }
+
         return state;
     }
 
