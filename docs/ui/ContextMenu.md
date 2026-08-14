@@ -14,6 +14,8 @@
 | `UIHoverStyle` / `UIHoverPanelShell` | 호버 정보창 Placement 셸 — [`HOVER.md`](HOVER.md) |
 | `ContextMenuOutsideClick` | 열린 cascade 패널 밖 포인터 판정 (바깥 클릭 Hide) |
 
+`Entry.Icon` optional; null = text-only (existing menus unchanged).
+
 ## 의존
 
 - 이 asmdef → `Config`(Loc), Unity.TextMeshPro, Unity.InputSystem

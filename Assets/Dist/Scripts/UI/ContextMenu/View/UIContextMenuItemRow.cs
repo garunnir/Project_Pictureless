@@ -11,6 +11,7 @@ using UnityEngine.UI;
 public sealed class UIContextMenuItemRow : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [SerializeField] Image _background;
+    [SerializeField] Image _icon;
     [SerializeField] TMP_Text _label;
     [SerializeField] TMP_Text _chevron;
 
@@ -51,10 +52,24 @@ public sealed class UIContextMenuItemRow : MonoBehaviour, IPointerEnterHandler, 
             _label.overflowMode = TextOverflowModes.Ellipsis;
 
             string text = entry?.Label ?? "";
-            if (!_interactable && !string.IsNullOrEmpty(disabledReason))
+            if (!_interactable && !string.IsNullOrWhiteSpace(disabledReason))
                 text = $"{text} — {disabledReason}";
             _label.text = text;
             _label.color = _interactable ? Color.white : new Color(0.65f, 0.65f, 0.65f, 1f);
+        }
+
+        if (_icon != null)
+        {
+            bool showIcon = entry != null && entry.Icon != null;
+            _icon.gameObject.SetActive(showIcon);
+            if (showIcon)
+            {
+                _icon.enabled = true;
+                _icon.sprite = entry.Icon;
+                Color iconColor = Color.white;
+                iconColor.a = _interactable ? 1f : ContextMenuStyle.RowIconDisabledAlpha;
+                _icon.color = iconColor;
+            }
         }
 
         if (_chevron != null)
@@ -74,11 +89,16 @@ public sealed class UIContextMenuItemRow : MonoBehaviour, IPointerEnterHandler, 
         if (_label != null && !string.IsNullOrEmpty(_label.text))
             labelW = _label.GetPreferredValues(_label.text).x;
 
+        float iconW = 0f;
+        if (_icon != null && _icon.gameObject.activeSelf)
+            iconW = ContextMenuStyle.RowIconSize + ContextMenuStyle.RowIconLabelGap;
+
         float chevronW = 0f;
         if (_chevron != null && _chevron.gameObject.activeSelf)
             chevronW = ContextMenuStyle.ChevronWidth + ContextMenuStyle.RowLabelChevronGap;
 
         return ContextMenuStyle.RowPaddingLeft
+            + iconW
             + labelW
             + chevronW
             + ContextMenuStyle.RowPaddingRight;

@@ -16,6 +16,7 @@
 | UI MVC / font | [`ui/UI_Scripts.md`](ui/UI_Scripts.md) | `ui-prefab-layout.mdc` · `ui-font.mdc` |
 | UI hover placement | [`ui/HOVER.md`](ui/HOVER.md) | (ContextMenu asm · keep-in-bounds) |
 | Message log HUD | [`ui/MESSAGE_LOG.md`](ui/MESSAGE_LOG.md) | (UI 레이아웃·폰트 룰 공유) |
+| Crafting window | [`crafting/CRAFTING.md`](crafting/CRAFTING.md) | (창 vs 아이템 메뉴 · 재료 풀 · 대체재 드롭) |
 | Locomotion | [`locomotion/LOCOMOTION.md`](locomotion/LOCOMOTION.md) | `locomotion.mdc` |
 | Legacy | [`legacy/LEGACY_README.md`](legacy/LEGACY_README.md) | `legacy.mdc` |
 

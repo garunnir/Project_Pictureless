@@ -21,6 +21,8 @@ internal static class DistMcpMenus
         Root + "/Inventory/Patch Row Name Status Bar";
     public const string InventorySetupCanvasOverlays =
         Root + "/Inventory/Setup Canvas Overlays In Open Scene";
+    public const string ContextMenuPatchRowIcons =
+        Root + "/ContextMenu/Patch Row Icons";
 
     public const string PlayerStatusEnsureMoodAssets =
         Root + "/PlayerStatus/Ensure Mood Assets";
@@ -55,5 +57,14 @@ internal static class DistMcpMenus
 
     public const string LocalizationSelectOrCreateUiKo =
         Root + "/Localization/Select Or Create UI_ko Table";
+
+    public const string CraftingSetupCanvas =
+        Root + "/Crafting/Setup Canvas In Open Scene";
+    public const string CraftingMergeLocalizationKeys =
+        Root + "/Crafting/Merge Localization Keys Into UI_ko";
+    public const string CraftingPatchDetailFooter =
+        Root + "/Crafting/Patch Detail Outputs And Footer";
+    public const string CraftingPatchIngredientGrid =
+        Root + "/Crafting/Patch Ingredient Grid";
 }
 #endif

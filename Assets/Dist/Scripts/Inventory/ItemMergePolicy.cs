@@ -48,10 +48,13 @@ public static class ItemMergePolicy
             if (have.HasMagazine || incoming.HasMagazine)
                 return false;
             return have.ChamberRounds == incoming.ChamberRounds
-                && string.Equals(have.ChamberAmmoId, incoming.ChamberAmmoId, StringComparison.Ordinal);
+                && string.Equals(have.ChamberAmmoId, incoming.ChamberAmmoId, StringComparison.Ordinal)
+                && have.ToolCharges == incoming.ToolCharges;
         }
 
-        return SameKind(have, incoming) && have.DamageLevel == incoming.DamageLevel;
+        return SameKind(have, incoming)
+            && have.DamageLevel == incoming.DamageLevel
+            && have.ToolCharges == incoming.ToolCharges;
     }
 
     static bool SameKind(ItemMergeKey a, ItemMergeKey b) =>

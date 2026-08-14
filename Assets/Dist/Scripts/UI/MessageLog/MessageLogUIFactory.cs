@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public static class MessageLogUIFactory
 {
-    public const string DefaultUIFontPath = "Assets/Dist/Scripts/UI/Font/Katuri SDF.asset";
+    public const string DefaultUIFontPath = "Assets/Dist/Scripts/UI/Font/Galmuri-v2.40.3/Galmuri7 SDF.asset";
 
     public static readonly Vector2 PanelSize = new(420f, 120f);
     public static readonly Vector2 AnchoredPosition = new(12f, 12f);

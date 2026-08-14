@@ -14,13 +14,13 @@ Dist UI TMP·UI 프리팹·인벤 Editor 빌더/패치.
 |------|--------|
 | Language + fonts | `LocalizationBundle` (`Assets/Dist/Resources/Localization/LocalizationBundle.asset`) |
 | Runtime apply | `DistUiFont.Get` / `Apply` (reads active language font) |
-| Default ko/en glyph | `Assets/Dist/Scripts/UI/Font/Katuri SDF.asset` |
+| Default ko/en glyph | `Assets/Dist/Scripts/UI/Font/Galmuri-v2.40.3/Galmuri7 SDF.asset` |
 | Builder const | `InventoryUIHierarchyBuilder.DefaultUIFontPath` |
 
 Docs: `docs/ui/UI_Scripts.md` §Font · `docs/inventory/ITEM_NAMES.md`
 
 ## MUST
-- 신규/수정 프리팹·Instantiate 라벨·Editor 빌더 TMP `font` = Bundle 활성 폰트 또는 **Katuri SDF** (ko 기본)
+- 신규/수정 프리팹·Instantiate 라벨·Editor 빌더 TMP `font` = Bundle 활성 폰트 또는 **Galmuri7 SDF** (ko 기본)
 - 언어별 폰트 변경은 `LocalizationBundle` Inspector만 (Definitions에 인라인 두지 않음)
 - 한글 깨짐 → Liberation Sans / font null / Bundle 미할당 여부 먼저 확인
 

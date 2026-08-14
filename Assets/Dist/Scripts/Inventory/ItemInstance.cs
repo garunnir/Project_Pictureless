@@ -1,5 +1,5 @@
 // ============================================================
-// ItemInstance — 스택과 별개의 아이템 개체 (uid·선택 액션·약실)
+// ItemInstance — 스택과 별개의 아이템 개체 (uid·선택 액션·약실·공구 충전)
 // ============================================================
 
 using System;
@@ -29,6 +29,9 @@ public sealed class ItemInstance
     /// <summary>메거진 아이템의 보급 잔여. 약실이 아님.</summary>
     public int SupplyRounds { get; private set; }
 
+    /// <summary>공구 충전 잔여. tool이 없으면 0.</summary>
+    public int ToolCharges { get; private set; }
+
     public ItemInstance(ItemData item, int damageLevel = 0)
     {
         Item = item ?? throw new ArgumentNullException(nameof(item));
@@ -38,6 +41,7 @@ public sealed class ItemInstance
         ChamberRounds = 0;
         ChamberAmmoId = null;
         SupplyRounds = 0;
+        ToolCharges = item.tool != null ? Math.Max(0, item.tool.initial_charges) : 0;
     }
 
     public void SetChamberRounds(int rounds)
@@ -75,6 +79,17 @@ public sealed class ItemInstance
         if (SupplyRounds <= 0)
             return false;
         SupplyRounds--;
+        return true;
+    }
+
+    public void SetToolCharges(int charges) =>
+        ToolCharges = Math.Max(0, charges);
+
+    public bool TryConsumeToolCharges(int amount)
+    {
+        if (amount <= 0 || ToolCharges < amount)
+            return false;
+        ToolCharges -= amount;
         return true;
     }
 }

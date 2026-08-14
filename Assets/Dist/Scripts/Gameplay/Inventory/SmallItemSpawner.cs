@@ -5,9 +5,37 @@
 using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public static class SmallItemSpawner
 {
+    public const string WorldMapRootName = "Map";
+    public const string WorldItemsFolderName = "Items";
+
+    public static Transform TryResolveWorldRoot()
+    {
+        Transform map = FindSceneRoot(WorldMapRootName);
+        return map != null ? map.Find(WorldItemsFolderName) : null;
+    }
+
+    public static Transform ResolveWorldRoot()
+    {
+        Transform existing = TryResolveWorldRoot();
+        if (existing != null)
+            return existing;
+
+        Transform map = FindSceneRoot(WorldMapRootName);
+        if (map == null)
+        {
+            var mapGo = new GameObject(WorldMapRootName);
+            map = mapGo.transform;
+        }
+
+        var itemsGo = new GameObject(WorldItemsFolderName);
+        itemsGo.transform.SetParent(map, false);
+        return itemsGo.transform;
+    }
+
     public static SmallItemObject Spawn(
         SmallItemObject prefab,
         ItemData definition,
@@ -73,9 +101,10 @@ public static class SmallItemSpawner
         if (wasActive)
             template.SetActive(false);
 
-        SmallItemObject instance = parent != null
-            ? Object.Instantiate(prefab, worldPosition, rotation, parent)
-            : Object.Instantiate(prefab, worldPosition, rotation);
+        if (parent == null)
+            parent = ResolveWorldRoot();
+
+        SmallItemObject instance = Object.Instantiate(prefab, worldPosition, rotation, parent);
 
         if (wasActive)
             template.SetActive(true);
@@ -113,5 +142,22 @@ public static class SmallItemSpawner
             instance.BindWorldGrid(worldGrid);
 
         instance.gameObject.SetActive(true);
+    }
+
+    static Transform FindSceneRoot(string name)
+    {
+        Scene scene = SceneManager.GetActiveScene();
+        if (!scene.IsValid() || !scene.isLoaded)
+            return null;
+
+        GameObject[] roots = scene.GetRootGameObjects();
+        for (int i = 0; i < roots.Length; i++)
+        {
+            GameObject root = roots[i];
+            if (root != null && root.name == name)
+                return root.transform;
+        }
+
+        return null;
     }
 }

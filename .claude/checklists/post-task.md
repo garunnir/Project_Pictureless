@@ -30,4 +30,7 @@ Before reporting completion, verify ALL of the following:
 - [ ] `.claude/checklists/dist-ui-gate.md` 통과 (`ui-font` · `ui-prefab-layout`)
 - [ ] 검증 에이전트를 쓰면 Fail 시 Incomplete
 
+## Scene — if this task dirtied an open Unity scene
+- [ ] Saved (`manage_scene save` / `SaveOpenScenes`). MarkSceneDirty-only is not done
+
 If any item fails → fix it before reporting done.

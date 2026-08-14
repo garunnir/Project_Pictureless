@@ -16,19 +16,22 @@ public readonly struct ItemMergeKey
     public readonly int ChamberRounds;
     public readonly string ChamberAmmoId;
     public readonly bool HasMagazine;
+    public readonly int ToolCharges;
 
     public ItemMergeKey(
         string kindId,
         int damageLevel,
         int chamberRounds,
         bool hasMagazine,
-        string chamberAmmoId = null)
+        string chamberAmmoId = null,
+        int toolCharges = 0)
     {
         KindId = kindId ?? string.Empty;
         DamageLevel = Math.Max(0, damageLevel);
         ChamberRounds = Math.Max(0, chamberRounds);
         ChamberAmmoId = chamberAmmoId ?? string.Empty;
         HasMagazine = hasMagazine;
+        ToolCharges = Math.Max(0, toolCharges);
     }
 
     public static ItemMergeKey From(ItemStack stack)
@@ -42,16 +45,22 @@ public readonly struct ItemMergeKey
             instance.DamageLevel,
             instance.ChamberRounds,
             HasMagazineShallow(stack),
-            instance.ChamberAmmoId);
+            instance.ChamberAmmoId,
+            instance.ToolCharges);
     }
 
     public static ItemMergeKey From(ItemData item, int damageLevel)
     {
+        int toolCharges = 0;
+        if (item?.tool != null)
+            toolCharges = Math.Max(0, item.tool.initial_charges);
+
         return new ItemMergeKey(
             item != null ? item.id : string.Empty,
             damageLevel,
             chamberRounds: 0,
-            hasMagazine: false);
+            hasMagazine: false,
+            toolCharges: toolCharges);
     }
 
     static bool HasMagazineShallow(ItemStack stack)

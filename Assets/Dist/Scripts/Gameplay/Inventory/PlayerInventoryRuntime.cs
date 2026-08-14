@@ -2,6 +2,7 @@
 // PlayerInventoryRuntime — Session·Detector 소유 (게임플레이 진입점)
 // ============================================================
 
+using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -18,6 +19,7 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
 
     InventorySession _session;
     bool _inventoryContextActive;
+    readonly HashSet<object> _contextOwners = new();
 
     public InventorySession Session => _session;
     public PlayerInventoryHost Host => _host;
@@ -65,7 +67,31 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
         if (!_detector) TryGetComponent(out _detector);
     }
 
-    public void BeginInventoryContext()
+    public void AcquireContext(object owner)
+    {
+        if (owner == null || _session == null)
+            return;
+
+        if (!_contextOwners.Add(owner))
+            return;
+
+        if (_contextOwners.Count == 1)
+            BeginInventoryContext();
+    }
+
+    public void ReleaseContext(object owner)
+    {
+        if (owner == null)
+            return;
+
+        if (!_contextOwners.Remove(owner))
+            return;
+
+        if (_contextOwners.Count == 0)
+            EndInventoryContext();
+    }
+
+    void BeginInventoryContext()
     {
         if (_inventoryContextActive || _session == null)
             return;
@@ -76,8 +102,10 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
         _inventoryContextActive = true;
     }
 
-    public void EndInventoryContext()
+    void EndInventoryContext()
     {
+        _contextOwners.Clear();
+
         if (!_inventoryContextActive || _session == null)
             return;
 

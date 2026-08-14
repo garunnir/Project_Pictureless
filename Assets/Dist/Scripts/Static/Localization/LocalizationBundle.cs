@@ -70,7 +70,7 @@ public sealed class LocalizationBundle : ScriptableObject
         if (language == DisplayLanguage.Ja && _fontKo != null)
         {
             Debug.LogWarning(
-                "[LocalizationBundle] ja font unset; falling back to ko (Katuri). Glyphs may tofu.");
+                "[LocalizationBundle] ja font unset; falling back to ko (Galmuri7). Glyphs may tofu.");
             return _fontKo;
         }
 

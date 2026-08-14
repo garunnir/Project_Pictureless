@@ -23,107 +23,92 @@ public static class CraftingService
 
     public static bool CanCraft(RecipeData recipe, InventoryContainer container)
     {
-        if (recipe == null || container == null || string.IsNullOrEmpty(recipe.result))
+        if (container == null)
             return false;
 
-        // skill_used/difficulty 게이팅
-        if (!string.IsNullOrEmpty(recipe.skill_used))
-        {
-            int lv = GameplayData.Stats.GetSkillLevel(recipe.skill_used);
-            if (lv < recipe.difficulty)
-                return false;
-        }
+        return CanCraft(recipe, new CraftingMaterialPool(new[] { container }));
+    }
 
-        // qualities_required 게이팅
-        if (recipe.qualities_required != null && recipe.qualities_required.Count > 0)
+    public static bool CanCraft(RecipeData recipe, CraftingMaterialPool pool)
+    {
+        return CanCraft(recipe, pool, null, null);
+    }
+
+    public static bool CanCraft(
+        RecipeData recipe,
+        CraftingMaterialPool pool,
+        IReadOnlyList<int> componentAltIndices,
+        IReadOnlyList<int> toolAltIndices)
+    {
+        if (recipe == null || pool == null || string.IsNullOrEmpty(recipe.result))
+            return false;
+
+        if (!MeetsSkillRequirements(recipe))
+            return false;
+
+        if (!MeetsQualities(recipe, pool))
+            return false;
+
+        if (!MeetsToolSlots(recipe, pool, toolAltIndices))
+            return false;
+
+        return MeetsComponentSlots(recipe, pool, componentAltIndices);
+    }
+
+    public static int GetMaxCraftCount(
+        RecipeData recipe,
+        CraftingMaterialPool pool,
+        IReadOnlyList<int> componentAltIndices,
+        IReadOnlyList<int> toolAltIndices,
+        int cap)
+    {
+        if (cap <= 0 || !CanCraft(recipe, pool, componentAltIndices, toolAltIndices))
+            return 0;
+
+        int max = cap;
+        if (recipe.components != null)
         {
-            foreach (QualityEntry required in recipe.qualities_required)
+            for (int i = 0; i < recipe.components.Count; i++)
             {
-                if (required == null || string.IsNullOrEmpty(required.id))
+                if (!TryPickComponentAlt(
+                        recipe.components[i],
+                        pool,
+                        componentAltIndices,
+                        i,
+                        out ComponentAlt alt))
+                    return 0;
+
+                if (alt.count <= 0)
                     continue;
 
-                bool found = false;
-                for (int s = 0; s < container.Stacks.Count && !found; s++)
-                {
-                    ItemStack stack = container.Stacks[s];
-                    ItemData item = stack?.Item;
-                    if (item == null || item.qualities == null)
-                        continue;
-
-                    for (int q = 0; q < item.qualities.Count; q++)
-                    {
-                        QualityEntry got = item.qualities[q];
-                        if (got == null || got.id != required.id)
-                            continue;
-                        if (got.level >= required.level)
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!found)
-                    return false;
+                int crafts = pool.CountItem(alt.item) / alt.count;
+                if (crafts < max)
+                    max = crafts;
             }
         }
 
-        // tools 슬롯 게이팅(충전/소비는 미구현 → 존재 여부만 검사)
-        if (recipe.tools != null && recipe.tools.Count > 0)
+        if (recipe.tools != null)
         {
-            foreach (ToolSlot slot in recipe.tools)
+            for (int i = 0; i < recipe.tools.Count; i++)
             {
-                if (slot == null || slot.alternatives == null || slot.alternatives.Count == 0)
-                    return false;
+                if (!TryPickToolAlt(
+                        recipe.tools[i],
+                        pool,
+                        toolAltIndices,
+                        i,
+                        out ToolAlt alt))
+                    return 0;
 
-                bool slotSatisfied = false;
-                for (int j = 0; j < slot.alternatives.Count; j++)
-                {
-                    ToolAlt alt = slot.alternatives[j];
-                    if (alt == null || string.IsNullOrEmpty(alt.tool))
-                        continue;
-
-                    if (container.CountItem(alt.tool) > 0)
-                    {
-                        slotSatisfied = true;
-                        break;
-                    }
-                }
-
-                if (!slotSatisfied)
-                    return false;
-            }
-        }
-
-        // components는 마지막에 검사(없으면 tool/quality/skill만으로 제작 가능)
-        if (recipe.components == null || recipe.components.Count == 0)
-            return true;
-
-        for (int i = 0; i < recipe.components.Count; i++)
-        {
-            ComponentSlot slot = recipe.components[i];
-            if (slot == null || slot.alternatives == null || slot.alternatives.Count == 0)
-                return false;
-
-            bool slotSatisfied = false;
-            for (int j = 0; j < slot.alternatives.Count; j++)
-            {
-                ComponentAlt alt = slot.alternatives[j];
-                if (alt == null || string.IsNullOrEmpty(alt.item))
+                if (alt.charges <= 0)
                     continue;
 
-                if (container.CountItem(alt.item) >= alt.count)
-                {
-                    slotSatisfied = true;
-                    break;
-                }
+                int crafts = pool.CountToolCharges(alt.tool) / alt.charges;
+                if (crafts < max)
+                    max = crafts;
             }
-
-            if (!slotSatisfied)
-                return false;
         }
 
-        return true;
+        return max < 0 ? 0 : max;
     }
 
     public static bool TryCraft(
@@ -131,38 +116,97 @@ public static class CraftingService
         InventoryContainer container,
         InventorySession session)
     {
-        if (!CanCraft(recipe, container))
+        if (container == null)
             return false;
 
-        // Consume components (tools/qualities consumption은 미구현)
+        return TryCraft(recipe, new CraftingMaterialPool(new[] { container }), session, null, null);
+    }
+
+    public static bool TryCraft(
+        RecipeData recipe,
+        CraftingMaterialPool pool,
+        InventorySession session,
+        IReadOnlyList<int> componentAltIndices,
+        IReadOnlyList<int> toolAltIndices)
+    {
+        if (!TryCraftCore(recipe, pool, componentAltIndices, toolAltIndices))
+            return false;
+
+        NotifyPoolSourcesChanged(session, pool);
+        return true;
+    }
+
+    public static int TryCraftMany(
+        RecipeData recipe,
+        CraftingMaterialPool pool,
+        InventorySession session,
+        IReadOnlyList<int> componentAltIndices,
+        IReadOnlyList<int> toolAltIndices,
+        int count)
+    {
+        if (count <= 0)
+            return 0;
+
+        int done = 0;
+        for (int i = 0; i < count; i++)
+        {
+            if (!TryCraftCore(recipe, pool, componentAltIndices, toolAltIndices))
+                break;
+            done++;
+        }
+
+        if (done > 0)
+            NotifyPoolSourcesChanged(session, pool);
+
+        return done;
+    }
+
+    static bool TryCraftCore(
+        RecipeData recipe,
+        CraftingMaterialPool pool,
+        IReadOnlyList<int> componentAltIndices,
+        IReadOnlyList<int> toolAltIndices)
+    {
+        if (!CanCraft(recipe, pool, componentAltIndices, toolAltIndices))
+            return false;
+
         if (recipe.components != null)
         {
             for (int i = 0; i < recipe.components.Count; i++)
             {
-                ComponentSlot slot = recipe.components[i];
-                if (slot == null || slot.alternatives == null)
-                    continue;
+                if (!TryPickComponentAlt(
+                        recipe.components[i],
+                        pool,
+                        componentAltIndices,
+                        i,
+                        out ComponentAlt alt))
+                    return false;
 
-                for (int j = 0; j < slot.alternatives.Count; j++)
-                {
-                    ComponentAlt alt = slot.alternatives[j];
-                    if (alt == null || string.IsNullOrEmpty(alt.item))
-                        continue;
-
-                    if (container.CountItem(alt.item) >= alt.count)
-                    {
-                        container.RemoveItem(alt.item, alt.count);
-                        break;
-                    }
-                }
+                if (alt.count > 0 && !pool.TryRemoveItem(alt.item, alt.count))
+                    return false;
             }
         }
 
-        // Result
-        int resultCount = recipe.result_count > 0 ? recipe.result_count : 1;
-        container.AddItem(recipe.result, resultCount);
+        if (recipe.tools != null)
+        {
+            for (int i = 0; i < recipe.tools.Count; i++)
+            {
+                if (!TryPickToolAlt(
+                        recipe.tools[i],
+                        pool,
+                        toolAltIndices,
+                        i,
+                        out ToolAlt alt))
+                    return false;
 
-        // Byproducts (BN의 byproducts)
+                if (alt.charges > 0 && !pool.TryConsumeToolCharges(alt.tool, alt.charges))
+                    return false;
+            }
+        }
+
+        int resultCount = recipe.result_count > 0 ? recipe.result_count : 1;
+        pool.TryAddResult(recipe.result, resultCount);
+
         if (recipe.byproducts != null && recipe.byproducts.Count > 0)
         {
             for (int i = 0; i < recipe.byproducts.Count; i++)
@@ -170,20 +214,16 @@ public static class CraftingService
                 Byproduct bp = recipe.byproducts[i];
                 if (bp == null || string.IsNullOrEmpty(bp.item) || bp.count <= 0)
                     continue;
-                container.AddItem(bp.item, bp.count);
+                pool.TryAddResult(bp.item, bp.count);
             }
         }
 
-        // Practice gain
         if (!string.IsNullOrEmpty(recipe.skill_used))
         {
-            // BN은 난이도/시간/배치에 따라 연습량을 정규화하지만,
-            // 현재 시스템에서는 난이도 기반의 단순 스케일로 시작한다.
             int practiceXp = recipe.difficulty * PracticeDifficultyMultiplier + PracticeDifficultyBonus;
             GameplayData.Stats.AddPractice(recipe.skill_used, practiceXp);
         }
 
-        session?.NotifyExternalStacksChanged(container);
         return true;
     }
 
@@ -304,6 +344,235 @@ public static class CraftingService
 
         session?.NotifyExternalStacksChanged(container);
         return true;
+    }
+
+    static bool MeetsSkillRequirements(RecipeData recipe)
+    {
+        if (!string.IsNullOrEmpty(recipe.skill_used))
+        {
+            int lv = GameplayData.Stats.GetSkillLevel(recipe.skill_used);
+            if (lv < recipe.difficulty)
+                return false;
+        }
+
+        if (recipe.skills_required == null || recipe.skills_required.Count == 0)
+            return true;
+
+        for (int i = 0; i < recipe.skills_required.Count; i++)
+        {
+            SkillReq req = recipe.skills_required[i];
+            if (req == null || string.IsNullOrEmpty(req.skill))
+                continue;
+
+            if (GameplayData.Stats.GetSkillLevel(req.skill) < req.level)
+                return false;
+        }
+
+        return true;
+    }
+
+    static bool MeetsQualities(RecipeData recipe, CraftingMaterialPool pool)
+    {
+        if (recipe.qualities_required == null || recipe.qualities_required.Count == 0)
+            return true;
+
+        IReadOnlyList<InventoryContainer> sources = pool.Sources;
+        for (int q = 0; q < recipe.qualities_required.Count; q++)
+        {
+            QualityEntry required = recipe.qualities_required[q];
+            if (required == null || string.IsNullOrEmpty(required.id))
+                continue;
+
+            bool found = false;
+            for (int c = 0; c < sources.Count && !found; c++)
+            {
+                IReadOnlyList<ItemStack> stacks = sources[c].Stacks;
+                for (int s = 0; s < stacks.Count && !found; s++)
+                {
+                    ItemData item = stacks[s]?.Item;
+                    if (item?.qualities == null)
+                        continue;
+
+                    for (int qi = 0; qi < item.qualities.Count; qi++)
+                    {
+                        QualityEntry got = item.qualities[qi];
+                        if (got == null || got.id != required.id)
+                            continue;
+                        if (got.level >= required.level)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!found)
+                return false;
+        }
+
+        return true;
+    }
+
+    static bool MeetsComponentSlots(
+        RecipeData recipe,
+        CraftingMaterialPool pool,
+        IReadOnlyList<int> componentAltIndices)
+    {
+        if (recipe.components == null || recipe.components.Count == 0)
+            return true;
+
+        for (int i = 0; i < recipe.components.Count; i++)
+        {
+            if (!TryPickComponentAlt(recipe.components[i], pool, componentAltIndices, i, out _))
+                return false;
+        }
+
+        return true;
+    }
+
+    static bool MeetsToolSlots(
+        RecipeData recipe,
+        CraftingMaterialPool pool,
+        IReadOnlyList<int> toolAltIndices)
+    {
+        if (recipe.tools == null || recipe.tools.Count == 0)
+            return true;
+
+        for (int i = 0; i < recipe.tools.Count; i++)
+        {
+            if (!TryPickToolAlt(recipe.tools[i], pool, toolAltIndices, i, out _))
+                return false;
+        }
+
+        return true;
+    }
+
+    static bool TryPickComponentAlt(
+        ComponentSlot slot,
+        CraftingMaterialPool pool,
+        IReadOnlyList<int> indices,
+        int slotIndex,
+        out ComponentAlt chosen)
+    {
+        chosen = null;
+        if (slot == null || slot.alternatives == null || slot.alternatives.Count == 0)
+            return false;
+
+        if (TryGetForcedIndex(indices, slotIndex, out int forcedIndex))
+        {
+            if (forcedIndex < 0 || forcedIndex >= slot.alternatives.Count)
+                return false;
+
+            ComponentAlt alt = slot.alternatives[forcedIndex];
+            if (!IsComponentAltSatisfied(alt, pool))
+                return false;
+
+            chosen = alt;
+            return true;
+        }
+
+        for (int j = 0; j < slot.alternatives.Count; j++)
+        {
+            ComponentAlt alt = slot.alternatives[j];
+            if (!IsComponentAltSatisfied(alt, pool))
+                continue;
+
+            chosen = alt;
+            return true;
+        }
+
+        return false;
+    }
+
+    static bool TryPickToolAlt(
+        ToolSlot slot,
+        CraftingMaterialPool pool,
+        IReadOnlyList<int> indices,
+        int slotIndex,
+        out ToolAlt chosen)
+    {
+        chosen = null;
+        if (slot == null || slot.alternatives == null || slot.alternatives.Count == 0)
+            return false;
+
+        if (TryGetForcedIndex(indices, slotIndex, out int forcedIndex))
+        {
+            if (forcedIndex < 0 || forcedIndex >= slot.alternatives.Count)
+                return false;
+
+            ToolAlt alt = slot.alternatives[forcedIndex];
+            if (!IsToolAltSatisfied(alt, pool))
+                return false;
+
+            chosen = alt;
+            return true;
+        }
+
+        for (int j = 0; j < slot.alternatives.Count; j++)
+        {
+            ToolAlt alt = slot.alternatives[j];
+            if (!IsToolAltSatisfied(alt, pool))
+                continue;
+
+            chosen = alt;
+            return true;
+        }
+
+        return false;
+    }
+
+    static bool IsComponentAltSatisfied(ComponentAlt alt, CraftingMaterialPool pool)
+    {
+        if (alt == null || string.IsNullOrEmpty(alt.item))
+            return false;
+
+        return pool.CountItem(alt.item) >= alt.count;
+    }
+
+    static bool IsToolAltSatisfied(ToolAlt alt, CraftingMaterialPool pool)
+    {
+        if (alt == null || string.IsNullOrEmpty(alt.tool))
+            return false;
+
+        if (pool.CountItem(alt.tool) <= 0)
+            return false;
+
+        if (alt.charges > 0)
+            return pool.CountToolCharges(alt.tool) >= alt.charges;
+
+        return true;
+    }
+
+    static bool TryGetForcedIndex(IReadOnlyList<int> indices, int slotIndex, out int forcedIndex)
+    {
+        if (indices != null && indices.Count > 0 && slotIndex < indices.Count)
+        {
+            forcedIndex = indices[slotIndex];
+            return true;
+        }
+
+        forcedIndex = -1;
+        return false;
+    }
+
+    static void NotifyPoolSourcesChanged(InventorySession session, CraftingMaterialPool pool)
+    {
+        if (session == null || pool == null)
+            return;
+
+        IReadOnlyList<InventoryContainer> sources = pool.Sources;
+        if (sources.Count == 0)
+        {
+            session.NotifyExternalStacksChanged();
+            return;
+        }
+
+        var changed = new InventoryContainer[sources.Count];
+        for (int i = 0; i < sources.Count; i++)
+            changed[i] = sources[i];
+
+        session.NotifyExternalStacksChanged(changed);
     }
 
     static int Dice(int diceCount, int diceSides)

@@ -102,7 +102,7 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 
 레이아웃 Rect·폰트 크기는 프리팹 SSOT (`MessageLogUIFactory` 초기값 / 손수 조정). 런타임 덮어쓰기 금지.
 
-폰트: `Katuri SDF`.
+폰트: `Galmuri7 SDF` (`DistUiFont` / `MessageLogUIFactory.DefaultUIFontPath`).
 
 ---
 

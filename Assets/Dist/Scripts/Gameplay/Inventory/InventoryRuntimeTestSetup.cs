@@ -36,6 +36,7 @@ public sealed class InventoryRuntimeTestSetup : MonoBehaviour
     [Title("Floor Small Items")]
     [SerializeField] bool _spawnSmallItemsOnStart = true;
     [Required, SerializeField] SmallItemObject _smallItemPrefab;
+    [Tooltip("비우면 Map/Items SSOT. 자기 자신은 무시한다.")]
     [SerializeField] Transform _smallItemSpawnRoot;
     [SerializeField] List<SmallItemSpawnEntry> _smallItemSpawns = new();
 
@@ -46,7 +47,7 @@ public sealed class InventoryRuntimeTestSetup : MonoBehaviour
 
     void Reset()
     {
-        _smallItemSpawnRoot = transform;
+        _smallItemSpawnRoot = null;
         if (_smallItemSpawns.Count == 0)
         {
             _smallItemSpawns.Add(new SmallItemSpawnEntry
@@ -137,7 +138,13 @@ public sealed class InventoryRuntimeTestSetup : MonoBehaviour
         if (_smallItemSpawns.Count == 0)
             return;
 
-        Transform root = _smallItemSpawnRoot != null ? _smallItemSpawnRoot : transform;
+        Transform root = ResolveSpawnRoot(createIfMissing: true);
+        if (root == null)
+        {
+            Debug.LogWarning("[InventoryRuntimeTestSetup] World item root Map/Items is missing.", this);
+            return;
+        }
+
         IWorldGrid worldGrid = ResolveWorldGrid();
 
         int spawnedCount = 0;
@@ -184,10 +191,23 @@ public sealed class InventoryRuntimeTestSetup : MonoBehaviour
         return tileMapManager != null ? tileMapManager.WorldGrid : null;
     }
 
+    Transform ResolveSpawnRoot(bool createIfMissing)
+    {
+        if (_smallItemSpawnRoot != null && _smallItemSpawnRoot != transform)
+            return _smallItemSpawnRoot;
+
+        return createIfMissing
+            ? SmallItemSpawner.ResolveWorldRoot()
+            : SmallItemSpawner.TryResolveWorldRoot();
+    }
+
 #if UNITY_EDITOR
     void OnDrawGizmosSelected()
     {
-        Transform root = _smallItemSpawnRoot != null ? _smallItemSpawnRoot : transform;
+        Transform root = ResolveSpawnRoot(createIfMissing: false);
+        if (root == null)
+            return;
+
         Gizmos.color = new Color(0.4f, 0.85f, 1f, 0.9f);
 
         for (int i = 0; i < _smallItemSpawns.Count; i++)

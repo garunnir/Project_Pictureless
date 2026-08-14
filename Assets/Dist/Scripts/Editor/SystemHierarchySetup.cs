@@ -13,6 +13,7 @@ static class SystemHierarchySetup
     public const string Inventory = "Inventory";
     public const string Combat = "Combat";
     public const string Msg = "Msg";
+    public const string Crafting = "Crafting";
 
     public static Transform ResolveSystemRoot()
     {

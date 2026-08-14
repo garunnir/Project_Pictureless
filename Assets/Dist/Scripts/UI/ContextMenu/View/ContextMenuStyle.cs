@@ -20,6 +20,9 @@ public static class ContextMenuStyle
     public const float RowPaddingLeft = 6f;
     public const float RowPaddingRight = 4f;
     public const float RowLabelChevronGap = 4f;
+    public const float RowIconSize = 18f;
+    public const float RowIconLabelGap = 4f;
+    public const float RowIconDisabledAlpha = 0.4f;
     public const float SubmenuGap = 2f;
     public const float CloseDelaySeconds = 0.25f;
     public const int FontSize = 14;

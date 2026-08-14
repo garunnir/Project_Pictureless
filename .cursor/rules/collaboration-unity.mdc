@@ -26,5 +26,16 @@ Burst Jobs: managed alloc 금지. 미검증 시 `Unverified` + 가정 + 검증�
 ## Prefab layout / font
 UI chrome·TMP: `ui-prefab-layout.mdc`, `ui-font.mdc` (해당 glob).
 
+## Scene save (MUST)
+열린 씬을 Setup/MCP/계층 배선으로 dirty 만들면 **완료 전에 저장**.  
+`EditorSceneManager.MarkSceneDirty`만 하고 끝내지 않음.
+
+| How | Call |
+|-----|------|
+| Unity MCP | `manage_scene(action="save")` — 열린 `.unity` |
+| Editor 메뉴 | `EditorSceneManager.SaveOpenScenes()` (MarkDirty 직후) |
+
+Play 중이면 저장하지 않고, Play 종료 후 저장하거나 사용자에게 알린다.
+
 ## Pre-impl checklist
 Rule 1→5 (+2/6 if applicable). 외부 참조·Inspector 없는 단일 파일은 짧은 산문 OK.

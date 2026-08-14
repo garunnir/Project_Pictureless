@@ -654,7 +654,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
             return;
 
         BindRuntime(runtime);
-        runtime.BeginInventoryContext();
+        runtime.AcquireContext(this);
     }
 
     void TryEndInventoryContext()
@@ -662,7 +662,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         if (IsAnyWindowOpen)
             return;
 
-        _activeRuntime?.EndInventoryContext();
+        _activeRuntime?.ReleaseContext(this);
         UnbindRuntime();
     }
 

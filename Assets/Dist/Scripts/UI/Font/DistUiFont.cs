@@ -10,13 +10,13 @@ using UnityEngine;
 /// </summary>
 public static class DistUiFont
 {
-    public const string AssetPath = "Assets/Dist/Scripts/UI/Font/Katuri SDF.asset";
+    public const string AssetPath = "Assets/Dist/Scripts/UI/Font/Galmuri-v2.40.3/Galmuri7 SDF.asset";
 
-    /// <summary>Resources.Load 보조 키 (빌드용). Font 폴더에 Resources 복제가 있을 때만.</summary>
-    public const string ResourcesKey = "Katuri SDF";
+    /// <summary>Resources.Load 보조 키 (빌드용). Font 폴더에 Resources 복제가 있을 때만. Bundle이 런타임 SSOT.</summary>
+    public const string ResourcesKey = "Galmuri7 SDF";
 
-    static TMP_FontAsset _katuriFallback;
-    static bool _warnedMissingKaturi;
+    static TMP_FontAsset _defaultFallback;
+    static bool _warnedMissingDefault;
 
     public static TMP_FontAsset Get()
     {
@@ -28,7 +28,7 @@ public static class DistUiFont
                 return fromBundle;
         }
 
-        return GetKaturiFallback();
+        return GetDefaultFallback();
     }
 
     public static TMP_FontAsset GetFor(DisplayLanguage language)
@@ -41,28 +41,28 @@ public static class DistUiFont
                 return fromBundle;
         }
 
-        return GetKaturiFallback();
+        return GetDefaultFallback();
     }
 
-    static TMP_FontAsset GetKaturiFallback()
+    static TMP_FontAsset GetDefaultFallback()
     {
-        if (_katuriFallback != null)
-            return _katuriFallback;
+        if (_defaultFallback != null)
+            return _defaultFallback;
 
 #if UNITY_EDITOR
-        _katuriFallback = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(AssetPath);
+        _defaultFallback = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(AssetPath);
 #endif
-        if (_katuriFallback == null)
-            _katuriFallback = Resources.Load<TMP_FontAsset>(ResourcesKey);
+        if (_defaultFallback == null)
+            _defaultFallback = Resources.Load<TMP_FontAsset>(ResourcesKey);
 
-        if (_katuriFallback == null && !_warnedMissingKaturi)
+        if (_defaultFallback == null && !_warnedMissingDefault)
         {
-            _warnedMissingKaturi = true;
+            _warnedMissingDefault = true;
             Debug.LogError(
-                $"[DistUiFont] Katuri SDF missing. Assign LocalizationBundle fonts or '{AssetPath}'.");
+                $"[DistUiFont] Galmuri7 SDF missing. Assign LocalizationBundle fonts or '{AssetPath}'.");
         }
 
-        return _katuriFallback;
+        return _defaultFallback;
     }
 
     public static void Apply(TMP_Text text)

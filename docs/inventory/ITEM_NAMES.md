@@ -42,7 +42,7 @@ Default active language: **`ko`**.
 - Do not mass-edit `item_names.json` by hand when Definitions/convert can do it.
 - Do not use English msgid as runtime key; do not copy `ko.po`/`ja.po` into StreamingAssets.
 - Do not merge BN item names into `UI_ko.asset`.
-- Do not use Liberation Sans or unset TMP fonts; set fonts on `LocalizationBundle` (ko/en default Katuri). JA unset falls back to ko with a warning (possible tofu).
+- Do not use Liberation Sans or unset TMP fonts; set fonts on `LocalizationBundle` (ko/en default Galmuri7). JA unset falls back to ko with a warning (possible tofu).
 - Do not keep a second SSOT for language (EditorPrefs-only, etc.) parallel to the bundle.
 - Do not put Korean (or other) display strings into custom `items.json` `name` — use locale slots.
 - Description / other string locales are follow-ups; keep the same **id + language code** pattern.

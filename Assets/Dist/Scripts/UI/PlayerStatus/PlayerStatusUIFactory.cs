@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 public static class PlayerStatusUIFactory
 {
-    public const string DefaultUIFontPath = "Assets/Dist/Scripts/UI/Font/Katuri SDF.asset";
+    public const string DefaultUIFontPath = "Assets/Dist/Scripts/UI/Font/Galmuri-v2.40.3/Galmuri7 SDF.asset";
     const string BodyPartSpriteFolder =
         "Assets/Dist/Visual/Sprites/UI/PlayerStatus/";
     const string HeadSpritePath = BodyPartSpriteFolder + "PlayerStatus_Head.png";

@@ -115,7 +115,7 @@
 
 
 
-폰트: 텍스트가 있는 행/슬롯 프리팹 TMP는 `Katuri SDF` 사용.
+폰트: 텍스트가 있는 행/슬롯 프리팹 TMP는 `Galmuri7 SDF` (`DistUiFont`) 사용.
 
 빈 아이콘 폴백: `ItemIconCatalog` (`Assets/Dist/Resources/ItemIconCatalog.asset`) → `ItemVisualPresenter`. 편집은 **Tools/Game Data Browser** 아이템 상세의 Icon 필드.
 
@@ -219,6 +219,7 @@
 - `InventoryContainerRegistry`가 `ContainerId -> InventoryContainer`를 관리한다.
 
 - 시작 시 아이템 주입·바닥 소형 아이템 스폰은 `InventoryRuntimeTestSetup`(런타임 테스트 전용)으로 수행한다 (`PlayerInventoryRuntime._seedDemoItemsOnStart` 기본값 `false` — 중복 시딩 방지).
+- 월드 소형 아이템 부모 SSOT는 `Map/Items` (`SmallItemSpawner.ResolveWorldRoot`). 테스트 스폰·바닥 투하(`FloorLootHost`) 모두 여기. `InventoryRuntimeTestSetup._smallItemSpawnRoot`는 오버라이드(비우면 SSOT, 자기 자신은 무시).
 
 
 

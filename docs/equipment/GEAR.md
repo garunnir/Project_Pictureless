@@ -516,7 +516,7 @@ flowchart LR
 | Progress Slider AddComponent-only (no fill) | **Fixed** — Background + Fill Area/Fill wired on prefab |
 | `ApplyTabVisibility` hid only vitals/skills Text | **Fixed** — also toggles `_statusContentRoot` (`Area_Content`) |
 | Equipment body diagram still HP | **Intentional** — keep HP on Equipment; Enc/BodyTemp remap only |
-| Font for created TMP | **Fixed** — copy Title/Katuri from prefab Title |
+| Font for created TMP | **Fixed** — DistUiFont / Galmuri7 (copy from prefab Title) |
 | Legacy `UIPlayerStatusWindow` | **Debt** — leave until unused/safe to delete; scene uses `UICharacterController` |
 
 ### Ensure behavior (after patch)

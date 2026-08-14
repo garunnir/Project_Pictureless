@@ -138,9 +138,80 @@ public static class GameplayData
         return RefData?.GetUncraftForResult(resultId) ?? _emptyRecipes;
     }
 
+    public static List<RecipeData> GetAllRecipes()
+    {
+        var merged = new List<RecipeData>();
+        var customIds = new HashSet<string>();
+
+        AppendRecipes(GameItems?.Recipes, merged, customIds, skipIfCustomId: false);
+        AppendRecipes(RefData?.Recipes, merged, customIds, skipIfCustomId: true);
+        return merged;
+    }
+
+    public static List<string> GetRecipeCategories()
+    {
+        List<RecipeData> recipes = GetAllRecipes();
+        var categories = new List<string>();
+        var seen = new HashSet<string>();
+
+        for (int i = 0; i < recipes.Count; i++)
+        {
+            string category = recipes[i]?.category;
+            if (string.IsNullOrEmpty(category) || !seen.Add(category))
+                continue;
+            categories.Add(category);
+        }
+
+        return categories;
+    }
+
+    public static List<RecipeData> GetRecipesByCategory(string category)
+    {
+        List<RecipeData> all = GetAllRecipes();
+        if (string.IsNullOrEmpty(category))
+            return all;
+
+        var filtered = new List<RecipeData>();
+        for (int i = 0; i < all.Count; i++)
+        {
+            RecipeData recipe = all[i];
+            if (recipe == null || recipe.category != category)
+                continue;
+            filtered.Add(recipe);
+        }
+
+        return filtered;
+    }
+
     public static void ClearCache()
     {
         GameDataLoader.Unload();
+    }
+
+    static void AppendRecipes(
+        IReadOnlyList<RecipeData> recipes,
+        List<RecipeData> dest,
+        HashSet<string> customIds,
+        bool skipIfCustomId)
+    {
+        if (recipes == null)
+            return;
+
+        for (int i = 0; i < recipes.Count; i++)
+        {
+            RecipeData recipe = recipes[i];
+            if (recipe == null)
+                continue;
+
+            if (!string.IsNullOrEmpty(recipe.id))
+            {
+                if (skipIfCustomId && customIds.Contains(recipe.id))
+                    continue;
+                customIds.Add(recipe.id);
+            }
+
+            dest.Add(recipe);
+        }
     }
 
     static void InvalidateDefeat()

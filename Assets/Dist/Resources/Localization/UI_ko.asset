@@ -253,3 +253,41 @@ MonoBehaviour:
     text: "\uC9D0\uC774 \uB108\uBB34 \uBB34\uAC81\uB2E4"
   - key: PlayerStatus.Mood.Overencumbered.Extreme
     text: "\uC6C0\uC9C1\uC77C \uC218 \uC5C6\uC744 \uB9CC\uD07C \uBB34\uAC81\uB2E4"
+  - key: Crafting.Title
+    text: "\uC81C\uC791"
+  - key: Crafting.TitleOn
+    text: "\uC81C\uC791 \u2014 {0}"
+  - key: Crafting.SearchPlaceholder
+    text: "\uAC80\uC0C9"
+  - key: Crafting.Craft
+    text: "\uC81C\uC791"
+  - key: Crafting.All
+    text: "\uC804\uCCB4"
+  - key: Crafting.Favourites
+    text: "\uC990\uACA8\uCC3E\uAE30"
+  - key: Crafting.RequiredItems
+    text: "\uD544\uC694 \uC7AC\uB8CC"
+  - key: Crafting.SkillLine
+    text: '{0}  {1}/{2}'
+  - key: Crafting.TimeMinutes
+    text: "{0}\uBD84"
+  - key: Crafting.BookKnown
+    text: "\uB808\uC2DC\uD53C \uC2B5\uB4DD"
+  - key: Crafting.CannotCraft
+    text: "\uC7AC\uB8CC\xB7\uB3C4\uAD6C\xB7\uC2A4\uD0AC\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4"
+  - key: Crafting.QualityFormat
+    text: '{0} Lv.{1}'
+  - key: Crafting.CountFormat
+    text: '{0}/{1}'
+  - key: Crafting.Outputs
+    text: "\uACB0\uACFC"
+  - key: Crafting.TimeRequired
+    text: "\uC18C\uC694 \uC2DC\uAC04: {0}"
+  - key: Crafting.TimeRemaining
+    text: "\uB0A8\uC740 \uC2DC\uAC04: {0}"
+  - key: Crafting.DurationFormat
+    text: '{0}m {1}s'
+  - key: Crafting.Max
+    text: MAX
+  - key: Crafting.OutputCountFormat
+    text: '{0}'

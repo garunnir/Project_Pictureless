@@ -62,25 +62,27 @@ public sealed class WorldClock : SceneSingleton<WorldClock>
         EnsureInitialized();
     }
 
+    /// <summary>
+    /// 이번 프레임 진행된 게임 분. <see cref="Update"/>와 동일 식.
+    /// Instance가 없으면 기본 rate × World delta.
+    /// </summary>
+    public static float DeltaGameMinutes()
+    {
+        WorldClock clock = Instance;
+        if (clock != null)
+            return clock.ComputeDeltaGameMinutes();
+
+        float worldDelta = TimeScaleService.Delta(TimeScaleChannel.World);
+        float rate = WorldClockSettings.DefaultWorldMinutesPerRealtimeSecond;
+        if (worldDelta <= 0f || rate <= 0f)
+            return 0f;
+        return worldDelta * rate;
+    }
+
     void Update()
     {
         EnsureInitialized();
-        if (_settings == null)
-            return;
-
-        TimeScaleService scales = TimeScaleService.Instance;
-        if (scales == null)
-            return;
-
-        float worldDelta = scales.GetDelta(TimeScaleChannel.World);
-        if (worldDelta <= 0f)
-            return;
-
-        float rate = _settings.WorldMinutesPerRealtimeSecond;
-        if (rate <= 0f)
-            return;
-
-        AdvanceMinutes(worldDelta * rate);
+        AdvanceMinutes(ComputeDeltaGameMinutes());
     }
 
     public void SetSettings(WorldClockSettings settings)
@@ -130,6 +132,22 @@ public sealed class WorldClock : SceneSingleton<WorldClock>
 
         _minuteAccumulator = 0f;
         _initialized = true;
+    }
+
+    float ComputeDeltaGameMinutes()
+    {
+        if (_settings == null)
+            return 0f;
+
+        TimeScaleService scales = TimeScaleService.Instance;
+        if (scales == null)
+            return 0f;
+
+        float worldDelta = scales.GetDelta(TimeScaleChannel.World);
+        float rate = _settings.WorldMinutesPerRealtimeSecond;
+        if (worldDelta <= 0f || rate <= 0f)
+            return 0f;
+        return worldDelta * rate;
     }
 
     void AdvanceMinutes(float deltaWorldMinutes)

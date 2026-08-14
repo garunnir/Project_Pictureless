@@ -161,7 +161,7 @@ TimeUIBridge (Canvas)
 - 부모: `UICanvasLayerHost.GetLayerRoot(UICanvasLayer.HUD)`
 - 앵커: **상단 중앙** (Summary 우상단·런처 좌상단과 충돌 회피)
 - 표시 포맷 SSOT: `TimeDisplayFormat.DayTimePattern` → `Day {0}  {1:00}:{2:00}`
-- TMP 폰트: Katuri SDF (`TimeUIFactory.DefaultUIFontPath`)
+- TMP 폰트: Galmuri7 SDF (`TimeUIFactory.DefaultUIFontPath`)
 - 창 크롬: Controller `Enable Drag Header` / `Enable Resize`(둘 다 기본 on) → `Area_Header`+`UIWindowDragHandler`(창 근처 시 표시) · 루트 `UIWindowResizeHandles`(Awake에서 8핸들 생성, 폭만 Inspector) + `UIWindowResizeProximity`(가장자리 근접 시 핸들). Inventory/Status는 Handles만(AlwaysHit, proximity 미사용).
 
 ---
@@ -204,6 +204,7 @@ IsoLand에는 Setup이 적용·저장되어 있다. Full bake 정책: `.cursor/r
 | `GridCursor` (hold/repeat) | Realtime | `Delta` |
 | Context menus | Realtime | `WaitForSecondsRealtime` (기존) |
 | `PlayerGearHost` (EnvExposure / BodyTemp) | World | `Delta` |
+| `UICraftingWindow` (제작 대기) | WorldClock 게임 분 | `WorldClock.DeltaGameMinutes` |
 
 구동작 계약: scale=1·모디파이어 없을 때 unscaled 기준이므로 Unity `timeScale==1`일 때와 동일. Dist는 `timeScale`을 쓰지 않으므로 기본 플레이 패리티 유지. 채널 Push 시에만 분기.
 

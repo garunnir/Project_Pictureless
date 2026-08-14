@@ -30,7 +30,8 @@ UI/
 ├── Container/
 │   └── UIButtonContainer.cs      # 빈 껍데기 (미구현)
 └── Font/
-    └── Katuri (.otf/.ttf/SDF)    # 한글 폰트 리소스
+    ├── Galmuri-v2.40.3/Galmuri7 SDF.asset  # 기본 TMP (ko/en)
+    └── Katuri (.otf/.ttf/SDF)              # leftover, 기본값 아님
 ```
 
 ---
@@ -243,19 +244,21 @@ UI.cs 상속, ContentSizeFitter 필수
 
 ## Font/
 
-### Katuri (.otf / .ttf / SDF)
+### Galmuri7 SDF (기본)
 **역할:** 프로젝트 기본 한글(및 en) TMP 폰트
 
-- `Katuri.otf` / `Katuri.ttf` — 원본 폰트 파일
-- `Katuri SDF.asset` — TextMeshPro용 SDF (`Assets/Dist/Scripts/UI/Font/Katuri SDF.asset`)
+- `Galmuri7 SDF.asset` — TextMeshPro용 SDF (`Assets/Dist/Scripts/UI/Font/Galmuri-v2.40.3/Galmuri7 SDF.asset`)
+- Galmuri 11/9/Mono 등 다른 variant는 기본값 아님
+- `Katuri.otf` / `Katuri.ttf` / `Katuri SDF.asset` — leftover 파일 (기본값 아님)
 
 **런타임 SSOT:** `LocalizationBundle` (활성 언어 + 언어별 TMP) → `DistUiFont.Get()` / `Apply()`.  
-기본 매핑: `ko`/`en` → Katuri; `ja` → Bundle JA 슬롯(미할당 시 Katuri 폴백 + Warning).  
+기본 매핑: `ko`/`en` → Galmuri7; `ja` → Bundle JA 슬롯(미할당 시 ko/Galmuri7 폴백 + Warning).  
+폴백: Bundle 미할당 시 `DistUiFont`가 Galmuri7 SDF를 last resort로 로드 (`Resources.Load`는 실패할 수 있음).  
 편집: `LocalizationBundle` Inspector (Definitions `Loc Bundle`로 핑). 허브에 언어/폰트 인라인 없음.  
 아이템 표시명: [`docs/inventory/ITEM_NAMES.md`](../inventory/ITEM_NAMES.md).
 
-- 신규 UI 프리팹·일회 bake(후 삭제) 스크립트: Katuri 또는 Bundle이 고른 활성 폰트
-- 인벤 UI TMP: Katuri SDF (ko 기본)
+- 신규 UI 프리팹·일회 bake(후 삭제) 스크립트: `DistUiFont.Apply` 또는 Bundle 활성 폰트
+- 인벤 UI TMP: Galmuri7 SDF (ko 기본)
 - Editor 빌더 상수: `InventoryUIHierarchyBuilder.DefaultUIFontPath` (Patch/빌더용)
 
 **효용:** 언어 전환 시 문구와 글리프를 같이 맞춤. Liberation Sans / font null 금지 (`ui-font.mdc`).

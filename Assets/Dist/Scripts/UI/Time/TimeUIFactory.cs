@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public static class TimeUIFactory
 {
-    public const string DefaultUIFontPath = "Assets/Dist/Scripts/UI/Font/Katuri SDF.asset";
+    public const string DefaultUIFontPath = "Assets/Dist/Scripts/UI/Font/Galmuri-v2.40.3/Galmuri7 SDF.asset";
 
     public static readonly Vector2 PanelSize = new(200f, 40f);
     public static readonly Vector2 AnchoredPosition = new(0f, -12f);

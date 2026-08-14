@@ -12,13 +12,13 @@ UI 경로를 **수정**한 작업에만 사용. 비UI 도메인 전용 작업에
 ```text
 ## Dist UI MUST (path gate)
 - Read and obey: .cursor/rules/ui-font.mdc , .cursor/rules/ui-prefab-layout.mdc
-- TMP: Katuri via DistUiFont or prefab-serialized font — no Liberation/unset
+- TMP: Galmuri7 via DistUiFont or prefab-serialized font — no Liberation/unset
 - Chrome layout: prefab SSOT — no runtime new+magic Rect/Layout for window chrome
 - Fail either rule → task Incomplete (do not declare done)
 ```
 
 ## Verify agent checklist
-- [ ] New/edited `TextMeshProUGUI`: font is Katuri (`DistUiFont.Apply` or prefab field)
+- [ ] New/edited `TextMeshProUGUI`: font is Galmuri7 (`DistUiFont.Apply` or prefab field)
 - [ ] No Liberation Sans / null font on Dist UI labels touched this task
 - [ ] Window chrome (TabBar, panels, menus meant as layout) lives on prefab; runtime only binds/pools rows
 - [ ] No new permanent full-bake menu (`ui-prefab-bake.mdc`)

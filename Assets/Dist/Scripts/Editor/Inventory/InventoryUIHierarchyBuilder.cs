@@ -11,7 +11,8 @@ using UnityEngine.UI;
 static class InventoryUIHierarchyBuilder
 {
     internal const string PrefabFolder = "Assets/Dist/Visual/Prefabs/UIComponents/Inventory";
-    internal const string DefaultUIFontPath = "Assets/Dist/Scripts/UI/Font/Katuri SDF.asset";
+    internal const string DefaultUIFontPath = "Assets/Dist/Scripts/UI/Font/Galmuri-v2.40.3/Galmuri7 SDF.asset";
+    const string ContextMenuRowIconChildName = "Img_Icon";
 
     static readonly Color PanelColor = new(0.12f, 0.12f, 0.12f, 0.95f);
     static readonly Color RowColor = new(0.18f, 0.18f, 0.18f, 1f);
@@ -304,6 +305,8 @@ static class InventoryUIHierarchyBuilder
         le.flexibleWidth = 1f;
         le.minHeight = ContextMenuStyle.RowHeight;
 
+        Image icon = EnsureContextMenuRowIcon(rowGo.transform);
+
         var label = CreateTmp("Label", rowGo.transform, 0f, ContextMenuStyle.FontSize, flexibleWidth: true);
         label.alignment = TextAlignmentOptions.MidlineLeft;
         label.raycastTarget = false;
@@ -315,10 +318,63 @@ static class InventoryUIHierarchyBuilder
 
         var row = rowGo.AddComponent<UIContextMenuItemRow>();
         SetReference(row, "_background", rowGo.GetComponent<Image>());
+        SetReference(row, "_icon", icon);
         SetReference(row, "_label", label);
         SetReference(row, "_chevron", chevron);
         rowGo.SetActive(false);
         return row;
+    }
+
+    internal static int PatchContextMenuRowIcons(GameObject root)
+    {
+        UIContextMenuItemRow[] rows = root.GetComponentsInChildren<UIContextMenuItemRow>(true);
+        for (int i = 0; i < rows.Length; i++)
+        {
+            Image icon = EnsureContextMenuRowIcon(rows[i].transform);
+            SetReference(rows[i], "_icon", icon);
+        }
+
+        return rows.Length;
+    }
+
+    static Image EnsureContextMenuRowIcon(Transform rowTransform)
+    {
+        Transform existing = rowTransform.Find(ContextMenuRowIconChildName);
+        Image icon;
+        if (existing != null)
+        {
+            icon = existing.GetComponent<Image>();
+            if (icon == null)
+                icon = existing.gameObject.AddComponent<Image>();
+        }
+        else
+        {
+            icon = CreateIcon(ContextMenuRowIconChildName, rowTransform, ContextMenuStyle.RowIconSize);
+        }
+
+        ApplyContextMenuRowIconLayout(icon);
+        icon.transform.SetAsFirstSibling();
+        icon.gameObject.SetActive(false);
+        return icon;
+    }
+
+    static void ApplyContextMenuRowIconLayout(Image icon)
+    {
+        icon.raycastTarget = false;
+        icon.preserveAspect = true;
+        icon.color = Color.white;
+
+        var layout = icon.GetComponent<LayoutElement>();
+        if (layout == null)
+            layout = icon.gameObject.AddComponent<LayoutElement>();
+
+        float size = ContextMenuStyle.RowIconSize;
+        layout.minWidth = size;
+        layout.minHeight = size;
+        layout.preferredWidth = size;
+        layout.preferredHeight = size;
+        layout.flexibleWidth = 0f;
+        layout.flexibleHeight = 0f;
     }
 
     static UIContextMenuCascadePanel BuildContextMenuPanelTemplate(Transform parent, UIContextMenuItemRow rowTemplate)
