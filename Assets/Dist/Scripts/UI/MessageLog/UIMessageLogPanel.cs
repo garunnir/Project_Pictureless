@@ -12,6 +12,7 @@ public sealed class UIMessageLogPanel : MonoBehaviour
 {
     [SerializeField] ScrollRect _scrollRect;
     [SerializeField] TMP_Text _logText;
+    [SerializeField] TMP_Text _headerTitle;
     [SerializeField] Color _combatColor = new Color(0.95f, 0.75f, 0.55f, 1f);
     [SerializeField] Color _statusColor = new Color(0.85f, 0.9f, 1f, 1f);
     [SerializeField] Color _systemColor = new Color(0.75f, 0.75f, 0.75f, 1f);
@@ -21,13 +22,25 @@ public sealed class UIMessageLogPanel : MonoBehaviour
     MessageLogViewModel _viewModel;
     bool _stickToBottom = true;
 
-    public void Wire(ScrollRect scrollRect, TMP_Text logText)
+    public void Wire(ScrollRect scrollRect, TMP_Text logText, TMP_Text headerTitle = null)
     {
         _scrollRect = scrollRect;
         _logText = logText;
+        _headerTitle = headerTitle;
     }
 
     public void BindViewModel(MessageLogViewModel viewModel) => _viewModel = viewModel;
+
+    public void Hide() => gameObject.SetActive(false);
+
+    public void RefreshHeaderTitle()
+    {
+        if (_headerTitle == null)
+            return;
+
+        DistUiFont.Apply(_headerTitle);
+        _headerTitle.text = MessageLogLabels.Title;
+    }
 
     public void Refresh()
     {

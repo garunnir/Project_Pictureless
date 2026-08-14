@@ -13,6 +13,7 @@ public sealed class UITimeDisplayPanel : MonoBehaviour
     [SerializeField] UIWindowDragHandler _dragHandler;
     [SerializeField] UIWindowResizeProximity _resizeProximity;
     [SerializeField] UIWindowResizeHandles _resizeHandles;
+    UIWindowChromeBar _chromeBar;
 
     TimeViewModel _viewModel;
 
@@ -77,8 +78,13 @@ public sealed class UITimeDisplayPanel : MonoBehaviour
         }
 
         if (!TryGetComponent(out UIOverlayWindow _))
-            gameObject.AddComponent<UIOverlayWindow>();
+            Debug.LogError("[UITimeDisplayPanel] UIOverlayWindow missing on HUD prefab root.", this);
+
+        _chromeBar = GetComponentInChildren<UIWindowChromeBar>(true);
+        UIWindowChromeBar.BindCloseOnWindow(this, Hide);
     }
+
+    public void Hide() => gameObject.SetActive(false);
 
     public void Refresh()
     {
@@ -88,5 +94,6 @@ public sealed class UITimeDisplayPanel : MonoBehaviour
         _timeText.text = _viewModel != null
             ? _viewModel.DisplayText
             : TimeDisplayFormat.Format(0, 0, 0);
+        _chromeBar?.SetFoldedTitle(_timeText.text);
     }
 }

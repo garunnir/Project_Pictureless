@@ -85,6 +85,7 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 | `msg.status.defeat_body` | `치명상을 입고 쓰러졌다.` |
 | `msg.status.defeat_collapse` | `정신이 무너져 쓰러졌다.` |
 | `msg.status.encumbrance_immobile` | `너무 무거워서 움직일 수 없다.` |
+| `MessageLog.Title` | `메시지` |
 
 부위 표시: 기존 `PlayerStatus.Part.{id}`.
 
@@ -96,6 +97,7 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 
 1. `Dist/MCP/MessageLog/Create Hud_MessageLog Prefab If Missing` (없을 때만 생성; 레이아웃 덮어쓰기 금지)
 2. `Dist/MCP/MessageLog/Setup Message Log HUD In Open Scene`
+3. `Dist/MCP/WindowChrome/Patch Fold Close Buttons` (헤더·접기·끄기. 기존 프리팹에 헤더가 없을 때)
    - Canvas: `MessageLogUIBridge`
    - `System/Msg`: `MessageLogPlayerCombatSink`, `MessageLogPlayerEncumbranceSink`, `UIMessageLogController`
    - `Layer_HUD`: `Hud_MessageLog` 인스턴스
@@ -110,7 +112,7 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 
 | 항목 | 기대 |
 |------|------|
-| 상시 표시 | HUD 항상 표시 |
+| 상시 표시 | HUD 항상 표시 (헤더 근접 시 접기/끄기). 끄기 = 세션 동안 숨김, 복원 런처 없음 |
 | 비차단 | 메시지와 무관하게 입력 유지 |
 | 스크롤 | 최신 하단; 사용자가 위로 올려 보면 stick 해제 |
 | 중요·플레이어만 | miss·비플레이어·공격 성공 무로그 |

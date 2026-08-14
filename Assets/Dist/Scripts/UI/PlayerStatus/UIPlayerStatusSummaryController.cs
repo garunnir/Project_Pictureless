@@ -30,6 +30,7 @@ public sealed class UIPlayerStatusSummaryController : MonoBehaviour
         }
 
         _panel.BindViewModel(_viewModel);
+        UIWindowChromeBar.BindCloseOnWindow(_panel, HidePanel);
         _viewModel.MoodChanged += OnMoodChanged;
         Refresh();
     }
@@ -46,5 +47,11 @@ public sealed class UIPlayerStatusSummaryController : MonoBehaviour
     {
         if (_panel != null)
             _panel.Refresh();
+    }
+
+    void HidePanel()
+    {
+        if (_panel != null)
+            _panel.gameObject.SetActive(false);
     }
 }

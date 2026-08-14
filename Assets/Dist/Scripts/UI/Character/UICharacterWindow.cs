@@ -31,10 +31,13 @@ public sealed class UICharacterWindow : MonoBehaviour
 
     PlayerStatusViewModel _viewModel;
     CharacterWindowTab _tab = CharacterWindowTab.Status;
+    Action _onChromeClose;
 
     public bool IsVisible => gameObject.activeSelf;
     public RectTransform WindowRect => transform as RectTransform;
     public CharacterWindowTab ActiveTab => _tab;
+
+    public void BindChromeClose(Action onClose) => _onChromeClose = onClose;
 
     public void ConfigureChrome(Canvas rootCanvas)
     {
@@ -58,7 +61,9 @@ public sealed class UICharacterWindow : MonoBehaviour
             WindowRect.sizeDelta = PlayerStatusWindowLayout.ClampSize(WindowRect.sizeDelta, rootCanvas);
 
         if (!TryGetComponent(out UIOverlayWindow _))
-            gameObject.AddComponent<UIOverlayWindow>();
+            Debug.LogError("[UICharacterWindow] UIOverlayWindow missing on window prefab root.", this);
+
+        UIWindowChromeBar.BindCloseOnWindow(this, _onChromeClose);
 
         _detailPanel?.Initialize(rootCanvas);
         EnsureTabChrome();

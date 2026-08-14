@@ -163,6 +163,7 @@ TimeUIBridge (Canvas)
 - 표시 포맷 SSOT: `TimeDisplayFormat.DayTimePattern` → `Day {0}  {1:00}:{2:00}`
 - TMP 폰트: Galmuri7 SDF (`TimeUIFactory.DefaultUIFontPath`)
 - 창 크롬: Controller `Enable Drag Header` / `Enable Resize`(둘 다 기본 on) → `Area_Header`+`UIWindowDragHandler`(창 근처 시 표시) · 루트 `UIWindowResizeHandles`(Awake에서 8핸들 생성, 폭만 Inspector) + `UIWindowResizeProximity`(가장자리 근접 시 핸들). Inventory/Status는 Handles만(AlwaysHit, proximity 미사용).
+- 접기/끄기: 공용 `UIWindowChromeBar` (`Area_Header`의 `Btn_Fold` / `Btn_Close`). 접기 = 헤더만 남김. 끄기 = 패널 `SetActive(false)` (이번 슬라이스 HUD 복원 런처 없음 — Play 재시작 전까지 숨음). 접힌 동안 헤더는 proximity hide를 끄고 시계 문자열은 `Txt_FoldedTitle`에 표시.
 
 ---
 

@@ -296,7 +296,7 @@ public sealed class UICraftingWindow : MonoBehaviour
     {
         if (bind)
         {
-            if (_closeButton != null)
+            if (_closeButton != null && GetComponentInChildren<UIWindowChromeBar>(true) == null)
                 _closeButton.onClick.AddListener(OnCloseClicked);
             if (_gridButton != null)
                 _gridButton.onClick.AddListener(OnGridClicked);
@@ -323,7 +323,7 @@ public sealed class UICraftingWindow : MonoBehaviour
         }
         else
         {
-            if (_closeButton != null)
+            if (_closeButton != null && GetComponentInChildren<UIWindowChromeBar>(true) == null)
                 _closeButton.onClick.RemoveListener(OnCloseClicked);
             if (_gridButton != null)
                 _gridButton.onClick.RemoveListener(OnGridClicked);

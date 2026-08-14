@@ -27,6 +27,9 @@ public sealed class UIMessageLogController : MonoBehaviour
         }
 
         _panel.BindViewModel(_viewModel);
+        UIWindowChromeBar.BindCloseOnWindow(_panel, _panel.Hide);
+        if (_panel != null)
+            _panel.RefreshHeaderTitle();
         _viewModel.Changed += OnChanged;
         Refresh();
     }

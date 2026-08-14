@@ -291,3 +291,5 @@ MonoBehaviour:
     text: MAX
   - key: Crafting.OutputCountFormat
     text: '{0}'
+  - key: MessageLog.Title
+    text: "\uBA54\uC2DC\uC9C0"

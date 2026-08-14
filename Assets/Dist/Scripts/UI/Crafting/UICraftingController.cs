@@ -77,6 +77,7 @@ public sealed class UICraftingController : MonoBehaviour
         _window.gameObject.SetActive(true);
         _window.ConfigureChrome(_uiCanvas);
         _window.Initialize(runtime, Close);
+        UIWindowChromeBar.BindCloseOnWindow(_window, Close);
         _isOpen = true;
         SyncLauncher();
     }

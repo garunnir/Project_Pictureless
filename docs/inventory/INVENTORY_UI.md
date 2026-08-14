@@ -101,7 +101,7 @@
 
 |--------|------|
 
-| `Grp_InventoryListWindow` | 리스트 + 사이드바 창 (상단 드래그 헤더 포함). `Area_List/Viewport/Area_ColumnHeader` sticky 헤더 클릭으로 뷰 전용 정렬 (`UIItemListColumnHeader` → `UIItemListView.SetSort`). 컨테이너 스택 순서는 불변. |
+| `Grp_InventoryListWindow` | 리스트 + 사이드바 창 (상단 드래그 헤더 포함). 헤더 `UIWindowChromeBar` 접기(헤더만) / 끄기(`ClosePrimaryWindow` / `CloseLootWindow`). `Area_List/Viewport/Area_ColumnHeader` sticky 헤더 클릭으로 뷰 전용 정렬 (`UIItemListColumnHeader` → `UIItemListView.SetSort`). 컨테이너 스택 순서는 불변. |
 
 | `Grp_ItemListRow` | 아이템 행 (LeanPool). 컬럼: Icon | Category | Name(flex) | Count | WeightValue | WeightUnit(kg) | VolumeValue | VolumeUnit(L). 폭 SSOT: `InventoryListColumnLayout`. |
 
@@ -119,7 +119,7 @@
 
 빈 아이콘 폴백: `ItemIconCatalog` (`Assets/Dist/Resources/ItemIconCatalog.asset`) → `ItemVisualPresenter`. 편집은 **Tools/Game Data Browser** 아이템 상세의 Icon 필드.
 
-프리팹 갱신: full bake 메뉴는 두지 않음 (`.cursor/rules/ui-prefab-bake.mdc`). 기존 창에 컬럼 헤더만: `Dist/MCP/Inventory/Patch Window Column Header`. 열 폭·행간격·패딩 SSOT 에셋 반영: `Dist/MCP/Inventory/Sync List Column Layout` (`Resources/Inventory/InventoryListColumnLayoutSettings`). 구 리사이즈 핸들 제거+`UIWindowResizeHandles` 부착: `Dist/MCP/Inventory/Patch Window Resize Handlers`. `Dist/MCP/*` 는 Unity MCP·에이전트용 Setup/Patch 메뉴다 (`Create → Dist/...` 와 별개).
+프리팹 갱신: full bake 메뉴는 두지 않음 (`.cursor/rules/ui-prefab-bake.mdc`). 기존 창에 컬럼 헤더만: `Dist/MCP/Inventory/Patch Window Column Header`. 열 폭·행간격·패딩 SSOT 에셋 반영: `Dist/MCP/Inventory/Sync List Column Layout` (`Resources/Inventory/InventoryListColumnLayoutSettings`). 구 리사이즈 핸들 제거+`UIWindowResizeHandles` 부착: `Dist/MCP/Inventory/Patch Window Resize Handlers`. 헤더 접기/끄기: `Dist/MCP/WindowChrome/Patch Fold Close Buttons`. `Dist/MCP/*` 는 Unity MCP·에이전트용 Setup/Patch 메뉴다 (`Create → Dist/...` 와 별개).
 
 캔버스 오버레이 배선: `Dist/MCP/Inventory/Setup Canvas Overlays In Open Scene` (IsoLand 등 씬 1회 실행).
 

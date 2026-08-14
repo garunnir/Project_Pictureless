@@ -177,6 +177,7 @@ static class MessageLogUISetupMenu
         Put("msg.status.defeat_body", "치명상을 입고 쓰러졌다.");
         Put("msg.status.defeat_collapse", "정신이 무너져 쓰러졌다.");
         Put("msg.status.encumbrance_immobile", "너무 무거워서 움직일 수 없다.");
+        Put("MessageLog.Title", "메시지");
 
         var list = new List<LocalizationTable.Entry>(map.Count);
         foreach (KeyValuePair<string, string> kv in map)

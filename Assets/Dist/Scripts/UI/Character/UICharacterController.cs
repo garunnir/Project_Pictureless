@@ -78,6 +78,7 @@ public sealed class UICharacterController : MonoBehaviour
             return;
 
         _window.gameObject.SetActive(true);
+        _window.BindChromeClose(Close);
         _window.ConfigureChrome(_uiCanvas);
         _window.Initialize(_viewModel);
         _isOpen = true;

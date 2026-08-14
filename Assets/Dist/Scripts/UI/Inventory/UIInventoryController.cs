@@ -276,6 +276,10 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         Vector2 minSize = new(InventoryWindowLayout.MinWidth, InventoryWindowLayout.MinHeight);
 
         ApplyWindowSizeClamp(window, minSize, maxSize);
+        if (window == _primaryWindow)
+            window.BindChromeClose(ClosePrimaryWindow);
+        else if (window == _lootWindow)
+            window.BindChromeClose(CloseLootWindow);
         window.ConfigureWindowChrome(_uiCanvas, minSize, maxSize);
         window.ConfigureDragAndDrop(this, _uiCanvas, EnsureDragGhostService());
     }

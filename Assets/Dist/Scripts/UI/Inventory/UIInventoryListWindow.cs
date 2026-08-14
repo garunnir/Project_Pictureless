@@ -2,6 +2,7 @@
 // UIInventoryListWindow — 인벤 리스트+사이드바 단일 View
 // ============================================================
 
+using System;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using TMPro;
@@ -33,6 +34,7 @@ public sealed class UIInventoryListWindow : MonoBehaviour
     bool _dragConfigured;
     Color _weightTextDefaultColor = Color.white;
     bool _weightTextColorCached;
+    Action _onChromeClose;
 
     readonly List<InventoryContainer> _filteredSidebar = new();
     readonly FixedContainerCapacityPolicy _nestedContainerPolicy = new();
@@ -49,6 +51,8 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         if (_headerTitle != null)
             _headerTitle.text = title;
     }
+
+    public void BindChromeClose(Action onClose) => _onChromeClose = onClose;
 
     public void ConfigureWindowChrome(Canvas rootCanvas, Vector2 minSize, Vector2 maxSize)
     {
@@ -68,13 +72,10 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         if (WindowRect != null && rootCanvas != null)
             WindowRect.sizeDelta = InventoryWindowLayout.ClampSize(WindowRect.sizeDelta, rootCanvas);
 
-        EnsureOverlayWindow();
-    }
-
-    void EnsureOverlayWindow()
-    {
         if (!TryGetComponent(out UIOverlayWindow _))
-            gameObject.AddComponent<UIOverlayWindow>();
+            Debug.LogError("[UIInventoryListWindow] UIOverlayWindow missing on window prefab root.", this);
+
+        UIWindowChromeBar.BindCloseOnWindow(this, _onChromeClose);
     }
 
     public void ConfigureWindowDrag(Canvas rootCanvas) =>

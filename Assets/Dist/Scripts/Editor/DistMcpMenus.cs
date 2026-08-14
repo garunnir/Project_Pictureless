@@ -66,5 +66,8 @@ internal static class DistMcpMenus
         Root + "/Crafting/Patch Detail Outputs And Footer";
     public const string CraftingPatchIngredientGrid =
         Root + "/Crafting/Patch Ingredient Grid";
+
+    public const string WindowChromePatchFoldCloseButtons =
+        Root + "/WindowChrome/Patch Fold Close Buttons";
 }
 #endif
