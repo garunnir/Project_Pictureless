@@ -70,8 +70,10 @@ flowchart LR
 | Move Layer | none | 1 |
 | RightArm Layer | `RightArm.mask` | 오른손 무장·비TwoHand → 1 (`useHold`·Aim/Attack 게이트) |
 | LeftArm Layer | `LeftArm.mask` | 왼손 무장·비TwoHand → 1 (동일) |
-| TwoHand Layer | `UpperBody.mask` | TwoHand 모드/`ActiveWieldHand` → 1 (동일 게이트; 그때 L/R Arm = 0) |
+| TwoHand Layer | `UpperBody.mask` | TwoHand 모드/`ActiveWieldHand` → 1 (동일 게이트; 그때 L/R Arm = 0). Attack도 UpperBody만 (정지 전신 교체는 Idle 발이 어색해 playtest에서 폐기) |
 | Impact Layer | none (v1) | Recoil/Blocked 재생 중 → 1, 평시 0 |
+
+**Pending (몸 경로):** Animancer 구매 후 적용 (할인 대기·지금은 Mecanim 유지). 계약 후보: Dynamic Layers(정지=전신·이동=상체) — playtest상 Mecanim Full은 Idle 발이 어색해 미채택. 이주 시 TimeScale 채널 틱·thin 클립 SSOT 유지.
 
 **Action vs Reaction vs Hit:** Action = 동사 자세·시전. Reaction = Recoil/Blocked (`ArmImpactKind`, 애니 Impact Layer). Hit = 특성(bash/cut/bullet) 타격 결과 — `WeaponImpactVfxDefaults`.  
 **근접 판정:** `melee_hit`는 `AttackResolved`로 스윙을 올리고, cue에서 `MeleeHitbox` 겹침만 확정 히트. 타깃 없음·사거리 밖이어도 모션은 재생. [`GEAR.md`](../equipment/GEAR.md) Melee connect.  

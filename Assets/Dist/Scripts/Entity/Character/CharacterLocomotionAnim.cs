@@ -7,6 +7,7 @@ using UnityEngine;
 
 /// <summary>
 /// Drives Move (facing-relative MoveX/MoveZ) + RightArm/LeftArm/TwoHand overlays + Impact.
+/// TwoHand Attack stays UpperBody-masked (full-body replace looked unnatural on Idle).
 /// WeaponAction selects library clips projected onto thin keys via
 /// <see cref="ArmAnimSlotResolver"/>; Impact Kind via <see cref="ArmImpactSlotResolver"/>.
 /// Animation time advances via <see cref="TimeScaleService"/> only.

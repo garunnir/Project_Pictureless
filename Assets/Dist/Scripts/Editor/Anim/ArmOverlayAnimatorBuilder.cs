@@ -312,6 +312,9 @@ public static class ArmOverlayAnimatorBuilder
         layer.defaultWeight = 0f;
         layer.blendingMode = AnimatorLayerBlendingMode.Override;
         layer.avatarMask = null;
+        layer.syncedLayerIndex = -1;
+        layer.iKPass = false;
+        layer.syncedLayerAffectsTiming = false;
         layers[index] = layer;
         controller.layers = layers;
 
@@ -367,6 +370,9 @@ public static class ArmOverlayAnimatorBuilder
         layer.defaultWeight = 0f;
         layer.blendingMode = AnimatorLayerBlendingMode.Override;
         layer.avatarMask = mask;
+        layer.syncedLayerIndex = -1;
+        layer.iKPass = false;
+        layer.syncedLayerAffectsTiming = false;
         layers[index] = layer;
         controller.layers = layers;
 
@@ -384,6 +390,9 @@ public static class ArmOverlayAnimatorBuilder
         layer.defaultWeight = 0f;
         layer.blendingMode = AnimatorLayerBlendingMode.Override;
         layer.avatarMask = mask;
+        layer.syncedLayerIndex = -1;
+        layer.iKPass = false;
+        layer.syncedLayerAffectsTiming = false;
         layers[index] = layer;
         controller.layers = layers;
 
