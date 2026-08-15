@@ -72,10 +72,10 @@ public sealed class WeaponCombatFallbacks : ScriptableObject
 
     [TabGroup(TabProjectile)]
     [InfoBox(
-        "미사일/탄도 Pending. spawn_projectile은 히트스캔만 쓰므로 런타임 무시.\n" +
-        "탄도 핸들러가 생길 때까지 Inspector 비노출(직렬화 유지).",
+        "런타임 스위치 아님. 비행은 Attack.ProjectilePrefab.\n" +
+        "이 Default는 Attack에 넣을 프리팹을 찾기 위한 에디터 편의(직렬화 유지).",
         InfoMessageType.None)]
-    [Title("Default Projectile", "미사일 Pending — 히트스캔은 무시", horizontalLine: false)]
+    [Title("Default Projectile", "에디터 편의 — 런타임 무시", horizontalLine: false)]
     [HideInInspector]
     [SerializeField] DistProjectile _defaultProjectile;
 

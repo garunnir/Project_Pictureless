@@ -36,7 +36,7 @@ MovementStyle (NPC)                  SOData/Locomotion/       ← Combat 아님
 | `Visual/Anim/SourceRef/` | Mixamo 등 **원본/레퍼런스** | 런타임 Override·Pipeline 직접 참조 |
 | `Visual/Anim/CharacterAnimator/` | Controller · masks · `Slots/` · `Overrides/` | Pipeline SO |
 | `Visual/Prefabs/Combat/Vfx/` | Combat VFX **리프** | Catalog/테이블 SO |
-| `Visual/Prefabs/Combat/` | 히트스캔 트레이서·착탄 VFX. `DistProjectile` = 탄도/미사일 예약 | `spawn_projectile`에 DistProjectile 스폰 |
+| `Visual/Prefabs/Combat/` | 히트스캔 트레이서·착탄 VFX. `DistProjectile` = 비행 탄 엔티티 | 히트스캔 Attack에 DistProjectile 할당 |
 | `Scripts/Entity/Combat/` | Presentation·Pipeline·Attack·VFX 타입 | — |
 | `Scripts/Entity/Combat/Vfx/` | 스폰/트레이서 **런타임 유틸** | SO 허브 |
 | `SOData/Locomotion/` | NPC `MovementStyle` | Combat 폴더에 두지 않음 |
@@ -49,7 +49,7 @@ MovementStyle (NPC)                  SOData/Locomotion/       ← Combat 아님
 | 공용 AnimVerb 팔 애니·동작 VFX | `SOData/Combat/Fallbacks/ArmAnimSlotCatalog` |
 | bash/cut/bullet Hit VFX | `SOData/Combat/Fallbacks/WeaponImpactVfxDefaults` |
 | Attack 레시피 | `SOData/Combat/Attacks/` |
-| `spawn_projectile` | cue 히트스캔 명중. DistProjectile 스폰 없음(탄도/미사일 Pending) |
+| `spawn_projectile` | Attack.`ProjectilePrefab` 있으면 비행(pierce 0). 없으면 cue 히트스캔. `tracerVfx`는 히트스캔 연출 |
 | NPC 이동 프로파일 | `SOData/Locomotion/` · 메뉴 `Dist/Locomotion/Movement Style` |
 | thin/라이브러리 클립 시드 | `Dist/MCP/Ensure Arm Anim Pipeline` |
 | Animator 레이어 재구성 | `Dist/MCP/Rebuild Arm Overlay Animator` |

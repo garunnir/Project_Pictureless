@@ -1,5 +1,5 @@
 // ============================================================
-// SpawnProjectileHandler — spawn_projectile: cue 히트스캔 명중
+// SpawnProjectileHandler — spawn_projectile: Attack 프리팹이면 비행, 없으면 히트스캔
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
@@ -115,6 +115,9 @@ public sealed class SpawnProjectileHandler : IActionHandler
         attacker.CommitAttempt(
             context, item, consumeAmmo: true, ammo, applyCooldown: false, practice: true);
 
+        if (TryLaunchFlight(attacker, context, item, ammo, origin, dir, range))
+            return true;
+
         int pierce = WeaponChamber.ResolvePierce(context.Stack, context.Instance);
         CombatHitscan.Trace(
             attacker,
@@ -188,6 +191,32 @@ public sealed class SpawnProjectileHandler : IActionHandler
                 ammo);
         }
 
+        return true;
+    }
+
+    static bool TryLaunchFlight(
+        CharacterAttacker attacker,
+        in ActionHandlerContext context,
+        ItemData item,
+        ItemData ammo,
+        Vector3 origin,
+        Vector3 direction,
+        float range)
+    {
+        if (!WeaponAttack.UsesFlightProjectile(context.Attack))
+            return false;
+
+        DistProjectile spawned = UnityEngine.Object.Instantiate(context.Attack.ProjectilePrefab);
+        spawned.Launch(
+            attacker,
+            context,
+            item,
+            ammo,
+            origin,
+            direction,
+            range,
+            pierce: 0,
+            attacker.RangedObstructionMask);
         return true;
     }
 }

@@ -81,6 +81,13 @@ public sealed class CharacterCombatVfx : MonoBehaviour
         GameObject impactPrefab = outcome.DidHit ? vfx.hitVfx : vfx.missVfx;
         if (outcome.ResolveMode == WeaponResolveMode.RangedRay)
         {
+            if (WeaponAttack.UsesFlightProjectile(outcome.Attack))
+            {
+                if (impactPrefab != null)
+                    Spawn(impactPrefab, outcome.ImpactPoint, -outcome.Direction);
+                return;
+            }
+
             if (!SpawnTracer(vfx.tracerVfx, outcome, impactPrefab) && impactPrefab != null)
                 Spawn(impactPrefab, outcome.ImpactPoint, -outcome.Direction);
             return;

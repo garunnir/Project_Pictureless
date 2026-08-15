@@ -47,14 +47,26 @@ public sealed class WeaponAttack : ScriptableObject
     [ShowInInspector]
     [ReadOnly]
     [LabelText("실행 핸들러")]
-    string HandlerSummary => DescribeHandler(_logicId);
+    string HandlerSummary =>
+        string.Equals(_logicId, ActionHandlerIds.SpawnProjectile, StringComparison.Ordinal)
+            ? UsesFlightProjectile(this)
+                ? "SpawnProjectileHandler (비행)"
+                : "SpawnProjectileHandler (히트스캔)"
+            : DescribeHandler(_logicId);
 
     [SerializeField] EffectSeed[] _effectSeeds = Array.Empty<EffectSeed>();
     [SerializeField] WeaponActionVfx _attackVfx = new WeaponActionVfx();
     [SerializeField, Range(0f, 1f)] float _cueNormalizedTime = DefaultCueNormalizedTime;
     [Tooltip("켜면 발사 큐에서 약실이 비었을 때 메거진 1발을 올린 뒤 소모. 끄면 펌프/수동(빈 약실=NoAmmo).")]
     [SerializeField] bool _feedsChamberOnFire = true;
-    [HideInInspector]
+
+    [ShowIf(nameof(ShowProjectilePrefab))]
+    [Title(
+        "비행 탄환",
+        "할당하면 cue에서 DistProjectile 스폰(비관통). 비우면 히트스캔. tracerVfx는 히트스캔 연출.",
+        horizontalLine: false)]
+    [Tooltip("비우면 히트스캔. 있으면 비행 엔티티(첫 충돌 소멸). 연출용 tracerVfx와 별개.")]
+    [LabelText("Projectile")]
     [SerializeField] DistProjectile _projectilePrefab;
 
     [Title("근접 히트박스", "cue 시 Overlap. 길이 = CombatMath.RangeMeters. 원거리는 무시.", horizontalLine: false)]
@@ -86,6 +98,9 @@ public sealed class WeaponAttack : ScriptableObject
     public bool FeedsChamberOnFire => _feedsChamberOnFire;
 
     public DistProjectile ProjectilePrefab => _projectilePrefab;
+
+    public static bool UsesFlightProjectile(WeaponAttack attack) =>
+        attack != null && attack._projectilePrefab != null;
 
     public float HitboxHalfWidth =>
         _hitboxHalfWidth > 0f ? _hitboxHalfWidth : DefaultHitboxHalfWidth;
@@ -122,7 +137,7 @@ public sealed class WeaponAttack : ScriptableObject
             "근접 타격 → MeleeHitHandler (melee_hit)",
             ActionHandlerIds.MeleeHit);
         yield return new ValueDropdownItem<string>(
-            "사격·히트스캔 → SpawnProjectileHandler (spawn_projectile)",
+            "사격 → SpawnProjectileHandler (프리팹 없으면 히트스캔)",
             ActionHandlerIds.SpawnProjectile);
         yield return new ValueDropdownItem<string>(
             "가드 → RaiseGuardHandler (raise_guard)",
@@ -155,6 +170,10 @@ public sealed class WeaponAttack : ScriptableObject
             Selection.activeObject = script;
 #endif
     }
+
+    bool ShowProjectilePrefab =>
+        _projectilePrefab != null
+        || string.Equals(_logicId, ActionHandlerIds.SpawnProjectile, StringComparison.Ordinal);
 
     bool CanSelectHandlerScript() =>
         !string.IsNullOrEmpty(HandlerScriptPath(_logicId));
