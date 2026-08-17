@@ -3,6 +3,7 @@
 // ============================================================
 
 #if UNITY_EDITOR
+using System.Text;
 using Garunnir.Runtime.Gameplay.Data;
 using TMPro;
 using UnityEditor;
@@ -173,6 +174,185 @@ static class PlayerStatusUISetupMenu
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
+    }
+
+    /// <summary>
+    /// ColliderParts BoxCollider2D를 RectTransform 앵커로 구워 Graphic 히트로 배선.
+    /// 변환은 에디트 타임만. Area_BodyDiagram / canvas Rect는 유지.
+    /// </summary>
+    [MenuItem(DistMcpMenus.PlayerStatusPatchWindowBodyChibiColliderHits)]
+    static void PatchWindowBodyChibiColliderHits()
+    {
+        GameObject root = PrefabUtility.LoadPrefabContents(BodyChibiPrefabPath);
+        if (root == null)
+        {
+            Debug.LogError($"[PlayerStatusUISetupMenu] Failed to load: {BodyChibiPrefabPath}");
+            return;
+        }
+
+        try
+        {
+            Transform partsRoot = root.transform.Find("Parts");
+            Transform colliderRoot = root.transform.Find("ColliderParts");
+            if (partsRoot == null || colliderRoot == null)
+            {
+                Debug.LogError(
+                    "[PlayerStatusUISetupMenu] Parts or ColliderParts missing; abort.",
+                    root);
+                return;
+            }
+
+            Image rootImage = root.GetComponent<Image>();
+            if (rootImage != null)
+                rootImage.raycastTarget = false;
+
+            Vector2 parentSize = ResolveChibiColliderParentSize(root);
+
+            int wired = 0;
+            int baked = 0;
+            for (int i = 0; i < colliderRoot.childCount; i++)
+            {
+                Transform hitT = colliderRoot.GetChild(i);
+                Transform visualT = partsRoot.Find(hitT.name);
+                if (visualT == null)
+                {
+                    Debug.LogError(
+                        $"[PlayerStatusUISetupMenu] Parts/{hitT.name} missing.",
+                        hitT);
+                    continue;
+                }
+
+                Image visualImage = visualT.GetComponent<Image>();
+                if (visualImage == null)
+                {
+                    Debug.LogError(
+                        $"[PlayerStatusUISetupMenu] Parts/{hitT.name} has no Image.",
+                        visualT);
+                    continue;
+                }
+
+                visualImage.raycastTarget = false;
+
+                string partId = null;
+                UIPlayerStatusBodyPartGraphic visualGraphic =
+                    visualT.GetComponent<UIPlayerStatusBodyPartGraphic>();
+                if (visualGraphic != null)
+                {
+                    partId = visualGraphic.PartId;
+                    Object.DestroyImmediate(visualGraphic);
+                }
+
+                if (string.IsNullOrEmpty(partId))
+                    partId = PartIdFromGoName(hitT.name);
+
+                BoxCollider2D box = hitT.GetComponent<BoxCollider2D>();
+                if (box != null)
+                {
+                    ApplyBoxColliderToAnchors(
+                        hitT as RectTransform,
+                        box,
+                        parentSize);
+                    Object.DestroyImmediate(box);
+                    baked++;
+                }
+
+                Image hitImage = EnsureInvisibleHitImage(hitT.gameObject);
+                hitImage.raycastTarget = true;
+
+                UIPlayerStatusBodyPartGraphic hitGraphic =
+                    hitT.GetComponent<UIPlayerStatusBodyPartGraphic>();
+                if (hitGraphic == null)
+                    hitGraphic = hitT.gameObject.AddComponent<UIPlayerStatusBodyPartGraphic>();
+
+                hitGraphic.Wire(visualImage, partId);
+                wired++;
+            }
+
+            for (int i = 0; i < partsRoot.childCount; i++)
+            {
+                Image partImage = partsRoot.GetChild(i).GetComponent<Image>();
+                if (partImage != null)
+                    partImage.raycastTarget = false;
+            }
+
+            PrefabUtility.SaveAsPrefabAsset(root, BodyChibiPrefabPath);
+            Debug.Log(
+                $"[PlayerStatusUISetupMenu] Wired {wired}/{colliderRoot.childCount} hits, baked {baked} boxes to anchors (parent {parentSize.x:0.##}x{parentSize.y:0.##}) on {BodyChibiPrefabPath}.");
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+    }
+
+    static void ApplyBoxColliderToAnchors(
+        RectTransform child,
+        BoxCollider2D box,
+        Vector2 parentSize)
+    {
+        if (child == null || box == null)
+            return;
+        if (parentSize.x <= 0f || parentSize.y <= 0f)
+            return;
+
+        Vector2 half = box.size * 0.5f;
+        float xMin = 0.5f + (box.offset.x - half.x) / parentSize.x;
+        float xMax = 0.5f + (box.offset.x + half.x) / parentSize.x;
+        float yMin = 0.5f + (box.offset.y - half.y) / parentSize.y;
+        float yMax = 0.5f + (box.offset.y + half.y) / parentSize.y;
+
+        child.anchorMin = new Vector2(xMin, yMin);
+        child.anchorMax = new Vector2(xMax, yMax);
+        child.pivot = new Vector2(0.5f, 0.5f);
+        child.anchoredPosition = Vector2.zero;
+        child.sizeDelta = Vector2.zero;
+    }
+
+    static Vector2 ResolveChibiColliderParentSize(GameObject chibiRoot)
+    {
+        Vector2 size = PlayerStatusUIFactory.BodyDiagramSize;
+        AspectRatioFitter fitter = chibiRoot.GetComponent<AspectRatioFitter>();
+        if (fitter == null || fitter.aspectRatio <= 0f)
+            return size;
+
+        if (fitter.aspectMode == AspectRatioFitter.AspectMode.WidthControlsHeight)
+            return new Vector2(size.x, size.x / fitter.aspectRatio);
+        if (fitter.aspectMode == AspectRatioFitter.AspectMode.HeightControlsWidth)
+            return new Vector2(size.y * fitter.aspectRatio, size.y);
+        return size;
+    }
+
+    static Image EnsureInvisibleHitImage(GameObject go)
+    {
+        Image image = go.GetComponent<Image>();
+        if (image == null)
+            image = go.AddComponent<Image>();
+
+        Color hitColor = image.color;
+        hitColor.a = 0f;
+        image.color = hitColor;
+        image.raycastTarget = true;
+        return image;
+    }
+
+    static string PartIdFromGoName(string goName)
+    {
+        if (string.IsNullOrEmpty(goName))
+            return goName;
+
+        var sb = new StringBuilder(goName.Length + 4);
+        for (int i = 0; i < goName.Length; i++)
+        {
+            char c = goName[i];
+            if (char.IsUpper(c) && i > 0 && goName[i - 1] != '_')
+                sb.Append('_');
+            sb.Append(char.ToLowerInvariant(c));
+        }
+
+        return sb.ToString();
     }
 
     static Transform FindDeep(Transform parent, string name)

@@ -32,7 +32,7 @@ public static class PlayerStatusUIFactory
     public const float MoodSlotSpacing = 4f;
     public const float MoodFrontInset = 4f;
     public static readonly Vector2 DetailSize = new(240f, 320f);
-    static readonly Vector2 BodyDiagramSize = new(147f, 220f);
+    public static readonly Vector2 BodyDiagramSize = new(147f, 220f);
     public const float RowHeight = 28f;
     public const float HeaderHeight = 32f;
     public const float ResizeEdgeThickness = 8f;
