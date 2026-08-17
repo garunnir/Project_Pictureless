@@ -26,21 +26,21 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return true;
             }
 
-            if (main == BodyPartIds.LegL && IsUsableMain(target, BodyPartIds.LegR))
+            if (main == BodyPartIds.ThighL && IsUsableMain(target, BodyPartIds.ThighR))
             {
-                aimedPartId = BodyPartIds.LegR;
+                aimedPartId = BodyPartIds.ThighR;
                 return true;
             }
 
-            if (main == BodyPartIds.LegR && IsUsableMain(target, BodyPartIds.LegL))
+            if (main == BodyPartIds.ThighR && IsUsableMain(target, BodyPartIds.ThighL))
             {
-                aimedPartId = BodyPartIds.LegL;
+                aimedPartId = BodyPartIds.ThighL;
                 return true;
             }
 
-            if (IsUsableMain(target, BodyPartIds.Torso))
+            if (IsUsableMain(target, BodyPartIds.Chest))
             {
-                aimedPartId = BodyPartIds.Torso;
+                aimedPartId = BodyPartIds.Chest;
                 return true;
             }
 

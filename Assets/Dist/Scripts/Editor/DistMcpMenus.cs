@@ -28,6 +28,8 @@ internal static class DistMcpMenus
         Root + "/PlayerStatus/Ensure Mood Assets";
     public const string PlayerStatusPatchWindowResizeHandlers =
         Root + "/PlayerStatus/Patch Window Resize Handlers";
+    public const string PlayerStatusPatchWindowBodyDiagramChibi =
+        Root + "/PlayerStatus/Patch Window Body Diagram Chibi";
     public const string PlayerStatusPatchCharacterTabsAndGearPanel =
         Root + "/PlayerStatus/Patch Character Tabs And Gear Panel";
     public const string PlayerStatusSetupCanvas =

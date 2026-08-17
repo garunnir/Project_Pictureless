@@ -16,6 +16,7 @@ static class PlayerStatusUISetupMenu
     const string PrefabFolder = "Assets/Dist/Visual/Prefabs/UIComponents/PlayerStatus";
     const string WindowPrefabPath = PrefabFolder + "/Grp_PlayerStatusWindow.prefab";
     const string SummaryPrefabPath = PrefabFolder + "/Grp_PlayerStatusSummary.prefab";
+    const string BodyChibiPrefabPath = PrefabFolder + "/Grp_PlayerStatusBodyChibi.prefab";
     const string MoodSpriteFolder = "Assets/Dist/Visual/Sprites/UI/PlayerStatus/Mood";
     const string MoodCatalogAssetPath =
         "Assets/Dist/SOData/Gameplay/PlayerStatus/PlayerStatusMoodIconCatalog.asset";
@@ -71,6 +72,122 @@ static class PlayerStatusUISetupMenu
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
+    }
+
+    /// <summary>
+    /// Area_BodyDiagram/BodyDiagramCanvas 안쪽만 치비로 교체.
+    /// TabBar·GearPanel·Area_BodyDiagram·BodyDiagramCanvas Rect는 유지.
+    /// </summary>
+    [MenuItem(DistMcpMenus.PlayerStatusPatchWindowBodyDiagramChibi)]
+    static void PatchWindowBodyDiagramChibi()
+    {
+        GameObject chibiPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(BodyChibiPrefabPath);
+        if (chibiPrefab == null)
+        {
+            Debug.LogError($"[PlayerStatusUISetupMenu] Missing: {BodyChibiPrefabPath}");
+            return;
+        }
+
+        GameObject root = PrefabUtility.LoadPrefabContents(WindowPrefabPath);
+        if (root == null)
+        {
+            Debug.LogError($"[PlayerStatusUISetupMenu] Failed to load: {WindowPrefabPath}");
+            return;
+        }
+
+        try
+        {
+            Transform diagram = root.transform.Find("Area_BodyProfile/Area_BodyDiagram");
+            if (diagram == null)
+                diagram = FindDeep(root.transform, "Area_BodyDiagram");
+            if (diagram == null)
+            {
+                Debug.LogError(
+                    "[PlayerStatusUISetupMenu] Area_BodyDiagram missing; abort (no chrome rewrite).",
+                    root);
+                return;
+            }
+
+            Transform canvas = diagram.Find("BodyDiagramCanvas");
+            if (canvas == null)
+            {
+                Debug.LogError(
+                    "[PlayerStatusUISetupMenu] BodyDiagramCanvas missing; abort.",
+                    diagram);
+                return;
+            }
+
+            for (int i = canvas.childCount - 1; i >= 0; i--)
+            {
+                Transform child = canvas.GetChild(i);
+                if (child.name == "Grp_PlayerStatusBodyChibi")
+                    continue;
+
+                UIPlayerStatusBodyPartGraphic graphic =
+                    child.GetComponent<UIPlayerStatusBodyPartGraphic>();
+                if (graphic != null)
+                    Object.DestroyImmediate(graphic);
+                child.gameObject.SetActive(false);
+            }
+
+            Transform existingChibi = canvas.Find("Grp_PlayerStatusBodyChibi");
+            GameObject chibiGo;
+            if (existingChibi != null)
+            {
+                chibiGo = existingChibi.gameObject;
+            }
+            else
+            {
+                chibiGo = (GameObject)PrefabUtility.InstantiatePrefab(chibiPrefab, canvas);
+                if (chibiGo == null)
+                {
+                    Debug.LogError(
+                        "[PlayerStatusUISetupMenu] InstantiatePrefab chibi failed.",
+                        canvas);
+                    return;
+                }
+
+                chibiGo.name = "Grp_PlayerStatusBodyChibi";
+            }
+
+            RectTransform chibiRt = chibiGo.GetComponent<RectTransform>();
+            if (chibiRt != null)
+            {
+                chibiRt.anchorMin = Vector2.zero;
+                chibiRt.anchorMax = Vector2.one;
+                chibiRt.pivot = new Vector2(0.5f, 0.5f);
+                chibiRt.anchoredPosition = Vector2.zero;
+                chibiRt.sizeDelta = Vector2.zero;
+                chibiRt.localScale = Vector3.one;
+            }
+
+            PrefabUtility.SaveAsPrefabAsset(root, WindowPrefabPath);
+            Debug.Log(
+                "[PlayerStatusUISetupMenu] Nested chibi under BodyDiagramCanvas; old Img_* hidden.",
+                canvas);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+    }
+
+    static Transform FindDeep(Transform parent, string name)
+    {
+        if (parent.name == name)
+            return parent;
+
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            Transform found = FindDeep(parent.GetChild(i), name);
+            if (found != null)
+                return found;
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -1147,6 +1264,18 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.DebugSeverArmL", "절단(왼팔)");
 
         Put("PlayerStatus.Part.head", "머리");
+        Put("PlayerStatus.Part.neck", "목");
+        Put("PlayerStatus.Part.chest", "가슴");
+        Put("PlayerStatus.Part.belly", "배");
+        Put("PlayerStatus.Part.pelvis", "골반");
+        Put("PlayerStatus.Part.upper_arm_l", "왼윗팔");
+        Put("PlayerStatus.Part.lower_arm_l", "왼아래팔");
+        Put("PlayerStatus.Part.upper_arm_r", "오른윗팔");
+        Put("PlayerStatus.Part.lower_arm_r", "오른아래팔");
+        Put("PlayerStatus.Part.thigh_l", "왼허벅지");
+        Put("PlayerStatus.Part.calf_l", "왼종아리");
+        Put("PlayerStatus.Part.thigh_r", "오른허벅지");
+        Put("PlayerStatus.Part.calf_r", "오른종아리");
         Put("PlayerStatus.Part.torso", "몸통");
         Put("PlayerStatus.Part.arm_l", "왼팔");
         Put("PlayerStatus.Part.arm_r", "오른팔");

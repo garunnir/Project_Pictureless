@@ -76,9 +76,14 @@ public static class GearHandleRules
         if (item?.armor?.covers == null || string.IsNullOrEmpty(partId))
             return false;
 
+        string group = BodyPartIds.GetCoverGroup(partId);
         for (int i = 0; i < item.armor.covers.Count; i++)
         {
-            if (string.Equals(item.armor.covers[i], partId, StringComparison.Ordinal))
+            string cover = item.armor.covers[i];
+            if (string.Equals(cover, partId, StringComparison.Ordinal))
+                return true;
+            if (!string.IsNullOrEmpty(group) &&
+                string.Equals(cover, group, StringComparison.Ordinal))
                 return true;
         }
 

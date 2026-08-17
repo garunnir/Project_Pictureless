@@ -25,8 +25,8 @@ public sealed class UICharacterWindow : MonoBehaviour
     [SerializeField] RectTransform _gearPanelRoot;
     [SerializeField] UICharacterGearPanel _gearPanel;
 
-    readonly List<UIPlayerStatusBodyPartGraphic> _graphics = new(6);
-    readonly List<UIPlayerStatusBodyPartRow> _rows = new(6);
+    readonly List<UIPlayerStatusBodyPartGraphic> _graphics = new(16);
+    readonly List<UIPlayerStatusBodyPartRow> _rows = new(16);
     readonly List<Button> _tabButtons = new(4);
 
     PlayerStatusViewModel _viewModel;
@@ -128,7 +128,7 @@ public sealed class UICharacterWindow : MonoBehaviour
 
     void OnDebugSeverArmL()
     {
-        _viewModel?.Body?.RemovePart(BodyPartIds.ArmL);
+        _viewModel?.Body?.RemovePart(BodyPartIds.UpperArmL);
     }
 
     void EnsureTabChrome()

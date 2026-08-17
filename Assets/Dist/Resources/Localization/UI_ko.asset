@@ -293,3 +293,33 @@ MonoBehaviour:
     text: '{0}'
   - key: MessageLog.Title
     text: "\uBA54\uC2DC\uC9C0"
+  - key: PlayerStatus.View.Condition
+    text: "\uC0C1\uD0DC"
+  - key: PlayerStatus.View.Wound
+    text: "\uC0C1\uCC98"
+  - key: PlayerStatus.View.Thermal
+    text: "\uCCB4\uC628"
+  - key: PlayerStatus.Part.neck
+    text: "\uBAA9"
+  - key: PlayerStatus.Part.chest
+    text: "\uAC00\uC2B4"
+  - key: PlayerStatus.Part.belly
+    text: "\uBC30"
+  - key: PlayerStatus.Part.pelvis
+    text: "\uACE8\uBC18"
+  - key: PlayerStatus.Part.upper_arm_l
+    text: "\uC67C\uC704\uD314"
+  - key: PlayerStatus.Part.lower_arm_l
+    text: "\uC67C\uC544\uB798\uD314"
+  - key: PlayerStatus.Part.upper_arm_r
+    text: "\uC624\uB978\uC704\uD314"
+  - key: PlayerStatus.Part.lower_arm_r
+    text: "\uC624\uB978\uC544\uB798\uD314"
+  - key: PlayerStatus.Part.thigh_l
+    text: "\uC67C\uD5C8\uBC85\uC9C0"
+  - key: PlayerStatus.Part.calf_l
+    text: "\uC67C\uC885\uC544\uB9AC"
+  - key: PlayerStatus.Part.thigh_r
+    text: "\uC624\uB978\uD5C8\uBC85\uC9C0"
+  - key: PlayerStatus.Part.calf_r
+    text: "\uC624\uB978\uC885\uC544\uB9AC"

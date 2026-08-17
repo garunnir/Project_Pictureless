@@ -272,7 +272,7 @@ public sealed class UICharacterGearPanel : MonoBehaviour
         {
             _filterLabel.text = string.IsNullOrEmpty(partId)
                 ? CharacterGearLabels.WornFilterAll
-                : partId;
+                : PlayerStatusLabels.GetPartName(partId);
         }
 
         Refresh();

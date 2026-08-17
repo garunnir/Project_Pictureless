@@ -25,8 +25,8 @@ namespace Garunnir.Runtime.Gameplay.Data
                 if (!TryGet(BodyPartIds.Head, out BodyPartNode head) ||
                     head.ConditionCur <= 0)
                     return true;
-                if (!TryGet(BodyPartIds.Torso, out BodyPartNode torso) ||
-                    torso.ConditionCur <= 0)
+                if (!TryGet(BodyPartIds.Chest, out BodyPartNode chest) ||
+                    chest.ConditionCur <= 0)
                     return true;
                 return false;
             }
@@ -40,31 +40,38 @@ namespace Garunnir.Runtime.Gameplay.Data
             BodyPartNode head = new(BodyPartIds.Head, true, conditionMax);
             head.AddChild(new BodyPartNode(BodyPartIds.Eyes, false));
             head.AddChild(new BodyPartNode(BodyPartIds.Mouth, false));
+            head.AddChild(new BodyPartNode(BodyPartIds.Neck, true, conditionMax));
             body._roots.Add(head);
 
-            body._roots.Add(new BodyPartNode(BodyPartIds.Torso, true, conditionMax));
+            BodyPartNode chest = new(BodyPartIds.Chest, true, conditionMax);
+            chest.AddChild(new BodyPartNode(BodyPartIds.Belly, true, conditionMax));
+            chest.AddChild(new BodyPartNode(BodyPartIds.Pelvis, true, conditionMax));
+            body._roots.Add(chest);
 
-            BodyPartNode armL = new(BodyPartIds.ArmL, true, conditionMax);
-            BodyPartNode handL = new(BodyPartIds.HandL, false);
-            handL.AddChild(new BodyPartNode(BodyPartIds.FingerThumbL, false));
-            handL.AddChild(new BodyPartNode(BodyPartIds.FingerIndexL, false));
-            armL.AddChild(handL);
-            body._roots.Add(armL);
-
-            BodyPartNode armR = new(BodyPartIds.ArmR, true, conditionMax);
-            BodyPartNode handR = new(BodyPartIds.HandR, false);
-            handR.AddChild(new BodyPartNode(BodyPartIds.FingerThumbR, false));
-            handR.AddChild(new BodyPartNode(BodyPartIds.FingerIndexR, false));
-            armR.AddChild(handR);
-            body._roots.Add(armR);
-
-            BodyPartNode legL = new(BodyPartIds.LegL, true, conditionMax);
-            legL.AddChild(new BodyPartNode(BodyPartIds.FootL, false));
-            body._roots.Add(legL);
-
-            BodyPartNode legR = new(BodyPartIds.LegR, true, conditionMax);
-            legR.AddChild(new BodyPartNode(BodyPartIds.FootR, false));
-            body._roots.Add(legR);
+            body._roots.Add(CreateArm(
+                BodyPartIds.UpperArmL,
+                BodyPartIds.LowerArmL,
+                BodyPartIds.HandL,
+                BodyPartIds.FingerThumbL,
+                BodyPartIds.FingerIndexL,
+                conditionMax));
+            body._roots.Add(CreateArm(
+                BodyPartIds.UpperArmR,
+                BodyPartIds.LowerArmR,
+                BodyPartIds.HandR,
+                BodyPartIds.FingerThumbR,
+                BodyPartIds.FingerIndexR,
+                conditionMax));
+            body._roots.Add(CreateLeg(
+                BodyPartIds.ThighL,
+                BodyPartIds.CalfL,
+                BodyPartIds.FootL,
+                conditionMax));
+            body._roots.Add(CreateLeg(
+                BodyPartIds.ThighR,
+                BodyPartIds.CalfR,
+                BodyPartIds.FootR,
+                conditionMax));
 
             if (!prototypeSeed)
                 return body;
@@ -87,9 +94,10 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (string.IsNullOrEmpty(partId))
                 return false;
 
+            string resolved = BodyPartIds.ResolveNodeId(partId);
             for (int i = 0; i < _roots.Count; i++)
             {
-                if (TryFind(_roots[i], partId, out node))
+                if (TryFind(_roots[i], resolved, out node))
                     return true;
             }
 
@@ -103,9 +111,10 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (string.IsNullOrEmpty(partId))
                 return false;
 
+            string resolved = BodyPartIds.ResolveNodeId(partId);
             for (int i = 0; i < _roots.Count; i++)
             {
-                if (_roots[i].PartId != partId)
+                if (_roots[i].PartId != resolved)
                     continue;
 
                 _roots.RemoveAt(i);
@@ -115,7 +124,7 @@ namespace Garunnir.Runtime.Gameplay.Data
 
             for (int i = 0; i < _roots.Count; i++)
             {
-                if (!TryRemoveUnder(_roots[i], partId))
+                if (!TryRemoveUnder(_roots[i], resolved))
                     continue;
 
                 Changed?.Invoke();
@@ -258,6 +267,37 @@ namespace Garunnir.Runtime.Gameplay.Data
             }
 
             return false;
+        }
+
+        static BodyPartNode CreateArm(
+            string upperId,
+            string lowerId,
+            string handId,
+            string thumbId,
+            string indexId,
+            int conditionMax)
+        {
+            BodyPartNode upper = new(upperId, true, conditionMax);
+            BodyPartNode lower = new(lowerId, true, conditionMax);
+            BodyPartNode hand = new(handId, true, conditionMax);
+            hand.AddChild(new BodyPartNode(thumbId, false));
+            hand.AddChild(new BodyPartNode(indexId, false));
+            lower.AddChild(hand);
+            upper.AddChild(lower);
+            return upper;
+        }
+
+        static BodyPartNode CreateLeg(
+            string thighId,
+            string calfId,
+            string footId,
+            int conditionMax)
+        {
+            BodyPartNode thigh = new(thighId, true, conditionMax);
+            BodyPartNode calf = new(calfId, true, conditionMax);
+            calf.AddChild(new BodyPartNode(footId, true, conditionMax));
+            thigh.AddChild(calf);
+            return thigh;
         }
     }
 }

@@ -137,7 +137,6 @@ public sealed class UICharacterController : MonoBehaviour
         if (_window.transform.parent != windowRoot)
             _window.transform.SetParent(windowRoot, false);
 
-        _window.name = "Grp_CharacterWindow";
         if (_window.WindowRect != null)
             _window.WindowRect.anchoredPosition = _windowInitialPosition;
     }
