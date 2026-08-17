@@ -40,6 +40,7 @@ public sealed class NpcCombatBehavior : MonoBehaviour
     CharacterAttacker _attacker;
     CharacterAimIntent _aimIntent;
     CharacterSkillsHost _skillsHost;
+    CharacterState _characterState;
     ICharacterDefeat _defeat;
 
     NpcCombatState _state = NpcCombatState.Idle;
@@ -65,6 +66,7 @@ public sealed class NpcCombatBehavior : MonoBehaviour
         _attacker = GetComponent<CharacterAttacker>();
         _aimIntent = GetComponent<CharacterAimIntent>();
         _skillsHost = GetComponent<CharacterSkillsHost>();
+        _characterState = GetComponent<CharacterState>();
         _homePosition = transform.position;
         ApplyAimPreference();
     }
@@ -86,7 +88,7 @@ public sealed class NpcCombatBehavior : MonoBehaviour
             _defeat.Changed -= OnDefeatChanged;
         _defeat = null;
         _steer?.ClearDestination();
-        _aimIntent?.SetAimHeld(false);
+        ReleaseCombatAim();
     }
 
     void Update()
@@ -207,6 +209,8 @@ public sealed class NpcCombatBehavior : MonoBehaviour
         else
             _steer.ClearDestination();
 
+        AimAtTarget(target);
+
         WeaponAction action = _attacker.SelectedAction;
         if (action == WeaponAction.Raise)
             return;
@@ -249,10 +253,30 @@ public sealed class NpcCombatBehavior : MonoBehaviour
 
     void SetAimHeld(bool held) => _aimIntent?.SetAimHeld(held);
 
+    void ReleaseCombatAim()
+    {
+        SetAimHeld(false);
+        _characterState?.ClearAim();
+    }
+
+    void AimAtTarget(CharacterBodyHost target)
+    {
+        if (_characterState == null || target == null)
+            return;
+
+        Vector3 toTarget = target.transform.position - transform.position;
+        toTarget.y = 0f;
+        float reach = toTarget.magnitude;
+        if (reach < CharacterAttacker.MinRayDistance)
+            return;
+
+        _characterState.SetAimDir(toTarget / reach, target.transform.position, reach);
+    }
+
     void EnterIdle()
     {
         _state = NpcCombatState.Idle;
-        SetAimHeld(false);
+        ReleaseCombatAim();
         _steer.ClearDestination();
         _movement.SetActiveMovementStyle(_holdStyle);
     }
@@ -260,7 +284,7 @@ public sealed class NpcCombatBehavior : MonoBehaviour
     void EnterPatrol()
     {
         _state = NpcCombatState.Patrol;
-        SetAimHeld(false);
+        ReleaseCombatAim();
         _movement.SetActiveMovementStyle(_patrolStyle);
         if (_patrolWaypoints == null || _patrolWaypoints.Length == 0)
             EnterIdle();
@@ -269,7 +293,7 @@ public sealed class NpcCombatBehavior : MonoBehaviour
     void EnterAlert()
     {
         _state = NpcCombatState.Alert;
-        SetAimHeld(false);
+        ReleaseCombatAim();
         _alertTimer = _alertSeconds;
         _steer.ClearDestination();
         _movement.SetActiveMovementStyle(_holdStyle);
@@ -278,7 +302,7 @@ public sealed class NpcCombatBehavior : MonoBehaviour
     void EnterChase()
     {
         _state = NpcCombatState.Chase;
-        SetAimHeld(false);
+        ReleaseCombatAim();
         _movement.SetActiveMovementStyle(_chaseStyle);
     }
 
@@ -286,13 +310,14 @@ public sealed class NpcCombatBehavior : MonoBehaviour
     {
         _state = NpcCombatState.Attack;
         SetAimHeld(true);
+        AimAtTarget(_senses != null ? _senses.Target : null);
         _movement.SetActiveMovementStyle(_holdStyle);
     }
 
     void EnterReturn()
     {
         _state = NpcCombatState.Return;
-        SetAimHeld(false);
+        ReleaseCombatAim();
         _movement.SetActiveMovementStyle(_patrolStyle);
         _steer.SetDestination(_homePosition);
     }
@@ -300,7 +325,7 @@ public sealed class NpcCombatBehavior : MonoBehaviour
     void EnterDead()
     {
         _state = NpcCombatState.Dead;
-        SetAimHeld(false);
+        ReleaseCombatAim();
         _steer.ClearDestination();
         _movement.SetActiveMovementStyle(_holdStyle);
         _movement.SetDesiredWorldDir(Vector3.zero);

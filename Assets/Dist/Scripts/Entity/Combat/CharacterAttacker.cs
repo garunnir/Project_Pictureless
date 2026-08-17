@@ -98,7 +98,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     public WeaponAction SelectedAction => _selectedAction;
     public WieldHand ActiveWieldHand => _activeWieldHand;
 
-    /// <summary>플레이어는 CharacterState, NPC는 AimIntent.AimHeld.</summary>
+    /// <summary>CharacterState.IsAiming. NPC Attack은 SetAimDir. CharacterState 없으면 AimIntent.AimHeld.</summary>
     public bool IsAiming =>
         _characterState != null
             ? _characterState.IsAiming
@@ -584,6 +584,8 @@ public sealed class CharacterAttacker : MonoBehaviour
             dir = _characterState.SightDir;
             if (dir.sqrMagnitude < 1e-6f)
                 dir = _characterState.InteractionDir;
+            if (dir.sqrMagnitude < 1e-6f)
+                dir = _characterState.GetFacingDir();
         }
 
         if (dir.sqrMagnitude < 1e-6f)
