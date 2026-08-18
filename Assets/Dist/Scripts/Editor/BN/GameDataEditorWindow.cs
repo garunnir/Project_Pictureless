@@ -14,7 +14,7 @@ using UnityEngine;
 public sealed class GameDataEditorWindow : EditorWindow
 {
     enum Source { Reference, Custom }
-    enum Tab { Items, Recipes }
+    enum Tab { Items, Recipes, Characters }
 
     [MenuItem("Tools/Data Definitions")]
     static void Open() => GetWindow<GameDataEditorWindow>("Data Definitions");
@@ -35,6 +35,11 @@ public sealed class GameDataEditorWindow : EditorWindow
 
     List<ItemData> _filteredItems = new();
     List<RecipeData> _filteredRecipes = new();
+    List<CharacterDefinition> _characterDefs = new();
+    List<CharacterDefinition> _filteredCharacters = new();
+    SerializedObject _characterSerialized;
+    CharacterDefinition _characterSerializedTarget;
+    static readonly string[] _characterKindLabels = { "All", "Player", "Npc" };
     string _lastSearch = "\0";
     string _lastCategory = "\0";
     Tab _lastTab;
@@ -74,6 +79,8 @@ public sealed class GameDataEditorWindow : EditorWindow
 
     void OnEnable() => ReloadAll();
 
+    void OnDisable() => BindCharacterSerialized(null);
+
     void ReloadAll()
     {
         _bundle = EnsureLocalizationBundle();
@@ -90,6 +97,7 @@ public sealed class GameDataEditorWindow : EditorWindow
         LoadCustomData();
         SeedCustomItemNames();
         _iconCatalog = EnsureIconCatalog();
+        LoadCharacters();
         InvalidateFilter();
     }
 
@@ -182,26 +190,53 @@ public sealed class GameDataEditorWindow : EditorWindow
 
     GameDatabase ActiveDb => _source == Source.Reference ? _bnDb : _customDb;
     bool IsCustom => _source == Source.Custom;
+    bool IsCharactersTab => _tab == Tab.Characters;
+
+    void LoadCharacters()
+    {
+        _characterDefs = CharacterDefinitionCatalog.LoadAll();
+        BindCharacterSerialized(null);
+        InvalidateFilter();
+    }
+
+    void BindCharacterSerialized(CharacterDefinition def)
+    {
+        if (_characterSerialized != null)
+        {
+            _characterSerialized.Dispose();
+            _characterSerialized = null;
+        }
+
+        _characterSerializedTarget = def;
+        if (def != null)
+            _characterSerialized = new SerializedObject(def);
+    }
 
     // ── OnGUI ──────────────────────────────────────────────────
 
     void OnGUI()
     {
-        if (_bnDb == null && _customDb == null)
-        {
-            EditorGUILayout.HelpBox(
-                "데이터를 로드할 수 없습니다.\nAssets/StreamingAssets/ 에 BNData/ 또는 GameData/ 폴더가 있는지 확인하세요.",
-                MessageType.Warning);
-            if (GUILayout.Button("Reload")) ReloadAll();
-            return;
-        }
-
         DrawSourceBar();
         DrawToolbar();
 
         EditorGUILayout.BeginHorizontal();
-        DrawList();
-        DrawDetail();
+        if (IsCharactersTab)
+        {
+            DrawCharacterList();
+            DrawCharacterDetail();
+        }
+        else if (ActiveDb == null)
+        {
+            EditorGUILayout.HelpBox(
+                "데이터를 로드할 수 없습니다.\nAssets/StreamingAssets/ 에 BNData/ 또는 GameData/ 폴더가 있는지 확인하세요.",
+                MessageType.Warning);
+        }
+        else
+        {
+            DrawList();
+            DrawDetail();
+        }
+
         EditorGUILayout.EndHorizontal();
 
         DrawFooter();
@@ -211,16 +246,26 @@ public sealed class GameDataEditorWindow : EditorWindow
     {
         EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 
-        var newSource = (Source)GUILayout.Toolbar((int)_source,
-            new[] { "BN Reference (read-only)", "Custom (editable)" },
-            EditorStyles.toolbarButton, GUILayout.Width(360));
-        if (newSource != _source)
+        if (IsCharactersTab)
         {
-            _source = newSource;
-            _selectedIndex = -1;
-            _categoryIndex = 0;
-            _categoryFilter = "";
-            InvalidateFilter();
+            EditorGUILayout.LabelField(
+                "Characters (Dist SO)",
+                EditorStyles.miniLabel,
+                GUILayout.Width(360));
+        }
+        else
+        {
+            var newSource = (Source)GUILayout.Toolbar((int)_source,
+                new[] { "BN Reference (read-only)", "Custom (editable)" },
+                EditorStyles.toolbarButton, GUILayout.Width(360));
+            if (newSource != _source)
+            {
+                _source = newSource;
+                _selectedIndex = -1;
+                _categoryIndex = 0;
+                _categoryFilter = "";
+                InvalidateFilter();
+            }
         }
 
         GUILayout.FlexibleSpace();
@@ -256,38 +301,80 @@ public sealed class GameDataEditorWindow : EditorWindow
 
     void DrawToolbar()
     {
-        var db = ActiveDb;
-        if (db == null) return;
-
         EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 
+        int itemCount = ActiveDb != null ? ActiveDb.Items.Count : 0;
+        int recipeCount = ActiveDb != null ? ActiveDb.Recipes.Count : 0;
         Tab newTab = (Tab)GUILayout.Toolbar((int)_tab,
-            new[] { $"Items ({db.Items.Count})", $"Recipes ({db.Recipes.Count})" },
-            EditorStyles.toolbarButton, GUILayout.Width(300));
-        if (newTab != _tab) { _tab = newTab; _selectedIndex = -1; InvalidateFilter(); }
+            new[]
+            {
+                $"Items ({itemCount})",
+                $"Recipes ({recipeCount})",
+                $"Characters ({_characterDefs.Count})"
+            },
+            EditorStyles.toolbarButton, GUILayout.Width(420));
+        if (newTab != _tab)
+        {
+            _tab = newTab;
+            _selectedIndex = -1;
+            _categoryIndex = 0;
+            _categoryFilter = "";
+            BindCharacterSerialized(null);
+            InvalidateFilter();
+        }
 
         GUILayout.Space(8);
 
-        string[] catLabels = _tab == Tab.Items ? _itemTypeLabels : _recipeCategoryLabels;
-        int newCatIdx = EditorGUILayout.Popup(_categoryIndex, catLabels,
-            EditorStyles.toolbarPopup, GUILayout.Width(120));
-        if (newCatIdx != _categoryIndex)
+        if (IsCharactersTab)
         {
-            _categoryIndex = newCatIdx;
-            _categoryFilter = _tab == Tab.Items
-                ? _itemTypes[_categoryIndex]
-                : _recipeCategories[_categoryIndex];
-            _selectedIndex = -1;
-            InvalidateFilter();
+            int newKindIdx = EditorGUILayout.Popup(
+                _categoryIndex,
+                _characterKindLabels,
+                EditorStyles.toolbarPopup,
+                GUILayout.Width(120));
+            if (newKindIdx != _categoryIndex)
+            {
+                _categoryIndex = newKindIdx;
+                _categoryFilter = _characterKindLabels[newKindIdx];
+                _selectedIndex = -1;
+                BindCharacterSerialized(null);
+                InvalidateFilter();
+            }
+        }
+        else
+        {
+            string[] catLabels = _tab == Tab.Items ? _itemTypeLabels : _recipeCategoryLabels;
+            int newCatIdx = EditorGUILayout.Popup(_categoryIndex, catLabels,
+                EditorStyles.toolbarPopup, GUILayout.Width(120));
+            if (newCatIdx != _categoryIndex)
+            {
+                _categoryIndex = newCatIdx;
+                _categoryFilter = _tab == Tab.Items
+                    ? _itemTypes[_categoryIndex]
+                    : _recipeCategories[_categoryIndex];
+                _selectedIndex = -1;
+                InvalidateFilter();
+            }
         }
 
         GUILayout.Space(8);
 
         string newSearch = EditorGUILayout.TextField(_searchText,
             EditorStyles.toolbarSearchField, GUILayout.MinWidth(200));
-        if (newSearch != _searchText) { _searchText = newSearch; _selectedIndex = -1; InvalidateFilter(); }
+        if (newSearch != _searchText)
+        {
+            _searchText = newSearch;
+            _selectedIndex = -1;
+            BindCharacterSerialized(null);
+            InvalidateFilter();
+        }
 
-        if (IsCustom)
+        if (IsCharactersTab)
+        {
+            if (GUILayout.Button("+", EditorStyles.toolbarButton, GUILayout.Width(24)))
+                AddNewCharacter();
+        }
+        else if (IsCustom)
         {
             if (GUILayout.Button("+", EditorStyles.toolbarButton, GUILayout.Width(24)))
             {
@@ -314,9 +401,37 @@ public sealed class GameDataEditorWindow : EditorWindow
         _lastSource = _source;
         _lastLanguage = lang;
 
+        string lower = _searchText.ToLowerInvariant();
+
+        if (_tab == Tab.Characters)
+        {
+            _filteredCharacters.Clear();
+            for (int i = 0; i < _characterDefs.Count; i++)
+            {
+                CharacterDefinition def = _characterDefs[i];
+                if (def == null)
+                    continue;
+                if (_categoryIndex == 1 && def.Kind != CharacterKind.Player)
+                    continue;
+                if (_categoryIndex == 2 && def.Kind != CharacterKind.Npc)
+                    continue;
+                if (!string.IsNullOrEmpty(lower))
+                {
+                    string display = def.DisplayNameOverride ?? string.Empty;
+                    if (!(def.name ?? string.Empty).ToLowerInvariant().Contains(lower) &&
+                        !(def.Id ?? string.Empty).ToLowerInvariant().Contains(lower) &&
+                        !display.ToLowerInvariant().Contains(lower))
+                        continue;
+                }
+
+                _filteredCharacters.Add(def);
+            }
+
+            return;
+        }
+
         var db = ActiveDb;
         if (db == null) return;
-        string lower = _searchText.ToLowerInvariant();
 
         if (_tab == Tab.Items)
         {
@@ -385,6 +500,42 @@ public sealed class GameDataEditorWindow : EditorWindow
         EditorGUILayout.EndVertical();
     }
 
+    void DrawCharacterList()
+    {
+        RebuildFilterIfNeeded();
+        EditorGUILayout.BeginVertical(GUILayout.Width(320));
+        int count = _filteredCharacters.Count;
+        EditorGUILayout.LabelField($"{count} entries", EditorStyles.miniLabel);
+
+        _listScroll = EditorGUILayout.BeginScrollView(_listScroll);
+        const int PAGE = 200;
+        int show = Mathf.Min(count, PAGE);
+
+        for (int i = 0; i < show; i++)
+        {
+            bool selected = i == _selectedIndex;
+            CharacterDefinition def = _filteredCharacters[i];
+            string id = def != null ? def.Id : string.Empty;
+            string kind = def != null ? def.Kind.ToString() : "?";
+            string assetName = def != null ? def.name : "(missing)";
+            string label = $"{kind}  {assetName}";
+            if (!string.IsNullOrEmpty(id))
+                label += $"  —  {id}";
+
+            if (GUILayout.Toggle(selected, label, "SelectionRect") && !selected)
+            {
+                _selectedIndex = i;
+                BindCharacterSerialized(def);
+            }
+        }
+
+        if (count > PAGE)
+            EditorGUILayout.HelpBox($"검색을 좁혀주세요. {count - PAGE}개 항목 추가.", MessageType.Info);
+
+        EditorGUILayout.EndScrollView();
+        EditorGUILayout.EndVertical();
+    }
+
     // ── Detail ─────────────────────────────────────────────────
 
     void DrawDetail()
@@ -398,6 +549,72 @@ public sealed class GameDataEditorWindow : EditorWindow
             DrawItemDetail();
         else
             DrawRecipeDetail();
+
+        EditorGUILayout.EndScrollView();
+        EditorGUILayout.EndVertical();
+    }
+
+    void DrawCharacterDetail()
+    {
+        EditorGUILayout.BeginVertical("box");
+        _detailScroll = EditorGUILayout.BeginScrollView(_detailScroll);
+
+        if (_selectedIndex < 0 || _selectedIndex >= _filteredCharacters.Count)
+        {
+            EditorGUILayout.LabelField("항목을 선택하세요", EditorStyles.centeredGreyMiniLabel);
+            EditorGUILayout.EndScrollView();
+            EditorGUILayout.EndVertical();
+            return;
+        }
+
+        CharacterDefinition def = _filteredCharacters[_selectedIndex];
+        if (def == null)
+        {
+            EditorGUILayout.HelpBox("에셋을 로드할 수 없습니다.", MessageType.Warning);
+            EditorGUILayout.EndScrollView();
+            EditorGUILayout.EndVertical();
+            return;
+        }
+
+        if (_characterSerializedTarget != def)
+            BindCharacterSerialized(def);
+
+        EditorGUILayout.LabelField("Character (Dist SO)", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "BN JSON이 아닙니다. 저장은 Unity 에셋(Ctrl+S). Save Changes는 아이템/레시피 전용입니다.",
+            MessageType.None);
+
+        _characterSerialized.Update();
+        EditorGUI.BeginChangeCheck();
+        SerializedProperty iterator = _characterSerialized.GetIterator();
+        bool enterChildren = true;
+        while (iterator.NextVisible(enterChildren))
+        {
+            enterChildren = false;
+            if (iterator.name == "m_Script" || iterator.name == "_alignment")
+                continue;
+            EditorGUILayout.PropertyField(iterator, true);
+        }
+
+        CharacterAlignmentDrawer.Draw(_characterSerialized.FindProperty("_alignment"));
+        if (EditorGUI.EndChangeCheck())
+        {
+            _characterSerialized.ApplyModifiedProperties();
+            EditorUtility.SetDirty(def);
+            InvalidateFilter();
+        }
+
+        EditorGUILayout.Space(8);
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Ping Asset", GUILayout.Width(100)))
+        {
+            Selection.activeObject = def;
+            EditorGUIUtility.PingObject(def);
+        }
+
+        if (GUILayout.Button("Delete Asset", GUILayout.Width(100)))
+            DeleteSelectedCharacter();
+        EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.EndScrollView();
         EditorGUILayout.EndVertical();
@@ -859,6 +1076,45 @@ public sealed class GameDataEditorWindow : EditorWindow
     }
 
     // ── CRUD ───────────────────────────────────────────────────
+
+    void AddNewCharacter()
+    {
+        CharacterDefinition def = CharacterDefinitionCatalog.CreateNew();
+        LoadCharacters();
+        _tab = Tab.Characters;
+        InvalidateFilter();
+        RebuildFilterIfNeeded();
+        _selectedIndex = _filteredCharacters.IndexOf(def);
+        BindCharacterSerialized(def);
+        Selection.activeObject = def;
+        EditorGUIUtility.PingObject(def);
+    }
+
+    void DeleteSelectedCharacter()
+    {
+        if (_selectedIndex < 0 || _selectedIndex >= _filteredCharacters.Count)
+            return;
+
+        CharacterDefinition def = _filteredCharacters[_selectedIndex];
+        if (def == null)
+            return;
+
+        string path = AssetDatabase.GetAssetPath(def);
+        if (string.IsNullOrEmpty(path))
+            return;
+
+        if (!EditorUtility.DisplayDialog(
+                "Delete Character Definition",
+                $"Delete asset '{def.name}'?\n{path}",
+                "Delete",
+                "Cancel"))
+            return;
+
+        BindCharacterSerialized(null);
+        AssetDatabase.DeleteAsset(path);
+        LoadCharacters();
+        _selectedIndex = -1;
+    }
 
     void AddNewItem()
     {

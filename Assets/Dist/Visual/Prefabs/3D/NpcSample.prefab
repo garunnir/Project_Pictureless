@@ -72,6 +72,7 @@ GameObject:
   - component: {fileID: 5197488811145636763}
   - component: {fileID: 8762515008328947030}
   - component: {fileID: 929168342102942221}
+  - component: {fileID: 5011223344556677889}
   m_Layer: 6
   m_Name: NpcSample
   m_TagString: Untagged
@@ -342,6 +343,19 @@ MonoBehaviour:
   _paramAiming: IsAiming
   _paramAction: Action
   _poseRate: 10
+--- !u!114 &5011223344556677889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fda92ab50a9d7545a8642f391bde5d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterDefinitionBinder
+  _definition: {fileID: 11400000, guid: a7c3e8910245d6e4f8b2a1c9d3e5f7a8, type: 2}
 --- !u!1 &8110232566133532116
 GameObject:
   m_ObjectHideFlags: 0

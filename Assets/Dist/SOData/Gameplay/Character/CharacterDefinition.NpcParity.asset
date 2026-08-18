@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 424fcbc8f5275df45888035d148ca0ec, type: 3}
+  m_Name: CharacterDefinition.NpcParity
+  m_EditorClassIdentifier: DistScript::CharacterDefinition
+  _kind: 1
+  _id: 
+  _displayName: 
+  _portraitSprite: {fileID: 0}
+  _alignment: {x: 0, y: 0}
+  _attributes:
+    str: 8
+    con: 8
+    dex: 8
+    intel: 8
+    wis: 8
+    cha: 8
+  _skillOverrides: []
+  _bodyMassKg: 0
+  _bustCm: 0
+  _waistCm: 0
+  _hipCm: 0
+  _partMasses: []
+  _prototypeSeed: 0
+  _prefab: {fileID: 100100000, guid: d37475c6e3368db4c9e212b9bcee3831, type: 3}

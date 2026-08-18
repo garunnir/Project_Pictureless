@@ -49,6 +49,6 @@ Default active language: **`ko`**.
 
 ## Related
 
-- Hub window: `Assets/Dist/Scripts/Editor/BN/GameDataEditorWindow.cs`
+- Hub window: `Assets/Dist/Scripts/Editor/BN/GameDataEditorWindow.cs` (Items / Recipes / Characters). Characters are Dist SO under `SOData/Gameplay/Character/`, not BN JSON.
 - Runtime: `UITextPresenter`, `ItemNameTable`, `LocalizationBundle`, `DistUiFont`
 - UI chrome keys remain `UI_ko` / `Loc` (separate from item display names)

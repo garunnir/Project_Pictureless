@@ -19,6 +19,7 @@
 | Message log HUD | [`ui/MESSAGE_LOG.md`](ui/MESSAGE_LOG.md) | (UI 레이아웃·폰트 룰 공유) |
 | Crafting window | [`crafting/CRAFTING.md`](crafting/CRAFTING.md) | (창 vs 아이템 메뉴 · 재료 풀 · 대체재 드롭) |
 | Locomotion | [`locomotion/LOCOMOTION.md`](locomotion/LOCOMOTION.md) | `locomotion.mdc` |
+| Character definition / spawn | [`character/DEFINITION.md`](character/DEFINITION.md) | — |
 | Legacy | [`legacy/LEGACY_README.md`](legacy/LEGACY_README.md) | `legacy.mdc` |
 
 **스크립트를 수정하기 전에** 해당 행의 Canonical 문서를 읽는다.  

@@ -80,6 +80,28 @@ public sealed class CharacterSkillsHost : MonoBehaviour
         _skills = _ownedSkills;
     }
 
+    /// <summary>Definition Apply ? ???? ??? ?? ????? ????.</summary>
+    public void BindSkills(DefaultCharacterSkills skills)
+    {
+        _bodyHost ??= GetComponent<CharacterBodyHost>();
+
+        if (_bodyAggregator != null && _skills != null)
+        {
+            _skills.RemoveModifierSource(_bodyAggregator);
+            _bodyAggregator = null;
+        }
+
+        _ownedDefeat?.Dispose();
+        _ownedDefeat = null;
+        _defeat = null;
+
+        _ownedSkills = skills;
+        _skills = skills;
+
+        BindBodyToSkills();
+        EnsureDefeat();
+    }
+
     void BindBodyToSkills()
     {
         if (_skills == null || _bodyHost == null)
