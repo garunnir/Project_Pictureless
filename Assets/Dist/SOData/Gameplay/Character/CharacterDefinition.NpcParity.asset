@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 424fcbc8f5275df45888035d148ca0ec, type: 3}
   m_Name: CharacterDefinition.NpcParity
   m_EditorClassIdentifier: DistScript::CharacterDefinition
-  _kind: 1
   _id: 
   _displayName: 
   _portraitSprite: {fileID: 0}

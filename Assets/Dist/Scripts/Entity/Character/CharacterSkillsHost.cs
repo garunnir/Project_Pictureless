@@ -36,6 +36,8 @@ public sealed class CharacterSkillsHost : MonoBehaviour
         }
     }
 
+    public bool UseGameplayDataSkills => _useGameplayDataSkills;
+
     void Awake()
     {
         _bodyHost = GetComponent<CharacterBodyHost>();

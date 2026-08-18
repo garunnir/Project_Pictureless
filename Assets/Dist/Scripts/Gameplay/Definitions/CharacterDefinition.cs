@@ -7,12 +7,6 @@ using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
-public enum CharacterKind
-{
-    Player = 0,
-    Npc = 1
-}
-
 [Serializable]
 public struct CharacterAttributeBlock
 {
@@ -64,7 +58,6 @@ public struct CharacterPartMassEntry
 [CreateAssetMenu(fileName = "CharacterDefinition", menuName = "Dist/Character/Definition")]
 public sealed class CharacterDefinition : ScriptableObject
 {
-    [SerializeField] CharacterKind _kind = CharacterKind.Npc;
     [SerializeField] string _id;
     [SerializeField] string _displayName;
     [SerializeField] Sprite _portraitSprite;
@@ -79,7 +72,6 @@ public sealed class CharacterDefinition : ScriptableObject
     [SerializeField] bool _prototypeSeed;
     [SerializeField] GameObject _prefab;
 
-    public CharacterKind Kind => _kind;
     public string Id => _id;
     public string DisplayNameOverride => _displayName;
     public Sprite PortraitSprite => _portraitSprite;

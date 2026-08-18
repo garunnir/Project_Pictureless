@@ -39,7 +39,6 @@ public sealed class GameDataEditorWindow : EditorWindow
     List<CharacterDefinition> _filteredCharacters = new();
     SerializedObject _characterSerialized;
     CharacterDefinition _characterSerializedTarget;
-    static readonly string[] _characterKindLabels = { "All", "Player", "Npc" };
     string _lastSearch = "\0";
     string _lastCategory = "\0";
     Tab _lastTab;
@@ -325,23 +324,7 @@ public sealed class GameDataEditorWindow : EditorWindow
 
         GUILayout.Space(8);
 
-        if (IsCharactersTab)
-        {
-            int newKindIdx = EditorGUILayout.Popup(
-                _categoryIndex,
-                _characterKindLabels,
-                EditorStyles.toolbarPopup,
-                GUILayout.Width(120));
-            if (newKindIdx != _categoryIndex)
-            {
-                _categoryIndex = newKindIdx;
-                _categoryFilter = _characterKindLabels[newKindIdx];
-                _selectedIndex = -1;
-                BindCharacterSerialized(null);
-                InvalidateFilter();
-            }
-        }
-        else
+        if (!IsCharactersTab)
         {
             string[] catLabels = _tab == Tab.Items ? _itemTypeLabels : _recipeCategoryLabels;
             int newCatIdx = EditorGUILayout.Popup(_categoryIndex, catLabels,
@@ -355,9 +338,9 @@ public sealed class GameDataEditorWindow : EditorWindow
                 _selectedIndex = -1;
                 InvalidateFilter();
             }
-        }
 
-        GUILayout.Space(8);
+            GUILayout.Space(8);
+        }
 
         string newSearch = EditorGUILayout.TextField(_searchText,
             EditorStyles.toolbarSearchField, GUILayout.MinWidth(200));
@@ -410,10 +393,6 @@ public sealed class GameDataEditorWindow : EditorWindow
             {
                 CharacterDefinition def = _characterDefs[i];
                 if (def == null)
-                    continue;
-                if (_categoryIndex == 1 && def.Kind != CharacterKind.Player)
-                    continue;
-                if (_categoryIndex == 2 && def.Kind != CharacterKind.Npc)
                     continue;
                 if (!string.IsNullOrEmpty(lower))
                 {
@@ -516,9 +495,8 @@ public sealed class GameDataEditorWindow : EditorWindow
             bool selected = i == _selectedIndex;
             CharacterDefinition def = _filteredCharacters[i];
             string id = def != null ? def.Id : string.Empty;
-            string kind = def != null ? def.Kind.ToString() : "?";
             string assetName = def != null ? def.name : "(missing)";
-            string label = $"{kind}  {assetName}";
+            string label = assetName;
             if (!string.IsNullOrEmpty(id))
                 label += $"  —  {id}";
 

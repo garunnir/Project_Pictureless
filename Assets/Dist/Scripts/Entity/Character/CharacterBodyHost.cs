@@ -24,6 +24,8 @@ public sealed class CharacterBodyHost : MonoBehaviour
         }
     }
 
+    public bool UseGameplayDataBody => _useGameplayDataBody;
+
     void Awake() => EnsureBody();
 
     void EnsureBody()

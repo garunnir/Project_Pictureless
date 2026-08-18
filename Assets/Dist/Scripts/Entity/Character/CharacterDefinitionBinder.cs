@@ -38,7 +38,7 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
         DefaultCharacterSkills skills = definition.CreateSkills();
         CharacterBody body = definition.CreateBody();
 
-        if (definition.Kind == CharacterKind.Player)
+        if (UsesGameplayData())
         {
             GameplayData.Stats = new DefaultPlayerStats(skills);
             GameplayData.Body = body;
@@ -48,13 +48,22 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
         if (_bodyHost == null || _skillsHost == null)
         {
             Debug.LogError(
-                $"[CharacterDefinitionBinder] Npc definition '{definition.name}' requires CharacterBodyHost and CharacterSkillsHost on '{name}'.",
+                $"[CharacterDefinitionBinder] '{name}' needs CharacterBodyHost and CharacterSkillsHost, or UseGameplayData on those hosts.",
                 this);
             return;
         }
 
         _bodyHost.BindBody(body);
         _skillsHost.BindSkills(skills);
+    }
+
+    bool UsesGameplayData()
+    {
+        if (_bodyHost != null && _bodyHost.UseGameplayDataBody)
+            return true;
+        if (_skillsHost != null && _skillsHost.UseGameplayDataSkills)
+            return true;
+        return _bodyHost == null && _skillsHost == null;
     }
 
     void EnsureHosts()

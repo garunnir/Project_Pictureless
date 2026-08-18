@@ -12,7 +12,7 @@ Inspector CustomEditor는 같은 Alignment 위젯을 쓴다 (`CharacterAlignment
 
 ## 역할
 
-`CharacterDefinition` SO는 플레이어/NPC **생성 스펙**이다. Dist는 Dialogue `Actor` / `ActorSO`에 의존하지 않는다.
+`CharacterDefinition` SO는 캐릭터 **생성 스펙**이다. PC/NPC 구분은 스펙에 없다. Dist는 Dialogue `Actor` / `ActorSO`에 의존하지 않는다.
 
 | 경로 | 책임 |
 |------|------|
@@ -25,7 +25,6 @@ Inspector CustomEditor는 같은 Alignment 위젯을 쓴다 (`CharacterAlignment
 
 | 필드 | ActorSO 대응 | Dist |
 |------|--------------|------|
-| `kind` | `IsPlayer` | Player → `GameplayData`; Npc → 엔티티 호스트 |
 | `id` | `Name` (Loc 키) | `Loc.Get(id)` |
 | `displayName` | Display Name | 비어 있으면 `id` Loc |
 | `portraitSprite` | spritePortrait | 저장만 |
@@ -43,16 +42,16 @@ Inspector CustomEditor는 같은 Alignment 위젯을 쓴다 (`CharacterAlignment
 
 ```text
 definition == null  → BodyHost/SkillsHost 기존 시드 (CreateHumanDefault(8), CreateSeededSkills)
-Kind.Player         → GameplayData.Stats / Body (싱글톤)
-Kind.Npc            → CharacterBodyHost.BindBody + CharacterSkillsHost.BindSkills
+UseGameplayData* 또는 호스트 없음 → GameplayData.Stats / Body
+그 외 → CharacterBodyHost.BindBody + CharacterSkillsHost.BindSkills
 ```
 
 ## 샘플
 
 | 에셋 | 용도 |
 |------|------|
-| `CharacterDefinition.NpcParity.asset` | NpcSample 패리티 (능력치 8, override 없음) |
-| `CharacterDefinition.PlayerParity.asset` | 플레이어 GameplayData 패리티 템플릿 |
+| `CharacterDefinition.NpcParity.asset` | NpcSample 배선용 패리티 (능력치 8, override 없음) |
+| `CharacterDefinition.PlayerParity.asset` | 동일 패리티 템플릿 (prefab 미할당) |
 
 ## 검증
 
