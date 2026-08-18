@@ -8,6 +8,8 @@ using UnityEngine;
 
 public static class PlayerStatusBodyGraphicDisplay
 {
+    const int TempComfortDisplayScale = 100;
+
     public static void Apply(
         IReadOnlyList<UIPlayerStatusBodyPartGraphic> graphics,
         ICharacterBody body,
@@ -17,6 +19,7 @@ public static class PlayerStatusBodyGraphicDisplay
             return;
 
         EquipmentWearState wear = PlayerGearHost.Active?.Wear;
+        BodyTemp bodyTemp = PlayerGearHost.Active?.BodyTemperature;
         for (int i = 0; i < graphics.Count; i++)
         {
             UIPlayerStatusBodyPartGraphic graphic = graphics[i];
@@ -37,8 +40,7 @@ public static class PlayerStatusBodyGraphicDisplay
 
             if (tab == CharacterWindowTab.BodyTemp)
             {
-                int warm = WearStatsAggregator.WarmthForPart(wear, partId);
-                graphic.SetDisplay(warm, Mathf.Max(warm, 1), present);
+                ApplyBodyTempGraphic(graphic, bodyTemp, partId, present);
                 continue;
             }
 
@@ -46,5 +48,32 @@ public static class PlayerStatusBodyGraphicDisplay
             int max = present ? body.GetConditionMax(partId) : 0;
             graphic.SetDisplay(cur, max, present);
         }
+    }
+
+    static void ApplyBodyTempGraphic(
+        UIPlayerStatusBodyPartGraphic graphic,
+        BodyTemp bodyTemp,
+        string partId,
+        bool present)
+    {
+        if (!present)
+        {
+            graphic.SetDisplay(0, TempComfortDisplayScale, false);
+            return;
+        }
+
+        float tempC = BodyTemp.ComfortBodyTempC;
+        if (bodyTemp == null || !bodyTemp.TryGetPartTempC(partId, out tempC))
+            tempC = BodyTemp.ComfortBodyTempC;
+
+        float deviation = Mathf.Abs(tempC - BodyTemp.ComfortBodyTempC);
+        float maxDev = Mathf.Max(
+            BodyTemp.ComfortBodyTempC - BodyTemp.ExtremityTempMinC,
+            BodyTemp.ExtremityTempMaxC - BodyTemp.ComfortBodyTempC);
+        float closeness = maxDev > 0f
+            ? 1f - Mathf.Clamp01(deviation / maxDev)
+            : 1f;
+        int current = Mathf.RoundToInt(closeness * TempComfortDisplayScale);
+        graphic.SetDisplay(current, TempComfortDisplayScale, true);
     }
 }

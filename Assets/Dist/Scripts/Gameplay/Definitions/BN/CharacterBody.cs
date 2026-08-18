@@ -134,6 +134,155 @@ namespace Garunnir.Runtime.Gameplay.Data
             return false;
         }
 
+        public bool TryAttach(string parentId, BodyPartNode node)
+        {
+            if (!TryAttachCore(parentId, node))
+                return false;
+
+            Changed?.Invoke();
+            return true;
+        }
+
+        public CharacterBodyDto ToDto()
+        {
+            var parts = new List<CharacterBodyPartDto>();
+            for (int i = 0; i < _roots.Count; i++)
+                AppendPartDto(_roots[i], string.Empty, parts);
+
+            return new CharacterBodyDto { parts = parts.ToArray() };
+        }
+
+        public static CharacterBody CreateFromDto(CharacterBodyDto dto)
+        {
+            var body = new CharacterBody();
+            body.ReplaceFromDto(dto);
+            return body;
+        }
+
+        public void FromDto(CharacterBodyDto dto)
+        {
+            ReplaceFromDto(dto);
+            Changed?.Invoke();
+        }
+
+        void ReplaceFromDto(CharacterBodyDto dto)
+        {
+            _roots.Clear();
+            CharacterBodyPartDto[] parts = dto != null ? dto.parts : null;
+            if (parts == null || parts.Length == 0)
+                return;
+
+            bool[] done = new bool[parts.Length];
+            int remaining = parts.Length;
+            int guard = parts.Length + 1;
+            while (remaining > 0 && guard-- > 0)
+            {
+                int attachedThisPass = 0;
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    if (done[i])
+                        continue;
+
+                    CharacterBodyPartDto part = parts[i];
+                    if (part == null || string.IsNullOrEmpty(part.partId))
+                    {
+                        done[i] = true;
+                        remaining--;
+                        continue;
+                    }
+
+                    if (!string.IsNullOrEmpty(part.parent) && !Has(part.parent))
+                        continue;
+
+                    if (!TryAttachCore(part.parent, CreateNodeFromDto(part)))
+                    {
+                        done[i] = true;
+                        remaining--;
+                        continue;
+                    }
+
+                    done[i] = true;
+                    remaining--;
+                    attachedThisPass++;
+                }
+
+                if (attachedThisPass == 0)
+                    break;
+            }
+        }
+
+        bool TryAttachCore(string parentId, BodyPartNode node)
+        {
+            if (node == null || string.IsNullOrEmpty(node.PartId) || Has(node.PartId))
+                return false;
+
+            if (string.IsNullOrEmpty(parentId))
+            {
+                _roots.Add(node);
+                return true;
+            }
+
+            if (!TryGet(parentId, out BodyPartNode parent))
+                return false;
+
+            parent.AddChild(node);
+            return true;
+        }
+
+        static BodyPartNode CreateNodeFromDto(CharacterBodyPartDto part)
+        {
+            int max = part.hasCondition ? part.conditionMax : 0;
+            var node = new BodyPartNode(part.partId, part.hasCondition, max, part.kind);
+            if (part.hasCondition)
+                node.SetCondition(part.conditionCur, part.conditionMax);
+
+            BodyPartEffectDto[] effects = part.effects;
+            if (effects == null)
+                return node;
+
+            for (int i = 0; i < effects.Length; i++)
+            {
+                BodyPartEffectDto e = effects[i];
+                if (e == null || string.IsNullOrEmpty(e.effectId))
+                    continue;
+
+                node.AddEffect(new BodyPartEffect(e.effectId, e.intensity, e.remainingSeconds));
+            }
+
+            return node;
+        }
+
+        static void AppendPartDto(BodyPartNode node, string parentId, List<CharacterBodyPartDto> into)
+        {
+            IReadOnlyList<BodyPartEffect> effects = node.Effects;
+            var effectDtos = new BodyPartEffectDto[effects.Count];
+            for (int i = 0; i < effects.Count; i++)
+            {
+                BodyPartEffect e = effects[i];
+                effectDtos[i] = new BodyPartEffectDto
+                {
+                    effectId = e.EffectId,
+                    intensity = e.Intensity,
+                    remainingSeconds = e.RemainingSeconds
+                };
+            }
+
+            into.Add(new CharacterBodyPartDto
+            {
+                partId = node.PartId,
+                parent = parentId ?? string.Empty,
+                kind = node.Kind,
+                hasCondition = node.HasCondition,
+                conditionCur = node.ConditionCur,
+                conditionMax = node.ConditionMax,
+                effects = effectDtos
+            });
+
+            IReadOnlyList<BodyPartNode> children = node.Children;
+            for (int i = 0; i < children.Count; i++)
+                AppendPartDto(children[i], node.PartId, into);
+        }
+
         public int GetConditionCur(string mainConditionPartId)
         {
             if (!TryGet(mainConditionPartId, out BodyPartNode node) ||
@@ -269,35 +418,207 @@ namespace Garunnir.Runtime.Gameplay.Data
             return false;
         }
 
+        public static bool TryCreateLimbFrom(
+            string startPartId,
+            int conditionMax,
+            BodyPartKind kind,
+            out BodyPartNode subtree)
+        {
+            subtree = null;
+            if (string.IsNullOrEmpty(startPartId))
+                return false;
+
+            string id = BodyPartIds.ResolveNodeId(startPartId);
+            if (id == BodyPartIds.UpperArmL)
+            {
+                subtree = CreateArm(
+                    BodyPartIds.UpperArmL,
+                    BodyPartIds.LowerArmL,
+                    BodyPartIds.HandL,
+                    BodyPartIds.FingerThumbL,
+                    BodyPartIds.FingerIndexL,
+                    conditionMax,
+                    kind);
+                return true;
+            }
+
+            if (id == BodyPartIds.UpperArmR)
+            {
+                subtree = CreateArm(
+                    BodyPartIds.UpperArmR,
+                    BodyPartIds.LowerArmR,
+                    BodyPartIds.HandR,
+                    BodyPartIds.FingerThumbR,
+                    BodyPartIds.FingerIndexR,
+                    conditionMax,
+                    kind);
+                return true;
+            }
+
+            if (id == BodyPartIds.LowerArmL)
+            {
+                subtree = CreateArmFromLower(
+                    BodyPartIds.LowerArmL,
+                    BodyPartIds.HandL,
+                    BodyPartIds.FingerThumbL,
+                    BodyPartIds.FingerIndexL,
+                    conditionMax,
+                    kind);
+                return true;
+            }
+
+            if (id == BodyPartIds.LowerArmR)
+            {
+                subtree = CreateArmFromLower(
+                    BodyPartIds.LowerArmR,
+                    BodyPartIds.HandR,
+                    BodyPartIds.FingerThumbR,
+                    BodyPartIds.FingerIndexR,
+                    conditionMax,
+                    kind);
+                return true;
+            }
+
+            if (id == BodyPartIds.HandL)
+            {
+                subtree = CreateHand(
+                    BodyPartIds.HandL,
+                    BodyPartIds.FingerThumbL,
+                    BodyPartIds.FingerIndexL,
+                    conditionMax,
+                    kind);
+                return true;
+            }
+
+            if (id == BodyPartIds.HandR)
+            {
+                subtree = CreateHand(
+                    BodyPartIds.HandR,
+                    BodyPartIds.FingerThumbR,
+                    BodyPartIds.FingerIndexR,
+                    conditionMax,
+                    kind);
+                return true;
+            }
+
+            if (id == BodyPartIds.ThighL)
+            {
+                subtree = CreateLeg(
+                    BodyPartIds.ThighL,
+                    BodyPartIds.CalfL,
+                    BodyPartIds.FootL,
+                    conditionMax,
+                    kind);
+                return true;
+            }
+
+            if (id == BodyPartIds.ThighR)
+            {
+                subtree = CreateLeg(
+                    BodyPartIds.ThighR,
+                    BodyPartIds.CalfR,
+                    BodyPartIds.FootR,
+                    conditionMax,
+                    kind);
+                return true;
+            }
+
+            if (id == BodyPartIds.CalfL)
+            {
+                subtree = CreateLegFromCalf(
+                    BodyPartIds.CalfL,
+                    BodyPartIds.FootL,
+                    conditionMax,
+                    kind);
+                return true;
+            }
+
+            if (id == BodyPartIds.CalfR)
+            {
+                subtree = CreateLegFromCalf(
+                    BodyPartIds.CalfR,
+                    BodyPartIds.FootR,
+                    conditionMax,
+                    kind);
+                return true;
+            }
+
+            if (id == BodyPartIds.FootL)
+            {
+                subtree = new BodyPartNode(BodyPartIds.FootL, true, conditionMax, kind);
+                return true;
+            }
+
+            if (id == BodyPartIds.FootR)
+            {
+                subtree = new BodyPartNode(BodyPartIds.FootR, true, conditionMax, kind);
+                return true;
+            }
+
+            return false;
+        }
+
         static BodyPartNode CreateArm(
             string upperId,
             string lowerId,
             string handId,
             string thumbId,
             string indexId,
-            int conditionMax)
+            int conditionMax,
+            BodyPartKind kind = BodyPartKind.Organic)
         {
-            BodyPartNode upper = new(upperId, true, conditionMax);
-            BodyPartNode lower = new(lowerId, true, conditionMax);
-            BodyPartNode hand = new(handId, true, conditionMax);
-            hand.AddChild(new BodyPartNode(thumbId, false));
-            hand.AddChild(new BodyPartNode(indexId, false));
-            lower.AddChild(hand);
-            upper.AddChild(lower);
+            BodyPartNode upper = new(upperId, true, conditionMax, kind);
+            upper.AddChild(CreateArmFromLower(lowerId, handId, thumbId, indexId, conditionMax, kind));
             return upper;
+        }
+
+        static BodyPartNode CreateArmFromLower(
+            string lowerId,
+            string handId,
+            string thumbId,
+            string indexId,
+            int conditionMax,
+            BodyPartKind kind)
+        {
+            BodyPartNode lower = new(lowerId, true, conditionMax, kind);
+            lower.AddChild(CreateHand(handId, thumbId, indexId, conditionMax, kind));
+            return lower;
+        }
+
+        static BodyPartNode CreateHand(
+            string handId,
+            string thumbId,
+            string indexId,
+            int conditionMax,
+            BodyPartKind kind)
+        {
+            BodyPartNode hand = new(handId, true, conditionMax, kind);
+            hand.AddChild(new BodyPartNode(thumbId, false, 0, kind));
+            hand.AddChild(new BodyPartNode(indexId, false, 0, kind));
+            return hand;
         }
 
         static BodyPartNode CreateLeg(
             string thighId,
             string calfId,
             string footId,
-            int conditionMax)
+            int conditionMax,
+            BodyPartKind kind = BodyPartKind.Organic)
         {
-            BodyPartNode thigh = new(thighId, true, conditionMax);
-            BodyPartNode calf = new(calfId, true, conditionMax);
-            calf.AddChild(new BodyPartNode(footId, true, conditionMax));
-            thigh.AddChild(calf);
+            BodyPartNode thigh = new(thighId, true, conditionMax, kind);
+            thigh.AddChild(CreateLegFromCalf(calfId, footId, conditionMax, kind));
             return thigh;
+        }
+
+        static BodyPartNode CreateLegFromCalf(
+            string calfId,
+            string footId,
+            int conditionMax,
+            BodyPartKind kind)
+        {
+            BodyPartNode calf = new(calfId, true, conditionMax, kind);
+            calf.AddChild(new BodyPartNode(footId, true, conditionMax, kind));
+            return calf;
         }
     }
 }

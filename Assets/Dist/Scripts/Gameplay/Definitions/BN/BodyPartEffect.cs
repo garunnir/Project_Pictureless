@@ -29,5 +29,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         public const string Infected = "infected";
         public const string Regenerating = "regenerating";
         public const string Adrenaline = "adrenaline";
+        public const string Frostbite = "frostbite";
+        public const string Heat = "heat";
     }
 }

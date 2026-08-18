@@ -323,6 +323,13 @@ public static class CharacterGearLabels
                + $"  {HoverBodyTempTarget} {bodyTemp.TargetTempDisplayC:0.0}°C";
     }
 
+    public static string FormatPartBodyTemp(string partId, int warmth, float partTempC)
+    {
+        return $"{partId}"
+               + $"\n{HoverWarm} {warmth}"
+               + $"\n{HoverBodyTemp} {partTempC:0.0}°C";
+    }
+
     public static string FormatBodyTempFeeling(BodyTempFeeling feeling)
     {
         switch (feeling)

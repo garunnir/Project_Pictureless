@@ -3,6 +3,7 @@
 // ============================================================
 
 using System.Collections.Generic;
+using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -28,6 +29,19 @@ public sealed class CharacterAppearanceHost : MonoBehaviour
     public float HipCm => _hipCm;
     public IReadOnlyList<CharacterPartMassEntry> PartMasses => _partMasses;
 
+    CharacterBodyHost _bodyHost;
+    float _remainingMassKg;
+
+    /// <summary>절단 후 남은 체중(kg). partMasses에서 없는 부위를 뺀 값. 과적은 미연동.</summary>
+    public float RemainingMassKg
+    {
+        get
+        {
+            RecalcRemainingMass();
+            return _remainingMassKg;
+        }
+    }
+
     public string ResolveDisplayName()
     {
         if (!string.IsNullOrEmpty(_displayNameOverride))
@@ -37,6 +51,29 @@ public sealed class CharacterAppearanceHost : MonoBehaviour
             return string.Empty;
 
         return Loc.Get(_id);
+    }
+
+    void Awake() => TryGetComponent(out _bodyHost);
+
+    void RecalcRemainingMass()
+    {
+        if (_bodyHost == null)
+            TryGetComponent(out _bodyHost);
+
+        float remaining = _bodyMassKg;
+        ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
+        if (body != null)
+        {
+            for (int i = 0; i < _partMasses.Count; i++)
+            {
+                CharacterPartMassEntry entry = _partMasses[i];
+                if (string.IsNullOrEmpty(entry.partId) || body.Has(entry.partId))
+                    continue;
+                remaining -= entry.kg;
+            }
+        }
+
+        _remainingMassKg = remaining < 0f ? 0f : remaining;
     }
 
     public void ApplyFromDefinition(CharacterDefinition definition)

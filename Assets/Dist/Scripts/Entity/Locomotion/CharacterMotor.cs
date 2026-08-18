@@ -38,6 +38,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     bool _possessed;
     bool _hasTravelLimit;
     float _remainingTravelDistance;
+    float _envSpeedMultiplier = 1f;
 
     public bool IsPossessed => _possessed;
     public bool IsStuck => _locomotion != null && _locomotion.IsStuck;
@@ -117,7 +118,9 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
         }
         else
         {
-            desiredMove = _mover.CalcConstantSpeedMove(EffectiveMoveSpeed, deltaTime);
+            desiredMove = _mover.CalcConstantSpeedMove(
+                EffectiveMoveSpeed * _envSpeedMultiplier,
+                deltaTime);
             if (_hasTravelLimit &&
                 desiredMove.sqrMagnitude >
                 _remainingTravelDistance * _remainingTravelDistance)
@@ -176,6 +179,10 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
 
     public void SetSpeed(float metersPerSecond) =>
         _moveSpeed = Mathf.Max(0f, metersPerSecond);
+
+    /// <summary>Env 이동 배율 (GearEnv × limp). Possessed는 PlayerMovement.SetEnvMovement가 같은 값을 쓴다.</summary>
+    public void SetEnvMovement(float speedMultiplier) =>
+        _envSpeedMultiplier = Mathf.Max(0f, speedMultiplier);
 
     public void SetActiveMovementStyle(MovementStyle style)
     {

@@ -37,6 +37,15 @@ namespace Garunnir.Runtime.Gameplay.Data
                 [BodyPartEffectIds.Regenerating] = new[]
                 {
                     (AttributeIds.Con, 1)
+                },
+                [BodyPartEffectIds.Frostbite] = new[]
+                {
+                    (AttributeIds.Dex, -2)
+                },
+                [BodyPartEffectIds.Heat] = new[]
+                {
+                    (AttributeIds.Con, -1),
+                    (AttributeIds.Wis, -1)
                 }
             };
 

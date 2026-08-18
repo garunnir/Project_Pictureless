@@ -103,7 +103,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
     public void SetLiftStrainMovement(float speedMultiplier) =>
         _liftStrainSpeedMultiplier = Mathf.Max(0f, speedMultiplier);
 
-    /// <summary>BodyTemp/wetness 이동 배율. 1 = 없음. GearEnvPenalties.MoveSpeedFactor.</summary>
+    /// <summary>Env 이동 배율 (GearEnvPenalties × BodyLocomotionPenalties). ClimateHost가 motor와 같은 값을 넣는다.</summary>
     public void SetEnvMovement(float speedMultiplier) =>
         _envSpeedMultiplier = Mathf.Max(0f, speedMultiplier);
 

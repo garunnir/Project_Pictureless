@@ -43,14 +43,19 @@ public sealed class BodyEffectTicker : MonoBehaviour
         _bleedTimer = 0f;
 
         IReadOnlyList<BodyPartNode> roots = body.Roots;
-        for (int r = 0; r < roots.Count; r++)
-        {
-            BodyPartNode root = roots[r];
-            if (root == null || !root.HasCondition)
-                continue;
+        for (int r = roots.Count - 1; r >= 0; r--)
+            TickBleedOrganicSubtree(body, roots[r]);
+    }
 
+    void TickBleedOrganicSubtree(ICharacterBody body, BodyPartNode node)
+    {
+        if (node == null || node.Kind == BodyPartKind.Prosthetic)
+            return;
+
+        if (node.HasCondition)
+        {
             _scratch.Clear();
-            body.CollectEffectsUnder(root.PartId, _scratch, includeDescendants: true);
+            CollectOrganicEffects(node, _scratch);
             bool hasBleed = false;
             for (int i = 0; i < _scratch.Count; i++)
             {
@@ -60,10 +65,22 @@ public sealed class BodyEffectTicker : MonoBehaviour
                 break;
             }
 
-            if (!hasBleed)
-                continue;
-
-            BodyDamageService.ApplyHit(body, root.PartId, BleedDamagePerTick);
+            if (hasBleed)
+                BodyDamageService.ApplyHit(body, node.PartId, BleedDamagePerTick);
         }
+    }
+
+    static void CollectOrganicEffects(BodyPartNode node, System.Collections.Generic.List<BodyPartEffect> into)
+    {
+        if (node == null || node.Kind == BodyPartKind.Prosthetic)
+            return;
+
+        IReadOnlyList<BodyPartEffect> effects = node.Effects;
+        for (int i = 0; i < effects.Count; i++)
+            into.Add(effects[i]);
+
+        IReadOnlyList<BodyPartNode> children = node.Children;
+        for (int i = 0; i < children.Count; i++)
+            CollectOrganicEffects(children[i], into);
     }
 }

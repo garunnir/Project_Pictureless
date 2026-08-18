@@ -34,6 +34,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     CharacterAimIntent _aimIntent;
     CharacterSkillsHost _skillsHost;
     PlayerGearHost _gearHost;
+    CharacterClimateHost _climateHost;
     CharacterState _characterState;
     PlayerAimController _aimController;
     CharacterLocomotionAnim _locAnim;
@@ -132,6 +133,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         _aimIntent = GetComponent<CharacterAimIntent>();
         _skillsHost = GetComponent<CharacterSkillsHost>();
         TryGetComponent(out _gearHost);
+        TryGetComponent(out _climateHost);
         TryGetComponent(out _characterState);
         TryGetComponent(out _aimController);
         TryGetComponent(out _locAnim);
@@ -361,10 +363,10 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     float ResolveAttackerEnvAccuracyFactor()
     {
-        if (_gearHost == null)
+        if (_climateHost == null)
             return 1f;
-        BodyTemp bodyTemp = _gearHost.BodyTemperature;
-        WearEnvExposure env = _gearHost.EnvExposure;
+        BodyTemp bodyTemp = _climateHost.BodyTemperature;
+        WearEnvExposure env = _climateHost.EnvExposure;
         if (bodyTemp == null || env == null)
             return 1f;
         return GearEnvPenalties.HitAccuracyFactor(bodyTemp.Feeling, env.Wetness01);

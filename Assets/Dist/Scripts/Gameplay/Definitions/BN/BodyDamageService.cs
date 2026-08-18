@@ -40,6 +40,9 @@ namespace Garunnir.Runtime.Gameplay.Data
                 }
             }
 
+            if (next == 0 && BodyPartIds.IsSeverable(main))
+                body.RemovePart(main);
+
             return true;
         }
     }

@@ -32,7 +32,7 @@ Inspector CustomEditor는 같은 Alignment 위젯을 쓴다 (`CharacterAlignment
 | `attributes` | Status.Str..Cha | 기본 8 (`SkillGrowth.DefaultAttributeLevel`) |
 | `skillOverrides` | Skill.Active* | BN `skillId` — 레거시 인덱스 아님 |
 | `bodyMassKg`, 쓰리사이즈 | Body.Personalized | 저장만; 과적 미연동 |
-| `partMasses` | (없음) | `BodyPartIds` 트리 노드 키; 절단 차감 후속 |
+| `partMasses` | (없음) | `BodyPartIds` 트리 노드 키. 절단 시 `CharacterAppearanceHost.RemainingMassKg`가 없는 부위 kg을 차감. **과적(encumbrance)은 미연동** — [`docs/body/BODY.md`](../body/BODY.md) |
 | `prototypeSeed` | — | `CharacterBody.CreateHumanDefault` |
 | `prefab` | — | Factory용 |
 

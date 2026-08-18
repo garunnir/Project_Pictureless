@@ -6,7 +6,8 @@ using UnityEngine;
 
 /// <summary>
 /// Feeling bands + Wetness01 → movement / HitChance factors.
-/// Wired by PlayerGearHost (move) and CharacterAttacker (accuracy).
+/// Core Feeling (chest) only — not per-part. Move: CharacterClimateHost.
+/// HitChance: CharacterAttacker.ResolveAttackerEnvAccuracyFactor.
 /// Docs: docs/equipment/GEAR.md Phase H.
 /// </summary>
 public static class GearEnvPenalties

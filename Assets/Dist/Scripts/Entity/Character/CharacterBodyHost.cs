@@ -61,4 +61,37 @@ public sealed class CharacterBodyHost : MonoBehaviour
     {
         _body = body;
     }
+
+    public void ApplyBodyDto(CharacterBodyDto dto)
+    {
+        Body.FromDto(dto);
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Debug/Sever Arm L")]
+    void DebugSeverArmL() => Body?.RemovePart(BodyPartIds.UpperArmL);
+
+    [ContextMenu("Debug/Regen Arm L")]
+    void DebugRegenArmL() => BodyPartRestoreService.TryRegenerate(Body, BodyPartIds.UpperArmL);
+
+    [ContextMenu("Debug/Attach Prosthetic Arm L")]
+    void DebugAttachProstheticArmL() =>
+        BodyPartRestoreService.TryAttachProsthetic(Body, BodyPartIds.UpperArmL);
+
+    [ContextMenu("Debug/Sever Thigh L")]
+    void DebugSeverThighL() => Body?.RemovePart(BodyPartIds.ThighL);
+
+    [ContextMenu("Debug/Regen Thigh L")]
+    void DebugRegenThighL() => BodyPartRestoreService.TryRegenerate(Body, BodyPartIds.ThighL);
+
+    [ContextMenu("Debug/Attach Prosthetic Thigh L")]
+    void DebugAttachProstheticThighL() =>
+        BodyPartRestoreService.TryAttachProsthetic(Body, BodyPartIds.ThighL);
+
+    [ContextMenu("Debug/Verify Body DTO Round-Trip")]
+    void DebugVerifyBodyDtoRoundTrip()
+    {
+        Debug.Log("[CharacterBodyHost] CharacterBody DTO " + CharacterBodyDtoRoundTrip.Execute(), this);
+    }
+#endif
 }

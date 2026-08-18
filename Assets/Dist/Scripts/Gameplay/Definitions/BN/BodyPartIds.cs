@@ -52,6 +52,31 @@ namespace Garunnir.Runtime.Gameplay.Data
             ThighR, CalfR, FootR
         };
 
+        /// <summary>체온 틱·표시용 10부위 SSOT.</summary>
+        public static readonly string[] ThermalParts =
+        {
+            Head, Chest,
+            UpperArmL, UpperArmR,
+            HandL, HandR,
+            ThighL, ThighR,
+            FootL, FootR
+        };
+
+        /// <summary>Cold 지속 시 frostbite가 붙는 말단.</summary>
+        public static readonly string[] FrostbiteParts =
+        {
+            Head, HandL, HandR, FootL, FootR
+        };
+
+        /// <summary>HP 0일 때 RemovePart 대상. 팔/다리 체인만 (head/neck/chest/belly/pelvis 제외).</summary>
+        public static readonly string[] SeverableParts =
+        {
+            UpperArmL, LowerArmL, HandL,
+            UpperArmR, LowerArmR, HandR,
+            ThighL, CalfL, FootL,
+            ThighR, CalfR, FootR
+        };
+
         static readonly Dictionary<string, string> MainConditionOf = new()
         {
             [Head] = Head,
@@ -93,6 +118,38 @@ namespace Garunnir.Runtime.Gameplay.Data
             [LegR] = ThighR
         };
 
+        static readonly Dictionary<string, string> ThermalPartOf = new()
+        {
+            [Head] = Head,
+            [Eyes] = Head,
+            [Mouth] = Head,
+            [Neck] = Chest,
+            [Chest] = Chest,
+            [Belly] = Chest,
+            [Pelvis] = Chest,
+            [Torso] = Chest,
+            [UpperArmL] = UpperArmL,
+            [LowerArmL] = UpperArmL,
+            [ArmL] = UpperArmL,
+            [HandL] = HandL,
+            [FingerThumbL] = HandL,
+            [FingerIndexL] = HandL,
+            [UpperArmR] = UpperArmR,
+            [LowerArmR] = UpperArmR,
+            [ArmR] = UpperArmR,
+            [HandR] = HandR,
+            [FingerThumbR] = HandR,
+            [FingerIndexR] = HandR,
+            [ThighL] = ThighL,
+            [CalfL] = ThighL,
+            [LegL] = ThighL,
+            [FootL] = FootL,
+            [ThighR] = ThighR,
+            [CalfR] = ThighR,
+            [LegR] = ThighR,
+            [FootR] = FootR
+        };
+
         static readonly Dictionary<string, string> CoverGroupOf = new()
         {
             [Head] = Head,
@@ -124,6 +181,42 @@ namespace Garunnir.Runtime.Gameplay.Data
             [FootR] = LegR,
             [LegR] = LegR
         };
+
+        public static bool IsThermalPart(string partId)
+        {
+            if (string.IsNullOrEmpty(partId))
+                return false;
+
+            for (int i = 0; i < ThermalParts.Length; i++)
+            {
+                if (ThermalParts[i] == partId)
+                    return true;
+            }
+
+            return false;
+        }
+
+        public static int IndexOfThermalPart(string partId)
+        {
+            if (string.IsNullOrEmpty(partId))
+                return -1;
+
+            for (int i = 0; i < ThermalParts.Length; i++)
+            {
+                if (ThermalParts[i] == partId)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        public static string GetThermalPart(string partId)
+        {
+            if (string.IsNullOrEmpty(partId))
+                return null;
+
+            return ThermalPartOf.TryGetValue(partId, out string thermal) ? thermal : null;
+        }
 
         public static bool IsMainConditionPart(string partId)
         {
@@ -161,6 +254,38 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return null;
 
             return CoverGroupOf.TryGetValue(partId, out string group) ? group : null;
+        }
+
+        public static bool IsSeverable(string partId)
+        {
+            if (string.IsNullOrEmpty(partId))
+                return false;
+
+            string id = ResolveNodeId(partId);
+            for (int i = 0; i < SeverableParts.Length; i++)
+            {
+                if (SeverableParts[i] == id)
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 절단 후 남는 소켓 부모. 상완/대퇴는 루트(null) — TryAttach(null)이 루트로 채운다.
+        /// </summary>
+        public static string GetSocketParentId(string partId)
+        {
+            string id = ResolveNodeId(partId);
+            if (id == LowerArmL) return UpperArmL;
+            if (id == HandL) return LowerArmL;
+            if (id == LowerArmR) return UpperArmR;
+            if (id == HandR) return LowerArmR;
+            if (id == CalfL) return ThighL;
+            if (id == FootL) return CalfL;
+            if (id == CalfR) return ThighR;
+            if (id == FootR) return CalfR;
+            return null;
         }
     }
 }

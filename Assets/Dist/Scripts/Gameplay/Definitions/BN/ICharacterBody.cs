@@ -20,8 +20,15 @@ namespace Garunnir.Runtime.Gameplay.Data
         /// <summary>
         /// 부모 컬렉션에서 해당 노드만 제거한다.
         /// 하위 부위·부착 효과는 소유권으로 함께 도달 불가가 된다.
+        /// 소켓(부모)은 남으므로 <see cref="TryAttach"/>로 다시 채울 수 있다.
         /// </summary>
         bool RemovePart(string partId);
+
+        /// <summary>
+        /// 런타임 복원 전용 AddChild 경로. parentId가 비면 루트로 붙인다.
+        /// 이미 같은 partId가 있으면 false.
+        /// </summary>
+        bool TryAttach(string parentId, BodyPartNode node);
 
         int GetConditionCur(string mainConditionPartId);
 
@@ -39,5 +46,9 @@ namespace Garunnir.Runtime.Gameplay.Data
         bool IsDeadState { get; }
 
         void CollectEffectsUnder(string partId, List<BodyPartEffect> into, bool includeDescendants);
+
+        CharacterBodyDto ToDto();
+
+        void FromDto(CharacterBodyDto dto);
     }
 }

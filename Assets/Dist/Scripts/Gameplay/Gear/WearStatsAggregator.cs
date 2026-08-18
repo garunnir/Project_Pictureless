@@ -6,7 +6,7 @@ using Garunnir.Runtime.Gameplay.Data;
 
 /// <summary>
 /// Wear-only armor aggregation SSOT. Combat consume = WearCombatDefense (Phase D).
-/// Env/wetness consume = WearEnvExposure (Phase E). BodyTemp consume = TotalWarmth (Phase F).
+/// Env/wetness consume = WearEnvExposure (Phase E). BodyTemp consume = WarmthForPart (core totals still TotalWarmth).
 /// Coverage per part = max; enc/warmth/max_enc/env/thickness = sum; power_armor = any.
 /// </summary>
 public static class WearStatsAggregator

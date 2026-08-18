@@ -288,6 +288,12 @@ namespace IsoTilemap
         BuildingGroupBuilder _roomBakeBuilder;
         readonly List<TileData> _occupiedCellCollectScratch = new();
 
+        /// <summary>
+        /// 씬 런타임 허브. DistScript가 층 셀로 <see cref="IsOutdoorEvaluation"/>을 호출할 때 사용.
+        /// <see cref="Create"/>가 마지막 생성 인스턴스를 등록합니다.
+        /// </summary>
+        public static TileMapCacheHub Runtime { get; private set; }
+
         TileMapCacheHub(
             TopologyLayer topology,
             BuildingLayer buildings,
@@ -313,7 +319,9 @@ namespace IsoTilemap
             var rooms = new RoomGeometryLayer();
             var cellYGeometry = new CellYGeometryLayer(topology, rooms);
             var spaces = new SpaceLayer(new SpaceRegistry());
-            return new TileMapCacheHub(topology, buildings, rooms, cellYGeometry, spaces);
+            var hub = new TileMapCacheHub(topology, buildings, rooms, cellYGeometry, spaces);
+            Runtime = hub;
+            return hub;
         }
 
         internal void BindRoomBakeBuilder(BuildingGroupBuilder builder) => _roomBakeBuilder = builder;

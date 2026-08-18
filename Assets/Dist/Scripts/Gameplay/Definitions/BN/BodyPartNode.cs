@@ -6,6 +6,12 @@ using System.Collections.Generic;
 
 namespace Garunnir.Runtime.Gameplay.Data
 {
+    public enum BodyPartKind
+    {
+        Organic = 0,
+        Prosthetic = 1
+    }
+
     public sealed class BodyPartNode
     {
         readonly List<BodyPartNode> _children = new();
@@ -15,14 +21,20 @@ namespace Garunnir.Runtime.Gameplay.Data
         public bool HasCondition { get; }
         public int ConditionCur { get; private set; }
         public int ConditionMax { get; private set; }
+        public BodyPartKind Kind { get; }
 
         public IReadOnlyList<BodyPartNode> Children => _children;
         public IReadOnlyList<BodyPartEffect> Effects => _effects;
 
-        public BodyPartNode(string partId, bool hasCondition, int conditionMax = 0)
+        public BodyPartNode(
+            string partId,
+            bool hasCondition,
+            int conditionMax = 0,
+            BodyPartKind kind = BodyPartKind.Organic)
         {
             PartId = partId;
             HasCondition = hasCondition;
+            Kind = kind;
             if (hasCondition)
             {
                 ConditionMax = conditionMax;
@@ -41,7 +53,8 @@ namespace Garunnir.Runtime.Gameplay.Data
                 : (current > ConditionMax ? ConditionMax : current);
         }
 
-        public void AddChild(BodyPartNode child)
+        /// <summary>팩토리·<see cref="ICharacterBody.TryAttach"/> 전용. 런타임 복원은 TryAttach만.</summary>
+        internal void AddChild(BodyPartNode child)
         {
             if (child == null)
                 return;

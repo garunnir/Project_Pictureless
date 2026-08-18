@@ -70,6 +70,7 @@ GameObject:
   - component: {fileID: 8762515008328947030}
   - component: {fileID: 929168342102942221}
   - component: {fileID: 5011223344556677889}
+  - component: {fileID: 1489448253437206970}
   m_Layer: 6
   m_Name: NpcSample
   m_TagString: Untagged
@@ -248,12 +249,12 @@ MonoBehaviour:
   _presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}
   _itemId: weapon_bat
   _catalog: {fileID: 11400000, guid: f7556fd63dd29cf4fb45651a5765b2d1, type: 2}
-  _loadedRounds: 0
   _rangedObstructionMask:
     serializedVersion: 2
     m_Bits: 55
   _timeChannel: 1
   _selectedAction: 0
+  _activeWieldHand: 2
 --- !u!114 &8762515008328947030
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -282,9 +283,18 @@ MonoBehaviour:
   _timeChannel: 1
   _animator: {fileID: 293100225542826288}
   _defaultController: {fileID: 9100000, guid: 340c7b66e1595a44db858530dc6283b7, type: 2}
+  _armSlotCatalog: {fileID: 11400000, guid: 05420430cc89c3d44bdb6b6edb99740c, type: 2}
   _paramSpeed: Speed
+  _paramMoveX: MoveX
+  _paramMoveZ: MoveZ
   _paramAiming: IsAiming
-  _paramAction: Action
+  _paramAttackR: AttackR
+  _paramAttackL: AttackL
+  _paramAttack2H: Attack2H
+  _rightArmLayerName: RightArm Layer
+  _leftArmLayerName: LeftArm Layer
+  _twoHandLayerName: TwoHand Layer
+  _layerBlendSpeed: 10
   _poseRate: 10
 --- !u!114 &5011223344556677889
 MonoBehaviour:
@@ -299,6 +309,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterDefinitionBinder
   _definition: {fileID: 11400000, guid: a7c3e8910245d6e4f8b2a1c9d3e5f7a8, type: 2}
+--- !u!114 &1489448253437206970
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c4e2a91b0d84f6e9a3c5d8e1f2b4a60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterClimateHost
 --- !u!1 &8110232566133532116
 GameObject:
   m_ObjectHideFlags: 0

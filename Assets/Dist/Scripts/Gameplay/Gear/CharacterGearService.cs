@@ -21,7 +21,10 @@ public sealed class CharacterGearService
     Action _onPrimaryDirty;
     Func<InventoryContainer> _bodyProvider;
     Func<InventoryContainer> _floorProvider;
+    Func<ICharacterBody> _characterBodyProvider;
     ItemStack _activeStack;
+
+    public const string BlockedMissingHand = "손이 없음";
 
     public EquipmentWearState Wear => _wear;
     public WieldSlots Wield => _wield;
@@ -40,13 +43,15 @@ public sealed class CharacterGearService
         Func<ICharacterSkills> skillsProvider,
         Func<InventoryContainer> bodyProvider,
         Func<InventoryContainer> floorProvider,
-        Action onPrimaryDirty)
+        Action onPrimaryDirty,
+        Func<ICharacterBody> characterBodyProvider = null)
     {
         _strengthProvider = strengthProvider;
         _skillsProvider = skillsProvider;
         _bodyProvider = bodyProvider;
         _floorProvider = floorProvider;
         _onPrimaryDirty = onPrimaryDirty;
+        _characterBodyProvider = characterBodyProvider;
 
         _wear.Changed += OnDomainChanged;
         _wield.Changed += OnDomainChanged;
@@ -124,6 +129,10 @@ public sealed class CharacterGearService
             return CharacterGearLabels.BlockedAlreadyEquipped;
 
         bool twoHand = hand == WieldHand.TwoHand || GearHandleRules.IsTwoHandWeapon(stack.Item);
+        string missingHand = GetMissingHandReason(twoHand ? WieldHand.TwoHand : hand);
+        if (missingHand != null)
+            return missingHand;
+
         int str = Strength();
         if (!GearHandleRules.CanLift(str, stack.Item, twoHand))
             return CharacterGearLabels.FormatNeedStrength(
@@ -231,6 +240,27 @@ public sealed class CharacterGearService
         return TryBeginUnwield(stack, toFloor);
     }
 
+    public void DropWieldForMissingHands(ICharacterBody body)
+    {
+        if (body == null)
+            return;
+
+        bool hasL = body.Has(BodyPartIds.HandL);
+        bool hasR = body.Has(BodyPartIds.HandR);
+
+        if (_wield.IsTwoHand)
+        {
+            if (!hasL || !hasR)
+                ForceUnwield(_wield.Left ?? _wield.Right);
+            return;
+        }
+
+        if (!hasL)
+            ForceUnwield(_wield.Left);
+        if (!hasR)
+            ForceUnwield(_wield.Right);
+    }
+
     /// <summary>메거진 보급 1발 → 약실. Action row 아님.</summary>
     public bool TryReload(ItemStack weapon)
     {
@@ -261,6 +291,8 @@ public sealed class CharacterGearService
             return false;
 
         bool twoHand = hand == WieldHand.TwoHand || GearHandleRules.IsTwoHandWeapon(tool.Item);
+        if (GetMissingHandReason(twoHand ? WieldHand.TwoHand : hand) != null)
+            return false;
         if (!GearHandleRules.CanLift(Strength(), tool.Item, twoHand))
             return false;
 
@@ -349,6 +381,43 @@ public sealed class CharacterGearService
     int Strength() => _strengthProvider?.Invoke() ?? 0;
 
     ICharacterSkills Skills() => _skillsProvider?.Invoke();
+
+    string GetMissingHandReason(WieldHand hand)
+    {
+        ICharacterBody body = _characterBodyProvider?.Invoke();
+        if (body == null)
+            return null;
+
+        if (hand == WieldHand.TwoHand)
+        {
+            if (!body.Has(BodyPartIds.HandL) || !body.Has(BodyPartIds.HandR))
+                return BlockedMissingHand;
+            return null;
+        }
+
+        if (hand == WieldHand.Left && !body.Has(BodyPartIds.HandL))
+            return BlockedMissingHand;
+        if (hand == WieldHand.Right && !body.Has(BodyPartIds.HandR))
+            return BlockedMissingHand;
+        return null;
+    }
+
+    void ForceUnwield(ItemStack stack)
+    {
+        if (stack == null || !_wield.Contains(stack))
+            return;
+
+        if (_toolSession.IsActive)
+            TryEndToolUse();
+
+        if (!_wield.Contains(stack))
+            return;
+        if (!_wield.TryUnwield(stack, out ItemStack removed) || removed == null)
+            return;
+
+        DepositStack(removed, toFloor: false);
+        NotifyPrimaryDirty();
+    }
 
     bool BeginTimed(ItemStack stack, GearTimedAction.Kind kind, float duration, Action onComplete)
     {

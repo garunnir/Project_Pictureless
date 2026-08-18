@@ -227,11 +227,12 @@ public sealed class UICharacterGearPanel : MonoBehaviour
 
         WearStatsAggregator.WearPartArmorStats stats =
             WearStatsAggregator.ForPart(_gear.Wear, partId);
-        string text = $"{partId}\n{CharacterGearLabels.HoverWarm} {stats.Warmth}";
         PlayerGearHost host = PlayerGearHost.Active;
         BodyTemp bodyTemp = host?.BodyTemperature;
-        if (bodyTemp != null)
-            text += "\n" + CharacterGearLabels.FormatBodyTempLine(bodyTemp);
+        float partTempC = BodyTemp.ComfortBodyTempC;
+        if (bodyTemp == null || !bodyTemp.TryGetPartTempC(partId, out partTempC))
+            partTempC = BodyTemp.ComfortBodyTempC;
+        string text = CharacterGearLabels.FormatPartBodyTemp(partId, stats.Warmth, partTempC);
         if (host != null)
             text += "\n" + CharacterGearLabels.FormatWeatherVisionLine(
                 host.Weather,

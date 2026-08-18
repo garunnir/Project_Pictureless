@@ -53,10 +53,17 @@ flowchart LR
 표급하지 않는다. 공통 이주 절차는
 [`migration-parity.md`](../../../../../.claude/checklists/migration-parity.md)를 따른다.
 
-### Gear 이동 배율 (교차)
+### Gear / body 이동 배율 (교차)
 
-`PlayerMovement` 속도 = base × enc × LiftStrain × **`GearEnvPenalties.MoveSpeedFactor`**
-(`PlayerGearHost` → `SetEnvMovement`). 계약·상수: [`docs/equipment/GEAR.md`](../equipment/GEAR.md) Phase H.
+Env 배율 SSOT: `BodyLocomotionPenalties.CombinedMoveSpeedFactor`  
+= `GearEnvPenalties.MoveSpeedFactor`(코어 `BodyTemp.Feeling` + wetness) × 절뚝(`MissingThigh`/`MissingFoot`).
+
+`CharacterClimateHost`가 **같은 `factor`**를 넣는다:
+
+- `CharacterMotor.SetEnvMovement(factor)` — 비possessed·NPC 포함 (모터 `EffectiveMoveSpeed × _envSpeedMultiplier`)
+- possessed: `PlayerMovement.SetEnvMovement(factor)` — 동일 값 (base × enc × LiftStrain × env)
+
+LiftStrain은 `PlayerGearHost` 별 배율. 계약·상수: [`docs/equipment/GEAR.md`](../equipment/GEAR.md) Phase H · [`docs/body/BODY.md`](../body/BODY.md).
 
 ## 3D 애니 브릿지
 

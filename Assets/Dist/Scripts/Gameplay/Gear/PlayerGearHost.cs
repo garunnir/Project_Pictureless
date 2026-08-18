@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerGearHost — 플레이어 Gear 런타임 호스트 + Primary/Strain + Env + BodyTemp + Weather/Vision
+// PlayerGearHost — 플레이어 Wear/Wield 호스트 + Kind + HelmetVision (ambient는 ClimateHost)
 // ============================================================
 
 using System;
@@ -17,12 +17,13 @@ public sealed class PlayerGearHost : MonoBehaviour
     [SerializeField] CharacterAttacker _attacker;
     [SerializeField] PlayerMovement _movement;
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
+    [Tooltip("씬 월드 날씨. ClimateHost는 Kind만 읽고 실내외는 엔티티별로 평가합니다.")]
     [SerializeField] WeatherKind _weatherKind = WeatherKind.Clear;
 
     CharacterGearService _service;
-    readonly WearEnvExposure _envExposure = new();
-    readonly BodyTemp _bodyTemp = new();
-    readonly WeatherExposure _weather = new();
+    CharacterClimateHost _climateHost;
+    CharacterBodyHost _bodyHost;
+    ICharacterBody _subscribedBody;
     bool _bound;
     int _lastWetnessPercent = -1;
     int _lastBodyTempTenths = int.MinValue;
@@ -36,9 +37,12 @@ public sealed class PlayerGearHost : MonoBehaviour
     public EquipmentWearState Wear => _service?.Wear;
     public WieldSlots Wield => _service?.Wield;
     public GearTimedAction Timed => _service?.Timed;
-    public WearEnvExposure EnvExposure => _envExposure;
-    public BodyTemp BodyTemperature => _bodyTemp;
-    public WeatherExposure Weather => _weather;
+    public WearEnvExposure EnvExposure =>
+        _climateHost != null ? _climateHost.EnvExposure : null;
+    public BodyTemp BodyTemperature =>
+        _climateHost != null ? _climateHost.BodyTemperature : null;
+    public WeatherExposure Weather =>
+        _climateHost != null ? _climateHost.Weather : null;
     public float VisionFactor { get; private set; } = HelmetVision.FullVisionFactor;
     public bool HasHeadVisionPenalty => VisionFactor < HelmetVision.FullVisionFactor;
     public bool HasLiftStrain => _service != null && _service.HasLiftStrain;
@@ -49,18 +53,19 @@ public sealed class PlayerGearHost : MonoBehaviour
     {
         EnsureReferences();
         _service = new CharacterGearService();
-        ApplyWeatherKind(_weatherKind);
     }
 
     void OnEnable()
     {
         Active = this;
         EnsureBound();
+        if (_climateHost != null)
+            _climateHost.Changed += OnClimateChanged;
+        SubscribeBody();
+        _service?.DropWieldForMissingHands(_subscribedBody);
         ApplyLiftStrainMovement();
-        ApplyEnvMovement();
         ApplyVisionToCamera();
         RefreshPrimaryWield();
-        ApplyWeatherKind(_weatherKind);
     }
 
     void OnDisable()
@@ -72,6 +77,11 @@ public sealed class PlayerGearHost : MonoBehaviour
             _service.Unbind();
             _bound = false;
         }
+
+        if (_climateHost != null)
+            _climateHost.Changed -= OnClimateChanged;
+
+        UnsubscribeBody();
 
         if (_movement != null)
         {
@@ -87,11 +97,7 @@ public sealed class PlayerGearHost : MonoBehaviour
             Active = null;
     }
 
-    void OnValidate()
-    {
-        EnsureReferences();
-        ApplyWeatherKind(_weatherKind);
-    }
+    void OnValidate() => EnsureReferences();
 
     void Reset() => EnsureReferences();
 
@@ -101,36 +107,30 @@ public sealed class PlayerGearHost : MonoBehaviour
             return;
         float dt = TimeScaleService.Delta(_timeChannel);
         _service.Tick(dt);
-        TickEnvBodyTempAndVision(dt);
+        TickVisionAndNotify();
     }
 
-    /// <summary>Inspector/디버그용 날씨 설정. Resolve 후 다음 tick에 반영.</summary>
+    /// <summary>씬 월드 날씨 Kind. 실내외·기간 Resolve·ambient 캐시는 CharacterClimateHost.</summary>
+    public WeatherKind WorldWeatherKind => _weatherKind;
+
+    /// <summary>Inspector/디버그용 월드 날씨 Kind. ClimateHost 다음 tick에 반영.</summary>
     public void SetWeatherKind(WeatherKind kind)
     {
         _weatherKind = kind;
-        ApplyWeatherKind(kind);
         Changed?.Invoke();
     }
 
-    void ApplyWeatherKind(WeatherKind kind)
+    void TickVisionAndNotify()
     {
-        _weather.SetKind(kind);
-    }
-
-    void TickEnvBodyTempAndVision(float dt)
-    {
-        WearStatsAggregator.WearArmorTotals totals = WearStatsAggregator.Aggregate(_service.Wear);
-        _weather.Resolve();
-        _envExposure.Tick(dt, totals.TotalEnvironmentalProtection, _weather.AmbientWetnessGainPerSecond);
-        _bodyTemp.Tick(dt, totals.TotalWarmth, _envExposure.Wetness01, _weather.AmbientTempC);
         VisionFactor = HelmetVision.ComputeVisionFactor(_service.Wear);
-        ApplyEnvMovement();
         ApplyVisionToCamera();
 
-        int wetPercent = _envExposure.WetnessPercent;
-        int tempTenths = _bodyTemp.BodyTempTenths;
+        BodyTemp bodyTemp = BodyTemperature;
+        WearEnvExposure env = EnvExposure;
+        int wetPercent = env != null ? env.WetnessPercent : 0;
+        int tempTenths = bodyTemp != null ? bodyTemp.BodyTempTenths : int.MinValue;
         int visionPct = HelmetVision.VisionPercent(VisionFactor);
-        WeatherKind weatherKind = _weather.Kind;
+        WeatherKind weatherKind = _weatherKind;
         if (wetPercent == _lastWetnessPercent
             && tempTenths == _lastBodyTempTenths
             && visionPct == _lastVisionPercent
@@ -146,6 +146,8 @@ public sealed class PlayerGearHost : MonoBehaviour
         Changed?.Invoke();
     }
 
+    void OnClimateChanged() => Changed?.Invoke();
+
     void EnsureReferences()
     {
         if (_inventoryHost == null)
@@ -156,6 +158,10 @@ public sealed class PlayerGearHost : MonoBehaviour
             TryGetComponent(out _attacker);
         if (_movement == null)
             TryGetComponent(out _movement);
+        if (_climateHost == null)
+            TryGetComponent(out _climateHost);
+        if (_bodyHost == null)
+            TryGetComponent(out _bodyHost);
     }
 
     void EnsureBound()
@@ -169,7 +175,8 @@ public sealed class PlayerGearHost : MonoBehaviour
             Skills,
             BodyContainer,
             FloorContainer,
-            RefreshPrimaryWield);
+            RefreshPrimaryWield,
+            ResolveCharacterBody);
         _service.SetPresentationCatalog(_attacker != null ? _attacker.Catalog : null);
         _service.LiftStrainChanged += ApplyLiftStrainMovement;
         _service.Changed += OnServiceChanged;
@@ -184,6 +191,32 @@ public sealed class PlayerGearHost : MonoBehaviour
 
     ICharacterSkills Skills() =>
         _skillsHost != null ? _skillsHost.Skills : GameplayData.CharacterSkills;
+
+    ICharacterBody ResolveCharacterBody() =>
+        _bodyHost != null ? _bodyHost.Body : null;
+
+    void SubscribeBody()
+    {
+        ICharacterBody body = ResolveCharacterBody();
+        if (ReferenceEquals(_subscribedBody, body))
+            return;
+
+        UnsubscribeBody();
+        _subscribedBody = body;
+        if (_subscribedBody != null)
+            _subscribedBody.Changed += OnBodyChanged;
+    }
+
+    void UnsubscribeBody()
+    {
+        if (_subscribedBody == null)
+            return;
+        _subscribedBody.Changed -= OnBodyChanged;
+        _subscribedBody = null;
+    }
+
+    void OnBodyChanged() =>
+        _service?.DropWieldForMissingHands(_subscribedBody);
 
     InventoryContainer BodyContainer() =>
         _inventoryHost != null ? _inventoryHost.Container : null;
@@ -224,16 +257,6 @@ public sealed class PlayerGearHost : MonoBehaviour
             return;
         float factor = HasLiftStrain ? GearConstants.LiftStrainMoveFactor : 1f;
         _movement.SetLiftStrainMovement(factor);
-    }
-
-    void ApplyEnvMovement()
-    {
-        if (_movement == null)
-            return;
-        float factor = GearEnvPenalties.MoveSpeedFactor(
-            _bodyTemp.Feeling,
-            _envExposure.Wetness01);
-        _movement.SetEnvMovement(factor);
     }
 
     void ApplyVisionToCamera()

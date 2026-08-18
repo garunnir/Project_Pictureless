@@ -3,7 +3,8 @@
 Canonical for BN-style **착용(Wear)** vs **들기(Wield)** and the Character window equipment tab.
 
 Related: [`docs/inventory/INVENTORY_UI.md`](../inventory/INVENTORY_UI.md) · Status parity lives in Character **상태** tab (`UICharacterWindow`).  
-Anim/VFX 폴더 맵: [`WEAPON_VISUAL.md`](WEAPON_VISUAL.md).
+Anim/VFX 폴더 맵: [`WEAPON_VISUAL.md`](WEAPON_VISUAL.md).  
+Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기는 [`DEFINITION.md`](../character/DEFINITION.md)).
 
 ## Terms
 
@@ -28,7 +29,7 @@ Anim/VFX 폴더 맵: [`WEAPON_VISUAL.md`](WEAPON_VISUAL.md).
 | `EquipmentWearState` | Worn stacks |
 | `WieldSlots` | L/R (+ two-hand mode) |
 | `CharacterGearService` | Timed Wear/Wield/Unequip + deposit |
-| `PlayerGearHost` | Player host + Primary + LiftStrain + EnvExposure + BodyTemp + Weather + VisionFactor |
+| `PlayerGearHost` | Player Wear/Wield + Primary + LiftStrain + 씬 `WorldWeatherKind` + `HelmetVision`. BodyTemp / EnvExposure / **Weather(ambient 캐시)** 는 `CharacterClimateHost` 포워드 |
 | `ItemInstance.SelectedAction` | 선택 동사 SSOT |
 | `WeaponActionRows` | Presentation 행 → available / default / instance select |
 | `PrimaryWieldResolver` | DPS primary; dual secondary score |
@@ -44,10 +45,10 @@ Anim/VFX 폴더 맵: [`WEAPON_VISUAL.md`](WEAPON_VISUAL.md).
 | `WearStatsAggregator` | Wear-only armor aggregates (Phase A fields); combat reads via `WearCombatDefense` |
 | `WearCombatDefense` | Phase D: ArmorEngage / ArmorAbsorb / MitigatedDamage + WearEncAccuracyFactor |
 | `WearEnvExposure` | Phase E/G: weather wetness rate + env_prot → ExposureFactor |
-| `BodyTemp` | Phase F/G: body °C tick; warmth + weather ambient + wetness cool |
-| `WeatherExposure` | Phase G: Clear/Rain/Wind → AmbientTempC + wetness gain |
+| `BodyTemp` | 부위별 °C (`ThermalParts`). 코어 getter = chest. 틱 소유 = `CharacterClimateHost`. [`docs/body/BODY.md`](../body/BODY.md) |
+| `WeatherExposure` | `Resolve(kind, period, outdoor)` → AmbientTempC + wetness gain |
 | `HelmetVision` | Phase G: head covers → VisionFactor (host + Character UI + camera) |
-| `GearEnvPenalties` | Phase H: BodyTemp feeling + wetness → move / HitChance factors |
+| `GearEnvPenalties` | Phase H: **코어** `BodyTemp.Feeling` + wetness → move / HitChance. 부위별 Feeling 아님 |
 | `WearOverlapRules` | Phase C: same part + layer(/sided) conflict → Wear **reject** |
 | `WeaponPresentationCatalog` | 허브 (Fallbacks Catalog + Tag VFX + item→Presentation). Entry = **Leaf** 라우팅(가용·Attack·VFX) |
 | `ArmAnimSlotCatalog` | **Leaf마다** 기본 동사 폴백(클립+VFX). Semi/Burst/Auto 줄 필수. Entry 빈 VFX → 같은 Leaf 행. 표시=Melee/Trigger 묶음 |
@@ -336,30 +337,34 @@ flowchart LR
 
 ## Phase F — BodyTemp → 체온 탭
 
-**Scope:** Tick body temperature from worn `TotalWarmth` (+ slight wetness cool). Wire Character **체온** tab to show state + warmth contribution. **No** weather/wind/helmet vision (G).
+**Shipped now:** per-part `BodyTemp` + 틱 호스트 = `CharacterClimateHost`. 이 Phase F 표는 단일 코어 도입 계약. 현재 anatomy/틱 SSOT: [`docs/body/BODY.md`](../body/BODY.md).
 
-Time base: `TimeScaleService.Delta(World)` on `PlayerGearHost` (same channel as EnvExposure). See [`docs/time/TIME.md`](../time/TIME.md).
+**Scope (F 당시):** Tick body temperature from worn warmth (+ slight wetness cool). Wire Character **체온** tab. **No** weather/wind/helmet vision (G).
+
+Time base: `TimeScaleService.Delta(World)` — F/G는 `PlayerGearHost`, 이후 ClimateHost. See [`docs/time/TIME.md`](../time/TIME.md).
 
 ### Parity contract (body temp path)
 
-| Before F | After F (default) |
-|----------|-------------------|
-| 체온 tab = warmth graphic + worn list only | + BodyTemp totals / feeling / target |
-| No body °C state | `BodyTemp` on `PlayerGearHost` (`BodyTemperature`) |
-| Warmth UI-only | Consumed by `BodyTemp.Tick` |
-| Ambient weather | Constant `BaseAmbientTempC` until Phase G |
+| Before F | After F (then) | Now |
+|----------|----------------|-----|
+| 체온 tab = warmth graphic + worn list only | + BodyTemp totals / feeling / target | 부위 그래픽 = `TryGetPartTempC` |
+| No body °C state | `BodyTemp` on `PlayerGearHost` | ClimateHost 소유. GearHost는 포워드 |
+| Warmth UI-only | `BodyTemp.Tick` (`TotalWarmth`) | `WarmthForPart` × `ThermalParts` |
+| Ambient weather | Constant `BaseAmbientTempC` until G | `WeatherExposure.Resolve(kind, period, outdoor)` |
 
-Boundary SSOT: `WearStatsAggregator` = warmth sums; `BodyTemp` = °C formulas; host ticks World delta. Checklist: `.claude/checklists/migration-parity.md`.
+Boundary SSOT: `WearStatsAggregator` = warmth sums; `BodyTemp` = °C formulas (now per-part, ClimateHost 틱). Checklist: `.claude/checklists/migration-parity.md`.
 
 ### Named formulas (`BodyTemp`)
 
+F 당시 단일 코어. **Shipped:** 부위 `WarmthForPart` + heat flow — [`BODY.md`](../body/BODY.md).
+
 | Name | Formula |
 |------|---------|
-| `TargetTempC` | `clamp(BaseAmbient + TotalWarmth × DegreesPerWarmth − Wetness01 × WetnessCool, Min, Max)` |
-| `BodyTempC` | `clamp(BodyTemp + (Target − BodyTemp) × Convergence × dt, Min, Max)` |
-| `Feeling` | bands around `ComfortBodyTempC ± ComfortBandHalfWidthC` (Cold/Cool/Comfortable/Warm/Hot) |
+| `TargetTempC` | `clamp(ambient + warmth × DegreesPerWarmth − Wetness01 × WetnessCool, min, max)` — 부위별. 코어 min/max vs 말단 min/max |
+| `BodyTempC` / `Feeling` | **chest**. 가슴 없으면 Comfort. Feeling 밴드 unchanged |
+| Heat flow | arms←chest, hands←arms, legs←chest, feet←legs |
 
-Consts: `ComfortBodyTempC=37`, `BodyTempMinC=27`, `BodyTempMaxC=43`, `BaseAmbientTempC=18`, `DegreesPerWarmthPoint=0.5`, `WetnessCoolDegreesC=2`, `ConvergencePerSecond=0.08`, `ComfortBandHalfWidthC=1`.
+Consts: `ComfortBodyTempC=37`, `BodyTempMinC=27`, `BodyTempMaxC=43`, `ExtremityTempMinC=12`, `ExtremityTempMaxC=48`, `BaseAmbientTempC=18`, `DegreesPerWarmth=0.5`, `WetnessCoolDegreesC=2`, `ConvergencePerSecond=0.08`, `ComfortBandHalfWidthC=1`, `HypothermiaBodyTempC=32`.
 
 ```mermaid
 flowchart LR
@@ -376,7 +381,7 @@ flowchart LR
 
 | Surface | Behavior |
 |---------|----------|
-| 체온 body graphic | Warmth per part (M0 unchanged) |
+| 체온 body graphic | 부위 `TryGetPartTempC` vs Comfort 편차 (`PlayerStatusBodyGraphicDisplay`). 없으면 present=false |
 | 체온 totals line | `FormatBodyTempTotals` — °C / feeling / TotalWarmth / target |
 | 체온 part hover | Part warmth + `FormatBodyTempLine` |
 
@@ -389,47 +394,55 @@ flowchart LR
 
 **Scope:** WeatherKind drives BodyTemp ambient °C and WearEnvExposure wetness gain (replaces F/E hard ambient stand-ins on host path). Head-covering worn armor → `VisionFactor` on `PlayerGearHost` + Character totals/hover line. **No** new window/key; **no** M0–F redesign.
 
-Time base: same `TimeScaleService.Delta(World)` tick on `PlayerGearHost`. See [`docs/time/TIME.md`](../time/TIME.md).
+Time base: World delta on `CharacterClimateHost`. Kind는 `PlayerGearHost.WorldWeatherKind`. Period = `WorldClock.Period`. outdoor = `TileMapCacheHub.IsOutdoorEvaluation`. See [`docs/time/TIME.md`](../time/TIME.md) · [`docs/body/BODY.md`](../body/BODY.md).
 
 ### Parity contract (weather / vision path)
 
-| Before G | After G (default) |
-|----------|-------------------|
-| BodyTemp ambient = const `BaseAmbientTempC` | Host passes `WeatherExposure.AmbientTempC` |
-| Wetness ambient = const `BaseAmbientWetnessGainPerSecond` | Host passes `WeatherExposure.AmbientWetnessGainPerSecond` |
-| No weather state | `WeatherKind` on host (`Clear` default; Inspector / `SetWeatherKind`) |
-| No helmet vision | `HelmetVision` → `PlayerGearHost.VisionFactor` |
-| 방해/체온 totals = E/F lines | + weather ambient + vision% |
+| Before G | After G (default) | Now |
+|----------|-------------------|-----|
+| BodyTemp ambient = const `BaseAmbientTempC` | Host passes `WeatherExposure.AmbientTempC` | `Resolve(kind, period, outdoor)` |
+| Wetness ambient = const `BaseAmbientWetnessGainPerSecond` | Host passes `WeatherExposure.AmbientWetnessGainPerSecond` | 실내면 wetness 0 |
+| No weather state | `WeatherKind` on host (`Clear`; `SetWeatherKind`) | Kind = GearHost. period/outdoor = ClimateHost |
+| No helmet vision | `HelmetVision` → `PlayerGearHost.VisionFactor` | 동일 (GearHost) |
+| 방해/체온 totals = E/F lines | + weather ambient + vision% | 체온 그래픽 부위별 |
 
-Boundary SSOT: `WeatherExposure` = ambient formulas; `HelmetVision` = head-cover vision; `BodyTemp`/`WearEnvExposure` accept ambient params (legacy consts remain as Clear/fallback). Checklist: `.claude/checklists/migration-parity.md`.
+Boundary SSOT: `WeatherExposure` = ambient; `HelmetVision` = GearHost; BodyTemp/wetness 틱 = ClimateHost. Checklist: `.claude/checklists/migration-parity.md`.
 
 ### Named formulas (`WeatherExposure` / `HelmetVision`)
 
 | Name | Formula |
 |------|---------|
+| `Resolve(kind, period, outdoor)` | 실내 → `IndoorAmbientTempC` + wetness 0. 야외 → kind ambient + `ResolvePeriodOffsetC` |
 | `AmbientTempC(Clear)` | `ClearAmbientTempC` (= `BodyTemp.BaseAmbientTempC`) |
 | `AmbientTempC(Rain)` | `RainAmbientTempC` |
 | `AmbientTempC(Wind)` | `ClearAmbientTempC − WindChillDegreesC` |
-| `WetnessGain(Clear/Rain/Wind)` | `ClearWetnessGain` / `RainWetnessGain` / `WindWetnessGain` (per World second) |
-| `BodyTemp.Target` | `ambient + TotalWarmth × DegreesPerWarmth − Wetness01 × WetnessCool` |
+| Period offset | Night `-6` / Dawn `-3` / Day·Dusk `0` |
+| `WetnessGain(Clear/Rain/Wind)` | `ClearWetnessGainPerSecond` / `RainWetnessGainPerSecond` / `WindWetnessGainPerSecond` |
+| `BodyTemp.Target` | `ambient + WarmthForPart × DegreesPerWarmth − Wetness01 × WetnessCool` (부위) |
 | `WetnessDelta` | `(weatherGain × ExposureFactor − BaseDry × (1 − ExposureFactor)) × dt` |
 | `VisionFactor` | head covered → `HeadCoverVisionFactor`; else `FullVisionFactor` |
 
-Consts: `ClearAmbientTempC=18`, `RainAmbientTempC=10`, `WindChillDegreesC=4`, `ClearWetnessGain=0`, `RainWetnessGain=0.02`, `WindWetnessGain=0.002`, `HeadCoverVisionFactor=0.85`, `FullVisionFactor=1`, cover part = `BodyPartIds.Head`.
+Consts: `ClearAmbientTempC=18`, `RainAmbientTempC=10`, `WindChillDegreesC=4`, `NightAmbientOffsetC=-6`, `DawnAmbientOffsetC=-3`, `IndoorAmbientTempC=18`, `ClearWetnessGainPerSecond=0`, `RainWetnessGainPerSecond=0.02`, `WindWetnessGainPerSecond=0.002`, `IndoorWetnessGainPerSecond=0`, `HeadCoverVisionFactor=0.85`, `FullVisionFactor=1`, cover part = `BodyPartIds.Head`.
 
 ```mermaid
 flowchart LR
-  kind[WeatherKind]
-  wx[WeatherExposure]
+  kind[WorldWeatherKind]
+  period[WorldClock_Period]
+  outdoor[IsOutdoorEvaluation]
+  wx[WeatherExposure_Resolve]
   wear[WearStatsAggregator]
   env[WearEnvExposure_Tick]
   temp[BodyTemp_Tick]
   helm[HelmetVision]
+  climate[CharacterClimateHost]
   ui[Character_totals]
   kind --> wx
+  period --> wx
+  outdoor --> wx
+  climate --> wx
   wx -->|ambientTemp| temp
   wx -->|wetnessGain| env
-  wear -->|warmth| temp
+  wear -->|WarmthForPart| temp
   wear -->|env_prot| env
   wear -->|head covers| helm
   env --> ui
@@ -454,18 +467,20 @@ flowchart LR
 
 ## Phase H — BodyTemp / wetness → move + combat
 
-**Scope:** Consume Phase F/E state for locomotion speed and attacker HitChance. Named consts in `GearEnvPenalties`. **No** Gear redesign; **no** new UI.
+**Scope:** Consume Feeling + wetness for locomotion and attacker HitChance. Named consts in `GearEnvPenalties`. **No** Gear redesign; **no** new UI.
 
-Boundary SSOT: `BodyTemp.Feeling` + `WearEnvExposure.Wetness01` → `GearEnvPenalties`; `PlayerGearHost` → `PlayerMovement.SetEnvMovement`; `CharacterAttacker` multiplies **ranged** HitChance. 근접 확정 히트는 미적용. Checklist: `.claude/checklists/migration-parity.md`. See [`docs/locomotion/LOCOMOTION.md`](../locomotion/LOCOMOTION.md).
+**Feeling still drives `GearEnvPenalties`:** 코어 `BodyTemp.Feeling` (chest) + `Wetness01`만. 부위별 °C/`FeelingForPart`는 frostbite용 — 이동·히트 배율에 안 넣음.
+
+Boundary SSOT: Feeling + wetness → `GearEnvPenalties`; ClimateHost → `CharacterMotor.SetEnvMovement`와 possessed `PlayerMovement.SetEnvMovement` **같은 값** (`BodyLocomotionPenalties.CombinedMoveSpeedFactor`); `CharacterAttacker.ResolveAttackerEnvAccuracyFactor`는 ClimateHost Feeling+wetness (없으면 1). 근접 확정 히트는 미적용. Checklist: `.claude/checklists/migration-parity.md`. See [`docs/locomotion/LOCOMOTION.md`](../locomotion/LOCOMOTION.md) · [`docs/body/BODY.md`](../body/BODY.md).
 
 ### Parity contract (move / combat path)
 
-| Before H | After H (default) |
-|----------|-------------------|
-| Move = base × enc × LiftStrain | × **`GearEnvPenalties.MoveSpeedFactor`** |
-| HitChance = CombatMath × offense × WearEnc | × **`GearEnvPenalties.HitAccuracyFactor`** (원거리만) |
-| Feeling / wetness UI-only (E/F) | Consumed for gameplay penalties |
-| No gear host | factors = 1 |
+| Before H | After H (then) | Now |
+|----------|----------------|-----|
+| Move = base × enc × LiftStrain | × **`GearEnvPenalties.MoveSpeedFactor`** | × combined (Feeling+wetness × limp) |
+| HitChance = CombatMath × offense × WearEnc | × **`GearEnvPenalties.HitAccuracyFactor`** (원거리만) | ClimateHost Feeling. 호스트 없으면 1 |
+| Feeling / wetness UI-only (E/F) | Consumed for gameplay penalties | 코어 Feeling 유지 |
+| No `PlayerGearHost` | NPC factors = **1** (스탠드인) | **ClimateHost가 대체.** 모터 env + 공격자 ClimateHost |
 
 ### Named formulas (`GearEnvPenalties`)
 
@@ -480,22 +495,43 @@ Consts: `WetnessMovePenaltyPerUnit=0.15`, `WetnessHitPenaltyPerUnit=0.1`, plus p
 
 ```mermaid
 flowchart LR
-  feel[BodyTemp_Feeling]
+  feel[BodyTemp_Feeling_core]
   wet[WearEnvExposure_Wetness]
+  limp[BodyLocomotionPenalties]
   pen[GearEnvPenalties]
+  climate[CharacterClimateHost]
+  motor[CharacterMotor_SetEnv]
   move[PlayerMovement_SetEnv]
   hit[CharacterAttacker_HitChance]
   feel --> pen
   wet --> pen
-  pen -->|MoveSpeedFactor| move
+  pen --> limp
+  climate --> limp
+  limp -->|same_factor| motor
+  limp -->|same_factor| move
   pen -->|HitAccuracyFactor| hit
 ```
 
 ### Migration parity (env penalties)
 
 - Enc / LiftStrain / WearEnc / dual-wield paths unchanged order (multiplicative)
-- NPC attackers without `PlayerGearHost` keep factor 1
+- Phase H NPC factor-1 스탠드인은 **ClimateHost로 대체** (모터 env + 공격자 Feeling). ClimateHost 없는 공격자만 1
+- `GearEnvPenalties` 입력은 코어 Feeling 유지 (per-part 아님)
 - Phase G weather still feeds BodyTemp/wetness; H only consumes
+- Checklist: `.claude/checklists/migration-parity.md`
+
+## ClimateHost vs PlayerGearHost (post-H)
+
+체온·습윤 틱을 GearHost에서 분리. Wear 합·시야·월드 Kind는 Gear 유지.
+
+| Before | After (기본 경로) |
+|--------|-------------------|
+| GearHost가 BodyTemp + EnvExposure + Weather 틱/캐시 | ClimateHost가 World dt로 틱·ambient 캐시. GearHost는 포워드 |
+| 단일 코어 °C | `ThermalParts` 부위별. Feeling(코어)만 GearEnv |
+| NPC move/hit env = 1 | ClimateHost → `CharacterMotor.SetEnvMovement`; possessed는 같은 값을 `PlayerMovement.SetEnvMovement` |
+| `WeatherExposure.Resolve()` Kind만 | `Resolve(kind, period, outdoor)`. outdoor = `IsOutdoorEvaluation` |
+
+경계: Kind/`HelmetVision`/Wear = `PlayerGearHost`. ambient °C·wetness gain 캐시·틱·실내외·frostbite/heat/env 이동 = `CharacterClimateHost` (`Weather` getter 포워드). 전문: [`docs/body/BODY.md`](../body/BODY.md).
 
 ## Migration parity (Status → Character)
 

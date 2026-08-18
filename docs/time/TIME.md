@@ -138,6 +138,8 @@ HUD: `Hud_TimeScale` (우상단, Summary 왼쪽 기본 앵커). Setup: `Dist/MCP
 
 이벤트: `MinuteChanged`, `DayChanged`, `PeriodChanged`.
 
+`Period` 소비자: `CharacterClimateHost` → `WeatherExposure.Resolve(kind, period, outdoor)` (야외 Night/Dawn ambient 오프셋). 본문: [`docs/body/BODY.md`](../body/BODY.md).
+
 진행식 (매 `Update`):
 
 ```text
@@ -223,7 +225,9 @@ IsoLand에는 Setup이 적용·저장되어 있다. Full bake 정책: `.cursor/r
 | `TileMapChunkStreamer` (unload hysteresis) | Realtime | `TimeNow` |
 | `GridCursor` (hold/repeat) | Realtime | `Delta` |
 | Context menus | Realtime | `WaitForSecondsRealtime` (기존) |
-| `PlayerGearHost` (EnvExposure / BodyTemp) | World | `Delta` |
+| `PlayerGearHost` (Gear timed / `HelmetVision`) | World | `Delta` |
+| `CharacterClimateHost` (BodyTemp / WearEnvExposure / frostbite·heat / env move) | World | `Delta` + `WorldClock.Period` |
+| `WeatherExposure.Resolve` (ClimateHost) | WorldClock `Period` + World dt 틱 | `Resolve(kind, period, outdoor)` |
 | `UICraftingWindow` (제작 대기) | WorldClock 게임 분 | `WorldClock.DeltaGameMinutes` |
 
 구동작 계약: scale=1·모디파이어 없을 때 unscaled 기준이므로 Unity `timeScale==1`일 때와 동일. Dist는 `timeScale`을 쓰지 않으므로 기본 플레이 패리티 유지. 채널 Push 시에만 분기.

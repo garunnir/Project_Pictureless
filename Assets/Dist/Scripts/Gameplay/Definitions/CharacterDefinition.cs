@@ -86,6 +86,22 @@ public sealed class CharacterDefinition : ScriptableObject
     public bool PrototypeSeed => _prototypeSeed;
     public GameObject Prefab => _prefab;
 
+    public float GetPartMassKg(string partId) => LookupPartMassKg(_partMasses, partId);
+
+    public static float LookupPartMassKg(IReadOnlyList<CharacterPartMassEntry> masses, string partId)
+    {
+        if (masses == null || string.IsNullOrEmpty(partId))
+            return 0f;
+
+        for (int i = 0; i < masses.Count; i++)
+        {
+            if (masses[i].partId == partId)
+                return masses[i].kg;
+        }
+
+        return 0f;
+    }
+
     public string ResolveDisplayName()
     {
         if (!string.IsNullOrEmpty(_displayName))

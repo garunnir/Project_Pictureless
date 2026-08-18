@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerStatusMoodEntries ???ÅÌÉú ?îÏïΩ HUD ?úÏãú ?Ä???òÏßë
+// PlayerStatusMoodEntries ? ?? ?? HUD ?? ??? ??
 // ============================================================
 
 using System.Collections.Generic;
@@ -31,6 +31,7 @@ namespace Garunnir.Runtime.Gameplay.Data
                 CollectBodyEffects(body, into);
 
             CollectEncumbrance(encumbranceStage, into);
+            CollectCoreFeeling(PlayerGearHost.Active?.BodyTemperature, into);
         }
 
         static void CollectEncumbrance(PlayerEncumbranceStage stage, List<MoodEntry> into)
@@ -43,6 +44,70 @@ namespace Garunnir.Runtime.Gameplay.Data
                 MoodPolarity.Negative,
                 PlayerEncumbrance.GetMoodIntensity(stage),
                 PlayerStatusLabels.GetEncumbranceTooltip(stage)));
+        }
+
+        static void CollectCoreFeeling(BodyTemp bodyTemp, List<MoodEntry> into)
+        {
+            if (bodyTemp == null)
+                return;
+
+            float coreC = bodyTemp.BodyTempC;
+            BodyTempFeeling feeling = bodyTemp.Feeling;
+            MoodIconId iconId;
+            MoodPolarity polarity;
+            float intensity;
+            if (coreC <= BodyTemp.HypothermiaBodyTempC)
+            {
+                iconId = MoodIconId.Hypothermia;
+                polarity = MoodPolarity.Negative;
+                intensity = PlayerStatusMoodVisuals.EffectDefaultIntensity;
+            }
+            else if (feeling == BodyTempFeeling.Cold || feeling == BodyTempFeeling.Cool)
+            {
+                iconId = MoodIconId.TooCold;
+                polarity = MoodPolarity.Negative;
+                intensity = feeling == BodyTempFeeling.Cold
+                    ? PlayerStatusMoodVisuals.EffectDefaultIntensity
+                    : PlayerStatusMoodVisuals.VitalLowIntensity;
+            }
+            else if (feeling == BodyTempFeeling.Hot)
+            {
+                iconId = MoodIconId.TooHot;
+                polarity = MoodPolarity.Negative;
+                intensity = PlayerStatusMoodVisuals.EffectDefaultIntensity;
+            }
+            else if (feeling == BodyTempFeeling.Warm)
+            {
+                iconId = MoodIconId.Warm;
+                polarity = MoodPolarity.Positive;
+                intensity = PlayerStatusMoodVisuals.VitalLowIntensity;
+            }
+            else
+            {
+                iconId = MoodIconId.Comfortable;
+                polarity = MoodPolarity.Positive;
+                intensity = PlayerStatusMoodVisuals.VitalLowIntensity;
+            }
+
+            if (ContainsIcon(into, iconId))
+                return;
+
+            into.Add(new MoodEntry(
+                iconId,
+                polarity,
+                intensity,
+                CharacterGearLabels.FormatBodyTempFeeling(feeling)));
+        }
+
+        static bool ContainsIcon(List<MoodEntry> into, MoodIconId iconId)
+        {
+            for (int i = 0; i < into.Count; i++)
+            {
+                if (into[i].IconId == iconId)
+                    return true;
+            }
+
+            return false;
         }
 
         static void CollectVitals(IPlayerVitals vitals, List<MoodEntry> into)
