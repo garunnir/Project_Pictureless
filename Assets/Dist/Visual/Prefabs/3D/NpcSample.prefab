@@ -62,14 +62,11 @@ GameObject:
   - component: {fileID: 208125999193700478}
   - component: {fileID: 8587219361330171216}
   - component: {fileID: 626806252378597420}
-  - component: {fileID: 1797648017738236570}
   - component: {fileID: 2934366836420799707}
   - component: {fileID: 8123332443564162229}
   - component: {fileID: 2081645496284688511}
   - component: {fileID: 7835201994309978629}
   - component: {fileID: 8777330253604345042}
-  - component: {fileID: 1118176453110266648}
-  - component: {fileID: 5197488811145636763}
   - component: {fileID: 8762515008328947030}
   - component: {fileID: 929168342102942221}
   - component: {fileID: 5011223344556677889}
@@ -169,7 +166,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a7ae3bd875f9fb44b8938e477a2a9d3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: DistScript::NpcMovement
+  m_EditorClassIdentifier: DistScript::CharacterMotor
   _moveSpeed: 3
   _activeStyle: {fileID: 0}
   _collision:
@@ -182,22 +179,6 @@ MonoBehaviour:
     LogicalGravity: -9.81
     TopologyPushSpeed: 4
     TopologyPushMaxIterations: 4
---- !u!114 &1797648017738236570
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2816094712680714504}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 639595aeb8ff60d4a9f3f4aab1624156, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DistScript::NpcSteerToPoint
-  _hasDestination: 0
-  _destination: {x: 0, y: 0, z: 0}
-  _target: {fileID: 0}
-  _stoppingDistance: 0.1
 --- !u!114 &2934366836420799707
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -273,44 +254,6 @@ MonoBehaviour:
     m_Bits: 55
   _timeChannel: 1
   _selectedAction: 0
---- !u!114 &1118176453110266648
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2816094712680714504}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b277c667d5615f640996a6bd6a1fcced, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DistScript::NpcSenses
-  _detectRadius: 10
-  _loseRadius: 14
-  _timeChannel: 1
---- !u!114 &5197488811145636763
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2816094712680714504}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 14685ca40aa177c43b68f27a55bfc350, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DistScript::NpcCombatBehavior
-  _patrolWaypoints:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  _patrolStyle: {fileID: 11400000, guid: 78f91fee148105c4ab140221cca6edec, type: 2}
-  _chaseStyle: {fileID: 11400000, guid: 1f9ffa36ffe69ef4e9562267e38d1ba2, type: 2}
-  _holdStyle: {fileID: 11400000, guid: 7064b3ac4439be543a6165cb6ea55e77, type: 2}
-  _attackStandDistance: 1.1
-  _alertSeconds: 0.35
-  _suppressMode: 1
-  _timeChannel: 1
 --- !u!114 &8762515008328947030
 MonoBehaviour:
   m_ObjectHideFlags: 0

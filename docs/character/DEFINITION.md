@@ -46,6 +46,19 @@ UseGameplayData* 또는 호스트 없음 → GameplayData.Stats / Body
 그 외 → CharacterBodyHost.BindBody + CharacterSkillsHost.BindSkills
 ```
 
+## 본체 vs 매니저
+
+PC와 NPC는 **같은 본체 프리팹** (`NpcSample`: 모터·몸·Binder·공격·애니)을 쓴다. SO는 정보만 채운다. NPC 인스턴스에 `NpcCombatBehavior` / `NpcSenses` / `NpcSteerToPoint`를 Add하지 않는다.
+
+| 경로 | 책임 |
+|------|------|
+| `CharacterMotor` | 공용 물리. possessed면 Player 채널, 아니면 World |
+| `PlayerMovement` | 씬 플레이어 인스턴스 입력 드라이버. NPC에는 없음 |
+| `NpcManager` | 비possessed 유닛을 행 단위 FSM으로 원격 틱 (2대 이상) |
+| `NpcSteer` | 조향 헬퍼 (MB 아님) |
+
+`CharacterKind`로 PC/NPC를 나누지 않는다. 조종 여부는 `CharacterMotor.IsPossessed` (`IPlayControllable` 있으면 기본 possessed).
+
 ## 샘플
 
 | 에셋 | 용도 |
@@ -57,5 +70,6 @@ UseGameplayData* 또는 호스트 없음 → GameplayData.Stats / Body
 
 - Unity 컴파일 에러 없음
 - Data Definitions → Characters: NpcParity / PlayerParity 목록, 상세 인라인, Alignment 위젯
-- NpcSample + NpcParity SO: Play 시 STR 8·기존 전투 시드 유지
+- NpcSample + NpcParity SO: Play 시 STR 8·기존 전투 시드 유지. 프리팹에 AI MB 없음
+- IsoLand `NpcManager`: NPC 2대 이상 각자 웨이포인트/FSM. 플레이어는 틱하지 않음
 - Binder/definition null: 기존과 동일 시드

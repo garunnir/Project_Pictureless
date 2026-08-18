@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerMovement — KinematicMover를 이용한 캡슐 기반 플레이어 이동 (MonoBehaviour 래퍼)
+// PlayerMovement — 입력이 켜져 있을 때만 CharacterMotor에 관성·달리기 desired를 씀
 // ============================================================
 using IsoTilemap;
 using Sirenix.OdinInspector;
@@ -14,7 +14,8 @@ public interface IPlayerMovementDebug
 }
 
 [RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider), typeof(CharacterState))]
-public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
+[RequireComponent(typeof(CharacterMotor))]
+public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
 {
     [Header("Movement")]
     [SerializeField] private float _moveSpeed = 5f;
@@ -35,24 +36,14 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
     [Tooltip("달리기 버튼을 눌렀을 때 즉시 추가되는 1회 속도 부스트")]
     [SerializeField] private float _runEnterBoost = 1.5f;
 
-    [Header("Collision")]
-    [SerializeField] private CharacterLocomotionCollisionSettings _collision =
-        CharacterLocomotionCollisionSettings.Default;
-
     [SerializeField,ReadOnly] private Vector2 _moveDir;
-    Rigidbody _rb;
-    CapsuleCollider _capsule;
+    CharacterMotor _motor;
     CharacterState _characterState;
     CharacterFacingAnim _facingAnim;
-    KinematicMover _mover;
-    CharacterLocomotion _locomotion;
-    MapCollisionServices _pendingMapCollision;
     bool _pendingInitialVelocity;
     [SerializeField] private MonoBehaviour _debugControllerBehaviour;
     IPlayerMovementDebug _debugController;
-
-    readonly RaycastHit[] _hits =
-        new RaycastHit[CharacterLocomotionDefaults.HitBufferSize];
+    bool _controlEnabled;
 
     float _encumbranceSpeedMultiplier = 1f;
     float _liftStrainSpeedMultiplier = 1f;
@@ -62,57 +53,27 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
 
     public static event System.Action AnyImmobileMoveAttempted;
 
-    public CapsuleCollider Capsule => _capsule;
-    public RaycastHit[] Hits => _hits;
-    public int LastHitCount => _locomotion != null ? _locomotion.LastHitCount : 0;
-    public Vector3 LastP1 =>
-        _locomotion != null ? _locomotion.LastCapsulePoint : Vector3.zero;
+    public CapsuleCollider Capsule => _motor != null ? _motor.Capsule : null;
+    public RaycastHit[] Hits => _motor != null ? _motor.Hits : null;
+    public int LastHitCount => _motor != null ? _motor.LastHitCount : 0;
+    public Vector3 LastP1 => _motor != null ? _motor.LastP1 : Vector3.zero;
     public Vector3 LastDesiredMove =>
-        _locomotion != null ? _locomotion.LastDesiredMove : Vector3.zero;
-    public float BaseSkin => _collision.BaseSkin;
-    public int LastNearestIndex => _mover != null ? _mover.LastNearestIndex : -1;
-    public Vector3 LastSlide => _mover != null ? _mover.LastSlide : Vector3.zero;
-    public bool IsSprinting => _mover != null && _mover.IsSprinting;
-    public bool IsInertiaActive => _mover != null && _mover.IsInertiaActive;
-    public float CurrentSpeed => _mover != null ? _mover.CurrentSpeed : 0f;
+        _motor != null ? _motor.LastDesiredMove : Vector3.zero;
+    public float BaseSkin => _motor != null ? _motor.BaseSkin : 0f;
+    public int LastNearestIndex => _motor != null ? _motor.LastNearestIndex : -1;
+    public Vector3 LastSlide =>
+        _motor != null ? _motor.LastSlide : Vector3.zero;
+    public bool IsSprinting => _motor != null && _motor.IsSprinting;
+    public bool IsInertiaActive => _motor != null && _motor.IsInertiaActive;
+    public float CurrentSpeed => _motor != null ? _motor.CurrentSpeed : 0f;
     /// <summary>애니 Speed 정규화 분모 (달리기 상한). Inspector <c>_runMaxSpeed</c> SSOT.</summary>
     public float RunMaxSpeed => _runMaxSpeed;
     public float AnimSpeedReference => _runMaxSpeed;
-    public bool IsStuck => _locomotion != null && _locomotion.IsStuck;
+    public bool IsStuck => _motor != null && _motor.IsStuck;
     public float InitialVelocity
     {
         get => _initialVelocity;
         set => _initialVelocity = Mathf.Max(-1f, value);
-    }
-
-    public void BindMapCollision(MapCollisionServices services)
-    {
-        _pendingMapCollision = services;
-        _locomotion?.BindMapCollision(services);
-    }
-
-    public void SetDesiredWorldDir(Vector3 worldDirXZ)
-    {
-        if (_mover == null)
-            return;
-
-        if (_encumbranceBlocksMovement)
-        {
-            if (worldDirXZ.sqrMagnitude > Mathf.Epsilon)
-                AnyImmobileMoveAttempted?.Invoke();
-
-            _mover.SetWorldDirection(Vector3.zero);
-            _characterState?.SetMoveDir(Vector3.zero);
-            return;
-        }
-
-        _mover.SetWorldDirection(worldDirXZ);
-        _characterState?.SetMoveDir(_mover.WorldMoveDir);
-    }
-
-    public void SetSpeed(float metersPerSecond)
-    {
-        _moveSpeed = Mathf.Max(0f, metersPerSecond);
     }
 
     public void SetEncumbranceMovement(
@@ -124,7 +85,8 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
         _encumbranceBlocksSprint = blocksSprint;
         _encumbranceBlocksMovement = blocksMovement;
 
-        if (_mover == null)
+        KinematicMover mover = ActiveMover;
+        if (mover == null)
             return;
 
         if (blocksSprint || blocksMovement)
@@ -132,7 +94,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
 
         if (blocksMovement)
         {
-            _mover.SetInput(Vector2.zero, _refCam);
+            mover.SetInput(Vector2.zero, _refCam);
             _characterState?.SetMoveDir(Vector3.zero);
         }
     }
@@ -147,6 +109,8 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
 
     public void SetControllEnabled(bool enabled)
     {
+        _controlEnabled = enabled;
+        _motor?.SetPossessed(enabled);
         if (enabled)
         {
             _pendingInitialVelocity = true;
@@ -162,39 +126,29 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
     {
         NormalizeSpeedThresholds();
 
-        _rb = GetComponent<Rigidbody>();
-        _capsule = GetComponent<CapsuleCollider>();
+        _motor = GetComponent<CharacterMotor>();
         _characterState = GetComponent<CharacterState>();
         TryGetComponent(out _facingAnim);
         if (_debugControllerBehaviour == null) TryGetComponent(out _debugControllerBehaviour);
         _debugController = _debugControllerBehaviour as IPlayerMovementDebug;
-        _rb.freezeRotation = true;
-        _rb.useGravity = false;
 
-        _mover = new KinematicMover
-        {
-            Acceleration       = _acceleration,
-            Inertia            = _inertia,
-            BaseSkin           = _collision.BaseSkin,
-            CollisionMask      = _collision.CollisionMask,
-            TriggerInteraction = _collision.TriggerInteraction,
-        };
+        _motor.BindDrive(this);
+        ApplyDriveMoverSettings();
+    }
 
-        _locomotion = new CharacterLocomotion(
-            _rb,
-            _capsule,
-            transform,
-            _characterState,
-            _mover,
-            _hits,
-            _collision.ClimbAllowance,
-            _collision.BaseSkin,
-            _collision.CollisionMask,
-            _collision.TriggerInteraction,
-            _collision.LogicalGravity,
-            _collision.TopologyPushSpeed,
-            _collision.TopologyPushMaxIterations);
-        _locomotion.BindMapCollision(_pendingMapCollision);
+    void Start()
+    {
+        // Motor Awake가 뒤면 Awake 시점 Mover가 null이다. Start에서 관성 세팅을 다시 넣는다.
+        ApplyDriveMoverSettings();
+    }
+
+    KinematicMover ActiveMover => _motor != null ? _motor.Mover : null;
+
+    void ApplyDriveMoverSettings()
+    {
+        if (_motor == null)
+            return;
+        _motor.ConfigureDriveMover(_acceleration, _inertia);
     }
 
     void ConnectController()
@@ -223,50 +177,58 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
     }
     public void OnMove(InputAction.CallbackContext context)
     {
+        KinematicMover mover = ActiveMover;
+        if (!_controlEnabled || mover == null)
+            return;
+
         Vector2 inputDir = context.ReadValue<Vector2>();
         if (_encumbranceBlocksMovement)
         {
             if (inputDir.sqrMagnitude > Mathf.Epsilon)
                 AnyImmobileMoveAttempted?.Invoke();
 
-            _mover.SetInput(Vector2.zero, _refCam);
+            mover.SetInput(Vector2.zero, _refCam);
             _characterState.SetMoveDir(Vector3.zero);
             _characterState.UpdateGridPos(transform.position);
             return;
         }
 
-        _mover.SetInput(inputDir, _refCam);
+        mover.SetInput(inputDir, _refCam);
 
         if (_pendingInitialVelocity && inputDir.sqrMagnitude > Mathf.Epsilon)
         {
-            if (_mover.IsSprinting)
-                _mover.SetInitialVelocity(GetEffectiveInitialVelocity());
+            if (mover.IsSprinting)
+                mover.SetInitialVelocity(GetEffectiveInitialVelocity());
             _pendingInitialVelocity = false;
         }
 
-        _characterState.SetMoveDir(_mover.WorldMoveDir);
+        _characterState.SetMoveDir(mover.WorldMoveDir);
         _characterState.UpdateGridPos(transform.position);
     }
 
     public void OnRun(InputAction.CallbackContext context)
     {
+        KinematicMover mover = ActiveMover;
+        if (!_controlEnabled || mover == null)
+            return;
+
         if (_encumbranceBlocksSprint || _encumbranceBlocksMovement)
         {
             SetSprinting(false);
             return;
         }
 
-        bool wasSprinting = _mover.IsSprinting;
+        bool wasSprinting = mover.IsSprinting;
         bool isRun = context.ReadValue<float>() > 0.5f;
         SetSprinting(isRun);
         if (isRun)
         {
             _pendingInitialVelocity = true;
-            if (_mover.WorldMoveDir.sqrMagnitude > Mathf.Epsilon)
+            if (mover.WorldMoveDir.sqrMagnitude > Mathf.Epsilon)
             {
-                _mover.SetInitialVelocity(GetEffectiveInitialVelocity());
+                mover.SetInitialVelocity(GetEffectiveInitialVelocity());
                 if (!wasSprinting)
-                    _mover.ApplySpeedBoost(_runEnterBoost, _runMaxSpeed);
+                    mover.ApplySpeedBoost(_runEnterBoost, _runMaxSpeed);
                 _pendingInitialVelocity = false;
             }
         }
@@ -275,24 +237,11 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
 
     void SetSprinting(bool isRun)
     {
-        _mover.SetSprinting(isRun);
+        ActiveMover?.SetSprinting(isRun);
         _facingAnim?.SetRunning(isRun);
     }
 
-    void FixedUpdate()
-    {
-        float dt = TimeScaleService.FixedDelta(TimeScaleChannel.Player);
-        Vector3 desiredMove = CalcDesiredMove(dt);
-        Vector3 horizontalDelta = _locomotion.Move(desiredMove, dt);
-
-        if (_locomotion.LastHitCount > 0 &&
-            horizontalDelta.sqrMagnitude > Mathf.Epsilon)
-            _moveDir = horizontalDelta.normalized;
-
-        LogMovementDiagnostics();
-    }
-
-    Vector3 CalcDesiredMove(float dt)
+    public Vector3 CalcDesiredMove(KinematicMover mover, float dt)
     {
         if (_encumbranceBlocksMovement || _encumbranceSpeedMultiplier <= 0f)
             return Vector3.zero;
@@ -302,30 +251,37 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterLocomotion
             * _liftStrainSpeedMultiplier
             * _envSpeedMultiplier;
         float sprintMultiplier = _encumbranceBlocksSprint ? 1f : _sprintMultiplier;
-        Vector3 desiredMove = _mover.CalcDesiredMove(
+        return mover.CalcDesiredMove(
             moveSpeed,
             sprintMultiplier,
             dt,
             _customBaseSpeed,
             _inertiaEnableThreshold,
             _runMaxSpeed);
-        return desiredMove;
     }
 
-    void LogMovementDiagnostics()
+    public void AfterMove(CharacterMotor motor)
     {
-        if (_locomotion.LastPhysicsStuck)
+        if (motor.LastHitCount > 0 &&
+            motor.LastAppliedDelta.sqrMagnitude > Mathf.Epsilon)
+            _moveDir = motor.LastAppliedDelta.normalized;
+
+        LogMovementDiagnostics(motor);
+    }
+
+    void LogMovementDiagnostics(CharacterMotor motor)
+    {
+        if (motor.LastPhysicsStuck)
         {
             _debugController?.LogPlayerStuck();
             return;
         }
 
-        if (_locomotion.LastHitCount > 0 &&
-            _mover.LastSlide.sqrMagnitude > 0f)
-            _debugController?.LogPlayerSliding(_mover.LastSlide.sqrMagnitude);
+        if (motor.LastHitCount > 0 &&
+            motor.LastSlide.sqrMagnitude > 0f)
+            _debugController?.LogPlayerSliding(motor.LastSlide.sqrMagnitude);
 
-        MapTopologyDepenetration.PushOutResult topologyPush =
-            _locomotion.LastTopologyPush;
+        MapTopologyDepenetration.PushOutResult topologyPush = motor.LastTopologyPush;
         if (topologyPush.WasBlocking && topologyPush.StillBlocking)
             _debugController?.LogPlayerStuck();
     }

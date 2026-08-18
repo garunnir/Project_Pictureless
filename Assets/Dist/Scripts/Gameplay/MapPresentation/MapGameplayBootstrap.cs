@@ -47,8 +47,7 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         if (services == null)
             return;
 
-        BindCharacterLocomotions<PlayerMovement>(services);
-        BindCharacterLocomotions<NpcMovement>(services);
+        BindCharacterLocomotions<CharacterMotor>(services);
 
         var aimControllers = FindObjectsByType<PlayerAimController>(
             FindObjectsInactive.Include,

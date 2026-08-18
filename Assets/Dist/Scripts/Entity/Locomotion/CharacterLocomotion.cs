@@ -29,7 +29,7 @@ public static class CharacterLocomotionDefaults
 }
 
 /// <summary>
-/// Player/Npc Movement Collision Inspector SSOT.
+/// CharacterMotor Collision Inspector SSOT.
 /// 기본값은 <see cref="CharacterLocomotionDefaults"/>.
 /// </summary>
 [Serializable]

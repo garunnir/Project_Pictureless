@@ -10,27 +10,31 @@
 
 ```mermaid
 flowchart LR
-    PlayerMovement --> KinematicMover
-    NpcSteerToPoint --> NpcMovement
-    NpcMovement --> KinematicMover
+    PlayerMovement --> CharacterMotor
+    NpcManager --> NpcSteer
+    NpcSteer --> CharacterMotor
+    CharacterMotor --> KinematicMover
     KinematicMover --> CharacterLocomotion
     CharacterLocomotion --> Physics
     CharacterLocomotion --> MapCollisionServices
     CharacterLocomotion --> CharacterState
 ```
 
-- `PlayerMovement`: Input System, 달리기, 관성, `TimeScaleChannel.Player`
-- `NpcSteerToPoint`: 목표점/Transform을 월드 XZ 방향으로 변환
-- `NpcMovement`: 단순 등속 이동, `TimeScaleChannel.World`
+- `CharacterMotor`: 공용 물리 파사드. 조종 중(`IsPossessed`)이면 `TimeScaleChannel.Player`, 아니면 `World`. NPC 등속 또는 플레이어 드라이버 desired를 `CharacterLocomotion.Move`에 넘긴다.
+- `PlayerMovement`: Input System, 달리기, 관성 공식. 입력이 켜져 있을 때만 모터에 쓴다 (`ICharacterMotorDrive`). 물리 소유 없음.
+- `NpcSteer`: 목표점/Transform을 월드 XZ 방향으로 변환 (`NpcManager`가 호출, 인스턴스 MB 없음).
+- `NpcManager`: 비possessed 유닛 FSM (Patrol/Alert/Chase/Attack/Return/Dead). 상태·웨이포인트는 행 단위.
 - `KinematicMover`: 플레이어 속도/관성 또는 NPC 등속 desired delta 산출
 - `CharacterLocomotion`: CapsuleCast, slide, topology clamp, logical floor,
   depenetration, Rigidbody 이동, `CharacterState` 위치 갱신
-- `MapGameplayBootstrap`: 활성/비활성 Player/NPC에 맵 충돌 서비스를 바인딩
+- `MapGameplayBootstrap`: 활성/비활성 `CharacterMotor`에 맵 충돌 서비스를 바인딩
 
-`ICharacterLocomotion`은 `PlayerMovement`와 `NpcMovement` MonoBehaviour 파사드의
+`ICharacterLocomotion`은 `CharacterMotor` 파사드의
 공통 바인딩·명령·속도 조회 계약이다 (`CurrentSpeed` / `AnimSpeedReference`).
 비활성 오브젝트는 `Awake` 전에 바인딩될 수 있으므로
-두 파사드는 서비스를 보관했다가 공용 locomotion 생성 직후 다시 적용한다.
+모터는 서비스를 보관했다가 공용 locomotion 생성 직후 다시 적용한다.
+
+같은 GO에 플레이어 물리 MB와 NPC 물리 MB를 동시에 켜지 않는다. 모터는 하나다.
 
 ## 플레이어 마이그레이션 패리티
 
@@ -147,6 +151,7 @@ Collision Inspector는 `CharacterLocomotionCollisionSettings`이며 기본값은
 
 ## 현재 한계
 
-- NPC는 직선 목표점 조향만 지원한다.
+- NPC는 직선 목표점 조향만 지원한다 (`NpcSteer`).
 - 길찾기, 장애물 우회, stuck 재탐색은 구현하지 않는다.
 - 활성 NPC 시뮬레이션은 카메라 청크 로드 범위 안이라는 기존 전제를 따른다.
+- 청크 컬링·공간 해시는 후속. `NpcManager`는 씬 활성 유닛만 틱한다.

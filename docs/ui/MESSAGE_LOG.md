@@ -72,7 +72,7 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 
 **남기지 않음**: miss, 플레이어→적 공격, NPC↔NPC, 출혈 틱, 바이탈 소량, **Light~Heavy 과적**(상태 HUD 아이콘만).
 
-플레이어 판정: `ReferenceEquals(body, GameplayData.Body)` (`NpcSenses`와 동일).
+플레이어 판정: `ReferenceEquals(body, GameplayData.Body)` (`NpcManager` 감지와 동일).
 과적 Extreme 로그: Extreme 구간당 이동 시도 **1회** (`MessageLogPlayerEncumbranceSink`).
 
 ---
