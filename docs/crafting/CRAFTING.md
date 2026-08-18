@@ -53,8 +53,8 @@ sequenceDiagram
 
 ## 대체재 · 드롭 ≠ 이동
 
-- 기본 인덱스: 슬롯에서 **조건을 만족하는 첫 대체재**, 없으면 `0`. 레시피 변경 시 리셋.
-- 아이콘/스왑 클릭: `UIContextMenuHost.TryShow` + `CraftingAltSelectAction`. 대체재는 **전부** 표시. 보유 중이면 활성·맨 위, 없으면 비활성·맨 아래 (아이콘은 유지). 없는 항목은 고를 수 없다.
+- 기본 인덱스: 슬롯에서 **조건을 만족하는 첫 대체재**, 없으면 `0`. 레시피 변경 시 리셋. 품질 칸도 동일 — 요구 품질/레벨을 가진 아이템이 대체재다.
+- 아이콘/스왑 클릭: `UIContextMenuHost.TryShow` + `CraftingAltSelectAction`. 대체재는 **전부** Leaf로 넣는다. 보유 중이면 활성·맨 위, 없으면 비활성. 비활성 Leaf가 많으면 공용 컨텍스트 오버플로(`docs/ui/ContextMenu.md`)가 `그 외 N개`로 접는다. 없는 항목은 고를 수 없다. 품질 대체재 라벨은 `이름 lv.레벨`.
 - 카드 `IDropHandler`: `InventoryDragKind.Item`만. 그 슬롯 alternatives에 `itemId`가 있으면 해당 인덱스를 고르고 `InventoryDragState.MarkConsumed`. **스택 이동 없음** (`InventoryDragDrop.TryApplyTo` 금지). `End()`는 인벤 컨트롤러만.
 
 ---
@@ -66,7 +66,7 @@ sequenceDiagram
 | components | consume (소모) | `TryRemoveItem` |
 | tools `charges <= 0` | keep (유지) | 존재만 검사, 아이템 제거 없음 |
 | tools `charges > 0` | fuel (충전) | `TryConsumeToolCharges` — 공구 아이템 자체는 제거하지 않음 |
-| qualities | 아이콘 없음 | 품질 id/level 충족만 |
+| qualities | 요구 레벨 이상 도구 아이콘(대체재 스왑·드롭). 우상단 `{보유}/lv.{요구}` | 품질 id/level 충족만 |
 
 ---
 
@@ -84,7 +84,7 @@ sequenceDiagram
 - 헤더 접기/끄기: 공용 `UIWindowChromeBar` (`Btn_Fold` / `Btn_Close`). 끄기는 `UICraftingController.Close` (런처로 다시 열림). 구 `Btn_Close` 전용 훅은 크롬 바가 있으면 쓰지 않음.
 - 왼쪽: ALL / Favourites / `GetRecipeCategories` (`Loc.Get("RecipeCategory." + id)` — `RecipeCategoryLabels` 호출 금지, Dist.Inventory.UI 순환).
 - 가운데: 결과 이름 검색, 그리드/리스트 토글, 제작 가능(지식·재료·스킬 충족)을 맨 위·이름 녹색(`SkillMetColor`), 뷰포트 기반 셀 재활용 (ALL을 한 번에 Instantiate하지 않음). LeanPool 없음.
-- 오른쪽: 결과 아이콘·이름, 스킬·지식(충족 녹 / 미달 적 텍스트 목록), 별·시간·책·작업대·라이트, 재료·출력은 그리드 아이콘(우상단 `보유/요구`, 좌상단 kind 소모/충전/유지, 대체재 시 우측 교체, 부족 시 아이콘 흐림), 수량 `±`/`MAX`, 소요 시간(제작 중에는 남은 시간으로 카운트다운), 진행바, Craft.
+- 오른쪽: 결과 아이콘·이름, 스킬·지식(충족 녹 / 미달 적 텍스트 목록), 별·시간·책·작업대·라이트, 재료·도구품질·출력은 그리드 아이콘(우상단 `보유/요구`, 좌상단 kind 소모/충전/유지/품질, 대체재 시 우측 교체, 부족 시 아이콘 흐림), 수량 `±`/`MAX`, 소요 시간(제작 중에는 남은 시간으로 카운트다운), 진행바, Craft.
 - 빠진 재료는 별도 이름 목록이 아니라 슬롯 수량 표시다.
 - 즐겨찾기·뷰 모드: `CraftingFavoritesStore` PlayerPrefs (`Dist.Crafting.FavouriteRecipeIds`, `Dist.Crafting.ViewMode`).
 

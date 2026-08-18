@@ -1,7 +1,8 @@
 // ============================================================
-// UIPlayerStatusSummaryPanel — 상태 요약 HUD 아이콘 스트립 + 툴팁
+// UIPlayerStatusSummaryPanel — 상태 요약 HUD (무드 스트립 + 피격도)
 // ============================================================
 
+using System;
 using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 using TMPro;
@@ -11,6 +12,8 @@ using UnityEngine.UI;
 public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
 {
     public const int MaxSlots = 8;
+    const string BodyPartsPath = "Area_Status/Grp_Body/Parts";
+    const string SwitchPath = "Area_Status/Grp_Switch";
 
     static readonly UIHoverStyle MoodHoverStyle = new(new Vector2(0f, 28f), followMouse: false);
 
@@ -20,12 +23,19 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
     [SerializeField] RectTransform _tooltipRoot;
     [SerializeField] TMP_Text _tooltipText;
     [SerializeField] UIHoverPanelShell _tooltipShell;
+    [SerializeField] RectTransform _bodyPartsRoot;
+    [SerializeField] UIPlayerStatusBodyTabStrip _bodyTabStrip;
 
     readonly List<UIPlayerStatusMoodIconSlot> _slots = new(MaxSlots);
     readonly Dictionary<MoodIconId, float> _lastIntensityByIcon = new(MaxSlots);
+    readonly List<UIPlayerStatusBodyPartGraphic> _graphics = new(16);
 
     PlayerStatusViewModel _viewModel;
     Canvas _rootCanvas;
+    CharacterWindowTab _tab = CharacterWindowTab.Status;
+
+    public CharacterWindowTab ActiveTab => _tab;
+    public event Action<CharacterWindowTab> BodyTabChanged;
 
     public void Wire(
         RectTransform slotRoot,
@@ -44,6 +54,79 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
     }
 
     public void BindViewModel(PlayerStatusViewModel viewModel) => _viewModel = viewModel;
+
+    void OnEnable()
+    {
+        EnsureBodyTabStrip();
+        if (_bodyTabStrip != null)
+        {
+            _bodyTabStrip.Initialize(OnBodyTabStripSelected);
+            _bodyTabStrip.SetSelectedTab(_tab);
+        }
+    }
+
+    public void SetBodyTab(CharacterWindowTab tab)
+    {
+        _tab = tab;
+        _bodyTabStrip?.SetSelectedTab(tab);
+        RefreshBody();
+    }
+
+    public void RefreshBody()
+    {
+        EnsureBodyGraphics();
+        if (_graphics.Count == 0)
+            return;
+
+        PlayerStatusBodyGraphicDisplay.Apply(_graphics, _viewModel?.Body, _tab);
+    }
+
+    void OnBodyTabStripSelected(CharacterWindowTab tab)
+    {
+        SetBodyTab(tab);
+        BodyTabChanged?.Invoke(tab);
+    }
+
+    void EnsureBodyTabStrip()
+    {
+        if (_bodyTabStrip != null)
+            return;
+
+        Transform switchT = transform.Find(SwitchPath);
+        if (switchT != null)
+            _bodyTabStrip = switchT.GetComponent<UIPlayerStatusBodyTabStrip>();
+    }
+
+    void EnsureBodyGraphics()
+    {
+        if (_graphics.Count > 0)
+            return;
+
+        if (_bodyPartsRoot == null)
+            _bodyPartsRoot = transform.Find(BodyPartsPath) as RectTransform;
+
+        if (_bodyPartsRoot == null)
+        {
+            Debug.LogError(
+                "[UIPlayerStatusSummaryPanel] Grp_Body/Parts missing on summary HUD prefab.",
+                this);
+            return;
+        }
+
+        UIPlayerStatusBodyPartGraphic[] found =
+            _bodyPartsRoot.GetComponentsInChildren<UIPlayerStatusBodyPartGraphic>(true);
+        if (found.Length == 0)
+        {
+            Debug.LogError(
+                "[UIPlayerStatusSummaryPanel] UIPlayerStatusBodyPartGraphic missing on HUD Parts. " +
+                "Run Dist/MCP/PlayerStatus/Patch Summary Body Hits.",
+                _bodyPartsRoot);
+            return;
+        }
+
+        for (int i = 0; i < found.Length; i++)
+            _graphics.Add(found[i]);
+    }
 
     public void Refresh()
     {
@@ -83,7 +166,6 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
         }
 
         UpdateIntensitySnapshot(entries);
-        gameObject.SetActive(entries.Count > 0);
     }
 
     bool ShouldAttentionShake(MoodEntry entry)

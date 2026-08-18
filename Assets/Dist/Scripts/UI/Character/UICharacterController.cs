@@ -2,6 +2,7 @@
 // UICharacterController — Character 창 토글 (StatusToggle=C) + Layer_Window
 // ============================================================
 
+using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -16,10 +17,14 @@ public sealed class UICharacterController : MonoBehaviour
     [SerializeField] Canvas _uiCanvas;
     [SerializeField] UICanvasLayerHost _layerHost;
     [SerializeField] PlayerStatusWindowLauncher _launcher;
+    [SerializeField] UIPlayerStatusSummaryPanel _summaryPanel;
     [SerializeField] Vector2 _windowInitialPosition = new(220f, 40f);
 
     bool _isOpen;
     PlayerStatusViewModel _viewModel;
+
+    public bool IsOpen => _isOpen;
+    public event Action<CharacterWindowTab> TabChanged;
 
     void Awake()
     {
@@ -49,7 +54,10 @@ public sealed class UICharacterController : MonoBehaviour
             InputManager.Instance.PlayerStatusTogglePerformed -= OnStatusTogglePerformed;
 
         if (_window != null)
+        {
+            _window.TabChanged -= OnWindowTabChanged;
             _window.Unbind();
+        }
     }
 
     void OnStatusTogglePerformed(InputAction.CallbackContext context)
@@ -77,10 +85,19 @@ public sealed class UICharacterController : MonoBehaviour
         if (_window == null || _viewModel == null)
             return;
 
+        if (_summaryPanel == null)
+            _summaryPanel = UnityEngine.Object.FindAnyObjectByType<UIPlayerStatusSummaryPanel>();
+
+        CharacterWindowTab tab = _summaryPanel != null
+            ? _summaryPanel.ActiveTab
+            : CharacterWindowTab.Status;
+
         _window.gameObject.SetActive(true);
         _window.BindChromeClose(Close);
         _window.ConfigureChrome(_uiCanvas);
-        _window.Initialize(_viewModel);
+        _window.TabChanged -= OnWindowTabChanged;
+        _window.TabChanged += OnWindowTabChanged;
+        _window.Initialize(_viewModel, tab);
         _isOpen = true;
         SyncLauncher();
     }
@@ -92,6 +109,7 @@ public sealed class UICharacterController : MonoBehaviour
 
         if (_window != null)
         {
+            _window.TabChanged -= OnWindowTabChanged;
             _window.Unbind();
             _window.gameObject.SetActive(false);
         }
@@ -142,4 +160,14 @@ public sealed class UICharacterController : MonoBehaviour
     }
 
     public void BindLauncher(PlayerStatusWindowLauncher launcher) => _launcher = launcher;
+
+    public void SetTab(CharacterWindowTab tab)
+    {
+        if (!_isOpen || _window == null)
+            return;
+
+        _window.SetTab(tab);
+    }
+
+    void OnWindowTabChanged(CharacterWindowTab tab) => TabChanged?.Invoke(tab);
 }

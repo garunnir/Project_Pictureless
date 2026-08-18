@@ -31,9 +31,9 @@ public sealed class UICraftingIngredientCard : MonoBehaviour, IDropHandler
     readonly List<string> _altItemIds = new(8);
 
     int _slotIndex;
-    bool _isToolSlot;
-    Action<int, bool, Vector2> _onOpenAlts;
-    Action<int, bool, string> _onDropSelect;
+    CraftingIngredientKind _kind;
+    Action<int, CraftingIngredientKind, Vector2> _onOpenAlts;
+    Action<int, CraftingIngredientKind, string> _onDropSelect;
 
     public void Wire(
         Image background,
@@ -79,14 +79,13 @@ public sealed class UICraftingIngredientCard : MonoBehaviour, IDropHandler
         int required,
         int qualityLevel,
         int slotIndex,
-        bool isToolSlot,
         IReadOnlyList<string> altItemIds,
         bool showSwap,
-        Action<int, bool, Vector2> onOpenAlts,
-        Action<int, bool, string> onDropSelect)
+        Action<int, CraftingIngredientKind, Vector2> onOpenAlts,
+        Action<int, CraftingIngredientKind, string> onDropSelect)
     {
         _slotIndex = slotIndex;
-        _isToolSlot = isToolSlot;
+        _kind = kind;
         _onOpenAlts = onOpenAlts;
         _onDropSelect = onDropSelect;
 
@@ -105,9 +104,13 @@ public sealed class UICraftingIngredientCard : MonoBehaviour, IDropHandler
 
         if (_icon != null)
         {
-            bool showIcon = kind != CraftingIngredientKind.Quality && !string.IsNullOrEmpty(itemId);
+            bool showIcon = kind == CraftingIngredientKind.Quality || !string.IsNullOrEmpty(itemId);
             _icon.enabled = showIcon;
-            _icon.sprite = showIcon ? ItemVisualPresenter.GetDisplayIcon(itemId) : null;
+            _icon.sprite = showIcon
+                ? (string.IsNullOrEmpty(itemId)
+                    ? ItemVisualPresenter.GetDefaultIcon()
+                    : ItemVisualPresenter.GetDisplayIcon(itemId))
+                : null;
             _icon.preserveAspect = true;
             Color iconColor = Color.white;
             iconColor.a = available >= required
@@ -118,37 +121,23 @@ public sealed class UICraftingIngredientCard : MonoBehaviour, IDropHandler
 
         if (_kindIcon != null)
         {
-            bool showKind = kind != CraftingIngredientKind.Quality;
-            _kindIcon.gameObject.SetActive(showKind);
-            _kindIcon.enabled = showKind;
-            if (showKind)
-                _kindIcon.color = KindColor(kind);
+            _kindIcon.gameObject.SetActive(true);
+            _kindIcon.enabled = true;
+            _kindIcon.color = KindColor(kind);
         }
 
         if (_name != null)
-        {
-            bool showName = kind == CraftingIngredientKind.Quality;
-            _name.gameObject.SetActive(showName);
-            if (showName)
-            {
-                _name.text = CraftingWindowLabels.FormatQuality(displayName, qualityLevel);
-                _name.color = available >= required
-                    ? CraftingWindowLayout.SkillMetColor
-                    : CraftingWindowLayout.SkillUnmetColor;
-            }
-        }
+            _name.gameObject.SetActive(false);
 
         if (_count != null)
         {
-            bool showCount = kind != CraftingIngredientKind.Quality;
-            _count.gameObject.SetActive(showCount);
-            if (showCount)
-            {
-                _count.text = CraftingWindowLabels.FormatCount(available, required);
-                _count.color = available >= required
-                    ? CraftingWindowLayout.SkillMetColor
-                    : CraftingWindowLayout.SkillUnmetColor;
-            }
+            _count.gameObject.SetActive(true);
+            _count.text = kind == CraftingIngredientKind.Quality
+                ? CraftingWindowLabels.FormatQualityCount(available, required)
+                : CraftingWindowLabels.FormatCount(available, required);
+            _count.color = available >= required
+                ? CraftingWindowLayout.SkillMetColor
+                : CraftingWindowLayout.SkillUnmetColor;
         }
 
         if (_swapButton != null)
@@ -158,7 +147,7 @@ public sealed class UICraftingIngredientCard : MonoBehaviour, IDropHandler
     public void BindOutput(string itemId, string displayName, int count)
     {
         _slotIndex = -1;
-        _isToolSlot = false;
+        _kind = CraftingIngredientKind.Consume;
         _onOpenAlts = null;
         _onDropSelect = null;
         _altItemIds.Clear();
@@ -226,7 +215,7 @@ public sealed class UICraftingIngredientCard : MonoBehaviour, IDropHandler
 
         payload.ClearSelection?.Invoke();
         InventoryDragState.MarkConsumed();
-        _onDropSelect?.Invoke(_slotIndex, _isToolSlot, itemId);
+        _onDropSelect?.Invoke(_slotIndex, _kind, itemId);
     }
 
     void OnIconClicked() => OpenAlts();
@@ -241,7 +230,7 @@ public sealed class UICraftingIngredientCard : MonoBehaviour, IDropHandler
         Vector2 screen = RectTransformUtility.WorldToScreenPoint(
             null,
             transform.position);
-        _onOpenAlts?.Invoke(_slotIndex, _isToolSlot, screen);
+        _onOpenAlts?.Invoke(_slotIndex, _kind, screen);
     }
 
     static Color KindColor(CraftingIngredientKind kind)
@@ -252,6 +241,8 @@ public sealed class UICraftingIngredientCard : MonoBehaviour, IDropHandler
                 return CraftingWindowLayout.ConsumeIconColor;
             case CraftingIngredientKind.Fuel:
                 return CraftingWindowLayout.FuelIconColor;
+            case CraftingIngredientKind.Quality:
+                return CraftingWindowLayout.QualityIconColor;
             default:
                 return CraftingWindowLayout.KeepIconColor;
         }

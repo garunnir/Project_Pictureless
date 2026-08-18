@@ -213,7 +213,9 @@ static class CraftingUISetupMenu
         Put("Crafting.TimeMinutes", "{0}분");
         Put("Crafting.BookKnown", "레시피 습득");
         Put("Crafting.CannotCraft", "재료·도구·스킬이 부족합니다");
-        Put("Crafting.QualityFormat", "{0} Lv.{1}");
+        Put("Crafting.QualityFormat", "{0} lv.{1}");
+        Put("Crafting.QualityCountFormat", "{0}/lv.{1}");
+        Put("Crafting.QualityAltFormat", "{0} lv.{1}");
         Put("Crafting.CountFormat", "{0}/{1}");
 
         var list = new List<LocalizationTable.Entry>(map.Count);

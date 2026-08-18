@@ -120,7 +120,7 @@
 아이콘 resolve (`ItemVisualPresenter.GetDisplayIcon`):
 
 1. `ItemIconCatalog` 할당분 (`Assets/Dist/Resources/ItemIconCatalog.asset`) — GameData 커스텀·수동 오버라이드. 편집은 **Tools/Data Definitions** 아이템 상세 Override.
-2. BN Ultica 타일셋 — `StreamingAssets/BNData/tileset/item_sprites.json` + 아틀라스 PNG. item id와 타일 id가 같거나, BN 원본 `looks_like` / `copy-from` 체인이 타일에 닿으면 매핑. Bake: `python Tools/bn_converter/export_tileset_icons.py --bn-path <Cataclysm-BN> --items Assets/StreamingAssets/BNData/items.json --output Assets/StreamingAssets/BNData/tileset`
+2. BN 타일셋(MSX++) — `StreamingAssets/BNData/tileset/item_sprites.json` + 아틀라스 PNG. item id와 타일 id가 같거나, BN 원본 `looks_like` / `copy-from` 체인이 타일에 닿으면 매핑. Bake: `python Tools/bn_converter/export_tileset_icons.py --bn-path <Cataclysm-BN> --items Assets/StreamingAssets/BNData/items.json --output Assets/StreamingAssets/BNData/tileset --tileset MSX++UnDeadPeopleEdition`
 3. 기본 empty 아이콘 (`ui_icon_empty.png`)
 
 `looks_like`는 Dist `ItemData`에 넣지 않는다. bake가 체인만 따라가 `item_sprites.json`에 펼친다.

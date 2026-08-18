@@ -567,7 +567,7 @@ public sealed class GameDataEditorWindow : EditorWindow
             return;
 
         EditorGUILayout.HelpBox(
-            "아이콘은 아이템 JSON이 아닙니다. Sprite 필드는 ItemIconCatalog 오버라이드입니다. 미할당이면 BN Ultica 타일셋, 그것도 없으면 기본 아이콘입니다.",
+            "아이콘은 아이템 JSON이 아닙니다. Sprite 필드는 ItemIconCatalog 오버라이드입니다. 미할당이면 BN 타일셋(MSX++), 그것도 없으면 기본 아이콘입니다.",
             MessageType.None);
 
         ItemIconCatalog catalog = EnsureIconCatalog();

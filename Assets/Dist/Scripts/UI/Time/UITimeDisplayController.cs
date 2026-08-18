@@ -10,11 +10,11 @@ public sealed class UITimeDisplayController : MonoBehaviour
     [SerializeField] Canvas _uiCanvas;
 
     [Header("Window Chrome")]
-    [Tooltip("켜면 창 근처 시 Area_Header가 나타나고 드래그로 이동합니다.")]
-    [SerializeField] bool _enableDragHeader = true;
+    [Tooltip("HUD 조정 ON일 때만 HudLayoutParticipant가 드래그·리사이즈를 켭니다. 평소 헤더는 표시하지 않습니다.")]
+    [SerializeField] bool _enableDragHeader;
 
-    [Tooltip("켜면 가장자리 근접 시 리사이즈 핸들이 나타납니다.")]
-    [SerializeField] bool _enableResize = true;
+    [Tooltip("HUD 조정 ON일 때만 리사이즈 핸들을 켭니다.")]
+    [SerializeField] bool _enableResize;
 
     TimeViewModel _viewModel;
 

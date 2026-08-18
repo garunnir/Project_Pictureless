@@ -27,6 +27,8 @@ public static class CraftingWindowLabels
     const string KeyBookKnown = "Crafting.BookKnown";
     const string KeyCannotCraft = "Crafting.CannotCraft";
     const string KeyQualityFormat = "Crafting.QualityFormat";
+    const string KeyQualityCountFormat = "Crafting.QualityCountFormat";
+    const string KeyQualityAltFormat = "Crafting.QualityAltFormat";
     const string KeyCountFormat = "Crafting.CountFormat";
     const string KeyCategoryPrefix = "RecipeCategory.";
 
@@ -52,6 +54,12 @@ public static class CraftingWindowLabels
 
     public static string FormatQuality(string qualityId, int level) =>
         Loc.Format(KeyQualityFormat, qualityId, level);
+
+    public static string FormatQualityCount(int have, int need) =>
+        Loc.Format(KeyQualityCountFormat, have, need);
+
+    public static string FormatQualityAlt(string itemName, int level) =>
+        Loc.Format(KeyQualityAltFormat, itemName, level);
 
     public static string FormatCount(int have, int need) =>
         Loc.Format(KeyCountFormat, have, need);

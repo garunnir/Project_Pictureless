@@ -276,6 +276,111 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &2199386518822186490
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6083203373409143376}
+  - component: {fileID: 6369387264167640883}
+  - component: {fileID: 7994611432423311161}
+  - component: {fileID: 7969600859703196998}
+  - component: {fileID: 7176073901199789337}
+  m_Layer: 5
+  m_Name: Area_LayoutHit
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &6083203373409143376
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2199386518822186490}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7418530968314198246}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &6369387264167640883
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2199386518822186490}
+  m_CullTransparentMesh: 1
+--- !u!114 &7994611432423311161
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2199386518822186490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7969600859703196998
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2199386518822186490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23726a11818c96541bb3df31f54ff861, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::UIWindowDragHandler
+  _window: {fileID: 7418530968314198246}
+  _canvas: {fileID: 0}
+  _proximityReveal: 0
+  _proximityPadding: 12
+--- !u!225 &7176073901199789337
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2199386518822186490}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
 --- !u!1 &4227722098549097353
 GameObject:
   m_ObjectHideFlags: 0
@@ -540,6 +645,7 @@ GameObject:
   - component: {fileID: 8005262074887871860}
   - component: {fileID: 3078030288668303670}
   - component: {fileID: 4750063000466136081}
+  - component: {fileID: 1527422127717981397}
   m_Layer: 5
   m_Name: Grp_TimeDisplay
   m_TagString: Untagged
@@ -561,6 +667,7 @@ RectTransform:
   m_Children:
   - {fileID: 3088328697655853569}
   - {fileID: 5029603503563438797}
+  - {fileID: 6083203373409143376}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
@@ -669,6 +776,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2df9e12dd1415a448f56452a34ded2d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::UIOverlayWindow
+--- !u!114 &1527422127717981397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5610776231620736787}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df66d697069872b42a81782a73995af7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::HudLayoutParticipant
+  _participantId: TimeDisplay
+  _window: {fileID: 7418530968314198246}
+  _headerDrag: {fileID: 49721670887073846}
+  _layoutDrag: {fileID: 7969600859703196998}
+  _chromeBar: {fileID: 2454344912195576219}
+  _resizeHandles: {fileID: 3078030288668303670}
+  _resizeProximity: {fileID: 1596398038779288839}
+  _canvas: {fileID: 0}
+  _minSize: {x: 120, y: 28}
+  _maxSize: {x: 480, y: 96}
 --- !u!1 &7142095081707891723
 GameObject:
   m_ObjectHideFlags: 0

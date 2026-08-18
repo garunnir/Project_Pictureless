@@ -16,6 +16,10 @@
 
 `Entry.Icon` optional; null = text-only (existing menus unchanged).
 
+## 비활성 오버플로
+
+형제 Leaf 중 `GetDisabledReason() != null` 인 항목이 `ContextMenuStyle.DisabledLeafOverflowMin` 이상이면, 활성 항목(및 기존 Group) 뒤에 `그 외 N개` 서브메뉴로 접는다. 자식 Leaf의 아이콘은 유지한다. `UIContextMenuHost.Show`가 트리 전체에 한 번 적용한다. Contributor는 후보를 전부 Leaf로 넣는다.
+
 ## 의존
 
 - 이 asmdef → `Config`(Loc), Unity.TextMeshPro, Unity.InputSystem

@@ -15,6 +15,8 @@ static class SystemHierarchySetup
     public const string Msg = "Msg";
     public const string Crafting = "Crafting";
 
+    public const string Settings = "Settings";
+
     public static Transform ResolveSystemRoot()
     {
         InputManager inputManager = Object.FindAnyObjectByType<InputManager>();

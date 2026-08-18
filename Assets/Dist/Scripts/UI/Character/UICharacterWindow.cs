@@ -33,6 +33,8 @@ public sealed class UICharacterWindow : MonoBehaviour
     CharacterWindowTab _tab = CharacterWindowTab.Status;
     Action _onChromeClose;
 
+    public event Action<CharacterWindowTab> TabChanged;
+
     public bool IsVisible => gameObject.activeSelf;
     public RectTransform WindowRect => transform as RectTransform;
     public CharacterWindowTab ActiveTab => _tab;
@@ -76,7 +78,9 @@ public sealed class UICharacterWindow : MonoBehaviour
             _headerTitle.text = title;
     }
 
-    public void Initialize(PlayerStatusViewModel viewModel)
+    public void Initialize(
+        PlayerStatusViewModel viewModel,
+        CharacterWindowTab tab = CharacterWindowTab.Status)
     {
         Unbind();
         _viewModel = viewModel;
@@ -100,8 +104,7 @@ public sealed class UICharacterWindow : MonoBehaviour
         EnsureGearPanel();
         EnsurePartViews();
         BindGear();
-        SetTab(CharacterWindowTab.Status);
-        Refresh();
+        SetTab(tab);
     }
 
     public void Unbind()
@@ -122,6 +125,7 @@ public sealed class UICharacterWindow : MonoBehaviour
         ApplyTabVisibility();
         _gearPanel?.SetActiveTab(tab);
         Refresh();
+        TabChanged?.Invoke(_tab);
     }
 
     void OnDestroy() => Unbind();
@@ -423,33 +427,7 @@ public sealed class UICharacterWindow : MonoBehaviour
 
         ICharacterBody body = _viewModel.Body;
         string[] mains = BodyPartIds.MainConditionParts;
-        for (int i = 0; i < _graphics.Count; i++)
-        {
-            string partId = _graphics[i].PartId;
-            if (string.IsNullOrEmpty(partId))
-                continue;
-
-            bool present = body != null && body.Has(partId);
-            int cur = present ? body.GetConditionCur(partId) : 0;
-            int max = present ? body.GetConditionMax(partId) : 0;
-
-            if (_tab == CharacterWindowTab.Encumbrance)
-            {
-                int enc = WearStatsAggregator.EncumbranceForPart(
-                    PlayerGearHost.Active?.Wear, partId);
-                _graphics[i].SetDisplay(enc, Mathf.Max(enc, 1), present);
-            }
-            else if (_tab == CharacterWindowTab.BodyTemp)
-            {
-                int warm = WearStatsAggregator.WarmthForPart(
-                    PlayerGearHost.Active?.Wear, partId);
-                _graphics[i].SetDisplay(warm, Mathf.Max(warm, 1), present);
-            }
-            else
-            {
-                _graphics[i].SetDisplay(cur, max, present);
-            }
-        }
+        PlayerStatusBodyGraphicDisplay.Apply(_graphics, body, _tab);
 
         for (int i = 0; i < _rows.Count && i < mains.Length; i++)
         {

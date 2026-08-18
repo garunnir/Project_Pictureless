@@ -23,6 +23,8 @@ public sealed class UIItemContextMenu : MonoBehaviour, IPointerClickHandler
     Coroutine _closeDelayRoutine;
     int _hoverDepth = -1;
 
+    public bool IsOpen => _isOpen;
+
     void Awake()
     {
         TryGetComponent(out _rootRaycastImage);
@@ -33,26 +35,30 @@ public sealed class UIItemContextMenu : MonoBehaviour, IPointerClickHandler
     {
         UIItemListRow.RightClicked += OnItemRightClicked;
         ContextMenuHostEvents.HideRequested += Hide;
+        UiItemContextMenuCancelRegistry.Register(TryHandleCancelClose);
     }
 
     void OnDisable()
     {
         UIItemListRow.RightClicked -= OnItemRightClicked;
         ContextMenuHostEvents.HideRequested -= Hide;
+        UiItemContextMenuCancelRegistry.Unregister(TryHandleCancelClose);
         Hide();
+    }
+
+    bool TryHandleCancelClose()
+    {
+        if (!_isOpen)
+            return false;
+
+        Hide();
+        return true;
     }
 
     void Update()
     {
         if (!_isOpen)
             return;
-
-        InputManager input = InputManager.Instance;
-        if (input != null && input.TryReadCancelPerformedThisFrame(out bool canceled) && canceled)
-        {
-            Hide();
-            return;
-        }
 
         TryHideOnOutsidePress();
     }

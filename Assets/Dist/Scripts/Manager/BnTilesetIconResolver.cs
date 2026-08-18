@@ -1,5 +1,5 @@
 // ============================================================
-// BnTilesetIconResolver — BN Ultica 타일셋에서 itemId → Sprite (lazy)
+// BnTilesetIconResolver — BN 타일셋(MSX++)에서 itemId → Sprite (lazy)
 // ============================================================
 
 using System;
@@ -21,6 +21,15 @@ public static class BnTilesetIconResolver
     static bool _loadAttempted;
     static readonly Dictionary<string, Texture2D> Atlases = new(StringComparer.Ordinal);
     static readonly Dictionary<string, Sprite> Sprites = new(StringComparer.Ordinal);
+
+    public static bool Contains(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId))
+            return false;
+
+        BnTilesetIndexFile index = LoadIndex();
+        return index?.items != null && index.items.ContainsKey(itemId);
+    }
 
     public static bool TryGet(string itemId, out Sprite sprite)
     {

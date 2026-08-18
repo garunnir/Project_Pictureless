@@ -31,6 +31,8 @@ public sealed class UIContextMenuHost : MonoBehaviour, IPointerClickHandler
     Coroutine _closeDelayRoutine;
     int _hoverDepth = -1;
 
+    public bool IsOpen => _isOpen;
+
     public static bool TryShow(ContextMenuModel model, Vector2 screenPosition)
     {
         if (model == null || model.IsEmpty)
@@ -121,12 +123,6 @@ public sealed class UIContextMenuHost : MonoBehaviour, IPointerClickHandler
         if (!_isOpen)
             return;
 
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-        {
-            Hide();
-            return;
-        }
-
         TryHideOnOutsidePress();
     }
 
@@ -171,7 +167,13 @@ public sealed class UIContextMenuHost : MonoBehaviour, IPointerClickHandler
         if (rootPanel == null)
             return;
 
-        rootPanel.Bind(model.Roots, depth: 0, OnRowEnter, OnRowExit, OnRowClick, OnPanelEnter);
+        rootPanel.Bind(
+            ContextMenuOverflow.Fold(model.Roots),
+            depth: 0,
+            OnRowEnter,
+            OnRowExit,
+            OnRowClick,
+            OnPanelEnter);
         PlacePanelAtScreenPoint(rootPanel.Root, screenPosition);
         ClampPanelToScreen(rootPanel.Root);
         _openPanels.Add(rootPanel);

@@ -18,6 +18,7 @@ public sealed class UICraftingController : MonoBehaviour
     PlayerInventoryRuntime _boundRuntime;
 
     public bool IsOpen => _isOpen;
+    public bool IsCraftRunning => _isOpen && _window != null && _window.IsCraftRunning;
 
     void Awake()
     {

@@ -27,4 +27,5 @@ public static class ContextMenuStyle
     public const float CloseDelaySeconds = 0.25f;
     public const int FontSize = 14;
     public const float ChevronWidth = 18f;
+    public const int DisabledLeafOverflowMin = 8;
 }

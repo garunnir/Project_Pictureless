@@ -288,6 +288,213 @@ static class PlayerStatusUISetupMenu
         AssetDatabase.Refresh();
     }
 
+    /// <summary>
+    /// HUD Grp_Body/Parts Graphic 배선 + Grp_Switch 탭 펼침 스트립. 레이아웃 유지.
+    /// </summary>
+    [MenuItem(DistMcpMenus.PlayerStatusPatchSummaryBodyHits)]
+    static void PatchSummaryBodyHits()
+    {
+        GameObject root = PrefabUtility.LoadPrefabContents(SummaryPrefabPath);
+        if (root == null)
+        {
+            Debug.LogError($"[PlayerStatusUISetupMenu] Failed to load: {SummaryPrefabPath}");
+            return;
+        }
+
+        try
+        {
+            Transform partsRoot = root.transform.Find("Area_Status/Grp_Body/Parts");
+            if (partsRoot == null)
+            {
+                Debug.LogError(
+                    "[PlayerStatusUISetupMenu] Area_Status/Grp_Body/Parts missing; abort.",
+                    root);
+                return;
+            }
+
+            int wired = 0;
+            for (int i = 0; i < partsRoot.childCount; i++)
+            {
+                Transform partT = partsRoot.GetChild(i);
+                Image partImage = partT.GetComponent<Image>();
+                if (partImage == null)
+                {
+                    Debug.LogError(
+                        $"[PlayerStatusUISetupMenu] Parts/{partT.name} has no Image.",
+                        partT);
+                    continue;
+                }
+
+                partImage.raycastTarget = false;
+
+                UIPlayerStatusBodyPartGraphic graphic =
+                    partT.GetComponent<UIPlayerStatusBodyPartGraphic>();
+                if (graphic == null)
+                    graphic = partT.gameObject.AddComponent<UIPlayerStatusBodyPartGraphic>();
+
+                graphic.Wire(partImage, PartIdFromGoName(partT.name));
+                wired++;
+            }
+
+            Transform switchT = root.transform.Find("Area_Status/Grp_Switch");
+            if (switchT == null)
+            {
+                Debug.LogError(
+                    "[PlayerStatusUISetupMenu] Area_Status/Grp_Switch missing; abort.",
+                    root);
+                return;
+            }
+
+            UIPlayerStatusBodyTabStrip tabStrip = PatchSummaryBodyTabStrip(switchT);
+            if (tabStrip == null)
+                return;
+
+            UIPlayerStatusSummaryPanel panel = root.GetComponent<UIPlayerStatusSummaryPanel>();
+            if (panel == null)
+            {
+                Debug.LogError(
+                    "[PlayerStatusUISetupMenu] UIPlayerStatusSummaryPanel missing on summary root.",
+                    root);
+                return;
+            }
+
+            SerializedObject so = new(panel);
+            so.FindProperty("_bodyPartsRoot").objectReferenceValue = partsRoot;
+            so.FindProperty("_bodyTabStrip").objectReferenceValue = tabStrip;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            PrefabUtility.SaveAsPrefabAsset(root, SummaryPrefabPath);
+            Debug.Log(
+                $"[PlayerStatusUISetupMenu] Wired {wired}/{partsRoot.childCount} HUD body parts + tab strip on {SummaryPrefabPath}.");
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+    }
+
+    static UIPlayerStatusBodyTabStrip PatchSummaryBodyTabStrip(Transform switchT)
+    {
+        Button rootButton = switchT.GetComponent<Button>();
+        if (rootButton != null)
+            Object.DestroyImmediate(rootButton);
+
+        ContentSizeFitter stripFitter = switchT.GetComponent<ContentSizeFitter>();
+        if (stripFitter == null)
+            stripFitter = switchT.gameObject.AddComponent<ContentSizeFitter>();
+        stripFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+        stripFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+        Transform maskT = FindDeep(switchT, "Mask");
+        if (maskT == null)
+        {
+            Debug.LogError(
+                "[PlayerStatusUISetupMenu] Grp_Switch/Mask missing; abort.",
+                switchT);
+            return null;
+        }
+
+        EnsureTabIconSlot(maskT, "Icon (2)", CharacterWindowTab.Encumbrance);
+        Transform icon3T = maskT.Find("Icon (3)");
+        if (icon3T == null)
+        {
+            Transform icon2T = maskT.Find("Icon (2)");
+            if (icon2T == null)
+            {
+                Debug.LogError(
+                    "[PlayerStatusUISetupMenu] Grp_Switch Icon (2) missing; cannot add Icon (3).",
+                    maskT);
+                return null;
+            }
+
+            GameObject icon3Go = Object.Instantiate(icon2T.gameObject, maskT);
+            icon3Go.name = "Icon (3)";
+            icon3Go.SetActive(false);
+            icon3T = icon3Go.transform;
+
+            Transform backImgT = maskT.Find("BackImg");
+            if (backImgT != null)
+                icon3T.SetSiblingIndex(backImgT.GetSiblingIndex());
+        }
+
+        EnsureTabIconSlot(maskT, "Icon", CharacterWindowTab.Status);
+        EnsureTabIconSlot(maskT, "Icon (1)", CharacterWindowTab.Equipment);
+        EnsureTabIconSlot(maskT, "Icon (2)", CharacterWindowTab.Encumbrance);
+        EnsureTabIconSlot(maskT, "Icon (3)", CharacterWindowTab.BodyTemp);
+
+        maskT.Find("Icon (1)")?.gameObject.SetActive(false);
+        maskT.Find("Icon (2)")?.gameObject.SetActive(false);
+        maskT.Find("Icon (3)")?.gameObject.SetActive(false);
+
+        UIPlayerStatusBodyTabStrip strip = switchT.GetComponent<UIPlayerStatusBodyTabStrip>();
+        if (strip == null)
+            strip = switchT.gameObject.AddComponent<UIPlayerStatusBodyTabStrip>();
+
+        SerializedObject stripSo = new(strip);
+        stripSo.FindProperty("_maskRoot").objectReferenceValue = maskT as RectTransform;
+
+        SerializedProperty slotsProp = stripSo.FindProperty("_slots");
+        slotsProp.arraySize = 4;
+        WireTabStripSlot(slotsProp, 0, maskT.Find("Icon"), CharacterWindowTab.Status);
+        WireTabStripSlot(slotsProp, 1, maskT.Find("Icon (1)"), CharacterWindowTab.Equipment);
+        WireTabStripSlot(slotsProp, 2, maskT.Find("Icon (2)"), CharacterWindowTab.Encumbrance);
+        WireTabStripSlot(slotsProp, 3, icon3T, CharacterWindowTab.BodyTemp);
+        stripSo.ApplyModifiedPropertiesWithoutUndo();
+
+        return strip;
+    }
+
+    static void WireTabStripSlot(
+        SerializedProperty slotsProp,
+        int index,
+        Transform iconT,
+        CharacterWindowTab tab)
+    {
+        if (iconT == null)
+        {
+            Debug.LogError(
+                $"[PlayerStatusUISetupMenu] Tab icon missing for {tab}; abort slot {index}.",
+                slotsProp.serializedObject.targetObject);
+            return;
+        }
+
+        SerializedProperty slotProp = slotsProp.GetArrayElementAtIndex(index);
+        slotProp.FindPropertyRelative("button").objectReferenceValue = iconT.GetComponent<Button>();
+        slotProp.FindPropertyRelative("icon").objectReferenceValue = iconT.GetComponent<Image>();
+        slotProp.FindPropertyRelative("tab").enumValueIndex = (int)tab;
+    }
+
+    static void EnsureTabIconSlot(Transform maskT, string iconName, CharacterWindowTab tab)
+    {
+        Transform iconT = maskT.Find(iconName);
+        if (iconT == null)
+        {
+            Debug.LogError(
+                $"[PlayerStatusUISetupMenu] Mask/{iconName} missing for tab {tab}.",
+                maskT);
+            return;
+        }
+
+        Image iconImage = iconT.GetComponent<Image>();
+        if (iconImage == null)
+        {
+            Debug.LogError(
+                $"[PlayerStatusUISetupMenu] Mask/{iconName} Image missing.",
+                iconT);
+            return;
+        }
+
+        iconImage.raycastTarget = true;
+
+        Button button = iconT.GetComponent<Button>();
+        if (button == null)
+            button = iconT.gameObject.AddComponent<Button>();
+        button.targetGraphic = iconImage;
+    }
+
     static void ApplyBoxColliderToAnchors(
         RectTransform child,
         BoxCollider2D box,
@@ -1048,7 +1255,17 @@ static class PlayerStatusUISetupMenu
 
         SerializedObject summarySo = new(summaryController);
         summarySo.FindProperty("_panel").objectReferenceValue = summaryPanel;
+        SerializedProperty characterCtrlProp = summarySo.FindProperty("_characterController");
+        if (characterCtrlProp != null)
+            characterCtrlProp.objectReferenceValue = controller;
         summarySo.ApplyModifiedPropertiesWithoutUndo();
+
+        SerializedProperty summaryPanelProp = so.FindProperty("_summaryPanel");
+        if (summaryPanelProp != null)
+        {
+            summaryPanelProp.objectReferenceValue = summaryPanel;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
 
         MergeLocalizationKeys();
         EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());

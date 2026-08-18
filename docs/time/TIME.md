@@ -89,7 +89,26 @@ TimeScaleService.Instance.Pop("bullet_time");  // 해당 키 전부 제거
 | bullet `0.25` + pause `0` | `0` |
 | pause Pop 후 | `0.25` (bullet 유지) |
 
-권장 키 예: `"pause_menu"`, `"bullet_time"`, `"sleep_ff"`.
+권장 키 예: `"pause_menu"`, `"bullet_time"`, `"sleep_ff"`, `"gameplay_speed"`.
+
+### 플레이어 HUD 배속 (`gameplay_speed`)
+
+| 키 | 소유 | World+Player |
+|----|------|----------------|
+| `pause_menu` | 세팅 Overlay (`UISettingsController`) | `0` (세팅 열림만) |
+| `gameplay_speed` | `GameplayTimeScale` (우상단 HUD) | Pause=`0`, 1x=Pop, 2x=`2`, Smart=작업 중 `2` |
+
+`GameplayTimeScale`은 **키 소유 정책만** — `Pop` 후 `Push`로 독점. 곱 스택 중복 Push 금지.
+
+**지능형(Smart):** `ReservedWorkHub`에 등록된 소스가 하나라도 `HasActiveWork`면 2x. 마지막 작업 종료 시 1x + 모드 Normal.
+
+**예약 작업 소스 추가:** `IReservedWorkSource` 구현 → `ReservedWorkHub.Register`. Gear/제작 타입을 `GameplayTimeScale`에 `if`로 넣지 않음.
+
+초기 소스: `GearReservedWorkSource`, `InventoryReservedWorkSource`, `CraftingReservedWorkSource`.
+
+HUD: `Hud_TimeScale` (우상단, Summary 왼쪽 기본 앵커). Setup: `Dist/MCP/Time/Setup TimeScale HUD In Open Scene`.
+
+세팅·Cancel: [`ui/SETTINGS.md`](../ui/SETTINGS.md).
 
 ### 소비 측 규칙 (연동 시)
 

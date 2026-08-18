@@ -62,6 +62,7 @@ public static class CraftingWindowLayout
     public static readonly Color ConsumeIconColor = new(0.75f, 0.28f, 0.22f, 1f);
     public static readonly Color KeepIconColor = new(0.35f, 0.5f, 0.7f, 1f);
     public static readonly Color FuelIconColor = new(0.85f, 0.55f, 0.2f, 1f);
+    public static readonly Color QualityIconColor = new(0.55f, 0.4f, 0.75f, 1f);
 
     public static Vector2 DefaultSize => new(DefaultWidth, DefaultHeight);
 

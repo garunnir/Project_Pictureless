@@ -68,6 +68,7 @@ public sealed class UICraftingWindow : MonoBehaviour
     readonly List<UICraftingIngredientCard> _outputPool = new();
     readonly List<int> _componentAltIndices = new();
     readonly List<int> _toolAltIndices = new();
+    readonly List<int> _qualityAltIndices = new();
     readonly List<string> _altIdBuffer = new(8);
     readonly List<ContextMenuEntry> _altMenuEntries = new(8);
     readonly StringBuilder _skillsBuilder = new();
@@ -84,6 +85,8 @@ public sealed class UICraftingWindow : MonoBehaviour
     bool _craftRunning;
     float _craftElapsed;
     float _craftDuration;
+
+    public bool IsCraftRunning => _craftRunning;
     int _pendingCraftQuantity;
     int _lastDisplayedTimeSeconds = -1;
     bool _lastTimeWasRemaining;
@@ -765,7 +768,6 @@ public sealed class UICraftingWindow : MonoBehaviour
                     need,
                     0,
                     i,
-                    isToolSlot: false,
                     _altIdBuffer,
                     slot?.alternatives != null && slot.alternatives.Count > 1,
                     OpenAltMenu,
@@ -808,7 +810,6 @@ public sealed class UICraftingWindow : MonoBehaviour
                     need,
                     0,
                     i,
-                    isToolSlot: true,
                     _altIdBuffer,
                     slot?.alternatives != null && slot.alternatives.Count > 1,
                     OpenAltMenu,
@@ -825,21 +826,24 @@ public sealed class UICraftingWindow : MonoBehaviour
                 if (quality == null || string.IsNullOrEmpty(quality.id))
                     continue;
 
-                _altIdBuffer.Clear();
-                bool met = PoolHasQuality(quality);
+                QualityVisualPresenter.FillItemIds(quality.id, quality.level, _altIdBuffer);
+                int altIndex = GetIndex(_qualityAltIndices, i);
+                string iconItemId = GetListId(_altIdBuffer, altIndex);
+                int have = 0;
+                if (PoolHasItem(iconItemId))
+                    have = QualityVisualPresenter.GetItemQualityLevel(iconItemId, quality.id);
                 UICraftingIngredientCard card = GetPooled(
                     _ingredientPool, _ingredientCardPrefab, _ingredientContent, used);
                 card.Bind(
                     CraftingIngredientKind.Quality,
-                    string.Empty,
+                    iconItemId,
                     quality.id,
-                    met ? quality.level : 0,
+                    have,
                     quality.level,
                     quality.level,
                     i,
-                    isToolSlot: false,
                     _altIdBuffer,
-                    showSwap: false,
+                    _altIdBuffer.Count > 1,
                     OpenAltMenu,
                     OnAltDropped);
                 used++;
@@ -1006,6 +1010,7 @@ public sealed class UICraftingWindow : MonoBehaviour
     {
         _componentAltIndices.Clear();
         _toolAltIndices.Clear();
+        _qualityAltIndices.Clear();
         if (recipe?.components != null)
         {
             for (int i = 0; i < recipe.components.Count; i++)
@@ -1016,6 +1021,12 @@ public sealed class UICraftingWindow : MonoBehaviour
         {
             for (int i = 0; i < recipe.tools.Count; i++)
                 _toolAltIndices.Add(ResolveDefaultTool(recipe.tools[i]));
+        }
+
+        if (recipe?.qualities_required != null)
+        {
+            for (int i = 0; i < recipe.qualities_required.Count; i++)
+                _qualityAltIndices.Add(ResolveDefaultQuality(recipe.qualities_required[i]));
         }
     }
 
@@ -1056,7 +1067,22 @@ public sealed class UICraftingWindow : MonoBehaviour
         return 0;
     }
 
-    void OpenAltMenu(int slotIndex, bool isTool, Vector2 fallbackScreen)
+    int ResolveDefaultQuality(QualityEntry quality)
+    {
+        if (quality == null || string.IsNullOrEmpty(quality.id))
+            return 0;
+
+        QualityVisualPresenter.FillItemIds(quality.id, quality.level, _altIdBuffer);
+        for (int i = 0; i < _altIdBuffer.Count; i++)
+        {
+            if (PoolHasItem(_altIdBuffer[i]))
+                return i;
+        }
+
+        return 0;
+    }
+
+    void OpenAltMenu(int slotIndex, CraftingIngredientKind kind, Vector2 fallbackScreen)
     {
         if (_selected == null || _craftRunning)
             return;
@@ -1064,7 +1090,19 @@ public sealed class UICraftingWindow : MonoBehaviour
         _altMenuEntries.Clear();
         Vector2 screen = ReadPointerScreen(fallbackScreen);
 
-        if (isTool)
+        if (kind == CraftingIngredientKind.Quality)
+        {
+            if (_selected.qualities_required == null ||
+                slotIndex < 0 ||
+                slotIndex >= _selected.qualities_required.Count)
+                return;
+
+            QualityEntry quality = _selected.qualities_required[slotIndex];
+            QualityVisualPresenter.FillItemIds(quality?.id, quality != null ? quality.level : 0, _altIdBuffer);
+            AddQualityAltEntries(quality, slotIndex, ownedOnly: true);
+            AddQualityAltEntries(quality, slotIndex, ownedOnly: false);
+        }
+        else if (kind == CraftingIngredientKind.Keep || kind == CraftingIngredientKind.Fuel)
         {
             if (_selected.tools == null || slotIndex < 0 || slotIndex >= _selected.tools.Count)
                 return;
@@ -1143,17 +1181,63 @@ public sealed class UICraftingWindow : MonoBehaviour
         }
     }
 
+    void AddQualityAltEntries(QualityEntry quality, int slotIndex, bool ownedOnly)
+    {
+        if (quality == null || string.IsNullOrEmpty(quality.id))
+            return;
+
+        for (int i = 0; i < _altIdBuffer.Count; i++)
+        {
+            string itemId = _altIdBuffer[i];
+            if (string.IsNullOrEmpty(itemId))
+                continue;
+
+            bool owned = PoolHasItem(itemId);
+            if (owned != ownedOnly)
+                continue;
+
+            int capturedSlot = slotIndex;
+            int capturedAlt = i;
+            int level = QualityVisualPresenter.GetItemQualityLevel(itemId, quality.id);
+            _altMenuEntries.Add(ContextMenuEntry.Leaf(
+                "craft-quality-" + slotIndex + "-" + i,
+                CraftingWindowLabels.FormatQualityAlt(UITextPresenter.GetItemName(itemId), level),
+                new CraftingAltSelectAction(
+                    index => SetQualityAlt(capturedSlot, index),
+                    capturedAlt,
+                    owned),
+                ItemVisualPresenter.GetDisplayIcon(itemId)));
+        }
+    }
+
     bool PoolHasItem(string itemId)
     {
         return _pool != null && !string.IsNullOrEmpty(itemId) && _pool.CountItem(itemId) > 0;
     }
 
-    void OnAltDropped(int slotIndex, bool isTool, string itemId)
+    void OnAltDropped(int slotIndex, CraftingIngredientKind kind, string itemId)
     {
         if (_selected == null || _craftRunning || string.IsNullOrEmpty(itemId))
             return;
 
-        if (isTool)
+        if (kind == CraftingIngredientKind.Quality)
+        {
+            QualityEntry quality = _selected.qualities_required != null &&
+                slotIndex >= 0 &&
+                slotIndex < _selected.qualities_required.Count
+                ? _selected.qualities_required[slotIndex]
+                : null;
+            QualityVisualPresenter.FillItemIds(quality?.id, quality != null ? quality.level : 0, _altIdBuffer);
+            for (int i = 0; i < _altIdBuffer.Count; i++)
+            {
+                if (_altIdBuffer[i] == itemId)
+                {
+                    SetQualityAlt(slotIndex, i);
+                    return;
+                }
+            }
+        }
+        else if (kind == CraftingIngredientKind.Keep || kind == CraftingIngredientKind.Fuel)
         {
             ToolSlot slot = _selected.tools != null && slotIndex < _selected.tools.Count
                 ? _selected.tools[slotIndex]
@@ -1200,6 +1284,13 @@ public sealed class UICraftingWindow : MonoBehaviour
     {
         EnsureCount(_toolAltIndices, slotIndex + 1);
         _toolAltIndices[slotIndex] = altIndex;
+        RefreshDetail();
+    }
+
+    void SetQualityAlt(int slotIndex, int altIndex)
+    {
+        EnsureCount(_qualityAltIndices, slotIndex + 1);
+        _qualityAltIndices[slotIndex] = altIndex;
         RefreshDetail();
     }
 
@@ -1442,33 +1533,6 @@ public sealed class UICraftingWindow : MonoBehaviour
         return null;
     }
 
-    bool PoolHasQuality(QualityEntry required)
-    {
-        if (_pool == null || required == null)
-            return false;
-
-        IReadOnlyList<InventoryContainer> sources = _pool.Sources;
-        for (int c = 0; c < sources.Count; c++)
-        {
-            IReadOnlyList<ItemStack> stacks = sources[c].Stacks;
-            for (int s = 0; s < stacks.Count; s++)
-            {
-                ItemData item = stacks[s]?.Item;
-                if (item?.qualities == null)
-                    continue;
-
-                for (int q = 0; q < item.qualities.Count; q++)
-                {
-                    QualityEntry got = item.qualities[q];
-                    if (got != null && got.id == required.id && got.level >= required.level)
-                        return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
     void FillAltIdsFromComponents(ComponentSlot slot)
     {
         _altIdBuffer.Clear();
@@ -1520,6 +1584,15 @@ public sealed class UICraftingWindow : MonoBehaviour
         if (list == null || index < 0 || index >= list.Count)
             return 0;
         return list[index];
+    }
+
+    static string GetListId(List<string> list, int index)
+    {
+        if (list == null || list.Count == 0)
+            return string.Empty;
+        if (index < 0 || index >= list.Count)
+            return list[0];
+        return list[index] ?? string.Empty;
     }
 
     static void EnsureCount(List<int> list, int count)

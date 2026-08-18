@@ -32,6 +32,8 @@ internal static class DistMcpMenus
         Root + "/PlayerStatus/Patch Window Body Diagram Chibi";
     public const string PlayerStatusPatchWindowBodyChibiColliderHits =
         Root + "/PlayerStatus/Patch Window Body Chibi Collider Hits";
+    public const string PlayerStatusPatchSummaryBodyHits =
+        Root + "/PlayerStatus/Patch Summary Body Hits";
     public const string PlayerStatusPatchCharacterTabsAndGearPanel =
         Root + "/PlayerStatus/Patch Character Tabs And Gear Panel";
     public const string PlayerStatusSetupCanvas =
@@ -73,5 +75,22 @@ internal static class DistMcpMenus
 
     public const string WindowChromePatchFoldCloseButtons =
         Root + "/WindowChrome/Patch Fold Close Buttons";
+
+    public const string SettingsCreatePrefabIfMissing =
+        Root + "/Settings/Create Settings Window Prefab If Missing";
+    public const string SettingsSetupCanvas =
+        Root + "/Settings/Setup Settings In Open Scene";
+    public const string SettingsMergeLocalizationKeys =
+        Root + "/Settings/Merge Localization Keys Into UI_ko";
+    public const string SettingsPatchHudPopupToggles =
+        Root + "/Settings/Patch HUD Popup Toggles";
+
+    public const string HudLayoutPatchParticipants =
+        Root + "/HudLayout/Patch HUD Layout Participants";
+
+    public const string TimeScaleCreateHudPrefabIfMissing =
+        Root + "/Time/Create TimeScale HUD Prefab If Missing";
+    public const string TimeScaleSetupHudInOpenScene =
+        Root + "/Time/Setup TimeScale HUD In Open Scene";
 }
 #endif

@@ -14,6 +14,7 @@
 | Weapon anim / VFX folders | [`equipment/WEAPON_VISUAL.md`](equipment/WEAPON_VISUAL.md) | (hub → Pipeline → clips/prefabs) |
 | BN converter whitelist | [`equipment/BN_BAKE.md`](equipment/BN_BAKE.md) | (`convert.py` → BNData; promote when Dist has a consumer) |
 | UI MVC / font | [`ui/UI_Scripts.md`](ui/UI_Scripts.md) | `ui-prefab-layout.mdc` · `ui-font.mdc` |
+| Settings / HUD layout | [`ui/SETTINGS.md`](ui/SETTINGS.md) | (ESC Cancel · HudLayoutEdit) |
 | UI hover placement | [`ui/HOVER.md`](ui/HOVER.md) | (ContextMenu asm · keep-in-bounds) |
 | Message log HUD | [`ui/MESSAGE_LOG.md`](ui/MESSAGE_LOG.md) | (UI 레이아웃·폰트 룰 공유) |
 | Crafting window | [`crafting/CRAFTING.md`](crafting/CRAFTING.md) | (창 vs 아이템 메뉴 · 재료 풀 · 대체재 드롭) |

@@ -7,8 +7,10 @@ using UnityEngine;
 public sealed class UIPlayerStatusSummaryController : MonoBehaviour
 {
     [SerializeField] UIPlayerStatusSummaryPanel _panel;
+    [SerializeField] UICharacterController _characterController;
 
     PlayerStatusViewModel _viewModel;
+    bool _syncingTab;
 
     void Awake()
     {
@@ -29,19 +31,61 @@ public sealed class UIPlayerStatusSummaryController : MonoBehaviour
             return;
         }
 
+        if (_characterController == null)
+            _characterController = FindAnyObjectByType<UICharacterController>();
+
         _panel.BindViewModel(_viewModel);
         UIWindowChromeBar.BindCloseOnWindow(_panel, HidePanel);
+        _panel.BodyTabChanged += OnHudTabChanged;
+        if (_characterController != null)
+            _characterController.TabChanged += OnWindowTabChanged;
+
         _viewModel.MoodChanged += OnMoodChanged;
+        _viewModel.Changed += OnChanged;
         Refresh();
+        _panel.RefreshBody();
     }
 
     void OnDestroy()
     {
+        if (_panel != null)
+            _panel.BodyTabChanged -= OnHudTabChanged;
+        if (_characterController != null)
+            _characterController.TabChanged -= OnWindowTabChanged;
         if (_viewModel != null)
+        {
             _viewModel.MoodChanged -= OnMoodChanged;
+            _viewModel.Changed -= OnChanged;
+        }
     }
 
     void OnMoodChanged() => Refresh();
+
+    void OnChanged()
+    {
+        if (_panel != null)
+            _panel.RefreshBody();
+    }
+
+    void OnHudTabChanged(CharacterWindowTab tab)
+    {
+        if (_syncingTab)
+            return;
+
+        _syncingTab = true;
+        _characterController?.SetTab(tab);
+        _syncingTab = false;
+    }
+
+    void OnWindowTabChanged(CharacterWindowTab tab)
+    {
+        if (_syncingTab)
+            return;
+
+        _syncingTab = true;
+        _panel?.SetBodyTab(tab);
+        _syncingTab = false;
+    }
 
     void Refresh()
     {

@@ -19,10 +19,10 @@ python Tools/bn_converter/convert.py --bn-path <Cataclysm-BN> --output Assets/St
 
 Does **not** overwrite `GameData/items.json` demo seeds.
 
-Item **icons** are not `ItemData` fields. Ultica tileset bake (separate from this converter):
+Item **icons** are not `ItemData` fields. MSX++ tileset bake (separate from this converter):
 
 ```text
-python Tools/bn_converter/export_tileset_icons.py --bn-path <Cataclysm-BN> --items Assets/StreamingAssets/BNData/items.json --output Assets/StreamingAssets/BNData/tileset
+python Tools/bn_converter/export_tileset_icons.py --bn-path <Cataclysm-BN> --items Assets/StreamingAssets/BNData/items.json --output Assets/StreamingAssets/BNData/tileset --tileset MSX++UnDeadPeopleEdition
 ```
 
 Writes `BNData/tileset/item_sprites.json` + referenced PNG. Runtime: `ItemVisualPresenter` (catalog override → tileset → default). Bake follows BN `looks_like` and implicit `copy-from` (item_factory, max 10 hops) from Cataclysm-BN JSON — still not a Dist POCO. Chain miss → default icon.

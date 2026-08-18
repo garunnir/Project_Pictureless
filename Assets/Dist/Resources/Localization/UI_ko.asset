@@ -276,7 +276,7 @@ MonoBehaviour:
   - key: Crafting.CannotCraft
     text: "\uC7AC\uB8CC\xB7\uB3C4\uAD6C\xB7\uC2A4\uD0AC\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4"
   - key: Crafting.QualityFormat
-    text: '{0} Lv.{1}'
+    text: '{0} lv.{1}'
   - key: Crafting.CountFormat
     text: '{0}/{1}'
   - key: Crafting.Outputs
@@ -323,3 +323,31 @@ MonoBehaviour:
     text: "\uC624\uB978\uD5C8\uBC85\uC9C0"
   - key: PlayerStatus.Part.calf_r
     text: "\uC624\uB978\uC885\uC544\uB9AC"
+  - key: Crafting.QualityCountFormat
+    text: '{0}/lv.{1}'
+  - key: Crafting.QualityAltFormat
+    text: '{0} lv.{1}'
+  - key: ContextMenu.DisabledOverflow
+    text: "\uADF8 \uC678 {0}\uAC1C"
+  - key: Settings.WindowTitle
+    text: "\uC124\uC815"
+  - key: Settings.Category.Graphics
+    text: "\uADF8\uB798\uD53D"
+  - key: Settings.HudLayoutAdjust
+    text: "HUD \uC870\uC815"
+  - key: TimeScale.Pause
+    text: '||'
+  - key: TimeScale.Normal
+    text: 1x
+  - key: TimeScale.Double
+    text: 2x
+  - key: TimeScale.Smart
+    text: Auto
+  - key: Settings.Hud.Time
+    text: "\uC2DC\uACC4"
+  - key: Settings.Hud.TimeScale
+    text: "\uBC30\uC18D"
+  - key: Settings.Hud.MessageLog
+    text: "\uBA54\uC2DC\uC9C0 \uB85C\uADF8"
+  - key: Settings.Hud.Summary
+    text: "\uC0C1\uD0DC \uC694\uC57D"

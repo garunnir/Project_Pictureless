@@ -1,5 +1,5 @@
 """
-Cataclysm-BN Ultica tileset → Dist item icon index.
+Cataclysm-BN tileset → Dist item icon index.
 
 Usage:
     python export_tileset_icons.py --bn-path "Z:/Work/Project/Cataclysm-BN" ^
@@ -19,9 +19,9 @@ from typing import Any
 
 from convert import load_all_json
 
-LICENSE = "CC BY-SA 3.0 — derived from Cataclysm: Bright Nights / UltimateCataclysm"
+LICENSE = "CC BY-SA 3.0 — derived from Cataclysm: Bright Nights tileset"
 SOURCE = "https://github.com/cataclysmbnteam/Cataclysm-BN"
-DEFAULT_TILESET = "UltimateCataclysm"
+DEFAULT_TILESET = "MSX++UnDeadPeopleEdition"
 PIXELS_PER_UNIT = 100
 LOOKS_LIKE_JUMPS = 10
 ITEM_TYPES = {
@@ -390,7 +390,7 @@ def write_output(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="BN Ultica tileset → item icon index")
+    parser = argparse.ArgumentParser(description="BN tileset → item icon index")
     parser.add_argument("--bn-path", required=True, help="Cataclysm-BN 프로젝트 루트")
     parser.add_argument("--items", required=True, help="BNData items.json")
     parser.add_argument("--output", required=True, help="출력 디렉토리 (BNData/tileset)")

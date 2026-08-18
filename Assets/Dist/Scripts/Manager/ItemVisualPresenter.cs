@@ -64,6 +64,7 @@ public static class ItemVisualPresenter
         _fallbackIcon = null;
         _fallbackLoadAttempted = false;
         BnTilesetIconResolver.Invalidate();
+        QualityVisualPresenter.Invalidate();
     }
 
     static ItemIconCatalog LoadCatalog()
