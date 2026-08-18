@@ -117,7 +117,13 @@
 
 폰트: 텍스트가 있는 행/슬롯 프리팹 TMP는 `Galmuri7 SDF` (`DistUiFont`) 사용.
 
-빈 아이콘 폴백: `ItemIconCatalog` (`Assets/Dist/Resources/ItemIconCatalog.asset`) → `ItemVisualPresenter`. 편집은 **Tools/Game Data Browser** 아이템 상세의 Icon 필드.
+아이콘 resolve (`ItemVisualPresenter.GetDisplayIcon`):
+
+1. `ItemIconCatalog` 할당분 (`Assets/Dist/Resources/ItemIconCatalog.asset`) — GameData 커스텀·수동 오버라이드. 편집은 **Tools/Data Definitions** 아이템 상세 Override.
+2. BN Ultica 타일셋 — `StreamingAssets/BNData/tileset/item_sprites.json` + 아틀라스 PNG. item id와 타일 id가 같거나, BN 원본 `looks_like` / `copy-from` 체인이 타일에 닿으면 매핑. Bake: `python Tools/bn_converter/export_tileset_icons.py --bn-path <Cataclysm-BN> --items Assets/StreamingAssets/BNData/items.json --output Assets/StreamingAssets/BNData/tileset`
+3. 기본 empty 아이콘 (`ui_icon_empty.png`)
+
+`looks_like`는 Dist `ItemData`에 넣지 않는다. bake가 체인만 따라가 `item_sprites.json`에 펼친다.
 
 프리팹 갱신: full bake 메뉴는 두지 않음 (`.cursor/rules/ui-prefab-bake.mdc`). 기존 창에 컬럼 헤더만: `Dist/MCP/Inventory/Patch Window Column Header`. 열 폭·행간격·패딩 SSOT 에셋 반영: `Dist/MCP/Inventory/Sync List Column Layout` (`Resources/Inventory/InventoryListColumnLayoutSettings`). 구 리사이즈 핸들 제거+`UIWindowResizeHandles` 부착: `Dist/MCP/Inventory/Patch Window Resize Handlers`. 헤더 접기/끄기: `Dist/MCP/WindowChrome/Patch Fold Close Buttons`. `Dist/MCP/*` 는 Unity MCP·에이전트용 Setup/Patch 메뉴다 (`Create → Dist/...` 와 별개).
 

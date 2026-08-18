@@ -26,12 +26,19 @@ public static class ItemVisualPresenter
         }
     }
 
-    /// <summary>아이템별 아이콘. 카탈로그 미등록 시 기본 폴백.</summary>
+    /// <summary>아이템별 아이콘. 카탈로그 할당 → BN 타일셋 → 기본 폴백.</summary>
     public static Sprite GetDisplayIcon(string itemId)
     {
         ItemIconCatalog catalog = Catalog;
         if (catalog != null)
-            return catalog.Resolve(itemId);
+        {
+            Sprite assigned = catalog.GetAssignedIcon(itemId);
+            if (assigned != null)
+                return assigned;
+        }
+
+        if (BnTilesetIconResolver.TryGet(itemId, out Sprite tilesetIcon))
+            return tilesetIcon;
 
         return GetDefaultIcon();
     }
@@ -56,6 +63,7 @@ public static class ItemVisualPresenter
         _catalog = null;
         _fallbackIcon = null;
         _fallbackLoadAttempted = false;
+        BnTilesetIconResolver.Invalidate();
     }
 
     static ItemIconCatalog LoadCatalog()

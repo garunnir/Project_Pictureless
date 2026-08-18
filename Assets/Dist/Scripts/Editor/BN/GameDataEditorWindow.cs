@@ -567,7 +567,7 @@ public sealed class GameDataEditorWindow : EditorWindow
             return;
 
         EditorGUILayout.HelpBox(
-            "아이콘은 JSON이 아니라 ItemIconCatalog SO에 저장됩니다. BN/Custom 공통으로 itemId 매핑합니다.",
+            "아이콘은 아이템 JSON이 아닙니다. Sprite 필드는 ItemIconCatalog 오버라이드입니다. 미할당이면 BN Ultica 타일셋, 그것도 없으면 기본 아이콘입니다.",
             MessageType.None);
 
         ItemIconCatalog catalog = EnsureIconCatalog();
@@ -579,7 +579,7 @@ public sealed class GameDataEditorWindow : EditorWindow
 
         EditorGUI.BeginChangeCheck();
         Sprite assigned = catalog.GetAssignedIcon(item.id);
-        Sprite next = (Sprite)EditorGUILayout.ObjectField("Sprite", assigned, typeof(Sprite), false);
+        Sprite next = (Sprite)EditorGUILayout.ObjectField("Override", assigned, typeof(Sprite), false);
         if (EditorGUI.EndChangeCheck())
         {
             catalog.SetIcon(item.id, next);
@@ -589,11 +589,13 @@ public sealed class GameDataEditorWindow : EditorWindow
             ItemVisualPresenter.BindCatalog(catalog);
         }
 
-        Sprite resolved = catalog.Resolve(item.id);
+        Sprite resolved = ItemVisualPresenter.GetDisplayIcon(item.id);
         if (resolved != null)
         {
             Rect preview = GUILayoutUtility.GetRect(64f, 64f, GUILayout.Width(64f), GUILayout.Height(64f));
             DrawSpritePreview(preview, resolved);
+            if (assigned == null && resolved != ItemVisualPresenter.GetDefaultIcon())
+                EditorGUILayout.LabelField("Resolved from BN tileset", EditorStyles.miniLabel);
         }
         else
         {

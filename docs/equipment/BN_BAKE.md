@@ -19,6 +19,14 @@ python Tools/bn_converter/convert.py --bn-path <Cataclysm-BN> --output Assets/St
 
 Does **not** overwrite `GameData/items.json` demo seeds.
 
+Item **icons** are not `ItemData` fields. Ultica tileset bake (separate from this converter):
+
+```text
+python Tools/bn_converter/export_tileset_icons.py --bn-path <Cataclysm-BN> --items Assets/StreamingAssets/BNData/items.json --output Assets/StreamingAssets/BNData/tileset
+```
+
+Writes `BNData/tileset/item_sprites.json` + referenced PNG. Runtime: `ItemVisualPresenter` (catalog override → tileset → default). Bake follows BN `looks_like` and implicit `copy-from` (item_factory, max 10 hops) from Cataclysm-BN JSON — still not a Dist POCO. Chain miss → default icon.
+
 ## Baked ( Dist typed fields )
 
 Item common: `id`, `name`(singular), `type`, `category`, `subcategory`, `description`, `weight`→`weight_g`, `volume`→`volume_ml`, `stack_size`/`count`→`max_stack`, `material`→`materials`, `flags`, `qualities`, `comestible_type`, `has_durability`, `repairs_like`, `repair_difficulty`, `bashing`, `cutting`, `to_hit`, `weapon_category`, `techniques`.
@@ -48,7 +56,7 @@ Do not add these to Dist POCOs. Dist sprites / `item_names.json` / recipe filter
 | `ascii_picture` | ASCII art for curses; Dist does not render it |
 | `symbol` | Curses map glyph |
 | `color` | Curses glyph color — not Unity sprite tint |
-| `looks_like` | Tileset inheritance. Converter already drops it on copy-from merge |
+| `looks_like` | Tileset inheritance. Converter already drops it on copy-from merge. Icons: `export_tileset_icons.py` walks BN source `looks_like`/`copy-from` at bake time. Do not promote into Dist POCOs |
 | `str_pl` / other plural name keys | Display SSOT is `item_names.json` (`ITEM_NAMES.md`). Converter keeps singular `name` only as bake `en` source |
 | remaining unknown keys as `ItemData` fields or an extra JSON bag | Catalog-in-this-doc, not a dump. Revisit only by replacing this row |
 | recipe `obsolete` / `never_learn` / `CC_BUILDING` / `construction_blueprint` | Converter **skips** these recipes (not Dist content) |
