@@ -46,8 +46,12 @@ public sealed class CharacterAttacker : MonoBehaviour
     int _debugCueHitCount;
     int _debugContactCount;
     float _debugCueUntilUnscaled;
-    readonly float[] _cooldownRemaining = new float[HandCooldownSlotCount];
-    readonly float[] _cooldownDuration = new float[HandCooldownSlotCount];
+    readonly float[] _actionCooldownRemaining = new float[HandCooldownSlotCount];
+    readonly float[] _actionCooldownDuration = new float[HandCooldownSlotCount];
+    readonly float[] _weaponCooldownRemaining = new float[HandCooldownSlotCount];
+    readonly float[] _weaponCooldownDuration = new float[HandCooldownSlotCount];
+    readonly float[] _recoilRemaining = new float[HandCooldownSlotCount];
+    float _aim01;
     readonly PendingAttack[] _pendingCues = new PendingAttack[PendingCueSlotCount];
     readonly string[] _hitChannelScratch = new string[AttackDamageTags.MaxChannels];
 
@@ -96,13 +100,8 @@ public sealed class CharacterAttacker : MonoBehaviour
         {
             if (HasPendingAttackCue)
                 return true;
-            for (int i = 0; i < _cooldownRemaining.Length; i++)
-            {
-                if (_cooldownRemaining[i] > 0f)
-                    return true;
-            }
-
-            return false;
+            return HasAnyRemaining(_actionCooldownRemaining) ||
+                   HasAnyRemaining(_weaponCooldownRemaining);
         }
     }
 
@@ -112,13 +111,16 @@ public sealed class CharacterAttacker : MonoBehaviour
         {
             float bestRemaining = 0f;
             float bestDuration = 0f;
-            for (int i = 0; i < _cooldownRemaining.Length; i++)
-            {
-                if (_cooldownRemaining[i] <= bestRemaining)
-                    continue;
-                bestRemaining = _cooldownRemaining[i];
-                bestDuration = _cooldownDuration[i];
-            }
+            ConsiderProgress(
+                _actionCooldownRemaining,
+                _actionCooldownDuration,
+                ref bestRemaining,
+                ref bestDuration);
+            ConsiderProgress(
+                _weaponCooldownRemaining,
+                _weaponCooldownDuration,
+                ref bestRemaining,
+                ref bestDuration);
 
             if (bestDuration <= 0f)
                 return HasPendingAttackCue ? 0f : 1f;
@@ -214,12 +216,10 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (dt <= 0f)
             return;
 
-        for (int i = 0; i < _cooldownRemaining.Length; i++)
-        {
-            if (_cooldownRemaining[i] <= 0f)
-                continue;
-            _cooldownRemaining[i] = Mathf.Max(0f, _cooldownRemaining[i] - dt);
-        }
+        TickCooldownSlots(_actionCooldownRemaining, dt);
+        TickCooldownSlots(_weaponCooldownRemaining, dt);
+        TickRecoilSlots(dt);
+        TickAimProgress(dt);
 
         TickRaiseGuard();
         DrawMeleeHitboxDebugLines();
@@ -341,12 +341,13 @@ public sealed class CharacterAttacker : MonoBehaviour
 
         WeaponResolveMode resolveMode = WeaponActionUtil.ResolveMode(action);
         Vector3 origin = ResolveBodyCenter(transform, _selfCollider);
-        AttackPerformResult gate = GateAction(action, item, targetHost);
-        // Cooling/원거리 사거리·탄약 실패 등은 시그널·cue·연출을 올리지 않는다.
-        // 근접은 타깃·사거리를 여기서 막지 않는다 (cue 히트박스).
+        AttackPerformResult gate = GateAction(action, item);
+        // Cooling/pending/원거리 NoAmmo만 시전을 막는다.
+        // 타깃·사거리는 시전 게이트가 아님 (근접=cue 히트박스, 원거리=조준축 발사).
         if (gate != AttackPerformResult.Performed)
             return gate;
 
+        BeginActionCooldown(_activeWieldHand, ResolveActionCooldown(action));
         ArmPendingCue(action, targetHost, offenseFactor);
 
         AttackPerformResult signal = ResolveActionSignal(
@@ -358,10 +359,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         return signal;
     }
 
-    AttackPerformResult GateAction(
-        WeaponAction action,
-        ItemData item,
-        CharacterBodyHost targetHost)
+    AttackPerformResult GateAction(WeaponAction action, ItemData item)
     {
         if (GetCooldown(_activeWieldHand) > 0f)
             return AttackPerformResult.Cooling;
@@ -376,19 +374,6 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (WeaponActionUtil.IsRanged(action) &&
             !WeaponChamber.CanCommitFire(item, _wieldedInstance, _wieldedStack, AttackFor(action)))
             return AttackPerformResult.NoAmmo;
-
-        if (!WeaponActionUtil.IsRanged(action))
-            return AttackPerformResult.Performed;
-
-        if (targetHost == null || targetHost.Body == null)
-            return AttackPerformResult.NoTarget;
-
-        Vector3 toTarget = targetHost.transform.position - transform.position;
-        toTarget.y = 0f;
-        ItemData ammo = WeaponChamber.ResolveAmmo(_wieldedStack, _wieldedInstance);
-        float range = CombatHitscan.EffectiveRange(item, action, ammo, ResolveOrigin());
-        if (toTarget.magnitude > range)
-            return AttackPerformResult.OutOfRange;
 
         return AttackPerformResult.Performed;
     }
@@ -558,7 +543,9 @@ public sealed class CharacterAttacker : MonoBehaviour
         float offenseFactor,
         ItemData item)
     {
-        AttackPerformResult gate = GateAction(action, item, targetHost);
+        AttackPerformResult gate = GateAction(action, item);
+        if (gate == AttackPerformResult.Performed)
+            BeginActionCooldown(_activeWieldHand, ResolveActionCooldown(action));
         var context = new ActionHandlerContext(
             action,
             _activeWieldHand,
@@ -610,14 +597,57 @@ public sealed class CharacterAttacker : MonoBehaviour
         handler.Execute(this, context);
     }
 
+    public float GetWeaponCooldown(WieldHand hand) =>
+        _weaponCooldownRemaining[CooldownIndex(hand)];
+
+    public float GetActionCooldown(WieldHand hand) =>
+        _actionCooldownRemaining[CooldownIndex(hand)];
+
+    /// <summary>동작 쿨·무기 쿨 중 큰 쪽. cue 핸들러는 <see cref="GetWeaponCooldown"/>만 본다.</summary>
     public float GetCooldown(WieldHand hand) =>
-        _cooldownRemaining[CooldownIndex(hand)];
+        Mathf.Max(GetActionCooldown(hand), GetWeaponCooldown(hand));
 
     public ItemData ItemFor(string itemId) =>
         string.IsNullOrEmpty(itemId) ? null : GameplayData.GetItem(itemId);
 
     public Vector3 ResolveOrigin() =>
         ResolveBodyCenter(transform, _selfCollider);
+
+    /// <summary>원거리 발사 방향. 엔티티 락온 없음 — 조준축과 동일.</summary>
+    public Vector3 ResolveFireDirection() => ResolveSwingAxis();
+
+    public float GetRecoil(WieldHand hand) =>
+        _recoilRemaining[CooldownIndex(hand)];
+
+    public float Aim01 => _aim01;
+
+    public float RangedEffectiveDispersion(WieldHand hand, ItemData item, ItemData ammo) =>
+        CombatMath.EffectiveDispersion(item, ammo, GetRecoil(hand), ResolveAim01(item));
+
+    float ResolveAim01(ItemData item)
+    {
+        if (_aimIntent != null && _aimIntent.AimHeld)
+            return 1f;
+        if (!IsAiming)
+            return 0f;
+        if (CombatMath.AimSpeedOf(item) <= 0)
+            return 1f;
+        return _aim01;
+    }
+
+    /// <summary>effective dispersion yaw. 킥은 발사 후 <see cref="AddRecoilKick"/>.</summary>
+    public Vector3 ResolveSpreadFireDirection(WieldHand hand, ItemData item, ItemData ammo)
+    {
+        return CombatMath.SpreadFireDirection(
+            ResolveFireDirection(),
+            RangedEffectiveDispersion(hand, item, ammo));
+    }
+
+    public void AddRecoilKick(WieldHand hand, ItemData item, ItemData ammo)
+    {
+        int index = CooldownIndex(hand);
+        _recoilRemaining[index] += CombatMath.RecoilKickUnits(item, ammo);
+    }
 
     public Vector3 ResolveSwingAxis()
     {
@@ -760,12 +790,21 @@ public sealed class CharacterAttacker : MonoBehaviour
     public bool AllowsImpactReaction(WeaponAction action, ArmImpactKind kind) =>
         WeaponAttack.AllowsImpactReaction(AttackFor(action), kind);
 
-    WeaponAttack AttackFor(WeaponAction action)
+    WeaponAttack AttackFor(WeaponAction action) =>
+        EntryFor(action)?.attack;
+
+    WeaponPresentation.Entry EntryFor(WeaponAction action)
     {
         if (_presentation != null &&
             _presentation.TryGetEntry(action, out WeaponPresentation.Entry entry))
-            return entry.attack;
+            return entry;
         return null;
+    }
+
+    float ResolveActionCooldown(WeaponAction action)
+    {
+        WeaponPresentation.Entry entry = EntryFor(action);
+        return entry != null ? entry.ActionCooldownSeconds : 0f;
     }
 
     int FindPending(WieldHand hand)
@@ -871,7 +910,8 @@ public sealed class CharacterAttacker : MonoBehaviour
         bool rollHitChance = true,
         bool practice = true,
         float weaponReach01 = 0f,
-        Vector3? impactOverride = null)
+        Vector3? impactOverride = null,
+        float rangedEffectiveDispersion = -1f)
     {
         CharacterBodyHost targetHost = context.Target;
         if (targetHost == null || targetHost.Body == null)
@@ -911,27 +951,19 @@ public sealed class CharacterAttacker : MonoBehaviour
 
         if (rollHitChance)
         {
-            float hitChance = CombatMath.HitChance(item, context.Action, skillLevel, aimedPart, ammo)
+            float hitChance = CombatMath.HitChance(
+                    item,
+                    context.Action,
+                    skillLevel,
+                    aimedPart,
+                    ammo,
+                    rangedEffectiveDispersion)
                 * factor
                 * ResolveAttackerWearEncAccuracyFactor()
                 * ResolveAttackerEnvAccuracyFactor();
 
             if (UnityEngine.Random.value > hitChance)
-            {
-                EmitJudged(
-                    context,
-                    resolveMode,
-                    AttackPerformResult.Miss,
-                    targetHost,
-                    aimedPart,
-                    0,
-                    origin,
-                    impact,
-                    item,
-                    ammo,
-                    weaponReach01);
-                return;
-            }
+                aimedPart = AimPartResolver.ScatterToNeighbor(targetHost.Body, aimedPart);
         }
 
         EquipmentWearState wear = ResolveTargetWear(targetHost);
@@ -978,10 +1010,10 @@ public sealed class CharacterAttacker : MonoBehaviour
         bool applyCooldown = true,
         bool practice = true)
     {
-        if (applyCooldown)
+        if (applyCooldown && !WeaponActionUtil.IsRanged(context.Action))
         {
             float cooldown = CombatMath.AttackIntervalSeconds(item, context.Action);
-            BeginCooldown(context.Hand, cooldown);
+            BeginWeaponCooldown(context.Hand, cooldown);
         }
 
         if (consumeAmmo)
@@ -1025,12 +1057,110 @@ public sealed class CharacterAttacker : MonoBehaviour
         AnyAttackJudged?.Invoke(outcome);
     }
 
-    void BeginCooldown(WieldHand hand, float seconds)
+    void BeginActionCooldown(WieldHand hand, float seconds)
+    {
+        if (seconds <= 0f)
+            return;
+        BeginCooldownSlot(
+            _actionCooldownRemaining,
+            _actionCooldownDuration,
+            hand,
+            seconds);
+    }
+
+    void BeginWeaponCooldown(WieldHand hand, float seconds)
+    {
+        BeginCooldownSlot(
+            _weaponCooldownRemaining,
+            _weaponCooldownDuration,
+            hand,
+            seconds);
+    }
+
+    void BeginCooldownSlot(
+        float[] remaining,
+        float[] durationSlots,
+        WieldHand hand,
+        float seconds)
     {
         int index = CooldownIndex(hand);
         float duration = Mathf.Max(0f, seconds);
-        _cooldownRemaining[index] = duration;
-        _cooldownDuration[index] = duration;
+        remaining[index] = duration;
+        durationSlots[index] = duration;
+    }
+
+    static void TickCooldownSlots(float[] remaining, float dt)
+    {
+        for (int i = 0; i < remaining.Length; i++)
+        {
+            if (remaining[i] <= 0f)
+                continue;
+            remaining[i] = Mathf.Max(0f, remaining[i] - dt);
+        }
+    }
+
+    void TickRecoilSlots(float dt)
+    {
+        float recover = CombatMath.RecoilRecoverPerSecond * dt;
+        if (recover <= 0f)
+            return;
+
+        for (int i = 0; i < _recoilRemaining.Length; i++)
+        {
+            if (_recoilRemaining[i] <= 0f)
+                continue;
+            _recoilRemaining[i] = Mathf.Max(0f, _recoilRemaining[i] - recover);
+        }
+    }
+
+    void TickAimProgress(float dt)
+    {
+        if (_aimIntent != null && _aimIntent.AimHeld)
+        {
+            _aim01 = 1f;
+            return;
+        }
+
+        if (!IsAiming)
+        {
+            _aim01 = 0f;
+            return;
+        }
+
+        int aimSpeed = CombatMath.AimSpeedOf(CurrentItem);
+        if (aimSpeed <= 0)
+        {
+            _aim01 = 1f;
+            return;
+        }
+
+        _aim01 = Mathf.Min(1f, _aim01 + dt * CombatMath.AimProgressPerSecond(aimSpeed));
+    }
+
+    static bool HasAnyRemaining(float[] remaining)
+    {
+        for (int i = 0; i < remaining.Length; i++)
+        {
+            if (remaining[i] > 0f)
+                return true;
+        }
+
+        return false;
+    }
+
+    static void ConsiderProgress(
+        float[] remaining,
+        float[] durationSlots,
+        ref float bestRemaining,
+        ref float bestDuration)
+    {
+        for (int i = 0; i < remaining.Length; i++)
+        {
+            if (remaining[i] <= bestRemaining)
+                continue;
+            bestRemaining = remaining[i];
+            bestDuration = durationSlots[i];
+        }
     }
 
     static int CooldownIndex(WieldHand hand)

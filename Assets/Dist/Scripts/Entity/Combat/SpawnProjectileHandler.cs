@@ -23,29 +23,14 @@ public sealed class SpawnProjectileHandler : IActionHandler
         WeaponResolveMode mode = WeaponResolveMode.RangedRay;
         Vector3 origin = attacker.ResolveOrigin();
 
-        if (attacker.GetCooldown(context.Hand) > 0f)
+        if (attacker.GetWeaponCooldown(context.Hand) > 0f)
         {
             attacker.EmitJudgedGate(context, mode, AttackPerformResult.Cooling, item, origin);
             return;
         }
 
-        CharacterBodyHost targetHost = context.Target;
-        if (targetHost == null || targetHost.Body == null)
-        {
-            attacker.EmitJudgedGate(context, mode, AttackPerformResult.NoTarget, item, origin);
-            return;
-        }
-
-        Vector3 toTarget = targetHost.transform.position - attacker.transform.position;
-        toTarget.y = 0f;
-        float distance = toTarget.magnitude;
         ItemData ammoProbe = WeaponChamber.ResolveAmmo(context.Stack, context.Instance);
         float range = CombatHitscan.EffectiveRange(item, context.Action, ammoProbe, origin);
-        if (distance > range)
-        {
-            attacker.EmitJudgedGate(context, mode, AttackPerformResult.OutOfRange, item, origin);
-            return;
-        }
 
         int shots = WeaponActionUtil.ShotsPerPerform(context.Action, item);
         if (shots < 1)
@@ -63,7 +48,7 @@ public sealed class SpawnProjectileHandler : IActionHandler
             }
 
             ItemData ammo = WeaponChamber.ResolveAmmo(context.Stack, context.Instance);
-            if (!FireOne(attacker, context, item, ammo, origin, range, targetHost, mode))
+            if (!FireOne(attacker, context, item, ammo, origin, range, mode))
                 break;
             fired++;
         }
@@ -87,36 +72,19 @@ public sealed class SpawnProjectileHandler : IActionHandler
         ItemData ammo,
         Vector3 origin,
         float range,
-        CharacterBodyHost targetHost,
         WeaponResolveMode mode)
     {
-        Collider targetCollider = targetHost.GetComponentInChildren<Collider>();
-        Vector3 targetCenter = CharacterAttacker.ResolveBodyCenter(targetHost.transform, targetCollider);
-        Vector3 dir = targetCenter - origin;
-        float aimDist = dir.magnitude;
-        if (aimDist <= CharacterAttacker.MinRayDistance)
-        {
-            attacker.CommitAttempt(
-                context, item, consumeAmmo: true, ammo, applyCooldown: false, practice: true);
-            attacker.ResolveCommittedHit(
-                context,
-                mode,
-                item,
-                origin,
-                consumeAmmo: false,
-                ammo,
-                applyCooldown: false,
-                practice: false,
-                impactOverride: targetCenter);
-            return true;
-        }
+        float effective = attacker.RangedEffectiveDispersion(context.Hand, item, ammo);
+        Vector3 dir = CombatMath.SpreadFireDirection(attacker.ResolveFireDirection(), effective);
 
-        dir /= aimDist;
         attacker.CommitAttempt(
             context, item, consumeAmmo: true, ammo, applyCooldown: false, practice: true);
 
-        if (TryLaunchFlight(attacker, context, item, ammo, origin, dir, range))
+        if (TryLaunchFlight(attacker, context, item, ammo, origin, dir, range, effective))
+        {
+            attacker.AddRecoilKick(context.Hand, item, ammo);
             return true;
+        }
 
         int pierce = WeaponChamber.ResolvePierce(context.Stack, context.Instance);
         CombatHitscan.Trace(
@@ -157,8 +125,11 @@ public sealed class SpawnProjectileHandler : IActionHandler
                 ammo,
                 applyCooldown: false,
                 practice: false,
-                impactOverride: _impacts[i]);
+                impactOverride: _impacts[i],
+                rangedEffectiveDispersion: effective);
         }
+
+        attacker.AddRecoilKick(context.Hand, item, ammo);
 
         if (obstructed)
         {
@@ -166,7 +137,7 @@ public sealed class SpawnProjectileHandler : IActionHandler
                 context,
                 mode,
                 AttackPerformResult.Obstructed,
-                targetHost,
+                null,
                 string.Empty,
                 0,
                 origin,
@@ -182,7 +153,7 @@ public sealed class SpawnProjectileHandler : IActionHandler
                 context,
                 mode,
                 AttackPerformResult.Miss,
-                targetHost,
+                null,
                 string.Empty,
                 0,
                 origin,
@@ -201,7 +172,8 @@ public sealed class SpawnProjectileHandler : IActionHandler
         ItemData ammo,
         Vector3 origin,
         Vector3 direction,
-        float range)
+        float range,
+        float rangedEffectiveDispersion)
     {
         if (!WeaponAttack.UsesFlightProjectile(context.Attack))
             return false;
@@ -216,7 +188,8 @@ public sealed class SpawnProjectileHandler : IActionHandler
             direction,
             range,
             pierce: 0,
-            attacker.RangedObstructionMask);
+            attacker.RangedObstructionMask,
+            rangedEffectiveDispersion);
         return true;
     }
 }

@@ -2,10 +2,14 @@
 // AimPartResolver — 선호 부위 → 상대 Body 실존 부위 해석
 // ============================================================
 
+using UnityEngine;
+
 namespace Garunnir.Runtime.Gameplay.Data
 {
     public static class AimPartResolver
     {
+        static readonly string[] NeighborScratch = new string[8];
+
         public static bool TryResolve(
             ICharacterBody target,
             string preferredPartId,
@@ -63,6 +67,29 @@ namespace Garunnir.Runtime.Gameplay.Data
                 !node.HasCondition)
                 return false;
             return node.ConditionCur > 0;
+        }
+
+        /// <summary>인접 실존 부위. 없으면 fromMain 유지. 항상 피해 부위.</summary>
+        public static string ScatterToNeighbor(ICharacterBody target, string fromMain)
+        {
+            if (target == null || string.IsNullOrEmpty(fromMain))
+                return fromMain;
+
+            int adjCount = BodyPartIds.WriteAdjacentMains(fromMain, NeighborScratch);
+            int usable = 0;
+            for (int i = 0; i < adjCount; i++)
+            {
+                string candidate = NeighborScratch[i];
+                if (!IsUsableMain(target, candidate))
+                    continue;
+                NeighborScratch[usable++] = candidate;
+            }
+
+            if (usable <= 0)
+                return fromMain;
+
+            int pick = UnityEngine.Random.Range(0, usable);
+            return NeighborScratch[pick];
         }
     }
 }

@@ -231,7 +231,14 @@ static class GameDataEditorDetailDrawers
             ReadField("  Durability", item.gun.durability.ToString());
             ReadField("  Clip size", item.gun.clip_size.ToString());
             ReadField("  Range", item.gun.range.ToString());
+            ReadField("  Dispersion", item.gun.dispersion.ToString());
             ReadField("  Recoil", item.gun.recoil.ToString());
+            if (item.gun.sight_dispersion != 0)
+                ReadField("  Sight dispersion", item.gun.sight_dispersion.ToString());
+            if (item.gun.aim_speed != 0)
+                ReadField("  Aim speed", item.gun.aim_speed.ToString());
+            if (item.gun.handling != 0)
+                ReadField("  Handling", item.gun.handling.ToString());
             DrawGunMagazinesReadOnly(item.gun);
         }
 
@@ -303,6 +310,9 @@ static class GameDataEditorDetailDrawers
         EditInt(markDirty, "  Range", ref gun.range);
         EditInt(markDirty, "  Dispersion", ref gun.dispersion);
         EditInt(markDirty, "  Recoil", ref gun.recoil);
+        EditInt(markDirty, "  Sight dispersion", ref gun.sight_dispersion);
+        EditInt(markDirty, "  Aim speed", ref gun.aim_speed);
+        EditInt(markDirty, "  Handling", ref gun.handling);
         EditInt(markDirty, "  Durability", ref gun.durability);
         EditInt(markDirty, "  Clip size", ref gun.clip_size);
         EditInt(markDirty, "  Reload", ref gun.reload);

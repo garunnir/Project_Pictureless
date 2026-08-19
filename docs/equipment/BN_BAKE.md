@@ -36,7 +36,7 @@ Item common: `id`, `name`(singular), `type`, `category`, `subcategory`, `descrip
 | Block | Fields |
 |-------|--------|
 | armor | covers (L/R expand), coverage, encumbrance, max_encumbrance, warmth, environmental_protection, material_thickness, power_armor, storage, pockets[{volume_ml,moves}], layer, sided |
-| gun | skill (**Catalog By Skill Id** 모션 폴백), ammo, ranged_damage (flatten amount), range, dispersion, recoil, durability, clip_size, reload, **burst** (Dist: Burst Leaf 샷 수; 0이면 `WeaponActionUtil.DefaultBurstShots`), **magazines** `[{ammo_type, magazines[]}]` (장착 허용 탄창 id) |
+| gun | skill (**Catalog By Skill Id** 모션 폴백), ammo, ranged_damage (flatten amount), range, dispersion, recoil, **sight_dispersion**, **aim_speed**, **handling**, durability, clip_size, reload, **burst** (Dist: Burst Leaf 샷 수; 0이면 `WeaponActionUtil.DefaultBurstShots`), **magazines** `[{ammo_type, magazines[]}]` (장착 허용 탄창 id) |
 | ammo | ammo_type, damage (flatten amount), pierce (AP), damage_type, range, dispersion, recoil, count, shot_damage, projectile_count, shot_spread, effects, casing, loudness |
 | magazine | ammo_type, capacity, default_ammo, reliability, reload_time |
 | tool | max/initial charges, charges_per_use, turns_per_charge, ammo, revert_to |
@@ -90,7 +90,7 @@ Parked is everything in the next section. Weather JSON / visor FOV stay Parked (
 
 ### Gun (beyond current `GunDetailData`)
 
-`loudness`, `handling`, **`modes`**, `valid_mod_locations`, `built_in_mods`, `default_mods`, `magazine_well`, `ups_charges`, `ammo_effects`, `sight_dispersion`, `aim_speed`, `barrel_length` / `barrel_volume`, `reload_noise`, `blackpowder_tolerance`, `min_cycle_recoil`.
+`loudness`, **`modes`**, `valid_mod_locations`, `built_in_mods`, `default_mods`, `magazine_well`, `ups_charges`, `ammo_effects`, `barrel_length` / `barrel_volume`, `reload_noise`, `blackpowder_tolerance`, `min_cycle_recoil`.
 
 **`modes` (Parked) vs Dist Leaf (interim):**
 
@@ -156,4 +156,4 @@ Monsters, mutations, vehicle parts, terrain/furniture/traps, mapgen/overmap, wea
 | 2026-08-12 flatten rebake | same trees; damage object → amount/pierce/`damage_type` | 5591 items. ammo.damage nonzero 289/312; `damage_type` 312 (bullet 250, stab 41, heat 11, bash 10); pierce 203; gun.ranged_damage nonzero 180/185. Sample `9mm` damage 34 bullet. `GameData` demo `9mm`/`mag_9mm` removed so they do not overlay BN |
 | Combat ammo consume | `ChamberAmmoId` + `CombatMath` 탄+총 양, `damage_type` Hit | Dist runtime |
 
-When a row moves Parked → Baked, or a Won't reason is reversed, add a rebake line here.
+| 2026-08-19 gun aim fields | `sight_dispersion`, `aim_speed`, `handling` whitelist | convert.py 승격. Dist: RMB `aim01` 조임 + handling 킥 배율. BNData rebake는 BN 트리 있을 때 |

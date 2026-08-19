@@ -25,3 +25,7 @@ MonoBehaviour:
   _feedsChamberOnFire: 1
   _projectilePrefab: {fileID: 3439977824323346792, guid: 82cc010aac92f8b4eb11b4ffbe7dc5ce,
     type: 3}
+  _hitboxHalfWidth: 0.35
+  _hitboxHalfHeight: 0.45
+  _playRecoilImpact: 1
+  _playBlockedImpact: 1

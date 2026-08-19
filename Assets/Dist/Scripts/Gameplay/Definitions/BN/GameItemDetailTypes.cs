@@ -52,6 +52,12 @@ namespace Garunnir.Runtime.Gameplay.Data
         public int range;
         public int dispersion;
         public int recoil;
+        /// <summary>미조준 가산. aim01=1이면 0.</summary>
+        public int sight_dispersion;
+        /// <summary>RMB 조준 조임 속도. 0=즉시 풀조준.</summary>
+        public int aim_speed;
+        /// <summary>반동 킥 배율. 0=배율 1.</summary>
+        public int handling;
         public int durability;
         public int clip_size;
         public int reload;

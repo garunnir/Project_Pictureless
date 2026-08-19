@@ -28,6 +28,13 @@ public static class CombatMath
     const int MeleeMovesWeightDiv = 60;
     const int GunFireMoves = 100;
     const int PracticeXpPerAttack = 4;
+    const float GunDispersionFallback = 300f;
+    /// <summary>effective 이 값이면 yaw 1°. 300 → 5°.</summary>
+    const float DispersionUnitsPerDegree = 60f;
+    /// <summary>aim_speed 이 값이면 조임 1초.</summary>
+    const float AimSpeedProgressDivisor = 10f;
+    /// <summary>handling 0이면 킥 배율 1. handling=이 값이면 킥 0.5.</summary>
+    const float HandlingRef = 10f;
 
     public static string SkillId(ItemData item, WeaponAction action)
     {
@@ -69,6 +76,84 @@ public static class CombatMath
 
     public static float AttackIntervalSeconds(ItemData item, WeaponAction action) =>
         AttackMoves(item, action) / MovesPerSecond;
+
+    /// <summary>반동 수치(총+탄). handling 전 킥.</summary>
+    public static int RecoilUnits(ItemData item, ItemData ammo)
+    {
+        int recoil = 0;
+        if (item?.gun != null)
+            recoil += Mathf.Max(0, item.gun.recoil);
+        if (ammo?.ammo != null)
+            recoil += Mathf.Max(0, ammo.ammo.recoil);
+        return recoil;
+    }
+
+    /// <summary>킥 배율. handling 0이면 1.</summary>
+    public static float HandlingKickFactor(ItemData item)
+    {
+        int handling = item?.gun != null ? Mathf.Max(0, item.gun.handling) : 0;
+        if (handling <= 0)
+            return 1f;
+        return HandlingRef / (HandlingRef + handling);
+    }
+
+    public static float RecoilKickUnits(ItemData item, ItemData ammo) =>
+        RecoilUnits(item, ammo) * HandlingKickFactor(item);
+
+    /// <summary>반동 단위/초. RecoilUnits 100이면 1초 회복. aim_speed 아님.</summary>
+    public static float RecoilRecoverPerSecond => MovesPerSecond;
+
+    /// <summary>aim_speed 0이면 호출측이 aim01=1. 양수면 초당 조임.</summary>
+    public static float AimProgressPerSecond(int aimSpeed)
+    {
+        if (aimSpeed <= 0)
+            return 0f;
+        return aimSpeed / AimSpeedProgressDivisor;
+    }
+
+    public static int AimSpeedOf(ItemData item) =>
+        item?.gun != null ? Mathf.Max(0, item.gun.aim_speed) : 0;
+
+    public static float EffectiveDispersion(
+        ItemData item,
+        ItemData ammo,
+        float recoilRemaining,
+        float aim01)
+    {
+        float dispersion;
+        if (item?.gun != null)
+        {
+            dispersion = item.gun.dispersion;
+            float sight = Mathf.Max(0, item.gun.sight_dispersion);
+            dispersion += sight * (1f - Mathf.Clamp01(aim01));
+        }
+        else
+        {
+            dispersion = GunDispersionFallback;
+        }
+
+        if (ammo?.ammo != null)
+        {
+            dispersion += ammo.ammo.dispersion;
+            dispersion += Mathf.Max(0, ammo.ammo.shot_spread);
+        }
+
+        return dispersion + Mathf.Max(0f, recoilRemaining);
+    }
+
+    public static float DispersionYawDegrees(float effectiveDispersion) =>
+        Mathf.Max(0f, effectiveDispersion) / DispersionUnitsPerDegree;
+
+    public static Vector3 SpreadFireDirection(Vector3 direction, float effectiveDispersion)
+    {
+        Vector3 dir = direction.sqrMagnitude > 1e-8f ? direction.normalized : Vector3.forward;
+        float degrees = DispersionYawDegrees(effectiveDispersion);
+        if (degrees <= 0f)
+            return dir;
+
+        float yaw = (UnityEngine.Random.value * 2f - 1f) * degrees;
+        return Quaternion.AngleAxis(yaw, Vector3.up) * dir;
+    }
 
     public static int Damage(
         ItemData item,
@@ -128,20 +213,22 @@ public static class CombatMath
         return CombatSkillIds.Melee;
     }
 
+    /// <summary>원거리 확정 히트에서 조준 부위 유지 확률. 실패는 인접 산란·피해 유지. 근접 연결은 미사용.</summary>
     public static float HitChance(
         ItemData item,
         WeaponAction action,
         int skillLevel,
         string aimedPartId,
-        ItemData ammo = null)
+        ItemData ammo = null,
+        float rangedEffectiveDispersion = -1f)
     {
         float chance;
         if (WeaponActionUtil.IsRanged(action))
         {
-            int dispersion = item?.gun != null ? item.gun.dispersion : 300;
-            if (ammo?.ammo != null)
-                dispersion += ammo.ammo.dispersion;
-            chance = Mathf.Clamp01(1f - dispersion / GunDispersionScale)
+            float effective = rangedEffectiveDispersion >= 0f
+                ? rangedEffectiveDispersion
+                : EffectiveDispersion(item, ammo, 0f, 1f);
+            chance = Mathf.Clamp01(1f - effective / GunDispersionScale)
                 + skillLevel * SkillHitPerLevel;
         }
         else

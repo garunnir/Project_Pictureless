@@ -150,6 +150,27 @@ namespace Garunnir.Runtime.Gameplay.Data
             [FootR] = FootR
         };
 
+        static readonly Dictionary<string, string[]> AdjacentMains = new()
+        {
+            [Head] = new[] { Neck },
+            [Neck] = new[] { Head, Chest },
+            [Chest] = new[] { Neck, Belly, UpperArmL, UpperArmR },
+            [Belly] = new[] { Chest, Pelvis },
+            [Pelvis] = new[] { Belly, ThighL, ThighR },
+            [UpperArmL] = new[] { Chest, LowerArmL },
+            [LowerArmL] = new[] { UpperArmL, HandL },
+            [HandL] = new[] { LowerArmL },
+            [UpperArmR] = new[] { Chest, LowerArmR },
+            [LowerArmR] = new[] { UpperArmR, HandR },
+            [HandR] = new[] { LowerArmR },
+            [ThighL] = new[] { Pelvis, CalfL },
+            [CalfL] = new[] { ThighL, FootL },
+            [FootL] = new[] { CalfL },
+            [ThighR] = new[] { Pelvis, CalfR },
+            [CalfR] = new[] { ThighR, FootR },
+            [FootR] = new[] { CalfR }
+        };
+
         static readonly Dictionary<string, string> CoverGroupOf = new()
         {
             [Head] = Head,
@@ -254,6 +275,22 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return null;
 
             return CoverGroupOf.TryGetValue(partId, out string group) ? group : null;
+        }
+
+        /// <summary>해부 인접 메인 부위. dest에 쓰고 개수 반환. 할당 없음.</summary>
+        public static int WriteAdjacentMains(string partId, string[] dest)
+        {
+            if (dest == null || dest.Length == 0 || string.IsNullOrEmpty(partId))
+                return 0;
+
+            string id = GetMainConditionPart(partId) ?? ResolveNodeId(partId);
+            if (!AdjacentMains.TryGetValue(id, out string[] adj) || adj == null)
+                return 0;
+
+            int n = 0;
+            for (int i = 0; i < adj.Length && n < dest.Length; i++)
+                dest[n++] = adj[i];
+            return n;
         }
 
         public static bool IsSeverable(string partId)

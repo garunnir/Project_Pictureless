@@ -16,7 +16,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | Primary | Highest DPS hand → `CharacterAttacker.SetWieldedItem` |
 | SelectedAction | `ItemInstance.SelectedAction` — 손별 선택 **Leaf** (`WeaponAction`). 영속은 인스턴스 |
 | Action layers | **Family** = 에디터·UI 묶음(Melee, Trigger; 없으면 평면). **Leaf** = 선택·시전·**Catalog 폴백 행**(Swing/Thrust/Raise/Semi/Burst/Auto — 줄 필수). **Override** = thin 덮어쓰기만(분류 아님·컨트롤러는 동작 모름). 할당한 클립 Speed=`WeaponAnimClipSpeeds`(슬롯 속도 아님, 없으면 1). 구 `Trigger`→Semi. [`BN_BAKE.md`](BN_BAKE.md) |
-| Action rows | `WeaponPresentation` Entry = **Leaf** 라우팅 행 (가용 마스크 + Attack + 연출 + `useHold`). 가용 SSOT = Entry 존재 → `WeaponActionRows.Available` |
+| Action rows | `WeaponPresentation` Entry = **Leaf** 라우팅 행 (가용 마스크 + Attack + 연출 + `useHold` + **동작 쿨**). 가용 SSOT = Entry 존재 → `WeaponActionRows.Available` |
 | Action VFX coalesce | Action: Entry.vfx → Catalog **같은 Leaf** 행. Hit: Entry → Attack VFX → Defaults[bash/cut/bullet] → fallback |
 | Visual hub | `WeaponPresentationCatalog` — Pipeline / Tag Impact VFX / item·skill·category → Presentation |
 
@@ -28,7 +28,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | `GearHandleRules` | CanLift / RequiredStr / LiftStrain / IsWearable |
 | `EquipmentWearState` | Worn stacks |
 | `WieldSlots` | L/R (+ two-hand mode) |
-| `CharacterGearService` | Timed Wear/Wield/Unequip + deposit. `TryBeginDomainTimed` / `NotifyAmmoChanged` for 삽탄·장착 |
+| `CharacterGearService` | Timed Wear/Wield/Unequip + deposit. Deposit/source remove → `InventorySession.NotifyExternalStacksChanged`. `TryBeginDomainTimed` / `NotifyAmmoChanged` for 삽탄·장착 |
 | `WeaponAmmoFit` | Dist.Inventory — 허용 탄창 id / 탄종 / clip vs well |
 | `WeaponAmmoService` | 삽탄·장착·교체·분리·탄 빼기. 탄창=`SupplyRounds`, 총=`ItemStack.LoadedMagazine` (Nested 아님) |
 | `WeaponAmmoDuration` | reload moves → 초 (`CombatMath.MovesPerSecond`, 0이면 1s) |
@@ -58,7 +58,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | `WeaponPresentationCatalog` | 허브. Resolve = 아이템 id → `gun.skill` → `weapon_category` → Unarmed. Entry = Leaf 라우팅 |
 | `ArmAnimSlotCatalog` | **Leaf마다** 기본 동사 폴백(클립+VFX). Semi/Burst/Auto 줄 필수. Entry 빈 VFX → 같은 Leaf 행. 표시=Melee/Trigger 묶음 |
 | `WeaponAnimClipSpeeds` | Override 서브에셋. 할당한 클립→재생 배속. thin 슬롯 속도 아님. 없으면 1 |
-| `WeaponAttack` | 핸들러·cue·캐리어 VFX·탄 + **Recoil/Blocked on/off** + 근접 히트박스 반폭/반높이 (`Attack_MeleeHit` = logic 이름, **채널 아님**) |
+| `WeaponAttack` | 핸들러·cue·발사체·Recoil/Blocked·근접 히트박스 (`Attack_MeleeHit` = logic 이름, **채널 아님**). 동작 쿨 아님 |
 | `AttackDamageTags` | 특성 채널. Trigger→탄 `damage_type`(없으면 bullet). 근접은 양 있는 채널 전부(cut+bash 가능). 원거리 양 = 탄 `damage` + 총 `ranged_damage`. 계산기·Hit 키 공유 |
 | `MeleeHitbox` | 근접 cue OverlapBox. 겹침 = 확정 히트. `WeaponReach01` 기록(치명타 Pending) |
 | `WeaponImpactVfxDefaults` | Hit 테이블(bash/cut/bullet + fallback). Recoil/Blocked(Reaction) 아님 |
@@ -80,6 +80,20 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | 디버그 | `DebugLogController` Player → Melee Hitbox (`Config.DebugMode.MeleeHitbox`). GL 와이어. 노랑=현재 자세, 주황=cue 허공, 초록=cue 히트 + 접촉점 |
 
 NPC는 여전히 사거리 안에서만 `TryPerform` (AI). 플레이어 시전은 조준(RMB) 입력 게이트 유지.
+
+### Ranged fire (조준축)
+
+원거리는 엔티티 락온을 쓰지 않는다. 유도탄 핸들러가 생기면 그 경로만 예외.
+
+| 항목 | 계약 |
+|------|------|
+| 모션 | Cooling/pending/NoAmmo만 시전 게이트. `NoTarget`/`OutOfRange`는 발사를 막지 않음 |
+| 방향 | 조준축 + **effective** yaw (`CombatMath.DispersionYawDegrees`, 60 단위=1°). 반동은 게이트 아님. 킥=`(gun.recoil+ammo.recoil)*handlingFactor`, 회복=`MovesPerSecond` |
+| 연결 | Attack 프리팹 있으면 `DistProjectile` 비행. 없으면 cue `CombatHitscan` |
+| 조임 | RMB `IsAiming` 동안 `aim01` 0→1. `aim_speed` 0/없음=즉시 1. NPC `AimHeld`=즉시 1. `sight_dispersion*(1-aim01)` |
+| 명중 | 레이/탄이 `CharacterBodyHost`에 닿으면 피해. `effective`=`gun/ammo.dispersion`+sightExtra+`shot_spread`+recoilRemaining → yaw와 부위 유지 공유. `HitChance` 실패=`ScatterToNeighbor`. 허공 히트스캔=사거리 끝 Miss, 비행=사거리·수명 소멸 |
+
+동작 쿨과 무기 쿨은 **별 타이머**. 동작 쿨=`WeaponPresentation.Entry`(시전 시작, 0=생략). 근접 무기 쿨=`CombatMath.AttackIntervalSeconds`(무게/부피). 원거리는 무기 쿨 게이트 없음 — `effective`(조임+반동 잔여+dispersion)가 탄착 퍼짐과 부위 유지. cue 시점은 쿨이 아님. 건모드 합산은 후속.
 
 ```mermaid
 flowchart LR
@@ -133,7 +147,7 @@ flowchart LR
 ### Unequip
 
 - Worn row / wield slot: take off / unwield
-- Double-click → body inventory; drag outside Character window → floor (`toFloor`); slot RMB includes 바닥에 놓기
+- Double-click → body inventory; drag outside Character window → floor (`toFloor`); slot RMB includes 바닥에 놓기. Deposit/source remove는 `NotifyExternalStacksChanged`로 인벤 리스트를 갱신한다.
 - Drag ghost: shared `UIItemDragGhostService` (same TopMost ghost as inventory) while dragging worn/wield; hide on EndDrag
 - Worn filter: **body part click** (toggle); FilterLabel click → 전체; hover does not sticky-filter
 - Worn hover uses `AppendItemArmorHover` (Phase A/C fields)
@@ -262,13 +276,13 @@ Promote fields in `BN_BAKE.md` + `convert.py` together — do not grow a second 
 
 ## Phase D — Coverage / thickness combat + WearEnc hit hook
 
-**Scope:** On hit, mitigate damage with worn coverage + thickness (+ material resist when baked). Attacker WearEnc multiplies **ranged** HitChance. Melee connect is overlap (no HitChance). **No** E env/wetness, F BodyTemp, G weather/vision.
+**Scope:** On hit, mitigate damage with worn coverage + thickness (+ material resist when baked). Attacker WearEnc multiplies **ranged** stay-on-part chance (`HitChance`). Fail = neighbor scatter, still damage. Melee connect is overlap (no HitChance). **No** E env/wetness, F BodyTemp, G weather/vision.
 
 ### Parity contract (combat path) — before switch defaults
 
 | Before D | After D (default) |
 |----------|-------------------|
-| `HitChance` = `CombatMath.HitChance` × `offenseFactor` only | × **`WearEncAccuracyFactor`** (attacker `WearStatsAggregator.Aggregate.TotalEncumbrance`) — **원거리만**. 근접은 cue Overlap 확정 |
+| `HitChance` = `CombatMath.HitChance` × `offenseFactor` only | × **`WearEncAccuracyFactor`** (attacker `WearStatsAggregator.Aggregate.TotalEncumbrance`) — **원거리만**, 조준 부위 유지. 실패=인접 산란(Miss 아님). 근접은 cue Overlap 확정 |
 | Hit damage = `CombatMath.Damage` raw → `BodyDamageService.ApplyHit` | Same raw, then **`WearCombatDefense.MitigateDamage`** using **target** Wear |
 | Aggregator unused by combat | Coverage/thickness via `ForPart`; material resist scanned on covering pieces only |
 | No Wear → unchanged hit/damage | No `PlayerGearHost` / empty Wear → factor 1 / no mitigate (NPC targets OK) |
@@ -290,13 +304,16 @@ Consts: `CoveragePercentScale=100`, `ThicknessAbsorbPerUnit=1`, `MaterialResistA
 
 ```mermaid
 flowchart LR
-  hit[HitChance_roll]
+  stay[HitChance_stay]
   enc[WearEncAccuracyFactor]
+  scatter[ScatterToNeighbor]
   raw[CombatMath_Damage]
   mit[MitigateDamage]
   apply[BodyDamageService_ApplyHit]
-  hit --> enc
-  enc -->|hit| raw
+  stay --> enc
+  enc -->|stay| raw
+  enc -->|fail| scatter
+  scatter --> raw
   raw --> mit
   mit --> apply
 ```
@@ -304,6 +321,7 @@ flowchart LR
 ### Migration parity (combat)
 
 - Dual wield / OffHand factor / obstruction Miss unchanged
+- Ranged `HitChance` fail = neighbor scatter (body hit never Miss)
 - Armor Engage is post-hit only (does not convert to Miss)
 - Outcome damage = post-mitigation
 - Phase B/C Wear/pockets/overlap untouched
@@ -487,7 +505,7 @@ flowchart LR
 
 ## Phase H — BodyTemp / wetness → move + combat
 
-**Scope:** Consume Feeling + wetness for locomotion and attacker HitChance. Named consts in `GearEnvPenalties`. **No** Gear redesign; **no** new UI.
+**Scope:** Consume Feeling + wetness for locomotion and attacker stay-on-part chance. Named consts in `GearEnvPenalties`. **No** Gear redesign; **no** new UI.
 
 **Feeling still drives `GearEnvPenalties`:** 코어 `BodyTemp.Feeling` (chest) + `Wetness01`만. 부위별 °C/`FeelingForPart`는 frostbite용 — 이동·히트 배율에 안 넣음.
 
@@ -498,7 +516,7 @@ Boundary SSOT: Feeling + wetness → `GearEnvPenalties`; ClimateHost → `Charac
 | Before H | After H (then) | Now |
 |----------|----------------|-----|
 | Move = base × enc × LiftStrain | × **`GearEnvPenalties.MoveSpeedFactor`** | × combined (Feeling+wetness × limp) |
-| HitChance = CombatMath × offense × WearEnc | × **`GearEnvPenalties.HitAccuracyFactor`** (원거리만) | ClimateHost Feeling. 호스트 없으면 1 |
+| HitChance = CombatMath × offense × WearEnc | × **`GearEnvPenalties.HitAccuracyFactor`** (원거리만, 부위 유지) | ClimateHost Feeling. 호스트 없으면 1. 실패=산란 |
 | Feeling / wetness UI-only (E/F) | Consumed for gameplay penalties | 코어 Feeling 유지 |
 | No `PlayerGearHost` | NPC factors = **1** (스탠드인) | **ClimateHost가 대체.** 모터 env + 공격자 ClimateHost |
 

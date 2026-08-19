@@ -3,7 +3,6 @@
 // ============================================================
 
 using System.Collections.Generic;
-using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -12,49 +11,31 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public sealed class PlayerCombatController : MonoBehaviour
 {
-    const int PhysicsHitBufferSize = 16;
-
-    [Tooltip("조준점이 적 콜라이더를 빗나갔을 때, AimWorldPoint 주변으로 후보를 찾는 반경.")]
-    [SerializeField, Min(0.05f)] float _aimPointSoftRadius = 0.75f;
-
     CharacterAttacker _attacker;
     CharacterState _characterState;
-    PlayerAimController _aimController;
     DualWieldAttackDriver _dualDriver;
     CharacterActionHost _actionHost;
-    CharacterBodyHost _selfHost;
-    Transform _bodyTransform;
-    readonly RaycastHit[] _hits = new RaycastHit[PhysicsHitBufferSize];
     readonly List<RaycastResult> _uiRaycastResults = new();
     bool _connected;
 
     public void BindBody(
         CharacterAttacker attacker,
         CharacterState characterState,
-        PlayerAimController aimController,
         DualWieldAttackDriver dualDriver,
-        CharacterActionHost actionHost,
-        CharacterBodyHost selfHost)
+        CharacterActionHost actionHost)
     {
         _attacker = attacker;
         _characterState = characterState;
-        _aimController = aimController;
         _dualDriver = dualDriver;
         _actionHost = actionHost;
-        _selfHost = selfHost;
-        _bodyTransform = selfHost != null ? selfHost.transform : (attacker != null ? attacker.transform : null);
     }
 
     void Awake()
     {
         _attacker = GetComponent<CharacterAttacker>();
         _characterState = GetComponent<CharacterState>();
-        _aimController = GetComponent<PlayerAimController>();
         _dualDriver = GetComponent<DualWieldAttackDriver>();
         TryGetComponent(out _actionHost);
-        TryGetComponent(out _selfHost);
-        if (_bodyTransform == null)
-            _bodyTransform = transform;
     }
 
     void OnDisable() => DisconnectInput();
@@ -115,145 +96,24 @@ public sealed class PlayerCombatController : MonoBehaviour
             return;
         }
 
-        TryResolveAimedTarget(out CharacterBodyHost target);
-        CharacterBodyHost captured = target;
         if (_actionHost != null)
         {
-            _actionHost.TryRunOrEnqueue(CharacterActionKind.Combat, () => ExecuteAttack(captured));
+            _actionHost.TryRunOrEnqueue(CharacterActionKind.Combat, ExecuteAttack);
             return;
         }
 
-        ExecuteAttack(target);
+        ExecuteAttack();
     }
 
-    bool ExecuteAttack(CharacterBodyHost target)
+    bool ExecuteAttack()
     {
-        if (_dualDriver != null && _dualDriver.TryPerformDual(target))
+        if (_dualDriver != null && _dualDriver.TryPerformDual(null))
             return _attacker != null && _attacker.IsActionBusy;
 
         if (_attacker == null)
             return false;
-        _attacker.TryPerformSelected(target);
+        _attacker.TryPerformSelected(null);
         return _attacker.IsActionBusy;
-    }
-
-    bool TryResolveAimedTarget(out CharacterBodyHost target)
-    {
-        target = null;
-
-        Transform body = _bodyTransform != null ? _bodyTransform : transform;
-        Vector3 origin = body.position + Vector3.up * _aimController.CastOriginYOffset;
-        Vector3 direction = _characterState.SightDir;
-        if (direction.sqrMagnitude < 1e-6f)
-            direction = _characterState.InteractionDir;
-        if (direction.sqrMagnitude < 1e-6f)
-            return false;
-
-        direction.Normalize();
-
-        ItemData item = _attacker.ItemFor(_attacker.ItemId);
-        ItemData ammo = WeaponChamber.ResolveAmmo(_attacker.WieldedStack, _attacker.WieldedInstance);
-        float effective = CombatHitscan.EffectiveRange(
-            item,
-            _attacker.SelectedAction,
-            ammo,
-            _attacker.ResolveOrigin());
-        float maxDistance = Mathf.Max(
-            Mathf.Max(_characterState.InteractionReach, _aimController.MaxAimDistance),
-            effective);
-
-        if (TrySphereCastBody(origin, direction, maxDistance, out target))
-            return true;
-
-        return TryNearestBodyToAimPoint(maxDistance, out target);
-    }
-
-    bool TrySphereCastBody(
-        Vector3 origin,
-        Vector3 direction,
-        float maxDistance,
-        out CharacterBodyHost target)
-    {
-        target = null;
-        float radius = _aimController.SphereRadius;
-        int count = Physics.SphereCastNonAlloc(
-            origin,
-            radius,
-            direction,
-            _hits,
-            maxDistance,
-            ~0,
-            QueryTriggerInteraction.Ignore);
-
-        float bestDistance = float.MaxValue;
-        for (int i = 0; i < count; i++)
-        {
-            RaycastHit hit = _hits[i];
-            if (hit.collider == null)
-                continue;
-
-            CharacterBodyHost host = hit.collider.GetComponentInParent<CharacterBodyHost>();
-            if (!IsValidHostile(host))
-                continue;
-
-            if (hit.distance >= bestDistance)
-                continue;
-
-            bestDistance = hit.distance;
-            target = host;
-        }
-
-        return target != null;
-    }
-
-    bool TryNearestBodyToAimPoint(float maxWeaponDistance, out CharacterBodyHost target)
-    {
-        target = null;
-        Vector3 aimPoint = _characterState.AimWorldPoint;
-        if (aimPoint.sqrMagnitude < 1e-6f)
-            return false;
-
-        CharacterBodyHost[] hosts = FindObjectsByType<CharacterBodyHost>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None);
-
-        float bestSqr = _aimPointSoftRadius * _aimPointSoftRadius;
-        float maxWeaponSqr = maxWeaponDistance * maxWeaponDistance;
-        Vector3 self = _bodyTransform != null ? _bodyTransform.position : transform.position;
-        for (int i = 0; i < hosts.Length; i++)
-        {
-            CharacterBodyHost host = hosts[i];
-            if (!IsValidHostile(host))
-                continue;
-
-            Collider col = host.GetComponentInChildren<Collider>();
-            Vector3 center = col != null ? col.bounds.center : host.transform.position;
-
-            Vector3 fromSelf = center - self;
-            fromSelf.y = 0f;
-            if (fromSelf.sqrMagnitude > maxWeaponSqr)
-                continue;
-
-            float sqr = (center - aimPoint).sqrMagnitude;
-            if (sqr >= bestSqr)
-                continue;
-
-            bestSqr = sqr;
-            target = host;
-        }
-
-        return target != null;
-    }
-
-    bool IsValidHostile(CharacterBodyHost host)
-    {
-        if (_selfHost != null && host == _selfHost)
-            return false;
-        if (host.transform == (_bodyTransform != null ? _bodyTransform : transform))
-            return false;
-        if (host.Body == null || host.Body.IsDeadState)
-            return false;
-        return true;
     }
 
     /// <summary>

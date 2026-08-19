@@ -24,6 +24,7 @@ public sealed class DistProjectile : MonoBehaviour
     float _rangeRemaining;
     float _lifeRemaining;
     int _pierceRemaining;
+    float _rangedEffectiveDispersion;
     LayerMask _obstructionMask;
     bool _launched;
     readonly CharacterBodyHost[] _hitHosts = new CharacterBodyHost[MaxHitHistory];
@@ -38,7 +39,8 @@ public sealed class DistProjectile : MonoBehaviour
         Vector3 direction,
         float range,
         int pierce,
-        LayerMask obstructionMask)
+        LayerMask obstructionMask,
+        float rangedEffectiveDispersion)
     {
         if (attacker == null || direction.sqrMagnitude < 1e-8f)
         {
@@ -55,6 +57,7 @@ public sealed class DistProjectile : MonoBehaviour
         _lifeRemaining = Mathf.Max(0.01f, _maxLifetime);
         _pierceRemaining = Mathf.Max(0, pierce);
         _obstructionMask = obstructionMask;
+        _rangedEffectiveDispersion = rangedEffectiveDispersion;
         _hitCount = 0;
         _launched = true;
         transform.SetPositionAndRotation(
@@ -127,7 +130,8 @@ public sealed class DistProjectile : MonoBehaviour
             _item,
             origin,
             consumeAmmo: false,
-            _ammo);
+            _ammo,
+            rangedEffectiveDispersion: _rangedEffectiveDispersion);
 
         if (_pierceRemaining <= 0)
         {

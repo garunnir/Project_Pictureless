@@ -578,6 +578,7 @@ def export_gun_detail(entry: dict, item_type: str) -> dict | None:
     for key in (
         "range", "dispersion", "recoil", "durability",
         "clip_size", "reload", "burst",
+        "sight_dispersion", "aim_speed", "handling",
     ):
         if key in source:
             gun[key] = _as_int(source.get(key))

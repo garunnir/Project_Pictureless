@@ -41,8 +41,15 @@ public sealed class WeaponPresentation : ScriptableObject
             "Aim/Attack 재생 중에는 overlay를 켠다.")]
         public bool useHold = true;
 
+        [LabelText("동작 쿨(초)")]
+        [Tooltip("시전 시작부터. 같은 손 다음 시전을 막음. 0이면 cue pending만. 무기 쿨은 ItemData.")]
+        [Min(0f)]
+        public float actionCooldownSeconds;
+
         public EffectSeed[] effectSeeds;
         public WeaponActionVfx vfx = new();
+
+        public float ActionCooldownSeconds => Mathf.Max(0f, actionCooldownSeconds);
 
         static IEnumerable<ValueDropdownItem<WeaponAction>> LeafDropdown()
         {
@@ -61,7 +68,8 @@ public sealed class WeaponPresentation : ScriptableObject
         "Leaf = 선택·시전 단위(실체). Family(Melee/Trigger)는 에디터·UI 묶음만.\n" +
         "기본 동사 폴백은 ArmAnimSlotCatalog에 Leaf마다 행. Entry 비면 그 행 사용.\n" +
         "Hold(아이들)=Entry.useHold. Override=thin 클립 덮어쓰기(분류 아님).\n" +
-        "클립 배속은 Override Inspector에서 할당한 클립 옆 Speed (슬롯 속도 아님).",
+        "클립 배속은 Override Inspector에서 할당한 클립 옆 Speed (슬롯 속도 아님).\n" +
+        "동작 쿨은 이 줄(Leaf). 무기 쿨은 ItemData→CombatMath.",
         InfoMessageType.None)]
     [LabelText("동작 줄")]
     [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "action")]

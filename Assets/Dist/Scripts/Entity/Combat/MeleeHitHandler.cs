@@ -21,7 +21,7 @@ public sealed class MeleeHitHandler : IActionHandler
         WeaponResolveMode mode = WeaponResolveMode.MeleeReach;
         Vector3 origin = attacker.ResolveOrigin();
 
-        if (attacker.GetCooldown(context.Hand) > 0f)
+            if (attacker.GetWeaponCooldown(context.Hand) > 0f)
         {
             attacker.EmitJudgedGate(context, mode, AttackPerformResult.Cooling, item, origin);
             return;

@@ -38123,7 +38123,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd7ec1afe7ca5c24298375808bfad872, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::PlayerCombatController
-  _aimPointSoftRadius: 0.75
 --- !u!114 &739639491
 MonoBehaviour:
   m_ObjectHideFlags: 0

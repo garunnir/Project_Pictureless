@@ -171,6 +171,7 @@ public sealed class CharacterGearService
             }
 
             captured.TryEnsureNested(new FixedContainerCapacityPolicy());
+            NotifyInventory(capturedSource);
             NotifyPrimaryDirty();
         });
     }
@@ -229,6 +230,7 @@ public sealed class CharacterGearService
 
             DepositDisplaced(dL);
             DepositDisplaced(dR);
+            NotifyInventory(capturedSource);
             NotifyPrimaryDirty();
         });
     }
@@ -430,8 +432,24 @@ public sealed class CharacterGearService
             return;
         }
 
-        if (!target.ContainsStackReference(stack))
-            target.TryAddStackReference(stack);
+        if (!target.ContainsStackReference(stack) && !target.TryAddStackReference(stack))
+            return;
+
+        NotifyInventory(target);
+    }
+
+    static void NotifyInventory(InventoryContainer first, InventoryContainer second = null)
+    {
+        InventorySession session = PlayerInventoryRuntime.Active?.Session;
+        if (session == null)
+            return;
+
+        if (first != null && second != null && !ReferenceEquals(first, second))
+            session.NotifyExternalStacksChanged(first, second);
+        else if (first != null)
+            session.NotifyExternalStacksChanged(first);
+        else if (second != null)
+            session.NotifyExternalStacksChanged(second);
     }
 
     int Strength() => _strengthProvider?.Invoke() ?? 0;

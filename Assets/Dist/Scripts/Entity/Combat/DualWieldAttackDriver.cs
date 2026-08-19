@@ -39,8 +39,8 @@ public sealed class DualWieldAttackDriver : MonoBehaviour
 
     /// <summary>
     /// TwoHand·한손·듀얼 시전. 듀얼이면 Primary Resolve 후 Offhand.
-    /// Primary Gate(NoAmmo/Cooling; 원거리 NoTarget/OutOfRange)와 무관하게 양손 Action.
-    /// target null(조준점)이어도 양손 시전. Unsupported 손만 스킵.
+    /// Primary Gate(NoAmmo/Cooling)와 무관하게 양손 Action.
+    /// 원거리는 조준축 발사(락온 없음). target은 근접 cue 컨텍스트만. Unsupported 손만 스킵.
     /// false면 호출측 단발(<see cref="CharacterAttacker.TryPerformSelected"/>).
     /// </summary>
     public bool TryPerformDual(CharacterBodyHost target)
