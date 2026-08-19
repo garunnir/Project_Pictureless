@@ -40,7 +40,6 @@ static class GameDataEditorDetailDrawers
             EditorGUI.indentLevel++;
             EditInt(markDirty, "Max stack", ref item.max_stack);
             EditField(markDirty, "Subcategory", ref item.subcategory);
-            EditTextArea(markDirty, "Description", ref item.description);
             EditBool(markDirty, "Has durability", ref item.has_durability);
             EditField(markDirty, "Repairs like", ref item.repairs_like);
             EditInt(markDirty, "Repair difficulty", ref item.repair_difficulty);
@@ -168,13 +167,6 @@ static class GameDataEditorDetailDrawers
             ReadField("Subcategory", item.subcategory);
         if (item.max_stack > 1)
             ReadField("Max stack", item.max_stack.ToString());
-
-        if (!string.IsNullOrEmpty(item.description))
-        {
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField("Description", EditorStyles.miniBoldLabel);
-            EditorGUILayout.LabelField(item.description, EditorStyles.wordWrappedLabel);
-        }
 
         ReadField("Has durability", item.has_durability ? "yes" : "no");
 

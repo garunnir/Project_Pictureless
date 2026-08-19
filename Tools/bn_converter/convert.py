@@ -3,6 +3,7 @@ Cataclysm-BN JSON → Project_Pictureless 정제 JSON 변환기
 
 사용법:
     python convert.py --bn-path "Z:/Work/Project/Cataclysm-BN" --output "../../Assets/StreamingAssets/BNData"
+    python convert.py --bn-path "Z:/Work/Project/Cataclysm-BN" --output "../../Assets/StreamingAssets/BNData" --locale-only
 
 CC BY-SA 3.0 라이선스 준수:
     출력 JSON은 Cataclysm: Bright Nights 의 파생 저작물이며,
@@ -1370,6 +1371,22 @@ def parse_po_translations(po_path: Path) -> dict[str, str]:
     return translations
 
 
+def apply_po_slots(
+    entry: dict[str, str],
+    msgid: str,
+    ko_map: dict[str, str],
+    ja_map: dict[str, str],
+) -> None:
+    if not msgid:
+        return
+    ko = ko_map.get(msgid)
+    if ko:
+        entry["ko"] = ko
+    ja = ja_map.get(msgid)
+    if ja:
+        entry["ja"] = ja
+
+
 def export_item_names(
     items_out: list[dict],
     ko_map: dict[str, str],
@@ -1382,14 +1399,147 @@ def export_item_names(
         if not item_id or not en:
             continue
         entry: dict[str, str] = {"en": en}
-        ko = ko_map.get(en)
-        if ko:
-            entry["ko"] = ko
-        ja = ja_map.get(en)
-        if ja:
-            entry["ja"] = ja
+        apply_po_slots(entry, en, ko_map, ja_map)
         names[item_id] = entry
     return names
+
+
+def export_item_descriptions(
+    items_out: list[dict],
+    ko_map: dict[str, str],
+    ja_map: dict[str, str],
+) -> dict[str, dict[str, str]]:
+    descriptions: dict[str, dict[str, str]] = {}
+    for item in items_out:
+        item_id = item.get("id")
+        en = item.get("description") or ""
+        if not item_id or not en:
+            continue
+        entry: dict[str, str] = {"en": en}
+        apply_po_slots(entry, en, ko_map, ja_map)
+        descriptions[item_id] = entry
+    return descriptions
+
+
+def humanize_recipe_category_id(cat_id: str) -> str:
+    s = cat_id or ""
+    if s.startswith("CSC_"):
+        s = s[4:]
+    elif s.startswith("CC_"):
+        s = s[3:]
+    return s.replace("_", " ").title()
+
+
+# Dist UI_ko leftovers → bake ko when po misses. CC_MISC is Dist id; BN uses CC_OTHER.
+RECIPE_CATEGORY_KO_SEED = {
+    "CC_FOOD": "음식",
+    "CC_DRINK": "음료",
+    "CC_CHEM": "화학",
+    "CC_AMMO": "탄약",
+    "CC_WEAPON": "무기",
+    "CC_ARMOR": "방어구",
+    "CC_ELECTRONIC": "전자",
+    "CC_OTHER": "기타",
+    "CSC_FOOD_MEAT": "육류",
+    "CSC_FOOD_VEGGI": "채소",
+    "CSC_FOOD_OTHER": "기타 음식",
+}
+
+
+def export_recipe_categories(
+    recipes_out: list[dict],
+    uncraft_out: list[dict],
+    ko_map: dict[str, str],
+    ja_map: dict[str, str],
+) -> dict[str, dict[str, str]]:
+    ids: set[str] = set()
+    for rec in recipes_out + uncraft_out:
+        category = rec.get("category") or ""
+        subcategory = rec.get("subcategory") or ""
+        if category:
+            ids.add(category)
+        if subcategory:
+            ids.add(subcategory)
+
+    categories: dict[str, dict[str, str]] = {}
+    for cat_id in sorted(ids):
+        en = humanize_recipe_category_id(cat_id)
+        if not en:
+            continue
+        entry: dict[str, str] = {"en": en}
+        apply_po_slots(entry, en, ko_map, ja_map)
+        if "ko" not in entry:
+            apply_po_slots(entry, cat_id, ko_map, ja_map)
+        if "ko" not in entry and cat_id in RECIPE_CATEGORY_KO_SEED:
+            entry["ko"] = RECIPE_CATEGORY_KO_SEED[cat_id]
+        categories[cat_id] = entry
+    return categories
+
+
+def write_item_names_file(
+    path: Path,
+    names: dict[str, dict[str, str]],
+    descriptions: dict[str, dict[str, str]],
+    recipe_categories: dict[str, dict[str, str]],
+) -> None:
+    payload = {
+        "_license": LICENSE,
+        "_source": SOURCE,
+        "names": names,
+        "descriptions": descriptions,
+        "recipe_categories": recipe_categories,
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    name_ko = sum(1 for v in names.values() if "ko" in v)
+    name_ja = sum(1 for v in names.values() if "ja" in v)
+    desc_ko = sum(1 for v in descriptions.values() if "ko" in v)
+    desc_ja = sum(1 for v in descriptions.values() if "ja" in v)
+    cat_ko = sum(1 for v in recipe_categories.values() if "ko" in v)
+    cat_ja = sum(1 for v in recipe_categories.values() if "ja" in v)
+    print(
+        f"[output] {path}  names={len(names)} (ko={name_ko}, ja={name_ja})  "
+        f"descriptions={len(descriptions)} (ko={desc_ko}, ja={desc_ja})  "
+        f"recipe_categories={len(recipe_categories)} (ko={cat_ko}, ja={cat_ja})"
+    )
+
+
+def load_po_maps(bn_path: Path) -> tuple[dict[str, str], dict[str, str]]:
+    ko_po = bn_path / "lang" / "po" / "ko.po"
+    ja_po = bn_path / "lang" / "po" / "ja.po"
+    ko_map = parse_po_translations(ko_po)
+    ja_map = parse_po_translations(ja_po)
+    if not ko_map:
+        print(f"[WARN] no ko translations from {ko_po}")
+    if not ja_map:
+        print(f"[WARN] no ja translations from {ja_po}")
+    return ko_map, ja_map
+
+
+def merge_locale_into_existing(bn_path: Path, out_dir: Path) -> None:
+    items_file = out_dir / "items.json"
+    recipes_file = out_dir / "recipes.json"
+    names_file = out_dir / "item_names.json"
+    if not items_file.is_file() or not recipes_file.is_file() or not names_file.is_file():
+        print("[ERROR] --locale-only needs existing items.json, recipes.json, item_names.json")
+        sys.exit(1)
+
+    with open(items_file, encoding="utf-8") as f:
+        items_root = json.load(f)
+    with open(recipes_file, encoding="utf-8") as f:
+        recipes_root = json.load(f)
+    with open(names_file, encoding="utf-8") as f:
+        names_root = json.load(f)
+
+    items_out = items_root.get("items") or []
+    recipes_out = recipes_root.get("recipes") or []
+    uncraft_out = recipes_root.get("uncraft") or []
+    existing_names = names_root.get("names") or {}
+
+    ko_map, ja_map = load_po_maps(bn_path)
+    descriptions = export_item_descriptions(items_out, ko_map, ja_map)
+    recipe_categories = export_recipe_categories(recipes_out, uncraft_out, ko_map, ja_map)
+    write_item_names_file(names_file, existing_names, descriptions, recipe_categories)
 
 
 # ── Main ────────────────────────────────────────────────────────────
@@ -1398,11 +1548,20 @@ def main():
     parser = argparse.ArgumentParser(description="BN → Project JSON converter")
     parser.add_argument("--bn-path", required=True, help="Cataclysm-BN 프로젝트 루트")
     parser.add_argument("--output", required=True, help="출력 디렉토리")
+    parser.add_argument(
+        "--locale-only",
+        action="store_true",
+        help="Keep items/recipes; rewrite item_names.json names+descriptions+recipe_categories",
+    )
     args = parser.parse_args()
 
     bn_path = Path(args.bn_path)
     out_dir = Path(args.output)
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.locale_only:
+        merge_locale_into_existing(bn_path, out_dir)
+        return
 
     if not (bn_path / "data" / "json").exists():
         print(f"[ERROR] BN data path not found: {bn_path / 'data' / 'json'}")
@@ -1425,16 +1584,11 @@ def main():
     # 4) Recipes
     recipes_out, uncraft_out = load_recipes(bn_path, requirements)
 
-    # 5) Item display names (id → en/ko/ja); po is import-only
-    ko_po = bn_path / "lang" / "po" / "ko.po"
-    ja_po = bn_path / "lang" / "po" / "ja.po"
-    ko_map = parse_po_translations(ko_po)
-    ja_map = parse_po_translations(ja_po)
-    if not ko_map:
-        print(f"[WARN] no ko translations from {ko_po}")
-    if not ja_map:
-        print(f"[WARN] no ja translations from {ja_po}")
+    # 5) Catalog locale (id → en/ko/ja); po is import-only
+    ko_map, ja_map = load_po_maps(bn_path)
     item_names = export_item_names(items_out, ko_map, ja_map)
+    item_descriptions = export_item_descriptions(items_out, ko_map, ja_map)
+    recipe_categories = export_recipe_categories(recipes_out, uncraft_out, ko_map, ja_map)
 
     # ── Write output ────────────────────────────────────────────────
 
@@ -1462,18 +1616,7 @@ def main():
     print(f"[output] {recipes_file}  ({len(recipes_out)} recipes, {len(uncraft_out)} uncraft)")
 
     names_file = out_dir / "item_names.json"
-    with open(names_file, "w", encoding="utf-8") as f:
-        json.dump({
-            "_license": LICENSE,
-            "_source": SOURCE,
-            "names": item_names,
-        }, f, ensure_ascii=False, indent=2)
-    ko_hits = sum(1 for v in item_names.values() if "ko" in v)
-    ja_hits = sum(1 for v in item_names.values() if "ja" in v)
-    print(
-        f"[output] {names_file}  ({len(item_names)} ids, "
-        f"ko={ko_hits}, ja={ja_hits})"
-    )
+    write_item_names_file(names_file, item_names, item_descriptions, recipe_categories)
 
     # 통계 요약
     categories = set()
@@ -1490,6 +1633,8 @@ def main():
     print(f"  Recipes:    {len(recipes_out)}")
     print(f"  Uncraft:    {len(uncraft_out)}")
     print(f"  ItemNames:  {len(item_names)}")
+    print(f"  ItemDescs:  {len(item_descriptions)}")
+    print(f"  RecipeCats: {len(recipe_categories)}")
     print(f"  Categories: {sorted(categories)}")
     print(f"  Skills:     {sorted(skills)}")
 

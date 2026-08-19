@@ -30,7 +30,6 @@ public static class CraftingWindowLabels
     const string KeyQualityCountFormat = "Crafting.QualityCountFormat";
     const string KeyQualityAltFormat = "Crafting.QualityAltFormat";
     const string KeyCountFormat = "Crafting.CountFormat";
-    const string KeyCategoryPrefix = "RecipeCategory.";
 
     public static string Title => Loc.Get(KeyTitle);
     public static string SearchPlaceholder => Loc.Get(KeySearchPlaceholder);
@@ -94,6 +93,6 @@ public static class CraftingWindowLabels
         if (id == CategoryFavouritesId)
             return Favourites;
 
-        return Loc.Get(KeyCategoryPrefix + id);
+        return UITextPresenter.GetRecipeCategory(id);
     }
 }

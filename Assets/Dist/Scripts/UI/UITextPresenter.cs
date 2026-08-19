@@ -54,4 +54,22 @@ public static class UITextPresenter
         // Containers are not in item_names yet — Dist Loc override or missing marker via id
         return ItemNameTable.Get(definition.id, LocalizationBundle.Get()?.ActiveLanguage ?? DisplayLanguage.Ko);
     }
+
+    public static string GetItemDescription(ItemData item)
+    {
+        if (item == null || string.IsNullOrEmpty(item.id))
+            return string.Empty;
+
+        DisplayLanguage language = LocalizationBundle.Get()?.ActiveLanguage ?? DisplayLanguage.Ko;
+        return ItemNameTable.Get(ItemLocaleKind.Description, item.id, language);
+    }
+
+    public static string GetRecipeCategory(string categoryId)
+    {
+        if (string.IsNullOrEmpty(categoryId))
+            return string.Empty;
+
+        DisplayLanguage language = LocalizationBundle.Get()?.ActiveLanguage ?? DisplayLanguage.Ko;
+        return ItemNameTable.Get(ItemLocaleKind.RecipeCategory, categoryId, language);
+    }
 }

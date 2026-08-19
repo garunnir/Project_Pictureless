@@ -9,7 +9,7 @@
 | Game time | [`time/TIME.md`](time/TIME.md) | `game-time.mdc` |
 | Map / TileMap | [`map/SYSTEM.md`](map/SYSTEM.md) → TileMap 세부 | `map-system.mdc` · `tile-chunk-streaming.mdc` |
 | Inventory UI | [`inventory/INVENTORY_UI.md`](inventory/INVENTORY_UI.md) | `inventory-ui.mdc` |
-| Item display names / loc | [`inventory/ITEM_NAMES.md`](inventory/ITEM_NAMES.md) | (Data Definitions hub · LocalizationBundle) |
+| Item catalog locale (name / desc / recipe cat) | [`inventory/ITEM_NAMES.md`](inventory/ITEM_NAMES.md) | (Data Definitions hub · LocalizationBundle) |
 | Equipment / Wear·Wield | [`equipment/GEAR.md`](equipment/GEAR.md) | (Character window · transfer duration) |
 | Weapon anim / VFX folders | [`equipment/WEAPON_VISUAL.md`](equipment/WEAPON_VISUAL.md) | (hub → Pipeline → clips/prefabs) |
 | BN converter whitelist | [`equipment/BN_BAKE.md`](equipment/BN_BAKE.md) | (`convert.py` → BNData; promote when Dist has a consumer) |

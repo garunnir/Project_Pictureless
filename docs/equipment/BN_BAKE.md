@@ -1,7 +1,7 @@
 # BN bake (converter whitelist)
 
 Canonical for `Tools/bn_converter/convert.py` → `Assets/StreamingAssets/BNData`.  
-Gear runtime (Wear/Wield) stays in [`GEAR.md`](GEAR.md). Item names: [`ITEM_NAMES.md`](../inventory/ITEM_NAMES.md).
+Gear runtime (Wear/Wield) stays in [`GEAR.md`](GEAR.md). Catalog locale (names / descriptions / recipe categories): [`ITEM_NAMES.md`](../inventory/ITEM_NAMES.md).
 
 ## Policy
 
@@ -16,6 +16,8 @@ Command:
 ```text
 python Tools/bn_converter/convert.py --bn-path <Cataclysm-BN> --output Assets/StreamingAssets/BNData
 ```
+
+`--locale-only` keeps `items.json` / `recipes.json` and rewrites `item_names.json` (`names` / `descriptions` / `recipe_categories`).
 
 Does **not** overwrite `GameData/items.json` demo seeds.
 

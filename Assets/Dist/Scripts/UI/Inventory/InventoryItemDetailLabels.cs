@@ -71,10 +71,14 @@ public static class InventoryItemDetailLabels
     public static bool TryFormatDescription(ItemData item, out string text)
     {
         text = null;
-        if (item == null || string.IsNullOrWhiteSpace(item.description))
+        if (item == null || string.IsNullOrEmpty(item.id))
             return false;
 
-        text = item.description.Trim();
+        string description = UITextPresenter.GetItemDescription(item);
+        if (string.IsNullOrWhiteSpace(description))
+            return false;
+
+        text = description.Trim();
         return true;
     }
 

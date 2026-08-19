@@ -112,6 +112,8 @@ public sealed class GameDataEditorWindow : EditorWindow
                 continue;
             if (!string.IsNullOrEmpty(item.name))
                 ItemNameTable.SeedFromItemNameIfMissing(item.id, item.name, DisplayLanguage.Ko);
+            if (!string.IsNullOrEmpty(item.description))
+                ItemNameTable.SeedFromDescriptionIfMissing(item.id, item.description, DisplayLanguage.Ko);
         }
     }
 
@@ -652,6 +654,7 @@ public sealed class GameDataEditorWindow : EditorWindow
         if (_foldGameDetail)
         {
             EditorGUI.indentLevel++;
+            EditLocalizedItemDescription(item.id);
             if (IsCustom)
                 GameDataEditorDetailDrawers.DrawItemDetailEditable(item, MarkDirty);
             else
@@ -1147,6 +1150,10 @@ public sealed class GameDataEditorWindow : EditorWindow
         string display = ItemNameTable.Get(src.id, lang);
         if (!string.IsNullOrEmpty(display) && !display.StartsWith("[Missing:", StringComparison.Ordinal))
             ItemNameTable.Set(copy.id, lang, display);
+        string description = ItemNameTable.Get(ItemLocaleKind.Description, src.id, lang);
+        if (!string.IsNullOrEmpty(description) &&
+            !description.StartsWith("[Missing:", StringComparison.Ordinal))
+            ItemNameTable.Set(ItemLocaleKind.Description, copy.id, lang, description);
         RebuildCustomDb();
         _dirty = true;
         _source = Source.Custom;
@@ -1223,6 +1230,20 @@ public sealed class GameDataEditorWindow : EditorWindow
             ItemNameTable.Set(itemId, lang, newVal);
             InvalidateFilter();
         }
+    }
+
+    void EditLocalizedItemDescription(string itemId)
+    {
+        DisplayLanguage lang = ActiveDisplayLanguage;
+        string langCode = DisplayLanguageCodes.ToCode(lang);
+        string current = ItemNameTable.TryGetRaw(ItemLocaleKind.Description, itemId, lang, out string raw)
+            ? raw
+            : string.Empty;
+
+        EditorGUILayout.LabelField($"Description ({langCode})");
+        string newVal = EditorGUILayout.TextArea(current ?? string.Empty, GUILayout.MinHeight(48f));
+        if (newVal != (current ?? string.Empty))
+            ItemNameTable.Set(ItemLocaleKind.Description, itemId, lang, newVal);
     }
 
     void EditField(string label, ref string value)

@@ -1,5 +1,5 @@
 // ============================================================
-// ItemNameTable — item id → en/ko/ja 표시명 (BNData + GameData overlay)
+// ItemNameTable — catalog locale (name / description / recipe category)
 // ============================================================
 
 using System;
@@ -9,13 +9,25 @@ using UnityEngine;
 
 namespace Garunnir.Runtime.Gameplay.Data
 {
+    public enum ItemLocaleKind
+    {
+        Name = 0,
+        Description = 1,
+        RecipeCategory = 2,
+    }
+
     public static class ItemNameTable
     {
         public const string FileName = "item_names.json";
-        const string MissingFormat = "[Missing: ItemName {0}]";
+        public const string SectionNames = "names";
+        public const string SectionDescriptions = "descriptions";
+        public const string SectionRecipeCategories = "recipe_categories";
+        const string MissingFormat = "[Missing: {0}.{1}]";
+        const string MissingLogFormat = "[ItemNameTable] Missing catalog locale: {0}.{1}";
 
-        static Dictionary<string, ItemNameEntry> _merged;
-        static Dictionary<string, ItemNameEntry> _gameOverlay;
+        static Dictionary<ItemLocaleKind, Dictionary<string, ItemNameEntry>> _merged;
+        static Dictionary<ItemLocaleKind, Dictionary<string, ItemNameEntry>> _gameOverlay;
+        static readonly HashSet<string> ReportedMissing = new HashSet<string>(StringComparer.Ordinal);
         static bool _gameDirty;
 
         [Serializable]
@@ -32,6 +44,8 @@ namespace Garunnir.Runtime.Gameplay.Data
             public string _license;
             public string _source;
             public Dictionary<string, ItemNameEntry> names;
+            public Dictionary<string, ItemNameEntry> descriptions;
+            public Dictionary<string, ItemNameEntry> recipe_categories;
         }
 
         public static bool IsGameDirty => _gameDirty;
@@ -45,8 +59,9 @@ namespace Garunnir.Runtime.Gameplay.Data
 
         public static void Reload()
         {
-            _merged = new Dictionary<string, ItemNameEntry>(StringComparer.Ordinal);
-            _gameOverlay = new Dictionary<string, ItemNameEntry>(StringComparer.Ordinal);
+            _merged = CreateKindMaps();
+            _gameOverlay = CreateKindMaps();
+            ReportedMissing.Clear();
             _gameDirty = false;
 
             MergeFile(Path.Combine(Application.streamingAssetsPath, "BNData", FileName), overlay: false);
@@ -57,7 +72,25 @@ namespace Garunnir.Runtime.Gameplay.Data
         {
             _merged = null;
             _gameOverlay = null;
+            ReportedMissing.Clear();
             _gameDirty = false;
+        }
+
+        static Dictionary<ItemLocaleKind, Dictionary<string, ItemNameEntry>> CreateKindMaps()
+        {
+            return new Dictionary<ItemLocaleKind, Dictionary<string, ItemNameEntry>>
+            {
+                [ItemLocaleKind.Name] = new Dictionary<string, ItemNameEntry>(StringComparer.Ordinal),
+                [ItemLocaleKind.Description] = new Dictionary<string, ItemNameEntry>(StringComparer.Ordinal),
+                [ItemLocaleKind.RecipeCategory] = new Dictionary<string, ItemNameEntry>(StringComparer.Ordinal),
+            };
+        }
+
+        static Dictionary<string, ItemNameEntry> MapFor(
+            Dictionary<ItemLocaleKind, Dictionary<string, ItemNameEntry>> maps,
+            ItemLocaleKind kind)
+        {
+            return maps[kind];
         }
 
         static void MergeFile(string path, bool overlay)
@@ -67,18 +100,33 @@ namespace Garunnir.Runtime.Gameplay.Data
 
             string json = File.ReadAllText(path);
             ItemNamesFileRoot root = GameDataJson.Deserialize<ItemNamesFileRoot>(json);
-            if (root?.names == null)
+            if (root == null)
                 return;
 
-            foreach (KeyValuePair<string, ItemNameEntry> kv in root.names)
+            MergeKind(root.names, ItemLocaleKind.Name, overlay);
+            MergeKind(root.descriptions, ItemLocaleKind.Description, overlay);
+            MergeKind(root.recipe_categories, ItemLocaleKind.RecipeCategory, overlay);
+        }
+
+        static void MergeKind(
+            Dictionary<string, ItemNameEntry> source,
+            ItemLocaleKind kind,
+            bool overlay)
+        {
+            if (source == null)
+                return;
+
+            Dictionary<string, ItemNameEntry> merged = MapFor(_merged, kind);
+            Dictionary<string, ItemNameEntry> overlayMap = MapFor(_gameOverlay, kind);
+            foreach (KeyValuePair<string, ItemNameEntry> kv in source)
             {
                 if (string.IsNullOrEmpty(kv.Key) || kv.Value == null)
                     continue;
 
                 ItemNameEntry copy = CloneEntry(kv.Value);
-                _merged[kv.Key] = copy;
+                merged[kv.Key] = copy;
                 if (overlay)
-                    _gameOverlay[kv.Key] = CloneEntry(copy);
+                    overlayMap[kv.Key] = CloneEntry(copy);
             }
         }
 
@@ -89,14 +137,18 @@ namespace Garunnir.Runtime.Gameplay.Data
             ja = src.ja,
         };
 
-        public static string Get(string itemId, DisplayLanguage language)
+        public static string Get(string itemId, DisplayLanguage language) =>
+            Get(ItemLocaleKind.Name, itemId, language);
+
+        public static string Get(ItemLocaleKind kind, string id, DisplayLanguage language)
         {
             EnsureLoaded();
 
-            if (string.IsNullOrEmpty(itemId))
+            if (string.IsNullOrEmpty(id))
                 return string.Empty;
 
-            if (_merged.TryGetValue(itemId, out ItemNameEntry entry) && entry != null)
+            Dictionary<string, ItemNameEntry> merged = MapFor(_merged, kind);
+            if (merged.TryGetValue(id, out ItemNameEntry entry) && entry != null)
             {
                 string primary = GetSlot(entry, language);
                 if (!string.IsNullOrEmpty(primary))
@@ -110,16 +162,25 @@ namespace Garunnir.Runtime.Gameplay.Data
                 }
             }
 
-            return string.Format(MissingFormat, itemId);
+            return ReportMissing(kind, id);
         }
 
-        public static bool TryGetRaw(string itemId, DisplayLanguage language, out string text)
+        public static bool TryGetRaw(string itemId, DisplayLanguage language, out string text) =>
+            TryGetRaw(ItemLocaleKind.Name, itemId, language, out text);
+
+        public static bool TryGetRaw(
+            ItemLocaleKind kind,
+            string id,
+            DisplayLanguage language,
+            out string text)
         {
             EnsureLoaded();
             text = null;
-            if (string.IsNullOrEmpty(itemId) ||
-                !_merged.TryGetValue(itemId, out ItemNameEntry entry) ||
-                entry == null)
+            if (string.IsNullOrEmpty(id))
+                return false;
+
+            Dictionary<string, ItemNameEntry> merged = MapFor(_merged, kind);
+            if (!merged.TryGetValue(id, out ItemNameEntry entry) || entry == null)
                 return false;
 
             text = GetSlot(entry, language);
@@ -133,28 +194,32 @@ namespace Garunnir.Runtime.Gameplay.Data
             _ => entry.ko,
         };
 
-        public static void Set(string itemId, DisplayLanguage language, string text)
+        public static void Set(string itemId, DisplayLanguage language, string text) =>
+            Set(ItemLocaleKind.Name, itemId, language, text);
+
+        public static void Set(ItemLocaleKind kind, string id, DisplayLanguage language, string text)
         {
-            if (string.IsNullOrEmpty(itemId))
+            if (string.IsNullOrEmpty(id))
                 return;
 
             EnsureLoaded();
 
-            if (!_merged.TryGetValue(itemId, out ItemNameEntry merged) || merged == null)
+            Dictionary<string, ItemNameEntry> mergedMap = MapFor(_merged, kind);
+            if (!mergedMap.TryGetValue(id, out ItemNameEntry merged) || merged == null)
             {
                 merged = new ItemNameEntry();
-                _merged[itemId] = merged;
+                mergedMap[id] = merged;
             }
 
             SetSlot(merged, language, text ?? string.Empty);
 
-            if (!_gameOverlay.TryGetValue(itemId, out ItemNameEntry overlay) || overlay == null)
+            Dictionary<string, ItemNameEntry> overlayMap = MapFor(_gameOverlay, kind);
+            if (!overlayMap.TryGetValue(id, out ItemNameEntry overlay) || overlay == null)
             {
                 overlay = new ItemNameEntry();
-                _gameOverlay[itemId] = overlay;
+                overlayMap[id] = overlay;
             }
 
-            // Overlay keeps full row snapshot for save (merge en from BN if needed)
             if (string.IsNullOrEmpty(overlay.en) && !string.IsNullOrEmpty(merged.en))
                 overlay.en = merged.en;
             if (string.IsNullOrEmpty(overlay.ko) && !string.IsNullOrEmpty(merged.ko) &&
@@ -185,16 +250,29 @@ namespace Garunnir.Runtime.Gameplay.Data
         }
 
         /// <summary>Custom items.json에만 있던 name을 GameData overlay ko로 시드.</summary>
-        public static void SeedFromItemNameIfMissing(string itemId, string legacyName, DisplayLanguage language)
+        public static void SeedFromItemNameIfMissing(string itemId, string legacyName, DisplayLanguage language) =>
+            SeedIfMissing(ItemLocaleKind.Name, itemId, legacyName, language);
+
+        public static void SeedFromDescriptionIfMissing(
+            string itemId,
+            string legacyDescription,
+            DisplayLanguage language) =>
+            SeedIfMissing(ItemLocaleKind.Description, itemId, legacyDescription, language);
+
+        static void SeedIfMissing(
+            ItemLocaleKind kind,
+            string id,
+            string legacyText,
+            DisplayLanguage language)
         {
-            if (string.IsNullOrEmpty(itemId) || string.IsNullOrEmpty(legacyName))
+            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(legacyText))
                 return;
 
             EnsureLoaded();
-            if (TryGetRaw(itemId, language, out _))
+            if (TryGetRaw(kind, id, language, out _))
                 return;
 
-            Set(itemId, language, legacyName);
+            Set(kind, id, language, legacyText);
         }
 
         public static bool SaveGameOverlay()
@@ -208,12 +286,39 @@ namespace Garunnir.Runtime.Gameplay.Data
             {
                 _license = "Project proprietary (overrides) + BN-derived where applicable",
                 _source = "Data Definitions / GameData",
-                names = new Dictionary<string, ItemNameEntry>(_gameOverlay, StringComparer.Ordinal),
+                names = CopyIfAny(MapFor(_gameOverlay, ItemLocaleKind.Name)),
+                descriptions = CopyIfAny(MapFor(_gameOverlay, ItemLocaleKind.Description)),
+                recipe_categories = CopyIfAny(MapFor(_gameOverlay, ItemLocaleKind.RecipeCategory)),
             };
 
             File.WriteAllText(path, GameDataJson.Serialize(root));
             _gameDirty = false;
             return true;
+        }
+
+        static Dictionary<string, ItemNameEntry> CopyIfAny(Dictionary<string, ItemNameEntry> source)
+        {
+            if (source == null || source.Count == 0)
+                return null;
+
+            return new Dictionary<string, ItemNameEntry>(source, StringComparer.Ordinal);
+        }
+
+        static string SectionName(ItemLocaleKind kind) => kind switch
+        {
+            ItemLocaleKind.Description => SectionDescriptions,
+            ItemLocaleKind.RecipeCategory => SectionRecipeCategories,
+            _ => SectionNames,
+        };
+
+        static string ReportMissing(ItemLocaleKind kind, string id)
+        {
+            string section = SectionName(kind);
+            string reportKey = section + "." + id;
+            if (ReportedMissing.Add(reportKey))
+                Debug.LogError(string.Format(MissingLogFormat, section, id));
+
+            return string.Format(MissingFormat, section, id);
         }
 
 #if UNITY_EDITOR

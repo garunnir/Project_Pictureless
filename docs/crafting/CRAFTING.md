@@ -82,7 +82,7 @@ sequenceDiagram
 
 - 레이어 `UICanvasLayer.Window`. 루트에 `UIOverlayWindow` + `UIWindowResizeHandles` + 헤더 `UIWindowDragHandler` (프리팹 SSOT, 런타임 AddComponent 금지).
 - 헤더 접기/끄기: 공용 `UIWindowChromeBar` (`Btn_Fold` / `Btn_Close`). 끄기는 `UICraftingController.Close` (런처로 다시 열림). 구 `Btn_Close` 전용 훅은 크롬 바가 있으면 쓰지 않음.
-- 왼쪽: ALL / Favourites / `GetRecipeCategories` (`Loc.Get("RecipeCategory." + id)` — `RecipeCategoryLabels` 호출 금지, Dist.Inventory.UI 순환).
+- 왼쪽: ALL / Favourites / `GetRecipeCategories` (`UITextPresenter.GetRecipeCategory` → `item_names.json` `recipe_categories`. `__all__` / `__favourites__`는 Loc 크롬. `RecipeCategoryLabels`는 같은 presenter — Dist.Inventory.UI 순환 없음).
 - 가운데: 결과 이름 검색, 그리드/리스트 토글, 제작 가능(지식·재료·스킬 충족)을 맨 위·이름 녹색(`SkillMetColor`), 뷰포트 기반 셀 재활용 (ALL을 한 번에 Instantiate하지 않음). LeanPool 없음.
 - 오른쪽: 결과 아이콘·이름, 스킬·지식(충족 녹 / 미달 적 텍스트 목록), 별·시간·책·작업대·라이트, 재료·도구품질·출력은 그리드 아이콘(우상단 `보유/요구`, 좌상단 kind 소모/충전/유지/품질, 대체재 시 우측 교체, 부족 시 아이콘 흐림), 수량 `±`/`MAX`, 소요 시간(제작 중에는 남은 시간으로 카운트다운), 진행바, Craft.
 - 빠진 재료는 별도 이름 목록이 아니라 슬롯 수량 표시다.
