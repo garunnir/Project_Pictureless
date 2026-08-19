@@ -1,5 +1,5 @@
 // ============================================================
-// ItemNameTable — catalog locale (name / description / recipe category)
+// ItemNameTable — catalog locale (name / description / recipe category / quality)
 // ============================================================
 
 using System;
@@ -14,6 +14,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         Name = 0,
         Description = 1,
         RecipeCategory = 2,
+        Quality = 3,
     }
 
     public static class ItemNameTable
@@ -22,6 +23,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         public const string SectionNames = "names";
         public const string SectionDescriptions = "descriptions";
         public const string SectionRecipeCategories = "recipe_categories";
+        public const string SectionQualities = "qualities";
         const string MissingFormat = "[Missing: {0}.{1}]";
         const string MissingLogFormat = "[ItemNameTable] Missing catalog locale: {0}.{1}";
 
@@ -46,6 +48,7 @@ namespace Garunnir.Runtime.Gameplay.Data
             public Dictionary<string, ItemNameEntry> names;
             public Dictionary<string, ItemNameEntry> descriptions;
             public Dictionary<string, ItemNameEntry> recipe_categories;
+            public Dictionary<string, ItemNameEntry> qualities;
         }
 
         public static bool IsGameDirty => _gameDirty;
@@ -83,6 +86,7 @@ namespace Garunnir.Runtime.Gameplay.Data
                 [ItemLocaleKind.Name] = new Dictionary<string, ItemNameEntry>(StringComparer.Ordinal),
                 [ItemLocaleKind.Description] = new Dictionary<string, ItemNameEntry>(StringComparer.Ordinal),
                 [ItemLocaleKind.RecipeCategory] = new Dictionary<string, ItemNameEntry>(StringComparer.Ordinal),
+                [ItemLocaleKind.Quality] = new Dictionary<string, ItemNameEntry>(StringComparer.Ordinal),
             };
         }
 
@@ -106,6 +110,7 @@ namespace Garunnir.Runtime.Gameplay.Data
             MergeKind(root.names, ItemLocaleKind.Name, overlay);
             MergeKind(root.descriptions, ItemLocaleKind.Description, overlay);
             MergeKind(root.recipe_categories, ItemLocaleKind.RecipeCategory, overlay);
+            MergeKind(root.qualities, ItemLocaleKind.Quality, overlay);
         }
 
         static void MergeKind(
@@ -289,6 +294,7 @@ namespace Garunnir.Runtime.Gameplay.Data
                 names = CopyIfAny(MapFor(_gameOverlay, ItemLocaleKind.Name)),
                 descriptions = CopyIfAny(MapFor(_gameOverlay, ItemLocaleKind.Description)),
                 recipe_categories = CopyIfAny(MapFor(_gameOverlay, ItemLocaleKind.RecipeCategory)),
+                qualities = CopyIfAny(MapFor(_gameOverlay, ItemLocaleKind.Quality)),
             };
 
             File.WriteAllText(path, GameDataJson.Serialize(root));
@@ -308,6 +314,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         {
             ItemLocaleKind.Description => SectionDescriptions,
             ItemLocaleKind.RecipeCategory => SectionRecipeCategories,
+            ItemLocaleKind.Quality => SectionQualities,
             _ => SectionNames,
         };
 

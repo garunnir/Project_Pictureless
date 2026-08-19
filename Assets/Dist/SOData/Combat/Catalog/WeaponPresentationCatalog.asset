@@ -21,6 +21,19 @@ MonoBehaviour:
     presentation: {fileID: 11400000, guid: 097f40921b21d454cb770939a7dbb457, type: 2}
   - id: weapon_pistol
     presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  _bySkillId:
+  - id: pistol
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: smg
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: rifle
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: shotgun
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: launcher
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
+  - id: gun
+    presentation: {fileID: 11400000, guid: 530621f4ab0af9648bb59ee355771894, type: 2}
   _byCategoryId:
   - id: BAT
     presentation: {fileID: 11400000, guid: 796479803ab67fa4eae649833d8babdc, type: 2}

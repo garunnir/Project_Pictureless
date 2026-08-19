@@ -1,5 +1,5 @@
 // ============================================================
-// WeaponPresentationCatalog — 진입점 바인딩 (item → category → Unarmed)
+// WeaponPresentationCatalog — 진입점 바인딩 (item → gun.skill → category → Unarmed)
 // ============================================================
 
 using System;
@@ -21,7 +21,7 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
     [Serializable]
     public sealed class Binding
     {
-        [Tooltip("아이템 id 또는 무기 카테고리 id.")]
+        [Tooltip("아이템 id, gun.skill, 또는 weapon_category id.")]
         [LabelText("Id")]
         public string id;
 
@@ -33,14 +33,14 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
 
     [InfoBox(
         "【진입점】 무기가 들릴 때 Presentation(Leaf 목록)을 고릅니다.\n" +
-        "순서: 아이템 전용 → 카테고리 → 맨손. Leaf·Attack·Override는 Presentation을 펼쳐 편집.\n" +
+        "순서: 아이템 전용 → gun.skill → weapon_category → 맨손. Leaf·Attack·Override는 Presentation을 펼쳐 편집.\n" +
         "Fallbacks = AnimVerb Pipeline·Hit VFX·발사체 공용(거의 안 건드림). Semi/Burst/Auto는 Presentation Leaf.",
         InfoMessageType.None)]
     [SerializeField, HideInInspector] int _inspectorPad;
 
-    [Title("Unarmed", "아이템·카테고리 모두 없을 때 (마지막 진입점)", horizontalLine: false)]
+    [Title("Unarmed", "아이템·숙련·카테고리 모두 없을 때 (마지막 진입점)", horizontalLine: false)]
     [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
-    [Tooltip("아이템·카테고리 연결이 없을 때 쓰는 맨손 동작 목록입니다.")]
+    [Tooltip("아이템·gun.skill·카테고리 연결이 없을 때 쓰는 맨손 동작 목록입니다.")]
     [LabelText("맨손 Presentation")]
     [SerializeField] WeaponPresentation _unarmed;
 
@@ -50,7 +50,12 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
     [SerializeField] Binding[] _byItemId = Array.Empty<Binding>();
 
     [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "id")]
-    [Tooltip("아이템의 weapon_category에 맞춰 쓰는 동작 목록입니다. 아이템 전용이 없을 때 사용합니다.")]
+    [Tooltip("ItemData.gun.skill에 맞춰 쓰는 동작 목록입니다. 아이템 전용이 없을 때 사용합니다.")]
+    [LabelText("By Skill Id")]
+    [SerializeField] Binding[] _bySkillId = Array.Empty<Binding>();
+
+    [ListDrawerSettings(ShowFoldout = true, ListElementLabelName = "id")]
+    [Tooltip("아이템의 weapon_category에 맞춰 쓰는 동작 목록입니다. 아이템·숙련이 없을 때 사용합니다.")]
     [LabelText("By Category Id")]
     [SerializeField] Binding[] _byCategoryId = Array.Empty<Binding>();
 
@@ -76,6 +81,7 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
     public WeaponPresentation Unarmed => _unarmed;
     public WeaponCombatFallbacks Fallbacks => _fallbacks;
     public Binding[] ByItemId => _byItemId;
+    public Binding[] BySkillId => _bySkillId;
     public Binding[] ByCategoryId => _byCategoryId;
     public ArmAnimSlotCatalog AnimPipeline =>
         _fallbacks != null ? _fallbacks.AnimPipeline : null;
@@ -105,6 +111,11 @@ public sealed class WeaponPresentationCatalog : ScriptableObject
         if (!string.IsNullOrEmpty(itemId) &&
             TryFind(_byItemId, itemId, out WeaponPresentation byItem))
             return byItem;
+
+        string skillId = item?.gun != null ? item.gun.skill : null;
+        if (!string.IsNullOrEmpty(skillId) &&
+            TryFind(_bySkillId, skillId, out WeaponPresentation bySkill))
+            return bySkill;
 
         if (item?.weapon_category != null)
         {

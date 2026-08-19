@@ -224,7 +224,8 @@ public sealed class UICharacterWieldSlotView :
         int required = GearHandleRules.RequiredStr(stack.Item, twoHand);
         bool strain = GearHandleRules.HasLiftStrain(_strength, stack.Item, twoHand);
         var sb = new StringBuilder(160);
-        sb.Append(UITextPresenter.GetItemName(stack.Item)).Append('\n');
+        sb.Append(ItemAmmoLabels.AppendState(UITextPresenter.GetItemName(stack.Item), stack))
+            .Append('\n');
         sb.Append(CharacterGearLabels.FormatRequiredStr(required, _strength, strain));
         _onHover?.Invoke(sb.ToString(), transform as RectTransform);
     }
@@ -263,6 +264,11 @@ public sealed class UICharacterWieldSlotView :
 
     public void OnDrop(PointerEventData eventData)
     {
+        ItemStack target = _gear?.Wield?.Get(_slot);
+        InventorySession session = PlayerInventoryRuntime.Active?.Session;
+        if (WeaponAmmoDrop.TryApplyTo(target, session))
+            return;
+
         GearInventoryDrop.TryWieldFromActiveDrag(_slot);
     }
 

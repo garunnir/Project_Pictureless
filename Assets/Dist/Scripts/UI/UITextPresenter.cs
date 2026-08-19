@@ -72,4 +72,13 @@ public static class UITextPresenter
         DisplayLanguage language = LocalizationBundle.Get()?.ActiveLanguage ?? DisplayLanguage.Ko;
         return ItemNameTable.Get(ItemLocaleKind.RecipeCategory, categoryId, language);
     }
+
+    public static string GetQuality(string qualityId)
+    {
+        if (string.IsNullOrEmpty(qualityId))
+            return string.Empty;
+
+        DisplayLanguage language = LocalizationBundle.Get()?.ActiveLanguage ?? DisplayLanguage.Ko;
+        return ItemNameTable.Get(ItemLocaleKind.Quality, qualityId, language);
+    }
 }

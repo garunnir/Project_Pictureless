@@ -122,6 +122,22 @@ public sealed class InventoryContainer : IItemContainer
         return count;
     }
 
+    public int TryTakeFromStack(ItemStack stack, int count)
+    {
+        if (stack == null || count <= 0 || !_stacks.Contains(stack))
+            return 0;
+
+        int taken = count < stack.Count ? count : stack.Count;
+        if (taken >= stack.Count)
+            _stacks.Remove(stack);
+        else
+            stack.SetCount(stack.Count - taken);
+
+        if (taken > 0)
+            NotifyContentsChanged();
+        return taken;
+    }
+
     public int AddItem(string itemId, int count)
     {
         ItemData item = GameplayData.GetItem(itemId);

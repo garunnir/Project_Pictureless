@@ -35,6 +35,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     CharacterSkillsHost _skillsHost;
     PlayerGearHost _gearHost;
     CharacterClimateHost _climateHost;
+    CharacterActionHost _actionHost;
     CharacterState _characterState;
     PlayerAimController _aimController;
     CharacterLocomotionAnim _locAnim;
@@ -46,6 +47,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     int _debugContactCount;
     float _debugCueUntilUnscaled;
     readonly float[] _cooldownRemaining = new float[HandCooldownSlotCount];
+    readonly float[] _cooldownDuration = new float[HandCooldownSlotCount];
     readonly PendingAttack[] _pendingCues = new PendingAttack[PendingCueSlotCount];
     readonly string[] _hitChannelScratch = new string[AttackDamageTags.MaxChannels];
 
@@ -86,6 +88,42 @@ public sealed class CharacterAttacker : MonoBehaviour
     {
         int index = FindPending(hand);
         return index >= 0 && _pendingCues[index].Armed && !_pendingCues[index].CueFired;
+    }
+
+    public bool IsActionBusy
+    {
+        get
+        {
+            if (HasPendingAttackCue)
+                return true;
+            for (int i = 0; i < _cooldownRemaining.Length; i++)
+            {
+                if (_cooldownRemaining[i] > 0f)
+                    return true;
+            }
+
+            return false;
+        }
+    }
+
+    public float CooldownProgress01
+    {
+        get
+        {
+            float bestRemaining = 0f;
+            float bestDuration = 0f;
+            for (int i = 0; i < _cooldownRemaining.Length; i++)
+            {
+                if (_cooldownRemaining[i] <= bestRemaining)
+                    continue;
+                bestRemaining = _cooldownRemaining[i];
+                bestDuration = _cooldownDuration[i];
+            }
+
+            if (bestDuration <= 0f)
+                return HasPendingAttackCue ? 0f : 1f;
+            return 1f - Mathf.Clamp01(bestRemaining / bestDuration);
+        }
     }
 
     public LayerMask RangedObstructionMask => _rangedObstructionMask;
@@ -134,6 +172,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         _skillsHost = GetComponent<CharacterSkillsHost>();
         TryGetComponent(out _gearHost);
         TryGetComponent(out _climateHost);
+        TryGetComponent(out _actionHost);
         TryGetComponent(out _characterState);
         TryGetComponent(out _aimController);
         TryGetComponent(out _locAnim);
@@ -170,6 +209,8 @@ public sealed class CharacterAttacker : MonoBehaviour
         DrawMeleeHitboxDebugLines();
 
         float dt = TimeScaleService.Delta(_timeChannel);
+        if (_actionHost != null)
+            dt *= _actionHost.ActionTickScale;
         if (dt <= 0f)
             return;
 
@@ -984,8 +1025,13 @@ public sealed class CharacterAttacker : MonoBehaviour
         AnyAttackJudged?.Invoke(outcome);
     }
 
-    void BeginCooldown(WieldHand hand, float seconds) =>
-        _cooldownRemaining[CooldownIndex(hand)] = Mathf.Max(0f, seconds);
+    void BeginCooldown(WieldHand hand, float seconds)
+    {
+        int index = CooldownIndex(hand);
+        float duration = Mathf.Max(0f, seconds);
+        _cooldownRemaining[index] = duration;
+        _cooldownDuration[index] = duration;
+    }
 
     static int CooldownIndex(WieldHand hand)
     {

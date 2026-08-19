@@ -14,7 +14,9 @@ public sealed class GearTimedAction
         TakeOff,
         Wield,
         Unwield,
-        InventoryTransfer
+        InventoryTransfer,
+        AmmoLoad,
+        MagAttach
     }
 
     float _elapsed;

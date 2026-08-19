@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33043d8f96db2754db1bb10aec9ab00d, type: 3}
   m_Name: InventoryListColumnLayoutSettings
   m_EditorClassIdentifier: Dist.Inventory.UI::InventoryListColumnLayoutSettings
-  _iconSize: 32
-  _categoryWidth: 40
+  _iconSize: 20
+  _categoryWidth: 30
   _countWidth: 28
   _weightValueWidth: 40
   _weightUnitWidth: 22

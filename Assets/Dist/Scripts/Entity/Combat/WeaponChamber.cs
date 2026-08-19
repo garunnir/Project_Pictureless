@@ -1,11 +1,11 @@
 // ============================================================
-// WeaponChamber — 약실 SSOT 조회·메거진 보급 1발 (Attack이 호출)
+// WeaponChamber — 약실 SSOT 조회·장착 탄창 보급 1발 (Attack이 호출)
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
 
 /// <summary>
-/// 약실은 ItemInstance. 메거진은 Nested/장착 보급만. clip_size는 용량 힌트.
+/// 약실은 ItemInstance. 탄창은 LoadedMagazine + SupplyRounds. clip_size는 클립 용량.
 /// </summary>
 public static class WeaponChamber
 {
@@ -25,31 +25,13 @@ public static class WeaponChamber
 
     public static bool TryGetMagazine(ItemStack weapon, out ItemStack magazine)
     {
-        magazine = null;
-        InventoryContainer nested = weapon?.Nested;
-        if (nested == null)
-            return false;
-
-        var stacks = nested.Stacks;
-        for (int i = 0; i < stacks.Count; i++)
-        {
-            ItemStack candidate = stacks[i];
-            if (candidate?.Item?.magazine == null)
-                continue;
-            magazine = candidate;
-            return true;
-        }
-
-        return false;
+        magazine = weapon != null ? weapon.LoadedMagazine : null;
+        return magazine?.Item?.magazine != null;
     }
 
     public static bool HasSupply(ItemStack magazine)
     {
-        if (magazine == null)
-            return false;
-        if (magazine.Instance != null && magazine.Instance.SupplyRounds > 0)
-            return true;
-        return FindAmmoStack(magazine.Nested) != null;
+        return magazine?.Instance != null && magazine.Instance.SupplyRounds > 0;
     }
 
     public static bool CanCommitFire(
@@ -103,11 +85,11 @@ public static class WeaponChamber
     public static bool TryConsume(ItemInstance instance) =>
         instance != null && instance.TryConsumeChamberRound();
 
-    /// <summary>기어/어택이 호출. 메거진 보급 1발 → 약실. WeaponAction.Reload 없음.</summary>
+    /// <summary>기어/어택이 호출. 탄창 보급 1발 → 약실. WeaponAction.Reload 없음.</summary>
     public static bool TryReload(ItemInstance instance, ItemStack weapon, ItemData item) =>
         TryFeedFromMagazine(instance, weapon, item);
 
-    /// <summary>약실에 기록된 탄, 없으면 메거진/총 Nested의 탄 스택.</summary>
+    /// <summary>약실에 기록된 탄, 없으면 장착 탄창 보급 탄.</summary>
     public static ItemData ResolveAmmo(ItemStack weapon, ItemInstance instance = null)
     {
         instance ??= weapon?.Instance;
@@ -118,15 +100,16 @@ public static class WeaponChamber
                 return loaded;
         }
 
-        if (TryGetMagazine(weapon, out ItemStack magazine))
+        if (TryGetMagazine(weapon, out ItemStack magazine) &&
+            magazine.Instance != null &&
+            !string.IsNullOrEmpty(magazine.Instance.SupplyAmmoId))
         {
-            ItemStack magAmmo = FindAmmoStack(magazine.Nested);
-            if (magAmmo?.Item?.ammo != null)
-                return magAmmo.Item;
+            ItemData magAmmo = GameplayData.GetItem(magazine.Instance.SupplyAmmoId);
+            if (magAmmo?.ammo != null)
+                return magAmmo;
         }
 
-        ItemStack loose = FindAmmoStack(weapon?.Nested);
-        return loose?.Item?.ammo != null ? loose.Item : null;
+        return null;
     }
 
     public static int ResolvePierce(ItemStack weapon, ItemInstance instance = null)
@@ -139,30 +122,8 @@ public static class WeaponChamber
     static bool TryTakeOneFromMagazine(ItemStack magazine, out string ammoId)
     {
         ammoId = null;
-        ItemStack ammo = FindAmmoStack(magazine?.Nested);
-        if (ammo?.Item != null && magazine.Nested.RemoveItem(ammo.Item, 1) > 0)
-        {
-            ammoId = ammo.Item.id;
-            return true;
-        }
-
-        return magazine?.Instance != null && magazine.Instance.TryTakeSupplyRound();
-    }
-
-    static ItemStack FindAmmoStack(InventoryContainer nested)
-    {
-        if (nested == null)
-            return null;
-
-        var stacks = nested.Stacks;
-        for (int i = 0; i < stacks.Count; i++)
-        {
-            ItemStack candidate = stacks[i];
-            if (candidate?.Item?.ammo == null || candidate.Count <= 0)
-                continue;
-            return candidate;
-        }
-
-        return null;
+        if (magazine?.Instance == null)
+            return false;
+        return magazine.Instance.TryTakeSupplyRounds(1, out ammoId) > 0;
     }
 }

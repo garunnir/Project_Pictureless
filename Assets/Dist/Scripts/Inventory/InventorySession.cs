@@ -20,6 +20,24 @@ public sealed class InventorySession
 
     public IReadOnlyList<InventoryContainer> GetSidebarContainers() => _sidebarContainers;
 
+    public bool TryFindOwner(ItemStack stack, out InventoryContainer owner)
+    {
+        owner = null;
+        if (stack == null)
+            return false;
+
+        for (int i = 0; i < _sidebarContainers.Count; i++)
+        {
+            InventoryContainer candidate = _sidebarContainers[i];
+            if (candidate == null || !candidate.ContainsStackReference(stack))
+                continue;
+            owner = candidate;
+            return true;
+        }
+
+        return false;
+    }
+
     public bool TryAddSidebarContainer(InventoryContainer container)
     {
         if (container == null)

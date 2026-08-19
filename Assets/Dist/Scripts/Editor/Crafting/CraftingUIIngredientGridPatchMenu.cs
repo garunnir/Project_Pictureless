@@ -118,11 +118,10 @@ static class CraftingUIIngredientGridPatchMenu
             IgnoreLayout(countT);
             PatchCount(countT.GetComponent<TMP_Text>());
 
-            RectTransform nameRt = nameT as RectTransform;
-            nameRt.anchorMin = Vector2.zero;
-            nameRt.anchorMax = Vector2.one;
-            nameRt.offsetMin = Vector2.zero;
-            nameRt.offsetMax = Vector2.zero;
+            SetBottomStrip(
+                nameT as RectTransform,
+                CraftingWindowLayout.IngredientQualityNameHeight,
+                CraftingWindowLayout.IngredientOverlayInset);
             IgnoreLayout(nameT);
             PatchQualityName(nameT.GetComponent<TMP_Text>());
             nameT.gameObject.SetActive(false);
@@ -261,7 +260,7 @@ static class CraftingUIIngredientGridPatchMenu
 
         text.font = LoadFont();
         text.fontSize = CraftingWindowLayout.FontSizeSmall;
-        text.alignment = TextAlignmentOptions.Center;
+        text.alignment = TextAlignmentOptions.Bottom;
         text.overflowMode = TextOverflowModes.Ellipsis;
         text.textWrappingMode = TextWrappingModes.Normal;
         text.raycastTarget = false;
@@ -331,6 +330,19 @@ static class CraftingUIIngredientGridPatchMenu
         rt.pivot = new Vector2(1f, 1f);
         rt.sizeDelta = new Vector2(width, height);
         rt.anchoredPosition = new Vector2(-inset, -inset);
+        rt.localScale = Vector3.one;
+    }
+
+    static void SetBottomStrip(RectTransform rt, float height, float inset)
+    {
+        if (rt == null)
+            return;
+
+        rt.anchorMin = new Vector2(0f, 0f);
+        rt.anchorMax = new Vector2(1f, 0f);
+        rt.pivot = new Vector2(0.5f, 0f);
+        rt.sizeDelta = new Vector2(-inset * 2f, height);
+        rt.anchoredPosition = new Vector2(0f, inset);
         rt.localScale = Vector3.one;
     }
 

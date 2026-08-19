@@ -19,6 +19,10 @@ public sealed class UICraftingController : MonoBehaviour
 
     public bool IsOpen => _isOpen;
     public bool IsCraftRunning => _isOpen && _window != null && _window.IsCraftRunning;
+    public float CraftProgress01 =>
+        _window != null ? _window.CraftProgress01 : 0f;
+
+    public void CancelRunningCraft() => _window?.CancelRunningCraft();
 
     void Awake()
     {

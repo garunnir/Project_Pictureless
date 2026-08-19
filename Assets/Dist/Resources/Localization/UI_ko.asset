@@ -27,6 +27,30 @@ MonoBehaviour:
     text: "\uBD84\uD574 \uBD88\uAC00"
   - key: ItemContextMenu.UnknownResult
     text: '?'
+  - key: ItemContextMenu.LoadAmmo
+    text: "\uC0BD\uD0C4"
+  - key: ItemContextMenu.AttachMag
+    text: "\uC7A5\uCC29"
+  - key: ItemContextMenu.SwapMag
+    text: "\uD0C4\uCC3D \uAD50\uCCB4"
+  - key: ItemContextMenu.DetachMag
+    text: "\uBD84\uB9AC"
+  - key: ItemContextMenu.UnloadAmmo
+    text: "\uD0C4 \uBE7C\uAE30"
+  - key: ItemContextMenu.AmmoBlocked
+    text: "\uD560 \uC218 \uC5C6\uC74C"
+  - key: ItemContextMenu.AmmoBusy
+    text: "\uB2E4\uB978 \uD589\uB3D9 \uC911"
+  - key: ItemContextMenu.AmmoFull
+    text: "\uAC00\uB4DD \uCC38"
+  - key: ItemContextMenu.AmmoWrong
+    text: "\uB2E4\uB978 \uD0C4\uC774 \uB4E4\uC5B4 \uC788\uC74C"
+  - key: ItemContextMenu.AmmoNoRoom
+    text: "\uB123\uC744 \uACF5\uAC04\uC774 \uC5C6\uC74C"
+  - key: ItemAmmo.MagSupplyFormat
+    text: '{0} ({1}/{2})'
+  - key: ItemAmmo.GunMagFormat
+    text: '{0} [{1}]'
   - key: ItemContextMenu.SubmenuChevron
     text: "\u25B6"
   - key: ItemDamage.1

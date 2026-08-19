@@ -87,6 +87,10 @@ public sealed class UICraftingWindow : MonoBehaviour
     float _craftDuration;
 
     public bool IsCraftRunning => _craftRunning;
+    public float CraftProgress01 =>
+        !_craftRunning || _craftDuration <= 0f
+            ? 0f
+            : Mathf.Clamp01(_craftElapsed / _craftDuration);
     int _pendingCraftQuantity;
     int _lastDisplayedTimeSeconds = -1;
     bool _lastTimeWasRemaining;
@@ -264,7 +268,11 @@ public sealed class UICraftingWindow : MonoBehaviour
         if (!_craftRunning)
             return;
 
-        _craftElapsed += WorldClock.DeltaGameMinutes();
+        float dt = WorldClock.DeltaGameMinutes();
+        CharacterActionHost actionHost = ResolveActionHost();
+        if (actionHost != null)
+            dt *= actionHost.ActionTickScale;
+        _craftElapsed += dt;
         BindProgress();
         BindCraftTimeDisplay(true);
         if (_craftElapsed >= _craftDuration)
@@ -837,7 +845,7 @@ public sealed class UICraftingWindow : MonoBehaviour
                 card.Bind(
                     CraftingIngredientKind.Quality,
                     iconItemId,
-                    quality.id,
+                    UITextPresenter.GetQuality(quality.id),
                     have,
                     quality.level,
                     quality.level,
@@ -1335,6 +1343,26 @@ public sealed class UICraftingWindow : MonoBehaviour
         if (!string.IsNullOrEmpty(knowledge) || ResolveMaxCrafts() < qty)
             return;
 
+        CharacterActionHost host = ResolveActionHost();
+        if (host != null)
+        {
+            host.TryRunOrEnqueue(CharacterActionKind.Craft, TryStartCraftNow);
+            return;
+        }
+
+        TryStartCraftNow();
+    }
+
+    bool TryStartCraftNow()
+    {
+        if (_craftRunning || _selected == null || _runtime?.Session == null || _pool == null)
+            return false;
+
+        string knowledge = RecipeKnowledge.GetFailureReason(_selected, _pool);
+        int qty = CraftQuantity;
+        if (!string.IsNullOrEmpty(knowledge) || ResolveMaxCrafts() < qty)
+            return false;
+
         _pendingCraftQuantity = qty;
         _craftDuration = _selected.time_minutes * qty;
         _craftElapsed = 0f;
@@ -1346,6 +1374,13 @@ public sealed class UICraftingWindow : MonoBehaviour
 
         if (_craftDuration <= 0f)
             CompleteCraft();
+        return true;
+    }
+
+    CharacterActionHost ResolveActionHost()
+    {
+        PlayerInventoryRuntime runtime = _runtime != null ? _runtime : PlayerInventoryRuntime.Active;
+        return runtime != null ? runtime.GetComponent<CharacterActionHost>() : null;
     }
 
     int CraftQuantity => Mathf.Max(1, _quantity);
@@ -1430,6 +1465,8 @@ public sealed class UICraftingWindow : MonoBehaviour
         BindQuantityAndTime(_selected != null);
         BindCraftButton(_selected != null);
     }
+
+    public void CancelRunningCraft() => CancelCraft();
 
     void CancelCraft()
     {

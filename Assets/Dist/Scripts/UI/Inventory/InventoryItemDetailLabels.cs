@@ -24,9 +24,11 @@ public static class InventoryItemDetailLabels
         if (stack?.Item == null)
             return string.Empty;
 
-        return ItemDamageLabels.FormatName(
-            UITextPresenter.GetItemName(stack.Item),
-            stack.DamageLevel);
+        return ItemAmmoLabels.AppendState(
+            ItemDamageLabels.FormatName(
+                UITextPresenter.GetItemName(stack.Item),
+                stack.DamageLevel),
+            stack);
     }
 
     public static bool TryFormatCategory(ItemData item, out string text)

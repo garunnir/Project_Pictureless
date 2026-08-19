@@ -10,6 +10,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerInventoryHost))]
 [RequireComponent(typeof(InventoryTimedMoveHost))]
+[RequireComponent(typeof(CharacterActionHost))]
 public sealed class PlayerGearHost : MonoBehaviour
 {
     [SerializeField] PlayerInventoryHost _inventoryHost;
@@ -21,6 +22,7 @@ public sealed class PlayerGearHost : MonoBehaviour
     [SerializeField] WeatherKind _weatherKind = WeatherKind.Clear;
 
     CharacterGearService _service;
+    CharacterActionHost _actionHost;
     CharacterClimateHost _climateHost;
     CharacterBodyHost _bodyHost;
     ICharacterBody _subscribedBody;
@@ -106,6 +108,8 @@ public sealed class PlayerGearHost : MonoBehaviour
         if (_service == null)
             return;
         float dt = TimeScaleService.Delta(_timeChannel);
+        if (_actionHost != null)
+            dt *= _actionHost.ActionTickScale;
         _service.Tick(dt);
         TickVisionAndNotify();
     }
@@ -162,6 +166,8 @@ public sealed class PlayerGearHost : MonoBehaviour
             TryGetComponent(out _climateHost);
         if (_bodyHost == null)
             TryGetComponent(out _bodyHost);
+        if (_actionHost == null)
+            TryGetComponent(out _actionHost);
     }
 
     void EnsureBound()
@@ -177,6 +183,7 @@ public sealed class PlayerGearHost : MonoBehaviour
             FloorContainer,
             RefreshPrimaryWield,
             ResolveCharacterBody);
+        _service.SetActionHost(_actionHost);
         _service.SetPresentationCatalog(_attacker != null ? _attacker.Catalog : null);
         _service.LiftStrainChanged += ApplyLiftStrainMovement;
         _service.Changed += OnServiceChanged;

@@ -1,11 +1,11 @@
-# Item catalog locale (names, descriptions, recipe categories)
+# Item catalog locale (names, descriptions, recipe categories, qualities)
 
 Canonical for BN/custom **catalog display strings** and how they tie to Data Definitions + fonts.
 
 ## Decision
 
 - **Data Definitions** (`Tools/Data Definitions`) is the hub for serialized editable game data. Prefer editing here (or entering from here); do not scatter parallel edit UIs.
-- **Catalog strings are locale-only.** Consumers go through `UITextPresenter` / `ItemNameTable` with `ItemLocaleKind` (`Name`, `Description`, `RecipeCategory`). Do **not** use `ItemData.name` / `ItemData.description` for display, edit, or fallback.
+- **Catalog strings are locale-only.** Consumers go through `UITextPresenter` / `ItemNameTable` with `ItemLocaleKind` (`Name`, `Description`, `RecipeCategory`, `Quality`). Do **not** use `ItemData.name` / `ItemData.description` / `QualityData.name` for display, edit, or fallback.
 - Lookup key is **id** plus kind discriminator. Slots **`en` / `ko` / `ja`** in one file.
 - Editing **Name** or **Description** in Definitions writes `GameData/item_names.json` for the **active** language. It does **not** change `items.json` `name` / `description`.
 - If Definitions is the better place to edit a setting, **do not add a separate SO** just for that UX. Exception: one `LocalizationBundle` SO holds TMP font asset references and active language. Language/font change is **rare** — edit the bundle in Inspector (Definitions toolbar `Loc Bundle` pings it). Do **not** put language/font fields inline on the Definitions hub.
@@ -17,7 +17,7 @@ Canonical for BN/custom **catalog display strings** and how they tie to Data Def
 
 | Path | Role |
 |------|------|
-| `Assets/StreamingAssets/BNData/item_names.json` | BN bake: `names` / `descriptions` / `recipe_categories` → `{ en, ko?, ja? }` |
+| `Assets/StreamingAssets/BNData/item_names.json` | BN bake: `names` / `descriptions` / `recipe_categories` / `qualities` → `{ en, ko?, ja? }` |
 | `Assets/StreamingAssets/GameData/item_names.json` | Project overlay (Definitions Name/Description edits + custom seeds) |
 | `Assets/Dist/Resources/Localization/LocalizationBundle.asset` | Active language + per-lang TMP fonts |
 
@@ -40,15 +40,15 @@ Same miss rule for every kind:
 1. Optional Dist force (names only): `Loc` key `Item.{id}` (`UI_ko`)
 2. `item_names[kind][id][activeLang]` (GameData overlay wins over BNData)
 3. If active ≠ `en` and miss → `en`
-4. Else `[Missing: names|descriptions|recipe_categories.{id}]` (UI + console once; JSON 슬롯)
+4. Else `[Missing: names|descriptions|recipe_categories|qualities.{id}]` (UI + console once; JSON 슬롯)
 
 Default active language: **`ko`**.
 
-`recipe_categories` holds both `CC_*` and `CSC_*`. UI chrome (`Crafting.All`, `Crafting.Favourites`) stays `Loc`.
+`recipe_categories` holds both `CC_*` and `CSC_*`. UI chrome (`Crafting.All`, `Crafting.Favourites`) stays `Loc`. Tool quality display names (`CUT` → cutting) live in `qualities`; crafting cards use `UITextPresenter.GetQuality`.
 
 ## Caution
 
-- Do not display via `ItemData.name` / `stack.Item.name` / `item.description`.
+- Do not display via `ItemData.name` / `stack.Item.name` / `item.description` / `QualityData.name`.
 - Do not mass-edit `item_names.json` by hand when Definitions/convert can do it.
 - Do not use English msgid as runtime key; do not copy `ko.po`/`ja.po` into StreamingAssets.
 - Do not merge BN catalog strings into `UI_ko.asset`.

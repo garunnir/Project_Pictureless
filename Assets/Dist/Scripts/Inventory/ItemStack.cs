@@ -12,6 +12,8 @@ public sealed class ItemStack
     public string ItemId => Item?.id;
     public int Count { get; private set; }
     public InventoryContainer Nested { get; private set; }
+    /// <summary>총에 끼운 탄창. Nested 가방이 아님.</summary>
+    public ItemStack LoadedMagazine { get; private set; }
     public int DamageLevel => Instance.DamageLevel;
 
     public ItemStack(ItemData item, int count)
@@ -33,6 +35,8 @@ public sealed class ItemStack
             float total = Item.Weight * Count;
             if (Nested != null)
                 total += Nested.GetTotalWeight();
+            if (LoadedMagazine != null)
+                total += LoadedMagazine.TotalWeight;
             return total;
         }
     }
@@ -71,6 +75,21 @@ public sealed class ItemStack
         }
 
         return ArmorStorageNested.TryEnsure(this, nestedPolicy);
+    }
+
+    public bool TryAttachMagazine(ItemStack magazine)
+    {
+        if (magazine?.Item?.magazine == null || LoadedMagazine != null)
+            return false;
+        LoadedMagazine = magazine;
+        return true;
+    }
+
+    public ItemStack DetachMagazine()
+    {
+        ItemStack removed = LoadedMagazine;
+        LoadedMagazine = null;
+        return removed;
     }
 
     internal void AssignNested(InventoryContainer nested) => Nested = nested;

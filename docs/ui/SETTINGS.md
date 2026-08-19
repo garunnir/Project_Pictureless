@@ -54,6 +54,8 @@ Editor: `Assets/Dist/Scripts/Editor/Settings/SettingsUISetupMenu.cs`
 
 | 80 | `UiCancelPriority.ModalPopup` | (예약) |
 
+| 60 | `UiCancelPriority.CharacterAction` | `CharacterActionCancelConsumer` (possessed `CancelAll`) |
+
 | 40 | `UiCancelPriority.OverlayWindow` | (예약) |
 
 | 0 | `UiCancelPriority.Settings` | `UISettingsController` |

@@ -29,6 +29,9 @@ public sealed class ItemInstance
     /// <summary>메거진 아이템의 보급 잔여. 약실이 아님.</summary>
     public int SupplyRounds { get; private set; }
 
+    /// <summary>보급 탄 ItemData.id. 잔여 0이면 비움.</summary>
+    public string SupplyAmmoId { get; private set; }
+
     /// <summary>공구 충전 잔여. tool이 없으면 0.</summary>
     public int ToolCharges { get; private set; }
 
@@ -41,6 +44,7 @@ public sealed class ItemInstance
         ChamberRounds = 0;
         ChamberAmmoId = null;
         SupplyRounds = 0;
+        SupplyAmmoId = null;
         ToolCharges = item.tool != null ? Math.Max(0, item.tool.initial_charges) : 0;
     }
 
@@ -51,8 +55,50 @@ public sealed class ItemInstance
             ChamberAmmoId = null;
     }
 
-    public void SetSupplyRounds(int rounds) =>
+    public void SetSupplyRounds(int rounds)
+    {
         SupplyRounds = Math.Max(0, rounds);
+        if (SupplyRounds <= 0)
+            SupplyAmmoId = null;
+    }
+
+    public int TryAddSupplyRounds(int count, string ammoId, int capacity)
+    {
+        if (count <= 0 || capacity <= 0 || string.IsNullOrEmpty(ammoId))
+            return 0;
+        if (SupplyRounds > 0 &&
+            !string.Equals(SupplyAmmoId, ammoId, StringComparison.Ordinal))
+            return 0;
+
+        int room = capacity - SupplyRounds;
+        if (room <= 0)
+            return 0;
+
+        int added = count < room ? count : room;
+        SupplyRounds += added;
+        SupplyAmmoId = ammoId;
+        return added;
+    }
+
+    public int TryTakeSupplyRounds(int count, out string ammoId)
+    {
+        ammoId = SupplyAmmoId;
+        if (count <= 0 || SupplyRounds <= 0)
+        {
+            ammoId = null;
+            return 0;
+        }
+
+        int taken = count < SupplyRounds ? count : SupplyRounds;
+        SupplyRounds -= taken;
+        if (SupplyRounds <= 0)
+        {
+            SupplyRounds = 0;
+            SupplyAmmoId = null;
+        }
+
+        return taken;
+    }
 
     public bool TryAddChamberRound(int capacity, string ammoId = null)
     {
@@ -76,9 +122,8 @@ public sealed class ItemInstance
 
     public bool TryTakeSupplyRound()
     {
-        if (SupplyRounds <= 0)
+        if (TryTakeSupplyRounds(1, out _) <= 0)
             return false;
-        SupplyRounds--;
         return true;
     }
 

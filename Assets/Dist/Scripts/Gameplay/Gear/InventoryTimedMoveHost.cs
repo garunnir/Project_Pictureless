@@ -14,6 +14,7 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
 {
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
 
+    CharacterActionHost _actionHost;
     readonly GearTimedAction _timed = new();
     readonly List<ItemStack> _queue = new(8);
     readonly List<ItemStack> _activeStacks = new(1);
@@ -35,6 +36,11 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
     public IReadOnlyList<ItemStack> ActiveStacks => _activeStacks;
 
     public event Action Changed;
+
+    void Awake()
+    {
+        TryGetComponent(out _actionHost);
+    }
 
     void OnEnable()
     {
@@ -58,7 +64,10 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
     {
         if (!_timed.IsRunning)
             return;
-        _timed.Tick(TimeScaleService.Delta(_timeChannel));
+        float dt = TimeScaleService.Delta(_timeChannel);
+        if (_actionHost != null)
+            dt *= _actionHost.ActionTickScale;
+        _timed.Tick(dt);
     }
 
     public bool IsStackActive(ItemStack stack)
@@ -82,7 +91,7 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
         IReadOnlyList<ItemStack> stacks,
         Action onApplied = null)
     {
-        return TryBeginQueue(session, from, to, stacks, onApplied);
+        return RunOrEnqueue(() => TryBeginQueue(session, from, to, stacks, onApplied));
     }
 
     public bool TryBeginSequentialUntilFull(
@@ -93,10 +102,15 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
         Action onApplied = null)
     {
         // 용량 초과 시 해당 스택에서 중단 — 순차 1스택 MoveStacks와 동일.
-        return TryBeginQueue(session, from, to, stacks, onApplied);
+        return RunOrEnqueue(() => TryBeginQueue(session, from, to, stacks, onApplied));
     }
 
     public bool TryBegin(float durationSeconds, Action apply)
+    {
+        return RunOrEnqueue(() => TryBeginCore(durationSeconds, apply));
+    }
+
+    bool TryBeginCore(float durationSeconds, Action apply)
     {
         if (IsBusy || apply == null)
             return false;
@@ -135,6 +149,15 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
             _timed.Cancel();
         else
             EndTransfer();
+    }
+
+    bool RunOrEnqueue(Func<bool> start)
+    {
+        if (start == null)
+            return false;
+        if (_actionHost == null)
+            return start();
+        return _actionHost.TryRunOrEnqueue(CharacterActionKind.Inventory, start);
     }
 
     bool TryBeginQueue(

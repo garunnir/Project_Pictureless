@@ -94,8 +94,8 @@ static class GameDataWeaponPresentationEditor
         }
 
         EditorGUILayout.HelpBox(
-            "이 아이템 전용 동작 목록입니다. 비어 있으면 카탈로그가 무기 카테고리, " +
-            "그래도 없으면 맨손을 씁니다.\n" +
+            "이 아이템 전용 동작 목록입니다. 비어 있으면 카탈로그가 gun.skill, " +
+            "그래도 없으면 weapon_category, 그래도 없으면 맨손을 씁니다.\n" +
             "Ensure Presentation: 전용 에셋을 만들고 연결합니다. Unlink: 연결만 끊고 에셋은 남깁니다.",
             MessageType.None);
 

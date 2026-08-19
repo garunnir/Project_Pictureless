@@ -25,6 +25,7 @@ public sealed class PlayerCombatController : MonoBehaviour
     CharacterState _characterState;
     PlayerAimController _aimController;
     DualWieldAttackDriver _dualDriver;
+    CharacterActionHost _actionHost;
     readonly RaycastHit[] _hits = new RaycastHit[PhysicsHitBufferSize];
     readonly List<RaycastResult> _uiRaycastResults = new();
     bool _connected;
@@ -35,6 +36,7 @@ public sealed class PlayerCombatController : MonoBehaviour
         _characterState = GetComponent<CharacterState>();
         _aimController = GetComponent<PlayerAimController>();
         _dualDriver = GetComponent<DualWieldAttackDriver>();
+        TryGetComponent(out _actionHost);
     }
 
     void OnDisable() => DisconnectInput();
@@ -96,11 +98,25 @@ public sealed class PlayerCombatController : MonoBehaviour
         }
 
         TryResolveAimedTarget(out CharacterBodyHost target);
-
-        if (_dualDriver != null && _dualDriver.TryPerformDual(target))
+        CharacterBodyHost captured = target;
+        if (_actionHost != null)
+        {
+            _actionHost.TryRunOrEnqueue(CharacterActionKind.Combat, () => ExecuteAttack(captured));
             return;
+        }
 
+        ExecuteAttack(target);
+    }
+
+    bool ExecuteAttack(CharacterBodyHost target)
+    {
+        if (_dualDriver != null && _dualDriver.TryPerformDual(target))
+            return _attacker != null && _attacker.IsActionBusy;
+
+        if (_attacker == null)
+            return false;
         _attacker.TryPerformSelected(target);
+        return _attacker.IsActionBusy;
     }
 
     bool TryResolveAimedTarget(out CharacterBodyHost target)

@@ -52978,5 +52978,272 @@
     "CSC_WEAPON_RANGED": {
       "en": "Weapon Ranged"
     }
+  },
+  "qualities": {
+    "CUT": {
+      "en": "cutting",
+      "ko": "절단",
+      "ja": "切断"
+    },
+    "CUT_FINE": {
+      "en": "fine cutting",
+      "ko": "정밀 절단",
+      "ja": "精密切断"
+    },
+    "GLARE": {
+      "en": "glare protection",
+      "ko": "눈부심 방지",
+      "ja": "遮光"
+    },
+    "SHEAR": {
+      "en": "shearing",
+      "ko": "털깎기",
+      "ja": "毛刈"
+    },
+    "CHURN": {
+      "en": "churn",
+      "ko": "휘젓기",
+      "ja": "攪拌"
+    },
+    "LEATHER_AWL": {
+      "en": "awl",
+      "ko": "송곳",
+      "ja": "目打ち"
+    },
+    "SEW_CURVED": {
+      "en": "curved needle",
+      "ko": "굽은 바늘",
+      "ja": "湾曲針"
+    },
+    "ANESTHESIA": {
+      "en": "anesthesia",
+      "ko": "마취",
+      "ja": "麻酔"
+    },
+    "FISHING": {
+      "en": "fishing",
+      "ko": "낚시",
+      "ja": "魚釣り"
+    },
+    "SMOOTH": {
+      "en": "smoothing",
+      "ko": "미장",
+      "ja": "平滑化"
+    },
+    "WELD": {
+      "en": "welding",
+      "ko": "용접",
+      "ja": "溶接"
+    },
+    "HAMMER": {
+      "en": "hammering",
+      "ko": "망치",
+      "ja": "打込"
+    },
+    "HAMMER_FINE": {
+      "en": "fine hammering",
+      "ko": "정밀 망치",
+      "ja": "精密打込"
+    },
+    "SAW_W": {
+      "en": "wood sawing",
+      "ko": "목재절삭",
+      "ja": "製材"
+    },
+    "SAW_M": {
+      "en": "metal sawing",
+      "ko": "금속절삭",
+      "ja": "金工"
+    },
+    "SAW_M_FINE": {
+      "en": "fine metal sawing",
+      "ko": "정밀 금속절삭",
+      "ja": "精密金工"
+    },
+    "COOK": {
+      "en": "food cooking",
+      "ko": "요리",
+      "ja": "調理"
+    },
+    "BOIL": {
+      "en": "boiling",
+      "ko": "끓이기",
+      "ja": "煮沸"
+    },
+    "CONTAIN": {
+      "en": "containing",
+      "ko": "담기",
+      "ja": "梱包"
+    },
+    "CHEM": {
+      "en": "chemical making",
+      "ko": "화학 제조",
+      "ja": "調合"
+    },
+    "SMOKE_PIPE": {
+      "en": "smoking",
+      "ko": "흡연",
+      "ja": "喫煙"
+    },
+    "DISTILL": {
+      "en": "distilling",
+      "ko": "증류",
+      "ja": "蒸留"
+    },
+    "AXE": {
+      "en": "tree cutting",
+      "ko": "벌목",
+      "ja": "伐採"
+    },
+    "DIG": {
+      "en": "digging",
+      "ko": "땅파기",
+      "ja": "穴掘"
+    },
+    "WRENCH": {
+      "en": "bolt turning",
+      "ko": "볼트 돌리기",
+      "ja": "ボルト締緩"
+    },
+    "WRENCH_FINE": {
+      "en": "fine bolt turning",
+      "ko": "정밀 볼트 돌리기",
+      "ja": "精密ボルト締緩"
+    },
+    "SCREW": {
+      "en": "screw driving",
+      "ko": "나사 돌리기",
+      "ja": "ネジ締緩"
+    },
+    "SCREW_FINE": {
+      "en": "fine screw driving",
+      "ko": "정밀 나사 돌리기",
+      "ja": "精密ネジ締緩"
+    },
+    "BUTCHER": {
+      "en": "butchering",
+      "ko": "도축",
+      "ja": "解体"
+    },
+    "DRILL": {
+      "en": "drilling",
+      "ko": "구멍 뚫기",
+      "ja": "穿孔"
+    },
+    "PRY": {
+      "en": "prying",
+      "ko": "지레",
+      "ja": "こじ開け"
+    },
+    "LIFT": {
+      "en": "lifting",
+      "ko": "들어올리기",
+      "ja": "吊り上げ"
+    },
+    "JACK": {
+      "en": "jacking",
+      "ko": "잭 사용",
+      "ja": "持ち上げ"
+    },
+    "SELF_JACK": {
+      "en": "self jacking",
+      "ko": "자력 잭 사용",
+      "ja": "持ち上げ(セルフ)"
+    },
+    "HOSE": {
+      "en": "siphoning",
+      "ko": "액체 흡입",
+      "ja": "抜取"
+    },
+    "CHISEL": {
+      "en": "chiseling",
+      "ko": "조각",
+      "ja": "彫刻"
+    },
+    "SEW": {
+      "en": "sewing",
+      "ko": "재봉",
+      "ja": "裁縫"
+    },
+    "KNIT": {
+      "en": "knitting",
+      "ko": "뜨개질",
+      "ja": "毛編"
+    },
+    "PULL": {
+      "en": "bullet pulling",
+      "ko": "탄약 분해",
+      "ja": "弾頭抜取"
+    },
+    "ANVIL": {
+      "en": "anvil",
+      "ko": "모루",
+      "ja": "金床"
+    },
+    "ANALYSIS": {
+      "en": "analysis",
+      "ko": "분해",
+      "ja": "分析"
+    },
+    "CONCENTRATE": {
+      "en": "concentration",
+      "ko": "농축",
+      "ja": "濃縮"
+    },
+    "SEPARATE": {
+      "en": "separation",
+      "ko": "분리",
+      "ja": "分離"
+    },
+    "FINE_DISTILL": {
+      "en": "fine distillation",
+      "ko": "정밀 증류",
+      "ja": "精密蒸留"
+    },
+    "CHROMATOGRAPHY": {
+      "en": "chromatography",
+      "ko": "크로마토그래피",
+      "ja": "色層分析"
+    },
+    "GRIND": {
+      "en": "grinding",
+      "ko": "연마",
+      "ja": "研削"
+    },
+    "REAM": {
+      "en": "reaming",
+      "ko": "리밍",
+      "ja": "穴径拡張"
+    },
+    "FILE": {
+      "en": "filing",
+      "ko": "줄질",
+      "ja": "研磨"
+    },
+    "VISE": {
+      "en": "clamping",
+      "ko": "고정",
+      "ja": "固定"
+    },
+    "PRESSURIZATION": {
+      "en": "pressurizing",
+      "ko": "가압",
+      "ja": "加圧"
+    },
+    "LOCKPICK": {
+      "en": "lockpicking",
+      "ko": "잠금해제",
+      "ja": "解錠"
+    },
+    "EXTRACT": {
+      "en": "extraction",
+      "ko": "추출",
+      "ja": "抽出"
+    },
+    "FILTER": {
+      "en": "filtration",
+      "ko": "여과",
+      "ja": "ろ過"
+    }
   }
 }

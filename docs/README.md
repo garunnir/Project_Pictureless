@@ -9,7 +9,7 @@
 | Game time | [`time/TIME.md`](time/TIME.md) | `game-time.mdc` |
 | Map / TileMap | [`map/SYSTEM.md`](map/SYSTEM.md) → TileMap 세부 | `map-system.mdc` · `tile-chunk-streaming.mdc` |
 | Inventory UI | [`inventory/INVENTORY_UI.md`](inventory/INVENTORY_UI.md) | `inventory-ui.mdc` |
-| Item catalog locale (name / desc / recipe cat) | [`inventory/ITEM_NAMES.md`](inventory/ITEM_NAMES.md) | (Data Definitions hub · LocalizationBundle) |
+| Item catalog locale (name / desc / recipe cat / quality) | [`inventory/ITEM_NAMES.md`](inventory/ITEM_NAMES.md) | (Data Definitions hub · LocalizationBundle) |
 | Equipment / Wear·Wield | [`equipment/GEAR.md`](equipment/GEAR.md) | (Character window · transfer duration) |
 | Weapon anim / VFX folders | [`equipment/WEAPON_VISUAL.md`](equipment/WEAPON_VISUAL.md) | (hub → Pipeline → clips/prefabs) |
 | BN converter whitelist | [`equipment/BN_BAKE.md`](equipment/BN_BAKE.md) | (`convert.py` → BNData; promote when Dist has a consumer) |
@@ -20,6 +20,7 @@
 | Crafting window | [`crafting/CRAFTING.md`](crafting/CRAFTING.md) | (창 vs 아이템 메뉴 · 재료 풀 · 대체재 드롭) |
 | Locomotion | [`locomotion/LOCOMOTION.md`](locomotion/LOCOMOTION.md) | `locomotion.mdc` |
 | Character definition / spawn | [`character/DEFINITION.md`](character/DEFINITION.md) | — |
+| Character action / gauge | [`character/ACTION.md`](character/ACTION.md) | (행위자 큐·TickScale·CancelAll) |
 | Body / anatomy / climate | [`body/BODY.md`](body/BODY.md) | — |
 | Legacy | [`legacy/LEGACY_README.md`](legacy/LEGACY_README.md) | `legacy.mdc` |
 

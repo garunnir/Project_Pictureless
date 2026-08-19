@@ -44,6 +44,7 @@ public sealed class UIItemListView : MonoBehaviour
     ItemListSortKey _sortKey = ItemListSortKey.None;
     bool _sortAscending = true;
 
+    public InventorySession Session => _session;
     public InventoryListSelection Selection => _selection;
     public int ActiveRowCount => _activeRows.Count;
     public int BoundStackCount => _orderedStacks.Count;

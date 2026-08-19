@@ -1,7 +1,7 @@
 # BN bake (converter whitelist)
 
 Canonical for `Tools/bn_converter/convert.py` → `Assets/StreamingAssets/BNData`.  
-Gear runtime (Wear/Wield) stays in [`GEAR.md`](GEAR.md). Catalog locale (names / descriptions / recipe categories): [`ITEM_NAMES.md`](../inventory/ITEM_NAMES.md).
+Gear runtime (Wear/Wield) stays in [`GEAR.md`](GEAR.md). Catalog locale (names / descriptions / recipe categories / qualities): [`ITEM_NAMES.md`](../inventory/ITEM_NAMES.md).
 
 ## Policy
 
@@ -17,7 +17,7 @@ Command:
 python Tools/bn_converter/convert.py --bn-path <Cataclysm-BN> --output Assets/StreamingAssets/BNData
 ```
 
-`--locale-only` keeps `items.json` / `recipes.json` and rewrites `item_names.json` (`names` / `descriptions` / `recipe_categories`).
+`--locale-only` keeps existing `items.json` / `recipes.json` and rewrites `item_names.json` (`names` / `descriptions` / `recipe_categories` / `qualities`).
 
 Does **not** overwrite `GameData/items.json` demo seeds.
 
@@ -36,7 +36,7 @@ Item common: `id`, `name`(singular), `type`, `category`, `subcategory`, `descrip
 | Block | Fields |
 |-------|--------|
 | armor | covers (L/R expand), coverage, encumbrance, max_encumbrance, warmth, environmental_protection, material_thickness, power_armor, storage, pockets[{volume_ml,moves}], layer, sided |
-| gun | skill, ammo, ranged_damage (flatten amount), range, dispersion, recoil, durability, clip_size, reload, **burst** (Dist: Burst Leaf 샷 수; 0이면 `WeaponActionUtil.DefaultBurstShots`) |
+| gun | skill (**Catalog By Skill Id** 모션 폴백), ammo, ranged_damage (flatten amount), range, dispersion, recoil, durability, clip_size, reload, **burst** (Dist: Burst Leaf 샷 수; 0이면 `WeaponActionUtil.DefaultBurstShots`), **magazines** `[{ammo_type, magazines[]}]` (장착 허용 탄창 id) |
 | ammo | ammo_type, damage (flatten amount), pierce (AP), damage_type, range, dispersion, recoil, count, shot_damage, projectile_count, shot_spread, effects, casing, loudness |
 | magazine | ammo_type, capacity, default_ammo, reliability, reload_time |
 | tool | max/initial charges, charges_per_use, turns_per_charge, ammo, revert_to |
@@ -90,7 +90,7 @@ Parked is everything in the next section. Weather JSON / visor FOV stay Parked (
 
 ### Gun (beyond current `GunDetailData`)
 
-`loudness`, `handling`, **`modes`**, `valid_mod_locations`, `built_in_mods`, `default_mods`, `magazines`, `magazine_well`, `ups_charges`, `ammo_effects`, `sight_dispersion`, `aim_speed`, `barrel_length` / `barrel_volume`, `reload_noise`, `blackpowder_tolerance`, `min_cycle_recoil`.
+`loudness`, `handling`, **`modes`**, `valid_mod_locations`, `built_in_mods`, `default_mods`, `magazine_well`, `ups_charges`, `ammo_effects`, `sight_dispersion`, `aim_speed`, `barrel_length` / `barrel_volume`, `reload_noise`, `blackpowder_tolerance`, `min_cycle_recoil`.
 
 **`modes` (Parked) vs Dist Leaf (interim):**
 
@@ -104,7 +104,7 @@ Parked is everything in the next section. Weather JSON / visor FOV stay Parked (
 | Auto 홀드 연사 | **Pending** — 현재는 클릭당 볼리 |
 | `modes` bake | Promote when Dist maps BN mode ids → Leaf mask without manual Ensure |
 
-Chamber finds magazines by nested `magazine` block (not `gun.magazines` list). Combat already uses baked ammo `damage` / `damage_type` / `pierce` / `range` / `dispersion`.
+`gun.magazines` is **Baked** — Dist 장착/교체가 허용 탄창 id를 본다. Combat feed is `ItemStack.LoadedMagazine` + `SupplyRounds` (not Nested). Ammo `damage` / `damage_type` / `pierce` / `range` / `dispersion` still from chambered round.
 
 ### Gunmod (`GUNMOD`)
 

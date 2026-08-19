@@ -81,6 +81,21 @@ def test_export_gun_object():
     _eq(gun["ranged_damage"], 5, "gun.ranged_damage")
 
 
+def test_export_gun_magazines():
+    gun = export_gun_detail(
+        {
+            "skill": "rifle",
+            "magazines": [["308", ["g3mag", "g3bigmag", "g3_makeshiftmag"]]],
+        },
+        "GUN",
+    )
+    _eq(
+        gun["magazines"],
+        [{"ammo_type": "308", "magazines": ["g3mag", "g3bigmag", "g3_makeshiftmag"]}],
+        "gun.magazines",
+    )
+
+
 def test_copyfrom_relative_damage():
     parent = {
         "damage": {"damage_type": "bullet", "amount": 26, "armor_penetration": 2}
@@ -136,6 +151,7 @@ if __name__ == "__main__":
         test_export_ammo_object,
         test_export_ammo_legacy_int,
         test_export_gun_object,
+        test_export_gun_magazines,
         test_copyfrom_relative_damage,
         test_copyfrom_proportional_damage,
         test_copyfrom_partial_damage_override,

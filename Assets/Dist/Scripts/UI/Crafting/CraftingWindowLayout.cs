@@ -26,6 +26,7 @@ public static class CraftingWindowLayout
     public const float IngredientKindBadgeSize = 12f;
     public const float IngredientCountWidth = 36f;
     public const float IngredientCountHeight = 16f;
+    public const float IngredientQualityNameHeight = 24f;
     public const float IngredientOverlayInset = 2f;
     public const float OutputsScrollMinHeight = 56f;
     public const float FooterQtyRowHeight = 28f;

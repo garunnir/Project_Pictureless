@@ -581,7 +581,40 @@ def export_gun_detail(entry: dict, item_type: str) -> dict | None:
     ):
         if key in source:
             gun[key] = _as_int(source.get(key))
+    magazines = export_gun_magazines(source.get("magazines"))
+    if magazines:
+        gun["magazines"] = magazines
     return gun or None
+
+
+def export_gun_magazines(raw) -> list[dict] | None:
+    """BN magazines: [[ammo_type, [mag_id, ...]], ...] or {ammo_type: [mag_id, ...]}."""
+    if not raw:
+        return None
+
+    groups: list[dict] = []
+    if isinstance(raw, dict):
+        for ammo_type, mags in raw.items():
+            ids = mags if isinstance(mags, list) else [mags]
+            cleaned = [str(mag_id) for mag_id in ids if mag_id]
+            if not cleaned:
+                continue
+            groups.append({"ammo_type": str(ammo_type), "magazines": cleaned})
+        return groups or None
+
+    if not isinstance(raw, list):
+        return None
+
+    for row in raw:
+        if not isinstance(row, list) or len(row) < 2:
+            continue
+        ammo_type = row[0]
+        mag_list = row[1] if isinstance(row[1], list) else [row[1]]
+        cleaned = [str(mag_id) for mag_id in mag_list if mag_id]
+        if ammo_type is None or not cleaned:
+            continue
+        groups.append({"ammo_type": str(ammo_type), "magazines": cleaned})
+    return groups or None
 
 
 def export_tool_detail(entry: dict, item_type: str) -> dict | None:
@@ -1446,6 +1479,26 @@ RECIPE_CATEGORY_KO_SEED = {
 }
 
 
+def export_qualities(
+    qualities: list[dict],
+    ko_map: dict[str, str],
+    ja_map: dict[str, str],
+) -> dict[str, dict[str, str]]:
+    """tool_quality id → en/ko/ja. msgid is English name (cutting), not CUT."""
+    out: dict[str, dict[str, str]] = {}
+    for entry in qualities:
+        if not isinstance(entry, dict):
+            continue
+        quality_id = entry.get("id") or ""
+        en = entry.get("name") or ""
+        if not quality_id or not en:
+            continue
+        slot: dict[str, str] = {"en": en}
+        apply_po_slots(slot, en, ko_map, ja_map)
+        out[quality_id] = slot
+    return out
+
+
 def export_recipe_categories(
     recipes_out: list[dict],
     uncraft_out: list[dict],
@@ -1481,6 +1534,7 @@ def write_item_names_file(
     names: dict[str, dict[str, str]],
     descriptions: dict[str, dict[str, str]],
     recipe_categories: dict[str, dict[str, str]],
+    qualities: dict[str, dict[str, str]],
 ) -> None:
     payload = {
         "_license": LICENSE,
@@ -1488,6 +1542,7 @@ def write_item_names_file(
         "names": names,
         "descriptions": descriptions,
         "recipe_categories": recipe_categories,
+        "qualities": qualities,
     }
     with open(path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
@@ -1497,10 +1552,13 @@ def write_item_names_file(
     desc_ja = sum(1 for v in descriptions.values() if "ja" in v)
     cat_ko = sum(1 for v in recipe_categories.values() if "ko" in v)
     cat_ja = sum(1 for v in recipe_categories.values() if "ja" in v)
+    qual_ko = sum(1 for v in qualities.values() if "ko" in v)
+    qual_ja = sum(1 for v in qualities.values() if "ja" in v)
     print(
         f"[output] {path}  names={len(names)} (ko={name_ko}, ja={name_ja})  "
         f"descriptions={len(descriptions)} (ko={desc_ko}, ja={desc_ja})  "
-        f"recipe_categories={len(recipe_categories)} (ko={cat_ko}, ja={cat_ja})"
+        f"recipe_categories={len(recipe_categories)} (ko={cat_ko}, ja={cat_ja})  "
+        f"qualities={len(qualities)} (ko={qual_ko}, ja={qual_ja})"
     )
 
 
@@ -1539,7 +1597,8 @@ def merge_locale_into_existing(bn_path: Path, out_dir: Path) -> None:
     ko_map, ja_map = load_po_maps(bn_path)
     descriptions = export_item_descriptions(items_out, ko_map, ja_map)
     recipe_categories = export_recipe_categories(recipes_out, uncraft_out, ko_map, ja_map)
-    write_item_names_file(names_file, existing_names, descriptions, recipe_categories)
+    qualities = export_qualities(items_root.get("qualities") or [], ko_map, ja_map)
+    write_item_names_file(names_file, existing_names, descriptions, recipe_categories, qualities)
 
 
 # ── Main ────────────────────────────────────────────────────────────
@@ -1551,7 +1610,7 @@ def main():
     parser.add_argument(
         "--locale-only",
         action="store_true",
-        help="Keep items/recipes; rewrite item_names.json names+descriptions+recipe_categories",
+        help="Keep items/recipes; rewrite item_names.json names+descriptions+recipe_categories+qualities",
     )
     args = parser.parse_args()
 
@@ -1589,6 +1648,7 @@ def main():
     item_names = export_item_names(items_out, ko_map, ja_map)
     item_descriptions = export_item_descriptions(items_out, ko_map, ja_map)
     recipe_categories = export_recipe_categories(recipes_out, uncraft_out, ko_map, ja_map)
+    quality_names = export_qualities(qualities, ko_map, ja_map)
 
     # ── Write output ────────────────────────────────────────────────
 
@@ -1616,7 +1676,7 @@ def main():
     print(f"[output] {recipes_file}  ({len(recipes_out)} recipes, {len(uncraft_out)} uncraft)")
 
     names_file = out_dir / "item_names.json"
-    write_item_names_file(names_file, item_names, item_descriptions, recipe_categories)
+    write_item_names_file(names_file, item_names, item_descriptions, recipe_categories, quality_names)
 
     # 통계 요약
     categories = set()

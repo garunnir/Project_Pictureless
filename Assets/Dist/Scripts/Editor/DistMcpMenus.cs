@@ -60,6 +60,8 @@ internal static class DistMcpMenus
 
     public const string CharacterEnsurePlayerGearComponents =
         Root + "/Character/Ensure Player Gear Components";
+    public const string CharacterPatchActionGaugeOnPlayer =
+        Root + "/Character/Patch Action Gauge On Player";
 
     public const string LocalizationSelectOrCreateUiKo =
         Root + "/Localization/Select Or Create UI_ko Table";

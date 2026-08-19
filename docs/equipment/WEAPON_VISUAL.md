@@ -45,7 +45,7 @@ MovementStyle (NPC)                  SOData/Locomotion/       ← Combat 아님
 
 | 하려는 일 | 연다 |
 |-----------|------|
-| 아이템 → Leaf Presentation | `SOData/Combat/Catalog/WeaponPresentationCatalog` |
+| 아이템 / `gun.skill` / category → Leaf Presentation | `SOData/Combat/Catalog/WeaponPresentationCatalog` |
 | 공용 AnimVerb 팔 애니·동작 VFX | `SOData/Combat/Fallbacks/ArmAnimSlotCatalog` |
 | bash/cut/bullet Hit VFX | `SOData/Combat/Fallbacks/WeaponImpactVfxDefaults` |
 | Attack 레시피 | `SOData/Combat/Attacks/` |
@@ -53,3 +53,14 @@ MovementStyle (NPC)                  SOData/Locomotion/       ← Combat 아님
 | NPC 이동 프로파일 | `SOData/Locomotion/` · 메뉴 `Dist/Locomotion/Movement Style` |
 | thin/라이브러리 클립 시드 | `Dist/MCP/Ensure Arm Anim Pipeline` |
 | Animator 레이어 재구성 | `Dist/MCP/Rebuild Arm Overlay Animator` |
+
+Catalog `Resolve` 순서 (아이템 전용 > `gun.skill` > `weapon_category` > Unarmed). BN 총은 `weapon_category`가 없고 `gun.skill`(`pistol`/`rifle`/`smg`/`shotgun`/`launcher`)으로 묶는다. Dist 시드 `gun`도 같은 표.
+
+```mermaid
+flowchart LR
+  item[ByItemId]
+  skill[BySkillId_gun_skill]
+  cat[ByCategoryId]
+  unarmed[Unarmed]
+  item -->|miss| skill -->|miss| cat -->|miss| unarmed
+```

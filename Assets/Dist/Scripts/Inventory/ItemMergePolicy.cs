@@ -52,6 +52,15 @@ public static class ItemMergePolicy
                 && have.ToolCharges == incoming.ToolCharges;
         }
 
+        if (existingItem.magazine != null)
+        {
+            return SameKind(have, incoming)
+                && have.DamageLevel == incoming.DamageLevel
+                && have.SupplyRounds == incoming.SupplyRounds
+                && string.Equals(have.SupplyAmmoId, incoming.SupplyAmmoId, StringComparison.Ordinal)
+                && have.ToolCharges == incoming.ToolCharges;
+        }
+
         return SameKind(have, incoming)
             && have.DamageLevel == incoming.DamageLevel
             && have.ToolCharges == incoming.ToolCharges;

@@ -14,6 +14,7 @@
 우클릭 → UIItemContextMenu
       → ContextMenuBuilder + InventoryContextMenuCatalog
       → Contributors가 Roots(Entry 트리) 채움
+        (Gear / Ammo 삽탄·장착 / Craft / Uncraft)
       → View(Dist.UI.ContextMenu)가 Entry만 Bind / 리프 클릭 → IContextMenuAction.Execute
 ```
 

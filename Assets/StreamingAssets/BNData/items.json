@@ -6630,7 +6630,16 @@
         ],
         "range": 1,
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "m9mag",
+              "m9bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -6657,7 +6666,15 @@
         ],
         "range": 1,
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "40",
+            "magazines": [
+              "90two40mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -7921,7 +7938,17 @@
           "45"
         ],
         "dispersion": 280,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "45",
+            "magazines": [
+              "tdi_mag",
+              "glock_21mag",
+              "glock_21mag26"
+            ]
+          }
+        ]
       }
     },
     {
@@ -8033,7 +8060,16 @@
           "shot"
         ],
         "dispersion": 510,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "shot",
+            "magazines": [
+              "USAS10mag",
+              "USAS20mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -8544,7 +8580,27 @@
         ],
         "ranged_damage": -1,
         "dispersion": 150,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "stanag30",
+              "stanag5",
+              "stanag10",
+              "stanag20",
+              "stanag40",
+              "stanag50",
+              "stanag60",
+              "stanag60drum",
+              "stanag90",
+              "stanag100",
+              "stanag100drum",
+              "stanag150",
+              "survivor223mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -8571,7 +8627,27 @@
         ],
         "ranged_damage": -1,
         "dispersion": 150,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "300blk",
+            "magazines": [
+              "stanag30",
+              "stanag5",
+              "stanag10",
+              "stanag20",
+              "stanag40",
+              "stanag50",
+              "stanag60",
+              "stanag60drum",
+              "stanag90",
+              "stanag100",
+              "stanag100drum",
+              "stanag150",
+              "survivor223mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -8869,7 +8945,15 @@
           "38super"
         ],
         "dispersion": 520,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "38super",
+            "magazines": [
+              "af2011a1mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -9238,7 +9322,19 @@
           "762"
         ],
         "dispersion": 180,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "762",
+            "magazines": [
+              "akmag30",
+              "akmag10",
+              "akmag20",
+              "akmag40",
+              "akdrum75"
+            ]
+          }
+        ]
       }
     },
     {
@@ -9266,7 +9362,16 @@
           "545x39"
         ],
         "dispersion": 150,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "545x39",
+            "magazines": [
+              "ak74mag",
+              "rpk74mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -9461,7 +9566,19 @@
           "762"
         ],
         "dispersion": 180,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "762",
+            "magazines": [
+              "akmag30",
+              "akmag10",
+              "akmag20",
+              "akmag40",
+              "akdrum75"
+            ]
+          }
+        ]
       }
     },
     {
@@ -10151,7 +10268,15 @@
         ],
         "ranged_damage": 4,
         "dispersion": 280,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "22",
+            "magazines": [
+              "a180mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -10792,7 +10917,16 @@
           "545x39"
         ],
         "dispersion": 150,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "545x39",
+            "magazines": [
+              "ak74mag",
+              "rpk74mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -11791,7 +11925,16 @@
         ],
         "ranged_damage": -1,
         "dispersion": 150,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "308",
+            "magazines": [
+              "ar10mag_20rd",
+              "ar10_makeshiftmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -11866,7 +12009,27 @@
           "223"
         ],
         "dispersion": 150,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "stanag30",
+              "stanag5",
+              "stanag10",
+              "stanag20",
+              "stanag40",
+              "stanag50",
+              "stanag60",
+              "stanag60drum",
+              "stanag90",
+              "stanag100",
+              "stanag100drum",
+              "stanag150",
+              "survivor223mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -11892,7 +12055,27 @@
           "223"
         ],
         "dispersion": 150,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "stanag30",
+              "stanag5",
+              "stanag10",
+              "stanag20",
+              "stanag40",
+              "stanag50",
+              "stanag60",
+              "stanag60drum",
+              "stanag90",
+              "stanag100",
+              "stanag100drum",
+              "stanag150",
+              "survivor223mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -11920,7 +12103,17 @@
         "ranged_damage": -9,
         "range": -6,
         "dispersion": 380,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "stanag30",
+              "stanag50",
+              "survivor223mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -13702,7 +13895,18 @@
           "762"
         ],
         "dispersion": 160,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "762",
+            "magazines": [
+              "akmag30",
+              "akmag10",
+              "akmag20",
+              "akmag40"
+            ]
+          }
+        ]
       }
     },
     {
@@ -13732,7 +13936,15 @@
         "range": 115,
         "dispersion": 80,
         "durability": 7,
-        "reload": 400
+        "reload": 400,
+        "magazines": [
+          {
+            "ammo_type": "50",
+            "magazines": [
+              "as50mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -17844,7 +18056,15 @@
         "dispersion": 855,
         "durability": 8,
         "reload": 200,
-        "burst": 6
+        "burst": 6,
+        "magazines": [
+          {
+            "ammo_type": "shot",
+            "magazines": [
+              "shotbelt_20"
+            ]
+          }
+        ]
       }
     },
     {
@@ -27474,7 +27694,15 @@
         ],
         "ranged_damage": 0,
         "dispersion": 520,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "mp5mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -28820,7 +29048,15 @@
         ],
         "ranged_damage": -1,
         "dispersion": 90,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "3006",
+            "magazines": [
+              "blrmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -29933,7 +30169,15 @@
         ],
         "ranged_damage": 2,
         "dispersion": 280,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "calicomag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -34160,7 +34404,15 @@
           "chemical_spray"
         ],
         "dispersion": 300,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "chemical_spray",
+            "magazines": [
+              "pressurized_tank_chem"
+            ]
+          }
+        ]
       }
     },
     {
@@ -37414,7 +37666,15 @@
         "ranged_damage": 4,
         "range": 12,
         "dispersion": 180,
-        "durability": 5
+        "durability": 5,
+        "magazines": [
+          {
+            "ammo_type": "nail",
+            "magazines": [
+              "nailmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -41006,7 +41266,16 @@
         "ranged_damage": 2,
         "range": 20,
         "dispersion": 180,
-        "durability": 10
+        "durability": 10,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "m9bigmag",
+              "m9mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -41032,7 +41301,17 @@
           "9mm"
         ],
         "dispersion": 480,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "cz75mag_12rd",
+              "cz75mag_20rd",
+              "cz75mag_26rd"
+            ]
+          }
+        ]
       }
     },
     {
@@ -41604,7 +41883,15 @@
         ],
         "ranged_damage": -1,
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "44",
+            "magazines": [
+              "deaglemag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -43555,7 +43842,19 @@
         ],
         "ranged_damage": -5,
         "dispersion": 240,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "762",
+            "magazines": [
+              "akmag30",
+              "akmag10",
+              "akmag20",
+              "akmag40",
+              "akdrum75"
+            ]
+          }
+        ]
       }
     },
     {
@@ -47854,7 +48153,15 @@
         ],
         "ranged_damage": -2,
         "dispersion": 180,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "famasmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -50037,7 +50344,15 @@
         "range": 6,
         "dispersion": 300,
         "durability": 8,
-        "reload": 4
+        "reload": 4,
+        "magazines": [
+          {
+            "ammo_type": "flammable",
+            "magazines": [
+              "pressurized_tank"
+            ]
+          }
+        ]
       }
     },
     {
@@ -50133,7 +50448,16 @@
         "range": 4,
         "dispersion": 600,
         "durability": 6,
-        "reload": 6
+        "reload": 6,
+        "magazines": [
+          {
+            "ammo_type": "flammable",
+            "magazines": [
+              "aux_pressurized_tank",
+              "pressurized_tank"
+            ]
+          }
+        ]
       }
     },
     {
@@ -50817,7 +51141,15 @@
           "380"
         ],
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "380",
+            "magazines": [
+              "fn1910mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -50868,7 +51200,15 @@
         ],
         "ranged_damage": -2,
         "dispersion": 440,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "57",
+            "magazines": [
+              "fn57mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -50919,7 +51259,17 @@
         ],
         "ranged_damage": -1,
         "dispersion": 150,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "308",
+            "magazines": [
+              "falmag",
+              "falbigmag",
+              "fal_makeshiftmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -50945,7 +51295,15 @@
           "57"
         ],
         "dispersion": 260,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "57",
+            "magazines": [
+              "fnp90mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -52769,7 +53127,15 @@
         ],
         "dispersion": 150,
         "durability": 8,
-        "reload": 150
+        "reload": 150,
+        "magazines": [
+          {
+            "ammo_type": "3006",
+            "magazines": [
+              "garandclip"
+            ]
+          }
+        ]
       }
     },
     {
@@ -54798,7 +55164,19 @@
         ],
         "ranged_damage": -1,
         "dispersion": 480,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "glock17_17",
+              "glock17_22",
+              "glock_drum_50rd",
+              "glock_drum_100rd",
+              "glockbigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -54825,7 +55203,19 @@
         ],
         "ranged_damage": -1,
         "dispersion": 480,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "glock17_17",
+              "glock17_22",
+              "glock_drum_50rd",
+              "glock_drum_100rd",
+              "glockbigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -54852,7 +55242,20 @@
         ],
         "ranged_damage": -1,
         "dispersion": 480,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "glockmag",
+              "glockbigmag",
+              "glock17_17",
+              "glock17_22",
+              "glock_drum_50rd",
+              "glock_drum_100rd"
+            ]
+          }
+        ]
       }
     },
     {
@@ -54878,7 +55281,16 @@
           "45"
         ],
         "dispersion": 480,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "45",
+            "magazines": [
+              "glock_21mag",
+              "glock_21mag26"
+            ]
+          }
+        ]
       }
     },
     {
@@ -54953,7 +55365,16 @@
         ],
         "ranged_damage": 1,
         "dispersion": 480,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "40",
+            "magazines": [
+              "glock40mag",
+              "glock40bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -54980,7 +55401,16 @@
         ],
         "ranged_damage": 1,
         "dispersion": 480,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "357sig",
+            "magazines": [
+              "glock40mag",
+              "glock40bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -57511,7 +57941,27 @@
         ],
         "ranged_damage": -2,
         "dispersion": 180,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "stanag30",
+              "stanag5",
+              "stanag10",
+              "stanag20",
+              "stanag40",
+              "stanag50",
+              "stanag60",
+              "stanag60drum",
+              "stanag90",
+              "stanag100",
+              "stanag100drum",
+              "stanag150",
+              "survivor223mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -60636,7 +61086,15 @@
           "40"
         ],
         "dispersion": 480,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "40",
+            "magazines": [
+              "bhp40mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -60662,7 +61120,16 @@
           "9mm"
         ],
         "dispersion": 480,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "bhp9mag_13rd",
+              "bhp9mag_15rd"
+            ]
+          }
+        ]
       }
     },
     {
@@ -61140,7 +61607,17 @@
         ],
         "ranged_damage": -4,
         "dispersion": 180,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "308",
+            "magazines": [
+              "hk417mag_20rd",
+              "hk417mag_10rd",
+              "hk417_makeshiftmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -61326,7 +61803,17 @@
         ],
         "ranged_damage": -2,
         "dispersion": 150,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "308",
+            "magazines": [
+              "g3mag",
+              "g3bigmag",
+              "g3_makeshiftmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -61352,7 +61839,16 @@
           "223"
         ],
         "dispersion": 150,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "g36mag_30rd",
+              "g36mag_100rd"
+            ]
+          }
+        ]
       }
     },
     {
@@ -61380,7 +61876,15 @@
         ],
         "range": 60,
         "dispersion": 45,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "12mm",
+            "magazines": [
+              "hk_g80mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -61431,7 +61935,16 @@
         ],
         "ranged_damage": 1,
         "dispersion": 240,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "mp5mag",
+              "mp5bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -61458,7 +61971,16 @@
         ],
         "ranged_damage": 0,
         "dispersion": 270,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "mp5mag",
+              "mp5bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -61485,7 +62007,16 @@
         ],
         "ranged_damage": 0,
         "dispersion": 270,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "mp5mag",
+              "mp5bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -61512,7 +62043,16 @@
         ],
         "ranged_damage": 1,
         "dispersion": 240,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "mp5mag",
+              "mp5bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -61538,7 +62078,16 @@
           "46"
         ],
         "dispersion": 260,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "46",
+            "magazines": [
+              "hk46mag",
+              "hk46bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -61577,7 +62126,16 @@
         ],
         "ranged_damage": 1,
         "dispersion": 240,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "45",
+            "magazines": [
+              "ump45mag",
+              "ump45_makeshiftmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -63400,7 +63958,17 @@
           "9mm"
         ],
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "hptc9mag_8rd",
+              "hptc9mag_10rd",
+              "hptc9mag_15rd"
+            ]
+          }
+        ]
       }
     },
     {
@@ -63499,7 +64067,16 @@
           "380"
         ],
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "380",
+            "magazines": [
+              "hptcf380mag_8rd",
+              "hptcf380mag_10rd"
+            ]
+          }
+        ]
       }
     },
     {
@@ -63574,7 +64151,15 @@
           "40"
         ],
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "40",
+            "magazines": [
+              "hptjcpmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -63625,7 +64210,15 @@
           "45"
         ],
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "45",
+            "magazines": [
+              "hptjhpmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -66873,7 +67466,27 @@
           "300blk"
         ],
         "dispersion": 140,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "300blk",
+            "magazines": [
+              "stanag30",
+              "stanag5",
+              "stanag10",
+              "stanag20",
+              "stanag40",
+              "stanag50",
+              "stanag60",
+              "stanag60drum",
+              "stanag90",
+              "stanag100",
+              "stanag100drum",
+              "stanag150",
+              "survivor223mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -66898,7 +67511,15 @@
           "22"
         ],
         "dispersion": 600,
-        "durability": 5
+        "durability": 5,
+        "magazines": [
+          {
+            "ammo_type": "22",
+            "magazines": [
+              "j22mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -70910,7 +71531,15 @@
           "32"
         ],
         "dispersion": 480,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "32",
+            "magazines": [
+              "kp32mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -70961,7 +71590,15 @@
           "380"
         ],
         "dispersion": 480,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "380",
+            "magazines": [
+              "kp3atmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -71013,7 +71650,15 @@
         ],
         "ranged_damage": -1,
         "dispersion": 480,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "kpf9mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -71245,7 +71890,20 @@
         "ranged_damage": 3,
         "range": 18,
         "dispersion": 180,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "glockmag",
+              "glockbigmag",
+              "glock17_17",
+              "glock17_22",
+              "glock_drum_50rd",
+              "glock_drum_100rd"
+            ]
+          }
+        ]
       }
     },
     {
@@ -71448,7 +72106,15 @@
         "range": -6,
         "dispersion": 380,
         "durability": 8,
-        "clip_size": 5
+        "clip_size": 5,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "223_speedloader5"
+            ]
+          }
+        ]
       }
     },
     {
@@ -75740,7 +76406,15 @@
         "ranged_damage": -5,
         "range": 100,
         "dispersion": 130,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "50",
+            "magazines": [
+              "m107a1mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -75792,7 +76466,17 @@
         ],
         "ranged_damage": -1,
         "dispersion": 120,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "308",
+            "magazines": [
+              "hk417mag_20rd",
+              "hk417mag_10rd",
+              "hk417_makeshiftmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -75822,7 +76506,15 @@
         "ranged_damage": -1,
         "dispersion": 300,
         "durability": 9,
-        "reload": 400
+        "reload": 400,
+        "magazines": [
+          {
+            "ammo_type": "308",
+            "magazines": [
+              "belt308"
+            ]
+          }
+        ]
       }
     },
     {
@@ -75886,7 +76578,17 @@
         ],
         "ranged_damage": -1,
         "dispersion": 110,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "308",
+            "magazines": [
+              "m14mag",
+              "m14smallmag",
+              "m14_makeshiftmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -75989,7 +76691,27 @@
           "223"
         ],
         "dispersion": 150,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "stanag30",
+              "stanag5",
+              "stanag10",
+              "stanag20",
+              "stanag40",
+              "stanag50",
+              "stanag60",
+              "stanag60drum",
+              "stanag90",
+              "stanag100",
+              "stanag100drum",
+              "stanag150",
+              "survivor223mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76042,7 +76764,15 @@
           "9mm"
         ],
         "dispersion": 480,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "p320mag_17rd_9x19mm"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76071,7 +76801,15 @@
         ],
         "dispersion": 120,
         "durability": 8,
-        "clip_size": 5
+        "clip_size": 5,
+        "magazines": [
+          {
+            "ammo_type": "3006",
+            "magazines": [
+              "3006_clip"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76097,7 +76835,16 @@
           "45"
         ],
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "45",
+            "magazines": [
+              "m1911mag",
+              "m1911bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76124,7 +76871,23 @@
           "45"
         ],
         "dispersion": 480,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "460",
+            "magazines": [
+              "m1911mag",
+              "m1911bigmag"
+            ]
+          },
+          {
+            "ammo_type": "45",
+            "magazines": [
+              "m1911mag",
+              "m1911bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76150,7 +76913,16 @@
           "45"
         ],
         "dispersion": 420,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "45",
+            "magazines": [
+              "m1911mag",
+              "m1911bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76176,7 +76948,15 @@
           "38super"
         ],
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "38super",
+            "magazines": [
+              "m1911mag_10rd_38super"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76276,7 +77056,16 @@
           "3006"
         ],
         "dispersion": 180,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "3006",
+            "magazines": [
+              "m1918mag",
+              "m1918bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76352,7 +77141,17 @@
         ],
         "ranged_damage": -1,
         "dispersion": 110,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "308",
+            "magazines": [
+              "m14mag",
+              "m14smallmag",
+              "m14_makeshiftmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76380,7 +77179,15 @@
           "300"
         ],
         "dispersion": 90,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "300",
+            "magazines": [
+              "m2010mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76434,7 +77241,15 @@
         ],
         "dispersion": 300,
         "durability": 7,
-        "reload": 600
+        "reload": 600,
+        "magazines": [
+          {
+            "ammo_type": "m235",
+            "magazines": [
+              "m74_clip"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76552,7 +77367,15 @@
         ],
         "dispersion": 200,
         "durability": 9,
-        "reload": 400
+        "reload": 400,
+        "magazines": [
+          {
+            "ammo_type": "308",
+            "magazines": [
+              "belt308"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76579,7 +77402,28 @@
         ],
         "dispersion": 200,
         "durability": 7,
-        "reload": 400
+        "reload": 400,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "belt223",
+              "stanag30",
+              "stanag5",
+              "stanag10",
+              "stanag20",
+              "stanag40",
+              "stanag50",
+              "stanag60",
+              "stanag60drum",
+              "stanag90",
+              "stanag100",
+              "stanag100drum",
+              "stanag150",
+              "survivor223mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76606,7 +77450,27 @@
         ],
         "ranged_damage": -1,
         "dispersion": 180,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "stanag30",
+              "stanag5",
+              "stanag10",
+              "stanag20",
+              "stanag40",
+              "stanag50",
+              "stanag60",
+              "stanag60drum",
+              "stanag90",
+              "stanag100",
+              "stanag100drum",
+              "stanag150",
+              "survivor223mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76635,7 +77499,15 @@
         "range": 110,
         "dispersion": 250,
         "durability": 8,
-        "reload": 400
+        "reload": 400,
+        "magazines": [
+          {
+            "ammo_type": "50",
+            "magazines": [
+              "belt50"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76811,7 +77683,27 @@
         ],
         "ranged_damage": -2,
         "dispersion": 180,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "stanag30",
+              "stanag5",
+              "stanag10",
+              "stanag20",
+              "stanag40",
+              "stanag50",
+              "stanag60",
+              "stanag60drum",
+              "stanag90",
+              "stanag100",
+              "stanag100drum",
+              "stanag150",
+              "survivor223mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76839,7 +77731,15 @@
         "ranged_damage": -1,
         "dispersion": 180,
         "durability": 7,
-        "reload": 400
+        "reload": 400,
+        "magazines": [
+          {
+            "ammo_type": "308",
+            "magazines": [
+              "belt308"
+            ]
+          }
+        ]
       }
     },
     {
@@ -76920,7 +77820,16 @@
         ],
         "range": 1,
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "m9mag",
+              "m9bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -77072,7 +77981,16 @@
           "45"
         ],
         "dispersion": 520,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "45",
+            "magazines": [
+              "mac10mag",
+              "smg_45_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -77097,7 +78015,15 @@
           "380"
         ],
         "dispersion": 520,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "380",
+            "magazines": [
+              "mac11mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -78467,7 +79393,15 @@
           "9x18"
         ],
         "dispersion": 480,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "9x18",
+            "magazines": [
+              "makarovmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -80443,7 +81377,15 @@
         "range": 30,
         "dispersion": 180,
         "durability": 8,
-        "reload": 400
+        "reload": 400,
+        "magazines": [
+          {
+            "ammo_type": "40x53mm",
+            "magazines": [
+              "belt40mm"
+            ]
+          }
+        ]
       }
     },
     {
@@ -80473,7 +81415,15 @@
         "ranged_damage": 5,
         "dispersion": 90,
         "durability": 8,
-        "clip_size": 19
+        "clip_size": 19,
+        "magazines": [
+          {
+            "ammo_type": "22",
+            "magazines": [
+              "marlin_tubeloader"
+            ]
+          }
+        ]
       }
     },
     {
@@ -84330,7 +85280,15 @@
         ],
         "ranged_damage": 0,
         "dispersion": 400,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "45",
+            "magazines": [
+              "usp45mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -84467,7 +85425,15 @@
         ],
         "dispersion": 480,
         "durability": 8,
-        "clip_size": 6
+        "clip_size": 6,
+        "magazines": [
+          {
+            "ammo_type": "38",
+            "magazines": [
+              "38_speedloader6"
+            ]
+          }
+        ]
       }
     },
     {
@@ -85163,7 +86129,15 @@
         "range": -3,
         "dispersion": 150,
         "durability": 10,
-        "clip_size": 5
+        "clip_size": 5,
+        "magazines": [
+          {
+            "ammo_type": "762R",
+            "magazines": [
+              "762R_clip"
+            ]
+          }
+        ]
       }
     },
     {
@@ -85205,7 +86179,15 @@
         "range": 3,
         "dispersion": 90,
         "durability": 10,
-        "clip_size": 5
+        "clip_size": 5,
+        "magazines": [
+          {
+            "ammo_type": "762R",
+            "magazines": [
+              "762R_clip"
+            ]
+          }
+        ]
       }
     },
     {
@@ -88694,7 +89676,15 @@
         "dispersion": 400,
         "durability": 8,
         "clip_size": 0,
-        "reload": 50
+        "reload": 50,
+        "magazines": [
+          {
+            "ammo_type": "nail",
+            "magazines": [
+              "nailmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -88992,7 +89982,16 @@
         "ranged_damage": 10,
         "range": 10,
         "dispersion": 220,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "5x50",
+            "magazines": [
+              "5x50_100_mag",
+              "5x50_50_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -89021,7 +90020,16 @@
           "5x50"
         ],
         "dispersion": 280,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "5x50",
+            "magazines": [
+              "5x50_50_mag",
+              "5x50_100_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -90443,7 +91451,17 @@
         "ranged_damage": -11,
         "range": -6,
         "dispersion": 380,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "stanag30",
+              "stanag50",
+              "survivor223mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -91737,7 +92755,15 @@
           "357sig"
         ],
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "357sig",
+            "magazines": [
+              "p226mag_12rd_357sig"
+            ]
+          }
+        ]
       }
     },
     {
@@ -91799,7 +92825,15 @@
           "357sig"
         ],
         "dispersion": 480,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "357sig",
+            "magazines": [
+              "p320mag_13rd_357sig"
+            ]
+          }
+        ]
       }
     },
     {
@@ -98769,7 +99803,16 @@
         "ranged_damage": 2,
         "range": 2,
         "dispersion": 120,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "762x25",
+            "magazines": [
+              "ppshmag",
+              "ppshdrum"
+            ]
+          }
+        ]
       }
     },
     {
@@ -99750,7 +100793,15 @@
         ],
         "range": 1,
         "dispersion": 440,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "px4mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -99777,7 +100828,15 @@
         ],
         "range": 1,
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "40",
+            "magazines": [
+              "px4_40mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -100552,7 +101611,15 @@
         ],
         "dispersion": 280,
         "durability": 8,
-        "clip_size": 5
+        "clip_size": 5,
+        "magazines": [
+          {
+            "ammo_type": "454",
+            "magazines": [
+              "454_speedloader5"
+            ]
+          }
+        ]
       }
     },
     {
@@ -100585,7 +101652,15 @@
         ],
         "dispersion": 280,
         "durability": 8,
-        "clip_size": 6
+        "clip_size": 6,
+        "magazines": [
+          {
+            "ammo_type": "454",
+            "magazines": [
+              "454_speedloader6"
+            ]
+          }
+        ]
       }
     },
     {
@@ -105714,7 +106789,17 @@
         "ranged_damage": -5,
         "dispersion": 550,
         "durability": 6,
-        "reload": 200
+        "reload": 200,
+        "magazines": [
+          {
+            "ammo_type": "308",
+            "magazines": [
+              "g3_makeshiftmag",
+              "g3mag",
+              "g3bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -106106,7 +107191,16 @@
           "8x40mm"
         ],
         "dispersion": 175,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "8x40mm",
+            "magazines": [
+              "8x40_10_mag",
+              "8x40_25_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -106137,7 +107231,16 @@
         "ranged_damage": 10,
         "range": 20,
         "dispersion": 10,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "8x40mm",
+            "magazines": [
+              "8x40_10_mag",
+              "8x40_25_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -106380,7 +107483,16 @@
           "20x66mm"
         ],
         "dispersion": 335,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "20x66mm",
+            "magazines": [
+              "20x66_20_mag",
+              "20x66_40_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -106409,7 +107521,16 @@
           "8x40mm"
         ],
         "dispersion": 120,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "8x40mm",
+            "magazines": [
+              "8x40_25_mag",
+              "8x40_10_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -106438,7 +107559,15 @@
           "20x66mm"
         ],
         "dispersion": 400,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "20x66mm",
+            "magazines": [
+              "20x66_10_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -106470,7 +107599,16 @@
         "range": -6,
         "dispersion": 90,
         "durability": 9,
-        "reload": 400
+        "reload": 400,
+        "magazines": [
+          {
+            "ammo_type": "8x40mm",
+            "magazines": [
+              "8x40_500_mag",
+              "8x40_250_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -106564,7 +107702,16 @@
         "range": 10,
         "dispersion": 240,
         "durability": 9,
-        "reload": 4
+        "reload": 4,
+        "magazines": [
+          {
+            "ammo_type": "flammable",
+            "magazines": [
+              "rm4502",
+              "rm4504"
+            ]
+          }
+        ]
       }
     },
     {
@@ -106594,7 +107741,16 @@
         ],
         "ranged_damage": 5,
         "dispersion": 50,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "8x40mm",
+            "magazines": [
+              "8x40_50_mag",
+              "8x40_100_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -106625,7 +107781,16 @@
         "ranged_damage": 5,
         "dispersion": 70,
         "durability": 9,
-        "reload": 200
+        "reload": 200,
+        "magazines": [
+          {
+            "ammo_type": "8x40mm",
+            "magazines": [
+              "8x40_250_mag",
+              "8x40_500_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -106686,7 +107851,17 @@
         ],
         "ranged_damage": 10,
         "dispersion": 30,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "8x40mm",
+            "magazines": [
+              "8x40_100_mag",
+              "8x40_50_mag",
+              "8x40_250_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -106718,7 +107893,15 @@
         "ranged_damage": 10,
         "dispersion": 175,
         "durability": 9,
-        "clip_size": 5
+        "clip_size": 5,
+        "magazines": [
+          {
+            "ammo_type": "8x40mm",
+            "magazines": [
+              "8x40_speedloader5"
+            ]
+          }
+        ]
       }
     },
     {
@@ -108260,7 +109443,16 @@
         ],
         "ranged_damage": 4,
         "dispersion": 110,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "22",
+            "magazines": [
+              "ruger1022mag",
+              "ruger1022bigmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -108293,7 +109485,15 @@
         "ranged_damage": -2,
         "dispersion": 480,
         "durability": 10,
-        "clip_size": 8
+        "clip_size": 8,
+        "magazines": [
+          {
+            "ammo_type": "22",
+            "magazines": [
+              "22_speedloader8"
+            ]
+          }
+        ]
       }
     },
     {
@@ -108326,7 +109526,15 @@
         "ranged_damage": -2,
         "dispersion": 480,
         "durability": 10,
-        "clip_size": 5
+        "clip_size": 5,
+        "magazines": [
+          {
+            "ammo_type": "38",
+            "magazines": [
+              "38_speedloader5"
+            ]
+          }
+        ]
       }
     },
     {
@@ -108378,7 +109586,21 @@
         ],
         "ranged_damage": 1,
         "dispersion": 100,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "ruger20",
+              "ruger5",
+              "ruger10",
+              "ruger30",
+              "ruger90",
+              "ruger100",
+              "ruger_makeshiftmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -108409,7 +109631,15 @@
         ],
         "dispersion": 280,
         "durability": 8,
-        "clip_size": 6
+        "clip_size": 6,
+        "magazines": [
+          {
+            "ammo_type": "44",
+            "magazines": [
+              "44_speedloader6"
+            ]
+          }
+        ]
       }
     },
     {
@@ -108435,7 +109665,15 @@
           "380"
         ],
         "dispersion": 480,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "380",
+            "magazines": [
+              "rugerlcpmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -108845,7 +110083,16 @@
           "shot"
         ],
         "dispersion": 395,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "shot",
+            "magazines": [
+              "saiga10mag",
+              "saiga30mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -108873,7 +110120,16 @@
           "410shot"
         ],
         "dispersion": 395,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "410shot",
+            "magazines": [
+              "saiga410mag_10rd",
+              "saiga410mag_30rd"
+            ]
+          }
+        ]
       }
     },
     {
@@ -110366,7 +111622,18 @@
         ],
         "ranged_damage": -3,
         "dispersion": 150,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "308",
+            "magazines": [
+              "scarhmag",
+              "scarhbigmag",
+              "scarhmag_30rd",
+              "scarh_makeshiftmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -110393,7 +111660,27 @@
         ],
         "ranged_damage": -2,
         "dispersion": 150,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "stanag30",
+              "stanag5",
+              "stanag10",
+              "stanag20",
+              "stanag40",
+              "stanag50",
+              "stanag60",
+              "stanag60drum",
+              "stanag90",
+              "stanag100",
+              "stanag100drum",
+              "stanag150",
+              "survivor223mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -115875,7 +117162,27 @@
           "223"
         ],
         "dispersion": 180,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "stanag30",
+              "stanag5",
+              "stanag10",
+              "stanag20",
+              "stanag40",
+              "stanag50",
+              "stanag60",
+              "stanag60drum",
+              "stanag90",
+              "stanag100",
+              "stanag100drum",
+              "stanag150",
+              "survivor223mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -115901,7 +117208,15 @@
           "40"
         ],
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "40",
+            "magazines": [
+              "sig40mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -115929,7 +117244,15 @@
         ],
         "ranged_damage": -1,
         "dispersion": 480,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "22",
+            "magazines": [
+              "mosquitomag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -115955,7 +117278,15 @@
           "32"
         ],
         "dispersion": 480,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "32",
+            "magazines": [
+              "sigp230mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -116577,7 +117908,15 @@
           "32"
         ],
         "dispersion": 360,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "32",
+            "magazines": [
+              "skorpion61mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -116602,7 +117941,15 @@
           "9x18"
         ],
         "dispersion": 360,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "9x18",
+            "magazines": [
+              "skorpion82mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -116633,7 +117980,15 @@
         "ranged_damage": 1,
         "dispersion": 90,
         "durability": 8,
-        "clip_size": 10
+        "clip_size": 10,
+        "magazines": [
+          {
+            "ammo_type": "762",
+            "magazines": [
+              "762x39_clip"
+            ]
+          }
+        ]
       }
     },
     {
@@ -117916,7 +119271,15 @@
         ],
         "ranged_damage": -4,
         "dispersion": 590,
-        "durability": 4
+        "durability": 4,
+        "magazines": [
+          {
+            "ammo_type": "40",
+            "magazines": [
+              "smg_40_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -117967,7 +119330,16 @@
         ],
         "ranged_damage": -4,
         "dispersion": 590,
-        "durability": 4
+        "durability": 4,
+        "magazines": [
+          {
+            "ammo_type": "45",
+            "magazines": [
+              "smg_45_mag",
+              "mac10mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -118018,7 +119390,16 @@
         ],
         "ranged_damage": -3,
         "dispersion": 590,
-        "durability": 4
+        "durability": 4,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "survivor9mm_mag",
+              "stenmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -121268,7 +122649,16 @@
         ],
         "ranged_damage": 1,
         "dispersion": 360,
-        "durability": 5
+        "durability": 5,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "stenmag",
+              "survivor9mm_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -121403,7 +122793,18 @@
           "223"
         ],
         "dispersion": 140,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "augmag_30rd",
+              "augmag_10rd",
+              "augmag_42rd",
+              "augmag_100rd"
+            ]
+          }
+        ]
       }
     },
     {
@@ -122811,7 +124212,27 @@
         "ranged_damage": -4,
         "dispersion": 550,
         "durability": 6,
-        "reload": 200
+        "reload": 200,
+        "magazines": [
+          {
+            "ammo_type": "223",
+            "magazines": [
+              "survivor223mag",
+              "stanag30",
+              "stanag5",
+              "stanag10",
+              "stanag20",
+              "stanag40",
+              "stanag50",
+              "stanag60",
+              "stanag60drum",
+              "stanag90",
+              "stanag100",
+              "stanag100drum",
+              "stanag150"
+            ]
+          }
+        ]
       }
     },
     {
@@ -122915,7 +124336,15 @@
         "dispersion": 620,
         "durability": 6,
         "clip_size": 6,
-        "reload": 285
+        "reload": 285,
+        "magazines": [
+          {
+            "ammo_type": "40",
+            "magazines": [
+              "40_speedloader6"
+            ]
+          }
+        ]
       }
     },
     {
@@ -123884,7 +125313,15 @@
         "ranged_damage": -1,
         "dispersion": 280,
         "durability": 8,
-        "clip_size": 6
+        "clip_size": 6,
+        "magazines": [
+          {
+            "ammo_type": "44",
+            "magazines": [
+              "44_speedloader6"
+            ]
+          }
+        ]
       }
     },
     {
@@ -123911,7 +125348,15 @@
           "22"
         ],
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "22",
+            "magazines": [
+              "sw22mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -123942,7 +125387,15 @@
         ],
         "dispersion": 280,
         "durability": 8,
-        "clip_size": 5
+        "clip_size": 5,
+        "magazines": [
+          {
+            "ammo_type": "500",
+            "magazines": [
+              "500_speedloader5"
+            ]
+          }
+        ]
       }
     },
     {
@@ -123975,7 +125428,15 @@
         "ranged_damage": 1,
         "dispersion": 320,
         "durability": 8,
-        "clip_size": 6
+        "clip_size": 6,
+        "magazines": [
+          {
+            "ammo_type": "40",
+            "magazines": [
+              "40_speedloader6"
+            ]
+          }
+        ]
       }
     },
     {
@@ -124007,7 +125468,15 @@
         ],
         "dispersion": 320,
         "durability": 10,
-        "clip_size": 7
+        "clip_size": 7,
+        "magazines": [
+          {
+            "ammo_type": "38",
+            "magazines": [
+              "38_speedloader"
+            ]
+          }
+        ]
       }
     },
     {
@@ -124701,7 +126170,15 @@
         "range": 45,
         "dispersion": 50,
         "durability": 8,
-        "reload": 450
+        "reload": 450,
+        "magazines": [
+          {
+            "ammo_type": "50",
+            "magazines": [
+              "tac50mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -125463,7 +126940,15 @@
           "380"
         ],
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "380",
+            "magazines": [
+              "taurus_spectrum_mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -125767,7 +127252,15 @@
           "9mm"
         ],
         "dispersion": 520,
-        "durability": 6
+        "durability": 6,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "tec9mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -128365,7 +129858,15 @@
           "762x25"
         ],
         "dispersion": 225,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "762x25",
+            "magazines": [
+              "tokarevmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -128440,7 +129941,18 @@
         ],
         "ranged_damage": 2,
         "dispersion": 360,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "45",
+            "magazines": [
+              "thompson_mag",
+              "thompson_bigmag",
+              "thompson_drum",
+              "thompson_makeshiftmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -131437,7 +132949,15 @@
         ],
         "ranged_damage": 0,
         "dispersion": 400,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "45",
+            "magazines": [
+              "usp45mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -131464,7 +132984,15 @@
         ],
         "ranged_damage": -1,
         "dispersion": 400,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "usp9mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -131490,7 +133018,15 @@
         ],
         "ranged_damage": 1,
         "dispersion": 360,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "uzimag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -133198,7 +134734,15 @@
           "9mm"
         ],
         "dispersion": 480,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "ccpmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -133224,7 +134768,15 @@
           "22"
         ],
         "dispersion": 480,
-        "durability": 7
+        "durability": 7,
+        "magazines": [
+          {
+            "ammo_type": "22",
+            "magazines": [
+              "wp22mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -133250,7 +134802,15 @@
           "9mm"
         ],
         "dispersion": 480,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "p38mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -133276,7 +134836,15 @@
           "32"
         ],
         "dispersion": 480,
-        "durability": 8
+        "durability": 8,
+        "magazines": [
+          {
+            "ammo_type": "32",
+            "magazines": [
+              "ppkmag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -133302,7 +134870,17 @@
           "40"
         ],
         "dispersion": 480,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "40",
+            "magazines": [
+              "ppq40mag_10rd",
+              "ppq40mag_12rd",
+              "ppq40mag_14rd"
+            ]
+          }
+        ]
       }
     },
     {
@@ -133328,7 +134906,15 @@
           "45"
         ],
         "dispersion": 480,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "45",
+            "magazines": [
+              "ppq45mag"
+            ]
+          }
+        ]
       }
     },
     {
@@ -133354,7 +134940,17 @@
           "9mm"
         ],
         "dispersion": 480,
-        "durability": 9
+        "durability": 9,
+        "magazines": [
+          {
+            "ammo_type": "9mm",
+            "magazines": [
+              "ppq9mag_10rd",
+              "ppq9mag_15rd",
+              "ppq9mag_17rd"
+            ]
+          }
+        ]
       }
     },
     {

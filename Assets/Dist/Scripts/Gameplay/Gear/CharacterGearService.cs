@@ -22,6 +22,7 @@ public sealed class CharacterGearService
     Func<InventoryContainer> _bodyProvider;
     Func<InventoryContainer> _floorProvider;
     Func<ICharacterBody> _characterBodyProvider;
+    CharacterActionHost _actionHost;
     ItemStack _activeStack;
 
     public const string BlockedMissingHand = "손이 없음";
@@ -66,6 +67,9 @@ public sealed class CharacterGearService
         _presentationCatalog = catalog;
     }
 
+    public void SetActionHost(CharacterActionHost host) =>
+        _actionHost = host;
+
     public void Unbind()
     {
         _wear.Changed -= OnDomainChanged;
@@ -98,8 +102,6 @@ public sealed class CharacterGearService
             return CharacterGearLabels.BlockedInvalid;
         if (_toolSession.IsActive)
             return CharacterGearLabels.BlockedToolSession;
-        if (IsBusy)
-            return CharacterGearLabels.BlockedBusy;
         if (!GearHandleRules.IsWearable(stack.Item))
             return CharacterGearLabels.BlockedNotWearable;
         if (_wear.Contains(stack) || _wield.Contains(stack))
@@ -123,8 +125,6 @@ public sealed class CharacterGearService
             return CharacterGearLabels.BlockedInvalid;
         if (_toolSession.IsActive)
             return CharacterGearLabels.BlockedToolSession;
-        if (IsBusy)
-            return CharacterGearLabels.BlockedBusy;
         if (_wear.Contains(stack) || _wield.Contains(stack))
             return CharacterGearLabels.BlockedAlreadyEquipped;
 
@@ -142,6 +142,11 @@ public sealed class CharacterGearService
     }
 
     public bool TryBeginWear(ItemStack stack, InventoryContainer source)
+    {
+        return RunOrEnqueue(CharacterActionKind.Gear, () => TryBeginWearCore(stack, source));
+    }
+
+    bool TryBeginWearCore(ItemStack stack, InventoryContainer source)
     {
         string reason = GetWearBlockedReason(stack);
         if (reason != null || source == null || !source.ContainsStackReference(stack))
@@ -172,6 +177,11 @@ public sealed class CharacterGearService
 
     public bool TryBeginTakeOff(ItemStack stack, bool toFloor)
     {
+        return RunOrEnqueue(CharacterActionKind.Gear, () => TryBeginTakeOffCore(stack, toFloor));
+    }
+
+    bool TryBeginTakeOffCore(ItemStack stack, bool toFloor)
+    {
         if (_toolSession.IsActive || IsBusy || stack == null || !_wear.Contains(stack))
             return false;
 
@@ -187,6 +197,11 @@ public sealed class CharacterGearService
     }
 
     public bool TryBeginWield(ItemStack stack, InventoryContainer source, WieldHand hand)
+    {
+        return RunOrEnqueue(CharacterActionKind.Gear, () => TryBeginWieldCore(stack, source, hand));
+    }
+
+    bool TryBeginWieldCore(ItemStack stack, InventoryContainer source, WieldHand hand)
     {
         string reason = GetWieldBlockedReason(stack, hand);
         if (reason != null || source == null || !source.ContainsStackReference(stack))
@@ -219,6 +234,11 @@ public sealed class CharacterGearService
     }
 
     public bool TryBeginUnwield(ItemStack stack, bool toFloor)
+    {
+        return RunOrEnqueue(CharacterActionKind.Gear, () => TryBeginUnwieldCore(stack, toFloor));
+    }
+
+    bool TryBeginUnwieldCore(ItemStack stack, bool toFloor)
     {
         if (_toolSession.IsActive || IsBusy || stack == null || !_wield.Contains(stack))
             return false;
@@ -271,6 +291,42 @@ public sealed class CharacterGearService
         Changed?.Invoke();
         return true;
     }
+
+    public bool TryBeginDomainTimed(
+        ItemStack activeStack,
+        GearTimedAction.Kind kind,
+        float durationSeconds,
+        Action onComplete)
+    {
+        return RunOrEnqueue(
+            CharacterActionKind.Gear,
+            () => TryBeginDomainTimedCore(activeStack, kind, durationSeconds, onComplete));
+    }
+
+    bool TryBeginDomainTimedCore(
+        ItemStack activeStack,
+        GearTimedAction.Kind kind,
+        float durationSeconds,
+        Action onComplete)
+    {
+        if (activeStack == null || onComplete == null)
+            return false;
+        if (_toolSession.IsActive || IsBusy)
+            return false;
+        return BeginTimed(activeStack, kind, durationSeconds, onComplete);
+    }
+
+    public void NotifyAmmoChanged() => NotifyPrimaryDirty();
+
+    public bool CanDepositToBody(ItemStack stack)
+    {
+        InventoryContainer body = _bodyProvider?.Invoke();
+        if (body == null || stack == null)
+            return false;
+        return body.CapacityPolicy.CanAccept(body, stack);
+    }
+
+    public void DepositToBody(ItemStack stack) => DepositStack(stack, toFloor: false);
 
     public bool TrySetHandAction(ItemStack stack, WeaponAction? action)
     {
@@ -417,6 +473,15 @@ public sealed class CharacterGearService
 
         DepositStack(removed, toFloor: false);
         NotifyPrimaryDirty();
+    }
+
+    bool RunOrEnqueue(CharacterActionKind kind, Func<bool> start)
+    {
+        if (start == null)
+            return false;
+        if (_actionHost == null)
+            return start();
+        return _actionHost.TryRunOrEnqueue(kind, start);
     }
 
     bool BeginTimed(ItemStack stack, GearTimedAction.Kind kind, float duration, Action onComplete)

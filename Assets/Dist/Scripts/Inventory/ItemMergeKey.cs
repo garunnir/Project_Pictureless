@@ -3,11 +3,10 @@
 // ============================================================
 
 using System;
-using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
 
 /// <summary>
-/// Nested를 열지 않는다. HasMagazine은 한 단 유무만.
+/// Nested를 열지 않는다. HasMagazine은 LoadedMagazine 유무.
 /// </summary>
 public readonly struct ItemMergeKey
 {
@@ -16,6 +15,8 @@ public readonly struct ItemMergeKey
     public readonly int ChamberRounds;
     public readonly string ChamberAmmoId;
     public readonly bool HasMagazine;
+    public readonly int SupplyRounds;
+    public readonly string SupplyAmmoId;
     public readonly int ToolCharges;
 
     public ItemMergeKey(
@@ -24,13 +25,17 @@ public readonly struct ItemMergeKey
         int chamberRounds,
         bool hasMagazine,
         string chamberAmmoId = null,
-        int toolCharges = 0)
+        int toolCharges = 0,
+        int supplyRounds = 0,
+        string supplyAmmoId = null)
     {
         KindId = kindId ?? string.Empty;
         DamageLevel = Math.Max(0, damageLevel);
         ChamberRounds = Math.Max(0, chamberRounds);
         ChamberAmmoId = chamberAmmoId ?? string.Empty;
         HasMagazine = hasMagazine;
+        SupplyRounds = Math.Max(0, supplyRounds);
+        SupplyAmmoId = supplyAmmoId ?? string.Empty;
         ToolCharges = Math.Max(0, toolCharges);
     }
 
@@ -44,9 +49,11 @@ public readonly struct ItemMergeKey
             stack.ItemId,
             instance.DamageLevel,
             instance.ChamberRounds,
-            HasMagazineShallow(stack),
+            stack.LoadedMagazine != null,
             instance.ChamberAmmoId,
-            instance.ToolCharges);
+            instance.ToolCharges,
+            instance.SupplyRounds,
+            instance.SupplyAmmoId);
     }
 
     public static ItemMergeKey From(ItemData item, int damageLevel)
@@ -61,21 +68,5 @@ public readonly struct ItemMergeKey
             chamberRounds: 0,
             hasMagazine: false,
             toolCharges: toolCharges);
-    }
-
-    static bool HasMagazineShallow(ItemStack stack)
-    {
-        InventoryContainer nested = stack.Nested;
-        if (nested == null)
-            return false;
-
-        IReadOnlyList<ItemStack> stacks = nested.Stacks;
-        for (int i = 0; i < stacks.Count; i++)
-        {
-            if (stacks[i]?.Item?.magazine != null)
-                return true;
-        }
-
-        return false;
     }
 }

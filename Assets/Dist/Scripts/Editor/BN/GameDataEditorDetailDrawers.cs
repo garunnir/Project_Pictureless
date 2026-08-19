@@ -232,6 +232,7 @@ static class GameDataEditorDetailDrawers
             ReadField("  Clip size", item.gun.clip_size.ToString());
             ReadField("  Range", item.gun.range.ToString());
             ReadField("  Recoil", item.gun.recoil.ToString());
+            DrawGunMagazinesReadOnly(item.gun);
         }
 
         if (item.tool != null)
@@ -306,6 +307,67 @@ static class GameDataEditorDetailDrawers
         EditInt(markDirty, "  Clip size", ref gun.clip_size);
         EditInt(markDirty, "  Reload", ref gun.reload);
         EditInt(markDirty, "  Burst", ref gun.burst);
+        EditGunMagazines(markDirty, gun);
+    }
+
+    static void DrawGunMagazinesReadOnly(GunDetailData gun)
+    {
+        if (gun?.magazines == null || gun.magazines.Count == 0)
+            return;
+
+        for (int i = 0; i < gun.magazines.Count; i++)
+        {
+            GunMagazineGroup group = gun.magazines[i];
+            if (group == null)
+                continue;
+
+            string ammoType = string.IsNullOrEmpty(group.ammo_type) ? "—" : group.ammo_type;
+            string ids = group.magazines != null && group.magazines.Count > 0
+                ? string.Join(", ", group.magazines)
+                : "—";
+            ReadField($"  Magazines ({ammoType})", ids);
+        }
+    }
+
+    static void EditGunMagazines(Action markDirty, GunDetailData gun)
+    {
+        gun.magazines ??= new List<GunMagazineGroup>();
+        EditorGUILayout.LabelField("  Magazines", EditorStyles.miniBoldLabel);
+
+        int removeAt = -1;
+        for (int i = 0; i < gun.magazines.Count; i++)
+        {
+            GunMagazineGroup group = gun.magazines[i];
+            if (group == null)
+            {
+                group = new GunMagazineGroup();
+                gun.magazines[i] = group;
+                markDirty();
+            }
+
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditField(markDirty, "    Ammo type", ref group.ammo_type);
+            EditStringList(markDirty, "    Magazine ids", ref group.magazines);
+            if (GUILayout.Button("x group", GUILayout.Width(LabelWidth)))
+                removeAt = i;
+            EditorGUILayout.EndVertical();
+        }
+
+        if (removeAt >= 0)
+        {
+            gun.magazines.RemoveAt(removeAt);
+            markDirty();
+        }
+
+        if (GUILayout.Button("+ Magazines group", GUILayout.Width(LabelWidth + 40)))
+        {
+            gun.magazines.Add(new GunMagazineGroup
+            {
+                ammo_type = "",
+                magazines = new List<string>()
+            });
+            markDirty();
+        }
     }
 
     static void DrawToolBlock(ItemData item, Action markDirty)

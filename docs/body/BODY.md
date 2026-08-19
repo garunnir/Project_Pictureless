@@ -27,6 +27,7 @@ PC와 NPC를 이 문서에서 나누지 않는다. `CharacterKind` 없음. 조�
 | `BodyDamageService` | HP 타격. 0 + severable → `RemovePart` |
 | `BodyPartRestoreService` | `TryRegenerate` / `TryAttachProsthetic` |
 | `BodyEffectTicker` | 효과 지속·출혈 (World delta) |
+| `CharacterActionDelay` | `BodyPartEffect` → 행동 틱 배율. [`../character/ACTION.md`](../character/ACTION.md) |
 | `BodyLocomotionPenalties` | 절단 절뚝 × `GearEnvPenalties` |
 | `CharacterBodyDto` / `BodyTempDto` | JsonUtility 왕복. **세이브 UI 없음** |
 

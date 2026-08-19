@@ -37,6 +37,13 @@ namespace Garunnir.Runtime.Gameplay.Data
     }
 
     [Serializable]
+    public sealed class GunMagazineGroup
+    {
+        public string ammo_type;
+        public List<string> magazines;
+    }
+
+    [Serializable]
     public sealed class GunDetailData
     {
         public string skill;
@@ -49,6 +56,8 @@ namespace Garunnir.Runtime.Gameplay.Data
         public int clip_size;
         public int reload;
         public int burst;
+        /// <summary>BN gun.magazines — 허용 탄창 id. 비면 장착 불가(클립만).</summary>
+        public List<GunMagazineGroup> magazines;
     }
 
     [Serializable]

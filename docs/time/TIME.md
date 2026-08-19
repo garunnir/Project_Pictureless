@@ -219,7 +219,7 @@ IsoLand에는 Setup이 적용·저장되어 있다. Full bake 정책: `.cursor/r
 |----------|------|-----|
 | `PlayerMovement` | Player | `FixedDelta` (`fixedDeltaTime * scale`, max clamp) |
 | `CharacterFacingAnim` | Player (기본) / World (NPC) | `Delta` |
-| `PlayerBillboard` | Player | `TimeNow` |
+| `WorldBillboard` | Realtime (게이지 기본) / Inspector | `TimeNow` |
 | `CameraFollowTargetDriver` | Player | `Delta` |
 | `CharacterOcclusionDisplayDriver` | World | `Delta` |
 | `TileMapChunkStreamer` (unload hysteresis) | Realtime | `TimeNow` |

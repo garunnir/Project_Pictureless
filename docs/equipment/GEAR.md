@@ -18,7 +18,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | Action layers | **Family** = 에디터·UI 묶음(Melee, Trigger; 없으면 평면). **Leaf** = 선택·시전·**Catalog 폴백 행**(Swing/Thrust/Raise/Semi/Burst/Auto — 줄 필수). **Override** = thin 덮어쓰기만(분류 아님·컨트롤러는 동작 모름). 할당한 클립 Speed=`WeaponAnimClipSpeeds`(슬롯 속도 아님, 없으면 1). 구 `Trigger`→Semi. [`BN_BAKE.md`](BN_BAKE.md) |
 | Action rows | `WeaponPresentation` Entry = **Leaf** 라우팅 행 (가용 마스크 + Attack + 연출 + `useHold`). 가용 SSOT = Entry 존재 → `WeaponActionRows.Available` |
 | Action VFX coalesce | Action: Entry.vfx → Catalog **같은 Leaf** 행. Hit: Entry → Attack VFX → Defaults[bash/cut/bullet] → fallback |
-| Visual hub | `WeaponPresentationCatalog` — Pipeline / Tag Impact VFX / per-item Presentation 중간 진입점 |
+| Visual hub | `WeaponPresentationCatalog` — Pipeline / Tag Impact VFX / item·skill·category → Presentation |
 
 ## Domain SSOT
 
@@ -28,7 +28,11 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | `GearHandleRules` | CanLift / RequiredStr / LiftStrain / IsWearable |
 | `EquipmentWearState` | Worn stacks |
 | `WieldSlots` | L/R (+ two-hand mode) |
-| `CharacterGearService` | Timed Wear/Wield/Unequip + deposit |
+| `CharacterGearService` | Timed Wear/Wield/Unequip + deposit. `TryBeginDomainTimed` / `NotifyAmmoChanged` for 삽탄·장착 |
+| `WeaponAmmoFit` | Dist.Inventory — 허용 탄창 id / 탄종 / clip vs well |
+| `WeaponAmmoService` | 삽탄·장착·교체·분리·탄 빼기. 탄창=`SupplyRounds`, 총=`ItemStack.LoadedMagazine` (Nested 아님) |
+| `WeaponAmmoDuration` | reload moves → 초 (`CombatMath.MovesPerSecond`, 0이면 1s) |
+| `WeaponChamber` | 발사 보급: LoadedMagazine.SupplyRounds → Chamber. clip_size는 클립 용량 |
 | `PlayerGearHost` | Player Wear/Wield + Primary + LiftStrain + 씬 `WorldWeatherKind` + `HelmetVision`. BodyTemp / EnvExposure / **Weather(ambient 캐시)** 는 `CharacterClimateHost` 포워드 |
 | `ItemInstance.SelectedAction` | 선택 동사 SSOT |
 | `WeaponActionRows` | Presentation 행 → available / default / instance select |
@@ -50,7 +54,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | `HelmetVision` | Phase G: head covers → VisionFactor (host + Character UI + camera) |
 | `GearEnvPenalties` | Phase H: **코어** `BodyTemp.Feeling` + wetness → move / HitChance. 부위별 Feeling 아님 |
 | `WearOverlapRules` | Phase C: same part + layer(/sided) conflict → Wear **reject** |
-| `WeaponPresentationCatalog` | 허브 (Fallbacks Catalog + Tag VFX + item→Presentation). Entry = **Leaf** 라우팅(가용·Attack·VFX) |
+| `WeaponPresentationCatalog` | 허브. Resolve = 아이템 id → `gun.skill` → `weapon_category` → Unarmed. Entry = Leaf 라우팅 |
 | `ArmAnimSlotCatalog` | **Leaf마다** 기본 동사 폴백(클립+VFX). Semi/Burst/Auto 줄 필수. Entry 빈 VFX → 같은 Leaf 행. 표시=Melee/Trigger 묶음 |
 | `WeaponAnimClipSpeeds` | Override 서브에셋. 할당한 클립→재생 배속. thin 슬롯 속도 아님. 없으면 1 |
 | `WeaponAttack` | 핸들러·cue·캐리어 VFX·탄 + **Recoil/Blocked on/off** + 근접 히트박스 반폭/반높이 (`Attack_MeleeHit` = logic 이름, **채널 아님**) |
@@ -103,10 +107,25 @@ Checklist: `.claude/checklists/migration-parity.md`.
 - Inventory MoveStacks / quick transfer / outside drop: `InventoryTransferDuration` (**SSOT**, same host)
 - Transfer duration: `access`(source `draw_moves`→초 via `CombatMath.MovesPerSecond`, 0 if unset) **+** `handling`(base + weight + volume + nest). No storage-ml hint. **Multi-stack = sequential** (one `SecondsForStackFrom` + move each; no summed timer). Bag = item: `ItemStack.TotalWeight` includes Nested contents (volume = shell only).
 - **이름 겹침 바**: 조회 SSOT=`ItemTimedNameProgress` (InventoryTimedMove → Gear Timed → 내구도). 소비자: 인벤 행·사이드 중첩가방 탭·Worn·Wield. Name 셀 stretch fill이 글자 **뒤**. 패널 Progress Slider 없음.
+- 삽탄·장착/교체·분리·탄 빼기: `WeaponAmmoDuration` + `CharacterGearService.TryBeginDomainTimed` (`AmmoLoad` / `MagAttach`)
+
+```mermaid
+flowchart LR
+  ui[ContextMenu_or_item_DnD]
+  drop[WeaponAmmoDrop]
+  svc[WeaponAmmoService]
+  timed[GearTimedAction]
+  mag[ItemStack.LoadedMagazine]
+  supply[ItemInstance.SupplyRounds]
+  ui --> drop --> svc
+  ui --> svc
+  svc --> timed --> mag
+  timed --> supply
+```
 
 ### Equip (from inventory)
 
-- Inventory `Item` drag → Character L/R slot: `TryBeginWield` (`GearInventoryDrop`; two-hand item → `WieldHand.TwoHand`)
+- Inventory `Item` drag → Character L/R slot: ammo/mag이면 `WeaponAmmoDrop` → `WeaponAmmoService` (삽탄·장착/교체). 아니면 `TryBeginWield` (`GearInventoryDrop`; two-hand item → `WieldHand.TwoHand`)
 - Inventory `Item` drag → Worn list / worn row: `TryBeginWear` if wearable; else no-op
 - Success: `InventoryDragState.MarkConsumed` (floor drop suppressed). Drop on registered overlay window never floors.
 

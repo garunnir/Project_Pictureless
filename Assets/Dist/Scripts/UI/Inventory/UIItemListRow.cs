@@ -17,7 +17,8 @@ public sealed class UIItemListRow : MonoBehaviour,
     IPointerExitHandler,
     IBeginDragHandler,
     IDragHandler,
-    IEndDragHandler
+    IEndDragHandler,
+    IDropHandler
 {
     public static event Action<ItemStack, InventoryContainer, Vector2> RightClicked;
     public static event Action<ItemStack, Vector2> Hovered;
@@ -95,9 +96,11 @@ public sealed class UIItemListRow : MonoBehaviour,
 
         if (_nameText != null)
         {
-            _nameText.text = ItemDamageLabels.FormatName(
-                UITextPresenter.GetItemName(item),
-                stack.DamageLevel);
+            _nameText.text = ItemAmmoLabels.AppendState(
+                ItemDamageLabels.FormatName(
+                    UITextPresenter.GetItemName(item),
+                    stack.DamageLevel),
+                stack);
         }
 
         if (_countText != null)
@@ -219,6 +222,19 @@ public sealed class UIItemListRow : MonoBehaviour,
             return;
 
         _dragHost.OnItemDragEnded();
+    }
+
+    public void OnDrop(PointerEventData eventData)
+    {
+        InventorySession session = _listView != null
+            ? _listView.Session
+            : PlayerInventoryRuntime.Active?.Session;
+
+        if (WeaponAmmoDrop.TryApplyTo(_stack, session))
+            return;
+
+        if (session != null && _ownerContainer != null)
+            InventoryDragDrop.TryApplyTo(session, _ownerContainer);
     }
 
     static Sprite ResolveDragIcon(IReadOnlyList<ItemStack> stacks)

@@ -126,9 +126,6 @@ public sealed class UICraftingIngredientCard : MonoBehaviour, IDropHandler
             _kindIcon.color = KindColor(kind);
         }
 
-        if (_name != null)
-            _name.gameObject.SetActive(false);
-
         if (_count != null)
         {
             _count.gameObject.SetActive(true);
@@ -138,6 +135,19 @@ public sealed class UICraftingIngredientCard : MonoBehaviour, IDropHandler
             _count.color = available >= required
                 ? CraftingWindowLayout.SkillMetColor
                 : CraftingWindowLayout.SkillUnmetColor;
+        }
+
+        if (_name != null)
+        {
+            bool showName = kind == CraftingIngredientKind.Quality && !string.IsNullOrEmpty(displayName);
+            _name.gameObject.SetActive(showName);
+            if (showName)
+            {
+                _name.text = displayName;
+                _name.color = available >= required
+                    ? CraftingWindowLayout.SkillMetColor
+                    : CraftingWindowLayout.SkillUnmetColor;
+            }
         }
 
         if (_swapButton != null)
