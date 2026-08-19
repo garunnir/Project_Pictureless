@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerStatusUIBridge — PlayerStatusViewModel 씬 수명주기 + GameplayData bind
+// PlayerStatusUIBridge — PlayerStatusViewModel 씬 수명주기 + GameplayData bind (Possess 시 rebind)
 // ============================================================
 
 using UnityEngine;
@@ -18,7 +18,7 @@ public sealed class PlayerStatusUIBridge : MonoBehaviour
         }
     }
 
-    void Awake() => EnsureInitialized();
+    void Awake() => BindFromGameplayData();
 
     void OnDestroy()
     {
@@ -31,8 +31,24 @@ public sealed class PlayerStatusUIBridge : MonoBehaviour
         if (_viewModel != null)
             return;
 
-        _viewModel = new PlayerStatusViewModel();
+        BindFromGameplayData();
+    }
+
+    void BindFromGameplayData()
+    {
+        if (_viewModel == null)
+            _viewModel = new PlayerStatusViewModel();
+
         _viewModel.Bind(GameplayData.Body, GameplayData.Vitals, GameplayData.Stats);
+    }
+
+    public static void RebindFromGameplayData()
+    {
+        PlayerStatusUIBridge bridge = FindAnyObjectByType<PlayerStatusUIBridge>();
+        if (bridge == null)
+            return;
+
+        bridge.BindFromGameplayData();
     }
 
     public static bool TryResolve(out PlayerStatusViewModel viewModel)

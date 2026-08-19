@@ -6,14 +6,10 @@ using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
-[RequireComponent(typeof(PlayerInventoryHost))]
-[RequireComponent(typeof(NearbyContainerDetector))]
-[RequireComponent(typeof(PlayerEncumbranceHost))]
-[RequireComponent(typeof(PlayerGearHost))]
 public sealed class PlayerInventoryRuntime : MonoBehaviour
 {
-    [Required, SerializeField] PlayerInventoryHost _host;
-    [Required, SerializeField] NearbyContainerDetector _detector;
+    [SerializeField] PlayerInventoryHost _host;
+    [SerializeField] NearbyContainerDetector _detector;
 
     readonly LootProximityCoordinator _lootProximity = new();
 
@@ -29,11 +25,21 @@ public sealed class PlayerInventoryRuntime : MonoBehaviour
     public static PlayerInventoryRuntime Active { get; private set; }
     public static event System.Action<PlayerInventoryRuntime> ActiveChanged;
 
+    public void BindBody(PlayerInventoryHost host, NearbyContainerDetector detector)
+    {
+        _host = host;
+        _detector = detector;
+        EnsureReferences();
+        if (_session != null && _detector != null)
+            _detector.Bind(_session, _lootProximity);
+    }
+
     void Awake()
     {
         EnsureReferences();
         _session = new InventorySession();
-        _detector.Bind(_session, _lootProximity);
+        if (_detector != null)
+            _detector.Bind(_session, _lootProximity);
     }
 
     void OnEnable()

@@ -28,6 +28,36 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         BindWorldGridToSmallItems(worldGrid);
     }
 
+    public void BindSpawnedCharacter(GameObject instance)
+    {
+        if (instance == null)
+            return;
+
+        if (_tileMapManager == null)
+            _tileMapManager = GetComponent<TileMapManager>();
+        if (_tileMapManager == null)
+            return;
+
+        IWorldGrid worldGrid = _tileMapManager.WorldGrid;
+        CharacterState state = instance.GetComponent<CharacterState>();
+        if (state != null && worldGrid != null)
+            state.BindWorldGrid(worldGrid);
+
+        if (_tileMapManager.Model is not TileMapModel)
+            return;
+
+        MapCollisionServices services = _tileMapManager.MapCollisionServices;
+        if (services == null)
+            return;
+
+        CharacterMotor motor = instance.GetComponent<CharacterMotor>();
+        motor?.BindMapCollision(services);
+
+        DirectionalRaycaster raycaster = instance.GetComponent<DirectionalRaycaster>();
+        if (raycaster != null && state != null)
+            raycaster.BindMapCollision(services.LineCast, state);
+    }
+
     static void BindWorldGridToCharacters(IWorldGrid worldGrid)
     {
         var states = FindObjectsByType<CharacterState>(

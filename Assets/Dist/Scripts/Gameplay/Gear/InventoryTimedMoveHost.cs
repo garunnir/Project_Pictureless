@@ -30,6 +30,8 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
 
     public static InventoryTimedMoveHost Active { get; private set; }
 
+    public void ClaimActive() => Active = this;
+
     public bool IsBusy => _transferActive;
     public float Progress01 => _timed.Progress01;
     public GearTimedAction Timed => _timed;
@@ -44,7 +46,6 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
 
     void OnEnable()
     {
-        Active = this;
         _timed.Changed += OnTimedChanged;
         _timed.Completed += OnTimedCompleted;
         _timed.Cancelled += OnTimedCancelled;

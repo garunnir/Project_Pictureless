@@ -28,6 +28,8 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour, IFloorVisibilit
     private bool _buildingIdLabelsPublished;
 #endif
 
+    public void SetPlayerState(CharacterState playerState) => _playerState = playerState;
+
     public void Init(PlayerFloorVisibilityPolicy policy, IFloorVisibilitySync visibilitySync)
     {
         Shutdown();

@@ -70,6 +70,25 @@ public sealed class NpcManager : MonoBehaviour
             _runtimes[i].Tick(dt);
     }
 
+    public void Register(NpcAgentEntry entry)
+    {
+        if (entry == null || entry.character == null)
+            return;
+
+        if (_agents == null)
+            _agents = new List<NpcAgentEntry>();
+        _agents.Add(entry);
+
+        if (!isActiveAndEnabled)
+            return;
+
+        var runtime = new NpcAgentRuntime();
+        if (!runtime.TryBind(entry))
+            return;
+
+        _runtimes.Add(runtime);
+    }
+
     void BindRuntimes()
     {
         for (int i = 0; i < _runtimes.Count; i++)

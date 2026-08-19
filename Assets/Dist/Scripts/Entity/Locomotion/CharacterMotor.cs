@@ -100,9 +100,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
             _collision.TopologyPushSpeed,
             _collision.TopologyPushMaxIterations);
         _locomotion.BindMapCollision(_pendingMapCollision);
-
-        // IPlayControllable이 있으면 첫 프레임부터 매니저 틱을 건너뛴다.
-        _possessed = GetComponent<IPlayControllable>() != null;
+        _possessed = false;
     }
 
     void FixedUpdate()

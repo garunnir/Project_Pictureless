@@ -34,6 +34,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | `WeaponAmmoDuration` | reload moves → 초 (`CombatMath.MovesPerSecond`, 0이면 1s) |
 | `WeaponChamber` | 발사 보급: LoadedMagazine.SupplyRounds → Chamber. clip_size는 클립 용량 |
 | `PlayerGearHost` | Player Wear/Wield + Primary + LiftStrain + 씬 `WorldWeatherKind` + `HelmetVision`. BodyTemp / EnvExposure / **Weather(ambient 캐시)** 는 `CharacterClimateHost` 포워드 |
+| `CharacterSpawnGearApplier` | 스폰 직후 Definition 로드아웃 즉시 Wear/Wield + 총 탄 채움 (`WeaponAmmoService` 타이머 아님) |
 | `ItemInstance.SelectedAction` | 선택 동사 SSOT |
 | `WeaponActionRows` | Presentation 행 → available / default / instance select |
 | `PrimaryWieldResolver` | DPS primary; dual secondary score |

@@ -60,6 +60,7 @@
   - `PlayerOnly`: 플레이어 컨테이너(`player-body`) 단일 리스트. 중첩 가방 탭 **또는 착용 storage 포켓**이 있으면 사이드바 표시, 없으면 숨김. 착용 포켓 SSOT: `WornPocketRules` + `EquipmentWearState` (`docs/equipment/GEAR.md` Phase B).
 
   - `NearbyOnly`: `NearbyContainerDetector`가 등록한 주변 컨테이너 전체를 사이드탭으로 표시 (플레이어 제외). `TrackLootContainer` 없음 — 반경 스캔만 사용. 바닥 `floor-loot` 안 휴대 컨테이너(Nested)는 Detector가 managed 월드 루트로 promote하고, 사이드바 탭은 PlayerOnly body 유도와 같이 floor 스택에서 유도한다.
+  - 살아 있는 캐릭터 몸 인벤(`player-body` / `character-body-*`)은 Nearby에 넣지 않는다. possessed는 id 스킵, 그 외는 `PlayerInventoryHost.IsAvailableToPlayer`가 자기 몸만 true. **쓰러진 NPC 루팅**은 그 게이트를 열어 몸 컨테이너를 Nearby 탭으로 쓴다 (미구현).
   - 감지 SSOT: 컨테이너 후보 판정은 `InventoryContainerRegistry` provider 목록 + `CharacterState.ResolveGridCell`(WorldGrid 기준) 단일 경로를 사용한다. `ContainerGridRegistry`는 Nearby 판단 경로에서 사용하지 않는다.
 
 - 월드 컨테이너 표현은 **TilePresentationSystem** 단일 진입점 → `TileViewPresentationApplier`. UI는 Applier를 직접 호출하지 않는다.
@@ -224,7 +225,8 @@
 
 - `InventoryContainerRegistry`가 `ContainerId -> InventoryContainer`를 관리한다.
 
-- 시작 시 아이템 주입·바닥 소형 아이템 스폰은 `InventoryRuntimeTestSetup`(런타임 테스트 전용)으로 수행한다 (`PlayerInventoryRuntime._seedDemoItemsOnStart` 기본값 `false` — 중복 시딩 방지).
+- 캐릭터 몸통·Wear/Wield 시드는 `CharacterDefinition` (`CharacterSpawnGearApplier`, `SetActive` 직후). IsoLand 테스터는 바닥 소형 아이템만 (`InventoryRuntimeTestSetup._seedContainerOnStart` off).
+- 시작 시 바닥 소형 아이템 스폰은 `InventoryRuntimeTestSetup`(런타임 테스트 전용)으로 수행한다 (`PlayerInventoryRuntime._seedDemoItemsOnStart` 기본값 `false` — 중복 시딩 방지).
 - 월드 소형 아이템 부모 SSOT는 `Map/Items` (`SmallItemSpawner.ResolveWorldRoot`). 테스트 스폰·바닥 투하(`FloorLootHost`) 모두 여기. `InventoryRuntimeTestSetup._smallItemSpawnRoot`는 오버라이드(비우면 SSOT, 자기 자신은 무시).
 
 

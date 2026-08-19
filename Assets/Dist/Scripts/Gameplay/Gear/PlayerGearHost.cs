@@ -35,6 +35,8 @@ public sealed class PlayerGearHost : MonoBehaviour
 
     public static PlayerGearHost Active { get; private set; }
 
+    public void ClaimActive() => Active = this;
+
     public CharacterGearService Service => _service;
     public EquipmentWearState Wear => _service?.Wear;
     public WieldSlots Wield => _service?.Wield;
@@ -59,7 +61,6 @@ public sealed class PlayerGearHost : MonoBehaviour
 
     void OnEnable()
     {
-        Active = this;
         EnsureBound();
         if (_climateHost != null)
             _climateHost.Changed += OnClimateChanged;
@@ -152,6 +153,12 @@ public sealed class PlayerGearHost : MonoBehaviour
 
     void OnClimateChanged() => Changed?.Invoke();
 
+    public void BindMovement(PlayerMovement movement)
+    {
+        _movement = movement;
+        ApplyLiftStrainMovement();
+    }
+
     void EnsureReferences()
     {
         if (_inventoryHost == null)
@@ -169,6 +176,8 @@ public sealed class PlayerGearHost : MonoBehaviour
         if (_actionHost == null)
             TryGetComponent(out _actionHost);
     }
+
+    public void BindDomainIfNeeded() => EnsureBound();
 
     void EnsureBound()
     {

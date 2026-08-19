@@ -1,7 +1,8 @@
 // ============================================================
-// PlayerInventoryHost — 플레이어 몸통 인벤 (Detector 대상 아님, Host가 Session 등록)
+// PlayerInventoryHost — 캐릭터 몸통 인벤 (인스턴스별, Detector 대상 아님)
 // ============================================================
 
+using System;
 using Garunnir.Runtime.Gameplay.Data;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -11,6 +12,10 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
 {
     public const string DefaultInstanceId = "player-body";
     public const string DefaultContainerDefId = "player_body";
+    public const string UniqueBodyInstanceIdPrefix = "character-body-";
+
+    public static string CreateUniqueBodyInstanceId() =>
+        UniqueBodyInstanceIdPrefix + Guid.NewGuid().ToString("N");
 
     [Required, SerializeField] CharacterState _characterState;
     [SerializeField] string _containerDefId = DefaultContainerDefId;
@@ -25,6 +30,20 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
     public string ContainerId => _containerId;
     public Vector3 WorldPosition => transform.position;
     public Vector3Int GridPosition => _characterState.GridPos;
+
+    public void AssignInstanceId(string instanceId)
+    {
+        if (string.IsNullOrWhiteSpace(instanceId))
+            return;
+
+        if (_container != null)
+        {
+            Debug.LogError("[PlayerInventoryHost] AssignInstanceId must run before Awake.", this);
+            return;
+        }
+
+        _containerId = instanceId;
+    }
 
     void Awake()
     {
@@ -55,6 +74,9 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
             _containerId = DefaultInstanceId;
     }
 
+    /// <summary>
+    /// 자기 몸만 true. 쓰러진 NPC 루팅은 이 게이트를 연다 (살아 있으면 Nearby 스캔에서 제외).
+    /// </summary>
     public bool IsAvailableToPlayer(GameObject player) =>
         player != null && player == _characterState.gameObject;
 

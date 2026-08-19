@@ -10,6 +10,7 @@
 
 ```mermaid
 flowchart LR
+    PlayerPossessedInputHost --> PlayerMovement
     PlayerMovement --> CharacterMotor
     NpcManager --> NpcSteer
     NpcSteer --> CharacterMotor
@@ -21,7 +22,8 @@ flowchart LR
 ```
 
 - `CharacterMotor`: 공용 물리 파사드. 조종 중(`IsPossessed`)이면 `TimeScaleChannel.Player`, 아니면 `World`. NPC 등속 또는 플레이어 드라이버 desired를 `CharacterLocomotion.Move`에 넘긴다.
-- `PlayerMovement`: Input System, 달리기, 관성 공식. 입력이 켜져 있을 때만 모터에 쓴다 (`ICharacterMotorDrive`). 물리 소유 없음.
+- `PlayerMovement`: Input System, 달리기, 관성. `PlayerPossessedInputHost`가 possessed `CharacterMotor`에 바인드. 물리 소유 없음.
+- `MapGameplayBootstrap`: 씬 캐릭터 Find + `BindSpawnedCharacter` 증분 바인드
 - `NpcSteer`: 목표점/Transform을 월드 XZ 방향으로 변환 (`NpcManager`가 호출, 인스턴스 MB 없음).
 - `NpcManager`: 비possessed 유닛 FSM (Patrol/Alert/Chase/Attack/Return/Dead). 상태·웨이포인트는 행 단위.
 - `KinematicMover`: 플레이어 속도/관성 또는 NPC 등속 desired delta 산출

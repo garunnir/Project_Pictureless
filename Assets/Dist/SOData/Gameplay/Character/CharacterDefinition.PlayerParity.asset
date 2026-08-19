@@ -30,4 +30,14 @@ MonoBehaviour:
   _hipCm: 0
   _partMasses: []
   _prototypeSeed: 0
-  _prefab: {fileID: 0}
+  _prefab: {fileID: 2816094712680714504, guid: d37475c6e3368db4c9e212b9bcee3831, type: 3}
+  _wearItemIds:
+  - clothing_plain
+  _wieldLoadout:
+  - itemId: weapon_pistol
+    hand: 1
+  _bodyItemSeeds:
+  - itemId: container_bag
+    count: 1
+  - itemId: consumable_egg
+    count: 3

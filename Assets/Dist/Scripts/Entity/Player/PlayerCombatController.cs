@@ -10,10 +10,6 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterAttacker))]
-[RequireComponent(typeof(CharacterState))]
-[RequireComponent(typeof(PlayerAimController))]
-[RequireComponent(typeof(DualWieldAttackDriver))]
 public sealed class PlayerCombatController : MonoBehaviour
 {
     const int PhysicsHitBufferSize = 16;
@@ -26,9 +22,28 @@ public sealed class PlayerCombatController : MonoBehaviour
     PlayerAimController _aimController;
     DualWieldAttackDriver _dualDriver;
     CharacterActionHost _actionHost;
+    CharacterBodyHost _selfHost;
+    Transform _bodyTransform;
     readonly RaycastHit[] _hits = new RaycastHit[PhysicsHitBufferSize];
     readonly List<RaycastResult> _uiRaycastResults = new();
     bool _connected;
+
+    public void BindBody(
+        CharacterAttacker attacker,
+        CharacterState characterState,
+        PlayerAimController aimController,
+        DualWieldAttackDriver dualDriver,
+        CharacterActionHost actionHost,
+        CharacterBodyHost selfHost)
+    {
+        _attacker = attacker;
+        _characterState = characterState;
+        _aimController = aimController;
+        _dualDriver = dualDriver;
+        _actionHost = actionHost;
+        _selfHost = selfHost;
+        _bodyTransform = selfHost != null ? selfHost.transform : (attacker != null ? attacker.transform : null);
+    }
 
     void Awake()
     {
@@ -37,6 +52,9 @@ public sealed class PlayerCombatController : MonoBehaviour
         _aimController = GetComponent<PlayerAimController>();
         _dualDriver = GetComponent<DualWieldAttackDriver>();
         TryGetComponent(out _actionHost);
+        TryGetComponent(out _selfHost);
+        if (_bodyTransform == null)
+            _bodyTransform = transform;
     }
 
     void OnDisable() => DisconnectInput();
@@ -123,7 +141,8 @@ public sealed class PlayerCombatController : MonoBehaviour
     {
         target = null;
 
-        Vector3 origin = transform.position + Vector3.up * _aimController.CastOriginYOffset;
+        Transform body = _bodyTransform != null ? _bodyTransform : transform;
+        Vector3 origin = body.position + Vector3.up * _aimController.CastOriginYOffset;
         Vector3 direction = _characterState.SightDir;
         if (direction.sqrMagnitude < 1e-6f)
             direction = _characterState.InteractionDir;
@@ -200,7 +219,7 @@ public sealed class PlayerCombatController : MonoBehaviour
 
         float bestSqr = _aimPointSoftRadius * _aimPointSoftRadius;
         float maxWeaponSqr = maxWeaponDistance * maxWeaponDistance;
-        Vector3 self = transform.position;
+        Vector3 self = _bodyTransform != null ? _bodyTransform.position : transform.position;
         for (int i = 0; i < hosts.Length; i++)
         {
             CharacterBodyHost host = hosts[i];
@@ -228,9 +247,9 @@ public sealed class PlayerCombatController : MonoBehaviour
 
     bool IsValidHostile(CharacterBodyHost host)
     {
-        if (host == null || host.transform == transform)
+        if (_selfHost != null && host == _selfHost)
             return false;
-        if (host.GetComponent<PlayerCombatController>() != null)
+        if (host.transform == (_bodyTransform != null ? _bodyTransform : transform))
             return false;
         if (host.Body == null || host.Body.IsDeadState)
             return false;

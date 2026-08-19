@@ -9,6 +9,8 @@ Unity 비의존 순수 구조체. 시스템 전체에서 공유.
 **단일 진실원**은 bake 후 `FloorMapIndex.RebuildOccupancy`가 만든 점유 인덱스다.  
 월드 좌표·시선·가시성에서 「어떤 셀에 타일이 있나」를 물을 때는 **인덱스 조회를 먼저** 한다.
 
+에디터 셀 와이어 박스: `TileHelper.DrawOccupiedCellWire` (`ConvertGridToWorldPos` 중심). TileView Selected·캐릭터 스폰 마커가 공유한다.
+
 - 존재 여부: `CellHasOccupancy(x, z, y)` / `HasAnyTile`
 - 셀 내용: `TryGetCellTiles` + incident 면/엣지 (`CollectStructuralOccludersAtOccupiedCell` 등)
 - 전역 스캔: `EnumerateOccupiedCells` (필요할 때만)

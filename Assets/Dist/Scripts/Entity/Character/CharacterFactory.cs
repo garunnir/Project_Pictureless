@@ -11,6 +11,19 @@ public static class CharacterFactory
         Vector3 position,
         Transform parent = null)
     {
+        GameObject instance = InstantiateInactive(definition, position, parent);
+        if (instance == null)
+            return null;
+
+        instance.SetActive(true);
+        return instance;
+    }
+
+    public static GameObject InstantiateInactive(
+        CharacterDefinition definition,
+        Vector3 position,
+        Transform parent = null)
+    {
         if (definition == null)
         {
             Debug.LogError("[CharacterFactory] definition is null.");
@@ -23,7 +36,16 @@ public static class CharacterFactory
             return null;
         }
 
-        GameObject instance = Object.Instantiate(definition.Prefab, position, Quaternion.identity, parent);
+        GameObject template = definition.Prefab;
+        bool wasActive = template.activeSelf;
+        if (wasActive)
+            template.SetActive(false);
+
+        GameObject instance = Object.Instantiate(template, position, Quaternion.identity, parent);
+
+        if (wasActive)
+            template.SetActive(true);
+
         if (instance == null)
             return null;
 

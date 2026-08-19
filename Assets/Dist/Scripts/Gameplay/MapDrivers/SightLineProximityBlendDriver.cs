@@ -26,6 +26,8 @@ public sealed class SightLineProximityBlendDriver : MonoBehaviour, IProximityBle
     readonly HashSet<Vector3Int> _blockingCellsScratch = new();
     bool _isActive;
 
+    public void SetPlayerState(CharacterState playerState) => _playerState = playerState;
+
     public void Init(
         TileMapCacheHub hub,
         TileViewPresentationApplier applier,

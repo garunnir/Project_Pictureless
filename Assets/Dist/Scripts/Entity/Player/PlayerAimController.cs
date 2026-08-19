@@ -5,7 +5,6 @@ using IsoTilemap;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(CharacterState))]
 public class PlayerAimController : MonoBehaviour
 {
     [SerializeField] private Camera _refCam;
@@ -19,6 +18,7 @@ public class PlayerAimController : MonoBehaviour
     [SerializeField] private LayerMask _aimObstructionMask = ~0;
 
     private CharacterState _characterState;
+    private Transform _bodyTransform;
     private MapTopologyLineCast _topologyLineCast;
     private bool _isAiming;
     private bool _connected;
@@ -32,6 +32,14 @@ public class PlayerAimController : MonoBehaviour
     void Awake()
     {
         _characterState = GetComponent<CharacterState>();
+        if (_bodyTransform == null)
+            _bodyTransform = transform;
+    }
+
+    public void BindBody(CharacterState state, Transform bodyTransform)
+    {
+        _characterState = state;
+        _bodyTransform = bodyTransform;
     }
 
     public void BindMapCollision(MapTopologyLineCast lineCast) => _topologyLineCast = lineCast;
@@ -67,7 +75,7 @@ public class PlayerAimController : MonoBehaviour
         if (_isAiming)
         {
             _isAiming = false;
-            _characterState.ClearAim();
+            _characterState?.ClearAim();
         }
     }
 
@@ -82,16 +90,19 @@ public class PlayerAimController : MonoBehaviour
             return;
 
         _isAiming = false;
-        _characterState.ClearAim();
+        _characterState?.ClearAim();
     }
 
     void LateUpdate()
     {
-        if (!_isAiming || !InputManager.Instance.IsPlayerActionEnabled(PlayerAction.Aim))
+        if (_characterState == null || !_isAiming || InputManager.Instance == null)
+            return;
+        if (!InputManager.Instance.IsPlayerActionEnabled(PlayerAction.Aim))
             return;
 
         Camera cam = _refCam != null ? _refCam : Camera.main;
-        Vector3 origin = transform.position + Vector3.up * _castOriginYOffset;
+        Transform body = _bodyTransform != null ? _bodyTransform : transform;
+        Vector3 origin = body.position + Vector3.up * _castOriginYOffset;
 
         // 마우스 교차 평면을 조준 높이(origin.y)에 맞춤 — 발 평면 교차 후 올리면 아이소에서 커서와 어긋남.
         if (!ScreenRaycaster.TryGetMouseWorldPosition(cam, origin.y, out Vector3 mousePlanePos)) return;
@@ -107,7 +118,7 @@ public class PlayerAimController : MonoBehaviour
 
         if (_topologyLineCast != null)
         {
-            Vector3 feetWorld = CharacterFeetPose.GetFeetWorld(transform);
+            Vector3 feetWorld = CharacterFeetPose.GetFeetWorld(body);
             if (_topologyLineCast.TryGetBlockingDistance(feetWorld, dir, maxDist, out float blockDist))
                 maxDist = Mathf.Min(maxDist, blockDist);
         }
@@ -122,7 +133,7 @@ public class PlayerAimController : MonoBehaviour
             aimPoint = origin + dir * maxDist;
 
         if (_flattenAimYToPlayerHeight)
-            aimPoint.y = transform.position.y + _castOriginYOffset;
+            aimPoint.y = body.position.y + _castOriginYOffset;
 
         Vector3 sightFlat = aimPoint - origin;
         sightFlat.y = 0f;
@@ -138,7 +149,8 @@ public class PlayerAimController : MonoBehaviour
         if (!ShouldDrawAimDebug) return;
         if (_characterState == null && !TryGetComponent(out _characterState)) return;
         if (!_characterState.IsAiming) return;
-        Vector3 origin = transform.position + Vector3.up * _castOriginYOffset;
+        Transform body = _bodyTransform != null ? _bodyTransform : transform;
+        Vector3 origin = body.position + Vector3.up * _castOriginYOffset;
         Vector3 aim = _characterState.AimWorldPoint;
         Gizmos.color = Color.red;
         Gizmos.DrawLine(origin, aim);

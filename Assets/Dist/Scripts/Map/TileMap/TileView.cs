@@ -194,30 +194,8 @@ namespace IsoTilemap
         {
             if (!drawGizmoGrid) return;
 
-            // 셀 크기
             float cs = Mathf.Max(0.0001f, gizmoCellSize);
-
-            Vector3 anchor = transform.position - new Vector3(0.5f, 0f, 0.5f);
-
-            int sx = Mathf.Max(1, size.x);
-            int sy = Mathf.Max(1, size.y);
-            int sz = Mathf.Max(1, size.z);
-
-            Gizmos.color = gizmoGridColor;
-
-            // 높이에 따른 수직선 및 와이어 박스
-            Vector3 boxCenter = anchor + new Vector3((sx * cs) * 0.5f, (sy * cs) * 0.5f, (sz * cs) * 0.5f);
-            Vector3 boxSize = new Vector3(sx * cs, sy * cs, sz * cs);
-            Gizmos.DrawWireCube(boxCenter, boxSize);
-
-            // 모서리에서 위로 올라가는 수직선 (시각적 강조)
-            Vector3[] corners = new Vector3[4]
-            {
-                anchor + new Vector3(0f, 0f, 0f),
-                anchor + new Vector3(sx * cs, 0f, 0f),
-                anchor + new Vector3(sx * cs, 0f, sz * cs),
-                anchor + new Vector3(0f, 0f, sz * cs)
-            };
+            TileHelper.DrawOccupiedCellWire(gridPos, cs, gizmoGridColor, size);
         }
 
         internal void UpdateTile(TileData tileData, float cellSize)

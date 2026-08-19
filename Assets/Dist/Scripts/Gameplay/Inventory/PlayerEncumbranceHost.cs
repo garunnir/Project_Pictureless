@@ -50,8 +50,6 @@ public sealed class PlayerEncumbranceHost : MonoBehaviour, ISkillModifierSource
 
     void OnEnable()
     {
-        Active = this;
-        ActiveChanged?.Invoke();
         EnsureReferences();
         SubscribeContainer();
         RegisterModifierSource();
@@ -81,6 +79,21 @@ public sealed class PlayerEncumbranceHost : MonoBehaviour, ISkillModifierSource
 
     void OnValidate() => EnsureReferences();
     void Reset() => EnsureReferences();
+
+    public void ClaimActive()
+    {
+        if (Active == this)
+            return;
+
+        Active = this;
+        ActiveChanged?.Invoke();
+    }
+
+    public void BindMovement(PlayerMovement movement)
+    {
+        _movement = movement;
+        Refresh();
+    }
 
     void EnsureReferences()
     {

@@ -55,6 +55,20 @@ public struct CharacterPartMassEntry
     public float kg;
 }
 
+[Serializable]
+public struct CharacterWieldLoadoutEntry
+{
+    public string itemId;
+    public WieldHand hand;
+}
+
+[Serializable]
+public struct CharacterBodyItemSeed
+{
+    public string itemId;
+    [Min(1)] public int count;
+}
+
 [CreateAssetMenu(fileName = "CharacterDefinition", menuName = "Dist/Character/Definition")]
 public sealed class CharacterDefinition : ScriptableObject
 {
@@ -71,6 +85,9 @@ public sealed class CharacterDefinition : ScriptableObject
     [SerializeField] List<CharacterPartMassEntry> _partMasses = new();
     [SerializeField] bool _prototypeSeed;
     [SerializeField] GameObject _prefab;
+    [SerializeField] List<string> _wearItemIds = new();
+    [SerializeField] List<CharacterWieldLoadoutEntry> _wieldLoadout = new();
+    [SerializeField] List<CharacterBodyItemSeed> _bodyItemSeeds = new();
 
     public string Id => _id;
     public string DisplayNameOverride => _displayName;
@@ -85,6 +102,9 @@ public sealed class CharacterDefinition : ScriptableObject
     public IReadOnlyList<CharacterPartMassEntry> PartMasses => _partMasses;
     public bool PrototypeSeed => _prototypeSeed;
     public GameObject Prefab => _prefab;
+    public IReadOnlyList<string> WearItemIds => _wearItemIds;
+    public IReadOnlyList<CharacterWieldLoadoutEntry> WieldLoadout => _wieldLoadout;
+    public IReadOnlyList<CharacterBodyItemSeed> BodyItemSeeds => _bodyItemSeeds;
 
     public float GetPartMassKg(string partId) => LookupPartMassKg(_partMasses, partId);
 

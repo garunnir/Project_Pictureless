@@ -61,6 +61,40 @@ namespace IsoTilemap
             float boundaryY = ConvertGridToWorldPos(cellAbove, cellSize).y;
             return new Vector3(below.x, boundaryY, below.z);
         }
+
+        public static void GetOccupiedCellWireBox(
+            Vector3Int cell,
+            float cellSize,
+            Vector3Int sizeUnits,
+            out Vector3 center,
+            out Vector3 size)
+        {
+            if (cellSize <= 0f)
+                cellSize = 1f;
+
+            int sx = Mathf.Max(1, sizeUnits.x);
+            int sy = Mathf.Max(1, sizeUnits.y);
+            int sz = Mathf.Max(1, sizeUnits.z);
+            size = new Vector3(sx * cellSize, sy * cellSize, sz * cellSize);
+            Vector3 origin = ConvertGridToWorldPos(cell, cellSize);
+            center = new Vector3(origin.x, origin.y + size.y * 0.5f, origin.z);
+        }
+
+        public static void DrawOccupiedCellWire(
+            Vector3Int cell,
+            float cellSize,
+            Color color,
+            Vector3Int sizeUnits = default)
+        {
+            if (sizeUnits == Vector3Int.zero)
+                sizeUnits = Vector3Int.one;
+
+            GetOccupiedCellWireBox(cell, cellSize, sizeUnits, out Vector3 center, out Vector3 size);
+            Color previous = Gizmos.color;
+            Gizmos.color = color;
+            Gizmos.DrawWireCube(center, size);
+            Gizmos.color = previous;
+        }
     }
 
 }

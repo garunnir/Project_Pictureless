@@ -10,8 +10,17 @@ public class PlayerManager : MonoBehaviour
     [SerializeField, Required, ValidateInput(nameof(HasInitialControllable), "IPlayControllable을 구현한 컴포넌트를 할당해야 합니다.")]
     private MonoBehaviour _initialControllable;
     [SerializeField] private CameraFollowTargetDriver _cameraFollowDriver;
+    [SerializeField] private PlayerPossessedInputHost _possessedInput;
 
     private IPlayControllable _playControllable;
+
+    void Awake()
+    {
+        if (_possessedInput == null)
+            TryGetComponent(out _possessedInput);
+        if (_possessedInput == null)
+            _possessedInput = GetComponentInChildren<PlayerPossessedInputHost>(true);
+    }
 
     void Start(){
         _playControllable = _initialControllable as IPlayControllable;
@@ -24,6 +33,20 @@ public class PlayerManager : MonoBehaviour
             _cameraFollowDriver = CreateCameraDriver();
         EnsureCameraZoomController(_cameraFollowDriver);
         ChangeControllTarget(_playControllable);
+    }
+
+    public void Possess(GameObject body)
+    {
+        if (_possessedInput == null)
+            Awake();
+        if (_possessedInput == null)
+        {
+            Debug.LogError("[PlayerManager] PlayerPossessedInputHost is required to possess a spawned body.", this);
+            return;
+        }
+
+        _possessedInput.Bind(body);
+        ChangeControllTarget(_possessedInput);
     }
 
     private bool HasInitialControllable(MonoBehaviour behaviour) => behaviour is IPlayControllable;
@@ -54,6 +77,12 @@ public class PlayerManager : MonoBehaviour
     {
         if (_cameraFollowDriver == null)
             return;
+
+        if (controllable is PlayerPossessedInputHost host && host.BodyTransform != null)
+        {
+            _cameraFollowDriver.SetTarget(host.BodyTransform, host.BodyState);
+            return;
+        }
 
         if (controllable is Component component)
         {

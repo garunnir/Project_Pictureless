@@ -11,9 +11,6 @@ using UnityEngine;
 
 
 [DefaultExecutionOrder(-99)]
-
-[RequireComponent(typeof(CharacterState))]
-
 public class CharacterVisibilityBroadcaster : MonoBehaviour
 
 {
@@ -52,11 +49,24 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
 
 
 
+    public void BindPlayerState(CharacterState state)
+    {
+        _characterState = state;
+        if (isActiveAndEnabled)
+            SyncSettingsCellFromMapGrid();
+    }
+
     private void Awake()
 
     {
 
-        _characterState = GetComponent<CharacterState>();
+        if (_characterState == null)
+
+            _characterState = GetComponent<CharacterState>();
+
+        if (_tileMapManager == null)
+
+            _tileMapManager = FindFirstObjectByType<TileMapManager>();
 
         if (_tileMapManager == null)
 

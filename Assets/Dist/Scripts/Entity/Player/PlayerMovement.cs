@@ -13,8 +13,6 @@ public interface IPlayerMovementDebug
     void LogPlayerSliding(float lastSlideSqrMagnitude);
 }
 
-[RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider), typeof(CharacterState))]
-[RequireComponent(typeof(CharacterMotor))]
 public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
 {
     [Header("Movement")]
@@ -107,6 +105,19 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
     public void SetEnvMovement(float speedMultiplier) =>
         _envSpeedMultiplier = Mathf.Max(0f, speedMultiplier);
 
+    public void BindBody(CharacterMotor motor, CharacterState state, CharacterFacingAnim facing)
+    {
+        if (_motor != null && _motor != motor)
+            _motor.BindDrive(null);
+
+        _motor = motor;
+        _characterState = state;
+        _facingAnim = facing;
+        if (_motor != null)
+            _motor.BindDrive(this);
+        ApplyDriveMoverSettings();
+    }
+
     public void SetControllEnabled(bool enabled)
     {
         _controlEnabled = enabled;
@@ -132,8 +143,11 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         if (_debugControllerBehaviour == null) TryGetComponent(out _debugControllerBehaviour);
         _debugController = _debugControllerBehaviour as IPlayerMovementDebug;
 
-        _motor.BindDrive(this);
-        ApplyDriveMoverSettings();
+        if (_motor != null)
+        {
+            _motor.BindDrive(this);
+            ApplyDriveMoverSettings();
+        }
     }
 
     void Start()
@@ -189,7 +203,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
 
             mover.SetInput(Vector2.zero, _refCam);
             _characterState.SetMoveDir(Vector3.zero);
-            _characterState.UpdateGridPos(transform.position);
+            _characterState.UpdateGridPos(_motor != null ? _motor.transform.position : transform.position);
             return;
         }
 
@@ -203,7 +217,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         }
 
         _characterState.SetMoveDir(mover.WorldMoveDir);
-        _characterState.UpdateGridPos(transform.position);
+        _characterState.UpdateGridPos(_motor != null ? _motor.transform.position : transform.position);
     }
 
     public void OnRun(InputAction.CallbackContext context)
