@@ -22,7 +22,7 @@ alwaysApply: true
 | `ui-prefab-bake.mdc` | UI 프리팹 full bake는 일회성 — 베이크 후 스크립트 삭제 |
 | `vendor-packages.mdc` | 서드파티·벤더 원본 인플레이스 수정 금지 — Dist 포크/래퍼 |
 | `inspector-exposure.mdc` | Inspector — 무의미 비노출 / 유의미 필수 노출 |
-| `arm-anim-layers.mdc` | 팔 애니 — 컨트롤러는 동작 모름 · Override=thin · AnimVerb=Pipeline (Glob) |
+| `arm-anim-layers.mdc` | 팔 애니 — 컨트롤러는 동작 모름 · 동작 줄=무기×Leaf(클립+Recoil/Blocked) · Catalog=폴백 (Glob) |
 
 `00-rules-index.mdc` §**Dist UI path gate**: UI 경로 수정 시 `ui-font`/`ui-prefab-layout` 로드 스위치 (전문 Always 아님).
 

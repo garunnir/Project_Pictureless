@@ -17,13 +17,12 @@ public sealed class ArmAnimSlotCatalog : ScriptableObject
     const string TabThin = "thin SM";
 
     [Serializable]
+    [InlineProperty]
+    [DrawWithUnity]
     public sealed class HandClips
     {
-        [HorizontalGroup("Hands", LabelWidth = 55)]
         public AnimationClip leftBase;
-        [HorizontalGroup("Hands")]
         public AnimationClip rightBase;
-        [HorizontalGroup("Hands")]
         public AnimationClip twoHandBase;
     }
 
@@ -77,8 +76,8 @@ public sealed class ArmAnimSlotCatalog : ScriptableObject
 
     [InfoBox(
         "기본 동사 폴백: Leaf마다 행이 있어야 한다 (Swing/Thrust/Semi/Burst/Auto/Raise).\n" +
-        "표시는 Melee/Trigger 묶음(DropdownPath). 컨트롤러에는 동작 이름을 넣지 않는다.\n" +
-        "무기 Entry가 비면 여기 클립·VFX로 채운다. Impact=Recoil/Blocked.\n" +
+        "무기 동작 줄 클립이 비면 여기 클립·VFX로 채운다. Recoil/Blocked도 동작 줄 비면 Impact 행.\n" +
+        "표시는 Melee/Trigger 묶음. 컨트롤러에는 동작 이름을 넣지 않는다.\n" +
         "Leaf 추가: WeaponActionUtil.All(+Mask) → Dist/MCP/Ensure Arm Anim Pipeline.\n" +
         "docs/equipment/GEAR.md · WEAPON_VISUAL.md · .cursor/rules/arm-anim-layers.mdc",
         InfoMessageType.None)]
@@ -126,6 +125,8 @@ public sealed class ArmAnimSlotCatalog : ScriptableObject
     [LabelText("Blocked")]
     [SerializeField] AnimationClip _impactBlockedThin;
 
+    [SerializeField, HideInInspector] WeaponAnimClipSpeeds _clipSpeeds;
+
     /// <summary>Thin SM Hold 슬롯. 라이브러리 파지는 <see cref="ActionLibraryEntry.hold"/>.</summary>
     public HandClips HoldThin => _holdThin;
     public HandClips Hold => _holdThin;
@@ -133,7 +134,7 @@ public sealed class ArmAnimSlotCatalog : ScriptableObject
     public HandClips AttackThin => _attackThin;
     public AnimationClip ImpactRecoilThin => _impactRecoilThin;
     public AnimationClip ImpactBlockedThin => _impactBlockedThin;
-
+    public WeaponAnimClipSpeeds ClipSpeeds => _clipSpeeds;
     public ActionLibraryEntry[] Actions => _verbs;
     public ActionLibraryEntry[] Verbs => _verbs;
     public ImpactLibraryEntry[] Impacts => _impacts;
@@ -142,6 +143,7 @@ public sealed class ArmAnimSlotCatalog : ScriptableObject
     public void SetHold(HandClips hold) => SetHoldThin(hold);
     public void SetAimThin(HandClips aimThin) => _aimThin = aimThin ?? new HandClips();
     public void SetAttackThin(HandClips attackThin) => _attackThin = attackThin ?? new HandClips();
+    public void SetClipSpeeds(WeaponAnimClipSpeeds speeds) => _clipSpeeds = speeds;
 
     public void SetImpactThin(AnimationClip recoil, AnimationClip blocked)
     {

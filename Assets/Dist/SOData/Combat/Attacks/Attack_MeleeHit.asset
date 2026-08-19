@@ -24,3 +24,7 @@ MonoBehaviour:
   _cueNormalizedTime: 0.35
   _feedsChamberOnFire: 1
   _projectilePrefab: {fileID: 0}
+  _hitboxHalfWidth: 0.35
+  _hitboxHalfHeight: 0.45
+  _playRecoilImpact: 0
+  _playBlockedImpact: 1

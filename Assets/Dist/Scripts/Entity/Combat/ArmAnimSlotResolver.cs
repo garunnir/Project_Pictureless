@@ -1,18 +1,28 @@
 // ============================================================
-// ArmAnimSlotResolver — Pipeline 라이브러리 → thin 투영 (컨트롤러는 동작 모름)
+// ArmAnimSlotResolver — 동작 줄 → Catalog 폴백 → thin 투영 (컨트롤러는 동작 모름)
 // ============================================================
 
 using UnityEngine;
 
 /// <summary>
-/// AnimVerb 클립은 Pipeline(Catalog)에만 있다. SM thin에 투영한다.
-/// 무기 Override는 thin 덮어쓰기(분류 아님). 레거시 라이브러리 키 매핑도 읽는다.
+/// AnimVerb 클립은 무기 Entry(동작 줄) 또는 Pipeline(Catalog)에 있다. SM thin에 투영한다.
+/// Recoil/Blocked도 동작 줄 → Catalog Impact. 무기 Override 클립 맵은 쓰지 않는다.
 /// </summary>
 public static class ArmAnimSlotResolver
 {
+    enum PoseKind
+    {
+        Hold = 0,
+        Aim = 1,
+        Attack = 2
+    }
+
     public static AnimatorOverrideController BuildResolvedOverride(
         RuntimeAnimatorController baseOrWeapon,
         ArmAnimSlotCatalog catalog,
+        WeaponPresentation presentationL,
+        WeaponPresentation presentationR,
+        WeaponPresentation presentation2H,
         WeaponAction actionL,
         WeaponAction actionR,
         WeaponAction action2H)
@@ -26,14 +36,24 @@ public static class ArmAnimSlotResolver
             root = weaponOvr.runtimeAnimatorController;
 
         var resolved = new AnimatorOverrideController(root);
-        ProjectThinKeys(resolved, weaponOvr, catalog, actionL, actionR, action2H);
+        ProjectThinKeys(
+            resolved,
+            catalog,
+            presentationL,
+            presentationR,
+            presentation2H,
+            actionL,
+            actionR,
+            action2H);
         return resolved;
     }
 
     public static void RemapThinKeys(
         AnimatorOverrideController resolved,
-        RuntimeAnimatorController weaponSource,
         ArmAnimSlotCatalog catalog,
+        WeaponPresentation presentationL,
+        WeaponPresentation presentationR,
+        WeaponPresentation presentation2H,
         WeaponAction actionL,
         WeaponAction actionR,
         WeaponAction action2H)
@@ -41,71 +61,148 @@ public static class ArmAnimSlotResolver
         if (resolved == null || catalog == null)
             return;
 
-        var weaponOvr = weaponSource as AnimatorOverrideController;
-        ProjectThinKeys(resolved, weaponOvr, catalog, actionL, actionR, action2H);
-    }
-
-    /// <summary>구 API — weaponSource 없이 Remap (thin Override 유지 불가).</summary>
-    public static void RemapThinKeys(
-        AnimatorOverrideController resolved,
-        ArmAnimSlotCatalog catalog,
-        WeaponAction actionL,
-        WeaponAction actionR,
-        WeaponAction action2H)
-    {
-        RemapThinKeys(resolved, null, catalog, actionL, actionR, action2H);
+        ProjectThinKeys(
+            resolved,
+            catalog,
+            presentationL,
+            presentationR,
+            presentation2H,
+            actionL,
+            actionR,
+            action2H);
     }
 
     static void ProjectThinKeys(
         AnimatorOverrideController resolved,
-        AnimatorOverrideController weaponOvr,
         ArmAnimSlotCatalog catalog,
+        WeaponPresentation presentationL,
+        WeaponPresentation presentationR,
+        WeaponPresentation presentation2H,
         WeaponAction actionL,
         WeaponAction actionR,
         WeaponAction action2H)
     {
-        ArmAnimSlotCatalog.ActionLibraryEntry libL = catalog.FindAction(actionL);
-        ArmAnimSlotCatalog.ActionLibraryEntry libR = catalog.FindAction(actionR);
-        ArmAnimSlotCatalog.ActionLibraryEntry lib2H = catalog.FindAction(action2H);
-
-        ProjectPose(resolved, weaponOvr, catalog.HoldThin, libL?.hold, libR?.hold, lib2H?.hold, null);
-        ProjectPose(
-            resolved, weaponOvr, catalog.AimThin, libL?.aim, libR?.aim, lib2H?.aim, catalog.HoldThin);
         ProjectPose(
             resolved,
-            weaponOvr,
+            catalog,
+            catalog.HoldThin,
+            presentationL,
+            presentationR,
+            presentation2H,
+            actionL,
+            actionR,
+            action2H,
+            PoseKind.Hold,
+            null);
+        ProjectPose(
+            resolved,
+            catalog,
+            catalog.AimThin,
+            presentationL,
+            presentationR,
+            presentation2H,
+            actionL,
+            actionR,
+            action2H,
+            PoseKind.Aim,
+            catalog.HoldThin);
+        ProjectPose(
+            resolved,
+            catalog,
             catalog.AttackThin,
-            libL?.attack,
-            libR?.attack,
-            lib2H?.attack,
+            presentationL,
+            presentationR,
+            presentation2H,
+            actionL,
+            actionR,
+            action2H,
+            PoseKind.Attack,
             catalog.HoldThin);
     }
 
     static void ProjectPose(
         AnimatorOverrideController resolved,
-        AnimatorOverrideController weaponOvr,
+        ArmAnimSlotCatalog catalog,
         ArmAnimSlotCatalog.HandClips thin,
-        ArmAnimSlotCatalog.HandClips libL,
-        ArmAnimSlotCatalog.HandClips libR,
-        ArmAnimSlotCatalog.HandClips lib2H,
+        WeaponPresentation presentationL,
+        WeaponPresentation presentationR,
+        WeaponPresentation presentation2H,
+        WeaponAction actionL,
+        WeaponAction actionR,
+        WeaponAction action2H,
+        PoseKind pose,
         ArmAnimSlotCatalog.HandClips poseFallback)
     {
         if (thin == null)
             return;
 
         if (thin.leftBase != null)
-            resolved[thin.leftBase] = ResolveClip(
-                weaponOvr, thin.leftBase, LibHand(libL, WieldHand.Left), poseFallback, WieldHand.Left);
+            resolved[thin.leftBase] = PoseClip(
+                presentationL, actionL, catalog, pose, WieldHand.Left, poseFallback, thin.leftBase);
         if (thin.rightBase != null)
-            resolved[thin.rightBase] = ResolveClip(
-                weaponOvr, thin.rightBase, LibHand(libR, WieldHand.Right), poseFallback, WieldHand.Right);
+            resolved[thin.rightBase] = PoseClip(
+                presentationR, actionR, catalog, pose, WieldHand.Right, poseFallback, thin.rightBase);
         if (thin.twoHandBase != null)
-            resolved[thin.twoHandBase] = ResolveClip(
-                weaponOvr,
-                thin.twoHandBase,
-                LibHand(lib2H, WieldHand.TwoHand),
+            resolved[thin.twoHandBase] = PoseClip(
+                presentation2H,
+                action2H,
+                catalog,
+                pose,
+                WieldHand.TwoHand,
                 poseFallback,
-                WieldHand.TwoHand);
+                thin.twoHandBase);
+    }
+
+    static AnimationClip PoseClip(
+        WeaponPresentation presentation,
+        WeaponAction action,
+        ArmAnimSlotCatalog catalog,
+        PoseKind pose,
+        WieldHand hand,
+        ArmAnimSlotCatalog.HandClips poseFallback,
+        AnimationClip thinClip)
+    {
+        AnimationClip fromEntry = LibHand(EntryPose(presentation, action, pose), hand);
+        if (fromEntry != null)
+            return fromEntry;
+
+        ArmAnimSlotCatalog.ActionLibraryEntry lib =
+            catalog != null ? catalog.FindAction(action) : null;
+        AnimationClip fromCatalog = LibHand(CatalogPose(lib, pose), hand);
+        if (fromCatalog != null)
+            return fromCatalog;
+
+        AnimationClip fallback = LibHand(poseFallback, hand);
+        return fallback != null ? fallback : thinClip;
+    }
+
+    static ArmAnimSlotCatalog.HandClips EntryPose(
+        WeaponPresentation presentation,
+        WeaponAction action,
+        PoseKind pose)
+    {
+        if (presentation == null ||
+            !presentation.TryGetEntry(action, out WeaponPresentation.Entry entry) ||
+            entry == null)
+            return null;
+        if (pose == PoseKind.Hold)
+            return entry.holdClips;
+        if (pose == PoseKind.Aim)
+            return entry.aimClips;
+        return entry.attackClips;
+    }
+
+    static ArmAnimSlotCatalog.HandClips CatalogPose(
+        ArmAnimSlotCatalog.ActionLibraryEntry lib,
+        PoseKind pose)
+    {
+        if (lib == null)
+            return null;
+        if (pose == PoseKind.Hold)
+            return lib.hold;
+        if (pose == PoseKind.Aim)
+            return lib.aim;
+        return lib.attack;
     }
 
     static AnimationClip LibHand(ArmAnimSlotCatalog.HandClips lib, WieldHand hand)
@@ -117,43 +214,6 @@ public static class ArmAnimSlotResolver
         if (hand == WieldHand.Right)
             return lib.rightBase;
         return lib.twoHandBase;
-    }
-
-    static AnimationClip ResolveClip(
-        AnimatorOverrideController weaponOvr,
-        AnimationClip thinClip,
-        AnimationClip libClip,
-        ArmAnimSlotCatalog.HandClips poseFallback,
-        WieldHand hand)
-    {
-        AnimationClip fromThin = ReadNonIdentity(weaponOvr, thinClip);
-        if (fromThin != null)
-            return fromThin;
-
-        AnimationClip fromLib = ReadNonIdentity(weaponOvr, libClip);
-        if (fromLib != null)
-            return fromLib;
-
-        if (libClip != null)
-            return libClip;
-
-        if (poseFallback == null)
-            return thinClip;
-        AnimationClip fallback =
-            hand == WieldHand.Left ? poseFallback.leftBase :
-            hand == WieldHand.Right ? poseFallback.rightBase :
-            poseFallback.twoHandBase;
-        return ReadNonIdentity(weaponOvr, fallback) ?? fallback ?? thinClip;
-    }
-
-    static AnimationClip ReadNonIdentity(AnimatorOverrideController ovr, AnimationClip original)
-    {
-        if (ovr == null || original == null)
-            return null;
-        AnimationClip mapped = ovr[original];
-        if (mapped == null || mapped == original)
-            return null;
-        return mapped;
     }
 
     public static AnimationClip EffectiveClip(AnimationClip baseClip, AnimatorOverrideController overrideController)

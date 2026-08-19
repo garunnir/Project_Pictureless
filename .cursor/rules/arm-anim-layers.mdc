@@ -1,5 +1,5 @@
 ---
-description: 팔 애니 — 컨트롤러는 동작 모름. Override=thin만. AnimVerb는 Pipeline만
+description: 팔 애니 — 컨트롤러는 동작 모름. 동작 줄=무기×Leaf(Hold/Aim/Attack/Recoil/Blocked). Catalog=폴백
 globs: Assets/Dist/Visual/Anim/CharacterAnimator/**/*,Assets/Dist/Scripts/Entity/Combat/**/*,Assets/Dist/Scripts/Entity/Character/CharacterLocomotionAnim.cs,Assets/Dist/Scripts/Editor/Anim/**/*,docs/locomotion/**/*,docs/equipment/GEAR.md,docs/equipment/WEAPON_VISUAL.md
 alwaysApply: false
 ---
@@ -13,18 +13,20 @@ alwaysApply: false
 1. **컨트롤러**는 재생 칸만 안다: `Hold_*` / `Aim_*` / `Attack_*` / Impact thin. 동작 이름을 상태·레이어·파라미터에 넣지 않는다.
 2. **기본 동사 폴백**은 `ArmAnimSlotCatalog`에 **Leaf마다 행** (Swing/Thrust/Semi/Burst/Auto/Raise). 폴백 줄이 없는 Leaf 금지.
 3. **표시**는 Melee/Trigger 묶음(에디터·UI). 취급은 Leaf 실체.
-4. **무기 Override**는 재생 칸(thin)만 덮어쓴다. 분류 UI 아님.
+4. **무기 동작 줄** = 그 무기 그 Leaf Hold/Aim/Attack/**Recoil/Blocked** 클립. 비면 Catalog (Action은 같은 Leaf, Impact는 Recoil/Blocked 행).
+5. **무기 Override**는 클립 배속 테이블. 연출 클립으로 모든 동작을 덮지 않는다.
 
 ## MUST
 - 수정 전 `docs/locomotion/LOCOMOTION.md` · `docs/equipment/GEAR.md` Action layers
-- Override Inspector는 thin만 (`WeaponAnimOverrideEditor`)
+- Override Inspector는 배속 테이블만 (`WeaponAnimOverrideEditor`)
 - Rebuild 후 컨트롤러에 동작 이름·`LibraryKeys` 있으면 실패
 - Catalog Ensure는 `WeaponActionUtil.All` (Leaf 전부)
 
 ## MUST NOT
 - `LibraryKeys` 또는 동작 이름 상태를 `CharacterAnimController`에 추가
 - “Override에 키가 안 보이니까 컨트롤러에 키 심기”
-- Override를 동작별 슬롯장으로 설계
+- Override를 동작별 슬롯장으로 설계 (동작별 클립은 동작 줄)
+- Hold/Aim/Attack/Recoil/Blocked Override로 Catalog 폴백을 가로채기
 - Semi/Burst/Auto Catalog 행을 빼고 Trigger로만 접어 폴백 없애기
 
 ## 작업 전 질문 (Yes면 중단)

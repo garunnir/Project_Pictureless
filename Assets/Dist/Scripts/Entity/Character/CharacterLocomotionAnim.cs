@@ -8,7 +8,7 @@ using UnityEngine;
 /// <summary>
 /// Drives Move (facing-relative MoveX/MoveZ) + RightArm/LeftArm/TwoHand overlays + Impact.
 /// TwoHand Attack stays UpperBody-masked (full-body replace looked unnatural on Idle).
-/// WeaponAction selects library clips projected onto thin keys via
+/// WeaponAction selects Entry clips then Catalog Leaf, projected onto thin keys via
 /// <see cref="ArmAnimSlotResolver"/>; Impact Kind via <see cref="ArmImpactSlotResolver"/>.
 /// Animation time advances via <see cref="TimeScaleService"/> only.
 /// </summary>
@@ -247,7 +247,12 @@ public class CharacterLocomotionAnim : MonoBehaviour
             _animator.SetBool(_hashAiming, isAiming);
 
         ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H);
-        SyncThinActionRemap(actionL, actionR, action2H);
+        ResolveHandPresentations(
+            out WeaponPresentation presentationL,
+            out WeaponPresentation presentationR,
+            out WeaponPresentation presentation2H);
+        SyncThinActionRemap(
+            presentationL, presentationR, presentation2H, actionL, actionR, action2H);
 
         if (_attackQueueCount > 0)
         {
@@ -258,21 +263,24 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
             if (attackHand == WieldHand.TwoHand)
             {
-                SyncThinActionRemap(actionL, actionR, attackAction);
+                SyncThinActionRemap(
+                    presentationL, presentationR, presentation2H, actionL, actionR, attackAction);
                 ArmAttackOverlay(attackHand);
                 if (_hasAttack2H)
                     _animator.SetTrigger(_hashAttack2H);
             }
             else if (attackHand == WieldHand.Left)
             {
-                SyncThinActionRemap(attackAction, actionR, action2H);
+                SyncThinActionRemap(
+                    presentationL, presentationR, presentation2H, attackAction, actionR, action2H);
                 ArmAttackOverlay(attackHand);
                 if (_hasAttackL)
                     _animator.SetTrigger(_hashAttackL);
             }
             else
             {
-                SyncThinActionRemap(actionL, attackAction, action2H);
+                SyncThinActionRemap(
+                    presentationL, presentationR, presentation2H, actionL, attackAction, action2H);
                 ArmAttackOverlay(attackHand);
                 if (_hasAttackR)
                     _animator.SetTrigger(_hashAttackR);
@@ -289,7 +297,13 @@ public class CharacterLocomotionAnim : MonoBehaviour
         TickImpactEmpty();
     }
 
-    void SyncThinActionRemap(WeaponAction actionL, WeaponAction actionR, WeaponAction action2H)
+    void SyncThinActionRemap(
+        WeaponPresentation presentationL,
+        WeaponPresentation presentationR,
+        WeaponPresentation presentation2H,
+        WeaponAction actionL,
+        WeaponAction actionR,
+        WeaponAction action2H)
     {
         if (_resolvedOverride == null || _armSlotCatalog == null)
             return;
@@ -301,8 +315,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
         ArmAnimSlotResolver.RemapThinKeys(
             _resolvedOverride,
-            _weaponSourceController,
             _armSlotCatalog,
+            presentationL,
+            presentationR,
+            presentation2H,
             actionL,
             actionR,
             action2H);
@@ -332,7 +348,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (_attacker != null &&
             !_attacker.AllowsImpactReaction(action, ArmImpactKind.Recoil))
             return;
-        PlayImpact(ArmImpactKind.Recoil, hand);
+        PlayImpact(ArmImpactKind.Recoil, hand, action);
     }
 
     void OnAttackJudged(AttackOutcome outcome)
@@ -341,17 +357,27 @@ public class CharacterLocomotionAnim : MonoBehaviour
             return;
         if (!WeaponAttack.AllowsImpactReaction(outcome.Attack, ArmImpactKind.Blocked))
             return;
-        PlayImpact(ArmImpactKind.Blocked, outcome.Hand);
+        PlayImpact(ArmImpactKind.Blocked, outcome.Hand, outcome.Action);
     }
 
-    void PlayImpact(ArmImpactKind kind, WieldHand hand)
+    void PlayImpact(ArmImpactKind kind, WieldHand hand, WeaponAction action)
     {
         if (_animator == null || _armSlotCatalog == null || _resolvedOverride == null)
             return;
         if (_impactLayerIndex < 0)
             return;
 
-        ArmImpactSlotResolver.ProjectImpact(_resolvedOverride, _armSlotCatalog, kind, hand);
+        CharacterGearService gear = _gearHost != null ? _gearHost.Service : null;
+        WeaponPresentationCatalog presentationCatalog = gear?.PresentationCatalog
+            ?? (_attacker != null ? _attacker.Catalog : null);
+        WeaponPresentation presentation = PresentationForHand(gear, presentationCatalog, hand);
+        ArmImpactSlotResolver.ProjectImpact(
+            _resolvedOverride,
+            _armSlotCatalog,
+            presentation,
+            action,
+            kind,
+            hand);
         RefreshImpactClipSpeeds();
         _impactWeightTarget = 1f;
         _animator.SetLayerWeight(_impactLayerIndex, 1f);
@@ -428,10 +454,21 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _mappedAction2H = (WeaponAction)(-1);
 
         ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H);
+        ResolveHandPresentations(
+            out WeaponPresentation presentationL,
+            out WeaponPresentation presentationR,
+            out WeaponPresentation presentation2H);
         if (_armSlotCatalog != null)
         {
             _resolvedOverride = ArmAnimSlotResolver.BuildResolvedOverride(
-                source, _armSlotCatalog, actionL, actionR, action2H);
+                source,
+                _armSlotCatalog,
+                presentationL,
+                presentationR,
+                presentation2H,
+                actionL,
+                actionR,
+                action2H);
             _mappedActionL = actionL;
             _mappedActionR = actionR;
             _mappedAction2H = action2H;
@@ -578,24 +615,27 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void RefreshActionClipSpeeds()
     {
-        WeaponAnimClipSpeeds table = ResolveClipSpeedTable();
         ArmAnimSlotCatalog.HandClips hold = _armSlotCatalog != null ? _armSlotCatalog.HoldThin : null;
         ArmAnimSlotCatalog.HandClips aim = _armSlotCatalog != null ? _armSlotCatalog.AimThin : null;
         ArmAnimSlotCatalog.HandClips attack = _armSlotCatalog != null ? _armSlotCatalog.AttackThin : null;
-        _speedHoldR = SpeedOfThin(hold != null ? hold.rightBase : null, table);
-        _speedAimR = SpeedOfThin(aim != null ? aim.rightBase : null, table);
-        _speedAttackR = SpeedOfThin(attack != null ? attack.rightBase : null, table);
-        _speedHoldL = SpeedOfThin(hold != null ? hold.leftBase : null, table);
-        _speedAimL = SpeedOfThin(aim != null ? aim.leftBase : null, table);
-        _speedAttackL = SpeedOfThin(attack != null ? attack.leftBase : null, table);
-        _speedHold2H = SpeedOfThin(hold != null ? hold.twoHandBase : null, table);
-        _speedAim2H = SpeedOfThin(aim != null ? aim.twoHandBase : null, table);
-        _speedAttack2H = SpeedOfThin(attack != null ? attack.twoHandBase : null, table);
+        ResolveHandPresentations(
+            out WeaponPresentation presentationL,
+            out WeaponPresentation presentationR,
+            out WeaponPresentation presentation2H);
+        _speedHoldR = SpeedOfThin(hold != null ? hold.rightBase : null, presentationR);
+        _speedAimR = SpeedOfThin(aim != null ? aim.rightBase : null, presentationR);
+        _speedAttackR = SpeedOfThin(attack != null ? attack.rightBase : null, presentationR);
+        _speedHoldL = SpeedOfThin(hold != null ? hold.leftBase : null, presentationL);
+        _speedAimL = SpeedOfThin(aim != null ? aim.leftBase : null, presentationL);
+        _speedAttackL = SpeedOfThin(attack != null ? attack.leftBase : null, presentationL);
+        _speedHold2H = SpeedOfThin(hold != null ? hold.twoHandBase : null, presentation2H);
+        _speedAim2H = SpeedOfThin(aim != null ? aim.twoHandBase : null, presentation2H);
+        _speedAttack2H = SpeedOfThin(attack != null ? attack.twoHandBase : null, presentation2H);
     }
 
     void RefreshImpactClipSpeeds()
     {
-        WeaponAnimClipSpeeds table = ResolveClipSpeedTable();
+        WeaponPresentation presentation = _attacker != null ? _attacker.Presentation : null;
         if (_armSlotCatalog == null)
         {
             _speedImpactRecoil = WeaponAnimClipSpeeds.DefaultSpeed;
@@ -603,23 +643,29 @@ public class CharacterLocomotionAnim : MonoBehaviour
             return;
         }
 
-        _speedImpactRecoil = SpeedOfThin(_armSlotCatalog.ImpactRecoilThin, table);
-        _speedImpactBlocked = SpeedOfThin(_armSlotCatalog.ImpactBlockedThin, table);
+        _speedImpactRecoil = SpeedOfThin(_armSlotCatalog.ImpactRecoilThin, presentation);
+        _speedImpactBlocked = SpeedOfThin(_armSlotCatalog.ImpactBlockedThin, presentation);
     }
 
-    WeaponAnimClipSpeeds ResolveClipSpeedTable()
+    float SpeedOfThin(AnimationClip thin, WeaponPresentation presentation)
     {
-        if (_attacker == null || _attacker.Presentation == null)
-            return null;
-        return _attacker.Presentation.AnimClipSpeeds;
-    }
-
-    float SpeedOfThin(AnimationClip thin, WeaponAnimClipSpeeds table)
-    {
-        if (thin == null || table == null || _resolvedOverride == null)
+        if (thin == null || _resolvedOverride == null)
             return WeaponAnimClipSpeeds.DefaultSpeed;
         AnimationClip playing = ArmAnimSlotResolver.EffectiveClip(thin, _resolvedOverride);
-        return table.GetSpeed(playing);
+        return SpeedOfClip(playing, presentation);
+    }
+
+    float SpeedOfClip(AnimationClip playing, WeaponPresentation presentation)
+    {
+        if (playing == null)
+            return WeaponAnimClipSpeeds.DefaultSpeed;
+        WeaponAnimClipSpeeds local = presentation != null ? presentation.AnimClipSpeeds : null;
+        if (local != null && local.Contains(playing))
+            return local.GetSpeed(playing);
+        WeaponAnimClipSpeeds catalog = _armSlotCatalog != null ? _armSlotCatalog.ClipSpeeds : null;
+        if (catalog != null)
+            return catalog.GetSpeed(playing);
+        return WeaponAnimClipSpeeds.DefaultSpeed;
     }
 
     void AdvanceAnimator(float channelDelta)
@@ -916,6 +962,19 @@ public class CharacterLocomotionAnim : MonoBehaviour
         float next = Mathf.MoveTowards(current, target, _layerBlendSpeed * channelDelta);
         if (!Mathf.Approximately(current, next))
             _animator.SetLayerWeight(layerIndex, next);
+    }
+
+    void ResolveHandPresentations(
+        out WeaponPresentation presentationL,
+        out WeaponPresentation presentationR,
+        out WeaponPresentation presentation2H)
+    {
+        CharacterGearService gear = _gearHost != null ? _gearHost.Service : null;
+        WeaponPresentationCatalog catalog = gear?.PresentationCatalog
+            ?? (_attacker != null ? _attacker.Catalog : null);
+        presentationL = PresentationForHand(gear, catalog, WieldHand.Left);
+        presentationR = PresentationForHand(gear, catalog, WieldHand.Right);
+        presentation2H = PresentationForHand(gear, catalog, WieldHand.TwoHand);
     }
 
     void ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H)

@@ -1,17 +1,20 @@
 // ============================================================
-// ArmImpactSlotResolver — Impact 라이브러리 → thin Impact 키 투영
+// ArmImpactSlotResolver — 동작 줄 Recoil/Blocked → Catalog Impact → thin
 // ============================================================
 
 using UnityEngine;
 
 /// <summary>
-/// ArmImpactKind 라이브러리 클립을 Impact thin 슬롯에 주입한다.
+/// Impact 클립은 무기 Entry(동작 줄) 또는 Catalog Impact 행. SM Impact thin에 투영한다.
+/// 무기 Override Impact thin은 동작별이 아니라서 쓰지 않는다.
 /// </summary>
 public static class ArmImpactSlotResolver
 {
     public static void ProjectImpact(
         AnimatorOverrideController resolved,
         ArmAnimSlotCatalog catalog,
+        WeaponPresentation presentation,
+        WeaponAction action,
         ArmImpactKind kind,
         WieldHand hand)
     {
@@ -22,10 +25,28 @@ public static class ArmImpactSlotResolver
         if (thin == null)
             return;
 
-        ArmAnimSlotCatalog.ImpactLibraryEntry entry = catalog.FindImpact(kind);
-        AnimationClip lib = PickHand(entry != null ? entry.clips : null, hand);
-        AnimationClip mapped = ArmAnimSlotResolver.EffectiveClip(lib, resolved);
-        resolved[thin] = mapped != null ? mapped : thin;
+        AnimationClip fromEntry = PickHand(EntryImpact(presentation, action, kind), hand);
+        if (fromEntry != null)
+        {
+            resolved[thin] = fromEntry;
+            return;
+        }
+
+        ArmAnimSlotCatalog.ImpactLibraryEntry lib = catalog.FindImpact(kind);
+        AnimationClip fromCatalog = PickHand(lib != null ? lib.clips : null, hand);
+        resolved[thin] = fromCatalog != null ? fromCatalog : thin;
+    }
+
+    static ArmAnimSlotCatalog.HandClips EntryImpact(
+        WeaponPresentation presentation,
+        WeaponAction action,
+        ArmImpactKind kind)
+    {
+        if (presentation == null ||
+            !presentation.TryGetEntry(action, out WeaponPresentation.Entry entry) ||
+            entry == null)
+            return null;
+        return kind == ArmImpactKind.Blocked ? entry.blockedClips : entry.recoilClips;
     }
 
     static AnimationClip PickHand(ArmAnimSlotCatalog.HandClips clips, WieldHand hand)

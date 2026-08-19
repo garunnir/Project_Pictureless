@@ -1,5 +1,5 @@
 // ============================================================
-// WeaponPresentation — 동작 목록(가용·Attack·연출) + AnimatorOverride
+// WeaponPresentation — 동작 목록(가용·Attack·동작 줄 클립·연출) + Impact Override
 // ============================================================
 
 using System;
@@ -46,6 +46,31 @@ public sealed class WeaponPresentation : ScriptableObject
         [Min(0f)]
         public float actionCooldownSeconds;
 
+        [FoldoutGroup("애니", expanded: true)]
+        [LabelText("Hold")]
+        [Tooltip("비면 Catalog 같은 동작 Hold.")]
+        public ArmAnimSlotCatalog.HandClips holdClips = new ArmAnimSlotCatalog.HandClips();
+
+        [FoldoutGroup("애니")]
+        [LabelText("Aim")]
+        [Tooltip("비면 Catalog 같은 동작 Aim.")]
+        public ArmAnimSlotCatalog.HandClips aimClips = new ArmAnimSlotCatalog.HandClips();
+
+        [FoldoutGroup("애니")]
+        [LabelText("Attack")]
+        [Tooltip("비면 Catalog 같은 동작 Attack.")]
+        public ArmAnimSlotCatalog.HandClips attackClips = new ArmAnimSlotCatalog.HandClips();
+
+        [FoldoutGroup("애니")]
+        [LabelText("Recoil")]
+        [Tooltip("비면 Catalog Impact Recoil.")]
+        public ArmAnimSlotCatalog.HandClips recoilClips = new ArmAnimSlotCatalog.HandClips();
+
+        [FoldoutGroup("애니")]
+        [LabelText("Blocked")]
+        [Tooltip("비면 Catalog Impact Blocked.")]
+        public ArmAnimSlotCatalog.HandClips blockedClips = new ArmAnimSlotCatalog.HandClips();
+
         public EffectSeed[] effectSeeds;
         public WeaponActionVfx vfx = new();
 
@@ -66,9 +91,8 @@ public sealed class WeaponPresentation : ScriptableObject
 
     [InfoBox(
         "Leaf = 선택·시전 단위(실체). Family(Melee/Trigger)는 에디터·UI 묶음만.\n" +
-        "기본 동사 폴백은 ArmAnimSlotCatalog에 Leaf마다 행. Entry 비면 그 행 사용.\n" +
-        "Hold(아이들)=Entry.useHold. Override=thin 클립 덮어쓰기(분류 아님).\n" +
-        "클립 배속은 Override Inspector에서 할당한 클립 옆 Speed (슬롯 속도 아님).\n" +
+        "기본 동사 폴백은 ArmAnimSlotCatalog에 Leaf마다 행. Entry 애니·VFX 비면 그 행 사용.\n" +
+        "Hold/Aim/Attack/Recoil/Blocked 클립은 이 줄. 비면 Catalog. 클립 옆 Speed.\n" +
         "동작 쿨은 이 줄(Leaf). 무기 쿨은 ItemData→CombatMath.",
         InfoMessageType.None)]
     [LabelText("동작 줄")]
@@ -85,7 +109,7 @@ public sealed class WeaponPresentation : ScriptableObject
 
     [InlineEditor(InlineEditorObjectFieldModes.Foldout)]
     [Tooltip(
-        "thin Hold/Aim/Attack 클립 덮어쓰기(분류 아님). 컨트롤러는 동작 모름. 비우면 Pipeline→thin.")]
+        "클립 배속 테이블(WeaponAnimClipSpeeds). Hold/Aim/Attack/Recoil/Blocked는 동작 줄.")]
     [LabelText("Animator Override")]
     [SerializeField] AnimatorOverrideController _animatorOverride;
 

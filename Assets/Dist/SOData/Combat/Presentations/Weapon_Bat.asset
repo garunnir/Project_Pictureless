@@ -26,6 +26,5 @@ MonoBehaviour:
         type: 3}
   _supportedActions: 1
   _defaultEntryIndex: 0
-  _animatorOverride: {fileID: 22100000, guid: a797d5132a0a14344a3c6abe8f4079bf, type: 2}
-  _animClipSpeeds: {fileID: -3711712379296556945, guid: a797d5132a0a14344a3c6abe8f4079bf,
-    type: 2}
+  _animatorOverride: {fileID: 0}
+  _animClipSpeeds: {fileID: 0}

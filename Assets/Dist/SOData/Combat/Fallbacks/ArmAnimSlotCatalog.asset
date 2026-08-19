@@ -24,9 +24,9 @@ MonoBehaviour:
       rightBase: {fileID: 7400000, guid: 3c48e06349016e7409e3131ff69994d0, type: 2}
       twoHandBase: {fileID: 7400000, guid: 3c48e06349016e7409e3131ff69994d0, type: 2}
     attack:
-      leftBase: {fileID: 7400000, guid: 7895e19070389314b96c27bbdf724cf1, type: 2}
-      rightBase: {fileID: 7400000, guid: 39f7587b52354d64d954a8644339771d, type: 2}
-      twoHandBase: {fileID: 7400000, guid: 82b3138c8fcfaa84891aad23329991bf, type: 2}
+      leftBase: {fileID: 7400000, guid: d79c95bcd8e65fb4599806a52c3bc00d, type: 2}
+      rightBase: {fileID: 7400000, guid: d79c95bcd8e65fb4599806a52c3bc00d, type: 2}
+      twoHandBase: {fileID: 7400000, guid: d79c95bcd8e65fb4599806a52c3bc00d, type: 2}
     vfx:
       actionVfx: {fileID: 0}
       tracerVfx: {fileID: 0}
@@ -177,3 +177,4 @@ MonoBehaviour:
     twoHandBase: {fileID: 7400000, guid: 191d9ec53665f174f8788a813f2869b5, type: 2}
   _impactRecoilThin: {fileID: 7400000, guid: fc1ec7230d256504da1e7e02bb59c953, type: 2}
   _impactBlockedThin: {fileID: 7400000, guid: c647b8797ec89504cba57bb18620df3f, type: 2}
+  _clipSpeeds: {fileID: 0}

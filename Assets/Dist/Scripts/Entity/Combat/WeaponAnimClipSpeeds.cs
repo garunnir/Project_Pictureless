@@ -1,5 +1,5 @@
 // ============================================================
-// WeaponAnimClipSpeeds — Override에 할당한 클립의 재생 배속 (thin 슬롯 속도 아님)
+// WeaponAnimClipSpeeds — 클립 재생 배속 (동작 줄·Catalog 클립 키, thin 슬롯 아님)
 // ============================================================
 
 using System;
@@ -7,12 +7,12 @@ using Sirenix.OdinInspector;
 using UnityEngine;
 
 /// <summary>
-/// AnimatorOverrideController 서브에셋. 키는 thin 슬롯이 아니라 덮어쓴 <see cref="AnimationClip"/>.
+/// 키는 thin 슬롯이 아니라 재생되는 <see cref="AnimationClip"/>.
 /// 표에 없는 클립은 <see cref="DefaultSpeed"/>.
 /// </summary>
 [InfoBox(
-    "Override에 할당한 클립의 재생 배속입니다. thin 슬롯(Hold/Aim/Attack) 속도가 아닙니다.\n" +
-    "없는 클립은 1. Catalog 폴백(Override 없음)도 1.")]
+    "클립 옆 Speed입니다. thin 슬롯 속도가 아닙니다.\n" +
+    "없는 클립은 1.")]
 public sealed class WeaponAnimClipSpeeds : ScriptableObject
 {
     public const float DefaultSpeed = 1f;
@@ -45,6 +45,8 @@ public sealed class WeaponAnimClipSpeeds : ScriptableObject
 
         return DefaultSpeed;
     }
+
+    public bool Contains(AnimationClip clip) => IndexOf(clip) >= 0;
 
     public void SetSpeed(AnimationClip clip, float speed)
     {
