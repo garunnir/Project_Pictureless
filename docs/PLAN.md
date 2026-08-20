@@ -83,6 +83,17 @@ API·채널 소비 경로만 준비. 키 바인딩·연출 없음.
 
 **도메인:** [`equipment/GEAR.md`](equipment/GEAR.md) · [`equipment/BN_BAKE.md`](equipment/BN_BAKE.md)
 
+### 벽 HP
+
+원거리 막힘은 `AttackPerformResult.Obstructed` + `ImpactPoint`만. 타일 체력·파괴 없음.
+
+**지침**
+- 새 Miss/판정 값을 만들지 않는다. `Obstructed`에 붙인다 (히트스캔·비행 공통).
+- 맵 벽은 `MapTopologyLineCast` 착탄. 물리 콜라이더 벽은 레이 히트 포인트. 둘을 다른 Result로 쪼개지 않는다.
+- 관통은 몸만. 벽에 닿으면 중단한 뒤 그 점에 피해.
+
+**도메인:** [`equipment/GEAR.md`](equipment/GEAR.md) · [`map/SYSTEM.md`](map/SYSTEM.md)
+
 ### Wear/Wield → 숙련 modifier
 
 바디 효과·과적(`PlayerEncumbranceHost`)은 `ISkillModifierSource`. 장비 자체 보너스는 없음.
@@ -153,12 +164,12 @@ ActorSO에서 아직 Dist에 없는 것: HP 풀, Passive 슬롯, Dialogue int id
 
 ### 쓰러진 NPC 루팅
 
-살아 있는 NPC 몸은 Nearby에 안 뜬다 (`IsAvailableToPlayer`). 쓰러진 뒤 그 게이트를 여는 경로 없음.
+`PlayerInventoryHost.IsAvailableToPlayer`: 자기 몸, `ICharacterDefeat.IsDefeated`, 또는 `CharacterPainHost.IsPainShocked`. 살아 있는(쇼크 아닌) NPC 몸은 Nearby에 안 뜬다.
 
 **지침**
 - 게이트는 `PlayerInventoryHost.IsAvailableToPlayer`. 살아 있는 몸을 Nearby에 넣지 않는다.
 - 루팅은 몸 컨테이너를 Nearby 탭으로 쓰는 계약 ([`inventory/INVENTORY_UI.md`](inventory/INVENTORY_UI.md)). 새 루팅 창을 만들지 않는다.
-- Defeat `IsDefeated`와 게이트를 연동한다.
+- Defeat과 고통 쇼크 모두 게이트를 연다. 쇼크는 Dead가 아니다.
 
 **도메인:** [`inventory/INVENTORY_UI.md`](inventory/INVENTORY_UI.md) · [`character/DEFINITION.md`](character/DEFINITION.md)
 

@@ -42,7 +42,7 @@ Inspector CustomEditor는 같은 Alignment 위젯을 쓴다 (`CharacterAlignment
 
 플레이어 전용 장치(카메라, 층 가시성, 시야 블렌드, `PlayerSight`)는 시스템. 입력(`PlayerMovement` / Aim / Combat / Pointer)은 `PlayerPossessedInputHost`에 두고 본체 공용 API만 부른다. `PlayerController`를 `NpcSample`에 올리지 않는다.
 
-인벤·기어 호스트는 본체 프리팹에 두고 **인스턴스마다** 컨테이너를 갖는다. 몸 그래프 입구는 `CharacterSessionHub` (NpcSample). NPC는 `BecomePlayer`를 부르지 않고 `Active`를 건드리지 않는다. Possessed만 허브가 `PlayerInventoryRuntime` Bind + Gear/Encumbrance/TimedMove `ClaimActive` + `GameplayData` + 상태 UI rebind를 한 번에 한다. 인벤 이동 게이지는 그 몸의 `CharacterActionHost`를 본다. possessed 몸은 `player-body`, 나머지는 `character-body-*` (레지스트리 충돌 방지). 살아 있는 NPC 몸은 Nearby 루트에 안 뜬다 (`IsAvailableToPlayer`). 쓰러진 NPC 루팅은 그 게이트를 여는 후속.
+인벤·기어 호스트는 본체 프리팹에 두고 **인스턴스마다** 컨테이너를 갖는다. 몸 그래프 입구는 `CharacterSessionHub` (NpcSample). NPC는 `BecomePlayer`를 부르지 않고 `Active`를 건드리지 않는다. Possessed만 허브가 `PlayerInventoryRuntime` Bind + Gear/Encumbrance/TimedMove `ClaimActive` + `GameplayData` + 상태 UI rebind를 한 번에 한다. 인벤 이동 게이지는 그 몸의 `CharacterActionHost`를 본다. possessed 몸은 `player-body`, 나머지는 `character-body-*` (레지스트리 충돌 방지). 살아 있는 NPC 몸은 Nearby 루트에 안 뜬다 (`IsAvailableToPlayer`). 쓰러진·고통 쇼크는 그 게이트를 연다 (`IsDefeated || IsPainShocked`).
 
 ## 필드
 

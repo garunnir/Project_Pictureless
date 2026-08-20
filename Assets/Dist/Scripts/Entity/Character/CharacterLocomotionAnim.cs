@@ -1,15 +1,16 @@
 // ============================================================
-// CharacterLocomotionAnim — MoveXZ/Speed + L/R/2H overlays + Impact + thin remap
+// CharacterLocomotionAnim — MoveXZ/Speed + L/R/2H overlays + Impact + Hurt weight + thin remap
 // ============================================================
 using Garunnir.Runtime.Gameplay.Data;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
 /// <summary>
-/// Drives Move (facing-relative MoveX/MoveZ) + RightArm/LeftArm/TwoHand overlays + Impact.
+/// Drives Move (facing-relative MoveX/MoveZ) + RightArm/LeftArm/TwoHand overlays + Impact + Hurt.
 /// TwoHand Attack stays UpperBody-masked (full-body replace looked unnatural on Idle).
 /// WeaponAction selects Entry clips then Catalog Leaf, projected onto thin keys via
 /// <see cref="ArmAnimSlotResolver"/>; Impact Kind via <see cref="ArmImpactSlotResolver"/>.
+/// Hurt clips are controller thin only (no Catalog remap).
 /// Animation time advances via <see cref="TimeScaleService"/> only.
 /// </summary>
 [RequireComponent(typeof(CharacterState))]
@@ -84,6 +85,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     int _leftArmLayerIndex = -1;
     int _twoHandLayerIndex = -1;
     int _impactLayerIndex = -1;
+    int _hurtLayerIndex = -1;
     bool _hasSpeed;
     bool _hasMoveX;
     bool _hasMoveZ;
@@ -97,6 +99,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
     bool _hasArmSpeedL;
     bool _hasArmSpeed2H;
     bool _hasImpactSpeed;
+    bool _hasHitFlinch;
+    bool _hasHitStagger;
+    bool _hasPainShocked;
     int _hashAttackState;
     int _hashHoldState;
     int _hashAimState;
@@ -109,7 +114,14 @@ public class CharacterLocomotionAnim : MonoBehaviour
     int _hashImpactEmpty;
     int _hashImpactRecoilState;
     int _hashImpactBlockedState;
+    int _hashHurtFlinch;
+    int _hashHurtStagger;
+    int _hashHurtPainShocked;
+    int _hashHurtFlinchState;
+    int _hashHurtStaggerState;
+    int _hashHurtPainDownState;
     float _impactWeightTarget;
+    float _hurtWeightTarget;
     float _speedHoldR = WeaponAnimClipSpeeds.DefaultSpeed;
     float _speedAimR = WeaponAnimClipSpeeds.DefaultSpeed;
     float _speedAttackR = WeaponAnimClipSpeeds.DefaultSpeed;
@@ -288,8 +300,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
         }
 
         float channelDelta = TimeScaleService.Delta(_timeChannel);
+        UpdateHurtWeightTarget();
         SyncArmLayerWeights(rebound ? 0f : channelDelta);
         SyncImpactLayerWeight(rebound ? 0f : channelDelta);
+        SyncHurtLayerWeight(rebound ? 0f : channelDelta);
         ApplyClipSpeedParams();
         AdvanceAnimator(channelDelta);
         TickAttackOverlayLatches();
@@ -397,6 +411,44 @@ public class CharacterLocomotionAnim : MonoBehaviour
     {
         SetLayerWeightToward(_impactLayerIndex, _impactWeightTarget, channelDelta);
     }
+
+    void SyncHurtLayerWeight(float channelDelta)
+    {
+        SetLayerWeightToward(_hurtLayerIndex, _hurtWeightTarget, channelDelta);
+    }
+
+    void UpdateHurtWeightTarget()
+    {
+        // 할당 없음. 상태 해시 + 대기 트리거만.
+        if (_hurtLayerIndex < 0 || _animator == null)
+            return;
+
+        bool hurt = false;
+        if (_hasPainShocked && _animator.GetBool(_hashHurtPainShocked))
+            hurt = true;
+        else
+        {
+            AnimatorStateInfo current = _animator.GetCurrentAnimatorStateInfo(_hurtLayerIndex);
+            hurt = IsHurtPlayingState(current.shortNameHash);
+            if (!hurt && _animator.IsInTransition(_hurtLayerIndex))
+            {
+                AnimatorStateInfo next = _animator.GetNextAnimatorStateInfo(_hurtLayerIndex);
+                hurt = IsHurtPlayingState(next.shortNameHash);
+            }
+
+            if (!hurt && _hasHitFlinch && _animator.GetBool(_hashHurtFlinch))
+                hurt = true;
+            if (!hurt && _hasHitStagger && _animator.GetBool(_hashHurtStagger))
+                hurt = true;
+        }
+
+        _hurtWeightTarget = hurt ? 1f : 0f;
+    }
+
+    bool IsHurtPlayingState(int shortNameHash) =>
+        shortNameHash == _hashHurtFlinchState ||
+        shortNameHash == _hashHurtStaggerState ||
+        shortNameHash == _hashHurtPainDownState;
 
     void TickImpactEmpty()
     {
@@ -708,10 +760,14 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _hasArmSpeedL = false;
         _hasArmSpeed2H = false;
         _hasImpactSpeed = false;
+        _hasHitFlinch = false;
+        _hasHitStagger = false;
+        _hasPainShocked = false;
         _rightArmLayerIndex = -1;
         _leftArmLayerIndex = -1;
         _twoHandLayerIndex = -1;
         _impactLayerIndex = -1;
+        _hurtLayerIndex = -1;
         _hashAttackState = Hash(AttackOverlayStateName);
         _hashHoldState = Hash(HoldOverlayStateName);
         _hashAimState = Hash(AimOverlayStateName);
@@ -724,6 +780,12 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _hashImpactEmpty = Hash(ImpactEmptyStateName);
         _hashImpactRecoilState = Hash(ImpactRecoilStateName);
         _hashImpactBlockedState = Hash(ImpactBlockedStateName);
+        _hashHurtFlinch = Hash(CharacterHitReact.ParamFlinch);
+        _hashHurtStagger = Hash(CharacterHitReact.ParamStagger);
+        _hashHurtPainShocked = Hash(CharacterHitReact.ParamPainShocked);
+        _hashHurtFlinchState = Hash(CharacterHitReact.StateFlinch);
+        _hashHurtStaggerState = Hash(CharacterHitReact.StateStagger);
+        _hashHurtPainDownState = Hash(CharacterHitReact.StatePainDown);
 
         if (_animator == null || _animator.runtimeAnimatorController == null)
             return;
@@ -753,6 +815,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
             if (Match(WeaponAnimClipSpeeds.ParamLeft, _hashArmSpeedL, nameHash)) _hasArmSpeedL = true;
             if (Match(WeaponAnimClipSpeeds.ParamTwoHand, _hashArmSpeed2H, nameHash)) _hasArmSpeed2H = true;
             if (Match(WeaponAnimClipSpeeds.ParamImpact, _hashImpactSpeed, nameHash)) _hasImpactSpeed = true;
+            if (Match(CharacterHitReact.ParamFlinch, _hashHurtFlinch, nameHash)) _hasHitFlinch = true;
+            if (Match(CharacterHitReact.ParamStagger, _hashHurtStagger, nameHash)) _hasHitStagger = true;
+            if (Match(CharacterHitReact.ParamPainShocked, _hashHurtPainShocked, nameHash)) _hasPainShocked = true;
         }
 
         if (!string.IsNullOrEmpty(_rightArmLayerName))
@@ -762,6 +827,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (!string.IsNullOrEmpty(_twoHandLayerName))
             _twoHandLayerIndex = _animator.GetLayerIndex(_twoHandLayerName);
         _impactLayerIndex = _animator.GetLayerIndex(ImpactLayerName);
+        _hurtLayerIndex = _animator.GetLayerIndex(CharacterHitReact.HurtLayerName);
     }
 
     static int Hash(string name) =>

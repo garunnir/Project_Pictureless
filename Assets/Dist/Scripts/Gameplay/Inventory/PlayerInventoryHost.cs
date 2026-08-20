@@ -25,6 +25,8 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
 
     InventoryContainer _container;
     PlayerCarryCapacityPolicy _capacityPolicy;
+    CharacterPainHost _painHost;
+    CharacterSkillsHost _skillsHost;
 
     public InventoryContainer Container => _container;
     public string ContainerId => _containerId;
@@ -47,6 +49,9 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
 
     void Awake()
     {
+        TryGetComponent(out _painHost);
+        TryGetComponent(out _skillsHost);
+
         ContainerData containerDef = GameplayData.GetContainer(_containerDefId);
         if (containerDef == null)
         {
@@ -75,10 +80,20 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
     }
 
     /// <summary>
-    /// 자기 몸만 true. 쓰러진 NPC 루팅은 이 게이트를 연다 (살아 있으면 Nearby 스캔에서 제외).
+    /// 자기 몸, Defeat, 고통 쇼크면 true. 살아 있는 타인 몸은 Nearby에서 제외.
     /// </summary>
-    public bool IsAvailableToPlayer(GameObject player) =>
-        player != null && player == _characterState.gameObject;
+    public bool IsAvailableToPlayer(GameObject player)
+    {
+        if (player == null || _characterState == null)
+            return false;
+        if (player == _characterState.gameObject)
+            return true;
+
+        ICharacterDefeat defeat = _skillsHost != null ? _skillsHost.Defeat : null;
+        if (defeat != null && defeat.IsDefeated)
+            return true;
+        return _painHost != null && _painHost.IsPainShocked;
+    }
 
     public bool RegisterToSession(InventorySession session) =>
         session != null && _container != null && session.TryAddSidebarContainer(_container);

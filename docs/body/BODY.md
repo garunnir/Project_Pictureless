@@ -191,7 +191,26 @@ ClimateHost가 **같은 값**을 넣는다:
 
 LiftStrain 배율만 `PlayerGearHost` (별 슬롯). 히트 배율: `CharacterAttacker.ResolveAttackerEnvAccuracyFactor` — ClimateHost `Feeling` + wetness. ClimateHost 없으면 1.
 
+관성 질량(밀침): `RemainingMassKg` + 착용·들기 kg. 과적 이동 배율에 kg를 다시 넣지 않는다. 소비처: `CombatImpulse.InertialMassKg` → `CharacterHitReact` / `CharacterAttacker.AddRecoilKick`.
+
 상세: [`LOCOMOTION.md`](../locomotion/LOCOMOTION.md) · [`GEAR.md`](../equipment/GEAR.md) Phase H.
+
+---
+
+## PainTotal / 고통 쇼크
+
+`CombatPain.PainTotal01` = 부위 손실 HP 비율 × 부위 가중. 상해 타입 로그 없음. HitTag는 J가 아님.
+
+`EffectivePain01` = PainTotal × painFactor (`adrenaline`이면 `AdrenalinePainFactor`).  
+`CharacterPainHost`: effective ≥ `PainShockThreshold`(0.8)이면 살아 있는 다운 — `SetMoveLocked` + 액션/큐 취소. Defeat/Dead가 아니다. 기상은 문턱 아래.
+
+루팅: `PlayerInventoryHost.IsAvailableToPlayer`가 self이거나 `IsDefeated || IsPainShocked`.
+
+HUD: `PlayerStatusMoodEntries`가 effective Pain ≥ `PainHudMin`이면 `MoodIconId.Pain`, ≥ `SeverePainHudMin`이면 `SeverePain`.
+
+절단된 부위는 `GetConditionMax==0`이라 PainTotal에서 skip.
+
+상수·Hurt 밀침: [`LOCOMOTION.md`](../locomotion/LOCOMOTION.md) 피격 밀침 / 상수 표.
 
 ---
 
@@ -200,5 +219,5 @@ LiftStrain 배율만 `PlayerGearHost` (별 슬롯). 히트 배율: `CharacterAtt
 | 항목 | 상태 |
 |------|------|
 | 세이브/로드 UI | 없음 — DTO 왕복만 |
-| 과적 ↔ `RemainingMassKg` | 미연동 |
+| 과적 ↔ `RemainingMassKg` | 이동 과적은 미연동. 밀침 질량은 `CombatImpulse.InertialMassKg`가 소비 |
 | 낮/밤 라이팅 | TIME.md Pending. Period는 ambient만 |

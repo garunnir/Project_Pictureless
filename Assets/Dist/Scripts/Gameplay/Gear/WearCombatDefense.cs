@@ -42,15 +42,15 @@ public static class WearCombatDefense
 
     /// <summary>
     /// 명중 후 부위 방어. 부위 비면 torso.
-    /// ArmorEngageChance = coverage/100; 미관여면 raw.
-    /// ArmorAbsorb = thickness×ThicknessAbsorbPerUnit + resist×MaterialResistAbsorbPerUnit.
-    /// MitigatedDamage = engage ? max(0, raw − ArmorAbsorb) : raw.
+    /// 덮는 조각마다 coverage 주사. 맞은 조각만 thickness+resist 합.
+    /// ArmorPen(ammo.pierce)을 합흡수에서 뺌. 하한 0.
     /// </summary>
     public static int MitigateDamage(
         EquipmentWearState wear,
         string aimedPartId,
         int rawDamage,
-        string damageTag)
+        string damageTag,
+        int armorPen = 0)
     {
         if (rawDamage <= 0 || wear == null)
             return Mathf.Max(0, rawDamage);
@@ -59,18 +59,33 @@ public static class WearCombatDefense
             ? BodyPartIds.Torso
             : aimedPartId;
 
-        WearStatsAggregator.WearPartArmorStats stats =
-            WearStatsAggregator.ForPart(wear, partId);
+        int absorb = 0;
+        bool anyCover = false;
+        var worn = wear.Worn;
+        for (int i = 0; i < worn.Count; i++)
+        {
+            ItemStack stack = worn[i];
+            ItemData item = stack?.Item;
+            if (item == null || !GearHandleRules.CoversPart(item, partId))
+                continue;
 
-        if (stats.Coverage <= 0 && stats.MaterialThickness <= 0)
+            ArmorDetailData armor = item.armor;
+            if (armor == null)
+                continue;
+
+            anyCover = true;
+            float engageChance = ArmorEngageChance(armor.coverage);
+            if (engageChance <= 0f || Random.value >= engageChance)
+                continue;
+
+            int resist = MaxMaterialResist(item, damageTag);
+            absorb += ArmorAbsorb(armor.material_thickness, resist);
+        }
+
+        if (!anyCover)
             return rawDamage;
 
-        float engageChance = ArmorEngageChance(stats.Coverage);
-        if (engageChance <= 0f || Random.value >= engageChance)
-            return rawDamage;
-
-        int resist = MaterialResistForPart(wear, partId, damageTag);
-        int absorb = ArmorAbsorb(stats.MaterialThickness, resist);
+        absorb = Mathf.Max(0, absorb - Mathf.Max(0, armorPen));
         return Mathf.Max(0, rawDamage - absorb);
     }
 

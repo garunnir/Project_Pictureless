@@ -60,7 +60,7 @@
   - `PlayerOnly`: 플레이어 컨테이너(`player-body`) 단일 리스트. 중첩 가방 탭 **또는 착용 storage 포켓**이 있으면 사이드바 표시, 없으면 숨김. 착용 포켓 SSOT: `WornPocketRules` + `EquipmentWearState` (`docs/equipment/GEAR.md` Phase B).
 
   - `NearbyOnly`: `NearbyContainerDetector`가 등록한 주변 컨테이너 전체를 사이드탭으로 표시 (플레이어 제외). `TrackLootContainer` 없음 — 반경 스캔만 사용. 바닥 `floor-loot` 안 휴대 컨테이너(Nested)는 Detector가 managed 월드 루트로 promote하고, 사이드바 탭은 PlayerOnly body 유도와 같이 floor 스택에서 유도한다.
-  - 살아 있는 캐릭터 몸 인벤(`player-body` / `character-body-*`)은 Nearby에 넣지 않는다. possessed는 id 스킵, 그 외는 `PlayerInventoryHost.IsAvailableToPlayer`가 자기 몸만 true. **쓰러진 NPC 루팅**은 그 게이트를 열어 몸 컨테이너를 Nearby 탭으로 쓴다 (미구현).
+  - 살아 있는 캐릭터 몸 인벤(`player-body` / `character-body-*`)은 Nearby에 넣지 않는다. possessed는 id 스킵, 그 외는 `PlayerInventoryHost.IsAvailableToPlayer`가 자기 몸만 true. **쓰러진·고통 쇼크 NPC 루팅**은 `IsDefeated || IsPainShocked`일 때 그 게이트를 열어 몸 컨테이너를 Nearby 탭으로 쓴다.
   - 감지 SSOT: 컨테이너 후보 판정은 `InventoryContainerRegistry` provider 목록 + `CharacterState.ResolveGridCell`(WorldGrid 기준) 단일 경로를 사용한다. `ContainerGridRegistry`는 Nearby 판단 경로에서 사용하지 않는다.
 
 - 월드 컨테이너 표현은 **TilePresentationSystem** 단일 진입점 → `TileViewPresentationApplier`. UI는 Applier를 직접 호출하지 않는다.

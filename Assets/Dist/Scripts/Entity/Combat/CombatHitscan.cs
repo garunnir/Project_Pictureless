@@ -37,8 +37,30 @@ public static class CombatHitscan
     }
 
     /// <summary>
+    /// 맵 topology 벽까지 사거리 클립. 조준 <see cref="PlayerAimController"/>와 같은 LineCast.
+    /// 막힘 지점은 이후 벽 HP의 Obstructed 훅.
+    /// </summary>
+    public static bool TryClipMapRange(
+        CharacterAttacker attacker,
+        Vector3 direction,
+        float maxDistance,
+        out float hitDistance)
+    {
+        hitDistance = maxDistance;
+        if (attacker == null || attacker.MapLineCast == null)
+            return false;
+
+        Vector3 feet = CharacterFeetPose.GetFeetWorld(attacker.transform);
+        return attacker.MapLineCast.TryGetBlockingDistance(
+            feet,
+            direction,
+            maxDistance,
+            out hitDistance);
+    }
+
+    /// <summary>
     /// origin overlap → 전구간 RaycastNonAlloc 정렬 순회.
-    /// 바디 히트는 hosts/impacts에 채우고, 월드 막힘이면 obstructed=true.
+    /// 바디 히트는 hosts/impacts에 채우고, 월드·맵 막힘이면 obstructed=true.
     /// 아무 것도 없으면 missAtRangeEnd=true (impact = origin+dir*range).
     /// </summary>
     public static void Trace(
@@ -78,6 +100,10 @@ public static class CombatHitscan
 
         Vector3 dir = direction.normalized;
         int pierceLeft = Mathf.Max(0, pierce);
+        bool mapBlocked = TryClipMapRange(attacker, dir, range, out float mapDist);
+        Vector3 mapImpact = origin + dir * mapDist;
+        if (mapBlocked)
+            range = mapDist;
 
         if (overlapBuffer != null &&
             TryResolveOriginOverlap(
@@ -132,6 +158,13 @@ public static class CombatHitscan
 
             obstructed = true;
             obstructImpact = hit.point;
+            return;
+        }
+
+        if (mapBlocked)
+        {
+            obstructed = true;
+            obstructImpact = mapImpact;
             return;
         }
 

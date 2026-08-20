@@ -4,6 +4,7 @@
 
 using System;
 using Garunnir.Runtime.Gameplay.Data;
+using IsoTilemap;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -18,12 +19,14 @@ public sealed class CharacterAttacker : MonoBehaviour
     const float FallbackImpactRadius = 0.4f;
     const int PendingCueSlotCount = 2;
     const int HandCooldownSlotCount = (int)WieldHand.TwoHand + 1;
+    const float CueCycleEpsilon = 1e-4f;
 
     [FormerlySerializedAs("_weapon")]
     [SerializeField] WeaponPresentation _presentation;
     [Tooltip("GameplayData ItemData id. 비우면 비무장.")]
     [SerializeField] string _itemId;
     [SerializeField] WeaponPresentationCatalog _catalog;
+    [Tooltip("원거리 레이/탄 장애물. Character 포함(~0 권장). 자기 콜라이더는 IsOwnCollider로 제외.")]
     [SerializeField] LayerMask _rangedObstructionMask = ~0;
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
     [SerializeField] WeaponAction _selectedAction = WeaponAction.Swing;
@@ -36,9 +39,13 @@ public sealed class CharacterAttacker : MonoBehaviour
     PlayerGearHost _gearHost;
     CharacterClimateHost _climateHost;
     CharacterActionHost _actionHost;
+    CharacterMotor _motor;
+    CharacterAppearanceHost _appearance;
+    CharacterPainHost _painHost;
     CharacterState _characterState;
     PlayerAimController _aimController;
     CharacterLocomotionAnim _locAnim;
+    MapTopologyLineCast _mapLineCast;
     Collider _selfCollider;
     readonly Collider[] _meleeColliders = new Collider[MeleeHitbox.BufferSize];
     readonly Vector3[] _debugContacts = new Vector3[MeleeHitbox.BufferSize];
@@ -130,6 +137,11 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     public LayerMask RangedObstructionMask => _rangedObstructionMask;
 
+    public MapTopologyLineCast MapLineCast => _mapLineCast;
+
+    public void BindMapCollision(MapTopologyLineCast lineCast) =>
+        _mapLineCast = lineCast;
+
     public WeaponPresentation Presentation => _presentation;
     public WeaponPresentationCatalog Catalog => _catalog;
     public string ItemId => _itemId;
@@ -175,6 +187,9 @@ public sealed class CharacterAttacker : MonoBehaviour
         TryGetComponent(out _gearHost);
         TryGetComponent(out _climateHost);
         TryGetComponent(out _actionHost);
+        TryGetComponent(out _motor);
+        TryGetComponent(out _appearance);
+        TryGetComponent(out _painHost);
         TryGetComponent(out _characterState);
         TryGetComponent(out _aimController);
         TryGetComponent(out _locAnim);
@@ -364,6 +379,11 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (GetCooldown(_activeWieldHand) > 0f)
             return AttackPerformResult.Cooling;
 
+        if (_painHost != null && _painHost.IsPainShocked)
+            return AttackPerformResult.Cooling;
+        if (_motor != null && _motor.IsStaggered)
+            return AttackPerformResult.Cooling;
+
         // cue 대기 중 재시전 → pending 리셋·시전 VFX 연타 방지
         if (HasPendingFor(_activeWieldHand))
             return AttackPerformResult.Cooling;
@@ -406,8 +426,6 @@ public sealed class CharacterAttacker : MonoBehaviour
             return gear.Wear;
         return null;
     }
-
-    const int StrengthBaselineFallback = 8;
 
     AttackPerformResult ResolveActionSignal(
         WeaponAction action,
@@ -646,7 +664,31 @@ public sealed class CharacterAttacker : MonoBehaviour
     public void AddRecoilKick(WieldHand hand, ItemData item, ItemData ammo)
     {
         int index = CooldownIndex(hand);
-        _recoilRemaining[index] += CombatMath.RecoilKickUnits(item, ammo);
+        float mass = CombatImpulse.InertialMassKg(
+            _appearance,
+            _gearHost != null ? _gearHost.Wear : null,
+            _gearHost != null ? _gearHost.Wield : null);
+        float deltaV = CombatImpulse.ShooterDeltaV(item, ammo, mass);
+        _recoilRemaining[index] += CombatImpulse.DispersionKickFromDeltaV(deltaV);
+        if (_motor != null && deltaV > 0.001f)
+        {
+            Vector3 back = -ResolveFireDirection();
+            back.y = 0f;
+            if (back.sqrMagnitude > 1e-6f)
+                _motor.ApplyKnockback(back.normalized * deltaV);
+        }
+    }
+
+    float ResolveImpulseJin(ItemData item, WeaponAction action, ItemData ammo)
+    {
+        if (WeaponActionUtil.IsRanged(action))
+            return CombatImpulse.ShotJin(item, ammo);
+
+        ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
+        int strength = skills != null
+            ? skills.Level(AttributeIds.Str)
+            : CombatMath.StrengthBaseline;
+        return CombatImpulse.MeleeJin(item, action, strength);
     }
 
     public Vector3 ResolveSwingAxis()
@@ -735,17 +777,35 @@ public sealed class CharacterAttacker : MonoBehaviour
 
         if (inAttack)
         {
+            float cycle = CycleNormalizedTime(normalizedTime);
+            if (!pending.SawCueWindup && IsCueWindup(cycle, pending.CueNormalizedTime))
+                pending.SawCueWindup = true;
             pending.SawAttackState = true;
             _pendingCues[index] = pending;
-            if (normalizedTime >= pending.CueNormalizedTime)
+            if (pending.SawCueWindup && cycle >= pending.CueNormalizedTime)
                 ExecutePendingCue(index);
             return;
         }
 
-        if (!pending.SawAttackState)
+        if (!pending.SawAttackState || !pending.SawCueWindup)
             return;
 
         CancelPendingAt(index);
+    }
+
+    static float CycleNormalizedTime(float normalizedTime)
+    {
+        if (normalizedTime < 0f)
+            return 0f;
+        return normalizedTime - Mathf.Floor(normalizedTime);
+    }
+
+    static bool IsCueWindup(float cycleNormalizedTime, float cueNormalizedTime)
+    {
+        if (cycleNormalizedTime < cueNormalizedTime)
+            return true;
+        return cueNormalizedTime <= CueCycleEpsilon &&
+               cycleNormalizedTime <= CueCycleEpsilon;
     }
 
     bool HasAttackOverlayWatch =>
@@ -773,6 +833,7 @@ public sealed class CharacterAttacker : MonoBehaviour
             Armed = true,
             CueFired = false,
             SawAttackState = false,
+            SawCueWindup = false,
             Action = action,
             Hand = _activeWieldHand,
             Target = targetHost,
@@ -873,7 +934,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         _pendingCues[index] = default;
     }
 
-    void CancelAllPendingCues()
+    public void CancelAllPendingCues()
     {
         for (int i = 0; i < _pendingCues.Length; i++)
             _pendingCues[i] = default;
@@ -899,7 +960,7 @@ public sealed class CharacterAttacker : MonoBehaviour
             item);
     }
 
-    public void ResolveCommittedHit(
+    public float ResolveCommittedHit(
         in ActionHandlerContext context,
         WeaponResolveMode resolveMode,
         ItemData item,
@@ -911,13 +972,14 @@ public sealed class CharacterAttacker : MonoBehaviour
         bool practice = true,
         float weaponReach01 = 0f,
         Vector3? impactOverride = null,
-        float rangedEffectiveDispersion = -1f)
+        float rangedEffectiveDispersion = -1f,
+        float impulseJinOverride = -1f)
     {
         CharacterBodyHost targetHost = context.Target;
         if (targetHost == null || targetHost.Body == null)
         {
             EmitJudgedGate(context, resolveMode, AttackPerformResult.NoTarget, item, origin);
-            return;
+            return 0f;
         }
 
         Collider targetCollider = targetHost.GetComponentInChildren<Collider>();
@@ -929,7 +991,7 @@ public sealed class CharacterAttacker : MonoBehaviour
                 out string aimedPart))
         {
             EmitJudgedGate(context, resolveMode, AttackPerformResult.NoTarget, item, origin);
-            return;
+            return 0f;
         }
 
         Vector3 impact = impactOverride ?? ResolveImpactPoint(targetCollider, targetCenter, origin);
@@ -946,7 +1008,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         int skillLevel = skills != null && !string.IsNullOrEmpty(skillId)
             ? skills.Level(skillId)
             : 0;
-        int strength = skills != null ? skills.Level(AttributeIds.Str) : StrengthBaselineFallback;
+        int strength = skills != null ? skills.Level(AttributeIds.Str) : CombatMath.StrengthBaseline;
         float factor = context.OffenseFactor;
 
         if (rollHitChance)
@@ -968,18 +1030,23 @@ public sealed class CharacterAttacker : MonoBehaviour
 
         EquipmentWearState wear = ResolveTargetWear(targetHost);
         int damage = 0;
+        int rawDamage = 0;
         for (int i = 0; i < channelCount; i++)
         {
             string damageTag = _hitChannelScratch[i];
-            int channelDamage = Mathf.Max(
+            int channelRaw = Mathf.Max(
                 0,
                 Mathf.RoundToInt(
-                    CombatMath.DamageForTag(item, damageTag, strength, skillLevel, ammo) * factor));
-            channelDamage = WearCombatDefense.MitigateDamage(
+                    CombatMath.DamageForTag(item, damageTag, strength, skillLevel, ammo)
+                    * factor
+                    * CombatImpulse.HpFactor(item)));
+            rawDamage += channelRaw;
+            int channelDamage = WearCombatDefense.MitigateDamage(
                 wear,
                 aimedPart,
-                channelDamage,
-                damageTag);
+                channelRaw,
+                damageTag,
+                CombatImpulse.ArmorPen(ammo));
             BodyPartEffect[] seeds =
                 string.Equals(damageTag, AttackDamageTags.Cut, StringComparison.Ordinal)
                     ? BuildSeeds(_presentation, context.Action, context.Attack)
@@ -987,6 +1054,9 @@ public sealed class CharacterAttacker : MonoBehaviour
             BodyDamageService.ApplyHit(targetHost.Body, aimedPart, channelDamage, seeds);
             damage += channelDamage;
         }
+
+        if (CombatImpulse.IsBeanbag(ammo))
+            damage = 0;
 
         EmitJudged(
             context,
@@ -999,7 +1069,10 @@ public sealed class CharacterAttacker : MonoBehaviour
             impact,
             item,
             ammo,
-            weaponReach01);
+            weaponReach01,
+            rawDamage,
+            impulseJinOverride);
+        return CombatImpulse.Penetration01(damage, rawDamage);
     }
 
     public void CommitAttempt(
@@ -1033,13 +1106,22 @@ public sealed class CharacterAttacker : MonoBehaviour
         Vector3 impact,
         ItemData item = null,
         ItemData ammo = null,
-        float weaponReach01 = 0f)
+        float weaponReach01 = 0f,
+        int rawDamage = 0,
+        float impulseJinOverride = -1f)
     {
         if (item == null)
             item = ItemFor(context.ItemId);
         ammo ??= WeaponChamber.ResolveAmmo(context.Stack, context.Instance);
         int n = AttackDamageTags.WriteChannels(item, context.Action, _hitChannelScratch, ammo);
         string hitTag = n > 0 ? _hitChannelScratch[0] : AttackDamageTags.Fallback;
+        float impulseJin = 0f;
+        if (result == AttackPerformResult.Performed)
+        {
+            impulseJin = impulseJinOverride >= 0f
+                ? impulseJinOverride
+                : ResolveImpulseJin(item, context.Action, ammo);
+        }
         var outcome = new AttackOutcome(
             context.Action,
             context.Hand,
@@ -1052,7 +1134,9 @@ public sealed class CharacterAttacker : MonoBehaviour
             impact,
             hitTag,
             context.Attack,
-            weaponReach01);
+            weaponReach01,
+            rawDamage,
+            impulseJin);
         AttackJudged?.Invoke(outcome);
         AnyAttackJudged?.Invoke(outcome);
     }
@@ -1242,6 +1326,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         public bool Armed;
         public bool CueFired;
         public bool SawAttackState;
+        public bool SawCueWindup;
         public WeaponAction Action;
         public WieldHand Hand;
         public CharacterBodyHost Target;

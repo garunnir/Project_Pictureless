@@ -30,6 +30,7 @@ public static class ArmOverlayAnimatorBuilder
 
         EnsureThinSlotClips();
         EnsureImpactThinClips();
+        EnsureHurtThinClips();
         EnsureParameters(controller);
         RebuildLayers(controller);
         RemoveLibraryKeyLayer(controller);
@@ -43,7 +44,7 @@ public static class ArmOverlayAnimatorBuilder
 
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
-        Debug.Log("[ArmOverlayAnimatorBuilder] Rebuilt arm + Impact (no AnimVerb on controller).");
+        Debug.Log("[ArmOverlayAnimatorBuilder] Rebuilt arm + Impact + Hurt (no AnimVerb on controller).");
     }
 
     static void EnsureThinSlotClips()
@@ -114,6 +115,9 @@ public static class ArmOverlayAnimatorBuilder
         EnsureParam(controller, "Attack2H", AnimatorControllerParameterType.Trigger);
         EnsureParam(controller, "ImpactRecoil", AnimatorControllerParameterType.Trigger);
         EnsureParam(controller, "ImpactBlocked", AnimatorControllerParameterType.Trigger);
+        EnsureParam(controller, CharacterHitReact.ParamFlinch, AnimatorControllerParameterType.Trigger);
+        EnsureParam(controller, CharacterHitReact.ParamStagger, AnimatorControllerParameterType.Trigger);
+        EnsureParam(controller, CharacterHitReact.ParamPainShocked, AnimatorControllerParameterType.Bool);
         EnsureFloatParam(controller, WeaponAnimClipSpeeds.ParamRight, WeaponAnimClipSpeeds.DefaultSpeed);
         EnsureFloatParam(controller, WeaponAnimClipSpeeds.ParamLeft, WeaponAnimClipSpeeds.DefaultSpeed);
         EnsureFloatParam(controller, WeaponAnimClipSpeeds.ParamTwoHand, WeaponAnimClipSpeeds.DefaultSpeed);
@@ -180,6 +184,7 @@ public static class ArmOverlayAnimatorBuilder
         AddArmLayer(controller, "LeftArm Layer", leftMask, "Left", "AttackL");
         AddTwoHandLayer(controller, upperMask);
         AddImpactLayer(controller);
+        AddHurtLayer(controller);
     }
 
     /// <summary>
@@ -301,6 +306,159 @@ public static class ArmOverlayAnimatorBuilder
             name.Contains("Auto"))
             return true;
         return false;
+    }
+
+    static void EnsureHurtThinClips()
+    {
+        EnsureHurtFromSource(
+            CharacterHitReact.ClipFlinch,
+            "Assets/Dist/Visual/Anim/SourceRef/ActMotion/Reaction.anim",
+            false);
+        EnsureHurtFromSource(
+            CharacterHitReact.ClipStagger,
+            "Assets/Dist/Visual/Anim/SourceRef/ActMotion/Stunned.anim",
+            false);
+        EnsureHurtFromSource(
+            CharacterHitReact.ClipPainDown,
+            "Assets/Dist/Visual/Anim/SourceRef/ActMotion/Pistol Kneeling Idle.anim",
+            true);
+    }
+
+    static void EnsureHurtFromSource(string destName, string sourcePath, bool loop)
+    {
+        string destPath = $"{SlotDir}/{destName}.anim";
+        AnimationClip existing = AssetDatabase.LoadAssetAtPath<AnimationClip>(destPath);
+        if (existing != null && !IsHurtPlaceholder(existing))
+        {
+            if (loop)
+                SetClipLoop(existing, true);
+            return;
+        }
+
+        if (existing != null)
+            AssetDatabase.DeleteAsset(destPath);
+
+        if (!AssetDatabase.CopyAsset(sourcePath, destPath))
+        {
+            Debug.LogWarning($"[ArmOverlayAnimatorBuilder] Hurt source missing: {sourcePath}");
+            EnsurePlaceholderClip(destName, loop ? 1f : 0.25f, loop);
+            return;
+        }
+
+        AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(destPath);
+        if (clip == null)
+            return;
+        clip.name = destName;
+        if (loop)
+            SetClipLoop(clip, true);
+        EditorUtility.SetDirty(clip);
+    }
+
+    static bool IsHurtPlaceholder(AnimationClip clip)
+    {
+        EditorCurveBinding[] bindings = AnimationUtility.GetCurveBindings(clip);
+        for (int i = 0; i < bindings.Length; i++)
+        {
+            if (bindings[i].propertyName == "HurtPlaceholder")
+                return true;
+        }
+
+        return bindings.Length == 0 && clip.length <= 1.01f;
+    }
+
+    static void SetClipLoop(AnimationClip clip, bool loop)
+    {
+        AnimationClipSettings settings = AnimationUtility.GetAnimationClipSettings(clip);
+        settings.loopTime = loop;
+        AnimationUtility.SetAnimationClipSettings(clip, settings);
+    }
+
+    static void EnsurePlaceholderClip(string destName, float seconds, bool loop)
+    {
+        string destPath = $"{SlotDir}/{destName}.anim";
+        if (AssetDatabase.LoadAssetAtPath<AnimationClip>(destPath) != null)
+            return;
+
+        var clip = new AnimationClip
+        {
+            name = destName,
+            frameRate = 60f
+        };
+        var binding = new EditorCurveBinding
+        {
+            path = string.Empty,
+            type = typeof(Animator),
+            propertyName = "HurtPlaceholder"
+        };
+        AnimationUtility.SetEditorCurve(
+            clip,
+            binding,
+            AnimationCurve.Constant(0f, Mathf.Max(0.05f, seconds), 0f));
+        if (loop)
+        {
+            AnimationClipSettings settings = AnimationUtility.GetAnimationClipSettings(clip);
+            settings.loopTime = true;
+            AnimationUtility.SetAnimationClipSettings(clip, settings);
+        }
+
+        AssetDatabase.CreateAsset(clip, destPath);
+    }
+
+    static void AddHurtLayer(AnimatorController controller)
+    {
+        controller.AddLayer(CharacterHitReact.HurtLayerName);
+        AnimatorControllerLayer[] layers = controller.layers;
+        int index = layers.Length - 1;
+        AnimatorControllerLayer layer = layers[index];
+        layer.defaultWeight = 0f;
+        layer.blendingMode = AnimatorLayerBlendingMode.Override;
+        layer.avatarMask = null;
+        layer.syncedLayerIndex = -1;
+        layer.iKPass = false;
+        layer.syncedLayerAffectsTiming = false;
+        layers[index] = layer;
+        controller.layers = layers;
+
+        AnimatorStateMachine sm = controller.layers[index].stateMachine;
+        ClearStateMachine(sm);
+
+        AnimatorState empty = AddState(sm, CharacterHitReact.StateEmpty, null, new Vector3(200, 0, 0));
+        AnimatorState flinch = AddState(
+            sm,
+            CharacterHitReact.StateFlinch,
+            FlatClip(CharacterHitReact.ClipFlinch),
+            new Vector3(420, 0, 0),
+            writeDefaults: false);
+        AnimatorState stagger = AddState(
+            sm,
+            CharacterHitReact.StateStagger,
+            FlatClip(CharacterHitReact.ClipStagger),
+            new Vector3(420, 120, 0));
+        AnimatorState painDown = AddState(
+            sm,
+            CharacterHitReact.StatePainDown,
+            FlatClip(CharacterHitReact.ClipPainDown),
+            new Vector3(200, 180, 0));
+        sm.defaultState = empty;
+
+        AddHurtTrigger(empty, flinch, CharacterHitReact.ParamFlinch);
+        AddHurtTrigger(empty, stagger, CharacterHitReact.ParamStagger);
+        AddHurtTrigger(flinch, stagger, CharacterHitReact.ParamStagger);
+        AddExitToEmpty(flinch, empty);
+        AddExitToEmpty(stagger, empty);
+        AddBoolTransition(empty, painDown, CharacterHitReact.ParamPainShocked, true);
+        AddBoolTransition(flinch, painDown, CharacterHitReact.ParamPainShocked, true);
+        AddBoolTransition(stagger, painDown, CharacterHitReact.ParamPainShocked, true);
+        AddBoolTransition(painDown, empty, CharacterHitReact.ParamPainShocked, false);
+    }
+
+    static void AddHurtTrigger(AnimatorState from, AnimatorState to, string trigger)
+    {
+        var t = from.AddTransition(to);
+        t.hasExitTime = false;
+        t.duration = 0.05f;
+        t.AddCondition(AnimatorConditionMode.If, 0, trigger);
+        t.AddCondition(AnimatorConditionMode.IfNot, 0, CharacterHitReact.ParamPainShocked);
     }
 
     static void AddImpactLayer(AnimatorController controller)
@@ -431,6 +589,7 @@ public static class ArmOverlayAnimatorBuilder
 
         AddAttackFrom(hold, atk, attackParam);
         AddAttackFrom(aim, atk, attackParam);
+        AddAttackFrom(atk, atk, attackParam);
         AddExitAttack(atk, aim, hold);
     }
 
@@ -448,11 +607,13 @@ public static class ArmOverlayAnimatorBuilder
         string name,
         AnimationClip clip,
         Vector3 pos,
-        string speedParam = null)
+        string speedParam = null,
+        bool writeDefaults = true)
     {
         AnimatorState state = sm.AddState(name, pos);
         state.motion = clip;
         state.mirror = false;
+        state.writeDefaultValues = writeDefaults;
         if (!string.IsNullOrEmpty(speedParam))
         {
             state.speed = WeaponAnimClipSpeeds.DefaultSpeed;
@@ -476,6 +637,7 @@ public static class ArmOverlayAnimatorBuilder
         var t = from.AddTransition(to);
         t.hasExitTime = false;
         t.duration = 0.05f;
+        t.canTransitionToSelf = true;
         t.AddCondition(AnimatorConditionMode.If, 0, attackParam);
     }
 

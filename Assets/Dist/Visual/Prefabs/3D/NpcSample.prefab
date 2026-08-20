@@ -78,6 +78,9 @@ GameObject:
   - component: {fileID: 6449163034092800762}
   - component: {fileID: 3317479433915794997}
   - component: {fileID: 3768835915500036009}
+  - component: {fileID: 4678551400784576317}
+  - component: {fileID: 2336172187902048086}
+  - component: {fileID: 4231773269274488563}
   m_Layer: 6
   m_Name: NpcSample
   m_TagString: Untagged
@@ -148,10 +151,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.1
-  m_Height: 0.3
+  m_Radius: 0.22
+  m_Height: 1.5
   m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 0.7, z: 0}
 --- !u!114 &8587219361330171216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -259,7 +262,7 @@ MonoBehaviour:
   _catalog: {fileID: 11400000, guid: f7556fd63dd29cf4fb45651a5765b2d1, type: 2}
   _rangedObstructionMask:
     serializedVersion: 2
-    m_Bits: 55
+    m_Bits: 4294967295
   _timeChannel: 1
   _selectedAction: 0
   _activeWieldHand: 2
@@ -444,6 +447,51 @@ MonoBehaviour:
   _inventory: {fileID: 9118832040257560257}
   _detector: {fileID: 590745502483579110}
   _action: {fileID: 5337201764037988774}
+--- !u!114 &4678551400784576317
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebde6a9e2f207874691e335bc49fa6ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterPainHost
+--- !u!114 &2336172187902048086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d818f78d88b48464cb03c278ab5ab789, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterHitReact
+--- !u!114 &4231773269274488563
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa6b9a1d9c03d854b91c15af83e3c39e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterAppearanceHost
+  _id: 
+  _displayNameOverride: 
+  _portraitSprite: {fileID: 0}
+  _alignment: {x: 0, y: 0}
+  _bodyMassKg: 0
+  _bustCm: 0
+  _waistCm: 0
+  _hipCm: 0
+  _partMasses: []
 --- !u!1 &8110232566133532116
 GameObject:
   m_ObjectHideFlags: 0

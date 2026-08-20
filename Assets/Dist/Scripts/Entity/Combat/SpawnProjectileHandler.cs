@@ -104,6 +104,7 @@ public sealed class SpawnProjectileHandler : IActionHandler
             out bool missAtRangeEnd,
             out Vector3 missImpact);
 
+        float jin = CombatImpulse.ShotJin(item, ammo);
         for (int i = 0; i < bodyHitCount; i++)
         {
             CharacterBodyHost host = _hosts[i];
@@ -116,7 +117,7 @@ public sealed class SpawnProjectileHandler : IActionHandler
                 context.ItemId,
                 context.Instance,
                 context.Stack);
-            attacker.ResolveCommittedHit(
+            float p = attacker.ResolveCommittedHit(
                 hitContext,
                 mode,
                 item,
@@ -126,7 +127,11 @@ public sealed class SpawnProjectileHandler : IActionHandler
                 applyCooldown: false,
                 practice: false,
                 impactOverride: _impacts[i],
-                rangedEffectiveDispersion: effective);
+                rangedEffectiveDispersion: effective,
+                impulseJinOverride: jin);
+            jin = CombatImpulse.ExitJin(jin, p);
+            if (jin < CombatImpulse.MinContinueJin)
+                break;
         }
 
         attacker.AddRecoilKick(context.Hand, item, ammo);
@@ -187,7 +192,7 @@ public sealed class SpawnProjectileHandler : IActionHandler
             origin,
             direction,
             range,
-            pierce: 0,
+            pierce: WeaponChamber.ResolvePierce(context.Stack, context.Instance),
             attacker.RangedObstructionMask,
             rangedEffectiveDispersion);
         return true;

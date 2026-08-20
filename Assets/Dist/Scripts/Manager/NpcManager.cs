@@ -122,6 +122,7 @@ public sealed class NpcManager : MonoBehaviour
         CharacterSkillsHost _skillsHost;
         CharacterState _characterState;
         CharacterBodyHost _selfHost;
+        CharacterPainHost _painHost;
         ICharacterDefeat _defeat;
 
         NpcCombatState _state = NpcCombatState.Idle;
@@ -143,6 +144,7 @@ public sealed class NpcManager : MonoBehaviour
             _skillsHost = go.GetComponent<CharacterSkillsHost>();
             _characterState = go.GetComponent<CharacterState>();
             _selfHost = go.GetComponent<CharacterBodyHost>();
+            _painHost = go.GetComponent<CharacterPainHost>();
 
             if (_motor == null || _attacker == null || _selfHost == null)
             {
@@ -190,6 +192,12 @@ public sealed class NpcManager : MonoBehaviour
             if (_defeat != null && _defeat.IsDefeated)
             {
                 EnterDead();
+                return;
+            }
+
+            if (_painHost != null && _painHost.IsPainShocked)
+            {
+                NpcSteer.Stop(_motor);
                 return;
             }
 

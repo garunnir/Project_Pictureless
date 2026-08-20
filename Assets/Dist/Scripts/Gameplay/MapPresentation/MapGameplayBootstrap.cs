@@ -53,6 +53,9 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         CharacterMotor motor = instance.GetComponent<CharacterMotor>();
         motor?.BindMapCollision(services);
 
+        CharacterAttacker attacker = instance.GetComponent<CharacterAttacker>();
+        attacker?.BindMapCollision(services.LineCast);
+
         DirectionalRaycaster raycaster = instance.GetComponent<DirectionalRaycaster>();
         if (raycaster != null && state != null)
             raycaster.BindMapCollision(services.LineCast, state);
@@ -78,6 +81,12 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
             return;
 
         BindCharacterLocomotions<CharacterMotor>(services);
+
+        var attackers = FindObjectsByType<CharacterAttacker>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+        for (int i = 0; i < attackers.Length; i++)
+            attackers[i].BindMapCollision(services.LineCast);
 
         var aimControllers = FindObjectsByType<PlayerAimController>(
             FindObjectsInactive.Include,

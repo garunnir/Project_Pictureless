@@ -12,7 +12,14 @@ public readonly struct AttackOutcome
     public readonly AttackPerformResult Result;
     public readonly CharacterBodyHost Target;
     public readonly string AimedPartId;
+    /// <summary>완화 후 HP. 0이어도 히트일 수 있음.</summary>
     public readonly int Damage;
+
+    /// <summary>완화 전 HP 합. p = Damage/RawDamage.</summary>
+    public readonly int RawDamage;
+
+    /// <summary>들어온 충격량 J_in (밀침). 데미지 아님.</summary>
+    public readonly float ImpulseJin;
 
     /// <summary>공격이 출발한 월드 지점 (근접 휘두름 기준점 / 원거리 총구).</summary>
     public readonly Vector3 OriginPoint;
@@ -45,7 +52,9 @@ public readonly struct AttackOutcome
         Vector3 impactPoint,
         string hitTag = null,
         WeaponAttack attack = null,
-        float weaponReach01 = 0f)
+        float weaponReach01 = 0f,
+        int rawDamage = 0,
+        float impulseJin = 0f)
     {
         Action = action;
         Hand = hand;
@@ -54,6 +63,8 @@ public readonly struct AttackOutcome
         Target = target;
         AimedPartId = aimedPartId;
         Damage = damage;
+        RawDamage = rawDamage;
+        ImpulseJin = Mathf.Max(0f, impulseJin);
         OriginPoint = originPoint;
         ImpactPoint = impactPoint;
         HitTag = hitTag ?? string.Empty;

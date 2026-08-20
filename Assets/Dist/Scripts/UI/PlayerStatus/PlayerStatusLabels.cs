@@ -98,4 +98,12 @@ public static class PlayerStatusLabels
             ? fallback
             : string.Empty;
     }
+
+    public static string GetPainTooltip(bool severe)
+    {
+        string key = severe ? "PlayerStatus.Mood.SeverePain" : "PlayerStatus.Mood.Pain";
+        if (Loc.TryGet(key, out string text))
+            return text;
+        return severe ? "극심한 고통" : "고통";
+    }
 }

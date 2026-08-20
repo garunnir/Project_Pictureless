@@ -18,7 +18,8 @@ public static class CombatMath
     public const float MeleeReachMeters = 1.25f;
 
     const int UnarmedBaseDamage = 1;
-    const int StrengthBaseline = 8;
+    /// <summary>근접 피해 STR 가산·충격량 StrengthSwing 기준. Impulse는 이 값을 복제하지 않음.</summary>
+    public const int StrengthBaseline = 8;
     const float MeleeHitBase = 0.55f;
     const float ToHitPerPoint = 0.04f;
     const float SkillHitPerLevel = 0.01f;

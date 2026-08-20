@@ -3,6 +3,7 @@
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
+using IsoTilemap;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -24,8 +25,11 @@ public sealed class DistProjectile : MonoBehaviour
     float _rangeRemaining;
     float _lifeRemaining;
     int _pierceRemaining;
+    float _impulseRemaining;
     float _rangedEffectiveDispersion;
     LayerMask _obstructionMask;
+    MapTopologyLineCast _mapLineCast;
+    float _mapFeetY;
     bool _launched;
     readonly CharacterBodyHost[] _hitHosts = new CharacterBodyHost[MaxHitHistory];
     int _hitCount;
@@ -56,8 +60,11 @@ public sealed class DistProjectile : MonoBehaviour
         _rangeRemaining = Mathf.Max(0f, range);
         _lifeRemaining = Mathf.Max(0.01f, _maxLifetime);
         _pierceRemaining = Mathf.Max(0, pierce);
+        _impulseRemaining = CombatImpulse.ShotJin(item, ammo);
         _obstructionMask = obstructionMask;
         _rangedEffectiveDispersion = rangedEffectiveDispersion;
+        _mapLineCast = attacker.MapLineCast;
+        _mapFeetY = CharacterFeetPose.GetFeetWorld(attacker.transform).y;
         _hitCount = 0;
         _launched = true;
         transform.SetPositionAndRotation(
@@ -70,6 +77,7 @@ public sealed class DistProjectile : MonoBehaviour
         if (!_launched)
             return;
 
+        // 할당 없음. MapTopologyLineCast는 스택 샘플.
         float dt = TimeScaleService.Delta(_timeChannel);
         if (dt <= 0f)
             return;
@@ -83,6 +91,13 @@ public sealed class DistProjectile : MonoBehaviour
 
         float step = Mathf.Min(_speed * dt, _rangeRemaining);
         Vector3 origin = transform.position;
+        if (TryMapObstruction(origin, step, out float mapDist, out Vector3 mapImpact))
+        {
+            EmitObstructionMiss(origin, mapImpact);
+            Destroy(gameObject);
+            return;
+        }
+
         if (step > CharacterAttacker.MinRayDistance &&
             Physics.Raycast(
                 origin,
@@ -124,16 +139,18 @@ public sealed class DistProjectile : MonoBehaviour
             _context.ItemId,
             _context.Instance,
             _context.Stack);
-        _attacker.ResolveCommittedHit(
+        float p = _attacker.ResolveCommittedHit(
             hitContext,
             WeaponResolveMode.RangedRay,
             _item,
             origin,
             consumeAmmo: false,
             _ammo,
-            rangedEffectiveDispersion: _rangedEffectiveDispersion);
+            rangedEffectiveDispersion: _rangedEffectiveDispersion,
+            impulseJinOverride: _impulseRemaining);
+        _impulseRemaining = CombatImpulse.ExitJin(_impulseRemaining, p);
 
-        if (_pierceRemaining <= 0)
+        if (_pierceRemaining <= 0 || _impulseRemaining < CombatImpulse.MinContinueJin)
         {
             Destroy(gameObject);
             return true;
@@ -156,6 +173,26 @@ public sealed class DistProjectile : MonoBehaviour
             0,
             origin,
             impact);
+    }
+
+    bool TryMapObstruction(
+        Vector3 origin,
+        float step,
+        out float mapDist,
+        out Vector3 mapImpact)
+    {
+        mapDist = step;
+        mapImpact = origin + _direction * step;
+        if (_mapLineCast == null || step <= CharacterAttacker.MinRayDistance)
+            return false;
+
+        Vector3 feet = origin;
+        feet.y = _mapFeetY;
+        if (!_mapLineCast.TryGetBlockingDistance(feet, _direction, step, out mapDist))
+            return false;
+
+        mapImpact = origin + _direction * mapDist;
+        return true;
     }
 
     bool TryResolveBody(Collider collider, out CharacterBodyHost host)

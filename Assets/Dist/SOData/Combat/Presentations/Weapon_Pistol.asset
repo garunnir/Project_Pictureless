@@ -60,9 +60,9 @@ MonoBehaviour:
       rightBase: {fileID: 7400000, guid: e8eee04591f26ed4abf33956ba7f1841, type: 2}
       twoHandBase: {fileID: 7400000, guid: e8eee04591f26ed4abf33956ba7f1841, type: 2}
     attackClips:
-      leftBase: {fileID: 0}
-      rightBase: {fileID: 0}
-      twoHandBase: {fileID: 0}
+      leftBase: {fileID: 7400000, guid: 4b38157f68d1c9a45978e035b67ee760, type: 2}
+      rightBase: {fileID: 7400000, guid: 4b38157f68d1c9a45978e035b67ee760, type: 2}
+      twoHandBase: {fileID: 7400000, guid: 4b38157f68d1c9a45978e035b67ee760, type: 2}
     recoilClips:
       leftBase: {fileID: 7400000, guid: 4b38157f68d1c9a45978e035b67ee760, type: 2}
       rightBase: {fileID: 7400000, guid: 4b38157f68d1c9a45978e035b67ee760, type: 2}

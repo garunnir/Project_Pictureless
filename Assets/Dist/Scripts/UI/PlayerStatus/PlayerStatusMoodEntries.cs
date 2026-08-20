@@ -31,7 +31,27 @@ namespace Garunnir.Runtime.Gameplay.Data
                 CollectBodyEffects(body, into);
 
             CollectEncumbrance(encumbranceStage, into);
+            CollectPain(body, into);
             CollectCoreFeeling(PlayerGearHost.Active?.BodyTemperature, into);
+        }
+
+        static readonly List<BodyPartEffect> PainEffectScratch = new(16);
+
+        static void CollectPain(ICharacterBody body, List<MoodEntry> into)
+        {
+            if (body == null)
+                return;
+
+            float pain = CombatPain.EffectivePain01(body, PainEffectScratch);
+            if (pain < CombatPain.PainHudMin)
+                return;
+
+            bool severe = pain >= CombatPain.SeverePainHudMin;
+            into.Add(new MoodEntry(
+                severe ? MoodIconId.SeverePain : MoodIconId.Pain,
+                MoodPolarity.Negative,
+                pain,
+                PlayerStatusLabels.GetPainTooltip(severe)));
         }
 
         static void CollectEncumbrance(PlayerEncumbranceStage stage, List<MoodEntry> into)

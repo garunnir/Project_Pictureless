@@ -39,6 +39,13 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     bool _hasTravelLimit;
     float _remainingTravelDistance;
     float _envSpeedMultiplier = 1f;
+    Vector3 _knockbackVelocity;
+    float _staggerRemaining;
+    bool _moveLocked;
+
+    public bool IsStaggered => _staggerRemaining > 0f;
+    public bool IsMoveLocked => _moveLocked;
+    public bool IsMoveInhibited => _moveLocked || _staggerRemaining > 0f;
 
     public bool IsPossessed => _possessed;
     public bool IsStuck => _locomotion != null && _locomotion.IsStuck;
@@ -109,16 +116,24 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
         float deltaTime = TimeScaleService.FixedDelta(
             _possessed ? TimeScaleChannel.Player : TimeScaleChannel.World);
 
+        TickKnockback(deltaTime);
+
         Vector3 desiredMove;
-        if (_possessed && _drive != null)
+        if (IsMoveInhibited)
         {
-            desiredMove = _drive.CalcDesiredMove(_mover, deltaTime);
+            desiredMove = _knockbackVelocity * deltaTime;
+        }
+        else if (_possessed && _drive != null)
+        {
+            desiredMove = _drive.CalcDesiredMove(_mover, deltaTime)
+                + _knockbackVelocity * deltaTime;
         }
         else
         {
             desiredMove = _mover.CalcConstantSpeedMove(
                 EffectiveMoveSpeed * _envSpeedMultiplier,
-                deltaTime);
+                deltaTime)
+                + _knockbackVelocity * deltaTime;
             if (_hasTravelLimit &&
                 desiredMove.sqrMagnitude >
                 _remainingTravelDistance * _remainingTravelDistance)
@@ -199,5 +214,45 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     {
         _hasTravelLimit = false;
         _remainingTravelDistance = 0f;
+    }
+
+    /// <summary>월드 XZ 속도(m/s)를 넉백에 더함. 맵 Move로 소진.</summary>
+    public void ApplyKnockback(Vector3 velocityXz)
+    {
+        velocityXz.y = 0f;
+        _knockbackVelocity += velocityXz;
+    }
+
+    public void BeginStagger(float seconds)
+    {
+        if (seconds <= 0f)
+            return;
+        if (seconds > _staggerRemaining)
+            _staggerRemaining = seconds;
+        _mover?.SetWorldDirection(Vector3.zero);
+    }
+
+    public void SetMoveLocked(bool locked)
+    {
+        _moveLocked = locked;
+        if (locked)
+            _mover?.SetWorldDirection(Vector3.zero);
+    }
+
+    void TickKnockback(float deltaTime)
+    {
+        if (_staggerRemaining > 0f)
+            _staggerRemaining = Mathf.Max(0f, _staggerRemaining - deltaTime);
+
+        if (_knockbackVelocity.sqrMagnitude < 1e-8f)
+        {
+            _knockbackVelocity = Vector3.zero;
+            return;
+        }
+
+        float decay = CombatImpulse.KnockbackDecayPerSecond * deltaTime;
+        _knockbackVelocity = Vector3.Lerp(_knockbackVelocity, Vector3.zero, Mathf.Clamp01(decay));
+        if (_knockbackVelocity.sqrMagnitude < 1e-6f)
+            _knockbackVelocity = Vector3.zero;
     }
 }

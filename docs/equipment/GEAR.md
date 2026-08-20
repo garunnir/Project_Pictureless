@@ -73,7 +73,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | 항목 | 계약 |
 |------|------|
 | 모션 | Cooling/pending/Unsupported만 시전 게이트. 근접 `NoTarget`/`OutOfRange`는 스윙을 막지 않음 |
-| 판정 시점 | Attack 클립 cue (`CueNormalizedTime` / Animation Event) |
+| 판정 시점 | 이번 Attack 사이클이 cue 미만을 지난 뒤 `CueNormalizedTime`(또는 Animation Event). 잔여 Attack이 이미 cue를 지났다고 즉시 발사하지 않음 |
 | 연결 | `MeleeHitbox` OverlapBox (조준 축, 길이 `CombatMath.RangeMeters`, 반폭/반높이 `WeaponAttack`) |
 | 확정 | 겹친 `CharacterBodyHost`마다 `HitChance` 없이 피해. 방어는 `WearCombatDefense.MitigateDamage` 유지 |
 | 허공 | 쿨·연습치만. `AttackJudged` Miss 없음 |
@@ -92,7 +92,7 @@ NPC는 여전히 사거리 안에서만 `TryPerform` (AI). 플레이어 시전�
 | 방향 | 조준축 + **effective** yaw (`CombatMath.DispersionYawDegrees`, 60 단위=1°). 반동은 게이트 아님. 킥=`(gun.recoil+ammo.recoil)*handlingFactor`, 회복=`MovesPerSecond` |
 | 연결 | Attack 프리팹 있으면 `DistProjectile` 비행. 없으면 cue `CombatHitscan` |
 | 조임 | RMB `IsAiming` 동안 `aim01` 0→1. `aim_speed` 0/없음=즉시 1. NPC `AimHeld`=즉시 1. `sight_dispersion*(1-aim01)` |
-| 명중 | 레이/탄이 `CharacterBodyHost`에 닿으면 피해. `effective`=`gun/ammo.dispersion`+sightExtra+`shot_spread`+recoilRemaining → yaw와 부위 유지 공유. `HitChance` 실패=`ScatterToNeighbor`. 허공 히트스캔=사거리 끝 Miss, 비행=사거리·수명 소멸 |
+| 명중 | 레이/탄이 `CharacterBodyHost`에 닿으면 피해. 마스크 기본 `~0`(Character 포함). 자기 콜라이더는 `IsOwnCollider`/`IsSelf` 제외. 맵 벽은 `MapTopologyLineCast`(조준과 동일)에서 멈추고 `Obstructed`+`ImpactPoint` — 이후 벽 HP 훅. `effective`=`gun/ammo.dispersion`+sightExtra+`shot_spread`+recoilRemaining → yaw와 부위 유지 공유. `HitChance` 실패=`ScatterToNeighbor`. 허공 히트스캔=사거리 끝 Miss, 비행=사거리·수명 소멸 |
 
 동작 쿨과 무기 쿨은 **별 타이머**. 동작 쿨=`WeaponPresentation.Entry`(시전 시작, 0=생략). 근접 무기 쿨=`CombatMath.AttackIntervalSeconds`(무게/부피). 원거리는 무기 쿨 게이트 없음 — `effective`(조임+반동 잔여+dispersion)가 탄착 퍼짐과 부위 유지. cue 시점은 쿨이 아님. 건모드 합산은 후속.
 
@@ -296,10 +296,10 @@ Boundary SSOT: `CombatMath` = offense numbers; `WearCombatDefense` = Wear defens
 | Name | Formula |
 |------|---------|
 | `WearEncAccuracyFactor` | `1 − min(TotalEnc × WearEncHitPenaltyPerPoint, WearEncHitPenaltyCap)` |
-| `ArmorEngageChance` | `Clamp01(coverage / CoveragePercentScale)` — roll; miss → raw damage |
-| `ArmorAbsorb` | `thickness × ThicknessAbsorbPerUnit + materialResist × MaterialResistAbsorbPerUnit` |
-| `MitigatedDamage` | engage ? `max(0, raw − ArmorAbsorb)` : raw |
-| `MaterialResistForPart` | max resist among covering pieces' `ItemData.materials` → `MaterialData` (`bash`/`cut`/`bullet` by `AttackDamageTags.Resolve(item, action)`); missing data → 0 |
+| `ArmorEngageChance` | `Clamp01(coverage / CoveragePercentScale)` — **조각마다** roll. miss → 그 조각 흡수 0 |
+| `ArmorAbsorb` | 맞은 조각 `thickness × ThicknessAbsorbPerUnit + materialResist × MaterialResistAbsorbPerUnit` 합 |
+| `MitigatedDamage` | `max(0, raw − max(0, ArmorAbsorb − ArmorPen))`. ArmorPen = 원거리 `ammo.pierce` |
+| `MaterialResistForPart` | UI용: covering pieces max resist. 히트 흡수는 조각별 `MaxMaterialResist` |
 
 Consts: `CoveragePercentScale=100`, `ThicknessAbsorbPerUnit=1`, `MaterialResistAbsorbPerUnit=1`, `WearEncHitPenaltyPerPoint=0.01`, `WearEncHitPenaltyCap=0.35`.
 
@@ -323,8 +323,8 @@ flowchart LR
 
 - Dual wield / OffHand factor / obstruction Miss unchanged
 - Ranged `HitChance` fail = neighbor scatter (body hit never Miss)
-- Armor Engage is post-hit only (does not convert to Miss)
-- Outcome damage = post-mitigation
+- Armor Engage is post-hit only (does not convert to Miss). **조각마다** coverage 주사, 맞은 조각만 흡수 합. `ammo.pierce`는 AP (횟수 관통은 히트스캔/발사체와 공유)
+- Outcome damage = post-mitigation. **하한 1 없음. HP 0 허용** (막힌 타 = 밀침 최대). Defeat은 머리/가슴 0
 - Phase B/C Wear/pockets/overlap untouched
 
 ## Phase E — env_prot + wetness
