@@ -4,6 +4,8 @@
 루트 인덱스: `CLAUDE.md` → **Domain docs**  
 룰: `.cursor/rules/` (해당 스크립트 glob에서 자동)
 
+**남은 일 / 구현 지침:** [`PLAN.md`](PLAN.md) — “뭐 남았지?”는 이 문서만. 구현 시 항목 지침을 따르고, 끝나면 그 항목을 삭제한다.
+
 | Topic | Canonical | Rule |
 |-------|-----------|------|
 | Game time | [`time/TIME.md`](time/TIME.md) | `game-time.mdc` |

@@ -16,10 +16,27 @@ MonoBehaviour:
   - action: 5
     attack: {fileID: 11400000, guid: 7ebf51a4dc62897be40319f7da2658c4, type: 2}
     useHold: 1
+    actionCooldownSeconds: 0
+    holdClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    aimClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    attackClips:
+      leftBase: {fileID: 7400000, guid: 025debf2928397845814e8676bd349f0, type: 2}
+      rightBase: {fileID: 7400000, guid: 025debf2928397845814e8676bd349f0, type: 2}
+      twoHandBase: {fileID: 7400000, guid: 025debf2928397845814e8676bd349f0, type: 2}
     recoilClips:
       leftBase: {fileID: 7400000, guid: 025debf2928397845814e8676bd349f0, type: 2}
       rightBase: {fileID: 7400000, guid: 025debf2928397845814e8676bd349f0, type: 2}
       twoHandBase: {fileID: 7400000, guid: 025debf2928397845814e8676bd349f0, type: 2}
+    blockedClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     effectSeeds: []
     vfx:
       actionVfx: {fileID: 7028231510786012215, guid: e20c2743283bdeb4690bae5e30086fdd,
@@ -33,6 +50,27 @@ MonoBehaviour:
   - action: 0
     attack: {fileID: 11400000, guid: 4b8c2e71a93f5648b1d0e6c4a7f32591, type: 2}
     useHold: 1
+    actionCooldownSeconds: 0
+    holdClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    aimClips:
+      leftBase: {fileID: 7400000, guid: e8eee04591f26ed4abf33956ba7f1841, type: 2}
+      rightBase: {fileID: 7400000, guid: e8eee04591f26ed4abf33956ba7f1841, type: 2}
+      twoHandBase: {fileID: 7400000, guid: e8eee04591f26ed4abf33956ba7f1841, type: 2}
+    attackClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    recoilClips:
+      leftBase: {fileID: 7400000, guid: 4b38157f68d1c9a45978e035b67ee760, type: 2}
+      rightBase: {fileID: 7400000, guid: 4b38157f68d1c9a45978e035b67ee760, type: 2}
+      twoHandBase: {fileID: 7400000, guid: 4b38157f68d1c9a45978e035b67ee760, type: 2}
+    blockedClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     effectSeeds: []
     vfx:
       actionVfx: {fileID: 3393811213086816214, guid: df92d15a593607146b78ad219988cefb,
@@ -45,10 +83,27 @@ MonoBehaviour:
   - action: 6
     attack: {fileID: 11400000, guid: 7ebf51a4dc62897be40319f7da2658c4, type: 2}
     useHold: 1
+    actionCooldownSeconds: 0
+    holdClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    aimClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    attackClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     recoilClips:
       leftBase: {fileID: 7400000, guid: 025debf2928397845814e8676bd349f0, type: 2}
       rightBase: {fileID: 7400000, guid: 025debf2928397845814e8676bd349f0, type: 2}
       twoHandBase: {fileID: 7400000, guid: 025debf2928397845814e8676bd349f0, type: 2}
+    blockedClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     effectSeeds: []
     vfx:
       actionVfx: {fileID: 0}
@@ -58,10 +113,27 @@ MonoBehaviour:
   - action: 7
     attack: {fileID: 11400000, guid: 7ebf51a4dc62897be40319f7da2658c4, type: 2}
     useHold: 1
+    actionCooldownSeconds: 0
+    holdClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    aimClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
+    attackClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     recoilClips:
       leftBase: {fileID: 7400000, guid: 025debf2928397845814e8676bd349f0, type: 2}
       rightBase: {fileID: 7400000, guid: 025debf2928397845814e8676bd349f0, type: 2}
       twoHandBase: {fileID: 7400000, guid: 025debf2928397845814e8676bd349f0, type: 2}
+    blockedClips:
+      leftBase: {fileID: 0}
+      rightBase: {fileID: 0}
+      twoHandBase: {fileID: 0}
     effectSeeds: []
     vfx:
       actionVfx: {fileID: 0}
@@ -71,3 +143,4 @@ MonoBehaviour:
   _supportedActions: 225
   _defaultEntryIndex: 0
   _animatorOverride: {fileID: 22100000, guid: 88db4ca863cd08440ab0a703bda73d6e, type: 2}
+  _animClipSpeeds: {fileID: 0}

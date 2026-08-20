@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterActionHost — 행위자 1줄 행동 큐 + CancelAll + TickScale
+// CharacterActionHost — 행위자 1줄 행동 큐(종류별) + CancelAll + TickScale
 // ============================================================
 
 using System;
@@ -19,7 +19,7 @@ public sealed class CharacterActionHost : MonoBehaviour
 
     [SerializeField] UICraftingController _crafting;
 
-    readonly Queue<Job> _queue = new();
+    readonly List<Job> _queue = new();
     readonly List<BodyPartEffect> _effectScratch = new(16);
 
     CharacterBodyHost _bodyHost;
@@ -103,8 +103,7 @@ public sealed class CharacterActionHost : MonoBehaviour
 
         if (_currentKind != CharacterActionKind.None)
         {
-            _queue.Enqueue(new Job { Kind = kind, Start = start });
-            Changed?.Invoke();
+            EnqueueOrReplace(kind, start);
             return true;
         }
 
@@ -167,10 +166,32 @@ public sealed class CharacterActionHost : MonoBehaviour
     {
         while (_currentKind == CharacterActionKind.None && _queue.Count > 0)
         {
-            Job job = _queue.Dequeue();
+            Job job = _queue[0];
+            _queue.RemoveAt(0);
             if (BeginNow(job.Kind, job.Start))
                 return;
         }
+    }
+
+    /// <summary>
+    /// Gear/Inv/Craft는 FIFO append. Combat은 큐에 최대 1개 — 이미 있으면 Start만 교체.
+    /// </summary>
+    void EnqueueOrReplace(CharacterActionKind kind, Func<bool> start)
+    {
+        if (kind == CharacterActionKind.Combat)
+        {
+            for (int i = 0; i < _queue.Count; i++)
+            {
+                if (_queue[i].Kind != CharacterActionKind.Combat)
+                    continue;
+                _queue[i] = new Job { Kind = kind, Start = start };
+                Changed?.Invoke();
+                return;
+            }
+        }
+
+        _queue.Add(new Job { Kind = kind, Start = start });
+        Changed?.Invoke();
     }
 
     bool IsSourceBusy(CharacterActionKind kind)

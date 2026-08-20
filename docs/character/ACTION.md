@@ -17,18 +17,36 @@ Patch: `Dist/MCP/Character/Patch Action Gauge On Player`
 
 | Before | After |
 |--------|--------|
-| 장비 타이머·인벤 이동·전투 쿨·제작이 겹칠 수 있음 | 같은 행위자에서 **한 줄만** 진행, 나머지는 FIFO 큐 |
-| busy면 거절 | `TryRunOrEnqueue` — idle이면 즉시 Start, busy면 큐 |
+| 장비 타이머·인벤 이동·전투 쿨·제작이 겹칠 수 있음 | 같은 행위자에서 **한 줄만** 진행, 나머지는 종류별 큐 |
+| busy면 거절 | `TryRunOrEnqueue` — idle이면 즉시 Start, busy면 종류 정책 |
 | ESC가 행동을 안 끊음 | possessed만 `CancelAll` (현재 작업+큐). 전투 쿨은 스킵하지 않음 |
 | 상태이상이 행동 시간에 무관 | `BodyPartEffect` → `TickScale`을 실제 dt에 곱함 |
 
 ```text
 요청 → CharacterActionHost.TryRunOrEnqueue
          idle  → Start (기존 Gear/Inv/Craft/Attack 타이머)
-         busy  → 큐 append
+         busy  → 종류별 EnqueueOrReplace
          완료  → dequeue 다음 Start
 CancelAll → 현재 작업 취소(적용 없음) + 큐 전부 폐기
             (누가 호출하든 동일. possessed ESC / AI / 상호작용 중단)
+```
+
+종류별 큐 정책 (`EnqueueOrReplace`) — 이산 작업과 연타 입력을 같은 FIFO에 넣지 않는다.
+
+| Kind | busy일 때 | 이유 |
+|------|-----------|------|
+| Gear / Inventory / Craft | FIFO append | 클릭 1 = 작업 1. 착용 중 인벤 이동은 대기 |
+| Combat | 큐에 **최대 1개**. 이미 Combat이 있으면 Start만 교체 | LMB 연타는 “지금 한 대”이지 N대 예약이 아님 |
+
+교차 종류는 그대로 한 줄: 착용 중 공격은 Combat 1칸이 뒤에 앉는다. 쿨 중 연타는 그 1칸만 최신 클릭으로 덮는다.
+
+애니 `_attackActionQueue`(길이 2, 초과 drop)와 별개. Auto 홀드 연사는 클릭 큐가 아니라 입력 유지 → 같은 Leaf 재시전 (`docs/PLAN.md`).
+
+```text
+현재 Gear, Combat 연타 → 큐 [Combat×1]
+현재 Combat, 큐 비움, 클릭 → 큐 [Combat] (버퍼 1)
+현재 Combat, 큐 [Combat], 클릭 → 그 잡 Start만 교체
+현재 Combat, 큐 [Inv], 클릭 → 큐 [Inv, Combat]
 ```
 
 ```mermaid
@@ -38,7 +56,7 @@ flowchart LR
   Req[Wear Inv Craft Attack]
   Host[CharacterActionHost]
   Cur[CurrentJob]
-  Q[FifoQueue]
+  Q[KindQueue]
   Gauge[WorldGauge]
   Cancel[CancelAll]
   Effects --> Delay
@@ -79,4 +97,4 @@ possessed ESC: `CharacterActionCancelConsumer` → `UiCancelPriority.CharacterAc
 
 ## 검증
 
-IsoLand `>PlayerCharacter`: 착용 중 인벤 이동은 큐. ESC는 미적용+큐 소멸. 컨텍스트 메뉴 ESC는 메뉴만. 쿨만 남은 ESC는 세팅. 골절 등이 있으면 진행이 더 김.
+IsoLand `>PlayerCharacter`: 착용 중 인벤 이동은 큐. ESC는 미적용+큐 소멸. 컨텍스트 메뉴 ESC는 메뉴만. 쿨만 남은 ESC는 세팅. 골절 등이 있으면 진행이 더 김. 조준 중 LMB 연타 → 쿨 끝난 뒤 **한 대만** (손 뗀 뒤 지연 연타 없음).

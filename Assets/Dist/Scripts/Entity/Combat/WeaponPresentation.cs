@@ -46,27 +46,34 @@ public sealed class WeaponPresentation : ScriptableObject
         [Min(0f)]
         public float actionCooldownSeconds;
 
+        string HoldClipLabel => useHold ? "Hold" : "Idle";
+
         [FoldoutGroup("애니", expanded: true)]
-        [LabelText("Hold")]
+        [HideLabel]
+        [LabelText("$HoldClipLabel")]
         [Tooltip("비면 Catalog 같은 동작 Hold.")]
         public ArmAnimSlotCatalog.HandClips holdClips = new ArmAnimSlotCatalog.HandClips();
 
         [FoldoutGroup("애니")]
+        [HideLabel]
         [LabelText("Aim")]
         [Tooltip("비면 Catalog 같은 동작 Aim.")]
         public ArmAnimSlotCatalog.HandClips aimClips = new ArmAnimSlotCatalog.HandClips();
 
         [FoldoutGroup("애니")]
+        [HideLabel]
         [LabelText("Attack")]
         [Tooltip("비면 Catalog 같은 동작 Attack.")]
         public ArmAnimSlotCatalog.HandClips attackClips = new ArmAnimSlotCatalog.HandClips();
 
         [FoldoutGroup("애니")]
+        [HideLabel]
         [LabelText("Recoil")]
         [Tooltip("비면 Catalog Impact Recoil.")]
         public ArmAnimSlotCatalog.HandClips recoilClips = new ArmAnimSlotCatalog.HandClips();
 
         [FoldoutGroup("애니")]
+        [HideLabel]
         [LabelText("Blocked")]
         [Tooltip("비면 Catalog Impact Blocked.")]
         public ArmAnimSlotCatalog.HandClips blockedClips = new ArmAnimSlotCatalog.HandClips();

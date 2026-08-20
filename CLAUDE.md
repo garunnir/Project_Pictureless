@@ -95,6 +95,12 @@ Keep these files up to date during long tasks:
 
 When context gets long or a new session starts → read these files first.
 
+## Remaining work
+
+SSOT: `docs/PLAN.md`.  
+- “뭐 남았지?” → 그 문서의 남은 항목만 (도메인 Pending를 다시 긁지 않음).
+- 구현 시 해당 항목 **지침** + 링크된 도메인 문서를 따른다. 끝나면 **항목 삭제** (완료 체크를 남기지 않음).
+
 ## Domain docs (LLM entry)
 
 Index: `docs/README.md`. Stack: `docs/tech-stack.md`.  
@@ -102,6 +108,7 @@ Feature SSOT when touching that area — **read the Doc before editing related s
 
 | Topic | Doc | Rule |
 |-------|-----|------|
+| Remaining work / impl guide | `docs/PLAN.md` | (구현되면 항목 삭제) |
 | Game time / scale / day clock | `docs/time/TIME.md` | `.cursor/rules/game-time.mdc` |
 | Map / TileMap / bake / visibility | `docs/map/SYSTEM.md` (+ `TILEMAP*.md`) | `.cursor/rules/map-system.mdc` |
 | Inventory UI | `docs/inventory/INVENTORY_UI.md` | `.cursor/rules/inventory-ui.mdc` |

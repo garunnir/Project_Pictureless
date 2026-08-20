@@ -32,12 +32,58 @@ public sealed class ArmAnimHandClipsDrawer : PropertyDrawer
         float line = EditorGUIUtility.singleLineHeight;
         float gap = EditorGUIUtility.standardVerticalSpacing;
         Rect row = new Rect(position.x, position.y, position.width, line);
-        DrawHand(host, ref speeds, row, "Left", property.FindPropertyRelative("leftBase"));
+        DrawHand(host, ref speeds, row, PhaseHandLabel(property, "Left"), property.FindPropertyRelative("leftBase"));
         row.y += line + gap;
-        DrawHand(host, ref speeds, row, "Right", property.FindPropertyRelative("rightBase"));
+        DrawHand(host, ref speeds, row, PhaseHandLabel(property, "Right"), property.FindPropertyRelative("rightBase"));
         row.y += line + gap;
-        DrawHand(host, ref speeds, row, "TwoHand", property.FindPropertyRelative("twoHandBase"));
+        DrawHand(host, ref speeds, row, PhaseHandLabel(property, "TwoHand"), property.FindPropertyRelative("twoHandBase"));
         EditorGUI.EndProperty();
+    }
+
+    static string PhaseHandLabel(SerializedProperty property, string hand)
+    {
+        string phase = PhaseLabel(property);
+        if (string.IsNullOrEmpty(phase))
+            return hand;
+        return phase + " " + hand;
+    }
+
+    static string PhaseLabel(SerializedProperty property)
+    {
+        if (property == null)
+            return string.Empty;
+        switch (property.name)
+        {
+            case "holdClips":
+            case "hold":
+            case "_holdThin":
+                return IsEntryIdle(property) ? "Idle" : "Hold";
+            case "aimClips":
+            case "aim":
+            case "_aimThin":
+                return "Aim";
+            case "attackClips":
+            case "attack":
+            case "_attackThin":
+                return "Attack";
+            case "recoilClips":
+                return "Recoil";
+            case "blockedClips":
+                return "Blocked";
+            default:
+                return string.Empty;
+        }
+    }
+
+    static bool IsEntryIdle(SerializedProperty holdProp)
+    {
+        string path = holdProp.propertyPath;
+        int lastDot = path.LastIndexOf('.');
+        if (lastDot < 0)
+            return false;
+        SerializedProperty useHold =
+            holdProp.serializedObject.FindProperty(path.Substring(0, lastDot) + ".useHold");
+        return useHold != null && !useHold.boolValue;
     }
 
     static void DrawHand(

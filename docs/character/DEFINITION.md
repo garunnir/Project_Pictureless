@@ -82,7 +82,7 @@ PC와 NPC는 **같은 본체 프리팹** (`NpcSample`: 모터·몸·Binder·공�
 | `PlayerMovement` | 시스템(`PlayerPossessedInputHost`) 입력 드라이버. possessed 모터에 `ICharacterMotorDrive` 바인드. NPC에는 입력을 켜지 않음 |
 | `NpcManager` | 비possessed 유닛을 행 단위 FSM으로 원격 틱 (2대 이상) |
 | `NpcSteer` | 조향 헬퍼 (MB 아님) |
-| `CharacterActionHost` | 행위자 1줄 행동 큐·게이지·CancelAll. [`ACTION.md`](ACTION.md) |
+| `CharacterActionHost` | 행위자 1줄 행동 큐(종류별)·게이지·CancelAll. [`ACTION.md`](ACTION.md) |
 | `CharacterSessionHub` | 본체 세션 입구. possessed만 `BecomePlayer` |
 
 `CharacterKind`로 PC/NPC를 나누지 않는다. 조종 여부는 `CharacterMotor.IsPossessed` (`PlayerManager.Possess`).
