@@ -273,7 +273,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
             return;
 
         Vector2 maxSize = InventoryWindowLayout.GetMaxSize(_uiCanvas);
-        Vector2 minSize = new(InventoryWindowLayout.MinWidth, InventoryWindowLayout.MinHeight);
+        Vector2 minSize = window.ResolveMinSize();
 
         ApplyWindowSizeClamp(window, minSize, maxSize);
         if (window == _primaryWindow)

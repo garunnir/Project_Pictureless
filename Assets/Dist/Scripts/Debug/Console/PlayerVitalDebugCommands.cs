@@ -31,5 +31,27 @@ public static class PlayerVitalDebugCommands
         GameplayData.Vitals.SetCurrent(vitalKey, value);
         return GetValue(vitalKey);
     }
+
+    public const string StomachGetCommand = "player.needs.stomach.get";
+    public const string StomachSetCommand = "player.needs.stomach.set";
+
+    [ConsoleMethod(StomachGetCommand, "Returns player stomach mlFood/mlWater/kcal"), Preserve]
+    public static string GetStomach()
+    {
+        if (!RuntimeDebugCommandSupport.TryGetPlayerNeedsHost(out PlayerNeedsHost host))
+            return "ERROR: PlayerNeedsHost is not active";
+
+        return $"stomach mlFood={host.StomachMlFood} mlWater={host.StomachMlWater} kcal={host.StomachKcal}";
+    }
+
+    [ConsoleMethod(StomachSetCommand, "Sets player stomach pools", "mlFood", "mlWater", "kcal"), Preserve]
+    public static string SetStomach(float mlFood, float mlWater, float kcal)
+    {
+        if (!RuntimeDebugCommandSupport.TryGetPlayerNeedsHost(out PlayerNeedsHost host))
+            return "ERROR: PlayerNeedsHost is not active";
+
+        host.SetStomach(mlFood, mlWater, kcal);
+        return GetStomach();
+    }
 }
 #endif

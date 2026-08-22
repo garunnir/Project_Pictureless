@@ -69,6 +69,8 @@ namespace Garunnir.Runtime.Gameplay.Data
         public GunDetailData gun;
         public ToolDetailData tool;
         public ComestibleDetailData comestible;
+        /// <summary>Consume-only heal / consume_drug. Other BN actions stay Parked.</summary>
+        public UseActionData use_action;
         public AmmoDetailData ammo;
         public MagazineDetailData magazine;
         public BookDetailData book;

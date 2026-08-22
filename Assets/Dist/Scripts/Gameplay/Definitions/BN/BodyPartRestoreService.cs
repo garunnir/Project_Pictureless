@@ -1,11 +1,11 @@
 // ============================================================
-// BodyPartRestoreService — 절단 소켓에 Organic regen / Prosthetic 부착
+// BodyPartRestoreService — 절단 복원 + MED heal condition
 // ============================================================
 
 namespace Garunnir.Runtime.Gameplay.Data
 {
     /// <summary>
-    /// 런타임 복원은 <see cref="ICharacterBody.TryAttach"/>만 쓴다.
+    /// 절단 복원은 <see cref="ICharacterBody.TryAttach"/>, heal은 <see cref="ICharacterBody.SetCondition"/>.
     /// </summary>
     /// <remarks>
     /// flowchart LR
@@ -23,6 +23,29 @@ namespace Garunnir.Runtime.Gameplay.Data
 
         public static bool TryAttachProsthetic(ICharacterBody body, string partId) =>
             TryAttachLimb(body, partId, BodyPartKind.Prosthetic, addRegenerating: false);
+
+        /// <summary>MED heal consume: restore condition on an existing part (chest default).</summary>
+        public static bool TryHeal(ICharacterBody body, string partId, int amount)
+        {
+            if (body == null || amount <= 0 || string.IsNullOrEmpty(partId))
+                return false;
+
+            string main = BodyPartIds.GetMainConditionPart(partId) ?? partId;
+            if (string.IsNullOrEmpty(main) || !body.Has(main))
+                return false;
+
+            int cur = body.GetConditionCur(main);
+            int max = body.GetConditionMax(main);
+            if (max <= 0 || cur >= max)
+                return false;
+
+            int next = cur + amount;
+            if (next > max)
+                next = max;
+
+            body.SetCondition(main, next, max);
+            return true;
+        }
 
         static bool TryAttachLimb(
             ICharacterBody body,

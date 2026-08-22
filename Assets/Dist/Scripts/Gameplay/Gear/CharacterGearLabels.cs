@@ -43,6 +43,7 @@ public static class CharacterGearLabels
     const string KeyBlockedWearable = "Character.BlockedNotWearable";
     const string KeyBlockedEquipped = "Character.BlockedAlreadyEquipped";
     const string KeyBlockedInvalid = "Character.BlockedInvalid";
+    const string KeyBlockedNoStowRoom = "Character.BlockedNoStowRoom";
     const string KeyBlockedWearOverlap = "Character.BlockedWearOverlap";
     const string KeyHoverEnc = "Character.Hover.Enc";
     const string KeyHoverWarm = "Character.Hover.Warm";
@@ -130,6 +131,7 @@ public static class CharacterGearLabels
     public static string BlockedNotWearable => GetOr(KeyBlockedWearable, "착용할 수 없음");
     public static string BlockedAlreadyEquipped => GetOr(KeyBlockedEquipped, "이미 장착됨");
     public static string BlockedInvalid => GetOr(KeyBlockedInvalid, "유효하지 않음");
+    public static string BlockedNoStowRoom => GetOr(KeyBlockedNoStowRoom, "가방에 넣을 공간이 없음");
     public static string HoverEnc => GetOr(KeyHoverEnc, "enc");
     public static string HoverWarm => GetOr(KeyHoverWarm, "warm");
     public static string HoverCoverage => GetOr(KeyHoverCoverage, "coverage");

@@ -35,6 +35,14 @@ public sealed class ItemInstance
     /// <summary>공구 충전 잔여. tool이 없으면 0.</summary>
     public int ToolCharges { get; private set; }
 
+    public const int UnsetCreatedWorldMinute = -1;
+
+    /// <summary>부패 식품 생성 월드 분. <see cref="UnsetCreatedWorldMinute"/> = 미각인.</summary>
+    public int CreatedWorldMinute { get; private set; }
+
+    /// <summary>Host 스캔이 갱신. 신선/썩음 병합 키.</summary>
+    public bool IsRotten { get; private set; }
+
     public ItemInstance(ItemData item, int damageLevel = 0)
     {
         Item = item ?? throw new ArgumentNullException(nameof(item));
@@ -46,7 +54,18 @@ public sealed class ItemInstance
         SupplyRounds = 0;
         SupplyAmmoId = null;
         ToolCharges = item.tool != null ? Math.Max(0, item.tool.initial_charges) : 0;
+        CreatedWorldMinute = UnsetCreatedWorldMinute;
+        IsRotten = false;
     }
+
+    public void SetCreatedWorldMinute(int worldMinute)
+    {
+        if (CreatedWorldMinute != UnsetCreatedWorldMinute)
+            return;
+        CreatedWorldMinute = worldMinute;
+    }
+
+    public void SetRotten(bool rotten) => IsRotten = rotten;
 
     public void SetChamberRounds(int rounds)
     {

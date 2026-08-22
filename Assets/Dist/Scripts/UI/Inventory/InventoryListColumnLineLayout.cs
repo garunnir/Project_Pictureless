@@ -52,6 +52,7 @@ public sealed class InventoryListColumnLineLayout : MonoBehaviour
         SetFixedColumn("VolumeValue", _settings.VolumeValueWidth);
         SetFixedColumn("VolumeUnit", _settings.VolumeUnitWidth);
         SetFlexColumn("Name", _settings.NameMinWidth);
+        ApplyNameLabelStretch();
 
         ApplyFonts(asHeader);
     }
@@ -101,11 +102,39 @@ public sealed class InventoryListColumnLineLayout : MonoBehaviour
         SetFont("VolumeUnit", _settings.FontDetail);
     }
 
+    void ApplyNameLabelStretch()
+    {
+        Transform name = transform.Find("Name");
+        if (name == null)
+            return;
+
+        StretchExisting(name.Find(ItemNameStatusBar.LabelObjectName));
+    }
+
+    static void StretchExisting(Transform child)
+    {
+        if (child is not RectTransform rt)
+            return;
+
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+        rt.pivot = new Vector2(0.5f, 0.5f);
+    }
+
     void SetFont(string childName, float fontSize)
     {
         Transform child = transform.Find(childName);
-        if (child == null || !child.TryGetComponent(out TextMeshProUGUI text))
+        if (child == null)
             return;
+
+        if (!child.TryGetComponent(out TextMeshProUGUI text))
+        {
+            Transform label = child.Find(ItemNameStatusBar.LabelObjectName);
+            if (label == null || !label.TryGetComponent(out text))
+                return;
+        }
 
         text.enableAutoSizing = false;
         text.fontSize = fontSize;

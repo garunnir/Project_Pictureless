@@ -49,6 +49,31 @@ public static class PlayerStatusLabels
         return Loc.TryGet(key, out string prose) ? prose : string.Empty;
     }
 
+    public static string FormatHungerDaysProse(int storedKcal, float stomachKcal, PlayerNeedsSettings settings)
+    {
+        float days = PlayerStatusVitalDisplay.RemainingFoodDays(storedKcal, stomachKcal, settings);
+        PlayerStatusVitalDisplay.HungerDaysBand band =
+            PlayerStatusVitalDisplay.ResolveHungerDaysBand(days, settings);
+        string key = KeyVitalProsePrefix + "Hunger." + band;
+        return Loc.TryGet(key, out string prose) ? prose : string.Empty;
+    }
+
+    public static string FormatThirstNeedsProse(int cur, int max, PlayerNeedsSettings settings)
+    {
+        PlayerStatusVitalDisplay.ThirstNeedsBand band =
+            PlayerStatusVitalDisplay.ResolveThirstNeedsBand(cur, max, settings);
+        string key = KeyVitalProsePrefix + "Thirst." + band;
+        return Loc.TryGet(key, out string prose) ? prose : string.Empty;
+    }
+
+    public static string GetMoodTooltip(Garunnir.Runtime.Gameplay.Data.MoodIconId iconId)
+    {
+        string key = "PlayerStatus.Mood." + iconId;
+        if (Loc.TryGet(key, out string text))
+            return text;
+        return iconId.ToString();
+    }
+
     public static string FormatSkill(string skillId, int level) =>
         Loc.Format(KeySkillFormat, GetSkillName(skillId), level);
 

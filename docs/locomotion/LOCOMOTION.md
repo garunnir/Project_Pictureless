@@ -85,8 +85,9 @@ flowchart LR
 ```
 
 - **hp:** `WearCombatDefense.MitigateDamage` 그대로. 하한 1 없음. HP 0 허용.
-- **J (충격량):** 밀침만. `Δv = J / m`. 근접 `J_in = m_weapon × StrengthSwing(str) / T` × SWEEP면 `SweepJinFactor`. 원거리 `J_shot`. BRUTAL은 hp raw만. BEANBAG은 hp 0·J 유지.
-- **p = Clamp01(hp / raw).** `J_hit = J_in × (1 − p)`. 오버펜 `J_exit = J_in × p` → 다음 몸. 막히면(p=0) 중단. `ammo.pierce`는 추가 몸 횟수와 갑옷 AP.
+- **J (충격량):** 밀침만. 근접 `J_in = m_weapon × StrengthSwing(str) / T` × SWEEP면 `SweepJinFactor`. 원거리 `J_shot`. BRUTAL은 hp raw만. BEANBAG은 hp 0·J 유지.
+- **J_hit:** 이 몸에 남는 J. 다음 몸으로 안 가면 `J_in` 전부 (근접·마지막 몸). 오버펜 중에만 `p = Clamp01(hp / raw)`, `J_hit = J_in × (1 − p)`, `J_exit = J_in × p` → 다음 몸. 막히면(p=0) 중단. `ammo.pierce`는 추가 몸 횟수와 갑옷 AP.
+- **피해자 Δv:** `(J_hit / m) × VictimDeltaVScale`. 사수 킥은 기존 `J / m` (스케일 없음).
 - **질량 m:** `CharacterAppearanceHost.RemainingMassKg` + 착용·들기 `ItemStack.TotalWeight`(kg). 양손 같은 스택은 한 번만.
 - **Flinch:** 접촉이면 hp 0이어도. `HitFlinch` → Hurt Layer. 쇼크 중 생략.
 - **Stagger:** `Δv ≥ StaggerDeltaV`이면 `CancelAll` + cue 폐기 + 짧은 이동 잠금. 전투 쿨은 남긴다.
@@ -108,6 +109,7 @@ SSOT: `CombatImpulse` · `CombatPain`. STR 기준은 `CombatMath.StrengthBaselin
 | `StaggerDeltaV` | 1.2 | Stagger 문턱 (m/s) |
 | `StaggerSeconds` | 0.45 | Stagger 이동 잠금 |
 | `KnockbackDecayPerSecond` | 8 | 넉백 속도 감쇠 |
+| `VictimDeltaVScale` | 16 | 피해자 J/m → 모터 Δv (사수 킥 제외) |
 | `KickToDispersionPerDeltaV` | 1400 | 사수 Δv → 기존 분산 킥 단위 |
 | `BrutalHpFactor` | 1.25 | 기법 BRUTAL hp raw |
 | `SweepJinFactor` | 1.35 | 기법 SWEEP 근접 J |
@@ -116,7 +118,17 @@ SSOT: `CombatImpulse` · `CombatPain`. STR 기준은 `CombatMath.StrengthBaselin
 | `PainShockThreshold` | 0.8 | 고통 쇼크 (effective) |
 | `AdrenalinePainFactor` | 0.5 | adrenaline 시 PainTotal 배율 |
 
-환산 상수(0.05, 1400, 1.2)는 플레이테스트용. 식은 유지하고 숫자만 여기서 바꾼다.
+환산 상수(0.05, 1400, 1.2, 16)는 플레이테스트용. 식은 유지하고 숫자만 여기서 바꾼다.
+
+### 발밑 먼지 (넉백 끌림 / 걸음)
+
+무기 Catalog·`CharacterCombatVfx` 밖. 이동 연출만.
+
+- 드라이버: `CharacterFootDustVfx` (같은 GO `CharacterMotor`). 프리팹: `Visual/Prefabs/Locomotion/Vfx/Vfx_FootDust`
+- **넉백:** `|KnockbackVelocity|` ≥ 문턱이면 루핑 분출, 세기에 비례. 사수 킥은 문턱으로 걸러짐.
+- **걸음:** 자발 이동이 보폭만큼 쌓일 때마다 소량 버스트. 넉백 중에는 루핑만.
+- 발 위치 = 캡슐 바닥. `simulationSpace = World`라서 먼지는 바닥에 남는다.
+- 시간 채널: possessed → `Player`, 아니면 `World`. 루핑 프리팹은 `VfxChannelTicker` persist on.
 
 ## 3D 애니 브릿지
 
@@ -132,8 +144,8 @@ SSOT: `CombatImpulse` · `CombatPain`. STR 기준은 `CombatMath.StrengthBaselin
 | Layer | Mask | Weight |
 |-------|------|--------|
 | Move Layer | none | 1 |
-| RightArm Layer | `RightArm.mask` | 오른손 무장·비TwoHand → 1 (`useHold`·Aim/Attack 게이트) |
-| LeftArm Layer | `LeftArm.mask` | 왼손 무장·비TwoHand → 1 (동일) |
+| RightArm Layer | `RightArm.mask` (Body+Head+RightArm) | 오른손 무장·비TwoHand → 1 (`useHold`·Aim/Attack 게이트). 스윙 클립은 몸통 회전이 커서 팔만 열면 모션이 안 보임 |
+| LeftArm Layer | `LeftArm.mask` (Body+Head+LeftArm) | 왼손 무장·비TwoHand → 1 (동일) |
 | TwoHand Layer | `UpperBody.mask` | TwoHand 모드/`ActiveWieldHand` → 1 (동일 게이트; 그때 L/R Arm = 0). Attack도 UpperBody만 (정지 전신 교체는 Idle 발이 어색해 playtest에서 폐기) |
 | Impact Layer | none (v1) | Recoil/Blocked 재생 중 → 1, 평시 0 |
 | Hurt Layer | none | Flinch/Stagger/PainDown 중 → 1, 평시 0. **피해자**. Catalog remap 없음 |

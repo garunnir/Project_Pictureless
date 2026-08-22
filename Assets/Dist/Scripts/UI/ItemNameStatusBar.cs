@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Name 셀 Rect 전체 stretch fill. TMP는 형제 위(앞), fill은 뒤. raycast 없음.
+/// 이름 진행 fill. Rect는 프리팹 SSOT — Wrap은 위치·타입을 덮지 않는다.
 /// </summary>
 public sealed class ItemNameStatusBar
 {
@@ -64,6 +64,9 @@ public sealed class ItemNameStatusBar
 
         return new ItemNameStatusBar(fill);
     }
+
+    public static ItemNameStatusBar Wrap(Image fill) =>
+        fill == null ? null : new ItemNameStatusBar(fill);
 
     public void SetDurability(ItemStack stack)
     {

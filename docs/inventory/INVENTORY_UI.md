@@ -67,7 +67,8 @@
 - 루팅 파이프라인: `NearbyContainerDetector` → `LootProximityCoordinator` 이벤트 → `{ TilePresentationSystem, UIInventoryController }` 각각 구독. 컨테이너 TileView는 `EmphasisBlend`(살짝 밝게).
 - `NearbyOnly`: 사이드탭이 없으면 아이템 리스트도 비움. 활성 탭 1개만 월드 하이라이트.
 - 사이드탭 표현: `Normal` / `Selected` / `Dragging`. 중첩 가방 탭은 드래그 소스(컨테이너째), 고정 컨테이너 탭(`player-body` / `floor-loot` / 월드)은 내용물 전체 드래그(스택 순차 이동, 중량·부피 초과 시 중단). 모든 탭은 드롭 타겟.
-- Transfer duration: `InventoryTransferDuration` SSOT — MoveStacks / 퀵이동 / 창밖 투하 / 가방→Gear 인출에 적용 (`InventoryTimedMoveHost`). 소스 `draw_moves`→초(`CombatMath.MovesPerSecond`) **+** weight/volume/nest handling (storage-ml 가산 없음). **다중 스택은 합산 없이 순차**(스택마다 개별 딜레이→이동). 가방 중량 SSOT=`ItemStack.TotalWeight`(Nested 내용물 포함; `TotalVolume`은 외형만). **진행 UI**: `ItemTimedNameProgress` → 리스트 행·중첩가방 탭 Name stretch fill(idle=내구도, busy=로딩; Gear Wear/Wield도 동일). `Dist/MCP/Inventory/Patch Row Name Status Bar`. 상세: [`docs/equipment/GEAR.md`](../equipment/GEAR.md).
+- Transfer duration: `InventoryTransferDuration` SSOT — MoveStacks / 퀵이동 / 창밖 투하 / 가방→Gear 인출에 적용 (`InventoryTimedMoveHost`). 소스 `draw_moves`→초(`CombatMath.MovesPerSecond`) **+** weight/volume/nest handling (storage-ml 가산 없음). **다중 스택은 합산 없이 순차**(스택마다 개별 딜레이→이동). 가방 중량 SSOT=`ItemStack.TotalWeight`(Nested 내용물 포함; `TotalVolume`은 외형만). **진행 UI**: `ItemTimedNameProgress` → 리스트 행·중첩가방 탭 Name stretch fill(idle=내구도, busy=로딩; Gear Wear/Wield·HandWork act도 동일). `Dist/MCP/Inventory/Patch Row Name Status Bar`. 상세: [`docs/equipment/GEAR.md`](../equipment/GEAR.md).
+- 섭취 손 파이프: `CharacterHandWork` — Unwield(든 것→body) → Wield(대상) → `ConsumeDuration` mealtime. ESC는 현재 단계까지(롤백 없음).
 - 착용 포켓 탭: Wear 변경 시 `InventorySession.NotifySidebarLayoutChanged`로 사이드바 Sync. 착용 포켓은 고정 탭(컨테이너째 드래그 아님); 아이콘은 착용 아이템.
 - `Area_List`·`Area_Sidebar`(`SlotRoot`)는 세로 스크롤바(`Scrollbar_Vertical`, AutoHideAndExpandViewport)를 프리팹에 내장한다. 창 전체 rebake 금지 — `Dist/MCP/Inventory/Patch Window Scrollbars`로만 패치 (`Area_InvInfo` 보존). 사이드바는 `InventorySidebarScrollRect`(탭 DnD 중 스크롤 드래그 무시); 사이드바 Viewport에는 `InventoryScrollDragHandler` 없음.
 - 컨테이너 상호작용은 `Interactable`의 레거시 스프라이트 아웃라인을 사용하지 않는다. 포커스 시각효과는 타입별 전용 컴포넌트(`SpriteOutlineFocusVisual` 등)로 분리한다.
@@ -78,7 +79,7 @@
 - 두 창은 **독립 open/close** (`TogglePrimaryWindow`, `ToggleLootWindow`). 레이아웃 프리팹은 **하나** (`Grp_InventoryListWindow`) — Primary/Loot는 인스턴스·모드·제목만 다름.
 - `Area_InvInfo` (`Txt_Weight` / `Txt_Liter`): 선택 컨테이너 used/max 무게(kg)·부피(L).
 - 창 위치는 **상단 헤더 드래그**로 자유 이동, **8방향 리사이즈 핸들**(상·하·좌·우 + 4모서리)로 크기 조절 (`UIWindowResizeHandles` + `UIWindowResizeHandler` / `WindowResizeEdge`). 핸들은 프리팹에 두지 않고 런타임 생성(폭만 Inspector).
-- 크기 제한: 최소 320×240, 최대 Canvas의 75%×78% (`InventoryWindowLayout`).
+- 크기 제한: 최소 폭은 `UIItemListRow` 프리팹 열+창 chrome(사이드바 켠 상태·세로 스크롤바)에서 계산, 높이 240. 최대 Canvas의 75%×78% (`InventoryListColumnLayout.MeasureMinRowWidth` / `InventoryWindowLayout.ComputeMinWidth`). 행 열 폭·이름 폰트는 `InventoryListColumnLineLayout`이 행 프리팹에 반영. **StatusFill Rect는 프리팹 SSOT** — 런타임이 위치·stretch를 덮지 않는다.
 
 - 사이드탭 클릭 시 해당 컨테이너 아이템 리스트로 즉시 전환.
 - **창 선택 SSOT:** `UIInventoryListWindow.SelectedContainer` — 활성 탭 하이라이트와 리스트 `Bind`는 `SetActiveContainer` 단일 경로로만 갱신한다. 사이드바/리스트 단독 갱신 금지.
@@ -277,5 +278,7 @@
 - **사람용 사용법:** [`ItemContextMenu-usage.md`](ItemContextMenu-usage.md)
 - 기술 경계·항목 추가: [`ItemContextMenu.md`](ItemContextMenu.md)
 - 프리팹: `ItemContextMenu.prefab` (HierarchyBuilder bake). 메뉴 항목 추가는 Contributor/Action만 — UI 프리팹 변경 불필요.
+- 섭취: `ConsumeContextContributor` — Eat / Drink / Use. 라벨 `ItemContextMenu.Eat` · `.Drink` · `.Use`. 실행은 `ConsumeService.TryBegin` → `CharacterHandWork` ([`needs/NEEDS.md`](../needs/NEEDS.md)).
+- 부패 병합: `ItemMergeKey.IsRotten`이 다르면 합치지 않는다 (`ItemMergePolicy`).
 
 

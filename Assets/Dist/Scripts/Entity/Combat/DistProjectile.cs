@@ -147,7 +147,8 @@ public sealed class DistProjectile : MonoBehaviour
             consumeAmmo: false,
             _ammo,
             rangedEffectiveDispersion: _rangedEffectiveDispersion,
-            impulseJinOverride: _impulseRemaining);
+            impulseJinOverride: _impulseRemaining,
+            impulseContinues: _pierceRemaining > 0);
         _impulseRemaining = CombatImpulse.ExitJin(_impulseRemaining, p);
 
         if (_pierceRemaining <= 0 || _impulseRemaining < CombatImpulse.MinContinueJin)

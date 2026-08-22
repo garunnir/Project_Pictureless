@@ -460,6 +460,8 @@ public sealed class UICharacterWindow : MonoBehaviour
         }
 
         bool showNumeric = _viewModel.CanShowNumericVitals;
+        PlayerNeedsHost needs = PlayerNeedsHost.Active;
+        PlayerNeedsSettings settings = needs != null ? needs.Settings : null;
         var lines = new List<string>(VitalKeys.All.Length + 1)
         {
             PlayerStatusLabels.VitalsSection
@@ -470,12 +472,24 @@ public sealed class UICharacterWindow : MonoBehaviour
             string key = VitalKeys.All[i];
             int cur = vitals.GetCurrent(key);
             int max = vitals.GetMax(key);
+            string shortKey = PlayerStatusVitalDisplay.GetVitalShortKey(key);
 
             if (showNumeric)
             {
                 lines.Add(
                     $"{PlayerStatusLabels.GetVitalName(key)}  " +
                     PlayerStatusLabels.FormatVital(cur, max));
+                continue;
+            }
+
+            if (shortKey == PlayerStatusVitalDisplay.GetVitalShortKey(VitalKeys.Hunger))
+            {
+                float stomachKcal = needs != null ? needs.StomachKcal : 0f;
+                lines.Add(PlayerStatusLabels.FormatHungerDaysProse(cur, stomachKcal, settings));
+            }
+            else if (shortKey == PlayerStatusVitalDisplay.GetVitalShortKey(VitalKeys.Thirst))
+            {
+                lines.Add(PlayerStatusLabels.FormatThirstNeedsProse(cur, max, settings));
             }
             else
             {

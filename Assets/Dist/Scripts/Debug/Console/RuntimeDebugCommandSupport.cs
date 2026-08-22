@@ -34,5 +34,11 @@ static class RuntimeDebugCommandSupport
 
         return false;
     }
+
+    public static bool TryGetPlayerNeedsHost(out PlayerNeedsHost host)
+    {
+        host = PlayerNeedsHost.Active;
+        return host != null;
+    }
 }
 #endif

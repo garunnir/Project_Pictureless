@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: InventoryListColumnLayoutSettings
   m_EditorClassIdentifier: Dist.Inventory.UI::InventoryListColumnLayoutSettings
   _iconSize: 20
-  _categoryWidth: 30
+  _categoryWidth: 40
   _countWidth: 28
-  _weightValueWidth: 40
-  _weightUnitWidth: 22
-  _volumeValueWidth: 40
-  _volumeUnitWidth: 18
+  _weightValueWidth: 30
+  _weightUnitWidth: 15
+  _volumeValueWidth: 30
+  _volumeUnitWidth: 15
   _nameMinWidth: 48
   _rowPaddingH: 8
   _rowPaddingV: 2

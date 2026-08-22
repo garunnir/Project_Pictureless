@@ -13,7 +13,10 @@ public sealed class VfxChannelTicker : MonoBehaviour
 {
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
 
-    [Tooltip("이 시간이 지나면 파티클 생존 여부와 무관하게 풀에 반납한다.")]
+    [Tooltip("켜면 수명이 지나도 반납하지 않는다. 발밑 먼지처럼 루핑 연출용.")]
+    [SerializeField] bool _persist = false;
+
+    [Tooltip("이 시간이 지나면 파티클 생존 여부와 무관하게 풀에 반납한다. persist가 꺼져 있을 때만.")]
     [SerializeField, Min(0.05f)] float _maxLifetimeSeconds = 2f;
 
     ParticleSystem[] _systems;
@@ -69,6 +72,9 @@ public sealed class VfxChannelTicker : MonoBehaviour
                     _systems[i].Simulate(delta, false, false, true);
             }
         }
+
+        if (_persist)
+            return;
 
         if (_elapsed < ActiveLifetime)
             return;

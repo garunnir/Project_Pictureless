@@ -17,7 +17,7 @@ MonoBehaviour:
   _portraitSprite: {fileID: 0}
   _alignment: {x: 0, y: 0}
   _attributes:
-    str: 8
+    str: 20
     con: 8
     dex: 8
     intel: 8
@@ -40,4 +40,6 @@ MonoBehaviour:
   - itemId: container_bag
     count: 1
   - itemId: consumable_egg
+    count: 3
+  - itemId: candy
     count: 3

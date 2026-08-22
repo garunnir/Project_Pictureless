@@ -51,7 +51,13 @@ public static class CharacterFactory
 
         CharacterDefinitionBinder binder = instance.GetComponent<CharacterDefinitionBinder>();
         if (binder == null)
-            binder = instance.AddComponent<CharacterDefinitionBinder>();
+        {
+            Debug.LogError(
+                $"[CharacterFactory] '{definition.name}' prefab needs CharacterDefinitionBinder.",
+                instance);
+            Object.Destroy(instance);
+            return null;
+        }
 
         binder.Apply(definition);
         return instance;

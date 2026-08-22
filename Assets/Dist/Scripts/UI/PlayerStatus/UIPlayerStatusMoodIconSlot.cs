@@ -102,13 +102,15 @@ public sealed class UIPlayerStatusMoodIconSlot :
         _shakeRoot = shakeRoot;
     }
 
+    public string TooltipText => _tooltipText;
+
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (!string.IsNullOrEmpty(_tooltipText))
-            _owner?.ShowTooltip(_tooltipText, transform as RectTransform);
+            _owner?.ShowTooltip(this);
     }
 
-    public void OnPointerExit(PointerEventData eventData) => _owner?.HideTooltip();
+    public void OnPointerExit(PointerEventData eventData) => _owner?.HideTooltip(this);
 
     void OnDestroy() => StopAttentionShake();
 

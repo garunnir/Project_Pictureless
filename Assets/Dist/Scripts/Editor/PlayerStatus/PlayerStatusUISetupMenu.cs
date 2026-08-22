@@ -1699,11 +1699,22 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.VitalProse.Hunger.Ok", "배가 든든하다");
         Put("PlayerStatus.VitalProse.Hunger.Low", "배가 고프다");
         Put("PlayerStatus.VitalProse.Hunger.Critical", "굶주리고 있다");
+        Put("PlayerStatus.VitalProse.Hunger.Engorged", "배가 터질 듯하다");
+        Put("PlayerStatus.VitalProse.Hunger.Sated", "배가 든든하다");
+        Put("PlayerStatus.VitalProse.Hunger.Hungry", "배가 고프다");
+        Put("PlayerStatus.VitalProse.Hunger.VeryHungry", "매우 배가 고프다");
+        Put("PlayerStatus.VitalProse.Hunger.Famished", "허기에 시달린다");
+        Put("PlayerStatus.VitalProse.Hunger.Starving", "굶주리고 있다");
 
         Put("PlayerStatus.VitalProse.Thirst.Full", "목이 충분히 축인다");
         Put("PlayerStatus.VitalProse.Thirst.Ok", "목이 마르지 않았다");
         Put("PlayerStatus.VitalProse.Thirst.Low", "목이 마르다");
         Put("PlayerStatus.VitalProse.Thirst.Critical", "목이 타는 것 같다");
+        Put("PlayerStatus.VitalProse.Thirst.Quenched", "목이 축여 있다");
+        Put("PlayerStatus.VitalProse.Thirst.NotThirsty", "목이 마르지 않았다");
+        Put("PlayerStatus.VitalProse.Thirst.Thirsty", "목이 마르다");
+        Put("PlayerStatus.VitalProse.Thirst.VeryThirsty", "목이 매우 마르다");
+        Put("PlayerStatus.VitalProse.Thirst.Parched", "목이 타들어간다");
 
         Put("PlayerStatus.VitalProse.Stamina.Full", "몸이 가볍다");
         Put("PlayerStatus.VitalProse.Stamina.Ok", "아직 버틸 만하다");
@@ -1715,12 +1726,36 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.Effect.infected", "감염");
         Put("PlayerStatus.Effect.regenerating", "재생 중");
         Put("PlayerStatus.Effect.adrenaline", "아드레날린");
+        Put("PlayerStatus.Effect.bloated", "팽만");
 
+        Put("PlayerStatus.Mood.Full", "배가 부르다");
+        Put("PlayerStatus.Mood.Fed", "배가 든든하다");
+        Put("PlayerStatus.Mood.Hungry", "배가 고프다");
+        Put("PlayerStatus.Mood.VeryHungry", "매우 배가 고프다");
+        Put("PlayerStatus.Mood.ThirstQuenched", "목이 축여 있다");
+        Put("PlayerStatus.Mood.Thirsty", "목이 마르다");
+        Put("PlayerStatus.Mood.VeryThirsty", "목이 매우 마르다");
+        Put("PlayerStatus.Mood.GoodMood", "기분이 좋다");
+        Put("PlayerStatus.Mood.Sad", "기분이 처진다");
+        Put("PlayerStatus.Mood.Sick", "몸이 아프다");
+        Put("PlayerStatus.Mood.Adrenaline", "아드레날린");
         Put("PlayerStatus.Mood.Overencumbered", "과적");
         Put("PlayerStatus.Mood.Overencumbered.Light", "짐이 조금 무겁다");
         Put("PlayerStatus.Mood.Overencumbered.Medium", "짐이 무겁다");
         Put("PlayerStatus.Mood.Overencumbered.Heavy", "짐이 너무 무겁다");
         Put("PlayerStatus.Mood.Overencumbered.Extreme", "움직일 수 없을 만큼 무겁다");
+
+        Put("ItemContextMenu.Eat", "먹기");
+        Put("ItemContextMenu.Drink", "마시기");
+        Put("ItemContextMenu.Use", "사용");
+        Put("msg.status.needs_vomit", "너무 많이 먹어 토했다.");
+        Put("msg.status.needs_starve", "굶주림으로 쓰러졌다.");
+        Put("msg.status.needs_dehydrate", "갈증으로 쓰러졌다.");
+        Put("msg.status.needs_hunger_70", "배가 고프다.");
+        Put("msg.status.needs_hunger_50", "많이 배가 고프다.");
+        Put("msg.status.needs_hunger_25", "매우 배가 고프다.");
+        Put("msg.status.needs_hunger_10", "굶주리고 있다.");
+        Put("msg.status.needs_thirst_danger", "목이 타들어간다.");
 
         var list = new System.Collections.Generic.List<LocalizationTable.Entry>(map.Count);
         foreach (var kv in map)

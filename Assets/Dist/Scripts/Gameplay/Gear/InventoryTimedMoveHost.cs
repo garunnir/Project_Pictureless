@@ -108,10 +108,15 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
 
     public bool TryBegin(float durationSeconds, Action apply)
     {
-        return RunOrEnqueue(() => TryBeginCore(durationSeconds, apply));
+        return TryBegin(durationSeconds, apply, activeStack: null);
     }
 
-    bool TryBeginCore(float durationSeconds, Action apply)
+    public bool TryBegin(float durationSeconds, Action apply, ItemStack activeStack)
+    {
+        return RunOrEnqueue(() => TryBeginCore(durationSeconds, apply, activeStack));
+    }
+
+    bool TryBeginCore(float durationSeconds, Action apply, ItemStack activeStack)
     {
         if (IsBusy || apply == null)
             return false;
@@ -124,10 +129,13 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
         _queue.Clear();
         _current = null;
         ClearActiveStacks();
+        if (activeStack != null)
+            SetActiveStack(activeStack);
 
         if (!_timed.TryBegin(GearTimedAction.Kind.InventoryTransfer, durationSeconds, apply))
         {
             _transferActive = false;
+            ClearActiveStacks();
             return false;
         }
 

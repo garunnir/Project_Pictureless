@@ -28,7 +28,7 @@
 
 - Keep-in-bounds: 호버 셸 경로에서 clamp opt-out 없음. 기준은 **루트 Canvas rect**.
 - ContextMenu용 `PlaceAtScreenPoint(panel, screen, canvas)`는 offset=0·clamp off (패리티).
-- 콘텐츠 바인딩·숨김 시점(exit/드래그/창 닫힘/우클릭)은 Presenter·Controller.
+- 콘텐츠 바인딩·숨김 시점(exit/드래그/창 닫힘/우클릭)은 Presenter·Controller. Mood 툴팁은 포인터 enter/exit·패널 disable만 — vital/`Refresh`로 Hide 하지 않음.
 - 호버 패널 부모는 **`UIHoverCanvasLayer` (TopMost)**. Show 시 `BringToFront`(last sibling). DragGhost와 레이어 공유 — 고스트 Show 시 last sibling으로 호버 위.
 - Positioner용 **center anchors** 필요.
 

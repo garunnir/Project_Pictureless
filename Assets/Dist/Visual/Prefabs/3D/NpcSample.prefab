@@ -81,6 +81,8 @@ GameObject:
   - component: {fileID: 4678551400784576317}
   - component: {fileID: 2336172187902048086}
   - component: {fileID: 4231773269274488563}
+  - component: {fileID: 2114695070956075501}
+  - component: {fileID: 3428796886242963462}
   m_Layer: 6
   m_Name: NpcSample
   m_TagString: Untagged
@@ -492,6 +494,41 @@ MonoBehaviour:
   _waistCm: 0
   _hipCm: 0
   _partMasses: []
+--- !u!114 &2114695070956075501
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ffa14b9ca9b1d344a4e412ce5a71f34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterFootDustVfx
+  _dustPrefab: {fileID: 6057288306708094213, guid: 5ef5efbc4ca7efd4f89a69b6dc4e1b21,
+    type: 3}
+  _knockbackMinSpeed: 0.8
+  _knockbackFullSpeed: 4
+  _knockbackRateMin: 8
+  _knockbackRateMax: 36
+  _strideMeters: 0.7
+  _stepMinSpeed: 1.5
+  _stepBurstCount: 3
+  _emitUpBias: 0.35
+--- !u!114 &3428796886242963462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b31707533045dc6479ffd15cf6928ab9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::PlayerNeedsHost
+  _settings: {fileID: 11400000, guid: 39809576eb5659543856868bfd4f46f1, type: 2}
 --- !u!1 &8110232566133532116
 GameObject:
   m_ObjectHideFlags: 0

@@ -634,6 +634,156 @@ def export_tool_detail(entry: dict, item_type: str) -> dict | None:
     return tool or None
 
 
+USE_ACTION_TYPE_HEAL = "heal"
+USE_ACTION_TYPE_CONSUME_DRUG = "consume_drug"
+CONSUME_USE_ACTION_TYPES = frozenset({USE_ACTION_TYPE_HEAL, USE_ACTION_TYPE_CONSUME_DRUG})
+
+_HEAL_AMOUNT_KEYS = ("limb_power", "bandages_power", "head_power", "torso_power", "amount")
+_SCALAR_AMOUNT_KEYS = ("amount", "min", "limb_power")
+_VITAMIN_ID_KEYS = ("id", "vitamin")
+_VITAMIN_AMOUNT_KEYS = ("amount", "vitamins")
+_EFFECT_ID_KEYS = ("id", "effect_id", "effect")
+
+
+def _flatten_scalar_amount(value) -> int | None:
+    """BN scalar that may be int, [min, max], or {amount:...}. None if unreadable."""
+    if value is None or isinstance(value, bool):
+        return None
+    if _is_number(value):
+        return int(round(value))
+    if isinstance(value, list):
+        for item in value:
+            flat = _flatten_scalar_amount(item)
+            if flat is not None:
+                return flat
+        return None
+    if isinstance(value, dict):
+        for key in _SCALAR_AMOUNT_KEYS:
+            if key in value:
+                return _flatten_scalar_amount(value.get(key))
+        for nested in value.values():
+            flat = _flatten_scalar_amount(nested)
+            if flat is not None:
+                return flat
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def flatten_vitamins(value) -> dict[str, int] | None:
+    """BN vitamins pair-list or object → {id: amount}."""
+    if not value:
+        return None
+    out: dict[str, int] = {}
+    if isinstance(value, dict):
+        for key, val in value.items():
+            amount = _flatten_scalar_amount(val)
+            if amount is not None:
+                out[str(key)] = amount
+        return out or None
+    if isinstance(value, list):
+        for item in value:
+            if isinstance(item, (list, tuple)) and len(item) >= 2:
+                amount = _flatten_scalar_amount(item[1])
+                if amount is not None:
+                    out[str(item[0])] = amount
+            elif isinstance(item, dict):
+                vitamin_id = next(
+                    (item.get(key) for key in _VITAMIN_ID_KEYS if item.get(key)),
+                    None,
+                )
+                if not vitamin_id:
+                    continue
+                raw_amount = next(
+                    (item.get(key) for key in _VITAMIN_AMOUNT_KEYS if key in item),
+                    None,
+                )
+                amount = _flatten_scalar_amount(raw_amount)
+                if amount is not None:
+                    out[str(vitamin_id)] = amount
+        return out or None
+    return None
+
+
+def _use_action_type(action) -> str:
+    if isinstance(action, str):
+        return action.strip().lower()
+    if isinstance(action, dict) and action.get("type"):
+        return str(action.get("type")).strip().lower()
+    return ""
+
+
+def _iter_use_actions(value):
+    if value is None:
+        return
+    if isinstance(value, list):
+        for item in value:
+            yield item
+        return
+    yield value
+
+
+def _flatten_use_action_duration(value) -> int | None:
+    if isinstance(value, str):
+        minutes = parse_time_to_minutes(value)
+        return int(round(minutes)) if minutes else None
+    return _flatten_scalar_amount(value)
+
+
+def _first_consume_effect(action: dict) -> dict | None:
+    effects = action.get("effects")
+    if isinstance(effects, dict):
+        return effects
+    if isinstance(effects, list):
+        for item in effects:
+            if isinstance(item, dict):
+                return item
+            if isinstance(item, str) and item:
+                return {"id": item}
+    effect_id = next((action.get(key) for key in _EFFECT_ID_KEYS if action.get(key)), None)
+    if not effect_id:
+        return None
+    effect = {"id": effect_id}
+    if "duration" in action:
+        effect["duration"] = action.get("duration")
+    return effect
+
+
+def export_consume_use_action(entry: dict) -> dict | None:
+    """Whitelist heal / consume_drug only. Flatten nested objects. Never drop/tick/countdown."""
+    for action in _iter_use_actions(entry.get("use_action")):
+        action_type = _use_action_type(action)
+        if action_type not in CONSUME_USE_ACTION_TYPES:
+            continue
+        out = {"type": action_type}
+        if isinstance(action, dict):
+            if action_type == USE_ACTION_TYPE_HEAL:
+                for key in _HEAL_AMOUNT_KEYS:
+                    if key not in action:
+                        continue
+                    amount = _flatten_scalar_amount(action.get(key))
+                    if amount is not None:
+                        out["heal_amount"] = amount
+                        break
+            elif action_type == USE_ACTION_TYPE_CONSUME_DRUG:
+                effect = _first_consume_effect(action)
+                if effect:
+                    effect_id = next(
+                        (effect.get(key) for key in _EFFECT_ID_KEYS if effect.get(key)),
+                        None,
+                    )
+                    if effect_id:
+                        out["effect_id"] = str(effect_id)
+                    if "duration" in effect:
+                        duration = _flatten_use_action_duration(effect.get("duration"))
+                        if duration is not None:
+                            out["duration"] = duration
+        return out
+    return None
+
+
 def export_comestible_detail(entry: dict, item_type: str) -> dict | None:
     if item_type != "COMESTIBLE":
         return None
@@ -646,6 +796,13 @@ def export_comestible_detail(entry: dict, item_type: str) -> dict | None:
         comestible["spoils_in_minutes"] = parse_time_to_minutes(entry.get("spoils_in"))
     if entry.get("addiction_type"):
         comestible["addiction_type"] = str(entry.get("addiction_type"))
+    if "addiction_potential" in entry:
+        potential = _flatten_scalar_amount(entry.get("addiction_potential"))
+        if potential is not None:
+            comestible["addiction_potential"] = potential
+    vitamins = flatten_vitamins(entry.get("vitamins"))
+    if vitamins:
+        comestible["vitamins"] = vitamins
     return comestible or None
 
 
@@ -788,6 +945,9 @@ def export_item_game_detail(entry: dict, item_type: str) -> dict:
     container_detail = export_container_detail(entry, item_type)
     if container_detail:
         detail["container_detail"] = container_detail
+    use_action = export_consume_use_action(entry)
+    if use_action:
+        detail["use_action"] = use_action
 
     return detail
 

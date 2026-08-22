@@ -552,8 +552,32 @@ public sealed class CharacterAttacker : MonoBehaviour
         return targetCenter - direction * radius;
     }
 
-    public AttackPerformResult TryPerformSelected(CharacterBodyHost targetHost) =>
-        TryPerform(_selectedAction, targetHost);
+    public AttackPerformResult TryPerformSelected(CharacterBodyHost targetHost)
+    {
+        SyncActiveHandFromGear();
+        return TryPerform(_selectedAction, targetHost);
+    }
+
+    void SyncActiveHandFromGear()
+    {
+        WieldSlots slots = _gearHost != null ? _gearHost.Wield : null;
+        if (slots == null)
+            return;
+
+        ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
+        if (!PrimaryWieldResolver.TryResolvePrimary(
+                slots,
+                _catalog,
+                skills,
+                out PrimaryWieldResolver.HandScore primary,
+                out _))
+        {
+            SetActiveWieldHand(WieldHand.TwoHand);
+            return;
+        }
+
+        SetActiveWieldHand(AnimHandFrom(slots, primary.Slot));
+    }
 
     AttackPerformResult PerformRaise(
         WeaponAction action,
@@ -973,7 +997,8 @@ public sealed class CharacterAttacker : MonoBehaviour
         float weaponReach01 = 0f,
         Vector3? impactOverride = null,
         float rangedEffectiveDispersion = -1f,
-        float impulseJinOverride = -1f)
+        float impulseJinOverride = -1f,
+        bool impulseContinues = false)
     {
         CharacterBodyHost targetHost = context.Target;
         if (targetHost == null || targetHost.Body == null)
@@ -1058,6 +1083,10 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (CombatImpulse.IsBeanbag(ammo))
             damage = 0;
 
+        float jinIn = impulseJinOverride >= 0f
+            ? impulseJinOverride
+            : ResolveImpulseJin(item, context.Action, ammo);
+        float p = CombatImpulse.Penetration01(damage, rawDamage);
         EmitJudged(
             context,
             resolveMode,
@@ -1071,8 +1100,8 @@ public sealed class CharacterAttacker : MonoBehaviour
             ammo,
             weaponReach01,
             rawDamage,
-            impulseJinOverride);
-        return CombatImpulse.Penetration01(damage, rawDamage);
+            CombatImpulse.HitJin(jinIn, impulseContinues, p));
+        return p;
     }
 
     public void CommitAttempt(

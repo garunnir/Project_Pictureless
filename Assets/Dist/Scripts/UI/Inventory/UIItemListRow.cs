@@ -37,6 +37,7 @@ public sealed class UIItemListRow : MonoBehaviour,
     [SerializeField] TMP_Text _volumeUnitText;
     [SerializeField] Image _iconImage;
     [SerializeField] Image _backgroundImage;
+    [SerializeField] Image _nameStatusFill;
 
     ItemStack _stack;
     InventoryContainer _ownerContainer;
@@ -251,10 +252,16 @@ public sealed class UIItemListRow : MonoBehaviour,
 
     void EnsureNameBar()
     {
-        if (_nameBar != null || _nameText == null)
+        if (_nameBar != null)
             return;
 
-        _nameBar = ItemNameStatusBar.Ensure(ref _nameText);
+        if (_nameStatusFill == null)
+        {
+            Debug.LogError("[UIItemListRow] Name status fill missing on row prefab.", this);
+            return;
+        }
+
+        _nameBar = ItemNameStatusBar.Wrap(_nameStatusFill);
     }
 
     void RefreshNameBar()

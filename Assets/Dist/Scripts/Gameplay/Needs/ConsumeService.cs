@@ -1,0 +1,242 @@
+// ============================================================
+// ConsumeService — 인벤 1개 섭취/사용 → 위장·대사·MED heal
+// ============================================================
+// flowchart LR
+//   RMB[Inventory RMB] --> Contrib[ConsumeContextContributor]
+//   Contrib --> Action[ConsumeContextAction]
+//   Action --> Svc[ConsumeService]
+//   Svc --> Host[PlayerNeedsHost]
+//   Svc --> Restore[BodyPartRestoreService]
+//   Svc --> Hand[CharacterHandWork]
+//   Hand --> Inv[container_or_wield take 1]
+
+using System;
+using System.Collections.Generic;
+using Garunnir.Runtime.Gameplay.Data;
+
+public enum ConsumeKind
+{
+    Eat,
+    Drink,
+    Use
+}
+
+public static class ConsumeService
+{
+    public const float RawCalorieMultiplier = 0.75f;
+    public const string FlagRaw = "RAW";
+    public const string FlagCooked = "COOKED";
+    public const string TypeFood = "FOOD";
+    public const string TypeDrink = "DRINK";
+    public const string TypeMed = "MED";
+    public const string UseActionHeal = "heal";
+    public const string UseActionConsumeDrug = "consume_drug";
+
+    public static ConsumeKind? Classify(ItemData item)
+    {
+        if (item == null)
+            return null;
+
+        if (IsType(item.comestible_type, TypeMed) || IsType(item.type, TypeMed))
+            return ConsumeKind.Use;
+        if (IsType(item.comestible_type, TypeDrink) || IsType(item.type, TypeDrink))
+            return ConsumeKind.Drink;
+        if (IsType(item.comestible_type, TypeFood) || IsType(item.type, TypeFood))
+            return ConsumeKind.Eat;
+
+        if (item.comestible != null && item.comestible.calories > 0)
+            return ConsumeKind.Eat;
+
+        return null;
+    }
+
+    public static bool CanConsume(ItemStack stack, InventoryContainer container)
+    {
+        if (PlayerNeedsHost.Active == null)
+            return false;
+        if (stack?.Item == null || stack.Count < 1)
+            return false;
+        if (!OwnsForConsume(stack, container))
+            return false;
+        return Classify(stack.Item) != null;
+    }
+
+    public static bool TryBegin(ItemStack stack, InventoryContainer container)
+    {
+        if (!CanConsume(stack, container))
+            return false;
+
+        ConsumeKind kind = Classify(stack.Item).Value;
+        if (PlayerGearHost.Active?.Service == null)
+            return TryConsume(stack, container);
+
+        return CharacterHandWork.TryBegin(
+            stack,
+            container,
+            CharacterHandWork.DefaultHand(stack),
+            ConsumeDuration.ActSeconds(kind),
+            () => TryConsume(stack, container));
+    }
+
+    public static bool TryConsume(ItemStack stack, InventoryContainer container)
+    {
+        if (!CanConsume(stack, container))
+            return false;
+
+        PlayerNeedsHost host = PlayerNeedsHost.Active;
+        ItemData item = stack.Item;
+        ConsumeKind kind = Classify(item).Value;
+
+        if (TryTakeOne(stack, container) <= 0)
+            return false;
+
+        switch (kind)
+        {
+            case ConsumeKind.Eat:
+                ApplyFood(host, item);
+                break;
+            case ConsumeKind.Drink:
+                ApplyDrink(host, item);
+                break;
+            case ConsumeKind.Use:
+                ApplyMed(host, item);
+                break;
+        }
+
+        ApplyComestibleSideEffects(host, item);
+        if (ItemRot.IsRottenNow(stack.Instance))
+            ApplyRotPenalty(host);
+        return true;
+    }
+
+    static void ApplyRotPenalty(PlayerNeedsHost host)
+    {
+        PlayerNeedsSettings settings = host.Settings;
+        int fun = settings != null
+            ? settings.RotFunPenalty
+            : PlayerNeedsSettings.DefaultRotFunPenalty;
+        int healthy = settings != null
+            ? settings.RotHealthyPenalty
+            : PlayerNeedsSettings.DefaultRotHealthyPenalty;
+        if (fun == 0 && healthy == 0)
+            return;
+        host.ApplyMetabolites(fun, healthy, 0);
+    }
+
+    static void ApplyFood(PlayerNeedsHost host, ItemData item)
+    {
+        float ml = item.volume_ml;
+        float kcal = item.comestible != null ? item.comestible.calories : 0f;
+        if (HasRawWithoutCooked(item))
+            kcal *= RawCalorieMultiplier;
+
+        host.IngestFood(ml, kcal);
+    }
+
+    static void ApplyDrink(PlayerNeedsHost host, ItemData item)
+    {
+        float ml = item.volume_ml;
+        int quench = item.comestible != null ? item.comestible.quench : 0;
+        host.IngestDrink(ml, quench);
+    }
+
+    static void ApplyMed(PlayerNeedsHost host, ItemData item)
+    {
+        UseActionData action = item.use_action;
+        if (action == null || string.IsNullOrEmpty(action.type))
+            return;
+
+        ICharacterBody body = GameplayData.Body;
+        if (IsType(action.type, UseActionHeal))
+        {
+            if (action.heal_amount > 0 && body != null)
+                BodyPartRestoreService.TryHeal(body, BodyPartIds.Chest, action.heal_amount);
+            return;
+        }
+
+        if (!IsType(action.type, UseActionConsumeDrug))
+            return;
+
+        ComestibleDetailData comestible = item.comestible;
+        int fun = comestible != null ? comestible.fun : 0;
+        int healthy = comestible != null ? comestible.healthy : 0;
+        int stim = comestible != null ? comestible.stim : 0;
+        host.ApplyMetabolites(fun, healthy, stim);
+
+        if (body != null && !string.IsNullOrEmpty(action.effect_id))
+        {
+            float seconds = action.duration > 0 ? action.duration : -1f;
+            body.AddEffect(BodyPartIds.Chest, new BodyPartEffect(action.effect_id, 1, seconds));
+        }
+    }
+
+    static void ApplyComestibleSideEffects(PlayerNeedsHost host, ItemData item)
+    {
+        ComestibleDetailData comestible = item.comestible;
+        if (comestible == null)
+            return;
+
+        ConsumeKind? kind = Classify(item);
+        bool drugAlreadyApplied = kind == ConsumeKind.Use
+            && item.use_action != null
+            && IsType(item.use_action.type, UseActionConsumeDrug);
+        if (!drugAlreadyApplied)
+        {
+            if (comestible.fun != 0 || comestible.healthy != 0 || comestible.stim != 0)
+                host.ApplyMetabolites(comestible.fun, comestible.healthy, comestible.stim);
+        }
+
+        host.ApplyAddiction(comestible.addiction_type, comestible.addiction_potential);
+
+        Dictionary<string, int> vitamins = comestible.vitamins;
+        if (vitamins == null || vitamins.Count == 0)
+            return;
+
+        foreach (KeyValuePair<string, int> pair in vitamins)
+            host.AddVitamin(pair.Key, pair.Value);
+    }
+
+    static bool OwnsForConsume(ItemStack stack, InventoryContainer container)
+    {
+        if (container != null && container.ContainsStackReference(stack))
+            return true;
+
+        CharacterGearService gear = PlayerGearHost.Active?.Service;
+        return gear != null && gear.Wield.Contains(stack);
+    }
+
+    static int TryTakeOne(ItemStack stack, InventoryContainer container)
+    {
+        if (container != null && container.ContainsStackReference(stack))
+            return container.TryTakeFromStack(stack, 1);
+
+        CharacterGearService gear = PlayerGearHost.Active?.Service;
+        return gear != null ? gear.TryTakeFromWielded(stack, 1) : 0;
+    }
+
+    static bool HasRawWithoutCooked(ItemData item)
+    {
+        return HasFlag(item, FlagRaw) && !HasFlag(item, FlagCooked);
+    }
+
+    static bool HasFlag(ItemData item, string flag)
+    {
+        if (item?.flags == null || string.IsNullOrEmpty(flag))
+            return false;
+
+        for (int i = 0; i < item.flags.Count; i++)
+        {
+            string value = item.flags[i];
+            if (!string.IsNullOrEmpty(value) && value.Equals(flag, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
+    static bool IsType(string value, string expected)
+    {
+        return !string.IsNullOrEmpty(value)
+            && value.Equals(expected, StringComparison.OrdinalIgnoreCase);
+    }
+}

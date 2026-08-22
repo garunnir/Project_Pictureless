@@ -9,7 +9,8 @@ namespace Garunnir.Runtime.Gameplay.Data
 {
     public sealed class DefaultPlayerVitals : IPlayerVitals
     {
-        public const int DefaultHungerMax = 100;
+        /// <summary>Matches PlayerNeedsSettings.DefaultMaxStoredKcal (Data asm cannot ref DistScript).</summary>
+        public const int DefaultHungerMax = 17500;
         public const int DefaultThirstMax = 100;
         public const int DefaultStaminaMax = 100;
 
@@ -47,6 +48,21 @@ namespace Garunnir.Runtime.Gameplay.Data
             int max = _max[vitalKey];
             int clamped = value < 0 ? 0 : (value > max ? max : value);
             _current[vitalKey] = clamped;
+            Changed?.Invoke(vitalKey);
+        }
+
+        public void SetMax(string vitalKey, int max)
+        {
+            if (string.IsNullOrEmpty(vitalKey) || !_max.ContainsKey(vitalKey))
+                return;
+
+            if (max < 0)
+                max = 0;
+
+            _max[vitalKey] = max;
+            int current = _current[vitalKey];
+            if (current > max)
+                _current[vitalKey] = max;
             Changed?.Invoke(vitalKey);
         }
 

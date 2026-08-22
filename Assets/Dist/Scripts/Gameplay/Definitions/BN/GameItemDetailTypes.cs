@@ -88,6 +88,19 @@ namespace Garunnir.Runtime.Gameplay.Data
         public int healthy;
         public int stim;
         public string addiction_type;
+        public int addiction_potential;
+        /// <summary>BN vitamins id→amount. Empty if none.</summary>
+        public Dictionary<string, int> vitamins;
+    }
+
+    /// <summary>Consume-only BN use_action (heal / consume_drug). Flattened scalars.</summary>
+    [Serializable]
+    public sealed class UseActionData
+    {
+        public string type;
+        public int heal_amount;
+        public string effect_id;
+        public int duration;
     }
 
     [Serializable]

@@ -128,7 +128,8 @@ public sealed class SpawnProjectileHandler : IActionHandler
                 practice: false,
                 impactOverride: _impacts[i],
                 rangedEffectiveDispersion: effective,
-                impulseJinOverride: jin);
+                impulseJinOverride: jin,
+                impulseContinues: i < bodyHitCount - 1);
             jin = CombatImpulse.ExitJin(jin, p);
             if (jin < CombatImpulse.MinContinueJin)
                 break;

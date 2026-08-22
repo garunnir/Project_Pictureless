@@ -118,13 +118,11 @@ public sealed class CharacterHitReact : MonoBehaviour
         if (!shocked)
             PlayFlinch();
 
-        float p = CombatImpulse.Penetration01(outcome.Damage, outcome.RawDamage);
-        float jHit = CombatImpulse.Transferred(outcome.ImpulseJin, p);
         float mass = CombatImpulse.InertialMassKg(
             _appearance,
             _gear != null ? _gear.Wear : null,
             _gear != null ? _gear.Wield : null);
-        float dv = CombatImpulse.DeltaV(jHit, mass);
+        float dv = CombatImpulse.VictimDeltaV(outcome.ImpulseJin, mass);
         if (dv > 0.001f && _motor != null)
         {
             Vector3 dir = outcome.Direction;

@@ -9,7 +9,8 @@ using UnityEngine;
 /// <summary>
 /// 근접 J = m_weapon × StrengthSwing(str) / T.
 /// 원거리 J_shot = RecoilUnits × RecoilToImpulse.
-/// Δv = J / m. 문서: docs/locomotion/LOCOMOTION.md 상수 표.
+/// J_hit = 이 몸에 남는 J (다음 몸으로 안 가면 J_in 전부).
+/// 피해자 Δv = (J_hit / m) × VictimDeltaVScale. 문서: docs/locomotion/LOCOMOTION.md.
 /// </summary>
 public static class CombatImpulse
 {
@@ -36,6 +37,9 @@ public static class CombatImpulse
 
     /// <summary>넉백 속도 감쇠 / 초.</summary>
     public const float KnockbackDecayPerSecond = 8f;
+
+    /// <summary>피해자 J/m → 모터 Δv. 사수 분산 킥에는 안 곱함.</summary>
+    public const float VictimDeltaVScale = 16f;
 
     /// <summary>사수 Δv → 기존 분산 킥 단위. remaining += Δv × 이 값.</summary>
     public const float KickToDispersionPerDeltaV = 1400f;
@@ -123,7 +127,7 @@ public static class CombatImpulse
         return Mathf.Max(0, ammo.ammo.pierce);
     }
 
-    /// <summary>다음 타깃으로 넘어가는 J. p=관통 비율.</summary>
+    /// <summary>다음 타깃으로 넘어가는 J. 오버펜 중에만 p 사용.</summary>
     public static float ExitJin(float jin, float penetration01) =>
         jin * Mathf.Clamp01(penetration01);
 
@@ -132,6 +136,7 @@ public static class CombatImpulse
         return CombatMath.RecoilUnits(gun, ammo) * RecoilToImpulse;
     }
 
+    /// <summary>오버펜 분할용. 밀침 직접 배율 아님.</summary>
     public static float Penetration01(int hp, int raw)
     {
         if (raw <= 0)
@@ -142,11 +147,24 @@ public static class CombatImpulse
     public static float Transferred(float jin, float penetration01) =>
         jin * (1f - Mathf.Clamp01(penetration01));
 
+    /// <summary>이 몸에 남는 J. 다음 몸으로 안 나가면 J_in 전부.</summary>
+    public static float HitJin(float jinIn, bool continues, float penetration01)
+    {
+        if (jinIn <= 0f)
+            return 0f;
+        if (!continues)
+            return jinIn;
+        return Transferred(jinIn, penetration01);
+    }
+
     public static float DeltaV(float j, float massKg)
     {
         float m = Mathf.Max(MinInertialMassKg, massKg);
         return j / m;
     }
+
+    public static float VictimDeltaV(float jHit, float massKg) =>
+        DeltaV(jHit, massKg) * VictimDeltaVScale;
 
     public static float InertialMassKg(
         CharacterAppearanceHost appearance,

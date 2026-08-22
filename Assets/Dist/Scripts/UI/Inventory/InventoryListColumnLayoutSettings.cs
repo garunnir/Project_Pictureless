@@ -51,6 +51,11 @@ public sealed class InventoryListColumnLayoutSettings : ScriptableObject
     public float VolumeValueWidth => _volumeValueWidth;
     public float VolumeUnitWidth => _volumeUnitWidth;
     public float NameMinWidth => _nameMinWidth;
+    public const int ColumnCount = 8;
+    public float MinRowWidth =>
+        _iconSize + _categoryWidth + _nameMinWidth + _countWidth
+        + _weightValueWidth + _weightUnitWidth + _volumeValueWidth + _volumeUnitWidth
+        + _spacing * (ColumnCount - 1) + _rowPaddingH * 2;
     public int RowPaddingH => _rowPaddingH;
     public int RowPaddingV => _rowPaddingV;
     public float Spacing => _spacing;

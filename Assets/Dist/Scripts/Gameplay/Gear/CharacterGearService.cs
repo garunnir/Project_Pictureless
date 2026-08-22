@@ -235,6 +235,27 @@ public sealed class CharacterGearService
         });
     }
 
+    /// <summary>손에서 count만큼 제거. 잔량이 0이면 deposit 없이 Unwield.</summary>
+    public int TryTakeFromWielded(ItemStack stack, int count)
+    {
+        if (stack == null || count <= 0 || !_wield.Contains(stack))
+            return 0;
+
+        int taken = count < stack.Count ? count : stack.Count;
+        if (taken >= stack.Count)
+        {
+            if (!_wield.TryUnwield(stack, out _))
+                return 0;
+        }
+        else
+        {
+            stack.SetCount(stack.Count - taken);
+        }
+
+        NotifyPrimaryDirty();
+        return taken;
+    }
+
     public bool TryBeginUnwield(ItemStack stack, bool toFloor)
     {
         return RunOrEnqueue(CharacterActionKind.Gear, () => TryBeginUnwieldCore(stack, toFloor));

@@ -38,6 +38,9 @@ public static class ItemMergePolicy
         if (existingItem == null)
             return false;
 
+        if (have.IsRotten != incoming.IsRotten)
+            return false;
+
         if (AlwaysMerges(existingItem))
             return SameKind(have, incoming);
 

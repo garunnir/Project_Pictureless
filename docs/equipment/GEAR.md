@@ -40,6 +40,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | `WeaponActionRows` | Presentation 행 → available / default / instance select |
 | `PrimaryWieldResolver` | DPS primary; dual secondary score |
 | `ToolUseWieldSession` | Snapshot → temp wield → restore (M0 API; consumers later) |
+| `CharacterHandWork` | 손 비움(Unwield→body) → 대상 Wield → act. ESC=`CancelAll`, 완료 단계 유지(원복 아님). 섭취 등 |
 | `GearActionDuration` | Wear/TakeOff/Wield/Unwield seconds (proxy) |
 | `InventoryTransferDuration` | MoveStacks / bag draw seconds — `draw_moves`→초(`CombatMath.MovesPerSecond`) **+** weight/volume/nest handling |
 | `InventoryTimedMoveHost` | Per-stack sequential transfer (no summed delay); `ActiveStacks` = current only |
@@ -120,6 +121,7 @@ Checklist: `.claude/checklists/migration-parity.md`.
 
 - All Wear/TakeOff/Wield/Unwield are timed; wield/unwield short
 - Bag → gear: `GearActionDuration + InventoryTransferDuration`
+- Hand work (eat/drink/use): `CharacterHandWork` — stow other wielded → draw/wield target → `ConsumeDuration` (Eat/Drink 250 moves). ESC stops at current step (no rollback)
 - Inventory MoveStacks / quick transfer / outside drop: `InventoryTransferDuration` (**SSOT**, same host)
 - Transfer duration: `access`(source `draw_moves`→초 via `CombatMath.MovesPerSecond`, 0 if unset) **+** `handling`(base + weight + volume + nest). No storage-ml hint. **Multi-stack = sequential** (one `SecondsForStackFrom` + move each; no summed timer). Bag = item: `ItemStack.TotalWeight` includes Nested contents (volume = shell only).
 - **이름 겹침 바**: 조회 SSOT=`ItemTimedNameProgress` (InventoryTimedMove → Gear Timed → 내구도). 소비자: 인벤 행·사이드 중첩가방 탭·Worn·Wield. Name 셀 stretch fill이 글자 **뒤**. 패널 Progress Slider 없음.

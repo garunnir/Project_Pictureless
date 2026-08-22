@@ -70,7 +70,10 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             resizeHandles.Initialize(WindowRect, rootCanvas, minSize, maxSize);
 
         if (WindowRect != null && rootCanvas != null)
-            WindowRect.sizeDelta = InventoryWindowLayout.ClampSize(WindowRect.sizeDelta, rootCanvas);
+            WindowRect.sizeDelta = InventoryWindowLayout.ClampSize(
+                WindowRect.sizeDelta,
+                rootCanvas,
+                minSize.x);
 
         if (!TryGetComponent(out UIOverlayWindow _))
             Debug.LogError("[UIInventoryListWindow] UIOverlayWindow missing on window prefab root.", this);
@@ -81,8 +84,35 @@ public sealed class UIInventoryListWindow : MonoBehaviour
     public void ConfigureWindowDrag(Canvas rootCanvas) =>
         ConfigureWindowChrome(
             rootCanvas,
-            new Vector2(InventoryWindowLayout.MinWidth, InventoryWindowLayout.MinHeight),
+            ResolveMinSize(),
             InventoryWindowLayout.GetMaxSize(rootCanvas));
+
+    public Vector2 ResolveMinSize()
+    {
+        float listLeft = _listArea != null ? Mathf.Max(0f, _listArea.offsetMin.x) : 0f;
+        float listRight = ResolveListRightInset(showSidebar: true);
+        float scrollbar = ResolveVerticalScrollbarWidth();
+        float rowMin = InventoryListColumnLayout.MeasureMinRowWidth(
+            _listView != null ? _listView.RowPrefab : null);
+        return new Vector2(
+            InventoryWindowLayout.ComputeMinWidth(listLeft, listRight, scrollbar, rowMin),
+            InventoryWindowLayout.MinHeight);
+    }
+
+    float ResolveVerticalScrollbarWidth()
+    {
+        ScrollRect scroll = _listView != null
+            ? _listView.GetComponent<ScrollRect>()
+            : null;
+        if (scroll == null && _listArea != null)
+            _listArea.TryGetComponent(out scroll);
+
+        if (scroll == null || scroll.verticalScrollbar == null)
+            return 0f;
+
+        RectTransform scrollbarRect = scroll.verticalScrollbar.transform as RectTransform;
+        return scrollbarRect != null ? Mathf.Max(0f, scrollbarRect.sizeDelta.x) : 0f;
+    }
 
     /// <summary>
     /// 드래그 호스트·뷰포트 DnD 배선만 담당. 리스트/사이드바 바인딩은 Initialize·Refresh*가 SSOT.

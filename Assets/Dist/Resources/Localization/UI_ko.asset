@@ -27,6 +27,14 @@ MonoBehaviour:
     text: "\uBD84\uD574 \uBD88\uAC00"
   - key: ItemContextMenu.UnknownResult
     text: '?'
+  - key: ItemContextMenu.Eat
+    text: "\uBA39\uAE30"
+  - key: ItemContextMenu.Drink
+    text: "\uB9C8\uC2DC\uAE30"
+  - key: ItemContextMenu.Use
+    text: "\uC0AC\uC6A9"
+  - key: ItemContextMenu.ConsumeBlocked
+    text: "\uC0AC\uC6A9 \uBD88\uAC00"
   - key: ItemContextMenu.LoadAmmo
     text: "\uC0BD\uD0C4"
   - key: ItemContextMenu.AttachMag
@@ -353,3 +361,65 @@ MonoBehaviour:
     text: "\uBA54\uC2DC\uC9C0 \uB85C\uADF8"
   - key: Settings.Hud.Summary
     text: "\uC0C1\uD0DC \uC694\uC57D"
+  - key: PlayerStatus.VitalProse.Hunger.Engorged
+    text: "\uBC30\uAC00 \uD130\uC9C8 \uB4EF\uD558\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Sated
+    text: "\uBC30\uAC00 \uB4E0\uB4EC\uD558\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Hungry
+    text: "\uBC30\uAC00 \uACE0\uD504\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.VeryHungry
+    text: "\uB9E4\uC6B0 \uBC30\uAC00 \uACE0\uD504\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Famished
+    text: "\uD5C8\uAE30\uC5D0 \uC2DC\uB2EC\uB9B0\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Starving
+    text: "\uAD70\uC8FC\uB9AC\uACE0 \uC788\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.Quenched
+    text: "\uBAA9\uC774 \uCD95\uC5EC \uC788\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.NotThirsty
+    text: "\uBAA9\uC774 \uB9C8\uB974\uC9C0 \uC54A\uC558\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.Thirsty
+    text: "\uBAA9\uC774 \uB9C8\uB974\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.VeryThirsty
+    text: "\uBAA9\uC774 \uB9E4\uC6B0 \uB9C8\uB974\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.Parched
+    text: "\uBAA9\uC774 \uD0C0\uB4E4\uC5B4\uAC04\uB2E4"
+  - key: PlayerStatus.Effect.bloated
+    text: "\uD33D\uB9CC"
+  - key: PlayerStatus.Mood.Full
+    text: "\uBC30\uAC00 \uBD80\uB974\uB2E4"
+  - key: PlayerStatus.Mood.Fed
+    text: "\uBC30\uAC00 \uB4E0\uB4EC\uD558\uB2E4"
+  - key: PlayerStatus.Mood.Hungry
+    text: "\uBC30\uAC00 \uACE0\uD504\uB2E4"
+  - key: PlayerStatus.Mood.VeryHungry
+    text: "\uB9E4\uC6B0 \uBC30\uAC00 \uACE0\uD504\uB2E4"
+  - key: PlayerStatus.Mood.ThirstQuenched
+    text: "\uBAA9\uC774 \uCD95\uC5EC \uC788\uB2E4"
+  - key: PlayerStatus.Mood.Thirsty
+    text: "\uBAA9\uC774 \uB9C8\uB974\uB2E4"
+  - key: PlayerStatus.Mood.VeryThirsty
+    text: "\uBAA9\uC774 \uB9E4\uC6B0 \uB9C8\uB974\uB2E4"
+  - key: PlayerStatus.Mood.GoodMood
+    text: "\uAE30\uBD84\uC774 \uC88B\uB2E4"
+  - key: PlayerStatus.Mood.Sad
+    text: "\uAE30\uBD84\uC774 \uCC98\uC9C4\uB2E4"
+  - key: PlayerStatus.Mood.Sick
+    text: "\uBAB8\uC774 \uC544\uD504\uB2E4"
+  - key: PlayerStatus.Mood.Adrenaline
+    text: "\uC544\uB4DC\uB808\uB0A0\uB9B0"
+  - key: msg.status.needs_vomit
+    text: "\uB108\uBB34 \uB9CE\uC774 \uBA39\uC5B4 \uD1A0\uD588\uB2E4."
+  - key: msg.status.needs_starve
+    text: "\uAD70\uC8FC\uB9BC\uC73C\uB85C \uC4F0\uB7EC\uC84C\uB2E4."
+  - key: msg.status.needs_dehydrate
+    text: "\uAC08\uC99D\uC73C\uB85C \uC4F0\uB7EC\uC84C\uB2E4."
+  - key: msg.status.needs_hunger_70
+    text: "\uBC30\uAC00 \uACE0\uD504\uB2E4."
+  - key: msg.status.needs_hunger_50
+    text: "\uB9CE\uC774 \uBC30\uAC00 \uACE0\uD504\uB2E4."
+  - key: msg.status.needs_hunger_25
+    text: "\uB9E4\uC6B0 \uBC30\uAC00 \uACE0\uD504\uB2E4."
+  - key: msg.status.needs_hunger_10
+    text: "\uAD70\uC8FC\uB9AC\uACE0 \uC788\uB2E4."
+  - key: msg.status.needs_thirst_danger
+    text: "\uBAA9\uC774 \uD0C0\uB4E4\uC5B4\uAC04\uB2E4."

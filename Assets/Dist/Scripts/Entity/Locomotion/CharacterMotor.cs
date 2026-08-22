@@ -46,6 +46,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     public bool IsStaggered => _staggerRemaining > 0f;
     public bool IsMoveLocked => _moveLocked;
     public bool IsMoveInhibited => _moveLocked || _staggerRemaining > 0f;
+    public Vector3 KnockbackVelocity => _knockbackVelocity;
 
     public bool IsPossessed => _possessed;
     public bool IsStuck => _locomotion != null && _locomotion.IsStuck;

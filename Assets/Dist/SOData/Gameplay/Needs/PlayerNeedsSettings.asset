@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0a34648a402848448bde1b56776d7aa, type: 3}
+  m_Name: PlayerNeedsSettings
+  m_EditorClassIdentifier: DistScript::PlayerNeedsSettings
+  _dailyKcalBurn: 2500
+  _maxStoredKcal: 17500
+  _stomachCapacityMl: 1500
+  _foodDigestMlPerMinute: 8
+  _waterDigestMlPerMinute: 50
+  _digestKcalPerMinute: 7
+  _dailyThirstDrain: 80
+  _activityMulIdle: 1
+  _activityMulWalk: 1.2
+  _activityMulBusy: 1.6
+  _activityMulSprint: 2
+  _walkActivitySpeedMin: 0.1
+  _moodOverateRatio: 0.9
+  _moodFedRatio: 0.25
+  _moodHungryStoredRatio: 0.45
+  _moodVeryHungryStoredRatio: 0.2
+  _moodStomachEmptyRatio: 0.05
+  _moodThirstQuenchedRatio: 0.75
+  _moodThirstyRatio: 0.45
+  _moodVeryThirstyRatio: 0.2
+  _proseFullRatio: 0.75
+  _proseOkRatio: 0.45
+  _proseLowRatio: 0.2
+  _bloatWorldMinutes: 5
+  _overeatHit: 1
+  _vomitStomachFraction: 0.5
+  _rotFunPenalty: -10
+  _rotHealthyPenalty: -3
+  _warningIntervalWorldHours: 6
+  _warningKcalPct70: 70
+  _warningKcalPct50: 50
+  _warningKcalPct25: 25
+  _warningKcalPct10: 10

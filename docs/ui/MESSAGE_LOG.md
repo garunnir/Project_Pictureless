@@ -37,6 +37,7 @@ Elona / Cataclysm DDA식 **상시·비차단** 텍스트 피드. 플레이어에
 CharacterAttacker.AnyAttackResolved ──┐
 GameplayData.Defeat.Changed ──────────┼─► MessageLogPlayerCombatSink
 PlayerMovement.AnyImmobileMoveAttempted ► MessageLogPlayerEncumbranceSink
+PlayerNeedsHost.AnyNeedsVomit/Fatal/Warning ► MessageLogNeedsSink
                                       ▼
                               GameplayMessageLog (ring buffer)
                                       │
@@ -69,6 +70,9 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 | 피격 | `Target.Body == GameplayData.Body` 이고 hit | Combat / Normal |
 | 패배 | `Defeat.Changed`에서 패배 **진입** | Status / Critical |
 | 과적 Extreme 이동 시도 | `PlayerEncumbranceHost.Stage == Extreme` 이고 이동 입력 | Status / Normal |
+| 과식 구토 | `PlayerNeedsHost` 팽만 중 재섭취 | Status / Normal |
+| 아사/탈수 | stored kcal≤0 또는 thirst≤0 (1회) | Status / Critical |
+| 허기/갈증 경고 | 매 6 월드시간, kcal% below 70/50/25/10 또는 갈증 danger | Status / Normal |
 
 **남기지 않음**: miss, 플레이어→적 공격, NPC↔NPC, 출혈 틱, 바이탈 소량, **Light~Heavy 과적**(상태 HUD 아이콘만).
 
@@ -85,6 +89,14 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 | `msg.status.defeat_body` | `치명상을 입고 쓰러졌다.` |
 | `msg.status.defeat_collapse` | `정신이 무너져 쓰러졌다.` |
 | `msg.status.encumbrance_immobile` | `너무 무거워서 움직일 수 없다.` |
+| `msg.status.needs_vomit` | `너무 많이 먹어 토했다.` |
+| `msg.status.needs_starve` | `굶주림으로 쓰러졌다.` |
+| `msg.status.needs_dehydrate` | `갈증으로 쓰러졌다.` |
+| `msg.status.needs_hunger_70` | `배가 고프다.` |
+| `msg.status.needs_hunger_50` | `많이 배가 고프다.` |
+| `msg.status.needs_hunger_25` | `매우 배가 고프다.` |
+| `msg.status.needs_hunger_10` | `굶주리고 있다.` |
+| `msg.status.needs_thirst_danger` | `목이 타들어간다.` |
 | `MessageLog.Title` | `메시지` |
 
 부위 표시: 기존 `PlayerStatus.Part.{id}`.
@@ -99,7 +111,7 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 2. `Dist/MCP/MessageLog/Setup Message Log HUD In Open Scene`
 3. `Dist/MCP/WindowChrome/Patch Fold Close Buttons` (헤더·접기·끄기. 기존 프리팹에 헤더가 없을 때)
    - Canvas: `MessageLogUIBridge`
-   - `System/Msg`: `MessageLogPlayerCombatSink`, `MessageLogPlayerEncumbranceSink`, `UIMessageLogController`
+   - `System/Msg`: `MessageLogPlayerCombatSink`, `MessageLogPlayerEncumbranceSink`, `MessageLogNeedsSink`, `UIMessageLogController`
    - `Layer_HUD`: `Hud_MessageLog` 인스턴스
 
 레이아웃 Rect·폰트 크기는 프리팹 SSOT (`MessageLogUIFactory` 초기값 / 손수 조정). 런타임 덮어쓰기 금지.

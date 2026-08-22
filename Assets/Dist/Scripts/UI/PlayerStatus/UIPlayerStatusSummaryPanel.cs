@@ -33,6 +33,7 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
     PlayerStatusViewModel _viewModel;
     Canvas _rootCanvas;
     CharacterWindowTab _tab = CharacterWindowTab.Status;
+    UIPlayerStatusMoodIconSlot _hoveredSlot;
 
     public CharacterWindowTab ActiveTab => _tab;
     public event Action<CharacterWindowTab> BodyTabChanged;
@@ -63,7 +64,11 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
             _bodyTabStrip.Initialize(OnBodyTabStripSelected);
             _bodyTabStrip.SetSelectedTab(_tab);
         }
+
+        BringSlotRootToFront();
     }
+
+    void OnDisable() => HideTooltip();
 
     public void SetBodyTab(CharacterWindowTab tab)
     {
@@ -134,7 +139,6 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
             return;
 
         IReadOnlyList<MoodEntry> entries = _viewModel.MoodEntries;
-        HideTooltip();
 
         EnsureSlots();
 
@@ -166,6 +170,7 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
         }
 
         UpdateIntensitySnapshot(entries);
+        SyncHoveredTooltip();
     }
 
     bool ShouldAttentionShake(MoodEntry entry)
@@ -191,15 +196,66 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
         if (_slotRoot == null || _slotPrefab == null)
             return;
 
+        if (_slotPrefab.gameObject.activeSelf)
+            _slotPrefab.gameObject.SetActive(false);
+
         while (_slots.Count < MaxSlots)
         {
             UIPlayerStatusMoodIconSlot slot = Instantiate(_slotPrefab, _slotRoot);
             slot.Initialize(this);
             _slots.Add(slot);
         }
+
+        BringSlotRootToFront();
     }
 
-    public void ShowTooltip(string text, RectTransform anchor)
+    void BringSlotRootToFront()
+    {
+        if (_slotRoot != null)
+            _slotRoot.SetAsLastSibling();
+    }
+
+    public void ShowTooltip(UIPlayerStatusMoodIconSlot slot)
+    {
+        if (slot == null)
+            return;
+
+        _hoveredSlot = slot;
+        PresentTooltip(slot.TooltipText, slot.transform as RectTransform);
+    }
+
+    public void HideTooltip(UIPlayerStatusMoodIconSlot slot)
+    {
+        if (slot != null && _hoveredSlot != slot)
+            return;
+
+        HideTooltip();
+    }
+
+    public void HideTooltip()
+    {
+        _hoveredSlot = null;
+        if (_tooltipShell != null)
+            _tooltipShell.Hide();
+        else if (_tooltipRoot != null)
+            _tooltipRoot.gameObject.SetActive(false);
+    }
+
+    void SyncHoveredTooltip()
+    {
+        if (_hoveredSlot == null)
+            return;
+
+        if (!_hoveredSlot.isActiveAndEnabled || string.IsNullOrEmpty(_hoveredSlot.TooltipText))
+        {
+            HideTooltip();
+            return;
+        }
+
+        PresentTooltip(_hoveredSlot.TooltipText, _hoveredSlot.transform as RectTransform);
+    }
+
+    void PresentTooltip(string text, RectTransform anchor)
     {
         if (_tooltipRoot == null || _tooltipText == null || string.IsNullOrEmpty(text))
             return;
@@ -213,14 +269,6 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
         UIHoverCanvasLayer.EnsureParent(_tooltipRoot, _rootCanvas);
         UIHoverCanvasLayer.BringToFront(_tooltipRoot);
         _tooltipShell.ShowNearAnchor(anchor, MoodHoverStyle);
-    }
-
-    public void HideTooltip()
-    {
-        if (_tooltipShell != null)
-            _tooltipShell.Hide();
-        else if (_tooltipRoot != null)
-            _tooltipRoot.gameObject.SetActive(false);
     }
 
     void EnsureTooltipHoverLayout()

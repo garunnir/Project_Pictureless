@@ -73,6 +73,19 @@ API·채널 소비 경로만 준비. 키 바인딩·연출 없음.
 
 **도메인:** [`equipment/GEAR.md`](equipment/GEAR.md) · [`equipment/BN_BAKE.md`](equipment/BN_BAKE.md) · [`locomotion/LOCOMOTION.md`](locomotion/LOCOMOTION.md)
 
+### 충전 공격 (후순위)
+
+조준+좌클릭은 즉시 시전만. 홀드 충전·차지 클립/VFX 없음. **우선 낮음 — Auto 홀드 연사와 입력이 겹침.**
+
+**지침**
+- 새 Charge Leaf / Catalog Charge 행 / 컨트롤러 Charge 상태·`LibraryKeys` 금지 (`arm-anim-layers.mdc`).
+- 입력은 `performed` 시전을 나누지 말고 `started`/`canceled` 프레스 래치. 충전 off=눌림 즉시, on=릴리즈. 탭=`Charge01=0` 패리티.
+- Entry `allowCharge` + 선택 `chargeClips`/`chargeVfx`. 클립 있으면 Aim thin 덮고 Aim `Play(0)`, 논루프면 `normalizedTime` 끝 고정. VFX는 Entry → `WeaponCombatFallbacks` 기본 루프, Catalog 동사 행 폴백 없음.
+- `Charge01`은 `ActionHandlerContext`/`PendingAttack`에만. `offenseFactor`와 섞지 않음. HP/J 배율은 `WeaponAttack` SSOT.
+- `allowCharge` Auto는 릴리즈 1볼리. 위 Auto 홀드 연사와 동시에 켜지 않는다.
+
+**도메인:** [`equipment/GEAR.md`](equipment/GEAR.md) · [`locomotion/LOCOMOTION.md`](locomotion/LOCOMOTION.md)
+
 ### 건모드 합산
 
 원거리 쿨 게이트 없음. `effective`(조임+반동 잔여+dispersion)가 탄착·부위 유지. 모드별 합산 없음.

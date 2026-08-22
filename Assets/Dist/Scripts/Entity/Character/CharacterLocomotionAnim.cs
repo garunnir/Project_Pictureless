@@ -898,9 +898,11 @@ public class CharacterLocomotionAnim : MonoBehaviour
         WeaponAction action,
         bool isAiming)
     {
+        if (IsInAttackOverlay(hand) || HasQueuedAttack(hand) || HasAttackOverlayLatch(hand))
+            return 1f;
         if (!armed)
             return 0f;
-        if (isAiming || IsInAttackOverlay(hand) || HasQueuedAttack(hand) || HasAttackOverlayLatch(hand))
+        if (isAiming)
             return 1f;
         if (presentation != null && !presentation.UsesHold(action))
             return 0f;

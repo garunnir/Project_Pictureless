@@ -45,6 +45,7 @@ public sealed class UIItemListView : MonoBehaviour
     bool _sortAscending = true;
 
     public InventorySession Session => _session;
+    public UIItemListRow RowPrefab => _rowPrefab;
     public InventoryListSelection Selection => _selection;
     public int ActiveRowCount => _activeRows.Count;
     public int BoundStackCount => _orderedStacks.Count;

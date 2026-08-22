@@ -7,7 +7,13 @@
       "category": "food",
       "weight_g": 100,
       "volume_ml": 100,
-      "max_stack": 10
+      "max_stack": 10,
+      "comestible": {
+        "calories": 80,
+        "quench": 0,
+        "fun": 0,
+        "spoils_in_minutes": 1440
+      }
     },
     {
       "id": "weapon_killing_sword",

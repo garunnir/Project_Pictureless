@@ -503,7 +503,13 @@ static class InventoryUIHierarchyBuilder
         SetFloat(resizeHandles, "_handleWidth", spec.EdgeThickness);
         SetReference(resizeHandles, "_window", rootRect);
         SetVector2(resizeHandles, "_minSize",
-            new Vector2(InventoryWindowLayout.MinWidth, InventoryWindowLayout.MinHeight));
+            new Vector2(
+                InventoryWindowLayout.ComputeMinWidth(
+                    spec.ChromeMargin,
+                    spec.SidebarWidth,
+                    spec.ScrollbarWidth,
+                    ResolveRowMinWidth()),
+                InventoryWindowLayout.MinHeight));
         SetVector2(resizeHandles, "_maxSize",
             new Vector2(UIWindowResizeHandles.DefaultMaxSize, UIWindowResizeHandles.DefaultMaxSize));
         UIItemListView listView = listArea.AddComponent<UIItemListView>();
@@ -600,7 +606,13 @@ static class InventoryUIHierarchyBuilder
             windowRoot,
             spec.EdgeThickness,
             proximityReveal: false,
-            new Vector2(InventoryWindowLayout.MinWidth, InventoryWindowLayout.MinHeight),
+            new Vector2(
+                InventoryWindowLayout.ComputeMinWidth(
+                    spec.ChromeMargin,
+                    spec.SidebarWidth,
+                    spec.ScrollbarWidth,
+                    ResolveRowMinWidth()),
+                InventoryWindowLayout.MinHeight),
             new Vector2(UIWindowResizeHandles.DefaultMaxSize, UIWindowResizeHandles.DefaultMaxSize));
 
         UIWindowDragHandler drag = windowRoot.GetComponentInChildren<UIWindowDragHandler>(true);
@@ -1116,6 +1128,13 @@ static class InventoryUIHierarchyBuilder
         rect.offsetMax = new Vector2(-right, -top);
     }
 
+
+    static float ResolveRowMinWidth()
+    {
+        UIItemListRow row = AssetDatabase.LoadAssetAtPath<UIItemListRow>(
+            PrefabFolder + "/Grp_ItemListRow.prefab");
+        return InventoryListColumnLayout.MeasureMinRowWidth(row);
+    }
 
     static void SetFloat(Object target, string propertyName, float value)
     {

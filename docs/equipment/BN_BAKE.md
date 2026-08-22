@@ -31,7 +31,7 @@ Writes `BNData/tileset/item_sprites.json` + referenced PNG. Runtime: `ItemVisual
 
 ## Baked ( Dist typed fields )
 
-Item common: `id`, `name`(singular), `type`, `category`, `subcategory`, `description`, `weight`→`weight_g`, `volume`→`volume_ml`, `stack_size`/`count`→`max_stack`, `material`→`materials`, `flags`, `qualities`, `comestible_type`, `has_durability`, `repairs_like`, `repair_difficulty`, `bashing`, `cutting`, `to_hit`, `weapon_category`, `techniques`.
+Item common: `id`, `name`(singular), `type`, `category`, `subcategory`, `description`, `weight`→`weight_g`, `volume`→`volume_ml`, `stack_size`/`count`→`max_stack`, `material`→`materials`, `flags`, `qualities`, `comestible_type`, `has_durability`, `repairs_like`, `repair_difficulty`, `bashing`, `cutting`, `to_hit`, `weapon_category`, `techniques`, consume `use_action` (`heal` / `consume_drug` only: `type`, `heal_amount`, `effect_id`, `duration`; flatten objects).
 
 | Block | Fields |
 |-------|--------|
@@ -40,14 +40,14 @@ Item common: `id`, `name`(singular), `type`, `category`, `subcategory`, `descrip
 | ammo | ammo_type, damage (flatten amount), pierce (AP), damage_type, range, dispersion, recoil, count, shot_damage, projectile_count, shot_spread, effects, casing, loudness |
 | magazine | ammo_type, capacity, default_ammo, reliability, reload_time |
 | tool | max/initial charges, charges_per_use, turns_per_charge, ammo, revert_to |
-| comestible | calories, quench, fun, spoils_in_minutes, charges, healthy, stim, addiction_type |
+| comestible | calories, quench, fun, spoils_in_minutes, charges, healthy, stim, addiction_type, **addiction_potential**, **vitamins** `{id: amount}` |
 | book | intelligence, fun, chapters, read_time_minutes; item `book_skill` / required / max level |
 | container | seals, watertight, preserves; root `containers[]` volume (weight ≈ ml) |
 | material | bash/cut/bullet/acid/fire/chip resist, density |
 | quality / skill | id, name |
 | recipe | result, skills, difficulty, time_minutes, tools/components (`using` inlined), book_learn, byproducts, proficiencies, activity_level, morale, hot_result, dehydrating. Skips obsolete / never_learn / CC_BUILDING / construction_blueprint |
 
-**Silent-zero rule:** if a BN value is an object (`damage`, `ranged_damage`, `shot_damage`), flatten — never `_int_or_zero` on the object. Same trap for future `damage_modifier` (gunmod). Dist combat reads `ammo.damage` + `gun.ranged_damage` and `ammo.damage_type` when a round is chambered (`ItemInstance.ChamberAmmoId`). `GameData/items.json` must not reuse BN item ids (`9mm`, …) or it overlays RefData.
+**Silent-zero rule:** if a BN value is an object (`damage`, `ranged_damage`, `shot_damage`, heal `limb_power` / consume_drug `effects`), flatten — never `_int_or_zero` on the object. Same trap for future `damage_modifier` (gunmod). Dist combat reads `ammo.damage` + `gun.ranged_damage` and `ammo.damage_type` when a round is chambered (`ItemInstance.ChamberAmmoId`). `GameData/items.json` must not reuse BN item ids (`9mm`, …) or it overlays RefData.
 
 ## Won't bake (decision)
 
@@ -82,7 +82,7 @@ Parked is everything in the next section. Weather JSON / visor FOV stay Parked (
 |----|--------|
 | `min_str` / `min_dex` / `min_int` / `min_per` | Lift currently uses weight formula only |
 | `min_skills` | Skill gate |
-| `use_action` / `drop_action` / `tick_action` / `countdown_*` | Tool-action runner (GEAR milestone) |
+| non-consume `use_action` / `drop_action` / `tick_action` / `countdown_*` | Tool-action runner (GEAR milestone). Consume `heal` / `consume_drug` is **Baked** |
 | `explosion` / `explode_in_fire` / `emits` | Explosion / field |
 | `seed_data` / `brewable` / `milling` / `fuel` | Farming / brewing / fuel |
 | `relic_data` | Artifacts |
@@ -126,7 +126,7 @@ Per-part coverage/encumbrance objects; `environmental_protection_with_filter`; v
 
 | Type | Not baked |
 |------|-----------|
-| COMESTIBLE | `vitamins`, `addiction_potential`, `parasites`, `cooks_like`, `freeze_point`, `rot_spawn`, `smoking_result`, `monotony_penalty` |
+| COMESTIBLE | `parasites`, `cooks_like`, `freeze_point`, `rot_spawn`, `smoking_result`, `monotony_penalty` |
 | BOOK | martial art, recipes/proficiencies taught by the book |
 | MAGAZINE | `linkage` |
 | TOOL | `charged_qualities` (use_action: see gates) |
@@ -157,3 +157,4 @@ Monsters, mutations, vehicle parts, terrain/furniture/traps, mapgen/overmap, wea
 | Combat ammo consume | `ChamberAmmoId` + `CombatMath` 탄+총 양, `damage_type` Hit | Dist runtime |
 
 | 2026-08-19 gun aim fields | `sight_dispersion`, `aim_speed`, `handling` whitelist | convert.py 승격. Dist: RMB `aim01` 조임 + handling 킥 배율. BNData rebake는 BN 트리 있을 때 |
+| 2026-08-22 consume fields | `vitamins`, `addiction_potential`, consume `use_action` heal/consume_drug | convert.py 승격. GameData `consumable_egg` comestible seed. BNData rebake는 BN 트리 있을 때 |

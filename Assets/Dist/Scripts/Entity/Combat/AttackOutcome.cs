@@ -15,10 +15,10 @@ public readonly struct AttackOutcome
     /// <summary>완화 후 HP. 0이어도 히트일 수 있음.</summary>
     public readonly int Damage;
 
-    /// <summary>완화 전 HP 합. p = Damage/RawDamage.</summary>
+    /// <summary>완화 전 HP 합. 오버펜 분할에만 p = Damage/RawDamage.</summary>
     public readonly int RawDamage;
 
-    /// <summary>들어온 충격량 J_in (밀침). 데미지 아님.</summary>
+    /// <summary>이 몸에 전달된 J_hit (밀침). 데미지 아님.</summary>
     public readonly float ImpulseJin;
 
     /// <summary>공격이 출발한 월드 지점 (근접 휘두름 기준점 / 원거리 총구).</summary>
