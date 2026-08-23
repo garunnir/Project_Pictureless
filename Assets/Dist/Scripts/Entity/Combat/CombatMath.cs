@@ -101,8 +101,47 @@ public static class CombatMath
     public static float RecoilKickUnits(ItemData item, ItemData ammo) =>
         RecoilUnits(item, ammo) * HandlingKickFactor(item);
 
-    /// <summary>반동 단위/초. RecoilUnits 100이면 1초 회복. aim_speed 아님.</summary>
-    public static float RecoilRecoverPerSecond => MovesPerSecond;
+    /// <summary>recoilRemaining 천장 = 킥 × 이 배수 (풀 스프레이 블룸).</summary>
+    public const float RecoilRemainingMaxKicks = 4f;
+
+    /// <summary>분산용 반동 잔여 상한. 킥 0이면 0.</summary>
+    public static float RecoilRemainingMax(ItemData item, ItemData ammo) =>
+        RecoilKickUnits(item, ammo) * RecoilRemainingMaxKicks;
+
+    /// <summary>
+    /// 천장에 가까울수록 킥이 줄어드는 가산 (점근). next = remaining + kick*(1 - remaining/cap).
+    /// </summary>
+    public static float ApplyRecoilKick(float remaining, float kick, float cap)
+    {
+        if (kick <= 0f)
+            return Mathf.Max(0f, remaining);
+        if (cap <= 0f)
+            return remaining + kick;
+
+        float t = Mathf.Clamp01(remaining / cap);
+        float next = remaining + kick * (1f - t);
+        return Mathf.Min(next, cap);
+    }
+
+    /// <summary>
+    /// 지수 감쇠 기준 잔여. remaining이 이 값일 때 초당 감소량이 옛 선형 MovesPerSecond와 같음.
+    /// </summary>
+    public const float RecoilRecoverRefUnits = 100f;
+
+    /// <summary>지수 감쇠 λ(1/초). remaining *= exp(-λ·dt).</summary>
+    public static float RecoilRecoverLambda =>
+        MovesPerSecond / RecoilRecoverRefUnits;
+
+    /// <summary>반동 잔여 지수 감쇠. 미소값은 0으로 스냅.</summary>
+    public static float DecayRecoilRemaining(float remaining, float dt)
+    {
+        if (remaining <= 0f || dt <= 0f)
+            return 0f;
+
+        float next = remaining * Mathf.Exp(-RecoilRecoverLambda * dt);
+        const float SnapEpsilon = 0.01f;
+        return next < SnapEpsilon ? 0f : next;
+    }
 
     /// <summary>aim_speed 0이면 호출측이 aim01=1. 양수면 초당 조임.</summary>
     public static float AimProgressPerSecond(int aimSpeed)
@@ -154,6 +193,48 @@ public static class CombatMath
 
         float yaw = (UnityEngine.Random.value * 2f - 1f) * degrees;
         return Quaternion.AngleAxis(yaw, Vector3.up) * dir;
+    }
+
+    /// <summary>
+    /// 조준 거리에서 ±yaw 월드점을 화면에 투영한 반폭(픽셀). UI 탄퍼짐 포인터용.
+    /// </summary>
+    public static float ProjectYawHalfWidthPixels(
+        Camera cam,
+        Vector3 origin,
+        Vector3 fireDir,
+        float rangeMeters,
+        float effectiveDispersion)
+    {
+        if (cam == null || rangeMeters <= 1e-4f)
+            return 0f;
+
+        float degrees = DispersionYawDegrees(effectiveDispersion);
+        if (degrees <= 1e-4f)
+            return 0f;
+
+        Vector3 dir = fireDir.sqrMagnitude > 1e-8f ? fireDir.normalized : Vector3.forward;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 1e-8f)
+            return 0f;
+        dir.Normalize();
+
+        Vector3 center = origin + dir * rangeMeters;
+        Vector3 left = origin + (Quaternion.AngleAxis(-degrees, Vector3.up) * dir) * rangeMeters;
+        Vector3 right = origin + (Quaternion.AngleAxis(degrees, Vector3.up) * dir) * rangeMeters;
+
+        Vector3 screenCenter = cam.WorldToScreenPoint(center);
+        if (screenCenter.z <= 0f)
+            return 0f;
+
+        Vector3 screenLeft = cam.WorldToScreenPoint(left);
+        Vector3 screenRight = cam.WorldToScreenPoint(right);
+        if (screenLeft.z <= 0f || screenRight.z <= 0f)
+            return 0f;
+
+        float half = 0.5f * Vector2.Distance(
+            new Vector2(screenLeft.x, screenLeft.y),
+            new Vector2(screenRight.x, screenRight.y));
+        return half > 0f ? half : 0f;
     }
 
     public static int Damage(

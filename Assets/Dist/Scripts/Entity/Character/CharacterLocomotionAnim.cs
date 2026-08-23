@@ -85,6 +85,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     int _leftArmLayerIndex = -1;
     int _twoHandLayerIndex = -1;
     int _impactLayerIndex = -1;
+    int _flinchLayerIndex = -1;
     int _hurtLayerIndex = -1;
     bool _hasSpeed;
     bool _hasMoveX;
@@ -121,6 +122,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     int _hashHurtStaggerState;
     int _hashHurtPainDownState;
     float _impactWeightTarget;
+    float _flinchWeightTarget;
     float _hurtWeightTarget;
     float _speedHoldR = WeaponAnimClipSpeeds.DefaultSpeed;
     float _speedAimR = WeaponAnimClipSpeeds.DefaultSpeed;
@@ -300,9 +302,11 @@ public class CharacterLocomotionAnim : MonoBehaviour
         }
 
         float channelDelta = TimeScaleService.Delta(_timeChannel);
+        UpdateFlinchWeightTarget();
         UpdateHurtWeightTarget();
         SyncArmLayerWeights(rebound ? 0f : channelDelta);
         SyncImpactLayerWeight(rebound ? 0f : channelDelta);
+        SyncFlinchLayerWeight(rebound ? 0f : channelDelta);
         SyncHurtLayerWeight(rebound ? 0f : channelDelta);
         ApplyClipSpeedParams();
         AdvanceAnimator(channelDelta);
@@ -412,9 +416,34 @@ public class CharacterLocomotionAnim : MonoBehaviour
         SetLayerWeightToward(_impactLayerIndex, _impactWeightTarget, channelDelta);
     }
 
+    void SyncFlinchLayerWeight(float channelDelta)
+    {
+        SetLayerWeightToward(_flinchLayerIndex, _flinchWeightTarget, channelDelta);
+    }
+
     void SyncHurtLayerWeight(float channelDelta)
     {
         SetLayerWeightToward(_hurtLayerIndex, _hurtWeightTarget, channelDelta);
+    }
+
+    void UpdateFlinchWeightTarget()
+    {
+        if (_flinchLayerIndex < 0 || _animator == null)
+            return;
+
+        bool flinch = false;
+        AnimatorStateInfo current = _animator.GetCurrentAnimatorStateInfo(_flinchLayerIndex);
+        flinch = current.shortNameHash == _hashHurtFlinchState;
+        if (!flinch && _animator.IsInTransition(_flinchLayerIndex))
+        {
+            AnimatorStateInfo next = _animator.GetNextAnimatorStateInfo(_flinchLayerIndex);
+            flinch = next.shortNameHash == _hashHurtFlinchState;
+        }
+
+        if (!flinch && _hasHitFlinch && _animator.GetBool(_hashHurtFlinch))
+            flinch = true;
+
+        _flinchWeightTarget = flinch ? 1f : 0f;
     }
 
     void UpdateHurtWeightTarget()
@@ -436,8 +465,6 @@ public class CharacterLocomotionAnim : MonoBehaviour
                 hurt = IsHurtPlayingState(next.shortNameHash);
             }
 
-            if (!hurt && _hasHitFlinch && _animator.GetBool(_hashHurtFlinch))
-                hurt = true;
             if (!hurt && _hasHitStagger && _animator.GetBool(_hashHurtStagger))
                 hurt = true;
         }
@@ -446,7 +473,6 @@ public class CharacterLocomotionAnim : MonoBehaviour
     }
 
     bool IsHurtPlayingState(int shortNameHash) =>
-        shortNameHash == _hashHurtFlinchState ||
         shortNameHash == _hashHurtStaggerState ||
         shortNameHash == _hashHurtPainDownState;
 
@@ -767,6 +793,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _leftArmLayerIndex = -1;
         _twoHandLayerIndex = -1;
         _impactLayerIndex = -1;
+        _flinchLayerIndex = -1;
         _hurtLayerIndex = -1;
         _hashAttackState = Hash(AttackOverlayStateName);
         _hashHoldState = Hash(HoldOverlayStateName);
@@ -827,6 +854,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (!string.IsNullOrEmpty(_twoHandLayerName))
             _twoHandLayerIndex = _animator.GetLayerIndex(_twoHandLayerName);
         _impactLayerIndex = _animator.GetLayerIndex(ImpactLayerName);
+        _flinchLayerIndex = _animator.GetLayerIndex(CharacterHitReact.FlinchLayerName);
         _hurtLayerIndex = _animator.GetLayerIndex(CharacterHitReact.HurtLayerName);
     }
 

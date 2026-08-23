@@ -997,6 +997,48 @@ static class PlayerStatusUISetupMenu
             view = go.AddComponent<UICharacterWieldSlotView>();
         view.EnsureChrome();
 
+        // Shared chrome: action top-left, ammo top-right (same as HUD QuickSlot).
+        Transform actionTf = go.transform.Find("ActionIcon");
+        if (actionTf != null)
+        {
+            RectTransform actionRt = actionTf as RectTransform;
+            if (actionRt != null)
+            {
+                actionRt.anchorMin = new Vector2(0f, 1f);
+                actionRt.anchorMax = new Vector2(0f, 1f);
+                actionRt.pivot = new Vector2(0f, 1f);
+                actionRt.anchoredPosition = new Vector2(2f, -2f);
+            }
+        }
+
+        Transform ammoTf = go.transform.Find("Ammo");
+        if (ammoTf == null)
+            ammoTf = go.transform.Find("tmp");
+        if (ammoTf == null)
+        {
+            GameObject ammoGo = new GameObject("Ammo", typeof(RectTransform), typeof(CanvasRenderer));
+            ammoGo.layer = LayerMask.NameToLayer("UI");
+            ammoGo.transform.SetParent(go.transform, false);
+            ammoTf = ammoGo.transform;
+            RectTransform ammoRt = ammoGo.GetComponent<RectTransform>();
+            ammoRt.anchorMin = new Vector2(1f, 1f);
+            ammoRt.anchorMax = new Vector2(1f, 1f);
+            ammoRt.pivot = new Vector2(1f, 1f);
+            ammoRt.anchoredPosition = new Vector2(-2f, -2f);
+            ammoRt.sizeDelta = new Vector2(48f, 14f);
+            TextMeshProUGUI ammoTmp = ammoGo.AddComponent<TextMeshProUGUI>();
+            ammoTmp.fontSize = GearConstants.UiFontSizeActionIcon;
+            ammoTmp.alignment = TextAlignmentOptions.TopRight;
+            ammoTmp.raycastTarget = false;
+            ammoTmp.text = string.Empty;
+            if (font != null)
+                ammoTmp.font = font;
+        }
+        else
+        {
+            ammoTf.name = "Ammo";
+        }
+
         // Name Label kept invisible for ItemNameStatusBar overlay only.
         Transform labelTf = go.transform.Find("Label");
         if (labelTf == null)
@@ -1428,6 +1470,7 @@ static class PlayerStatusUISetupMenu
         MoodIconId.Trust,
         MoodIconId.Respect,
         MoodIconId.Overencumbered,
+        MoodIconId.OffBalance,
     };
 
     static void EnsureMoodAssets()
@@ -1744,6 +1787,8 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.Mood.Overencumbered.Medium", "짐이 무겁다");
         Put("PlayerStatus.Mood.Overencumbered.Heavy", "짐이 너무 무겁다");
         Put("PlayerStatus.Mood.Overencumbered.Extreme", "움직일 수 없을 만큼 무겁다");
+        Put("PlayerStatus.Mood.OffBalance", "중심이 흔들린다");
+        Put("PlayerStatus.Mood.OffBalance.Fallen", "중심을 잃고 쓰러졌다");
 
         Put("ItemContextMenu.Eat", "먹기");
         Put("ItemContextMenu.Drink", "마시기");

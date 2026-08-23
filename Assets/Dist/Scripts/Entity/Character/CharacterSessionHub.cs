@@ -60,6 +60,9 @@ public sealed class CharacterSessionHub : MonoBehaviour
             _gear.ClaimActive();
         }
 
+        if (TryGetComponent(out CharacterImbalanceHost imbalance))
+            imbalance.ClaimActive();
+
         if (_bodyHost != null && _bodyHost.Body != null)
             GameplayData.Body = _bodyHost.Body;
 

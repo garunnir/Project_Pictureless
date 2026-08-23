@@ -12,6 +12,7 @@ public sealed class PlayerStatusViewModel
     IPlayerVitals _vitals;
     IPlayerStats _stats;
     PlayerNeedsHost _needs;
+    CharacterImbalanceHost _imbalance;
 
     readonly List<MoodEntry> _moodEntries = new(UIPlayerStatusSummaryPanel.MaxSlots);
     readonly List<MoodEntry> _moodSnapshot = new(UIPlayerStatusSummaryPanel.MaxSlots);
@@ -47,6 +48,7 @@ public sealed class PlayerStatusViewModel
         PlayerEncumbranceHost.StageChanged += OnEncumbranceChanged;
         PlayerEncumbranceHost.ActiveChanged += OnEncumbranceChanged;
         BindNeeds(PlayerNeedsHost.Active);
+        BindImbalance(CharacterImbalanceHost.Active);
 
         RebuildMoodEntries();
         Changed?.Invoke();
@@ -65,6 +67,7 @@ public sealed class PlayerStatusViewModel
         PlayerEncumbranceHost.StageChanged -= OnEncumbranceChanged;
         PlayerEncumbranceHost.ActiveChanged -= OnEncumbranceChanged;
         BindNeeds(null);
+        BindImbalance(null);
 
         _body = null;
         _vitals = null;
@@ -110,6 +113,7 @@ public sealed class PlayerStatusViewModel
     bool RebuildMoodEntries()
     {
         BindNeeds(PlayerNeedsHost.Active);
+        BindImbalance(CharacterImbalanceHost.Active);
         PlayerEncumbranceStage stage = PlayerEncumbranceHost.Active != null
             ? PlayerEncumbranceHost.Active.Stage
             : PlayerEncumbranceStage.None;
@@ -154,5 +158,24 @@ public sealed class PlayerStatusViewModel
         _needs = needs;
         if (_needs != null)
             _needs.Changed += OnNeedsChanged;
+    }
+
+    void BindImbalance(CharacterImbalanceHost imbalance)
+    {
+        if (_imbalance == imbalance)
+            return;
+
+        if (_imbalance != null)
+            _imbalance.Changed -= OnImbalanceChanged;
+
+        _imbalance = imbalance;
+        if (_imbalance != null)
+            _imbalance.Changed += OnImbalanceChanged;
+    }
+
+    void OnImbalanceChanged()
+    {
+        RaiseMoodIfChanged();
+        Changed?.Invoke();
     }
 }

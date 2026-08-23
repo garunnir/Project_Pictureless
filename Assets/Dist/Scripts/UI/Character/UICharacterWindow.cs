@@ -117,6 +117,7 @@ public sealed class UICharacterWindow : MonoBehaviour
         _gearPanel?.Unbind();
         _viewModel = null;
         _detailPanel?.Hide();
+        UITextHoverService.HideOn(GetComponentInParent<Canvas>());
     }
 
     public void SetTab(CharacterWindowTab tab)
@@ -284,15 +285,22 @@ public sealed class UICharacterWindow : MonoBehaviour
 
     void OnGearItemHover(string text, RectTransform anchor)
     {
-        if (_detailPanel == null || string.IsNullOrEmpty(text))
+        if (string.IsNullOrEmpty(text))
             return;
         RectTransform a = anchor != null ? anchor : _gearPanelRoot;
-        _detailPanel.ShowText(text, a);
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (!UITextHoverService.TryShowNearAnchor(canvas, text, a))
+        {
+            Debug.LogError(
+                "[UICharacterWindow] UITextHoverService missing on UICanvas. " +
+                "Run Dist/MCP/Inventory/Setup Canvas Overlays In Open Scene.",
+                this);
+        }
     }
 
     void OnGearItemHoverExit()
     {
-        _detailPanel?.Hide();
+        UITextHoverService.HideOn(GetComponentInParent<Canvas>());
     }
 
     void ApplyTabVisibility()

@@ -196,7 +196,9 @@ static class InventoryUIHierarchyBuilder
         TMP_Text materialsLine = CreateDetailLine("Line_Materials", root.transform, bodyFontSize);
 
         var panel = root.AddComponent<UIInventoryItemDetailPanel>();
+        var shell = root.AddComponent<UIHoverPanelShell>();
         SetReference(panel, "_rect", rect);
+        SetReference(panel, "_shell", shell);
         SetReference(panel, "_nameLine", nameLine);
         SetReference(panel, "_descriptionLine", descriptionLine);
         SetReference(panel, "_categoryLine", categoryLine);

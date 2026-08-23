@@ -78,7 +78,8 @@ namespace Garunnir.Runtime.Gameplay.Data
         MarriedEngaged,
         Trust,
         Respect,
-        Overencumbered
+        Overencumbered,
+        OffBalance
     }
 
     public enum MoodPolarity

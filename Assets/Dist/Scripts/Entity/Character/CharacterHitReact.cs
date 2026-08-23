@@ -7,9 +7,11 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(CharacterBodyHost))]
+[RequireComponent(typeof(CharacterImbalanceHost))]
 public sealed class CharacterHitReact : MonoBehaviour
 {
     public const string HurtLayerName = "Hurt Layer";
+    public const string FlinchLayerName = "Flinch Layer";
     public const string ParamFlinch = "HitFlinch";
     public const string ParamStagger = "HitStagger";
     public const string ParamPainShocked = "IsPainShocked";
@@ -28,11 +30,13 @@ public sealed class CharacterHitReact : MonoBehaviour
     CharacterAppearanceHost _appearance;
     PlayerGearHost _gear;
     CharacterPainHost _pain;
+    CharacterImbalanceHost _imbalance;
     Animator _animator;
     int _hashFlinch;
     int _hashStagger;
     int _hashPainShocked;
     int _hurtLayerIndex = -1;
+    int _flinchLayerIndex = -1;
     bool _hasFlinch;
     bool _hasStagger;
     bool _hasPainShocked;
@@ -46,6 +50,7 @@ public sealed class CharacterHitReact : MonoBehaviour
         TryGetComponent(out _appearance);
         TryGetComponent(out _gear);
         TryGetComponent(out _pain);
+        TryGetComponent(out _imbalance);
         TryGetComponent(out _animator);
         if (_animator == null)
             _animator = GetComponentInChildren<Animator>();
@@ -73,6 +78,7 @@ public sealed class CharacterHitReact : MonoBehaviour
         _hasStagger = false;
         _hasPainShocked = false;
         _hurtLayerIndex = -1;
+        _flinchLayerIndex = -1;
         if (_animator == null)
             return;
 
@@ -80,6 +86,7 @@ public sealed class CharacterHitReact : MonoBehaviour
         _hashStagger = Animator.StringToHash(ParamStagger);
         _hashPainShocked = Animator.StringToHash(ParamPainShocked);
         _hurtLayerIndex = _animator.GetLayerIndex(HurtLayerName);
+        _flinchLayerIndex = _animator.GetLayerIndex(FlinchLayerName);
 
         for (int i = 0; i < _animator.parameterCount; i++)
         {
@@ -131,11 +138,22 @@ public sealed class CharacterHitReact : MonoBehaviour
                 _motor.ApplyKnockback(dir.normalized * dv);
         }
 
-        if (dv >= CombatImpulse.StaggerDeltaV)
+        bool fell = false;
+        if (_imbalance != null)
+            fell = _imbalance.ApplyHit(dv);
+        else if (dv >= CombatImpulse.StaggerDeltaV)
+            fell = true;
+
+        if (fell)
         {
-            _actionHost?.CancelAll();
-            _attacker?.CancelAllPendingCues();
-            _motor?.BeginStagger(CombatImpulse.StaggerSeconds);
+            if (_imbalance != null)
+                _imbalance.NotifyFallen();
+            else
+            {
+                _actionHost?.CancelAll();
+                _attacker?.CancelAllPendingCues();
+            }
+
             if (!shocked)
                 PlayStagger();
         }
@@ -149,7 +167,7 @@ public sealed class CharacterHitReact : MonoBehaviour
             return;
         _animator.ResetTrigger(_hashFlinch);
         _animator.SetTrigger(_hashFlinch);
-        LiftHurtLayer();
+        LiftFlinchLayer();
     }
 
     void PlayStagger()
@@ -159,6 +177,13 @@ public sealed class CharacterHitReact : MonoBehaviour
         _animator.ResetTrigger(_hashStagger);
         _animator.SetTrigger(_hashStagger);
         LiftHurtLayer();
+    }
+
+    void LiftFlinchLayer()
+    {
+        if (_flinchLayerIndex < 0 || _animator == null)
+            return;
+        _animator.SetLayerWeight(_flinchLayerIndex, 1f);
     }
 
     void LiftHurtLayer()

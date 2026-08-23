@@ -10,7 +10,7 @@ alwaysApply: false
 캐릭터 팔 AnimatorController · Weapon Override · ArmAnimSlotCatalog · resolve · Rebuild Arm Overlay.
 
 ## Invariant (풀어서)
-1. **컨트롤러**는 재생 칸만 안다: `Hold_*` / `Aim_*` / `Attack_*` / Impact thin / Hurt thin. 동작 이름을 상태·레이어·파라미터에 넣지 않는다.
+1. **컨트롤러**는 재생 칸만 안다: `Hold_*` / `Aim_*` / `Attack_*` / Impact thin / Flinch thin / Hurt thin. 동작 이름을 상태·레이어·파라미터에 넣지 않는다.
 2. **기본 동사 폴백**은 `ArmAnimSlotCatalog`에 **Leaf마다 행** (Swing/Thrust/Semi/Burst/Auto/Raise). 폴백 줄이 없는 Leaf 금지.
 3. **표시**는 Melee/Trigger 묶음(에디터·UI). 취급은 Leaf 실체.
 4. **무기 동작 줄** = 그 무기 그 Leaf Hold/Aim/Attack/**Recoil/Blocked** 클립. 비면 Catalog (Action은 같은 Leaf, Impact는 Recoil/Blocked 행).
@@ -21,7 +21,7 @@ alwaysApply: false
 - Override Inspector는 배속 테이블만 (`WeaponAnimOverrideEditor`)
 - Rebuild 후 컨트롤러에 동작 이름·`LibraryKeys` 있으면 실패
 - Catalog Ensure는 `WeaponActionUtil.All` (Leaf 전부)
-- Hurt(`Hurt Layer`, `HitFlinch`/`HitStagger`/`IsPainShocked`, `Hit*_Slot`)는 Catalog·무기 동작 줄 밖. **Rebuild가 Hurt를 재생성**해야 함 (레이어 1+ wipe 후 팔+Impact+Hurt)
+- Hurt(`Flinch Layer` Additive Head+Body, `Hurt Layer` Override, `HitFlinch`/`HitStagger`/`IsPainShocked`, `Hit*_Slot`)는 Catalog·무기 동작 줄 밖. **Rebuild가 Flinch+Hurt를 재생성**해야 함 (레이어 1+ wipe 후 팔+Impact+Flinch+Hurt)
 
 ## MUST NOT
 - `LibraryKeys` 또는 동작 이름 상태를 `CharacterAnimController`에 추가

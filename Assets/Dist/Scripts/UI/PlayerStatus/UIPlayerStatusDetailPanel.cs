@@ -53,30 +53,42 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
         if (_shell == null)
             return;
 
+        Canvas canvas = _rootCanvas != null ? _rootCanvas : GetComponentInParent<Canvas>();
+        UITextHoverService.HideOn(canvas);
+
         PrepareHoverShow();
         BindPart(body, mainPartId);
         RebuildLayout();
         _shell.ShowNearAnchor(anchor, PartHoverStyle);
     }
 
-    /// <summary>Gear 슬롯/행 호버 — 인벤식 DetailPanel 셸에 임의 본문.</summary>
+    /// <summary>Deprecated for text hover — use UITextHoverService. Kept only if legacy callers remain.</summary>
     public void ShowText(string body, RectTransform anchor)
     {
-        if (string.IsNullOrEmpty(body) || anchor == null)
+        Canvas canvas = _rootCanvas != null ? _rootCanvas : GetComponentInParent<Canvas>();
+        if (!UITextHoverService.TryShowNearAnchor(canvas, body, anchor))
+        {
+            // Fallback: local shell (body-part panel) so hover is not silent.
+            if (string.IsNullOrEmpty(body) || anchor == null)
+            {
+                Hide();
+                return;
+            }
+
+            EnsureShell();
+            if (_shell == null)
+                return;
+
+            PrepareHoverShow();
+            if (_bodyText != null)
+                _bodyText.text = body;
+            RebuildLayout();
+            _shell.ShowNearAnchor(anchor, PartHoverStyle);
+        }
+        else
         {
             Hide();
-            return;
         }
-
-        EnsureShell();
-        if (_shell == null)
-            return;
-
-        PrepareHoverShow();
-        if (_bodyText != null)
-            _bodyText.text = body;
-        RebuildLayout();
-        _shell.ShowNearAnchor(anchor, PartHoverStyle);
     }
 
     void PrepareHoverShow()

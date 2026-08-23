@@ -80,8 +80,8 @@ API·채널 소비 경로만 준비. 키 바인딩·연출 없음.
 **지침**
 - 새 Charge Leaf / Catalog Charge 행 / 컨트롤러 Charge 상태·`LibraryKeys` 금지 (`arm-anim-layers.mdc`).
 - 입력은 `performed` 시전을 나누지 말고 `started`/`canceled` 프레스 래치. 충전 off=눌림 즉시, on=릴리즈. 탭=`Charge01=0` 패리티.
-- Entry `allowCharge` + 선택 `chargeClips`/`chargeVfx`. 클립 있으면 Aim thin 덮고 Aim `Play(0)`, 논루프면 `normalizedTime` 끝 고정. VFX는 Entry → `WeaponCombatFallbacks` 기본 루프, Catalog 동사 행 폴백 없음.
-- `Charge01`은 `ActionHandlerContext`/`PendingAttack`에만. `offenseFactor`와 섞지 않음. HP/J 배율은 `WeaponAttack` SSOT.
+- Entry `allowCharge` + 선택 `chargeClips`/`chargeVfx`. 클립 있으면 Aim thin 덮고 Aim `Play(0)`, 논루프면 `normalizedTime` 끝 고정. 진행도=포즈면 충전 중에만 `Play(Aim, layer, Charge01)` — 상태 Motion Time은 컨트롤러 고정(런타임 토글 없음)이라 쓰지 않음. Attack Speed Parameter / `CueNormalizedTime`과 섞지 않음. 클립 적용은 Override thin 덮기만이 후보 아님 — Playable·직접 재생 등 Override 밖도 검토(미정). VFX는 Entry → `WeaponCombatFallbacks` 기본 루프, Catalog 동사 행 폴백 없음.
+- `Charge01`은 `ActionHandlerContext`/`PendingAttack`에만. Animator float 아님. `offenseFactor`와 섞지 않음. HP/J 배율은 `WeaponAttack` SSOT.
 - `allowCharge` Auto는 릴리즈 1볼리. 위 Auto 홀드 연사와 동시에 켜지 않는다.
 
 **도메인:** [`equipment/GEAR.md`](equipment/GEAR.md) · [`locomotion/LOCOMOTION.md`](locomotion/LOCOMOTION.md)

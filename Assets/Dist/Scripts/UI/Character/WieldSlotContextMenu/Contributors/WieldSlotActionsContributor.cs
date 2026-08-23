@@ -1,5 +1,5 @@
 // ============================================================
-// WieldSlotActionsContributor — HandAction Family 폴다운 + Unwield/Floor
+// WieldSlotActionsContributor — HandAction Family + 잡기(반대손/양손) + Unwield/Floor
 // ============================================================
 
 using System.Collections.Generic;
@@ -71,6 +71,23 @@ public sealed class WieldSlotActionsContributor : IWieldSlotContextMenuContribut
                 "hand-action",
                 CharacterGearLabels.HandActionGroup,
                 actionChildren));
+
+            WieldHand opposite = WieldSlots.OppositeHand(request.Slot);
+            var gripChildren = new List<ContextMenuEntry>(2)
+            {
+                ContextMenuEntry.Leaf(
+                    "grip-opposite",
+                    CharacterGearLabels.WieldOpposite,
+                    new WieldGripContextAction(request, opposite)),
+                ContextMenuEntry.Leaf(
+                    "grip-twohand",
+                    CharacterGearLabels.WieldTwoHand,
+                    new WieldGripContextAction(request, WieldHand.TwoHand)),
+            };
+            roots.Add(ContextMenuEntry.Group(
+                "grip",
+                CharacterGearLabels.WieldGripGroup,
+                gripChildren));
         }
 
         roots.Add(ContextMenuEntry.Leaf(

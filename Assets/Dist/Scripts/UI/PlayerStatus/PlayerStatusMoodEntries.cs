@@ -43,7 +43,26 @@ namespace Garunnir.Runtime.Gameplay.Data
             CollectNeeds(needs, vitals, into);
             CollectEncumbrance(encumbranceStage, into);
             CollectPain(body, into);
+            CollectImbalance(into);
             CollectCoreFeeling(PlayerGearHost.Active?.BodyTemperature, into);
+        }
+
+        static void CollectImbalance(List<MoodEntry> into)
+        {
+            CharacterImbalanceHost host = CharacterImbalanceHost.Active;
+            if (host == null)
+                return;
+
+            float imbalance = host.Imbalance01;
+            if (imbalance < CombatImbalance.HudMin)
+                return;
+
+            bool fallen = host.IsFullyUnbalanced;
+            into.Add(new MoodEntry(
+                MoodIconId.OffBalance,
+                MoodPolarity.Negative,
+                CombatImbalance.BucketIntensity(imbalance),
+                PlayerStatusLabels.GetOffBalanceTooltip(fallen)));
         }
 
         static readonly List<BodyPartEffect> PainEffectScratch = new(16);

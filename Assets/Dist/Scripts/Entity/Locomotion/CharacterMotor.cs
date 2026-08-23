@@ -39,6 +39,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     bool _hasTravelLimit;
     float _remainingTravelDistance;
     float _envSpeedMultiplier = 1f;
+    float _imbalanceSpeedMultiplier = 1f;
     Vector3 _knockbackVelocity;
     float _staggerRemaining;
     bool _moveLocked;
@@ -132,7 +133,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
         else
         {
             desiredMove = _mover.CalcConstantSpeedMove(
-                EffectiveMoveSpeed * _envSpeedMultiplier,
+                EffectiveMoveSpeed * _envSpeedMultiplier * _imbalanceSpeedMultiplier,
                 deltaTime)
                 + _knockbackVelocity * deltaTime;
             if (_hasTravelLimit &&
@@ -197,6 +198,10 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     /// <summary>Env 이동 배율 (GearEnv × limp). Possessed는 PlayerMovement.SetEnvMovement가 같은 값을 쓴다.</summary>
     public void SetEnvMovement(float speedMultiplier) =>
         _envSpeedMultiplier = Mathf.Max(0f, speedMultiplier);
+
+    /// <summary>불균형 이동 배율 (1 − Imbalance). Possessed는 PlayerMovement.SetImbalanceMovement.</summary>
+    public void SetImbalanceMovement(float speedMultiplier) =>
+        _imbalanceSpeedMultiplier = Mathf.Max(0f, speedMultiplier);
 
     public void SetActiveMovementStyle(MovementStyle style)
     {

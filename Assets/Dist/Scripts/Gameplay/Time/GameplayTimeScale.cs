@@ -16,6 +16,7 @@ public sealed class GameplayTimeScale : MonoBehaviour
     }
 
     public const float DoubleScale = 2f;
+    public const float SmartScale = 10f;
 
     static GameplayTimeScale _instance;
 
@@ -62,10 +63,8 @@ public sealed class GameplayTimeScale : MonoBehaviour
         if (_mode == mode && mode != Mode.Smart)
             return;
 
-        if (mode != Mode.Smart)
-            _hadWorkWhileSmart = false;
-
         _mode = mode;
+        _hadWorkWhileSmart = mode == Mode.Smart && ReservedWorkHub.HasAnyActiveWork;
         ApplyMode(_mode);
         Changed?.Invoke();
     }
@@ -108,7 +107,10 @@ public sealed class GameplayTimeScale : MonoBehaviour
                 break;
             case Mode.Smart:
                 if (ReservedWorkHub.HasAnyActiveWork)
-                    PushGameplaySpeed(DoubleScale);
+                {
+                    _hadWorkWhileSmart = true;
+                    PushGameplaySpeed(SmartScale);
+                }
                 break;
         }
     }

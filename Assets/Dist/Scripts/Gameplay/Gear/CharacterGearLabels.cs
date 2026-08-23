@@ -21,6 +21,8 @@ public static class CharacterGearLabels
     const string KeyWieldLeft = "Character.WieldLeft";
     const string KeyWieldRight = "Character.WieldRight";
     const string KeyWieldTwoHand = "Character.WieldTwoHand";
+    const string KeyWieldGripGroup = "Character.WieldGripGroup";
+    const string KeyWieldOpposite = "Character.WieldOpposite";
     const string KeyUnwield = "Character.Unwield";
     const string KeyDropFloor = "Character.DropFloor";
     const string KeyHandActionGroup = "Character.HandActionGroup";
@@ -42,6 +44,8 @@ public static class CharacterGearLabels
     const string KeyBlockedTool = "Character.BlockedToolSession";
     const string KeyBlockedWearable = "Character.BlockedNotWearable";
     const string KeyBlockedEquipped = "Character.BlockedAlreadyEquipped";
+    const string KeyBlockedAlreadyGrip = "Character.BlockedAlreadyGrip";
+    const string KeyBlockedTwoHandOnly = "Character.BlockedTwoHandOnly";
     const string KeyBlockedInvalid = "Character.BlockedInvalid";
     const string KeyBlockedNoStowRoom = "Character.BlockedNoStowRoom";
     const string KeyBlockedWearOverlap = "Character.BlockedWearOverlap";
@@ -90,6 +94,8 @@ public static class CharacterGearLabels
     public static string WieldLeft => GetOr(KeyWieldLeft, "왼손 들기");
     public static string WieldRight => GetOr(KeyWieldRight, "오른손 들기");
     public static string WieldTwoHand => GetOr(KeyWieldTwoHand, "양손 들기");
+    public static string WieldGripGroup => GetOr(KeyWieldGripGroup, "잡기");
+    public static string WieldOpposite => GetOr(KeyWieldOpposite, "반대손으로 잡기");
     public static string Unwield => GetOr(KeyUnwield, "내려놓기");
     public static string DropFloor => GetOr(KeyDropFloor, "바닥에 놓기");
     public static string HandActionGroup => GetOr(KeyHandActionGroup, "사용 액션");
@@ -130,6 +136,8 @@ public static class CharacterGearLabels
     public static string BlockedToolSession => GetOr(KeyBlockedTool, "도구 사용 중");
     public static string BlockedNotWearable => GetOr(KeyBlockedWearable, "착용할 수 없음");
     public static string BlockedAlreadyEquipped => GetOr(KeyBlockedEquipped, "이미 장착됨");
+    public static string BlockedAlreadyGrip => GetOr(KeyBlockedAlreadyGrip, "이미 그렇게 들고 있음");
+    public static string BlockedTwoHandOnly => GetOr(KeyBlockedTwoHandOnly, "양손으로만 들 수 있음");
     public static string BlockedInvalid => GetOr(KeyBlockedInvalid, "유효하지 않음");
     public static string BlockedNoStowRoom => GetOr(KeyBlockedNoStowRoom, "가방에 넣을 공간이 없음");
     public static string HoverEnc => GetOr(KeyHoverEnc, "enc");

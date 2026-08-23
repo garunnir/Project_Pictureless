@@ -57,6 +57,12 @@ internal static class DistMcpMenus
 
     public const string CombatSetupActionHud =
         Root + "/Combat/Setup Combat Action HUD In Open Scene";
+    public const string CombatCreateAimPointerPrefabIfMissing =
+        Root + "/Combat/Create Aim Pointer Prefab If Missing";
+    public const string CombatPatchAimPointerCircle =
+        Root + "/Combat/Patch Aim Pointer Circle";
+    public const string CombatSetupAimPointerInOpenScene =
+        Root + "/Combat/Setup Aim Pointer In Open Scene";
 
     public const string CharacterEnsurePlayerGearComponents =
         Root + "/Character/Ensure Player Gear Components";
@@ -89,6 +95,9 @@ internal static class DistMcpMenus
 
     public const string HudLayoutPatchParticipants =
         Root + "/HudLayout/Patch HUD Layout Participants";
+
+    public const string HudPatchQuickSlotWield =
+        Root + "/Hud/Patch QuickSlot Wield";
 
     public const string TimeScaleCreateHudPrefabIfMissing =
         Root + "/Time/Create TimeScale HUD Prefab If Missing";

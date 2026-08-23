@@ -72,6 +72,9 @@ static class TimeScaleHudSetupMenu
         if (timeScale == null)
             timeScale = EnsureComponentOnChild<GameplayTimeScale>(timeRoot, "GameplayTimeScale");
 
+        if (timeScale.GetComponent<PossessedActionReservedWorkSource>() == null)
+            Undo.AddComponent<PossessedActionReservedWorkSource>(timeScale.gameObject);
+
         EnsureReservedWorkSources();
 
         UITimeScaleHudPanel prefab =

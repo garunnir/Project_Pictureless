@@ -28,8 +28,8 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | `GearConstants` | GramsPerStr=500, TwoHandWeightFactor=2, SoftMargin, LiftStrainMoveFactor=0.9, OffHandDpsFactor |
 | `GearHandleRules` | CanLift / RequiredStr / LiftStrain / IsWearable |
 | `EquipmentWearState` | Worn stacks |
-| `WieldSlots` | L/R (+ two-hand mode) |
-| `CharacterGearService` | Timed Wear/Wield/Unequip + deposit. Deposit/source remove → `InventorySession.NotifyExternalStacksChanged`. `TryBeginDomainTimed` / `NotifyAmmoChanged` for 삽탄·장착 |
+| `WieldSlots` | L/R (+ two-hand mode). 든 스택 한손→반대 한손은 출발 칸을 비움 |
+| `CharacterGearService` | Timed Wear/Wield/Unequip + deposit. Deposit/source remove → `InventorySession.NotifyExternalStacksChanged`. `TryBeginDomainTimed` / `NotifyAmmoChanged` for 삽탄·장착. 든 스택 손 전환=`TryBeginWieldGrip` |
 | `WeaponAmmoFit` | Dist.Inventory — 허용 탄창 id / 탄종 / clip vs well |
 | `WeaponAmmoService` | 삽탄·장착·교체·분리·탄 빼기. 탄창=`SupplyRounds`, 총=`ItemStack.LoadedMagazine` (Nested 아님) |
 | `WeaponAmmoDuration` | reload moves → 초 (`CombatMath.MovesPerSecond`, 0이면 1s) |
@@ -90,9 +90,10 @@ NPC는 여전히 사거리 안에서만 `TryPerform` (AI). 플레이어 시전�
 | 항목 | 계약 |
 |------|------|
 | 모션 | Cooling/pending/NoAmmo만 시전 게이트. `NoTarget`/`OutOfRange`는 발사를 막지 않음 |
-| 방향 | 조준축 + **effective** yaw (`CombatMath.DispersionYawDegrees`, 60 단위=1°). 반동은 게이트 아님. 킥=`(gun.recoil+ammo.recoil)*handlingFactor`, 회복=`MovesPerSecond` |
+| 방향 | 조준축 + **effective** yaw (`CombatMath.DispersionYawDegrees`, 60 단위=1°). 반동은 게이트 아님. 킥=`(gun.recoil+ammo.recoil)*handlingFactor`. 회복=지수 `remaining*=exp(-λ·dt)`, `λ=MovesPerSecond/RecoilRecoverRefUnits`(Ref=100 → λ=1). 상한=`RecoilKickUnits × RecoilRemainingMaxKicks`(4). 가산=`remaining + kick*(1 - remaining/cap)` 점근 후 clamp. 넉백 Δv는 미클램프 |
 | 연결 | Attack 프리팹 있으면 `DistProjectile` 비행. 없으면 cue `CombatHitscan` |
 | 조임 | RMB `IsAiming` 동안 `aim01` 0→1. `aim_speed` 0/없음=즉시 1. NPC `AimHeld`=즉시 1. `sight_dispersion*(1-aim01)` |
+| 조준 포인터 | 원거리만. RMB + `TryPreviewRangedSpread` 성공 시 `UIAimPointer`(TopMost). 센터는 프리팹 고정 아트. 퍼짐은 `Dist/UI/AimRing` SDF 쿼드(반경=`sizeDelta`, 두께=`_strokePx`→UV fraction, 반경과 무관). UI는 식을 복제하지 않음. 근접 Pending |
 | 명중 | 레이/탄이 `CharacterBodyHost`에 닿으면 피해. 마스크 기본 `~0`(Character 포함). 자기 콜라이더는 `IsOwnCollider`/`IsSelf` 제외. 맵 벽은 `MapTopologyLineCast`(조준과 동일)에서 멈추고 `Obstructed`+`ImpactPoint` — 이후 벽 HP 훅. `effective`=`gun/ammo.dispersion`+sightExtra+`shot_spread`+recoilRemaining → yaw와 부위 유지 공유. `HitChance` 실패=`ScatterToNeighbor`. 허공 히트스캔=사거리 끝 Miss, 비행=사거리·수명 소멸 |
 
 동작 쿨과 무기 쿨은 **별 타이머**. 동작 쿨=`WeaponPresentation.Entry`(시전 시작, 0=생략). 근접 무기 쿨=`CombatMath.AttackIntervalSeconds`(무게/부피). 원거리는 무기 쿨 게이트 없음 — `effective`(조임+반동 잔여+dispersion)가 탄착 퍼짐과 부위 유지. cue 시점은 쿨이 아님. 건모드 합산은 후속.
@@ -143,18 +144,29 @@ flowchart LR
 
 ### Equip (from inventory)
 
-- Inventory `Item` drag → Character L/R slot: ammo/mag이면 `WeaponAmmoDrop` → `WeaponAmmoService` (삽탄·장착/교체). 아니면 `TryBeginWield` (`GearInventoryDrop`; two-hand item → `WieldHand.TwoHand`)
+- Inventory `Item` drag → Character L/R slot **or HUD QuickSlot L/R**: ammo/mag이면 `WeaponAmmoDrop` → `WeaponAmmoService` (삽탄·장착/교체). 아니면 `TryBeginWield` (`GearInventoryDrop`; two-hand item → `WieldHand.TwoHand`)
+- HUD `Grp_QuickSlot` L/R = 같은 `WieldSlots` 소비자 (`UIHudQuickSlotController` + `UICharacterWieldSlotView`). 숫자 슬롯(1–9)은 별 경로.
 - Inventory `Item` drag → Worn list / worn row: `TryBeginWear` if wearable; else no-op
 - Success: `InventoryDragState.MarkConsumed` (floor drop suppressed). Drop on registered overlay window never floors.
+
+### Wield slot chrome (Character + HUD)
+
+| Corner | Content |
+|--------|---------|
+| Top-left | Action mode label (`WeaponActionRows.ResolveSelected`, none=`—`) |
+| Top-right | Gun rounds only: mag-fed=`{Supply}/{cap}+{Chamber}` (`ItemAmmo.WieldGunRounds`); clip-fed=`{Chamber}/{clip_size}` (`ItemAmmo.WieldClipRounds`); non-gun hidden |
+
+Fire consume → `CharacterAttacker.CommitAttempt` → `NotifyAmmoChanged` → both surfaces re-Bind.
 
 ### Unequip
 
 - Worn row / wield slot: take off / unwield
-- Double-click → body inventory; drag outside Character window → floor (`toFloor`); slot RMB includes 바닥에 놓기. Deposit/source remove는 `NotifyExternalStacksChanged`로 인벤 리스트를 갱신한다.
-- Drag ghost: shared `UIItemDragGhostService` (same TopMost ghost as inventory) while dragging worn/wield; hide on EndDrag
+- Double-click → body inventory; slot RMB includes 바닥에 놓기. Deposit/source remove는 `NotifyExternalStacksChanged`로 인벤 리스트를 갱신한다.
+- Drag to floor: Character = outside Character window; HUD = outside overlay hit-test (`UIOverlayWindow` on QuickSlot). Ghost: shared `UIItemDragGhostService`
 - Worn filter: **body part click** (toggle); FilterLabel click → 전체; hover does not sticky-filter
 - Worn hover uses `AppendItemArmorHover` (Phase A/C fields)
 - Two-hand unwield once
+- Slot RMB **잡기**: 반대 한손 / 양손 (`TryBeginWieldGrip`). `TWO_HAND` 플래그는 한손 전환 불가. 이미 그 그립이면 disabled. 힘·손 결손은 신규 들기와 동일. 반대 칸에 다른 스택이 있으면 displace→body. 인출 딜레이 없이 `WieldSeconds`만.
 
 ## Phase A — Armor detail aggregates (UI only)
 
@@ -620,10 +632,10 @@ Last run: **2026-08-06 post-P0** (Play MCP smoke Pass).
 | L1 | Equipment: body diagram **left** + wield/worn **right** (2-col) | Pass | `GearPanelRoot` right; `Area_BodyStatus` off on gear tabs |
 | L2 | Wield L\|R **horizontal** | Pass | `WieldRoot` HorizontalLayoutGroup |
 | S1 | Wield: **item icon** primary; **no always-on name** | Pass | `Icon` Image; Label alpha 0 for name-bar only |
-| S2 | Wield: **action icon** corner (none = none icon) | Pass | `ActionIcon` + B/C/G/— |
+| S2 | Wield: **action** top-left; **ammo** top-right (gun only) | Pass | `ActionIcon` left; `Ammo` = `ItemAmmoLabels.FormatWieldGunRounds` |
 | S3 | Worn: **icon** + name + covers + name-overlay bar | Pass | `UICharacterWornRow` Icon + Label + `ItemNameStatusBar` |
-| H1 | Hover = DetailPanel (strain/need Str hover-only) | Pass | `ShowText` + Worn `AppendItemArmorHover` |
-| A1 | Slot RMB = **사용 액션** group (WeaponActionRows.Available+None) + unwield/floor | Pass | `WieldSlotActionsContributor` → `HandActionGroup` |
+| H1 | Hover = text hover (strain/need Str hover-only) | Pass | `UITextHoverService` + Worn `AppendItemArmorHover` |
+| A1 | Slot RMB = **사용 액션** group (WeaponActionRows.Available+None) + **잡기**(반대손/양손) + unwield/floor | Pass | `WieldSlotActionsContributor` → `HandActionGroup` + `WieldGripGroup` |
 | F1 | Worn filter by body **click** (toggle); FilterLabel clears | Pass | `OnPartClick` / not hover sticky |
 | T1 | Enc tab: enc body + worn; wield hidden | Pass | `showWield` Equipment-only |
 | T2 | BodyTemp tab: warmth + BodyTemp totals | Pass | `FormatBodyTempTotals` |

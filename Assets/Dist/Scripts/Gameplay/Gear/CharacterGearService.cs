@@ -141,6 +141,37 @@ public sealed class CharacterGearService
         return null;
     }
 
+    /// <summary>이미 든 스택의 손(반대 한손 / 양손) 전환. 인벤 신규 들기와 달리 AlreadyEquipped를 쓰지 않는다.</summary>
+    public string GetWieldGripBlockedReason(ItemStack stack, WieldHand hand)
+    {
+        if (stack?.Item == null)
+            return CharacterGearLabels.BlockedInvalid;
+        if (_toolSession.IsActive)
+            return CharacterGearLabels.BlockedToolSession;
+        if (!_wield.Contains(stack))
+            return CharacterGearLabels.BlockedInvalid;
+
+        bool twoHandRequested = hand == WieldHand.TwoHand;
+        if (!twoHandRequested && GearHandleRules.IsTwoHandWeapon(stack.Item))
+            return CharacterGearLabels.BlockedTwoHandOnly;
+
+        bool twoHand = twoHandRequested || GearHandleRules.IsTwoHandWeapon(stack.Item);
+        WieldHand effective = twoHand ? WieldHand.TwoHand : hand;
+        if (_wield.TryGetGrip(stack, out WieldHand current) && current == effective)
+            return CharacterGearLabels.BlockedAlreadyGrip;
+
+        string missingHand = GetMissingHandReason(effective);
+        if (missingHand != null)
+            return missingHand;
+
+        int str = Strength();
+        if (!GearHandleRules.CanLift(str, stack.Item, twoHand))
+            return CharacterGearLabels.FormatNeedStrength(
+                GearHandleRules.RequiredStr(stack.Item, twoHand), str);
+
+        return null;
+    }
+
     public bool TryBeginWear(ItemStack stack, InventoryContainer source)
     {
         return RunOrEnqueue(CharacterActionKind.Gear, () => TryBeginWearCore(stack, source));
@@ -281,6 +312,32 @@ public sealed class CharacterGearService
     {
         ItemStack stack = _wield.Get(slot);
         return TryBeginUnwield(stack, toFloor);
+    }
+
+    public bool TryBeginWieldGrip(ItemStack stack, WieldHand hand)
+    {
+        return RunOrEnqueue(CharacterActionKind.Gear, () => TryBeginWieldGripCore(stack, hand));
+    }
+
+    bool TryBeginWieldGripCore(ItemStack stack, WieldHand hand)
+    {
+        if (GetWieldGripBlockedReason(stack, hand) != null)
+            return false;
+
+        float duration = GearActionDuration.WieldSeconds(stack.Item);
+        ItemStack captured = stack;
+        WieldHand capturedHand = hand;
+        return BeginTimed(captured, GearTimedAction.Kind.Wield, duration, () =>
+        {
+            if (!_wield.Contains(captured))
+                return;
+            if (!_wield.TryWield(captured, capturedHand, out ItemStack dL, out ItemStack dR))
+                return;
+
+            DepositDisplaced(dL);
+            DepositDisplaced(dR);
+            NotifyPrimaryDirty();
+        });
     }
 
     public void DropWieldForMissingHands(ICharacterBody body)

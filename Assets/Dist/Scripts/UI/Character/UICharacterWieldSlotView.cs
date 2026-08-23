@@ -1,5 +1,5 @@
 // ============================================================
-// UICharacterWieldSlotView — L/R 들기 슬롯 (아이콘·액션 아이콘·호버·해제)
+// UICharacterWieldSlotView — L/R 들기 슬롯 (아이콘·액션·탄약·호버·해제)
 // ============================================================
 
 using System;
@@ -19,10 +19,15 @@ public sealed class UICharacterWieldSlotView :
     IEndDragHandler,
     IDropHandler
 {
-    Image _itemIcon;
-    Image _actionIcon;
-    TMP_Text _actionLabel;
-    TMP_Text _label;
+    const string AmmoObjectName = "Ammo";
+    const string LegacyAmmoObjectName = "tmp";
+
+    [SerializeField] Image _itemIcon;
+    [SerializeField] Image _actionIcon;
+    [SerializeField] TMP_Text _actionLabel;
+    [SerializeField] TMP_Text _ammoLabel;
+    [SerializeField] TMP_Text _label;
+
     ItemNameStatusBar _nameBar;
     CharacterGearService _gear;
     WieldSlotId _slot;
@@ -38,6 +43,7 @@ public sealed class UICharacterWieldSlotView :
         EnsureDropRaycast();
         EnsureItemIcon();
         EnsureActionIcon();
+        EnsureAmmoLabel();
         EnsureLabelForProgressBar();
     }
 
@@ -61,7 +67,10 @@ public sealed class UICharacterWieldSlotView :
         if (t != null)
             _itemIcon = t.GetComponent<Image>();
         if (_itemIcon != null)
+        {
+            _itemIcon.raycastTarget = false;
             return;
+        }
 
         GameObject go = new("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         go.transform.SetParent(transform, false);
@@ -77,20 +86,25 @@ public sealed class UICharacterWieldSlotView :
 
     void EnsureActionIcon()
     {
-        if (_actionIcon != null)
+        if (_actionIcon != null && _actionLabel != null)
+        {
+            DistUiFont.Apply(_actionLabel);
             return;
+        }
 
         Transform t = transform.Find("ActionIcon");
         if (t != null)
         {
-            _actionIcon = t.GetComponent<Image>();
+            if (_actionIcon == null)
+                _actionIcon = t.GetComponent<Image>();
             Transform labelTf = t.Find("Label");
-            if (labelTf != null)
+            if (labelTf != null && _actionLabel == null)
                 _actionLabel = labelTf.GetComponent<TMP_Text>();
         }
 
         if (_actionIcon != null)
         {
+            _actionIcon.raycastTarget = false;
             DistUiFont.Apply(_actionLabel);
             return;
         }
@@ -98,10 +112,11 @@ public sealed class UICharacterWieldSlotView :
         GameObject go = new("ActionIcon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         go.transform.SetParent(transform, false);
         RectTransform rt = go.GetComponent<RectTransform>();
-        rt.anchorMin = new Vector2(1f, 1f);
-        rt.anchorMax = new Vector2(1f, 1f);
-        rt.pivot = new Vector2(1f, 1f);
-        rt.anchoredPosition = new Vector2(-2f, -2f);
+        // Prefab SSOT preferred; fallback = top-left (shared HUD/Character chrome).
+        rt.anchorMin = new Vector2(0f, 1f);
+        rt.anchorMax = new Vector2(0f, 1f);
+        rt.pivot = new Vector2(0f, 1f);
+        rt.anchoredPosition = new Vector2(2f, -2f);
         rt.sizeDelta = new Vector2(GearConstants.WieldActionIconSize, GearConstants.WieldActionIconSize);
         _actionIcon = go.GetComponent<Image>();
         _actionIcon.color = new Color(0.1f, 0.1f, 0.1f, 0.92f);
@@ -121,10 +136,53 @@ public sealed class UICharacterWieldSlotView :
         DistUiFont.Apply(_actionLabel);
     }
 
+    void EnsureAmmoLabel()
+    {
+        if (_ammoLabel != null)
+        {
+            DistUiFont.Apply(_ammoLabel);
+            _ammoLabel.raycastTarget = false;
+            return;
+        }
+
+        Transform ammoTf = transform.Find(AmmoObjectName);
+        if (ammoTf == null)
+            ammoTf = transform.Find(LegacyAmmoObjectName);
+        if (ammoTf != null)
+            _ammoLabel = ammoTf.GetComponent<TMP_Text>();
+
+        if (_ammoLabel != null)
+        {
+            if (ammoTf != null && ammoTf.name != AmmoObjectName)
+                ammoTf.name = AmmoObjectName;
+            DistUiFont.Apply(_ammoLabel);
+            _ammoLabel.raycastTarget = false;
+            return;
+        }
+
+        GameObject go = new(AmmoObjectName, typeof(RectTransform), typeof(CanvasRenderer));
+        go.transform.SetParent(transform, false);
+        RectTransform rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(1f, 1f);
+        rt.anchorMax = new Vector2(1f, 1f);
+        rt.pivot = new Vector2(1f, 1f);
+        rt.anchoredPosition = new Vector2(-2f, -2f);
+        rt.sizeDelta = new Vector2(48f, 14f);
+        _ammoLabel = go.AddComponent<TextMeshProUGUI>();
+        _ammoLabel.fontSize = GearConstants.UiFontSizeActionIcon;
+        _ammoLabel.alignment = TextAlignmentOptions.TopRight;
+        _ammoLabel.raycastTarget = false;
+        DistUiFont.Apply(_ammoLabel);
+    }
+
     void EnsureLabelForProgressBar()
     {
         if (_label != null)
+        {
+            DistUiFont.Apply(_label);
+            _nameBar = ItemNameStatusBar.Ensure(ref _label);
             return;
+        }
 
         Transform labelChild = transform.Find(ItemNameStatusBar.LabelObjectName);
         if (labelChild != null)
@@ -177,6 +235,7 @@ public sealed class UICharacterWieldSlotView :
             }
 
             SetActionVisual(null);
+            SetAmmoVisual(null);
             _nameBar?.Clear();
             return;
         }
@@ -191,6 +250,7 @@ public sealed class UICharacterWieldSlotView :
         WeaponPresentation presentation = WeaponActionRows.Resolve(gear.PresentationCatalog, stack);
         WeaponAction action = WeaponActionRows.ResolveSelected(stack.Instance, presentation);
         SetActionVisual(action);
+        SetAmmoVisual(stack);
         RefreshNameBar();
     }
 
@@ -205,6 +265,16 @@ public sealed class UICharacterWieldSlotView :
             _actionLabel.text = CharacterGearLabels.ActionLabel(action.Value);
     }
 
+    void SetAmmoVisual(ItemStack stack)
+    {
+        if (_ammoLabel == null)
+            return;
+
+        string text = ItemAmmoLabels.FormatWieldGunRounds(stack);
+        _ammoLabel.text = text;
+        _ammoLabel.enabled = !string.IsNullOrEmpty(text);
+    }
+
     public void RefreshNameBar()
     {
         if (_nameBar == null)
@@ -212,6 +282,12 @@ public sealed class UICharacterWieldSlotView :
 
         ItemStack stack = _gear?.Wield?.Get(_slot);
         ItemTimedNameProgress.Apply(_nameBar, stack);
+    }
+
+    public void RefreshAmmo()
+    {
+        ItemStack stack = _gear?.Wield?.Get(_slot);
+        SetAmmoVisual(stack?.Item != null ? stack : null);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -305,17 +381,31 @@ public sealed class UICharacterWieldSlotView :
         if (stack?.Item == null || _onUnequip == null)
             return;
 
-        UICharacterWindow window = GetComponentInParent<UICharacterWindow>();
-        RectTransform windowRt = window != null ? window.WindowRect : null;
-        if (windowRt == null)
-            return;
-
-        Canvas canvas = window.GetComponentInParent<Canvas>();
-        Camera cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
-            ? canvas.worldCamera
-            : null;
-        if (!RectTransformUtility.RectangleContainsScreenPoint(windowRt, eventData.position, cam))
+        if (ShouldUnequipToFloor(eventData.position))
             _onUnequip.Invoke(_slot, true);
+    }
+
+    bool ShouldUnequipToFloor(Vector2 screenPosition)
+    {
+        UICharacterWindow window = GetComponentInParent<UICharacterWindow>();
+        if (window != null)
+        {
+            RectTransform windowRt = window.WindowRect;
+            if (windowRt == null)
+                return false;
+
+            Canvas canvas = window.GetComponentInParent<Canvas>();
+            Camera cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? canvas.worldCamera
+                : null;
+            return !RectTransformUtility.RectangleContainsScreenPoint(windowRt, screenPosition, cam);
+        }
+
+        Canvas hudCanvas = GetComponentInParent<Canvas>();
+        Camera hudCam = hudCanvas != null && hudCanvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? hudCanvas.worldCamera
+            : null;
+        return !UIOverlayWindowHitTest.ContainsScreenPoint(screenPosition, hudCam);
     }
 
     UIItemDragGhostService EnsureDragGhost()

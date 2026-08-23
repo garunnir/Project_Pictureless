@@ -83,9 +83,45 @@ public sealed class WieldSlots
         else
             _right = stack;
 
+        // 이미 든 스택을 반대 한손으로 옮기면 출발 칸을 비운다 (양손 모드가 아님).
+        if (slot == WieldSlotId.Left)
+        {
+            if (_right == stack)
+                _right = null;
+        }
+        else if (_left == stack)
+        {
+            _left = null;
+        }
+
         Changed?.Invoke();
         return true;
     }
+
+    public bool TryGetGrip(ItemStack stack, out WieldHand hand)
+    {
+        hand = WieldHand.Left;
+        if (stack == null || !Contains(stack))
+            return false;
+
+        if (_twoHand)
+        {
+            hand = WieldHand.TwoHand;
+            return true;
+        }
+
+        if (_left == stack)
+        {
+            hand = WieldHand.Left;
+            return true;
+        }
+
+        hand = WieldHand.Right;
+        return true;
+    }
+
+    public static WieldHand OppositeHand(WieldSlotId slot) =>
+        slot == WieldSlotId.Left ? WieldHand.Right : WieldHand.Left;
 
     public bool TryUnwield(ItemStack stack, out ItemStack removed)
     {

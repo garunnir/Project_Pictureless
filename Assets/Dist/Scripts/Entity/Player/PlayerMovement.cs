@@ -46,6 +46,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
     float _encumbranceSpeedMultiplier = 1f;
     float _liftStrainSpeedMultiplier = 1f;
     float _envSpeedMultiplier = 1f;
+    float _imbalanceSpeedMultiplier = 1f;
     bool _encumbranceBlocksSprint;
     bool _encumbranceBlocksMovement;
 
@@ -104,6 +105,10 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
     /// <summary>Env 이동 배율 (GearEnvPenalties × BodyLocomotionPenalties). ClimateHost가 motor와 같은 값을 넣는다.</summary>
     public void SetEnvMovement(float speedMultiplier) =>
         _envSpeedMultiplier = Mathf.Max(0f, speedMultiplier);
+
+    /// <summary>불균형 이동 배율 (1 − Imbalance). CharacterImbalanceHost가 넣는다.</summary>
+    public void SetImbalanceMovement(float speedMultiplier) =>
+        _imbalanceSpeedMultiplier = Mathf.Max(0f, speedMultiplier);
 
     public void BindBody(CharacterMotor motor, CharacterState state, CharacterFacingAnim facing)
     {
@@ -263,7 +268,8 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         float moveSpeed = _moveSpeed
             * _encumbranceSpeedMultiplier
             * _liftStrainSpeedMultiplier
-            * _envSpeedMultiplier;
+            * _envSpeedMultiplier
+            * _imbalanceSpeedMultiplier;
         float sprintMultiplier = _encumbranceBlocksSprint ? 1f : _sprintMultiplier;
         return mover.CalcDesiredMove(
             moveSpeed,

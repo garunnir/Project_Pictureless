@@ -15,6 +15,7 @@ public static class ArmOverlayAnimatorBuilder
     const string RightMaskPath = "Assets/Dist/Visual/Anim/CharacterAnimator/RightArm.mask";
     const string LeftMaskPath = "Assets/Dist/Visual/Anim/CharacterAnimator/LeftArm.mask";
     const string UpperMaskPath = "Assets/Dist/Visual/Anim/CharacterAnimator/UpperBody.mask";
+    const string HeadTorsoMaskPath = "Assets/Dist/Visual/Anim/CharacterAnimator/HeadTorso.mask";
 
     static readonly string[] Hands = { "Left", "Right", "TwoHand" };
 
@@ -44,7 +45,8 @@ public static class ArmOverlayAnimatorBuilder
 
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
-        Debug.Log("[ArmOverlayAnimatorBuilder] Rebuilt arm + Impact + Hurt (no AnimVerb on controller).");
+        Debug.Log(
+            "[ArmOverlayAnimatorBuilder] Rebuilt arm + Impact + Flinch + Hurt (no AnimVerb on controller).");
     }
 
     static void EnsureThinSlotClips()
@@ -179,12 +181,31 @@ public static class ArmOverlayAnimatorBuilder
         var rightMask = AssetDatabase.LoadAssetAtPath<AvatarMask>(RightMaskPath);
         var leftMask = AssetDatabase.LoadAssetAtPath<AvatarMask>(LeftMaskPath);
         var upperMask = AssetDatabase.LoadAssetAtPath<AvatarMask>(UpperMaskPath);
+        AvatarMask headTorsoMask = EnsureHeadTorsoMask();
 
         AddArmLayer(controller, "RightArm Layer", rightMask, "Right", "AttackR");
         AddArmLayer(controller, "LeftArm Layer", leftMask, "Left", "AttackL");
         AddTwoHandLayer(controller, upperMask);
         AddImpactLayer(controller);
+        AddFlinchLayer(controller, headTorsoMask);
         AddHurtLayer(controller);
+    }
+
+    static AvatarMask EnsureHeadTorsoMask()
+    {
+        AvatarMask mask = AssetDatabase.LoadAssetAtPath<AvatarMask>(HeadTorsoMaskPath);
+        if (mask == null)
+        {
+            mask = new AvatarMask { name = "HeadTorso" };
+            AssetDatabase.CreateAsset(mask, HeadTorsoMaskPath);
+        }
+
+        for (int i = 0; i < (int)AvatarMaskBodyPart.LastBodyPart; i++)
+            mask.SetHumanoidBodyPartActive((AvatarMaskBodyPart)i, false);
+        mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.Body, true);
+        mask.SetHumanoidBodyPartActive(AvatarMaskBodyPart.Head, true);
+        EditorUtility.SetDirty(mask);
+        return mask;
     }
 
     /// <summary>
@@ -404,6 +425,36 @@ public static class ArmOverlayAnimatorBuilder
         AssetDatabase.CreateAsset(clip, destPath);
     }
 
+    static void AddFlinchLayer(AnimatorController controller, AvatarMask mask)
+    {
+        controller.AddLayer(CharacterHitReact.FlinchLayerName);
+        AnimatorControllerLayer[] layers = controller.layers;
+        int index = layers.Length - 1;
+        AnimatorControllerLayer layer = layers[index];
+        layer.defaultWeight = 0f;
+        layer.blendingMode = AnimatorLayerBlendingMode.Additive;
+        layer.avatarMask = mask;
+        layer.syncedLayerIndex = -1;
+        layer.iKPass = false;
+        layer.syncedLayerAffectsTiming = false;
+        layers[index] = layer;
+        controller.layers = layers;
+
+        AnimatorStateMachine sm = controller.layers[index].stateMachine;
+        ClearStateMachine(sm);
+
+        AnimatorState empty = AddState(sm, CharacterHitReact.StateEmpty, null, new Vector3(200, 0, 0));
+        AnimatorState flinch = AddState(
+            sm,
+            CharacterHitReact.StateFlinch,
+            FlatClip(CharacterHitReact.ClipFlinch),
+            new Vector3(420, 0, 0));
+        sm.defaultState = empty;
+
+        AddHurtTrigger(empty, flinch, CharacterHitReact.ParamFlinch);
+        AddExitToEmpty(flinch, empty);
+    }
+
     static void AddHurtLayer(AnimatorController controller)
     {
         controller.AddLayer(CharacterHitReact.HurtLayerName);
@@ -423,12 +474,6 @@ public static class ArmOverlayAnimatorBuilder
         ClearStateMachine(sm);
 
         AnimatorState empty = AddState(sm, CharacterHitReact.StateEmpty, null, new Vector3(200, 0, 0));
-        AnimatorState flinch = AddState(
-            sm,
-            CharacterHitReact.StateFlinch,
-            FlatClip(CharacterHitReact.ClipFlinch),
-            new Vector3(420, 0, 0),
-            writeDefaults: false);
         AnimatorState stagger = AddState(
             sm,
             CharacterHitReact.StateStagger,
@@ -441,13 +486,9 @@ public static class ArmOverlayAnimatorBuilder
             new Vector3(200, 180, 0));
         sm.defaultState = empty;
 
-        AddHurtTrigger(empty, flinch, CharacterHitReact.ParamFlinch);
         AddHurtTrigger(empty, stagger, CharacterHitReact.ParamStagger);
-        AddHurtTrigger(flinch, stagger, CharacterHitReact.ParamStagger);
-        AddExitToEmpty(flinch, empty);
         AddExitToEmpty(stagger, empty);
         AddBoolTransition(empty, painDown, CharacterHitReact.ParamPainShocked, true);
-        AddBoolTransition(flinch, painDown, CharacterHitReact.ParamPainShocked, true);
         AddBoolTransition(stagger, painDown, CharacterHitReact.ParamPainShocked, true);
         AddBoolTransition(painDown, empty, CharacterHitReact.ParamPainShocked, false);
     }

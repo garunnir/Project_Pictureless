@@ -32,7 +32,7 @@ public static class CombatImpulse
     /// <summary>이 Δv 이상이면 Stagger.</summary>
     public const float StaggerDeltaV = 1.2f;
 
-    /// <summary>Stagger 이동 잠금 초.</summary>
+    /// <summary>Stagger 이동 잠금 초 (레거시). 이동 계약은 CombatImbalance 이속 배율을 쓴다.</summary>
     public const float StaggerSeconds = 0.45f;
 
     /// <summary>넉백 속도 감쇠 / 초.</summary>

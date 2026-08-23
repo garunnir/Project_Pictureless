@@ -42,6 +42,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     CharacterMotor _motor;
     CharacterAppearanceHost _appearance;
     CharacterPainHost _painHost;
+    CharacterImbalanceHost _imbalanceHost;
     CharacterState _characterState;
     PlayerAimController _aimController;
     CharacterLocomotionAnim _locAnim;
@@ -190,6 +191,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         TryGetComponent(out _motor);
         TryGetComponent(out _appearance);
         TryGetComponent(out _painHost);
+        TryGetComponent(out _imbalanceHost);
         TryGetComponent(out _characterState);
         TryGetComponent(out _aimController);
         TryGetComponent(out _locAnim);
@@ -381,7 +383,9 @@ public sealed class CharacterAttacker : MonoBehaviour
 
         if (_painHost != null && _painHost.IsPainShocked)
             return AttackPerformResult.Cooling;
-        if (_motor != null && _motor.IsStaggered)
+        if (_imbalanceHost != null && _imbalanceHost.IsFullyUnbalanced)
+            return AttackPerformResult.Cooling;
+        if (_imbalanceHost == null && _motor != null && _motor.IsStaggered)
             return AttackPerformResult.Cooling;
 
         // cue 대기 중 재시전 → pending 리셋·시전 VFX 연타 방지
@@ -666,6 +670,23 @@ public sealed class CharacterAttacker : MonoBehaviour
     public float RangedEffectiveDispersion(WieldHand hand, ItemData item, ItemData ammo) =>
         CombatMath.EffectiveDispersion(item, ammo, GetRecoil(hand), ResolveAim01(item));
 
+    /// <summary>
+    /// 원거리 탄퍼짐 미리보기. 시전·킥 없음. 근접/비총이면 false.
+    /// </summary>
+    public bool TryPreviewRangedSpread(out float effectiveDispersion)
+    {
+        effectiveDispersion = 0f;
+        ItemData item = CurrentItem;
+        if (item?.gun == null || !WeaponActionUtil.IsRanged(_selectedAction))
+            return false;
+
+        effectiveDispersion = RangedEffectiveDispersion(
+            _activeWieldHand,
+            item,
+            WeaponChamber.ResolveAmmo(_wieldedStack, _wieldedInstance));
+        return true;
+    }
+
     float ResolveAim01(ItemData item)
     {
         if (_aimIntent != null && _aimIntent.AimHeld)
@@ -693,7 +714,12 @@ public sealed class CharacterAttacker : MonoBehaviour
             _gearHost != null ? _gearHost.Wear : null,
             _gearHost != null ? _gearHost.Wield : null);
         float deltaV = CombatImpulse.ShooterDeltaV(item, ammo, mass);
-        _recoilRemaining[index] += CombatImpulse.DispersionKickFromDeltaV(deltaV);
+        float kick = CombatImpulse.DispersionKickFromDeltaV(deltaV);
+        float cap = CombatMath.RecoilRemainingMax(item, ammo);
+        _recoilRemaining[index] = CombatMath.ApplyRecoilKick(
+            _recoilRemaining[index],
+            kick,
+            cap);
         if (_motor != null && deltaV > 0.001f)
         {
             Vector3 back = -ResolveFireDirection();
@@ -1119,7 +1145,10 @@ public sealed class CharacterAttacker : MonoBehaviour
         }
 
         if (consumeAmmo)
+        {
             WeaponChamber.TryConsume(context.Instance);
+            PlayerGearHost.Active?.Service?.NotifyAmmoChanged();
+        }
         if (practice)
             Practice(item, context.Attack, context.Action, ammo);
     }
@@ -1214,15 +1243,14 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     void TickRecoilSlots(float dt)
     {
-        float recover = CombatMath.RecoilRecoverPerSecond * dt;
-        if (recover <= 0f)
+        if (dt <= 0f)
             return;
 
         for (int i = 0; i < _recoilRemaining.Length; i++)
         {
             if (_recoilRemaining[i] <= 0f)
                 continue;
-            _recoilRemaining[i] = Mathf.Max(0f, _recoilRemaining[i] - recover);
+            _recoilRemaining[i] = CombatMath.DecayRecoilRemaining(_recoilRemaining[i], dt);
         }
     }
 

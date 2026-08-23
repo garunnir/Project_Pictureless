@@ -82,13 +82,9 @@ public class KinematicMover
         bool hasInput = _moveDir.sqrMagnitude > Mathf.Epsilon;
         float currentSpeed = _currentVelocity.magnitude;
 
-        if (!hasInput)
-        {
-            // 입력이 없을 때는 현재 속도 기준으로 관성 유지/해제
-            IsInertiaActive = currentSpeed > baseThresholdSpeed;
-            _currentVelocity = IsInertiaActive ? _currentVelocity * Inertia : Vector3.zero;
-            return _currentVelocity * dt;
-        }
+        // 목표 이속 0(불균형 풀)·입력 없음 → 관성 감속만. 스프린트 가속 이어가기 금지.
+        if (!hasInput || walkSpeed <= Mathf.Epsilon)
+            return CoastMove(dt, baseThresholdSpeed);
 
         Vector3 direction = _moveDir.normalized;
         float desiredSpeed;
@@ -120,18 +116,27 @@ public class KinematicMover
     public Vector3 CalcConstantSpeedMove(float speed, float deltaTime)
     {
         float clampedSpeed = Mathf.Max(0f, speed);
-        if (_moveDir.sqrMagnitude <= Mathf.Epsilon ||
-            clampedSpeed <= Mathf.Epsilon ||
-            deltaTime <= 0f)
-        {
-            _currentVelocity = Vector3.zero;
-            IsInertiaActive = false;
+        if (deltaTime <= 0f)
             return Vector3.zero;
-        }
+
+        // 이속 0·입력 없음 → 스냅 0 금지, 관성 미끄러짐(자빠짐).
+        if (_moveDir.sqrMagnitude <= Mathf.Epsilon || clampedSpeed <= Mathf.Epsilon)
+            return CoastMove(deltaTime, 0.01f);
 
         _currentVelocity = _moveDir.normalized * clampedSpeed;
         IsInertiaActive = false;
         return _currentVelocity * deltaTime;
+    }
+
+    Vector3 CoastMove(float dt, float baseThresholdSpeed)
+    {
+        float currentSpeed = _currentVelocity.magnitude;
+        float damp = Inertia > 1e-4f ? Inertia : 0.85f;
+        IsInertiaActive = currentSpeed > baseThresholdSpeed;
+        _currentVelocity = IsInertiaActive ? _currentVelocity * damp : Vector3.zero;
+        if (_currentVelocity.sqrMagnitude < 1e-6f)
+            _currentVelocity = Vector3.zero;
+        return _currentVelocity * dt;
     }
 
     // desired: 이동하고 싶은 벡터

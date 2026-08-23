@@ -13,54 +13,164 @@ MonoBehaviour:
   m_Name: UI_ko
   m_EditorClassIdentifier: Config::LocalizationTable
   _entries:
-  - key: ItemContextMenu.Craft
+  - key: ContextMenu.DisabledOverflow
+    text: "\uADF8 \uC678 {0}\uAC1C"
+  - key: Crafting.All
+    text: "\uC804\uCCB4"
+  - key: Crafting.BookKnown
+    text: "\uB808\uC2DC\uD53C \uC2B5\uB4DD"
+  - key: Crafting.CannotCraft
+    text: "\uC7AC\uB8CC\xB7\uB3C4\uAD6C\xB7\uC2A4\uD0AC\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4"
+  - key: Crafting.CountFormat
+    text: '{0}/{1}'
+  - key: Crafting.Craft
     text: "\uC81C\uC791"
-  - key: ItemContextMenu.Uncraft
-    text: "\uBD84\uD574"
-  - key: ItemContextMenu.MiscGroup
-    text: "\uAE30\uD0C0"
-  - key: ItemContextMenu.UncraftPrefix
-    text: "\uBD84\uD574: "
-  - key: ItemContextMenu.CraftBlocked
-    text: "\uC7AC\uB8CC\xB7\uB3C4\uAD6C\xB7\uC2A4\uD0AC \uBD80\uC871"
-  - key: ItemContextMenu.UncraftBlocked
-    text: "\uBD84\uD574 \uBD88\uAC00"
-  - key: ItemContextMenu.UnknownResult
-    text: '?'
-  - key: ItemContextMenu.Eat
-    text: "\uBA39\uAE30"
-  - key: ItemContextMenu.Drink
-    text: "\uB9C8\uC2DC\uAE30"
-  - key: ItemContextMenu.Use
-    text: "\uC0AC\uC6A9"
-  - key: ItemContextMenu.ConsumeBlocked
-    text: "\uC0AC\uC6A9 \uBD88\uAC00"
-  - key: ItemContextMenu.LoadAmmo
-    text: "\uC0BD\uD0C4"
-  - key: ItemContextMenu.AttachMag
-    text: "\uC7A5\uCC29"
-  - key: ItemContextMenu.SwapMag
-    text: "\uD0C4\uCC3D \uAD50\uCCB4"
-  - key: ItemContextMenu.DetachMag
-    text: "\uBD84\uB9AC"
-  - key: ItemContextMenu.UnloadAmmo
-    text: "\uD0C4 \uBE7C\uAE30"
+  - key: Crafting.DurationFormat
+    text: '{0}m {1}s'
+  - key: Crafting.Favourites
+    text: "\uC990\uACA8\uCC3E\uAE30"
+  - key: Crafting.Max
+    text: MAX
+  - key: Crafting.OutputCountFormat
+    text: '{0}'
+  - key: Crafting.Outputs
+    text: "\uACB0\uACFC"
+  - key: Crafting.QualityAltFormat
+    text: '{0} lv.{1}'
+  - key: Crafting.QualityCountFormat
+    text: '{0}/lv.{1}'
+  - key: Crafting.QualityFormat
+    text: '{0} lv.{1}'
+  - key: Crafting.RequiredItems
+    text: "\uD544\uC694 \uC7AC\uB8CC"
+  - key: Crafting.SearchPlaceholder
+    text: "\uAC80\uC0C9"
+  - key: Crafting.SkillLine
+    text: '{0}  {1}/{2}'
+  - key: Crafting.TimeMinutes
+    text: "{0}\uBD84"
+  - key: Crafting.TimeRemaining
+    text: "\uB0A8\uC740 \uC2DC\uAC04: {0}"
+  - key: Crafting.TimeRequired
+    text: "\uC18C\uC694 \uC2DC\uAC04: {0}"
+  - key: Crafting.Title
+    text: "\uC81C\uC791"
+  - key: Crafting.TitleOn
+    text: "\uC81C\uC791 \u2014 {0}"
+  - key: Interaction.Crate.DisplayName
+    text: "\uC0C1\uC790"
+  - key: Interaction.Crate.Hint
+    text: "\uB8E8\uD305"
+  - key: Interaction.Door.DisplayName
+    text: "\uBB38"
+  - key: Interaction.DoorClose
+    text: "\uBB38 \uB2EB\uAE30"
+  - key: Interaction.DoorOpen
+    text: "\uBB38 \uC5F4\uAE30"
+  - key: Interaction.Key
+    text: E
+  - key: Inventory.Column.Category
+    text: "\uBD84\uB958"
+  - key: Inventory.Column.Count
+    text: "\uC218\uB7C9"
+  - key: Inventory.Column.Name
+    text: "\uC774\uB984"
+  - key: Inventory.Column.Volume
+    text: "\uBD80\uD53C"
+  - key: Inventory.Column.Weight
+    text: "\uBB34\uAC8C"
+  - key: Inventory.EmptyVolume
+    text: "\u2014 L"
+  - key: Inventory.EmptyWeight
+    text: "\u2014 kg"
+  - key: Inventory.ItemDetail.Category
+    text: "\uBD84\uB958: {0}"
+  - key: Inventory.ItemDetail.ContainerCapacity
+    text: "\uC218\uB0A9: \uCD5C\uB300 {0:0.##} kg, {1:0.##} L"
+  - key: Inventory.ItemDetail.Count
+    text: "\uC218\uB7C9: x{0}"
+  - key: Inventory.ItemDetail.Durability
+    text: "\uB0B4\uAD6C\uB3C4: {0}"
+  - key: Inventory.ItemDetail.DurabilityPristine
+    text: "\uBB34\uC190\uC0C1"
+  - key: Inventory.ItemDetail.Materials
+    text: "\uC7AC\uC9C8: {0}"
+  - key: Inventory.ItemDetail.Type
+    text: "\uC720\uD615: {0}"
+  - key: Inventory.ItemDetail.Volume
+    text: "\uBD80\uD53C: {0:0.##} L"
+  - key: Inventory.ItemDetail.Weight
+    text: "\uBB34\uAC8C: {0:0.##} kg (\uCD1D {1:0.##} kg)"
+  - key: Inventory.LootTitle
+    text: Loot
+  - key: Inventory.PrimaryTitle
+    text: Inventory
+  - key: Inventory.StackCount
+    text: x{0}
+  - key: Inventory.StackVolumeUnit
+    text: L
+  - key: Inventory.StackVolumeValue
+    text: '{0:0.##}'
+  - key: Inventory.StackWeightUnit
+    text: kg
+  - key: Inventory.StackWeightValue
+    text: '{0:0.##}'
+  - key: Inventory.VolumeCapacity
+    text: '{0:0.##}/{1:0.##} L'
+  - key: Inventory.WeightCapacity
+    text: '{0:0.##}/{1:0.##} kg'
+  - key: ItemAmmo.GunMagFormat
+    text: '{0} [{1}]'
+  - key: ItemAmmo.MagSupplyFormat
+    text: '{0} ({1}/{2})'
+  - key: ItemAmmo.WieldClipRounds
+    text: '{0}/{1}'
+  - key: ItemAmmo.WieldGunRounds
+    text: '{0}/{1}+{2}'
   - key: ItemContextMenu.AmmoBlocked
     text: "\uD560 \uC218 \uC5C6\uC74C"
   - key: ItemContextMenu.AmmoBusy
     text: "\uB2E4\uB978 \uD589\uB3D9 \uC911"
   - key: ItemContextMenu.AmmoFull
     text: "\uAC00\uB4DD \uCC38"
-  - key: ItemContextMenu.AmmoWrong
-    text: "\uB2E4\uB978 \uD0C4\uC774 \uB4E4\uC5B4 \uC788\uC74C"
   - key: ItemContextMenu.AmmoNoRoom
     text: "\uB123\uC744 \uACF5\uAC04\uC774 \uC5C6\uC74C"
-  - key: ItemAmmo.MagSupplyFormat
-    text: '{0} ({1}/{2})'
-  - key: ItemAmmo.GunMagFormat
-    text: '{0} [{1}]'
+  - key: ItemContextMenu.AmmoWrong
+    text: "\uB2E4\uB978 \uD0C4\uC774 \uB4E4\uC5B4 \uC788\uC74C"
+  - key: ItemContextMenu.AttachMag
+    text: "\uC7A5\uCC29"
+  - key: ItemContextMenu.ConsumeBlocked
+    text: "\uC0AC\uC6A9 \uBD88\uAC00"
+  - key: ItemContextMenu.Craft
+    text: "\uC81C\uC791"
+  - key: ItemContextMenu.CraftBlocked
+    text: "\uC7AC\uB8CC\xB7\uB3C4\uAD6C\xB7\uC2A4\uD0AC \uBD80\uC871"
+  - key: ItemContextMenu.DetachMag
+    text: "\uBD84\uB9AC"
+  - key: ItemContextMenu.Drink
+    text: "\uB9C8\uC2DC\uAE30"
+  - key: ItemContextMenu.Eat
+    text: "\uBA39\uAE30"
+  - key: ItemContextMenu.LoadAmmo
+    text: "\uC0BD\uD0C4"
+  - key: ItemContextMenu.MiscGroup
+    text: "\uAE30\uD0C0"
   - key: ItemContextMenu.SubmenuChevron
     text: "\u25B6"
+  - key: ItemContextMenu.SwapMag
+    text: "\uD0C4\uCC3D \uAD50\uCCB4"
+  - key: ItemContextMenu.Uncraft
+    text: "\uBD84\uD574"
+  - key: ItemContextMenu.UncraftBlocked
+    text: "\uBD84\uD574 \uBD88\uAC00"
+  - key: ItemContextMenu.UncraftPrefix
+    text: "\uBD84\uD574: "
+  - key: ItemContextMenu.UnknownResult
+    text: '?'
+  - key: ItemContextMenu.UnloadAmmo
+    text: "\uD0C4 \uBE7C\uAE30"
+  - key: ItemContextMenu.Use
+    text: "\uC0AC\uC6A9"
   - key: ItemDamage.1
     text: "\uC190\uC0C1\uB428"
   - key: ItemDamage.2
@@ -71,180 +181,228 @@ MonoBehaviour:
     text: "\uAC70\uC758 \uD30C\uAD34\uB428"
   - key: ItemDamage.NameFormat
     text: '{0} ({1})'
-  - key: RecipeKnowledge.Invalid
-    text: Invalid recipe
-  - key: RecipeKnowledge.SkillRequired
-    text: "\uC2A4\uD0AC lv{0} \uD544\uC694"
-  - key: RecipeKnowledge.BookRequired
-    text: "\uCC45 \uD544\uC694"
-  - key: RecipeKnowledge.Locked
-    text: Locked
-  - key: Recipe.ResultCountFormat
-    text: '{0} x{1}'
-  - key: Inventory.PrimaryTitle
-    text: Inventory
-  - key: Inventory.LootTitle
-    text: Loot
-  - key: Inventory.EmptyWeight
-    text: "\u2014 kg"
-  - key: Inventory.EmptyVolume
-    text: "\u2014 L"
-  - key: Inventory.WeightCapacity
-    text: '{0:0.##}/{1:0.##} kg'
-  - key: Inventory.VolumeCapacity
-    text: '{0:0.##}/{1:0.##} L'
-  - key: Inventory.StackCount
-    text: x{0}
-  - key: Inventory.StackWeightValue
-    text: '{0:0.##}'
-  - key: Inventory.StackWeightUnit
-    text: kg
-  - key: Inventory.StackVolumeValue
-    text: '{0:0.##}'
-  - key: Inventory.StackVolumeUnit
-    text: L
-  - key: Inventory.Column.Category
-    text: "\uBD84\uB958"
-  - key: Inventory.Column.Name
-    text: "\uC774\uB984"
-  - key: Inventory.Column.Count
-    text: "\uC218\uB7C9"
-  - key: Inventory.Column.Weight
-    text: "\uBB34\uAC8C"
-  - key: Inventory.Column.Volume
-    text: "\uBD80\uD53C"
-  - key: Inventory.ItemDetail.Category
-    text: "\uBD84\uB958: {0}"
-  - key: Inventory.ItemDetail.Type
-    text: "\uC720\uD615: {0}"
-  - key: Inventory.ItemDetail.Count
-    text: "\uC218\uB7C9: x{0}"
-  - key: Inventory.ItemDetail.Weight
-    text: "\uBB34\uAC8C: {0:0.##} kg (\uCD1D {1:0.##} kg)"
-  - key: Inventory.ItemDetail.Volume
-    text: "\uBD80\uD53C: {0:0.##} L"
-  - key: Inventory.ItemDetail.Durability
-    text: "\uB0B4\uAD6C\uB3C4: {0}"
-  - key: Inventory.ItemDetail.DurabilityPristine
-    text: "\uBB34\uC190\uC0C1"
-  - key: Inventory.ItemDetail.ContainerCapacity
-    text: "\uC218\uB0A9: \uCD5C\uB300 {0:0.##} kg, {1:0.##} L"
-  - key: Inventory.ItemDetail.Materials
-    text: "\uC7AC\uC9C8: {0}"
-  - key: Interaction.DoorOpen
-    text: "\uBB38 \uC5F4\uAE30"
-  - key: Interaction.DoorClose
-    text: "\uBB38 \uB2EB\uAE30"
-  - key: Interaction.Door.DisplayName
-    text: "\uBB38"
-  - key: Interaction.Crate.DisplayName
-    text: "\uC0C1\uC790"
-  - key: Interaction.Crate.Hint
-    text: "\uB8E8\uD305"
-  - key: Interaction.Key
-    text: E
-  - key: Tile.UncategorizedCategory
-    text: "\uAE30\uD0C0"
-  - key: UI.SelectBtn.ObjectNamePrefix
-    text: "\uC120\uD0DD{0}"
-  - key: PlayerStatus.Title
-    text: "\uC0C1\uD0DC"
-  - key: PlayerStatus.VitalsSection
-    text: "\uC0DD\uC874"
-  - key: PlayerStatus.SkillsSection
-    text: "\uC2A4\uD0AC"
+  - key: MessageLog.Title
+    text: "\uBA54\uC2DC\uC9C0"
+  - key: PlayerStatus.ConditionFormat
+    text: '{0}/{1}'
+  - key: PlayerStatus.DebugSeverArmL
+    text: "\uC808\uB2E8(\uC67C\uD314)"
+  - key: PlayerStatus.DetailEffects
+    text: "\uC0C1\uD0DC \uC774\uC0C1"
   - key: PlayerStatus.DetailHeader
     text: "\uBD80\uC704 \uC0C1\uC138"
   - key: PlayerStatus.DetailSubparts
     text: "\uC138\uBD80 \uBD80\uC704"
-  - key: PlayerStatus.DetailEffects
-    text: "\uC0C1\uD0DC \uC774\uC0C1"
-  - key: PlayerStatus.NoEffects
-    text: "\uC774\uC0C1 \uC5C6\uC74C"
-  - key: PlayerStatus.Lost
-    text: "\uC0C1\uC2E4"
-  - key: PlayerStatus.ConditionFormat
-    text: '{0}/{1}'
-  - key: PlayerStatus.VitalFormat
-    text: '{0}/{1}'
-  - key: PlayerStatus.SkillFormat
-    text: '{0}  Lv.{1}'
-  - key: PlayerStatus.DebugSeverArmL
-    text: "\uC808\uB2E8(\uC67C\uD314)"
-  - key: PlayerStatus.Part.head
-    text: "\uBA38\uB9AC"
-  - key: PlayerStatus.Part.torso
-    text: "\uBAB8\uD1B5"
-  - key: PlayerStatus.Part.arm_l
-    text: "\uC67C\uD314"
-  - key: PlayerStatus.Part.arm_r
-    text: "\uC624\uB978\uD314"
-  - key: PlayerStatus.Part.leg_l
-    text: "\uC67C\uB2E4\uB9AC"
-  - key: PlayerStatus.Part.leg_r
-    text: "\uC624\uB978\uB2E4\uB9AC"
-  - key: PlayerStatus.Part.eyes
-    text: "\uB208"
-  - key: PlayerStatus.Part.mouth
-    text: "\uC785"
-  - key: PlayerStatus.Part.hand_l
-    text: "\uC67C\uC190"
-  - key: PlayerStatus.Part.hand_r
-    text: "\uC624\uB978\uC190"
-  - key: PlayerStatus.Part.foot_l
-    text: "\uC67C\uBC1C"
-  - key: PlayerStatus.Part.foot_r
-    text: "\uC624\uB978\uBC1C"
-  - key: PlayerStatus.Part.finger_thumb_l
-    text: "\uC67C\uC5C4\uC9C0"
-  - key: PlayerStatus.Part.finger_index_l
-    text: "\uC67C\uAC80\uC9C0"
-  - key: PlayerStatus.Part.finger_thumb_r
-    text: "\uC624\uB978\uC5C4\uC9C0"
-  - key: PlayerStatus.Part.finger_index_r
-    text: "\uC624\uB978\uAC80\uC9C0"
-  - key: PlayerStatus.Vital.Hunger
-    text: "\uACF5\uBCF5"
-  - key: PlayerStatus.Vital.Thirst
-    text: "\uAC08\uC99D"
-  - key: PlayerStatus.Vital.Stamina
-    text: "\uC2A4\uD0DC\uBBF8\uB098"
-  - key: PlayerStatus.Skill.survival
-    text: "\uC0DD\uC874\uC220"
-  - key: PlayerStatus.VitalProse.Hunger.Full
-    text: "\uBC30\uAC00 \uBD80\uB974\uB2E4"
-  - key: PlayerStatus.VitalProse.Hunger.Ok
-    text: "\uBC30\uAC00 \uB4E0\uB4EC\uD558\uB2E4"
-  - key: PlayerStatus.VitalProse.Hunger.Low
-    text: "\uBC30\uAC00 \uACE0\uD504\uB2E4"
-  - key: PlayerStatus.VitalProse.Hunger.Critical
-    text: "\uAD70\uC8FC\uB9AC\uACE0 \uC788\uB2E4"
-  - key: PlayerStatus.VitalProse.Thirst.Full
-    text: "\uBAA9\uC774 \uCDA9\uBD84\uD788 \uCD95\uC778\uB2E4"
-  - key: PlayerStatus.VitalProse.Thirst.Ok
-    text: "\uBAA9\uC774 \uB9C8\uB974\uC9C0 \uC54A\uC558\uB2E4"
-  - key: PlayerStatus.VitalProse.Thirst.Low
-    text: "\uBAA9\uC774 \uB9C8\uB974\uB2E4"
-  - key: PlayerStatus.VitalProse.Thirst.Critical
-    text: "\uBAA9\uC774 \uD0C0\uB294 \uAC83 \uAC19\uB2E4"
-  - key: PlayerStatus.VitalProse.Stamina.Full
-    text: "\uBAB8\uC774 \uAC00\uBCBD\uB2E4"
-  - key: PlayerStatus.VitalProse.Stamina.Ok
-    text: "\uC544\uC9C1 \uBC84\uD2F8 \uB9CC\uD558\uB2E4"
-  - key: PlayerStatus.VitalProse.Stamina.Low
-    text: "\uBAB8\uC774 \uBB34\uAC81\uB2E4"
-  - key: PlayerStatus.VitalProse.Stamina.Critical
-    text: "\uAE30\uC9C4\uB9E5\uC9C4\uD558\uB2E4"
+  - key: PlayerStatus.Effect.adrenaline
+    text: "\uC544\uB4DC\uB808\uB0A0\uB9B0"
   - key: PlayerStatus.Effect.bleed
     text: "\uCD9C\uD608"
+  - key: PlayerStatus.Effect.bloated
+    text: "\uD33D\uB9CC"
   - key: PlayerStatus.Effect.fracture
     text: "\uACE8\uC808"
   - key: PlayerStatus.Effect.infected
     text: "\uAC10\uC5FC"
   - key: PlayerStatus.Effect.regenerating
     text: "\uC7AC\uC0DD \uC911"
-  - key: PlayerStatus.Effect.adrenaline
+  - key: PlayerStatus.Lost
+    text: "\uC0C1\uC2E4"
+  - key: PlayerStatus.Mood.Adrenaline
     text: "\uC544\uB4DC\uB808\uB0A0\uB9B0"
+  - key: PlayerStatus.Mood.Fed
+    text: "\uBC30\uAC00 \uB4E0\uB4EC\uD558\uB2E4"
+  - key: PlayerStatus.Mood.Full
+    text: "\uBC30\uAC00 \uBD80\uB974\uB2E4"
+  - key: PlayerStatus.Mood.GoodMood
+    text: "\uAE30\uBD84\uC774 \uC88B\uB2E4"
+  - key: PlayerStatus.Mood.Hungry
+    text: "\uBC30\uAC00 \uACE0\uD504\uB2E4"
+  - key: PlayerStatus.Mood.Overencumbered
+    text: "\uACFC\uC801"
+  - key: PlayerStatus.Mood.Overencumbered.Extreme
+    text: "\uC6C0\uC9C1\uC77C \uC218 \uC5C6\uC744 \uB9CC\uD07C \uBB34\uAC81\uB2E4"
+  - key: PlayerStatus.Mood.Overencumbered.Heavy
+    text: "\uC9D0\uC774 \uB108\uBB34 \uBB34\uAC81\uB2E4"
+  - key: PlayerStatus.Mood.Overencumbered.Light
+    text: "\uC9D0\uC774 \uC870\uAE08 \uBB34\uAC81\uB2E4"
+  - key: PlayerStatus.Mood.Overencumbered.Medium
+    text: "\uC9D0\uC774 \uBB34\uAC81\uB2E4"
+  - key: PlayerStatus.Mood.Sad
+    text: "\uAE30\uBD84\uC774 \uCC98\uC9C4\uB2E4"
+  - key: PlayerStatus.Mood.Sick
+    text: "\uBAB8\uC774 \uC544\uD504\uB2E4"
+  - key: PlayerStatus.Mood.ThirstQuenched
+    text: "\uBAA9\uC774 \uCD95\uC5EC \uC788\uB2E4"
+  - key: PlayerStatus.Mood.Thirsty
+    text: "\uBAA9\uC774 \uB9C8\uB974\uB2E4"
+  - key: PlayerStatus.Mood.VeryHungry
+    text: "\uB9E4\uC6B0 \uBC30\uAC00 \uACE0\uD504\uB2E4"
+  - key: PlayerStatus.Mood.VeryThirsty
+    text: "\uBAA9\uC774 \uB9E4\uC6B0 \uB9C8\uB974\uB2E4"
+  - key: PlayerStatus.NoEffects
+    text: "\uC774\uC0C1 \uC5C6\uC74C"
+  - key: PlayerStatus.Part.arm_l
+    text: "\uC67C\uD314"
+  - key: PlayerStatus.Part.arm_r
+    text: "\uC624\uB978\uD314"
+  - key: PlayerStatus.Part.belly
+    text: "\uBC30"
+  - key: PlayerStatus.Part.calf_l
+    text: "\uC67C\uC885\uC544\uB9AC"
+  - key: PlayerStatus.Part.calf_r
+    text: "\uC624\uB978\uC885\uC544\uB9AC"
+  - key: PlayerStatus.Part.chest
+    text: "\uAC00\uC2B4"
+  - key: PlayerStatus.Part.eyes
+    text: "\uB208"
+  - key: PlayerStatus.Part.finger_index_l
+    text: "\uC67C\uAC80\uC9C0"
+  - key: PlayerStatus.Part.finger_index_r
+    text: "\uC624\uB978\uAC80\uC9C0"
+  - key: PlayerStatus.Part.finger_thumb_l
+    text: "\uC67C\uC5C4\uC9C0"
+  - key: PlayerStatus.Part.finger_thumb_r
+    text: "\uC624\uB978\uC5C4\uC9C0"
+  - key: PlayerStatus.Part.foot_l
+    text: "\uC67C\uBC1C"
+  - key: PlayerStatus.Part.foot_r
+    text: "\uC624\uB978\uBC1C"
+  - key: PlayerStatus.Part.hand_l
+    text: "\uC67C\uC190"
+  - key: PlayerStatus.Part.hand_r
+    text: "\uC624\uB978\uC190"
+  - key: PlayerStatus.Part.head
+    text: "\uBA38\uB9AC"
+  - key: PlayerStatus.Part.leg_l
+    text: "\uC67C\uB2E4\uB9AC"
+  - key: PlayerStatus.Part.leg_r
+    text: "\uC624\uB978\uB2E4\uB9AC"
+  - key: PlayerStatus.Part.lower_arm_l
+    text: "\uC67C\uC544\uB798\uD314"
+  - key: PlayerStatus.Part.lower_arm_r
+    text: "\uC624\uB978\uC544\uB798\uD314"
+  - key: PlayerStatus.Part.mouth
+    text: "\uC785"
+  - key: PlayerStatus.Part.neck
+    text: "\uBAA9"
+  - key: PlayerStatus.Part.pelvis
+    text: "\uACE8\uBC18"
+  - key: PlayerStatus.Part.thigh_l
+    text: "\uC67C\uD5C8\uBC85\uC9C0"
+  - key: PlayerStatus.Part.thigh_r
+    text: "\uC624\uB978\uD5C8\uBC85\uC9C0"
+  - key: PlayerStatus.Part.torso
+    text: "\uBAB8\uD1B5"
+  - key: PlayerStatus.Part.upper_arm_l
+    text: "\uC67C\uC704\uD314"
+  - key: PlayerStatus.Part.upper_arm_r
+    text: "\uC624\uB978\uC704\uD314"
+  - key: PlayerStatus.Skill.survival
+    text: "\uC0DD\uC874\uC220"
+  - key: PlayerStatus.SkillFormat
+    text: '{0}  Lv.{1}'
+  - key: PlayerStatus.SkillsSection
+    text: "\uC2A4\uD0AC"
+  - key: PlayerStatus.Title
+    text: "\uC0C1\uD0DC"
+  - key: PlayerStatus.View.Condition
+    text: "\uC0C1\uD0DC"
+  - key: PlayerStatus.View.Thermal
+    text: "\uCCB4\uC628"
+  - key: PlayerStatus.View.Wound
+    text: "\uC0C1\uCC98"
+  - key: PlayerStatus.Vital.Hunger
+    text: "\uACF5\uBCF5"
+  - key: PlayerStatus.Vital.Stamina
+    text: "\uC2A4\uD0DC\uBBF8\uB098"
+  - key: PlayerStatus.Vital.Thirst
+    text: "\uAC08\uC99D"
+  - key: PlayerStatus.VitalFormat
+    text: '{0}/{1}'
+  - key: PlayerStatus.VitalProse.Hunger.Critical
+    text: "\uAD70\uC8FC\uB9AC\uACE0 \uC788\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Engorged
+    text: "\uBC30\uAC00 \uD130\uC9C8 \uB4EF\uD558\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Famished
+    text: "\uD5C8\uAE30\uC5D0 \uC2DC\uB2EC\uB9B0\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Full
+    text: "\uBC30\uAC00 \uBD80\uB974\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Hungry
+    text: "\uBC30\uAC00 \uACE0\uD504\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Low
+    text: "\uBC30\uAC00 \uACE0\uD504\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Ok
+    text: "\uBC30\uAC00 \uB4E0\uB4EC\uD558\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Sated
+    text: "\uBC30\uAC00 \uB4E0\uB4EC\uD558\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.Starving
+    text: "\uAD70\uC8FC\uB9AC\uACE0 \uC788\uB2E4"
+  - key: PlayerStatus.VitalProse.Hunger.VeryHungry
+    text: "\uB9E4\uC6B0 \uBC30\uAC00 \uACE0\uD504\uB2E4"
+  - key: PlayerStatus.VitalProse.Stamina.Critical
+    text: "\uAE30\uC9C4\uB9E5\uC9C4\uD558\uB2E4"
+  - key: PlayerStatus.VitalProse.Stamina.Full
+    text: "\uBAB8\uC774 \uAC00\uBCBD\uB2E4"
+  - key: PlayerStatus.VitalProse.Stamina.Low
+    text: "\uBAB8\uC774 \uBB34\uAC81\uB2E4"
+  - key: PlayerStatus.VitalProse.Stamina.Ok
+    text: "\uC544\uC9C1 \uBC84\uD2F8 \uB9CC\uD558\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.Critical
+    text: "\uBAA9\uC774 \uD0C0\uB294 \uAC83 \uAC19\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.Full
+    text: "\uBAA9\uC774 \uCDA9\uBD84\uD788 \uCD95\uC778\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.Low
+    text: "\uBAA9\uC774 \uB9C8\uB974\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.NotThirsty
+    text: "\uBAA9\uC774 \uB9C8\uB974\uC9C0 \uC54A\uC558\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.Ok
+    text: "\uBAA9\uC774 \uB9C8\uB974\uC9C0 \uC54A\uC558\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.Parched
+    text: "\uBAA9\uC774 \uD0C0\uB4E4\uC5B4\uAC04\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.Quenched
+    text: "\uBAA9\uC774 \uCD95\uC5EC \uC788\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.Thirsty
+    text: "\uBAA9\uC774 \uB9C8\uB974\uB2E4"
+  - key: PlayerStatus.VitalProse.Thirst.VeryThirsty
+    text: "\uBAA9\uC774 \uB9E4\uC6B0 \uB9C8\uB974\uB2E4"
+  - key: PlayerStatus.VitalsSection
+    text: "\uC0DD\uC874"
+  - key: Recipe.ResultCountFormat
+    text: '{0} x{1}'
+  - key: RecipeKnowledge.BookRequired
+    text: "\uCC45 \uD544\uC694"
+  - key: RecipeKnowledge.Invalid
+    text: Invalid recipe
+  - key: RecipeKnowledge.Locked
+    text: Locked
+  - key: RecipeKnowledge.SkillRequired
+    text: "\uC2A4\uD0AC lv{0} \uD544\uC694"
+  - key: Settings.Category.Graphics
+    text: "\uADF8\uB798\uD53D"
+  - key: Settings.Hud.MessageLog
+    text: "\uBA54\uC2DC\uC9C0 \uB85C\uADF8"
+  - key: Settings.Hud.Summary
+    text: "\uC0C1\uD0DC \uC694\uC57D"
+  - key: Settings.Hud.Time
+    text: "\uC2DC\uACC4"
+  - key: Settings.Hud.TimeScale
+    text: "\uBC30\uC18D"
+  - key: Settings.HudLayoutAdjust
+    text: "HUD \uC870\uC815"
+  - key: Settings.WindowTitle
+    text: "\uC124\uC815"
+  - key: Tile.UncategorizedCategory
+    text: "\uAE30\uD0C0"
+  - key: TimeScale.Double
+    text: 2x
+  - key: TimeScale.Normal
+    text: 1x
+  - key: TimeScale.Pause
+    text: '||'
+  - key: TimeScale.Smart
+    text: Auto
+  - key: UI.SelectBtn.ObjectNamePrefix
+    text: "\uC120\uD0DD{0}"
   - key: msg.combat.player_hit
     text: "{0}\uC5D0 {1}\uC758 \uD53C\uD574\uB97C \uC785\uC5C8\uB2E4."
   - key: msg.status.defeat_body
@@ -253,173 +411,19 @@ MonoBehaviour:
     text: "\uC815\uC2E0\uC774 \uBB34\uB108\uC838 \uC4F0\uB7EC\uC84C\uB2E4."
   - key: msg.status.encumbrance_immobile
     text: "\uB108\uBB34 \uBB34\uAC70\uC6CC\uC11C \uC6C0\uC9C1\uC77C \uC218 \uC5C6\uB2E4."
-  - key: PlayerStatus.Mood.Overencumbered
-    text: "\uACFC\uC801"
-  - key: PlayerStatus.Mood.Overencumbered.Light
-    text: "\uC9D0\uC774 \uC870\uAE08 \uBB34\uAC81\uB2E4"
-  - key: PlayerStatus.Mood.Overencumbered.Medium
-    text: "\uC9D0\uC774 \uBB34\uAC81\uB2E4"
-  - key: PlayerStatus.Mood.Overencumbered.Heavy
-    text: "\uC9D0\uC774 \uB108\uBB34 \uBB34\uAC81\uB2E4"
-  - key: PlayerStatus.Mood.Overencumbered.Extreme
-    text: "\uC6C0\uC9C1\uC77C \uC218 \uC5C6\uC744 \uB9CC\uD07C \uBB34\uAC81\uB2E4"
-  - key: Crafting.Title
-    text: "\uC81C\uC791"
-  - key: Crafting.TitleOn
-    text: "\uC81C\uC791 \u2014 {0}"
-  - key: Crafting.SearchPlaceholder
-    text: "\uAC80\uC0C9"
-  - key: Crafting.Craft
-    text: "\uC81C\uC791"
-  - key: Crafting.All
-    text: "\uC804\uCCB4"
-  - key: Crafting.Favourites
-    text: "\uC990\uACA8\uCC3E\uAE30"
-  - key: Crafting.RequiredItems
-    text: "\uD544\uC694 \uC7AC\uB8CC"
-  - key: Crafting.SkillLine
-    text: '{0}  {1}/{2}'
-  - key: Crafting.TimeMinutes
-    text: "{0}\uBD84"
-  - key: Crafting.BookKnown
-    text: "\uB808\uC2DC\uD53C \uC2B5\uB4DD"
-  - key: Crafting.CannotCraft
-    text: "\uC7AC\uB8CC\xB7\uB3C4\uAD6C\xB7\uC2A4\uD0AC\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4"
-  - key: Crafting.QualityFormat
-    text: '{0} lv.{1}'
-  - key: Crafting.CountFormat
-    text: '{0}/{1}'
-  - key: Crafting.Outputs
-    text: "\uACB0\uACFC"
-  - key: Crafting.TimeRequired
-    text: "\uC18C\uC694 \uC2DC\uAC04: {0}"
-  - key: Crafting.TimeRemaining
-    text: "\uB0A8\uC740 \uC2DC\uAC04: {0}"
-  - key: Crafting.DurationFormat
-    text: '{0}m {1}s'
-  - key: Crafting.Max
-    text: MAX
-  - key: Crafting.OutputCountFormat
-    text: '{0}'
-  - key: MessageLog.Title
-    text: "\uBA54\uC2DC\uC9C0"
-  - key: PlayerStatus.View.Condition
-    text: "\uC0C1\uD0DC"
-  - key: PlayerStatus.View.Wound
-    text: "\uC0C1\uCC98"
-  - key: PlayerStatus.View.Thermal
-    text: "\uCCB4\uC628"
-  - key: PlayerStatus.Part.neck
-    text: "\uBAA9"
-  - key: PlayerStatus.Part.chest
-    text: "\uAC00\uC2B4"
-  - key: PlayerStatus.Part.belly
-    text: "\uBC30"
-  - key: PlayerStatus.Part.pelvis
-    text: "\uACE8\uBC18"
-  - key: PlayerStatus.Part.upper_arm_l
-    text: "\uC67C\uC704\uD314"
-  - key: PlayerStatus.Part.lower_arm_l
-    text: "\uC67C\uC544\uB798\uD314"
-  - key: PlayerStatus.Part.upper_arm_r
-    text: "\uC624\uB978\uC704\uD314"
-  - key: PlayerStatus.Part.lower_arm_r
-    text: "\uC624\uB978\uC544\uB798\uD314"
-  - key: PlayerStatus.Part.thigh_l
-    text: "\uC67C\uD5C8\uBC85\uC9C0"
-  - key: PlayerStatus.Part.calf_l
-    text: "\uC67C\uC885\uC544\uB9AC"
-  - key: PlayerStatus.Part.thigh_r
-    text: "\uC624\uB978\uD5C8\uBC85\uC9C0"
-  - key: PlayerStatus.Part.calf_r
-    text: "\uC624\uB978\uC885\uC544\uB9AC"
-  - key: Crafting.QualityCountFormat
-    text: '{0}/lv.{1}'
-  - key: Crafting.QualityAltFormat
-    text: '{0} lv.{1}'
-  - key: ContextMenu.DisabledOverflow
-    text: "\uADF8 \uC678 {0}\uAC1C"
-  - key: Settings.WindowTitle
-    text: "\uC124\uC815"
-  - key: Settings.Category.Graphics
-    text: "\uADF8\uB798\uD53D"
-  - key: Settings.HudLayoutAdjust
-    text: "HUD \uC870\uC815"
-  - key: TimeScale.Pause
-    text: '||'
-  - key: TimeScale.Normal
-    text: 1x
-  - key: TimeScale.Double
-    text: 2x
-  - key: TimeScale.Smart
-    text: Auto
-  - key: Settings.Hud.Time
-    text: "\uC2DC\uACC4"
-  - key: Settings.Hud.TimeScale
-    text: "\uBC30\uC18D"
-  - key: Settings.Hud.MessageLog
-    text: "\uBA54\uC2DC\uC9C0 \uB85C\uADF8"
-  - key: Settings.Hud.Summary
-    text: "\uC0C1\uD0DC \uC694\uC57D"
-  - key: PlayerStatus.VitalProse.Hunger.Engorged
-    text: "\uBC30\uAC00 \uD130\uC9C8 \uB4EF\uD558\uB2E4"
-  - key: PlayerStatus.VitalProse.Hunger.Sated
-    text: "\uBC30\uAC00 \uB4E0\uB4EC\uD558\uB2E4"
-  - key: PlayerStatus.VitalProse.Hunger.Hungry
-    text: "\uBC30\uAC00 \uACE0\uD504\uB2E4"
-  - key: PlayerStatus.VitalProse.Hunger.VeryHungry
-    text: "\uB9E4\uC6B0 \uBC30\uAC00 \uACE0\uD504\uB2E4"
-  - key: PlayerStatus.VitalProse.Hunger.Famished
-    text: "\uD5C8\uAE30\uC5D0 \uC2DC\uB2EC\uB9B0\uB2E4"
-  - key: PlayerStatus.VitalProse.Hunger.Starving
-    text: "\uAD70\uC8FC\uB9AC\uACE0 \uC788\uB2E4"
-  - key: PlayerStatus.VitalProse.Thirst.Quenched
-    text: "\uBAA9\uC774 \uCD95\uC5EC \uC788\uB2E4"
-  - key: PlayerStatus.VitalProse.Thirst.NotThirsty
-    text: "\uBAA9\uC774 \uB9C8\uB974\uC9C0 \uC54A\uC558\uB2E4"
-  - key: PlayerStatus.VitalProse.Thirst.Thirsty
-    text: "\uBAA9\uC774 \uB9C8\uB974\uB2E4"
-  - key: PlayerStatus.VitalProse.Thirst.VeryThirsty
-    text: "\uBAA9\uC774 \uB9E4\uC6B0 \uB9C8\uB974\uB2E4"
-  - key: PlayerStatus.VitalProse.Thirst.Parched
-    text: "\uBAA9\uC774 \uD0C0\uB4E4\uC5B4\uAC04\uB2E4"
-  - key: PlayerStatus.Effect.bloated
-    text: "\uD33D\uB9CC"
-  - key: PlayerStatus.Mood.Full
-    text: "\uBC30\uAC00 \uBD80\uB974\uB2E4"
-  - key: PlayerStatus.Mood.Fed
-    text: "\uBC30\uAC00 \uB4E0\uB4EC\uD558\uB2E4"
-  - key: PlayerStatus.Mood.Hungry
-    text: "\uBC30\uAC00 \uACE0\uD504\uB2E4"
-  - key: PlayerStatus.Mood.VeryHungry
-    text: "\uB9E4\uC6B0 \uBC30\uAC00 \uACE0\uD504\uB2E4"
-  - key: PlayerStatus.Mood.ThirstQuenched
-    text: "\uBAA9\uC774 \uCD95\uC5EC \uC788\uB2E4"
-  - key: PlayerStatus.Mood.Thirsty
-    text: "\uBAA9\uC774 \uB9C8\uB974\uB2E4"
-  - key: PlayerStatus.Mood.VeryThirsty
-    text: "\uBAA9\uC774 \uB9E4\uC6B0 \uB9C8\uB974\uB2E4"
-  - key: PlayerStatus.Mood.GoodMood
-    text: "\uAE30\uBD84\uC774 \uC88B\uB2E4"
-  - key: PlayerStatus.Mood.Sad
-    text: "\uAE30\uBD84\uC774 \uCC98\uC9C4\uB2E4"
-  - key: PlayerStatus.Mood.Sick
-    text: "\uBAB8\uC774 \uC544\uD504\uB2E4"
-  - key: PlayerStatus.Mood.Adrenaline
-    text: "\uC544\uB4DC\uB808\uB0A0\uB9B0"
-  - key: msg.status.needs_vomit
-    text: "\uB108\uBB34 \uB9CE\uC774 \uBA39\uC5B4 \uD1A0\uD588\uB2E4."
-  - key: msg.status.needs_starve
-    text: "\uAD70\uC8FC\uB9BC\uC73C\uB85C \uC4F0\uB7EC\uC84C\uB2E4."
   - key: msg.status.needs_dehydrate
     text: "\uAC08\uC99D\uC73C\uB85C \uC4F0\uB7EC\uC84C\uB2E4."
-  - key: msg.status.needs_hunger_70
-    text: "\uBC30\uAC00 \uACE0\uD504\uB2E4."
-  - key: msg.status.needs_hunger_50
-    text: "\uB9CE\uC774 \uBC30\uAC00 \uACE0\uD504\uB2E4."
-  - key: msg.status.needs_hunger_25
-    text: "\uB9E4\uC6B0 \uBC30\uAC00 \uACE0\uD504\uB2E4."
   - key: msg.status.needs_hunger_10
     text: "\uAD70\uC8FC\uB9AC\uACE0 \uC788\uB2E4."
+  - key: msg.status.needs_hunger_25
+    text: "\uB9E4\uC6B0 \uBC30\uAC00 \uACE0\uD504\uB2E4."
+  - key: msg.status.needs_hunger_50
+    text: "\uB9CE\uC774 \uBC30\uAC00 \uACE0\uD504\uB2E4."
+  - key: msg.status.needs_hunger_70
+    text: "\uBC30\uAC00 \uACE0\uD504\uB2E4."
+  - key: msg.status.needs_starve
+    text: "\uAD70\uC8FC\uB9BC\uC73C\uB85C \uC4F0\uB7EC\uC84C\uB2E4."
   - key: msg.status.needs_thirst_danger
     text: "\uBAA9\uC774 \uD0C0\uB4E4\uC5B4\uAC04\uB2E4."
+  - key: msg.status.needs_vomit
+    text: "\uB108\uBB34 \uB9CE\uC774 \uBA39\uC5B4 \uD1A0\uD588\uB2E4."

@@ -1,5 +1,5 @@
 // ============================================================
-// SetHandActionContextAction / UnwieldSlotContextAction — 들기 슬롯 RMB
+// SetHandAction / WieldGrip / UnwieldSlot — 들기 슬롯 RMB
 // ============================================================
 
 public sealed class SetHandActionContextAction : IContextMenuAction
@@ -40,6 +40,37 @@ public sealed class SetHandActionContextAction : IContextMenuAction
 
         ItemStack stack = _request.Gear.Wield?.Get(_request.Slot);
         _request.Gear.TrySetHandAction(stack, _action);
+        _request.OnChanged?.Invoke();
+    }
+}
+
+public sealed class WieldGripContextAction : IContextMenuAction
+{
+    readonly WieldSlotContextRequest _request;
+    readonly WieldHand _hand;
+
+    public WieldGripContextAction(WieldSlotContextRequest request, WieldHand hand)
+    {
+        _request = request;
+        _hand = hand;
+    }
+
+    public string GetDisabledReason()
+    {
+        if (_request?.Gear == null)
+            return CharacterGearLabels.BlockedInvalid;
+
+        ItemStack stack = _request.Gear.Wield?.Get(_request.Slot);
+        return _request.Gear.GetWieldGripBlockedReason(stack, _hand);
+    }
+
+    public void Execute()
+    {
+        if (_request?.Gear == null || !string.IsNullOrEmpty(GetDisabledReason()))
+            return;
+
+        ItemStack stack = _request.Gear.Wield?.Get(_request.Slot);
+        _request.Gear.TryBeginWieldGrip(stack, _hand);
         _request.OnChanged?.Invoke();
     }
 }

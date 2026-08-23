@@ -83,6 +83,7 @@ GameObject:
   - component: {fileID: 4231773269274488563}
   - component: {fileID: 2114695070956075501}
   - component: {fileID: 3428796886242963462}
+  - component: {fileID: 3325427700038724279}
   m_Layer: 6
   m_Name: NpcSample
   m_TagString: Untagged
@@ -529,6 +530,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DistScript::PlayerNeedsHost
   _settings: {fileID: 11400000, guid: 39809576eb5659543856868bfd4f46f1, type: 2}
+--- !u!114 &3325427700038724279
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49bd65d988e0726488607cc42bee200f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterImbalanceHost
 --- !u!1 &8110232566133532116
 GameObject:
   m_ObjectHideFlags: 0

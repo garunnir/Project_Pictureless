@@ -10,7 +10,8 @@
 |------|------|
 | 인벤 `UIInventoryItemDetailPanel` | ContextMenu (자체 배치·clamp) |
 | PlayerStatus Mood 툴팁 | DragGhost (`TopMost` 공유, 표시 시 last sibling) |
-| PlayerStatus Body `UIPlayerStatusDetailPanel` | Interaction hint (`PopUpManager`) |
+| PlayerStatus Body `UIPlayerStatusDetailPanel` (부위 트리) | Interaction hint (`PopUpManager`) |
+| **공용 텍스트** `UITextHoverService` (장비·HUD 들기 등 `ShowText`) | |
 | 이후 동급 follow-mouse / 앵커 정보창 | |
 
 ## SSOT
@@ -21,8 +22,10 @@
 | `UIPopupPositioner` | 스크린→부모 로컬. `clampToCanvas: true` 시 루트 Canvas rect 안 유지 |
 | `UIHoverStyle` | `ScreenOffset` · `FollowMouse` only (clamp 필드 없음) |
 | `UIHoverPanelShell` | `ShowAtScreen` / `ShowNearAnchor` / `Hide` / `SetScreenPosition`. 배치는 **항상** clamp on. `raycastTarget=false` |
+| `UITextHoverService` | Canvas TopMost **공용 텍스트** 호버. `TryShowNearAnchor` / `HideOn`. Prefab=`TextHoverPanel` |
 
-경로: `Assets/Dist/Scripts/UI/ContextMenu/` (`Dist.UI.ContextMenu`) · `UIHoverCanvasLayer`는 DistScript
+경로: `Assets/Dist/Scripts/UI/ContextMenu/` (`Dist.UI.ContextMenu`) · `UIHoverCanvasLayer` / `UITextHoverService`는 DistScript  
+Setup: `Dist/MCP/Inventory/Setup Canvas Overlays In Open Scene` (ghost + text hover)
 
 ## 계약
 
@@ -38,4 +41,5 @@
 |-----------|--------|--------|------|
 | Item detail | `(16, -16)` | yes | TopMost, `ShowAtScreen` |
 | Mood tooltip | `(0, 28)` | no | TopMost, `ShowNearAnchor` |
-| Body detail | `(16, -16)` | no | TopMost, `ShowNearAnchor` |
+| Body detail | `(16, -16)` | no | TopMost, `ShowNearAnchor` (`UIPlayerStatusDetailPanel`) |
+| Gear / HUD text | `(16, -16)` | no | TopMost, `UITextHoverService` (`DefaultStyle`) |

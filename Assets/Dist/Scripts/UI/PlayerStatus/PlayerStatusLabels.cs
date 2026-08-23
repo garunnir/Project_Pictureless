@@ -131,4 +131,12 @@ public static class PlayerStatusLabels
             return text;
         return severe ? "극심한 고통" : "고통";
     }
+
+    public static string GetOffBalanceTooltip(bool fallen)
+    {
+        string key = fallen ? "PlayerStatus.Mood.OffBalance.Fallen" : "PlayerStatus.Mood.OffBalance";
+        if (Loc.TryGet(key, out string text))
+            return text;
+        return fallen ? "중심을 잃고 쓰러졌다" : "중심이 흔들린다";
+    }
 }
