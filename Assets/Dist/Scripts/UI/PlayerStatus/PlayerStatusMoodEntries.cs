@@ -38,7 +38,10 @@ namespace Garunnir.Runtime.Gameplay.Data
                 CollectVitals(vitals, into);
 
             if (body != null)
+            {
                 CollectBodyEffects(body, into);
+                CollectIllness(body, into);
+            }
 
             CollectNeeds(needs, vitals, into);
             CollectEncumbrance(encumbranceStage, into);
@@ -372,6 +375,29 @@ namespace Garunnir.Runtime.Gameplay.Data
                 polarities.TryGetValue(iconId, out MoodPolarity polarity);
                 tooltips.TryGetValue(iconId, out string tooltip);
                 into.Add(new MoodEntry(iconId, polarity, pair.Value, tooltip));
+            }
+        }
+
+        static void CollectIllness(ICharacterBody body, List<MoodEntry> into)
+        {
+            if (body.Toxin01 >= BodyIllness.ToxinMoodMin && !ContainsIcon(into, MoodIconId.Infected))
+            {
+                into.Add(new MoodEntry(
+                    MoodIconId.Infected,
+                    MoodPolarity.Negative,
+                    body.Toxin01,
+                    PlayerStatusLabels.GetEffectName(BodyPartEffectIds.Toxin)));
+            }
+
+            float filtration = BodyCapacity.BloodFiltration(body);
+            if (filtration < BodyIllness.LowImmunityFiltration
+                && !ContainsIcon(into, MoodIconId.LowImmunity))
+            {
+                into.Add(new MoodEntry(
+                    MoodIconId.LowImmunity,
+                    MoodPolarity.Negative,
+                    1f - filtration,
+                    PlayerStatusLabels.GetMoodTooltip(MoodIconId.LowImmunity)));
             }
         }
 

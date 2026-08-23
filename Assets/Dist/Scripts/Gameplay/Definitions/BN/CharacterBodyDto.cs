@@ -45,7 +45,9 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return "FAIL: prosthetic HandL attach";
 
             src.SetCondition(BodyPartIds.Chest, CharacterBody.BaseCondition, src.GetConditionMax(BodyPartIds.Chest));
-            src.AddEffect(BodyPartIds.HandL, new BodyPartEffect(BodyPartEffectIds.Bleed, 1, 12f));
+            src.AddEffect(
+                BodyPartIds.HandL,
+                new BodyPartEffect(BodyPartEffectIds.Bleed, 1, BodyIllness.PrototypeBleedSeconds));
             src.AddEffect(BodyPartIds.FingerIndexL, new BodyPartEffect(BodyPartEffectIds.Fracture, 1, -1f));
 
             CharacterBodyDto dto = src.ToDto();
@@ -69,8 +71,12 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return "FAIL: prosthetic HandL kind not preserved";
             if (loaded.GetConditionCur(BodyPartIds.Chest) != CharacterBody.BaseCondition)
                 return "FAIL: chest condition not restored";
-            if (!HasEffect(handL, BodyPartEffectIds.Bleed, 12f))
+            if (!HasEffect(handL, BodyPartEffectIds.Bleed, BodyIllness.PrototypeBleedSeconds))
                 return "FAIL: HandL bleed not restored";
+            if (!loaded.Has(BodyPartIds.Brain) || !loaded.Has(BodyPartIds.Heart))
+                return "FAIL: vital organs missing after FromDto";
+            if (loaded.Blood01 < 0.999f)
+                return "FAIL: Blood01 not reset on FromDto";
             if (!loaded.TryGet(BodyPartIds.FingerIndexL, out BodyPartNode finger) ||
                 !HasEffect(finger, BodyPartEffectIds.Fracture, -1f))
                 return "FAIL: FingerIndexL fracture not restored";

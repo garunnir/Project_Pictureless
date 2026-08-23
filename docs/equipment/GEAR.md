@@ -338,7 +338,7 @@ flowchart LR
 - Dual wield / OffHand factor / obstruction Miss unchanged
 - Ranged `HitChance` fail = neighbor scatter (body hit never Miss)
 - Armor Engage is post-hit only (does not convert to Miss). **조각마다** coverage 주사, 맞은 조각만 흡수 합. `ammo.pierce`는 AP (횟수 관통은 히트스캔/발사체와 공유)
-- Outcome damage = post-mitigation. **하한 1 없음. HP 0 허용** (막힌 타 = 밀침 최대). Defeat은 머리/가슴 0
+- Outcome damage = post-mitigation. **하한 1 없음. HP 0 허용** (막힌 타 = 밀침 최대). Defeat BodyFatal = 의식 0 (뇌/피/감염/고통1/독소). 가슴·장기 HP0만으로는 즉사 아님 — [`docs/body/BODY.md`](../body/BODY.md)
 - Phase B/C Wear/pockets/overlap untouched
 
 ## Phase E — env_prot + wetness

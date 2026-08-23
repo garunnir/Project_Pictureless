@@ -75,7 +75,7 @@ flowchart LR
 
 ## TickScale
 
-`CharacterActionDelay.TickScale(body)` — 트리 효과 순회, catalog 배율을 intensity만큼 곱. 미등록 1. 하한 `MinTickScale`.
+`CharacterActionDelay.TickScale(body)` — 트리 효과 순회, catalog 배율을 intensity만큼 곱. 미등록 1. 그다음 `BodyCapacity.ManipulationTickScale` 한 번 곱. 하한 `MinTickScale`.
 
 적용: GearTimedAction, InventoryTimedMove, 전투 쿨, 제작 경과. 이동 속도(`BodyLocomotionPenalties`)와 별개. Feeling/습윤/과적은 후속 가산.
 

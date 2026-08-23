@@ -347,7 +347,7 @@ public sealed class UICharacterWindow : MonoBehaviour
                 _graphics.Add(existingGraphics[i]);
         }
 
-        string[] mains = BodyPartIds.MainConditionParts;
+        string[] mains = BodyPartIds.StatusConditionParts;
         if (_graphics.Count > 0)
         {
             for (int i = 0; i < _graphics.Count; i++)
@@ -434,7 +434,7 @@ public sealed class UICharacterWindow : MonoBehaviour
         EnsurePartViews();
 
         ICharacterBody body = _viewModel.Body;
-        string[] mains = BodyPartIds.MainConditionParts;
+        string[] mains = BodyPartIds.StatusConditionParts;
         PlayerStatusBodyGraphicDisplay.Apply(_graphics, body, _tab);
 
         for (int i = 0; i < _rows.Count && i < mains.Length; i++)

@@ -38,12 +38,30 @@ namespace Garunnir.Runtime.Gameplay.Data
 
         bool AddEffect(string partId, BodyPartEffect effect);
 
+        bool EnsureEffectMinIntensity(
+            string partId,
+            string effectId,
+            int intensity,
+            float remainingSeconds = -1f);
+
+        bool ReduceEffectIntensity(string partId, string effectId, int reduceBy);
+
         bool ClearEffectsOn(string partId);
 
         /// <summary>유한 효과 RemainingSeconds를 줄이고 만료분을 제거. 변경 시 true.</summary>
         bool TickEffectDurations(float deltaSeconds);
 
         bool IsDeadState { get; }
+
+        float Blood01 { get; }
+        float Toxin01 { get; }
+        float InfectionProgress01 { get; }
+        float InfectionImmunity01 { get; }
+
+        void SetBlood01(float value);
+        void SetToxin01(float value);
+        void SetInfectionProgress01(float value);
+        void SetInfectionImmunity01(float value);
 
         void CollectEffectsUnder(string partId, List<BodyPartEffect> into, bool includeDescendants);
 

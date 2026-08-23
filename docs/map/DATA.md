@@ -100,6 +100,18 @@ classDiagram
 
 런타임 저장: **셀** `TileMapModel.tiles` + **면** `TileFaceBinder` (수직·수평 registry).
 
+### 맵 혈흔 (`bloodStamps[]`)
+
+`tiles` / `wallEdges` / `floorFaces`와 **별 레이어**. 구 JSON에 없으면 empty.
+
+| 필드 | 의미 |
+|------|------|
+| `wx,wy,wz` | 스탬프 월드 좌표 (로드 시 셀 중심 재스냅 금지) |
+| `yaw, scale, alpha` | 수평 회전·크기·진하기 |
+| `cx,cy,cz` | 소속 walkable 셀 (`OccupiedCellCoord.ResolveFromWorld`) — 청소/쿼리용 |
+
+SSOT 런타임: `MapBloodOverlay` (`MapBloodHost`). 그리기: `MapBloodStainRenderer` (`DrawMeshInstanced`, 스탬프당 GO 없음). 쓰기: 출혈 drip · 히트 콘 spray · (선택) 피 VFX 파티클 위치 샘플. 청소: `ClearCell` API (UI 없음).
+
 ### TileDefinition 필수
 
 모든 타일은 `TilePrefabDB`에 등록된 `TileDefinition`을 가져야 합니다. JSON 로드·씬 export·배치 시 `prefabId`로 Definition lookup → `collisionFlags`·`sizeUnit` bake. Definition 없으면 **오류 로그 후 해당 타일 스킵** (tileType/prefabId 추론 폴백 없음).

@@ -37,6 +37,8 @@ namespace Garunnir.Runtime.Gameplay.Data
                     scale *= perIntensity;
             }
 
+            scale *= BodyCapacity.ManipulationTickScale(body);
+
             if (scale < CharacterActionDelayCatalog.MinTickScale)
                 return CharacterActionDelayCatalog.MinTickScale;
             return scale;

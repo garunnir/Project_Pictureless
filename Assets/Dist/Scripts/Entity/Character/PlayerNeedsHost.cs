@@ -6,9 +6,9 @@
 //   → burn stored * activity (Sprint > Busy > Walk > Idle)
 //   → drain thirst
 //   → rot scan possessed + open containers
-//   → stored/thirst <=0 → chest ApplyHit (Defeat BodyFatal)
+//   → stored/thirst <=0 → chest ApplyHit (파괴 출혈 → 과다출혈 BodyFatal)
 //   → every N world hours → needs warning events
-// ConsumeService → IngestFood / IngestDrink / ApplyMetabolites
+// ConsumeService → IngestFood / IngestDrink / ApplyMetabolites / RotToxin / MedIllnessRelief
 // Ingest overflow → Bloated; ingest while bloated → vomit + OvereatHit
 
 using System;

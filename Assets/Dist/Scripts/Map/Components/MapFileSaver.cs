@@ -23,7 +23,7 @@ public class MapFileSaver : MonoBehaviour
     public void Save()
     {
         float cellSize = _worldGrid != null ? _worldGrid.CellSize : 1f;
-        new MapSavePipeline(_model, _mapper).Save(GetFullPath(), cellSize);
+        new MapSavePipeline(_model, _mapper).Save(GetFullPath(), cellSize, MapBloodHost.Runtime);
     }
 
     private string GetFullPath()
@@ -49,11 +49,13 @@ public class MapFileSaver : MonoBehaviour
         var dtoModel = new MapModelDTO(snapshot);
         MapSaveJsonDto jsonDto = mapper.FromPrepared(dtoModel);
         jsonDto.gridCellSize = _worldGrid != null ? _worldGrid.CellSize : 1f;
+        MapBloodHost.Runtime?.WriteToDto(jsonDto);
 
         _model?.Initialize(dtoModel);
 
         File.WriteAllText(GetFullPath(), JsonUtility.ToJson(jsonDto, true));
-        Debug.Log($"TileMap saved to: {GetFullPath()} (tiles: {jsonDto.tiles.Count}, wallEdges: {jsonDto.wallEdges?.Count ?? 0})");
+        Debug.Log(
+            $"TileMap saved to: {GetFullPath()} (tiles: {jsonDto.tiles.Count}, wallEdges: {jsonDto.wallEdges?.Count ?? 0}, bloodStamps: {jsonDto.bloodStamps?.Count ?? 0})");
     }
 #endif
 }

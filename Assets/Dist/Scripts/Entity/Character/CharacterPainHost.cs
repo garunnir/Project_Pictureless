@@ -70,7 +70,9 @@ public sealed class CharacterPainHost : MonoBehaviour
         }
 
         _lastEffective = CombatPain.EffectivePain01(body, _effectScratch);
-        SetShocked(_lastEffective >= CombatPain.PainShockThreshold);
+        bool shocked = _lastEffective >= CombatPain.PainShockThreshold
+                       || BodyCapacity.IsCapacityDowned(body);
+        SetShocked(shocked);
     }
 
     void SetShocked(bool shocked)

@@ -92,7 +92,8 @@ flowchart LR
 - **Flinch:** 접촉이면 hp 0이어도. `HitFlinch` → Flinch Layer (Additive, Head+Body). 쇼크 중 생략.
 - **불균형 (Imbalance 0..1):** 피격 `Δv`만큼 `+= clamp01(Δv / StaggerDeltaV)`. 시간으로 `RecoverPerSecond` 회복. 능동 이속 × `(1 − Imbalance)` (1이면 목표 속도 0). 관성·넉백은 이속에 안 곱함. 별도 Stagger 이동 잠금 타이머 없음.
 - **자빠짐:** Imbalance가 1에 닿는 프레임 && 능동 `|CurrentSpeed| ≥ FallSpeedMin`. 넉백만으로는 안 넘어짐. 효과: 기존 `HitStagger` + `CancelAll` + cue 폐기. 전투 쿨은 남김. 서 있는 채 1이면 애니 없이 이속 0만.
-- **고통 쇼크:** effective Pain ≥ 0.8이면 살아 있는 다운 (`SetMoveLocked`). `ICharacterDefeat` / `NpcManager.EnterDead`에 넣지 않는다. 기상: effective가 문턱 아래. NPC는 `NpcSteer.Stop` 후 return.
+- **고통 쇼크:** effective Pain ≥ 0.8 **또는** `BodyCapacity.IsCapacityDowned`(의식 &lt; 0.3 / Moving &lt; 0.15 / Breathing ≤ 0)이면 살아 있는 다운 (`SetMoveLocked`). `ICharacterDefeat` / `NpcManager.EnterDead`에 넣지 않는다. 기상: 조건이 문턱 아래. NPC는 `NpcSteer.Stop` 후 return.
+- **이속:** `BodyLocomotionPenalties` 절뚝 유지. Moving 용량을 이속에 곱하지 않는다.
 - **사수 킥:** `AddRecoilKick`가 `ShooterDeltaV`를 모터에 넣고, 같은 Δv로 조준 분산 킥을 올린다. handling은 사수만.
 - `ApplyHit`(출혈·체온)로 Flinch/넉백 금지.
 - **HUD:** Imbalance ≥ `HudMin`이면 무드 `OffBalance` (intensity = Imbalance). 풀 게이지면 툴팁 Fallen.

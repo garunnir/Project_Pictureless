@@ -32,6 +32,7 @@ namespace Garunnir.Runtime.Gameplay.Data
                 [BodyPartEffectIds.Frostbite] = new(MoodIconId.Hypothermia, MoodPolarity.Negative),
                 [BodyPartEffectIds.Heat] = new(MoodIconId.Overheated, MoodPolarity.Negative),
                 [BodyPartEffectIds.Bloated] = new(MoodIconId.Discomfort, MoodPolarity.Negative),
+                [BodyPartEffectIds.Toxin] = new(MoodIconId.Infected, MoodPolarity.Negative),
             };
 
         public static bool TryGet(string effectId, out MoodIconId iconId, out MoodPolarity polarity)

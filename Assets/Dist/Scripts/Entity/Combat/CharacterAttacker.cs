@@ -1082,6 +1082,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         EquipmentWearState wear = ResolveTargetWear(targetHost);
         int damage = 0;
         int rawDamage = 0;
+        string hitPart = OrganHitResolver.Resolve(targetHost.Body, aimedPart);
         for (int i = 0; i < channelCount; i++)
         {
             string damageTag = _hitChannelScratch[i];
@@ -1102,7 +1103,7 @@ public sealed class CharacterAttacker : MonoBehaviour
                 string.Equals(damageTag, AttackDamageTags.Cut, StringComparison.Ordinal)
                     ? BuildSeeds(_presentation, context.Action, context.Attack)
                     : null;
-            BodyDamageService.ApplyHit(targetHost.Body, aimedPart, channelDamage, seeds);
+            BodyDamageService.ApplyHit(targetHost.Body, hitPart, channelDamage, seeds);
             damage += channelDamage;
         }
 
@@ -1118,7 +1119,7 @@ public sealed class CharacterAttacker : MonoBehaviour
             resolveMode,
             AttackPerformResult.Performed,
             targetHost,
-            aimedPart,
+            hitPart,
             damage,
             origin,
             impact,

@@ -15,17 +15,19 @@ namespace IsoTilemap
             _runtime = runtime;
         }
 
-        public void Save(string fullPath, float gridCellSize = 1f)
+        public void Save(string fullPath, float gridCellSize = 1f, MapBloodHost bloodHost = null)
         {
             MapModelDTO mapData = new MapModelDTO(_runtime);
             MapSaveJsonDto mapDatas = _mapper.FromPrepared(mapData);
             mapDatas.gridCellSize = Mathf.Max(1e-4f, gridCellSize);
+            bloodHost?.WriteToDto(mapDatas);
 
             string json = JsonUtility.ToJson(mapDatas, true);
 
             File.WriteAllText(fullPath, json);
 
-            Debug.Log($"TileMap saved to: {fullPath} (tiles: {mapDatas.tiles.Count}, wallEdges: {mapDatas.wallEdges.Count})");
+            Debug.Log(
+                $"TileMap saved to: {fullPath} (tiles: {mapDatas.tiles.Count}, wallEdges: {mapDatas.wallEdges.Count}, bloodStamps: {mapDatas.bloodStamps?.Count ?? 0})");
         }
         // void 대신 async Task 또는 async void(이벤트성일 때만) 사용
         public async UniTask SaveAsync(string fullPath)

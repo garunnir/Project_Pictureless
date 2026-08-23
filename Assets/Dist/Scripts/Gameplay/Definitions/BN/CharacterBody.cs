@@ -12,24 +12,74 @@ namespace Garunnir.Runtime.Gameplay.Data
         public const int BaseCondition = 60;
         public const int ConditionPerStr = 3;
 
+        /// <summary>장기 HP SSOT (STR 가산 없음).</summary>
+        public const int OrganConditionBrain = 20;
+        public const int OrganConditionHeart = 20;
+        public const int OrganConditionLiver = 20;
+        public const int OrganConditionLung = 25;
+        public const int OrganConditionStomach = 25;
+        public const int OrganConditionKidney = 15;
+
         readonly List<BodyPartNode> _roots = new();
+
+        float _blood01 = 1f;
+        float _toxin01;
+        float _infectionProgress01;
+        float _infectionImmunity01;
 
         public event Action Changed;
 
         public IReadOnlyList<BodyPartNode> Roots => _roots;
 
-        public bool IsDeadState
+        public float Blood01 => _blood01;
+        public float Toxin01 => _toxin01;
+        public float InfectionProgress01 => _infectionProgress01;
+        public float InfectionImmunity01 => _infectionImmunity01;
+
+        public bool IsDeadState => BodyCapacity.IsFatal(this);
+
+        public void SetBlood01(float value)
         {
-            get
-            {
-                if (!TryGet(BodyPartIds.Head, out BodyPartNode head) ||
-                    head.ConditionCur <= 0)
-                    return true;
-                if (!TryGet(BodyPartIds.Chest, out BodyPartNode chest) ||
-                    chest.ConditionCur <= 0)
-                    return true;
-                return false;
-            }
+            float next = Clamp01(value);
+            if (AlmostEqual(_blood01, next))
+                return;
+            _blood01 = next;
+            Changed?.Invoke();
+        }
+
+        public void SetToxin01(float value)
+        {
+            float next = Clamp01(value);
+            if (AlmostEqual(_toxin01, next))
+                return;
+            _toxin01 = next;
+            Changed?.Invoke();
+        }
+
+        public void SetInfectionProgress01(float value)
+        {
+            float next = Clamp01(value);
+            if (AlmostEqual(_infectionProgress01, next))
+                return;
+            _infectionProgress01 = next;
+            Changed?.Invoke();
+        }
+
+        public void SetInfectionImmunity01(float value)
+        {
+            float next = Clamp01(value);
+            if (AlmostEqual(_infectionImmunity01, next))
+                return;
+            _infectionImmunity01 = next;
+            Changed?.Invoke();
+        }
+
+        public void ResetIllnessRuntime()
+        {
+            _blood01 = 1f;
+            _toxin01 = 0f;
+            _infectionProgress01 = 0f;
+            _infectionImmunity01 = 0f;
         }
 
         public static CharacterBody CreateHumanDefault(int strength, bool prototypeSeed = true)
@@ -41,10 +91,20 @@ namespace Garunnir.Runtime.Gameplay.Data
             head.AddChild(new BodyPartNode(BodyPartIds.Eyes, false));
             head.AddChild(new BodyPartNode(BodyPartIds.Mouth, false));
             head.AddChild(new BodyPartNode(BodyPartIds.Neck, true, conditionMax));
+            head.AddChild(new BodyPartNode(BodyPartIds.Brain, true, OrganConditionBrain));
             body._roots.Add(head);
 
+            BodyPartNode belly = new(BodyPartIds.Belly, true, conditionMax);
+            belly.AddChild(new BodyPartNode(BodyPartIds.Liver, true, OrganConditionLiver));
+            belly.AddChild(new BodyPartNode(BodyPartIds.Stomach, true, OrganConditionStomach));
+            belly.AddChild(new BodyPartNode(BodyPartIds.KidneyL, true, OrganConditionKidney));
+            belly.AddChild(new BodyPartNode(BodyPartIds.KidneyR, true, OrganConditionKidney));
+
             BodyPartNode chest = new(BodyPartIds.Chest, true, conditionMax);
-            chest.AddChild(new BodyPartNode(BodyPartIds.Belly, true, conditionMax));
+            chest.AddChild(new BodyPartNode(BodyPartIds.Heart, true, OrganConditionHeart));
+            chest.AddChild(new BodyPartNode(BodyPartIds.LungL, true, OrganConditionLung));
+            chest.AddChild(new BodyPartNode(BodyPartIds.LungR, true, OrganConditionLung));
+            chest.AddChild(belly);
             chest.AddChild(new BodyPartNode(BodyPartIds.Pelvis, true, conditionMax));
             body._roots.Add(chest);
 
@@ -76,17 +136,29 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (!prototypeSeed)
                 return body;
 
+            // Bleed only — Infected seed removed (infection race would kill).
+            // Duration below InfectedOnsetSeconds so seed does not auto-infect.
             if (body.TryGet(BodyPartIds.HandL, out BodyPartNode seededHand))
-            {
-                seededHand.AddEffect(new BodyPartEffect(BodyPartEffectIds.Bleed, 1, 12f));
-                seededHand.AddEffect(new BodyPartEffect(BodyPartEffectIds.Infected, 1, -1f));
-            }
+                seededHand.AddEffect(new BodyPartEffect(
+                    BodyPartEffectIds.Bleed, 1, BodyIllness.PrototypeBleedSeconds));
 
             if (body.TryGet(BodyPartIds.FingerIndexL, out BodyPartNode seededFinger))
                 seededFinger.AddEffect(new BodyPartEffect(BodyPartEffectIds.Fracture, 1, -1f));
 
             return body;
         }
+
+        static float Clamp01(float value)
+        {
+            if (value < 0f)
+                return 0f;
+            if (value > 1f)
+                return 1f;
+            return value;
+        }
+
+        static bool AlmostEqual(float a, float b) =>
+            a > b - 0.0001f && a < b + 0.0001f;
 
         public bool TryGet(string partId, out BodyPartNode node)
         {
@@ -168,6 +240,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         void ReplaceFromDto(CharacterBodyDto dto)
         {
             _roots.Clear();
+            ResetIllnessRuntime();
             CharacterBodyPartDto[] parts = dto != null ? dto.parts : null;
             if (parts == null || parts.Length == 0)
                 return;
@@ -315,6 +388,34 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return false;
 
             node.AddEffect(effect);
+            Changed?.Invoke();
+            return true;
+        }
+
+        public bool EnsureEffectMinIntensity(
+            string partId,
+            string effectId,
+            int intensity,
+            float remainingSeconds = -1f)
+        {
+            if (!TryGet(partId, out BodyPartNode node))
+                return false;
+
+            if (!node.EnsureEffectMinIntensity(effectId, intensity, remainingSeconds))
+                return false;
+
+            Changed?.Invoke();
+            return true;
+        }
+
+        public bool ReduceEffectIntensity(string partId, string effectId, int reduceBy)
+        {
+            if (!TryGet(partId, out BodyPartNode node))
+                return false;
+
+            if (!node.ReduceEffectIntensity(effectId, reduceBy))
+                return false;
+
             Changed?.Invoke();
             return true;
         }

@@ -32,5 +32,6 @@ namespace Garunnir.Runtime.Gameplay.Data
         public const string Frostbite = "frostbite";
         public const string Heat = "heat";
         public const string Bloated = "bloated";
+        public const string Toxin = "toxin";
     }
 }

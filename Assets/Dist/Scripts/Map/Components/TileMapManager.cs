@@ -13,6 +13,9 @@ using UnityEngine.Serialization;
 [RequireComponent(typeof(CharacterOcclusionDisplayDriver))]
 public class TileMapManager : MonoBehaviour
 {
+    [Header("Map blood overlay")]
+    [SerializeField] private MapBloodHost _bloodHost;
+
     [Header("로드 → 컨트롤러/세이버 초기화 → 저장 흐름을 책임집니다.")]
     [SerializeField] private MapFileLoader _loader;
     [SerializeField] private MapFileSaver _saver;
@@ -183,6 +186,18 @@ public class TileMapManager : MonoBehaviour
         _chunkStreamer?.SyncNow();
         _saver.Init(Model, _worldGrid);
         SetupMapCollisionServices();
+        SetupMapBlood();
+    }
+
+    void SetupMapBlood()
+    {
+        _bloodHost ??= GetComponent<MapBloodHost>();
+        if (_bloodHost == null)
+            _bloodHost = gameObject.AddComponent<MapBloodHost>();
+
+        float cellSize = _worldGrid != null ? _worldGrid.CellSize : _gridCellSize;
+        _bloodHost.BindMapContext(_mapCacheHub, cellSize);
+        _bloodHost.LoadFromDto(_loader != null ? _loader.LastLoadedDto : null);
     }
 
     private void OnDestroy()

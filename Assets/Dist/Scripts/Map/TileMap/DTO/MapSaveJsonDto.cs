@@ -15,5 +15,8 @@ namespace IsoTilemap
         public List<TileSaveData> tiles = new List<TileSaveData>();
         public List<WallEdgeSaveData> wallEdges = new List<WallEdgeSaveData>();
         public List<FloorFaceSaveData> floorFaces = new List<FloorFaceSaveData>();
+
+        /// <summary>맵 혈흔 스탬프 (월드 좌표). tiles와 별 레이어. 구 JSON 누락 시 empty.</summary>
+        public List<BloodStampSaveData> bloodStamps = new List<BloodStampSaveData>();
     }
 }

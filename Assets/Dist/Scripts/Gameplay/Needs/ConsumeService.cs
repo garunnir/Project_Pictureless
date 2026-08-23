@@ -118,9 +118,12 @@ public static class ConsumeService
         int healthy = settings != null
             ? settings.RotHealthyPenalty
             : PlayerNeedsSettings.DefaultRotHealthyPenalty;
-        if (fun == 0 && healthy == 0)
-            return;
-        host.ApplyMetabolites(fun, healthy, 0);
+        if (fun != 0 || healthy != 0)
+            host.ApplyMetabolites(fun, healthy, 0);
+
+        ICharacterBody body = GameplayData.Body;
+        if (body != null)
+            body.SetToxin01(body.Toxin01 + BodyIllness.RotToxinAdd);
     }
 
     static void ApplyFood(PlayerNeedsHost host, ItemData item)
@@ -151,6 +154,8 @@ public static class ConsumeService
         {
             if (action.heal_amount > 0 && body != null)
                 BodyPartRestoreService.TryHeal(body, BodyPartIds.Chest, action.heal_amount);
+            if (body != null)
+                ApplyMedIllnessRelief(body);
             return;
         }
 
@@ -168,6 +173,39 @@ public static class ConsumeService
             float seconds = action.duration > 0 ? action.duration : -1f;
             body.AddEffect(BodyPartIds.Chest, new BodyPartEffect(action.effect_id, 1, seconds));
         }
+
+        if (body != null)
+            ApplyMedIllnessRelief(body);
+    }
+
+    static void ApplyMedIllnessRelief(ICharacterBody body)
+    {
+        body.SetInfectionProgress01(
+            body.InfectionProgress01 - BodyIllness.MedInfectionClear);
+        body.SetToxin01(body.Toxin01 - BodyIllness.MedToxinClear);
+        ReduceBleedIntensity(body, BodyIllness.MedBleedIntensityReduce);
+    }
+
+    static void ReduceBleedIntensity(ICharacterBody body, int reduceBy)
+    {
+        if (reduceBy <= 0)
+            return;
+
+        IReadOnlyList<BodyPartNode> roots = body.Roots;
+        for (int r = 0; r < roots.Count; r++)
+            ReduceBleedSubtree(body, roots[r], reduceBy);
+    }
+
+    static void ReduceBleedSubtree(ICharacterBody body, BodyPartNode node, int reduceBy)
+    {
+        if (node == null)
+            return;
+
+        body.ReduceEffectIntensity(node.PartId, BodyPartEffectIds.Bleed, reduceBy);
+
+        IReadOnlyList<BodyPartNode> children = node.Children;
+        for (int c = 0; c < children.Count; c++)
+            ReduceBleedSubtree(body, children[c], reduceBy);
     }
 
     static void ApplyComestibleSideEffects(PlayerNeedsHost host, ItemData item)

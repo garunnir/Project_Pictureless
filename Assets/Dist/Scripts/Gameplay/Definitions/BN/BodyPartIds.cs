@@ -43,6 +43,16 @@ namespace Garunnir.Runtime.Gameplay.Data
         public const string FingerThumbR = "finger_thumb_r";
         public const string FingerIndexR = "finger_index_r";
 
+        // ── Vital organs (tree only — not Main/Severable/Thermal) ─
+        public const string Brain = "brain";
+        public const string Heart = "heart";
+        public const string LungL = "lung_l";
+        public const string LungR = "lung_r";
+        public const string Liver = "liver";
+        public const string Stomach = "stomach";
+        public const string KidneyL = "kidney_l";
+        public const string KidneyR = "kidney_r";
+
         public static readonly string[] MainConditionParts =
         {
             Head, Neck, Chest, Belly, Pelvis,
@@ -51,6 +61,25 @@ namespace Garunnir.Runtime.Gameplay.Data
             ThighL, CalfL, FootL,
             ThighR, CalfR, FootR
         };
+
+        /// <summary>장기 노드. 조준·절단·체온 목록 밖.</summary>
+        public static readonly string[] VitalOrgans =
+        {
+            Brain, Heart, LungL, LungR, Liver, Stomach, KidneyL, KidneyR
+        };
+
+        /// <summary>상태창 부위 행 = Main + VitalOrgans.</summary>
+        public static readonly string[] StatusConditionParts = BuildStatusConditionParts();
+
+        static string[] BuildStatusConditionParts()
+        {
+            var parts = new string[MainConditionParts.Length + VitalOrgans.Length];
+            for (int i = 0; i < MainConditionParts.Length; i++)
+                parts[i] = MainConditionParts[i];
+            for (int i = 0; i < VitalOrgans.Length; i++)
+                parts[MainConditionParts.Length + i] = VitalOrgans[i];
+            return parts;
+        }
 
         /// <summary>체온 틱·표시용 10부위 SSOT.</summary>
         public static readonly string[] ThermalParts =
@@ -82,11 +111,19 @@ namespace Garunnir.Runtime.Gameplay.Data
             [Head] = Head,
             [Eyes] = Head,
             [Mouth] = Head,
+            [Brain] = Brain,
             [Neck] = Neck,
             [Chest] = Chest,
             [Belly] = Belly,
             [Pelvis] = Pelvis,
             [Torso] = Chest,
+            [Heart] = Heart,
+            [LungL] = LungL,
+            [LungR] = LungR,
+            [Liver] = Liver,
+            [Stomach] = Stomach,
+            [KidneyL] = KidneyL,
+            [KidneyR] = KidneyR,
             [UpperArmL] = UpperArmL,
             [LowerArmL] = LowerArmL,
             [HandL] = HandL,
@@ -107,6 +144,18 @@ namespace Garunnir.Runtime.Gameplay.Data
             [CalfR] = CalfR,
             [FootR] = FootR,
             [LegR] = ThighR
+        };
+
+        static readonly Dictionary<string, string> OrganParentOf = new()
+        {
+            [Brain] = Head,
+            [Heart] = Chest,
+            [LungL] = Chest,
+            [LungR] = Chest,
+            [Liver] = Belly,
+            [Stomach] = Belly,
+            [KidneyL] = Belly,
+            [KidneyR] = Belly
         };
 
         static readonly Dictionary<string, string> NodeAliasOf = new()
@@ -176,11 +225,19 @@ namespace Garunnir.Runtime.Gameplay.Data
             [Head] = Head,
             [Eyes] = Head,
             [Mouth] = Head,
+            [Brain] = Head,
             [Neck] = Torso,
             [Chest] = Torso,
             [Belly] = Torso,
             [Pelvis] = Torso,
             [Torso] = Torso,
+            [Heart] = Torso,
+            [LungL] = Torso,
+            [LungR] = Torso,
+            [Liver] = Torso,
+            [Stomach] = Torso,
+            [KidneyL] = Torso,
+            [KidneyR] = Torso,
             [UpperArmL] = ArmL,
             [LowerArmL] = ArmL,
             [HandL] = ArmL,
@@ -306,6 +363,32 @@ namespace Garunnir.Runtime.Gameplay.Data
             }
 
             return false;
+        }
+
+        public static bool IsVitalOrgan(string partId)
+        {
+            if (string.IsNullOrEmpty(partId))
+                return false;
+
+            string id = ResolveNodeId(partId);
+            for (int i = 0; i < VitalOrgans.Length; i++)
+            {
+                if (VitalOrgans[i] == id)
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>장기 트리 부모 (head/chest/belly). 아니면 null.</summary>
+        public static string GetOrganParentId(string partId)
+        {
+            if (string.IsNullOrEmpty(partId))
+                return null;
+
+            return OrganParentOf.TryGetValue(ResolveNodeId(partId), out string parent)
+                ? parent
+                : null;
         }
 
         /// <summary>

@@ -18,18 +18,21 @@ PC와 NPC를 이 문서에서 나누지 않는다. `CharacterKind` 없음. 조�
 |------|------|
 | `ICharacterBody` / `CharacterBody` | 소유권 트리. `RemovePart` / `TryAttach` / `ToDto` / `FromDto` |
 | `BodyPartNode` / `BodyPartKind` | 노드. `Organic` / `Prosthetic` |
-| `BodyPartIds` | ID·`ThermalParts`·`SeverableParts`·`FrostbiteParts` SSOT |
+| `BodyPartIds` | ID·`ThermalParts`·`SeverableParts`·`FrostbiteParts`·`VitalOrgans` SSOT |
 | `CharacterBodyHost` | 엔티티별 `ICharacterBody` 소유 (플레이어·NPC 공용) |
 | `CharacterClimateHost` | 공용 체온·습윤 틱. frostbite/heat. 엔티티별 outdoor |
 | `BodyTemp` | 부위별 °C. 코어 getter = chest |
 | `WearEnvExposure` | 습윤 0..1 (공식은 GEAR Phase E) |
 | `WeatherExposure` | `Resolve(kind, period, outdoor)` → ambient °C / wetness gain |
-| `BodyDamageService` | HP 타격. 0 + severable → `RemovePart` |
+| `BodyDamageService` | HP 타격. severable 0 → `RemovePart`. 뇌 제외 장기/몸통 0 → 강한 Bleed |
+| `BodyCapacity` | 의식·펌프·호흡·여과·소화·이동·조작. **IsFatal = 의식 ≤ 0만** |
+| `BodyIllness` / `BodyPain` | 출혈·감염·독소 상수 / PainTotal SSOT |
+| `OrganHitResolver` | 머리/가슴/배 피격 → 장기 분배 (mitigate 후) |
 | `BodyPartRestoreService` | `TryRegenerate` / `TryAttachProsthetic` |
-| `BodyEffectTicker` | 효과 지속·출혈 (World delta) |
-| `CharacterActionDelay` | `BodyPartEffect` → 행동 틱 배율. [`../character/ACTION.md`](../character/ACTION.md) |
-| `BodyLocomotionPenalties` | 절단 절뚝 × `GearEnvPenalties` |
-| `CharacterBodyDto` / `BodyTempDto` | JsonUtility 왕복. **세이브 UI 없음** |
+| `BodyEffectTicker` | 효과 지속·Bleed→Blood01·발밑 맵 혈흔 drip·감염 레이스·독소 감쇠 (World delta) |
+| `CharacterActionDelay` | 효과 배율 × Manipulation TickScale. [`../character/ACTION.md`](../character/ACTION.md) |
+| `BodyLocomotionPenalties` | 절단 절뚝 × `GearEnvPenalties` (이속; Moving 용량과 비곱) |
+| `CharacterBodyDto` / `BodyTempDto` | JsonUtility 왕복. **세이브 UI 없음**. Blood/Toxin/감염은 DTO 없음 |
 
 ---
 
@@ -37,13 +40,43 @@ PC와 NPC를 이 문서에서 나누지 않는다. `CharacterKind` 없음. 조�
 
 `CharacterBody.CreateHumanDefault` 트리. 루트: head, chest, 양 상완, 양 대퇴.
 
+`VitalOrgans` (조준·절단·체온 밖): `brain`(head), `heart`/`lung_l`/`lung_r`(chest), `liver`/`stomach`/`kidney_l`/`kidney_r`(belly). 장기 HP는 `OrganCondition*` (STR 가산 없음).
+
 `ThermalParts` (10, 체온 틱·표시): `head`, `chest`, `upper_arm_l/r`, `hand_l/r`, `thigh_l/r`, `foot_l/r`.
 
-`SeverableParts`: 팔/다리 체인만 (`head`/`neck`/`chest`/`belly`/`pelvis` 제외). HP 0이면 `BodyDamageService.ApplyHit` → `RemovePart`.
+`SeverableParts`: 팔/다리 체인만 (`head`/`neck`/`chest`/`belly`/`pelvis`·장기 제외). HP 0이면 `BodyDamageService.ApplyHit` → `RemovePart`.
 
 `FrostbiteParts`: `head`, `hand_l/r`, `foot_l/r`.
 
+`StatusConditionParts`: Main + VitalOrgans (상태창 행).
+
 소켓: `GetSocketParentId`. 상완/대퇴는 루트(`null`) — `TryAttach(null, …)`이 루트로 채운다. 부모는 남고 하위는 소유권으로 함께 도달 불가.
+
+---
+
+## Death / capacity
+
+**사망 (`IsDeadState` / `BodyCapacity.IsFatal`)** = **의식 ≤ 0** 만. 바닐라 림월드의 심장·간 즉사는 Dist에 없음.
+
+의식이 0이 되는 원인:
+
+| 원인 | 설명 |
+|------|------|
+| 뇌 없음/HP0 또는 머리 부모 HP0 | 유일한 장기 즉사 |
+| `Blood01` ≤ 0 | 과다출혈 |
+| `InfectionProgress01` ≥ 1 | 감염이 면역을 이김 |
+| `EffectivePain01` ≥ 1 | 고통이 의식을 0으로 |
+| `Toxin01` ≥ 1 | 독소 |
+
+펌프·호흡·여과·소화·이동·조작 0은 사망이 아님. 심장·폐·간·신장·위·목·가슴·배 HP0 → **강한 Bleed** (`BodyIllness.OrganDestroyedBleed*`), 즉사 아님. 가슴/배 0이면 무효 자식 장기마다 Bleed.
+
+쓸어짐 (`CharacterPainHost.IsPainShocked`): 고통 ≥ 0.8 **또는** `BodyCapacity.IsCapacityDowned` (의식 &lt; 0.3 / Moving &lt; 0.15 / Breathing ≤ 0). Defeat/Dead 아님.
+
+이속: `BodyLocomotionPenalties` 절뚝 유지. Moving을 이속에 곱하지 않음.
+
+런타임만 (DTO 없음, FromDto 후 리셋): `Blood01`(기본 1), `Toxin01`, `InfectionProgress01`, `InfectionImmunity01`.
+
+출혈 틱: Bleed intensity 합 → Blood01 감소 (부위 ApplyHit 없음). drain 누적 ≥ 문턱 시 발 월드에 맵 혈흔 스탬프 (`MapBloodHost`, [`docs/map/DATA.md`](../map/DATA.md)). 출혈 ≥ `InfectedOnsetSeconds` → Infected. 면역 × 여과 vs 진행. 독소는 여과로 감쇠.
 
 ---
 
@@ -199,14 +232,16 @@ LiftStrain 배율만 `PlayerGearHost` (별 슬롯). 히트 배율: `CharacterAtt
 
 ## PainTotal / 고통 쇼크
 
-`CombatPain.PainTotal01` = 부위 손실 HP 비율 × 부위 가중. 상해 타입 로그 없음. HitTag는 J가 아님.
+`BodyPain` / `CombatPain.PainTotal01` = 부위(+장기) 손실 HP 비율 × 부위 가중. 상해 타입 로그 없음. HitTag는 J가 아님.
 
 `EffectivePain01` = PainTotal × painFactor (`adrenaline`이면 `AdrenalinePainFactor`).  
-`CharacterPainHost`: effective ≥ `PainShockThreshold`(0.8)이면 살아 있는 다운 — `SetMoveLocked` + 액션/큐 취소. Defeat/Dead가 아니다. 기상은 문턱 아래.
+의식 = … × (1 − EffectivePain01) — **고통 1이면 사망**.
+
+`CharacterPainHost`: effective ≥ `PainShockThreshold`(0.8) **또는** `BodyCapacity.IsCapacityDowned`이면 살아 있는 다운 — `SetMoveLocked` + 액션/큐 취소. Defeat/Dead가 아니다. 기상은 문턱 아래.
 
 루팅: `PlayerInventoryHost.IsAvailableToPlayer`가 self이거나 `IsDefeated || IsPainShocked`.
 
-HUD: `PlayerStatusMoodEntries`가 effective Pain ≥ `PainHudMin`이면 `MoodIconId.Pain`, ≥ `SeverePainHudMin`이면 `SeverePain`.
+HUD: `PlayerStatusMoodEntries`가 effective Pain ≥ `PainHudMin`이면 `MoodIconId.Pain`, ≥ `SeverePainHudMin`이면 `SeverePain`. 독소·저여과(`LowImmunity`)도 수집.
 
 절단된 부위는 `GetConditionMax==0`이라 PainTotal에서 skip.
 

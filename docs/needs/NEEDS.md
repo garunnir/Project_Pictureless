@@ -38,7 +38,7 @@ digest mlWater (빠름) / mlFood / kcal→stored
   → burn stored × activity (Sprint > Busy > Walk > Idle)
   → drain thirst
   → rot scan possessed + open loot
-  → stored≤0 또는 thirst≤0 → chest ApplyHit 전부 (1회, Defeat BodyFatal)
+  → stored≤0 또는 thirst≤0 → chest ApplyHit 전부 (1회). 가슴 0은 즉사 아님 — 흉부 장기 무효 + 파괴 출혈 → 과다출혈로 BodyFatal. 소화 용량과 허기 틱은 섞지 않음.
   → 매 N 월드시간 → AnyNeedsWarning
 ```
 
@@ -56,7 +56,7 @@ digest mlWater (빠름) / mlFood / kcal→stored
 |------|------|--------|-----|
 | Eat | FOOD / calories>0 | `IngestFood` (ml+kcal) | `ConsumeDuration.MealtimeSeconds` |
 | Drink | DRINK | `IngestDrink` (ml+quench) | 동일 mealtime |
-| Use | MED / heal·consume_drug | 대사 + `BodyPartRestoreService` | 0 (손 파이프만) |
+| Use | MED / heal·consume_drug | 대사 + `BodyPartRestoreService` + 감염/독소/Bleed 감소 (`BodyIllness.Med*`) | 0 (손 파이프만) |
 
 캡은 `mlFood+mlWater`와 stored+stomach kcal. 넘치면 버림 + 가슴 `BodyPartEffectIds.Bloated` (`MoodIconId.Discomfort`). 팽만 중 재섭취 → 구토 + `OvereatHit`.
 
@@ -68,6 +68,8 @@ Fun/Healthy/Stim은 호스트가 보관. 틱 감쇠는 없음.
 
 `ItemInstance.CreatedWorldMinute`. 스캔은 possessed 몸 + 열린 Nearby 컨테이너(중첩 포함).  
 `ItemMergeKey.IsRotten`이 다르면 합치지 않음 (`ItemMergePolicy`).
+
+부패 섭취: Fun/Healthy 페널티 **유지** + `BodyIllness.RotToxinAdd` → `Toxin01`.
 
 ---
 

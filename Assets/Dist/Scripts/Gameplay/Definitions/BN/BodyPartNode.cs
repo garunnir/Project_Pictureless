@@ -90,6 +90,56 @@ namespace Garunnir.Runtime.Gameplay.Data
 
         public void ClearEffects() => _effects.Clear();
 
+        /// <summary>같은 effectId가 있으면 intensity를 max로. 없으면 추가. 변경 시 true.</summary>
+        public bool EnsureEffectMinIntensity(
+            string effectId,
+            int intensity,
+            float remainingSeconds = -1f)
+        {
+            if (string.IsNullOrEmpty(effectId) || intensity < 1)
+                return false;
+
+            for (int i = 0; i < _effects.Count; i++)
+            {
+                BodyPartEffect e = _effects[i];
+                if (e.EffectId != effectId)
+                    continue;
+                if (e.Intensity >= intensity)
+                    return false;
+                _effects[i] = new BodyPartEffect(effectId, intensity, e.RemainingSeconds);
+                return true;
+            }
+
+            _effects.Add(new BodyPartEffect(effectId, intensity, remainingSeconds));
+            return true;
+        }
+
+        /// <summary>같은 effectId intensity를 reduceBy만큼 줄임. 0 이하면 제거. 변경 시 true.</summary>
+        public bool ReduceEffectIntensity(string effectId, int reduceBy)
+        {
+            if (string.IsNullOrEmpty(effectId) || reduceBy <= 0)
+                return false;
+
+            for (int i = 0; i < _effects.Count; i++)
+            {
+                BodyPartEffect e = _effects[i];
+                if (e.EffectId != effectId)
+                    continue;
+
+                int next = e.Intensity - reduceBy;
+                if (next < 1)
+                {
+                    _effects.RemoveAt(i);
+                    return true;
+                }
+
+                _effects[i] = new BodyPartEffect(effectId, next, e.RemainingSeconds);
+                return true;
+            }
+
+            return false;
+        }
+
         /// <summary>유한 효과 초를 줄이고 만료를 제거. 변경 시 true.</summary>
         public bool TickEffectDurations(float deltaSeconds)
         {
