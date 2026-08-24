@@ -16,6 +16,9 @@ public class TileMapManager : MonoBehaviour
     [Header("Map blood overlay")]
     [SerializeField] private MapBloodHost _bloodHost;
 
+    [Header("Map plant overlay")]
+    [SerializeField] private MapPlantHost _plantHost;
+
     [Header("로드 → 컨트롤러/세이버 초기화 → 저장 흐름을 책임집니다.")]
     [SerializeField] private MapFileLoader _loader;
     [SerializeField] private MapFileSaver _saver;
@@ -187,6 +190,7 @@ public class TileMapManager : MonoBehaviour
         _saver.Init(Model, _worldGrid);
         SetupMapCollisionServices();
         SetupMapBlood();
+        SetupMapPlant();
     }
 
     void SetupMapBlood()
@@ -198,6 +202,18 @@ public class TileMapManager : MonoBehaviour
         float cellSize = _worldGrid != null ? _worldGrid.CellSize : _gridCellSize;
         _bloodHost.BindMapContext(_mapCacheHub, cellSize);
         _bloodHost.LoadFromDto(_loader != null ? _loader.LastLoadedDto : null);
+    }
+
+    void SetupMapPlant()
+    {
+        _plantHost ??= GetComponent<MapPlantHost>();
+        if (_plantHost == null)
+            _plantHost = gameObject.AddComponent<MapPlantHost>();
+
+        float cellSize = _worldGrid != null ? _worldGrid.CellSize : _gridCellSize;
+        _plantHost.BindMapContext(_mapCacheHub, cellSize, _prefabDB);
+        MapClockSnapshot.RestoreFromDto(_loader != null ? _loader.LastLoadedDto : null);
+        _plantHost.LoadFromDto(_loader != null ? _loader.LastLoadedDto : null);
     }
 
     private void OnDestroy()

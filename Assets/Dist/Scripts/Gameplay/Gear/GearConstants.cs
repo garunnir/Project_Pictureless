@@ -31,6 +31,30 @@ public static class GearConstants
     /// <summary>ArmorDetailData.layer 비어 있을 때 기본 (BN NORMAL).</summary>
     public const string DefaultArmorLayer = "NORMAL";
 
+    /// <summary>바깥→안 완화 순서. 작을수록 먼저 주사 (AURA…PERSONAL).</summary>
+    public static int ArmorLayerOutsideRank(string normalizedLayer)
+    {
+        switch (normalizedLayer)
+        {
+            case "AURA":
+                return 0;
+            case "BELTED":
+                return 1;
+            case "OUTER":
+                return 2;
+            case "WAIST":
+                return 3;
+            case "NORMAL":
+                return 4;
+            case "UNDER":
+                return 5;
+            case "PERSONAL":
+                return 6;
+            default:
+                return 4;
+        }
+    }
+
     /// <summary>sided=true 아이템이 같은 부위+레이어에 허용되는 최대 개수 (좌/우).</summary>
     public const int MaxSidedPerLayer = 2;
 

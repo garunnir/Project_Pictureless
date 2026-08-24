@@ -79,7 +79,9 @@ namespace Garunnir.Runtime.Gameplay.Data
         Trust,
         Respect,
         Overencumbered,
-        OffBalance
+        OffBalance,
+        Fading,
+        StatCollapse
     }
 
     public enum MoodPolarity

@@ -10,6 +10,9 @@ public static class TileObjectContextMenuCatalog
     {
         new DoorToggleContextContributor(),
         new OpenLootContextContributor(),
+        new HarvestContextContributor(),
+        new TillContextContributor(),
+        new FertilizeContextContributor(),
     };
 
     public static IReadOnlyList<ITileObjectContextMenuContributor> All => Contributors;

@@ -15,6 +15,7 @@ MonoBehaviour:
   _id: 
   _displayName: 
   _portraitSprite: {fileID: 0}
+  _faction: {fileID: 11400000, guid: d7c8e9f0a1b24de3f497a0b1c2d3e4f5, type: 2}
   _alignment: {x: 0, y: 0}
   _attributes:
     str: 8
@@ -36,4 +37,6 @@ MonoBehaviour:
   _wieldLoadout:
   - itemId: weapon_bat
     hand: 1
+  - itemId: weapon_knife
+    hand: 0
   _bodyItemSeeds: []

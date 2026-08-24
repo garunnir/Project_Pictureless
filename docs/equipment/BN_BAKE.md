@@ -31,7 +31,7 @@ Writes `BNData/tileset/item_sprites.json` + referenced PNG. Runtime: `ItemVisual
 
 ## Baked ( Dist typed fields )
 
-Item common: `id`, `name`(singular), `type`, `category`, `subcategory`, `description`, `weight`→`weight_g`, `volume`→`volume_ml`, `stack_size`/`count`→`max_stack`, `material`→`materials`, `flags`, `qualities`, `comestible_type`, `has_durability`, `repairs_like`, `repair_difficulty`, `bashing`, `cutting`, `to_hit`, `weapon_category`, `techniques`, consume `use_action` (`heal` / `consume_drug` only: `type`, `heal_amount`, `effect_id`, `duration`; flatten objects).
+Item common: `id`, `name`(singular), `type`, `category`, `subcategory`, `description`, `weight`→`weight_g`, `volume`→`volume_ml`, `stack_size`/`count`→`max_stack`, `material`→`materials`, `flags`, `qualities`, `comestible_type`, `has_durability`, `repairs_like`, `repair_difficulty`, `bashing`, `cutting`, `to_hit`, `weapon_category`, `techniques`, consume `use_action` (`heal` / `consume_drug` / `ANTIBIOTIC` / `WEAK_ANTIBIOTIC` / `STRONG_ANTIBIOTIC`: `type`; heal keeps BN power keys `limb_power` / `bandages_power` / `head_power` / `torso_power` / `amount` / `bleed`; consume_drug `effect_id`/`duration`). Dist JSON `type` is lowercase (`antibiotic`, `weak_antibiotic`, `strong_antibiotic`). **BN 키 이름 유지** — 여러 BN 키를 Dist 한 키로 접거나 개명 금지 (`heal_amount` 금지). BN에 없는 키는 출력에 넣지 않음(`bleed` 포함). 중첩 객체는 **같은 키**에서 스칼라로만 unwrap.
 
 | Block | Fields |
 |-------|--------|
@@ -46,8 +46,10 @@ Item common: `id`, `name`(singular), `type`, `category`, `subcategory`, `descrip
 | material | bash/cut/bullet/acid/fire/chip resist, density |
 | quality / skill | id, name |
 | recipe | result, skills, difficulty, time_minutes, tools/components (`using` inlined), book_learn, byproducts, proficiencies, activity_level, morale, hot_result, dehydrating. Skips obsolete / never_learn / CC_BUILDING / construction_blueprint |
+| seed | fruit, plant_name, grow_minutes, seeds, fruit_div, byproducts, required_terrain_flag (when `seed_data` present). Int `grow` = season-days × minutes-per-day — not recipe moves/100 |
+| terrain / furniture | id, name, farming flags (`PLANTABLE`, `PLOWABLE`, `PLANT`, `GROWTH_SEED`, `GROWTH_SEEDLING`, `GROWTH_MATURE`, `GROWTH_HARVEST`). Furniture `plant_data`: transform, base, growth_multiplier, harvest_multiplier. Tree: `data/json/furniture_and_terrain` (copy-from resolved). Output: `terrain_furniture.json` |
 
-**Silent-zero rule:** if a BN value is an object (`damage`, `ranged_damage`, `shot_damage`, heal `limb_power` / consume_drug `effects`), flatten — never `_int_or_zero` on the object. Same trap for future `damage_modifier` (gunmod). Dist combat reads `ammo.damage` + `gun.ranged_damage` and `ammo.damage_type` when a round is chambered (`ItemInstance.ChamberAmmoId`). `GameData/items.json` must not reuse BN item ids (`9mm`, …) or it overlays RefData.
+**Silent-zero rule:** if a BN value is an object (`damage`, `ranged_damage`, `shot_damage`, heal `limb_power` / consume_drug `effects`), unwrap the number onto **that same BN key** — never `_int_or_zero` on the object, never rename the key. Same trap for future `damage_modifier` (gunmod). Dist combat reads `ammo.damage` + `gun.ranged_damage` and `ammo.damage_type` when a round is chambered (`ItemInstance.ChamberAmmoId`). `GameData/items.json` must not reuse BN item ids (`9mm`, …) or it overlays RefData.
 
 ## Won't bake (decision)
 
@@ -62,6 +64,7 @@ Do not add these to Dist POCOs. Dist sprites / `item_names.json` / recipe filter
 | `str_pl` / other plural name keys | Display SSOT is `item_names.json` (`ITEM_NAMES.md`). Converter keeps singular `name` only as bake `en` source |
 | remaining unknown keys as `ItemData` fields or an extra JSON bag | Catalog-in-this-doc, not a dump. Revisit only by replacing this row |
 | recipe `obsolete` / `never_learn` / `CC_BUILDING` / `construction_blueprint` | Converter **skips** these recipes (not Dist content) |
+| terrain/furniture `symbol` / `color` / `looks_like` / `bash` / `deconstruct` | Curses glyph, tileset inheritance, smash/deconstruct dump. Farming whitelist only — do not sneak into `export_terrain_entry` / `export_furniture_entry` |
 
 Parked is everything in the next section. Weather JSON / visor FOV stay Parked (Dist has stand-ins, not a never).
 
@@ -82,11 +85,35 @@ Parked is everything in the next section. Weather JSON / visor FOV stay Parked (
 |----|--------|
 | `min_str` / `min_dex` / `min_int` / `min_per` | Lift currently uses weight formula only |
 | `min_skills` | Skill gate |
-| non-consume `use_action` / `drop_action` / `tick_action` / `countdown_*` | Tool-action runner (GEAR milestone). Consume `heal` / `consume_drug` is **Baked** |
+| `drop_action` / `tick_action` / `countdown_action` / `countdown_interval` / `countdown_destroy` | Tool-action runner (GEAR milestone). Not consume. |
 | `explosion` / `explode_in_fire` / `emits` | Explosion / field |
-| `seed_data` / `brewable` / `milling` / `fuel` | Farming / brewing / fuel |
+| `brewable` / `milling` / `fuel` | Brewing / milling / fuel |
 | `relic_data` | Artifacts |
 | wear/wield **move cost** field | Dist: `GearActionDuration` proxy |
+
+#### `use_action` tags (BN `Item_factory::init`)
+
+BN `use_action` is either a **string iuse** (`"ANTIBIOTIC"`) or an **actor object** (`{ "type": "heal", ... }`). Dist does not dump unknown types into `ItemData`.
+
+**Baked consume** (converter `CONSUME_USE_ACTION_TYPES`; Dist `UseActionData.type` lowercase):
+
+| BN | Dist `type` | Consumer |
+|----|-------------|----------|
+| `heal` | `heal` | `BodyHealApply` (지정 `partId`). 즉시 HP는 `limb_power` / `head_power` / `torso_power` (`amount` 폴백). `bandages_power` → `bandaged`(영구). `bleed`만(붕대 없음) → 지혈. Dist는 붕대 아이템의 `bleed`를 무시. Do not emit `heal_amount` |
+| `consume_drug` | `consume_drug` | `ConsumeService` drug + effect |
+| `ANTIBIOTIC` | `antibiotic` | immunity race 2× (`BodyIllness`) |
+| `WEAK_ANTIBIOTIC` | `weak_antibiotic` | immunity race 1.5× |
+| `STRONG_ANTIBIOTIC` | `strong_antibiotic` | immunity race 3× |
+
+**Parked string iuse** (`add_iuse` — consume가 아니거나 Dist 소비처 없음):
+
+`ACIDBOMB_ACT`, `ADRENALINE_INJECTOR`, `ALCOHOL`, `ALCOHOL_STRONG`, `ALCOHOL_WEAK`, `AMPUTATE`, `ANTIASTHMATIC`, `ANTICONVULSANT`, `ANTIFUNGAL`, `ANTIPARASITIC`, `ARROW_FLAMABLE`, `ARTIFACT`, `AUTOCLAVE`, `BELL`, `BLECH`, `BLECH_BECAUSE_UNCLEAN`, `BOLTCUTTERS`, `C4`, `C4_BREACHING`, `TOW_ATTACH`, `CABLE_ATTACH`, `CAMERA`, `CAN_GOO`, `COIN_FLIP`, `DIRECTIONAL_HOLOGRAM`, `CAPTURE_MONSTER_ACT`, `CAPTURE_MONSTER_VEH`, `RPGDIE`, `BURROW`, `CHOP_TREE`, `CHOP_LOGS`, `CLEAR_RUBBLE`, `CONTACTS`, `CROWBAR`, `DATURA`, `DIG`, `DIVE_TANK`, `DIRECTIONAL_ANTENNA`, `DISASSEMBLE`, `CRAFT`, `DOG_WHISTLE`, `DOLLCHAT`, `EHANDCUFFS`, `EINKTABLETPC`, `EXTINGUISHER`, `EYEDROPS`, `FILL_PIT`, `FIRECRACKER`, `FIRECRACKER_ACT`, `FIRECRACKER_PACK`, `FIRECRACKER_PACK_ACT`, `FISH_ROD`, `FISH_TRAP`, `FLUMED`, `FLUSLEEP`, `FOODPERSON`, `FUNGICIDE`, `GASMASK`, `GEIGER`, `DEBUG_GRENADE`, `DEBUG_GRENADE_ACT`, `GRENADE_INC_ACT`, `GUN_CLEAN`, `GUN_REPAIR`, `GUNMOD_ATTACH`, `TOOLMOD_ATTACH`, `HACKSAW`, `HAIRKIT`, `HAMMER`, `HONEYCOMB`, `INHALER`, `JACKHAMMER`, `JET_INJECTOR`, `LADDER`, `LUMBER`, `MAGIC_8_BALL`, `PLAY_GAME`, `MAKEMOUND`, `DIG_CHANNEL`, `MARLOSS`, `MARLOSS_GEL`, `MARLOSS_SEED`, `MA_MANUAL`, `MEDITATE`, `METH`, `MININUKE`, `MOLOTOV_LIT`, `MOP`, `MP3_ON`, `MYCUS`, `NOISE_EMITTER_OFF`, `NOISE_EMITTER_ON`, `NOTE_BIONICS`, `OXYGEN_BOTTLE`, `OXYTORCH`, `PACK_CBM`, `PACK_ITEM`, `PETFOOD`, `PHEROMONE`, `PICK_LOCK`, `PICKAXE`, `PLANTBLECH`, `POISON`, `PORTABLE_GAME`, `PORTAL`, `PROZAC`, `PURIFIER`, `PURIFY_IV`, `PURIFY_SMART`, `RADGLOVE`, `RADIOCAR`, `RADIOCARON`, `RADIOCONTROL`, `RADIO_MOD`, `RADIO_OFF`, `RADIO_ON`, `REMOTEVEH`, `REMOVE_ALL_MODS`, `REPORT_GRID_CHARGE`, `REPORT_GRID_CONNECTIONS`, `MODIFY_GRID_CONNECTIONS`, `REPORT_FLUID_GRID_CONNECTIONS`, `MODIFY_FLUID_GRID_CONNECTIONS`, `ROBOTCONTROL`, `SEED`, `SEWAGE`, `SHAVEKIT`, `SIPHON`, `SLEEP`, `SOLARPACK`, `SOLARPACK_OFF`, `SPRAY_CAN`, `STIMPACK`, `TAZER`, `TAZER2`, `TELEPORT`, `THORAZINE`, `THROWABLE_EXTINGUISHER_ACT`, `TOWEL`, `TOGGLE_HEATS_FOOD`, `TOGGLE_UPS_CHARGING`, `UNFOLD_GENERIC`, `UNPACK_ITEM`, `VACCINE`, `CALL_OF_TINDALOS`, `BLOOD_DRAW`, `MIND_SPLICER`, `VIBE`, `VORTEX`, `WATER_PURIFIER`, `WEATHER_TOOL`, `XANAX`, `BULLET_VIBE_ON`, `HOTPLATE`, `HEAT_FOOD`, `HEATPACK`
+
+**Parked iuse_actor `type`** (`add_actor` — JSON object `type`; `heal`/`consume_drug`는 위 Baked):
+
+`ammobelt`, `bandolier`, `cauterize`, `delayed_transform`, `set_transform`, `set_transformed`, `enzlave`, `explosion`, `firestarter`, `fireweapon_off`, `fireweapon_on`, `holster`, `inscribe`, `transform`, `unpack`, `countdown`, `manualnoise`, `musical_instrument`, `deploy_furn`, `place_monster`, `change_scent`, `cloning_syringe`, `dna_editor`, `place_npc`, `reveal_map`, `unfold_vehicle`, `place_trap`, `emit`, `saw_barrel`, `saw_stock`, `install_bionic`, `detach_gunmods`, `mutagen`, `mutagen_iv`, `deploy_tent`, `learn_spell`, `cast_spell`, `weigh_self`, `gps_device`, `sew_advanced`, `multicooker`, `hand_crank`, `sex_toy`, `train_skill`, `music_player`, `prospect_pick`, `reveal_contents`, `flowerpot_plant`, `flowerpot_collect`, `dimension_travel`, `pocket_dimension`, `portal_link`, `paint_stuff`, `paint_stuff_config`
+
+출처: Cataclysm-BN `src/item_factory.cpp` `Item_factory::init`. 태그 하나를 Dist에서 쓰게 되면 이 목록에서 빼고 Baked 표로 옮긴다.
 
 ### Gun (beyond current `GunDetailData`)
 
@@ -146,7 +173,9 @@ Per-part coverage/encumbrance objects; `environmental_protection_with_filter`; v
 
 ### Trees `convert.py` does not load
 
-Monsters, mutations, vehicle parts, terrain/furniture/traps, mapgen/overmap, weather JSON (Dist: `WeatherKind` stand-in), NPC/missions, spells, harvest.
+Monsters, mutations, vehicle parts, traps, mapgen/overmap, weather JSON (Dist: `WeatherKind` stand-in), NPC/missions, spells, harvest.
+
+`furniture_and_terrain` is **opened** (farming whitelist only — see Baked).
 
 ## Rebake log
 
@@ -158,3 +187,7 @@ Monsters, mutations, vehicle parts, terrain/furniture/traps, mapgen/overmap, wea
 
 | 2026-08-19 gun aim fields | `sight_dispersion`, `aim_speed`, `handling` whitelist | convert.py 승격. Dist: RMB `aim01` 조임 + handling 킥 배율. BNData rebake는 BN 트리 있을 때 |
 | 2026-08-22 consume fields | `vitamins`, `addiction_potential`, consume `use_action` heal/consume_drug | convert.py 승격. GameData `consumable_egg` comestible seed. BNData rebake는 BN 트리 있을 때 |
+| 2026-08-24 seed + terrain/furniture farming | `seed_data` whitelist; `furniture_and_terrain` farming flags + furniture `plant_data` | convert.py 승격. 64 seed items; `terrain_furniture.json` 665 terrain / 339 furniture. brewable/milling/fuel Parked |
+| 2026-08-24 antibiotic use_action | `ANTIBIOTIC` / `WEAK_ANTIBIOTIC` / `STRONG_ANTIBIOTIC` | convert.py 승격. Dist: 면역 레이스 배율. BNData 3 items에 `use_action.type` 기입. 전체 트리 rebake는 BN 경로 있을 때 |
+| 2026-08-24 heal key names | `limb_power` / `bandages_power` / `head_power` / `torso_power` / `amount` | convert.py가 `heal_amount`로 접지 않음. Dist `UseActionData` 동명 필드. 2026-08-24 full rebake: `heal_amount` 0건. `bandages_power` 6 (`bandages*` 4 + cotton_ball + medical_gauze), `limb_power` 1 (`rag`=0) |
+| 2026-08-25 heal `bleed` | `bleed` whitelist passthrough (absent → omit) | Dist: `bandages_power`면 붕대(JSON `bleed` 무시). `bleed`만이면 지혈. BNData rebake는 BN 트리 있을 때 |

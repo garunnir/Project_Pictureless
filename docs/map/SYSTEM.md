@@ -104,6 +104,10 @@ graph TD
 
 경로: `Assets/Dist/Scripts/Map/Blood/`. `TileMapManager`가 `MapBloodHost`를 바인딩·DTO 로드. 세이브 시 `MapSavePipeline`이 `bloodStamps`를 JSON에 병합. 모델(스탬프)은 청크 unload와 무관하게 유지; 뷰는 인스턴스 드로우만.
 
+### 맵 식물
+
+경로: `Assets/Dist/Scripts/Map/Plant/`. `TileMapManager`가 `MapPlantHost`를 바인딩·DTO 로드. 세이브 시 `MapSavePipeline`이 `plantCells`를 JSON에 병합. 모델은 청크 unload와 무관하게 유지; 뷰는 Dist 오버레이 GO만 (BN furniture 스프라이트 아님). 계약: [`docs/farming/FARMING.md`](../farming/FARMING.md).
+
 ---
 
 ## 데이터 흐름 요약

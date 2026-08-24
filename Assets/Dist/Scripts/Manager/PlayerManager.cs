@@ -35,6 +35,12 @@ public class PlayerManager : MonoBehaviour
         ChangeControllTarget(_playControllable);
     }
 
+    void Update()
+    {
+        if (_possessedInput != null)
+            PlayerSightVisionBinder.Sync(_possessedInput);
+    }
+
     public void Possess(GameObject body)
     {
         if (_possessedInput == null)

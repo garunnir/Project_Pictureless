@@ -15,6 +15,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         public const float BellyToLiver = 0.25f;
         public const float BellyToStomach = 0.2f;
         public const float BellyToKidneyEach = 0.15f;
+        public const float HandToFingerEach = 0.12f;
 
         public static string Resolve(ICharacterBody body, string aimedMainPartId)
         {
@@ -30,6 +31,10 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return PickChest(body);
             if (main == BodyPartIds.Belly)
                 return PickBelly(body);
+            if (main == BodyPartIds.HandL)
+                return PickHand(body, BodyPartIds.HandL, BodyPartIds.FingerThumbL, BodyPartIds.FingerIndexL);
+            if (main == BodyPartIds.HandR)
+                return PickHand(body, BodyPartIds.HandR, BodyPartIds.FingerThumbR, BodyPartIds.FingerIndexR);
             return main;
         }
 
@@ -74,6 +79,23 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (roll < cursor && IsUsable(body, BodyPartIds.KidneyR))
                 return BodyPartIds.KidneyR;
             return BodyPartIds.Belly;
+        }
+
+        static string PickHand(
+            ICharacterBody body,
+            string handId,
+            string thumbId,
+            string indexId)
+        {
+            float roll = Random.value;
+            float cursor = 0f;
+            cursor += HandToFingerEach;
+            if (roll < cursor && IsUsable(body, thumbId))
+                return thumbId;
+            cursor += HandToFingerEach;
+            if (roll < cursor && IsUsable(body, indexId))
+                return indexId;
+            return handId;
         }
 
         static bool IsUsable(ICharacterBody body, string partId)

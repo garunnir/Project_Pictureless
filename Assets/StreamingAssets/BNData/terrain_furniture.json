@@ -1,0 +1,4130 @@
+{
+  "_license": "CC BY-SA 3.0 — derived from Cataclysm: Bright Nights",
+  "_source": "https://github.com/cataclysmbnteam/Cataclysm-BN",
+  "terrain": [
+    {
+      "id": "t_adobe_brick_wall",
+      "name": "adobe wall"
+    },
+    {
+      "id": "t_adobe_brick_wall_halfway",
+      "name": "half-built adobe wall"
+    },
+    {
+      "id": "t_atm",
+      "name": "ATM"
+    },
+    {
+      "id": "t_backboard",
+      "name": "backboard"
+    },
+    {
+      "id": "t_backboard_in",
+      "name": "backboard"
+    },
+    {
+      "id": "t_ballistic_door_glass_c",
+      "name": "closed ballistic glass door"
+    },
+    {
+      "id": "t_ballistic_door_glass_o",
+      "name": "open ballistic glass door"
+    },
+    {
+      "id": "t_ballistic_glass",
+      "name": "ballistic glass"
+    },
+    {
+      "id": "t_barndoor",
+      "name": "rope and pulley"
+    },
+    {
+      "id": "t_bars",
+      "name": "metal bars"
+    },
+    {
+      "id": "t_brick_wall",
+      "name": "brick wall"
+    },
+    {
+      "id": "t_brick_wall_halfway",
+      "name": "half-built brick wall"
+    },
+    {
+      "id": "t_bridge",
+      "name": "walkway"
+    },
+    {
+      "id": "t_buffer_stop",
+      "name": "buffer stop"
+    },
+    {
+      "id": "t_bulk_tank",
+      "name": "bulk tank"
+    },
+    {
+      "id": "t_card_fp",
+      "name": "card reader"
+    },
+    {
+      "id": "t_card_industrial",
+      "name": "card reader"
+    },
+    {
+      "id": "t_card_military",
+      "name": "card reader"
+    },
+    {
+      "id": "t_card_reader_broken",
+      "name": "broken card reader"
+    },
+    {
+      "id": "t_card_robofac",
+      "name": "card reader"
+    },
+    {
+      "id": "t_card_science",
+      "name": "card reader"
+    },
+    {
+      "id": "t_carpet_concrete",
+      "name": "industrial carpet"
+    },
+    {
+      "id": "t_carpet_green",
+      "name": "green carpet"
+    },
+    {
+      "id": "t_carpet_metal",
+      "name": "bunker carpet"
+    },
+    {
+      "id": "t_carpet_purple",
+      "name": "purple carpet"
+    },
+    {
+      "id": "t_carpet_red",
+      "name": "red carpet"
+    },
+    {
+      "id": "t_carpet_yellow",
+      "name": "yellow carpet"
+    },
+    {
+      "id": "t_chainfence",
+      "name": "chain link fence"
+    },
+    {
+      "id": "t_chainfence_posts",
+      "name": "metal post"
+    },
+    {
+      "id": "t_chaingate_c",
+      "name": "closed wire gate"
+    },
+    {
+      "id": "t_chaingate_l",
+      "name": "locked wire gate"
+    },
+    {
+      "id": "t_chaingate_o",
+      "name": "open wire gate"
+    },
+    {
+      "id": "t_chickenwire_fence",
+      "name": "chickenwire fence"
+    },
+    {
+      "id": "t_chickenwire_fence_post",
+      "name": "chickenwire fence post"
+    },
+    {
+      "id": "t_chickenwire_gate_c",
+      "name": "closed chickenwire gate"
+    },
+    {
+      "id": "t_chickenwire_gate_o",
+      "name": "open chickenwire gate"
+    },
+    {
+      "id": "t_clay",
+      "name": "clay"
+    },
+    {
+      "id": "t_clay_underground",
+      "name": "clay"
+    },
+    {
+      "id": "t_claymound",
+      "name": "mound of clay"
+    },
+    {
+      "id": "t_claymound_underground",
+      "name": "mound of clay"
+    },
+    {
+      "id": "t_column",
+      "name": "column"
+    },
+    {
+      "id": "t_column_halfway",
+      "name": "half-built column"
+    },
+    {
+      "id": "t_concrete",
+      "name": "concrete"
+    },
+    {
+      "id": "t_concrete_railing",
+      "name": "concrete railing"
+    },
+    {
+      "id": "t_concrete_wall",
+      "name": "concrete wall"
+    },
+    {
+      "id": "t_concrete_y",
+      "name": "concrete"
+    },
+    {
+      "id": "t_console",
+      "name": "computer console"
+    },
+    {
+      "id": "t_console_broken",
+      "name": "broken console"
+    },
+    {
+      "id": "t_console_broken_test",
+      "name": "broken console"
+    },
+    {
+      "id": "t_conveyor",
+      "name": "conveyor belt"
+    },
+    {
+      "id": "t_covered_well",
+      "name": "covered well"
+    },
+    {
+      "id": "t_crossbuck_metal",
+      "name": "crossbuck"
+    },
+    {
+      "id": "t_crossbuck_wood",
+      "name": "crossbuck"
+    },
+    {
+      "id": "t_current_trans",
+      "name": "current transformer"
+    },
+    {
+      "id": "t_curtains",
+      "name": "window with closed curtains"
+    },
+    {
+      "id": "t_cvdbody",
+      "name": "CVD machine"
+    },
+    {
+      "id": "t_cvdmachine",
+      "name": "CVD control panel"
+    },
+    {
+      "id": "t_diesel_pump",
+      "name": "diesel pump"
+    },
+    {
+      "id": "t_diesel_pump_smashed",
+      "name": "smashed diesel pump"
+    },
+    {
+      "id": "t_dimensional_portal",
+      "name": "dimensional portal"
+    },
+    {
+      "id": "t_dirt",
+      "name": "dirt",
+      "flags": [
+        "PLOWABLE"
+      ]
+    },
+    {
+      "id": "t_dirt_underground",
+      "name": "dirt",
+      "flags": [
+        "PLOWABLE"
+      ]
+    },
+    {
+      "id": "t_dirtfloor",
+      "name": "dirt floor"
+    },
+    {
+      "id": "t_dirtfloor_no_roof",
+      "name": "dirt floor"
+    },
+    {
+      "id": "t_dirtfloor_thatchroof",
+      "name": "dirt floor"
+    },
+    {
+      "id": "t_dirtmound",
+      "name": "mound of dirt",
+      "flags": [
+        "PLANTABLE"
+      ]
+    },
+    {
+      "id": "t_dirtmoundfloor",
+      "name": "mound of dirt"
+    },
+    {
+      "id": "t_dock",
+      "name": "dock"
+    },
+    {
+      "id": "t_dock_deep",
+      "name": "deep dock"
+    },
+    {
+      "id": "t_dock_deep_frame",
+      "name": "deep dock frame"
+    },
+    {
+      "id": "t_dock_deep_pile",
+      "name": "deep dock pile"
+    },
+    {
+      "id": "t_door_b",
+      "name": "damaged wood door"
+    },
+    {
+      "id": "t_door_b_peep",
+      "name": "damaged wood door with peephole"
+    },
+    {
+      "id": "t_door_bar_c",
+      "name": "closed bar door"
+    },
+    {
+      "id": "t_door_bar_locked",
+      "name": "closed bar door"
+    },
+    {
+      "id": "t_door_bar_o",
+      "name": "open bar door"
+    },
+    {
+      "id": "t_door_boarded",
+      "name": "boarded up door"
+    },
+    {
+      "id": "t_door_boarded_damaged",
+      "name": "boarded up damaged door"
+    },
+    {
+      "id": "t_door_boarded_damaged_peep",
+      "name": "boarded up damaged door with peephole"
+    },
+    {
+      "id": "t_door_boarded_peep",
+      "name": "boarded up door with peephole"
+    },
+    {
+      "id": "t_door_c",
+      "name": "closed wood door"
+    },
+    {
+      "id": "t_door_c_peep",
+      "name": "closed wood door with peephole"
+    },
+    {
+      "id": "t_door_curtain_c",
+      "name": "closed door curtain"
+    },
+    {
+      "id": "t_door_curtain_o",
+      "name": "open door curtain"
+    },
+    {
+      "id": "t_door_frame",
+      "name": "empty door frame"
+    },
+    {
+      "id": "t_door_glass_c",
+      "name": "closed glass door"
+    },
+    {
+      "id": "t_door_glass_frosted_c",
+      "name": "closed frosted glass door"
+    },
+    {
+      "id": "t_door_glass_frosted_lab_c",
+      "name": "closed frosted glass door"
+    },
+    {
+      "id": "t_door_glass_frosted_lab_o",
+      "name": "open frosted glass door"
+    },
+    {
+      "id": "t_door_glass_frosted_o",
+      "name": "open frosted glass door"
+    },
+    {
+      "id": "t_door_glass_gray_c",
+      "name": "closed glass door"
+    },
+    {
+      "id": "t_door_glass_gray_o",
+      "name": "open glass door"
+    },
+    {
+      "id": "t_door_glass_green_c",
+      "name": "closed glass door"
+    },
+    {
+      "id": "t_door_glass_green_o",
+      "name": "open glass door"
+    },
+    {
+      "id": "t_door_glass_lab_c",
+      "name": "closed glass door"
+    },
+    {
+      "id": "t_door_glass_lab_o",
+      "name": "open glass door"
+    },
+    {
+      "id": "t_door_glass_o",
+      "name": "open glass door"
+    },
+    {
+      "id": "t_door_glass_red_c",
+      "name": "closed glass door"
+    },
+    {
+      "id": "t_door_glass_red_o",
+      "name": "open glass door"
+    },
+    {
+      "id": "t_door_glass_white_c",
+      "name": "closed glass door"
+    },
+    {
+      "id": "t_door_glass_white_o",
+      "name": "open glass door"
+    },
+    {
+      "id": "t_door_gray_b",
+      "name": "damaged wood door"
+    },
+    {
+      "id": "t_door_gray_c",
+      "name": "closed wood door"
+    },
+    {
+      "id": "t_door_gray_frame",
+      "name": "empty door frame"
+    },
+    {
+      "id": "t_door_gray_o",
+      "name": "open wood door"
+    },
+    {
+      "id": "t_door_green_b",
+      "name": "damaged wood door"
+    },
+    {
+      "id": "t_door_green_c",
+      "name": "closed wood door"
+    },
+    {
+      "id": "t_door_green_frame",
+      "name": "empty door frame"
+    },
+    {
+      "id": "t_door_green_o",
+      "name": "open wood door"
+    },
+    {
+      "id": "t_door_lab_b",
+      "name": "damaged wood door"
+    },
+    {
+      "id": "t_door_lab_c",
+      "name": "closed wood door"
+    },
+    {
+      "id": "t_door_lab_frame",
+      "name": "empty door frame"
+    },
+    {
+      "id": "t_door_lab_o",
+      "name": "open wood door"
+    },
+    {
+      "id": "t_door_locked",
+      "name": "closed wood door"
+    },
+    {
+      "id": "t_door_locked_alarm",
+      "name": "closed wood door"
+    },
+    {
+      "id": "t_door_locked_interior",
+      "name": "closed wood door"
+    },
+    {
+      "id": "t_door_locked_peep",
+      "name": "closed wood door"
+    },
+    {
+      "id": "t_door_makeshift_c",
+      "name": "closed makeshift door"
+    },
+    {
+      "id": "t_door_makeshift_o",
+      "name": "open makeshift door"
+    },
+    {
+      "id": "t_door_metal_c",
+      "name": "closed metal door"
+    },
+    {
+      "id": "t_door_metal_c_peep",
+      "name": "closed metal door with peephole"
+    },
+    {
+      "id": "t_door_metal_lab_c",
+      "name": "closed metal door"
+    },
+    {
+      "id": "t_door_metal_lab_o",
+      "name": "open metal door"
+    },
+    {
+      "id": "t_door_metal_locked",
+      "name": "closed metal door"
+    },
+    {
+      "id": "t_door_metal_locked_o",
+      "name": "open metal door"
+    },
+    {
+      "id": "t_door_metal_o",
+      "name": "open metal door"
+    },
+    {
+      "id": "t_door_metal_o_peep",
+      "name": "open metal door with peephole"
+    },
+    {
+      "id": "t_door_metal_pickable",
+      "name": "closed metal door"
+    },
+    {
+      "id": "t_door_o",
+      "name": "open wood door"
+    },
+    {
+      "id": "t_door_o_peep",
+      "name": "open wood door with peephole"
+    },
+    {
+      "id": "t_door_red_b",
+      "name": "damaged wood door"
+    },
+    {
+      "id": "t_door_red_c",
+      "name": "closed wood door"
+    },
+    {
+      "id": "t_door_red_frame",
+      "name": "empty door frame"
+    },
+    {
+      "id": "t_door_red_o",
+      "name": "open wood door"
+    },
+    {
+      "id": "t_door_white_b",
+      "name": "damaged wood door"
+    },
+    {
+      "id": "t_door_white_c",
+      "name": "closed wood door"
+    },
+    {
+      "id": "t_door_white_frame",
+      "name": "empty door frame"
+    },
+    {
+      "id": "t_door_white_o",
+      "name": "open wood door"
+    },
+    {
+      "id": "t_double_pane_glass",
+      "name": "Double glazed glass window"
+    },
+    {
+      "id": "t_double_pane_glass_open",
+      "name": "Double glazed glass window open"
+    },
+    {
+      "id": "t_double_pane_glass_with_curtain",
+      "name": "Double glazed glass window with a curtain"
+    },
+    {
+      "id": "t_double_pane_glass_with_curtain_open",
+      "name": "Double glazed glass window with a curtain"
+    },
+    {
+      "id": "t_double_pane_glass_with_curtain_open_window_closed",
+      "name": "Double glazed glass window with a curtain"
+    },
+    {
+      "id": "t_drystone_wall",
+      "name": "field stone wall"
+    },
+    {
+      "id": "t_drystone_wall_half",
+      "name": "field stone half-wall"
+    },
+    {
+      "id": "t_elevator",
+      "name": "elevator"
+    },
+    {
+      "id": "t_elevator_control",
+      "name": "elevator controls"
+    },
+    {
+      "id": "t_elevator_control_off",
+      "name": "powerless controls"
+    },
+    {
+      "id": "t_fault",
+      "name": "odd fault"
+    },
+    {
+      "id": "t_fence",
+      "name": "picket fence"
+    },
+    {
+      "id": "t_fence_barbed",
+      "name": "barbed wire fence"
+    },
+    {
+      "id": "t_fence_metal",
+      "name": "metal fence"
+    },
+    {
+      "id": "t_fence_post",
+      "name": "fence post"
+    },
+    {
+      "id": "t_fence_rope",
+      "name": "rope fence"
+    },
+    {
+      "id": "t_fence_wire",
+      "name": "wire fence"
+    },
+    {
+      "id": "t_fencegate_c",
+      "name": "closed wooden gate"
+    },
+    {
+      "id": "t_fencegate_o",
+      "name": "open wooden gate"
+    },
+    {
+      "id": "t_fern",
+      "name": "fern"
+    },
+    {
+      "id": "t_fern_harvested",
+      "name": "fern"
+    },
+    {
+      "id": "t_flat_roof",
+      "name": "flat roof"
+    },
+    {
+      "id": "t_floor",
+      "name": "floor"
+    },
+    {
+      "id": "t_floor_blue",
+      "name": "blue floor"
+    },
+    {
+      "id": "t_floor_green",
+      "name": "green floor"
+    },
+    {
+      "id": "t_floor_noroof",
+      "name": "wooden floor"
+    },
+    {
+      "id": "t_floor_paper",
+      "name": "paper floor"
+    },
+    {
+      "id": "t_floor_primitive",
+      "name": "primitive floor"
+    },
+    {
+      "id": "t_floor_red",
+      "name": "red floor"
+    },
+    {
+      "id": "t_floor_resin",
+      "name": "resin floor"
+    },
+    {
+      "id": "t_floor_wax",
+      "name": "wax floor"
+    },
+    {
+      "id": "t_floor_waxed",
+      "name": "waxed floor"
+    },
+    {
+      "id": "t_floor_waxed_y",
+      "name": "painted waxed floor"
+    },
+    {
+      "id": "t_fungus",
+      "name": "fungal bed"
+    },
+    {
+      "id": "t_fungus_floor_in",
+      "name": "fungal floor"
+    },
+    {
+      "id": "t_fungus_floor_out",
+      "name": "fungal floor"
+    },
+    {
+      "id": "t_fungus_floor_sup",
+      "name": "fungal floor"
+    },
+    {
+      "id": "t_fungus_mound",
+      "name": "fungal mound"
+    },
+    {
+      "id": "t_fungus_wall",
+      "name": "fungal wall"
+    },
+    {
+      "id": "t_fungus_wall_transformed",
+      "name": "fungal wall"
+    },
+    {
+      "id": "t_gas_pump",
+      "name": "gasoline pump"
+    },
+    {
+      "id": "t_gas_pump_a",
+      "name": "gasoline pump"
+    },
+    {
+      "id": "t_gas_pump_smashed",
+      "name": "smashed gas pump"
+    },
+    {
+      "id": "t_gas_tank",
+      "name": "fuel tank"
+    },
+    {
+      "id": "t_gas_tank_smashed",
+      "name": "broken fuel tank"
+    },
+    {
+      "id": "t_gate_metal_c",
+      "name": "closed metal gate"
+    },
+    {
+      "id": "t_gate_metal_o",
+      "name": "open metal gate"
+    },
+    {
+      "id": "t_gates_control_brick",
+      "name": "mechanical winch"
+    },
+    {
+      "id": "t_gates_control_brick_lab",
+      "name": "mechanical winch"
+    },
+    {
+      "id": "t_gates_control_concrete",
+      "name": "mechanical winch"
+    },
+    {
+      "id": "t_gates_control_concrete_lab",
+      "name": "mechanical winch"
+    },
+    {
+      "id": "t_gates_control_metal",
+      "name": "control lever"
+    },
+    {
+      "id": "t_gates_control_metal_lab",
+      "name": "control lever"
+    },
+    {
+      "id": "t_gates_mech_control",
+      "name": "mechanical winch"
+    },
+    {
+      "id": "t_gates_mech_control_lab",
+      "name": "mechanical winch"
+    },
+    {
+      "id": "t_generator_broken",
+      "name": "broken generator"
+    },
+    {
+      "id": "t_glass_railing",
+      "name": "glass railing"
+    },
+    {
+      "id": "t_glass_roof",
+      "name": "skylight"
+    },
+    {
+      "id": "t_golf_hole",
+      "name": "golf hole",
+      "flags": [
+        "PLOWABLE"
+      ]
+    },
+    {
+      "id": "t_grass",
+      "name": "grass",
+      "flags": [
+        "PLOWABLE"
+      ]
+    },
+    {
+      "id": "t_grass_dead",
+      "name": "dead grass",
+      "flags": [
+        "PLOWABLE"
+      ]
+    },
+    {
+      "id": "t_grass_golf",
+      "name": "golf green",
+      "flags": [
+        "PLOWABLE"
+      ]
+    },
+    {
+      "id": "t_grass_long",
+      "name": "long grass",
+      "flags": [
+        "PLOWABLE"
+      ]
+    },
+    {
+      "id": "t_grass_tall",
+      "name": "tall grass",
+      "flags": [
+        "PLOWABLE"
+      ]
+    },
+    {
+      "id": "t_grass_white",
+      "name": "white grass",
+      "flags": [
+        "PLOWABLE"
+      ]
+    },
+    {
+      "id": "t_grate",
+      "name": "metal grate"
+    },
+    {
+      "id": "t_grave",
+      "name": "grave"
+    },
+    {
+      "id": "t_grave_new",
+      "name": "grave"
+    },
+    {
+      "id": "t_guardrail",
+      "name": "guard rail"
+    },
+    {
+      "id": "t_guardrail_bg_dp",
+      "name": "guard rail"
+    },
+    {
+      "id": "t_guardrail_hw_air",
+      "name": "guard rail"
+    },
+    {
+      "id": "t_gutter_downspout",
+      "name": "downspout"
+    },
+    {
+      "id": "t_gutter_drop",
+      "name": "gutter drop"
+    },
+    {
+      "id": "t_gutter_east",
+      "name": "rain gutter"
+    },
+    {
+      "id": "t_gutter_north",
+      "name": "rain gutter"
+    },
+    {
+      "id": "t_gutter_south",
+      "name": "rain gutter"
+    },
+    {
+      "id": "t_gutter_west",
+      "name": "rain gutter"
+    },
+    {
+      "id": "t_improvised_shelter",
+      "name": "improvised shelter"
+    },
+    {
+      "id": "t_intercom",
+      "name": "intercom"
+    },
+    {
+      "id": "t_junk_floor",
+      "name": "junk metal floor"
+    },
+    {
+      "id": "t_junk_palisade",
+      "name": "junk metal barrier"
+    },
+    {
+      "id": "t_junk_wall",
+      "name": "junk metal wall"
+    },
+    {
+      "id": "t_ladder_down",
+      "name": "ladder"
+    },
+    {
+      "id": "t_ladder_up",
+      "name": "ladder"
+    },
+    {
+      "id": "t_lake_bed",
+      "name": "lake bed"
+    },
+    {
+      "id": "t_laminated_door_glass_c",
+      "name": "closed laminated glass door"
+    },
+    {
+      "id": "t_laminated_door_glass_o",
+      "name": "open laminated glass door"
+    },
+    {
+      "id": "t_laminated_glass",
+      "name": "laminated glass"
+    },
+    {
+      "id": "t_lava",
+      "name": "lava"
+    },
+    {
+      "id": "t_leanto",
+      "name": "pine lean-to"
+    },
+    {
+      "id": "t_lgtn_arrest",
+      "name": "lightning arrester"
+    },
+    {
+      "id": "t_linoleum_gray",
+      "name": "linoleum tile"
+    },
+    {
+      "id": "t_linoleum_gray_no_roof",
+      "name": "linoleum tile"
+    },
+    {
+      "id": "t_linoleum_white",
+      "name": "linoleum tile"
+    },
+    {
+      "id": "t_linoleum_white_no_roof",
+      "name": "linoleum tile"
+    },
+    {
+      "id": "t_little_column",
+      "name": "little column"
+    },
+    {
+      "id": "t_low_stairs_begin",
+      "name": "low stairs (beginning section)"
+    },
+    {
+      "id": "t_low_stairs_end",
+      "name": "low stairs (end section)"
+    },
+    {
+      "id": "t_m_frame",
+      "name": "empty metal window frame"
+    },
+    {
+      "id": "t_machinery_electronic",
+      "name": "electronic machinery"
+    },
+    {
+      "id": "t_machinery_heavy",
+      "name": "heavy machinery"
+    },
+    {
+      "id": "t_machinery_light",
+      "name": "light machinery"
+    },
+    {
+      "id": "t_machinery_old",
+      "name": "old machinery"
+    },
+    {
+      "id": "t_manhole",
+      "name": "manhole"
+    },
+    {
+      "id": "t_manhole_cover",
+      "name": "manhole cover"
+    },
+    {
+      "id": "t_marloss",
+      "name": "marloss bush"
+    },
+    {
+      "id": "t_marloss_tree",
+      "name": "marloss tree"
+    },
+    {
+      "id": "t_mdoor_frame",
+      "name": "empty metal door frame"
+    },
+    {
+      "id": "t_mdoor_lab_frame",
+      "name": "empty metal door frame"
+    },
+    {
+      "id": "t_metal_flat_roof",
+      "name": "metal flat roof"
+    },
+    {
+      "id": "t_metal_floor",
+      "name": "metal floor"
+    },
+    {
+      "id": "t_metal_floor_no_roof",
+      "name": "metal floor"
+    },
+    {
+      "id": "t_metal_grate_window",
+      "name": "Window with metal grate"
+    },
+    {
+      "id": "t_metal_grate_window_noglass",
+      "name": "Window with metal grate"
+    },
+    {
+      "id": "t_metal_grate_window_with_curtain",
+      "name": "Window with metal grate"
+    },
+    {
+      "id": "t_metal_grate_window_with_curtain_noglass",
+      "name": "Window with metal grate"
+    },
+    {
+      "id": "t_metal_grate_window_with_curtain_open",
+      "name": "Window with metal grate"
+    },
+    {
+      "id": "t_metal_grate_window_with_curtain_open_noglass",
+      "name": "Window with metal grate"
+    },
+    {
+      "id": "t_metal_railing",
+      "name": "metal railing"
+    },
+    {
+      "id": "t_metal_ventilation_shutter",
+      "name": "ventilation shutters"
+    },
+    {
+      "id": "t_milking_machine",
+      "name": "milking machine"
+    },
+    {
+      "id": "t_missile",
+      "name": "missile"
+    },
+    {
+      "id": "t_missile_exploded",
+      "name": "blown-out missile"
+    },
+    {
+      "id": "t_monkey_bars",
+      "name": "monkey bars"
+    },
+    {
+      "id": "t_moss",
+      "name": "moss",
+      "flags": [
+        "PLOWABLE"
+      ]
+    },
+    {
+      "id": "t_moss_underground",
+      "name": "moss"
+    },
+    {
+      "id": "t_mud",
+      "name": "mud"
+    },
+    {
+      "id": "t_mud_underground",
+      "name": "mud"
+    },
+    {
+      "id": "t_nanofab",
+      "name": "nanofabricator control panel"
+    },
+    {
+      "id": "t_nanofab_body",
+      "name": "nanofabricator"
+    },
+    {
+      "id": "t_ocean_bed",
+      "name": "ocean bed"
+    },
+    {
+      "id": "t_oil_circ_brkr_l",
+      "name": "HV oil circuit breaker"
+    },
+    {
+      "id": "t_oil_circ_brkr_s",
+      "name": "small HV oil circuit breaker"
+    },
+    {
+      "id": "t_open_air",
+      "name": "open air"
+    },
+    {
+      "id": "t_open_air_rooved",
+      "name": "open air"
+    },
+    {
+      "id": "t_open_air_rooved_outside",
+      "name": "open air"
+    },
+    {
+      "id": "t_orifice",
+      "name": "orifice"
+    },
+    {
+      "id": "t_ov_reb_cage",
+      "name": "rebar roof cage"
+    },
+    {
+      "id": "t_ov_smreb_cage",
+      "name": "small rebar roof cage"
+    },
+    {
+      "id": "t_palisade",
+      "name": "palisade wall"
+    },
+    {
+      "id": "t_palisade_gate",
+      "name": "palisade gate"
+    },
+    {
+      "id": "t_palisade_gate_o",
+      "name": "open palisade gate"
+    },
+    {
+      "id": "t_palisade_pulley",
+      "name": "rope and pulley"
+    },
+    {
+      "id": "t_paper",
+      "name": "paper wall"
+    },
+    {
+      "id": "t_pavement",
+      "name": "pavement"
+    },
+    {
+      "id": "t_pavement_bg_dp",
+      "name": "bridge pavement"
+    },
+    {
+      "id": "t_pavement_hw_air",
+      "name": "bridge pavement"
+    },
+    {
+      "id": "t_pavement_y",
+      "name": "yellow pavement"
+    },
+    {
+      "id": "t_pavement_y_bg_dp",
+      "name": "bridge yellow pavement"
+    },
+    {
+      "id": "t_pavement_y_hw_air",
+      "name": "bridge yellow pavement"
+    },
+    {
+      "id": "t_pedestal_temple",
+      "name": "light pedestal"
+    },
+    {
+      "id": "t_pedestal_wyrm",
+      "name": "dark pedestal"
+    },
+    {
+      "id": "t_pillar",
+      "name": "pillar"
+    },
+    {
+      "id": "t_pit",
+      "name": "pit"
+    },
+    {
+      "id": "t_pit_corpsed",
+      "name": "corpse filled pit"
+    },
+    {
+      "id": "t_pit_covered",
+      "name": "covered pit"
+    },
+    {
+      "id": "t_pit_glass",
+      "name": "glass pit"
+    },
+    {
+      "id": "t_pit_glass_covered",
+      "name": "covered glass pit"
+    },
+    {
+      "id": "t_pit_shallow",
+      "name": "shallow pit"
+    },
+    {
+      "id": "t_pit_spiked",
+      "name": "spiked pit"
+    },
+    {
+      "id": "t_pit_spiked_covered",
+      "name": "covered spiked pit"
+    },
+    {
+      "id": "t_plastic_window",
+      "name": "Plastic window"
+    },
+    {
+      "id": "t_plastic_window_open",
+      "name": "Plastic window"
+    },
+    {
+      "id": "t_plastic_window_with_curtain",
+      "name": "Plastic window with a curtain"
+    },
+    {
+      "id": "t_plastic_window_with_curtain_open",
+      "name": "Plastic window With a curtain"
+    },
+    {
+      "id": "t_plastic_window_with_curtain_open_window_closed",
+      "name": "Plastic window with a curtain"
+    },
+    {
+      "id": "t_platform_resin",
+      "name": "resin floor"
+    },
+    {
+      "id": "t_plut_generator",
+      "name": "plutonium generator"
+    },
+    {
+      "id": "t_pontoon_dp",
+      "name": "pontoon bridge"
+    },
+    {
+      "id": "t_ponywall",
+      "name": "pony wall"
+    },
+    {
+      "id": "t_portcullis",
+      "name": "makeshift portcullis"
+    },
+    {
+      "id": "t_potential_trans",
+      "name": "potential transformer"
+    },
+    {
+      "id": "t_privacy_fence",
+      "name": "wooden privacy fence"
+    },
+    {
+      "id": "t_privacy_fencegate_c",
+      "name": "closed wooden split rail gate"
+    },
+    {
+      "id": "t_privacy_fencegate_o",
+      "name": "open wooden split rail gate"
+    },
+    {
+      "id": "t_quadruple_pane_glass",
+      "name": "Quadruple glazed glass window"
+    },
+    {
+      "id": "t_quadruple_pane_glass_open",
+      "name": "Quadruple glazed glass window"
+    },
+    {
+      "id": "t_quadruple_pane_glass_with_curtain",
+      "name": "Quadruple glazed glass window with a curtain"
+    },
+    {
+      "id": "t_quadruple_pane_glass_with_curtain_open",
+      "name": "Quadruple glazed glass window With a curtain"
+    },
+    {
+      "id": "t_quadruple_pane_glass_with_curtain_open_window_closed",
+      "name": "Quadruple glazed glass window with a curtain"
+    },
+    {
+      "id": "t_rad_platform",
+      "name": "radiation platform"
+    },
+    {
+      "id": "t_radio_controls",
+      "name": "radio controls"
+    },
+    {
+      "id": "t_radio_tower",
+      "name": "radio tower"
+    },
+    {
+      "id": "t_railing",
+      "name": "railing"
+    },
+    {
+      "id": "t_railroad_crossing_signal",
+      "name": "railroad crossing signal"
+    },
+    {
+      "id": "t_railroad_rubble",
+      "name": "gravel"
+    },
+    {
+      "id": "t_railroad_tie",
+      "name": "railroad tie"
+    },
+    {
+      "id": "t_railroad_tie_d",
+      "name": "railroad tie"
+    },
+    {
+      "id": "t_railroad_tie_d1",
+      "name": "railroad tie"
+    },
+    {
+      "id": "t_railroad_tie_d2",
+      "name": "railroad tie"
+    },
+    {
+      "id": "t_railroad_tie_h",
+      "name": "railroad tie"
+    },
+    {
+      "id": "t_railroad_tie_v",
+      "name": "railroad tie"
+    },
+    {
+      "id": "t_railroad_track",
+      "name": "railroad track"
+    },
+    {
+      "id": "t_railroad_track_d",
+      "name": "railroad track"
+    },
+    {
+      "id": "t_railroad_track_d1",
+      "name": "railroad track"
+    },
+    {
+      "id": "t_railroad_track_d2",
+      "name": "railroad track"
+    },
+    {
+      "id": "t_railroad_track_d_on_tie",
+      "name": "railroad track"
+    },
+    {
+      "id": "t_railroad_track_h",
+      "name": "railroad track"
+    },
+    {
+      "id": "t_railroad_track_h_on_tie",
+      "name": "railroad track"
+    },
+    {
+      "id": "t_railroad_track_on_tie",
+      "name": "railroad track"
+    },
+    {
+      "id": "t_railroad_track_ramp_down_high",
+      "name": "railroad track down (high end)"
+    },
+    {
+      "id": "t_railroad_track_ramp_down_low",
+      "name": "railroad track down (low end)"
+    },
+    {
+      "id": "t_railroad_track_ramp_up_high",
+      "name": "railroad track up (high end)"
+    },
+    {
+      "id": "t_railroad_track_ramp_up_low",
+      "name": "railroad track up (low end)"
+    },
+    {
+      "id": "t_railroad_track_small",
+      "name": "small railroad track"
+    },
+    {
+      "id": "t_railroad_track_small_d",
+      "name": "small railroad track"
+    },
+    {
+      "id": "t_railroad_track_v",
+      "name": "railroad track"
+    },
+    {
+      "id": "t_railroad_track_v_on_tie",
+      "name": "railroad track"
+    },
+    {
+      "id": "t_ramp_down_high",
+      "name": "road ramp down (high end)"
+    },
+    {
+      "id": "t_ramp_down_low",
+      "name": "road ramp down (low end)"
+    },
+    {
+      "id": "t_ramp_up_high",
+      "name": "road ramp up (high end)"
+    },
+    {
+      "id": "t_ramp_up_low",
+      "name": "road ramp up (low end)"
+    },
+    {
+      "id": "t_rdoor_b",
+      "name": "damaged reinforced wood door"
+    },
+    {
+      "id": "t_rdoor_boarded",
+      "name": "boarded up reinforced door"
+    },
+    {
+      "id": "t_rdoor_boarded_damaged",
+      "name": "boarded up damaged reinforced door"
+    },
+    {
+      "id": "t_rdoor_c",
+      "name": "closed reinforced wood door"
+    },
+    {
+      "id": "t_rdoor_o",
+      "name": "open reinforced wood door"
+    },
+    {
+      "id": "t_reb_cage",
+      "name": "rebar cage"
+    },
+    {
+      "id": "t_recycler",
+      "name": "metal compactor"
+    },
+    {
+      "id": "t_region_grass",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_region_groundcover",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_region_groundcover_barren",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_region_groundcover_forest",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_region_groundcover_swamp",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_region_groundcover_urban",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_region_shrub",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_region_shrub_decorative",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_region_shrub_fruit",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_region_soil",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_region_tree",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_region_tree_evergreen",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_region_tree_fruit",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_region_tree_nut",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_region_tree_shade",
+      "name": "this should never actually show up, it's a pseudo terrain"
+    },
+    {
+      "id": "t_reinforced_door_glass_c",
+      "name": "closed reinforced glass door"
+    },
+    {
+      "id": "t_reinforced_door_glass_lab_c",
+      "name": "closed reinforced glass door"
+    },
+    {
+      "id": "t_reinforced_door_glass_lab_o",
+      "name": "open reinforced glass door"
+    },
+    {
+      "id": "t_reinforced_door_glass_o",
+      "name": "open reinforced glass door"
+    },
+    {
+      "id": "t_reinforced_double_pane_glass",
+      "name": "Reinforced double glazed glass window"
+    },
+    {
+      "id": "t_reinforced_double_pane_glass_open",
+      "name": "Reinforced double glazed glass window open"
+    },
+    {
+      "id": "t_reinforced_double_pane_glass_with_curtain",
+      "name": "Reinforced double glazed glass window with a curtain"
+    },
+    {
+      "id": "t_reinforced_double_pane_glass_with_curtain_open",
+      "name": "Reinforced double glazed glass window with a curtain"
+    },
+    {
+      "id": "t_reinforced_double_pane_glass_with_curtain_open_window_closed",
+      "name": "Reinforced double glazed glass window with a curtain"
+    },
+    {
+      "id": "t_reinforced_glass",
+      "name": "reinforced glass"
+    },
+    {
+      "id": "t_reinforced_glass_shutter",
+      "name": "reinforced glass with closed shutters"
+    },
+    {
+      "id": "t_reinforced_glass_shutter_open",
+      "name": "reinforced glass with open shutters"
+    },
+    {
+      "id": "t_reinforced_plastic_window",
+      "name": "Reinforced plastic window"
+    },
+    {
+      "id": "t_reinforced_plastic_window_open",
+      "name": "Reinforced Plastic window"
+    },
+    {
+      "id": "t_reinforced_plastic_window_with_curtain",
+      "name": "Reinforced plastic window with a curtain"
+    },
+    {
+      "id": "t_reinforced_plastic_window_with_curtain_open",
+      "name": "Reinforced plastic window With a curtain"
+    },
+    {
+      "id": "t_reinforced_plastic_window_with_curtain_open_window_closed",
+      "name": "Reinforced plastic window with a curtain"
+    },
+    {
+      "id": "t_reinforced_quadruple_double_pane_glass_with_curtain_open_window_closed",
+      "name": "Reinforced quadruple glazed glass window with a curtain"
+    },
+    {
+      "id": "t_reinforced_quadruple_pane_glass",
+      "name": "Reinforced quadruple glazed glass window"
+    },
+    {
+      "id": "t_reinforced_quadruple_pane_glass_open",
+      "name": "Reinforced quadruple glazed glass window"
+    },
+    {
+      "id": "t_reinforced_quadruple_pane_glass_with_curtain",
+      "name": "reinforced quadruple glazed glass window with a curtain"
+    },
+    {
+      "id": "t_reinforced_quadruple_pane_glass_with_curtain_open",
+      "name": "Reinforced quadruple glazed glass window With a curtain"
+    },
+    {
+      "id": "t_reinforced_single_pane_glass",
+      "name": "Reinforced single glazed glass window"
+    },
+    {
+      "id": "t_reinforced_single_pane_glass_open",
+      "name": "Reinforced single glazed glass window open"
+    },
+    {
+      "id": "t_reinforced_single_pane_glass_with_curtain",
+      "name": "Reinforced single glazed glass window with a curtain"
+    },
+    {
+      "id": "t_reinforced_single_pane_glass_with_curtain_open",
+      "name": "Reinforced single glazed glass window with a curtain"
+    },
+    {
+      "id": "t_reinforced_single_pane_glass_with_curtain_open_window_closed",
+      "name": "reinforced single glazed glass window with a curtain"
+    },
+    {
+      "id": "t_reinforced_triple_pane_glass",
+      "name": "Reinforced-triple pane glass window"
+    },
+    {
+      "id": "t_reinforced_triple_pane_glass_open",
+      "name": "Reinforced-triple pane glass window"
+    },
+    {
+      "id": "t_reinforced_triple_pane_glass_with_curtain",
+      "name": "Reinforced triple glazed glass window with a curtain"
+    },
+    {
+      "id": "t_reinforced_triple_pane_glass_with_curtain_open",
+      "name": "Reinforced triple glazed glass window With a curtain"
+    },
+    {
+      "id": "t_reinforced_triple_pane_glass_with_curtain_open_window_closed",
+      "name": "Reinforced triple-pane glass window with a curtain"
+    },
+    {
+      "id": "t_resin_hole",
+      "name": "resin-lined hole"
+    },
+    {
+      "id": "t_resin_hole_c",
+      "name": "closed resin portal"
+    },
+    {
+      "id": "t_resin_hole_o",
+      "name": "open resin portal"
+    },
+    {
+      "id": "t_resin_roof",
+      "name": "resin roof"
+    },
+    {
+      "id": "t_riverbridge_dp",
+      "name": "river bridge"
+    },
+    {
+      "id": "t_rock",
+      "name": "solid rock"
+    },
+    {
+      "id": "t_rock_blue",
+      "name": "blue stone"
+    },
+    {
+      "id": "t_rock_floor",
+      "name": "rock floor"
+    },
+    {
+      "id": "t_rock_floor_no_roof",
+      "name": "rock floor"
+    },
+    {
+      "id": "t_rock_green",
+      "name": "green stone"
+    },
+    {
+      "id": "t_rock_red",
+      "name": "red stone"
+    },
+    {
+      "id": "t_rock_roof",
+      "name": "rock roof"
+    },
+    {
+      "id": "t_rock_smooth",
+      "name": "smoothed rock"
+    },
+    {
+      "id": "t_rock_wall",
+      "name": "stone wall"
+    },
+    {
+      "id": "t_rock_wall_half",
+      "name": "half-built stone wall"
+    },
+    {
+      "id": "t_roof_paper",
+      "name": "flat roof"
+    },
+    {
+      "id": "t_root_wall",
+      "name": "root wall"
+    },
+    {
+      "id": "t_rootcellar",
+      "name": "root cellar"
+    },
+    {
+      "id": "t_rope_up",
+      "name": "rope leading up"
+    },
+    {
+      "id": "t_sai_box",
+      "name": "telecom cabinet"
+    },
+    {
+      "id": "t_sai_box_damaged",
+      "name": "damaged telecom cabinet"
+    },
+    {
+      "id": "t_sand",
+      "name": "sand"
+    },
+    {
+      "id": "t_sand_underground",
+      "name": "sand"
+    },
+    {
+      "id": "t_sandbox",
+      "name": "sandbox"
+    },
+    {
+      "id": "t_sandmound",
+      "name": "mound of sand"
+    },
+    {
+      "id": "t_sconc_wall",
+      "name": "simple concrete wall"
+    },
+    {
+      "id": "t_sconc_wall_halfway",
+      "name": "half-built simple concrete wall"
+    },
+    {
+      "id": "t_scrap_floor",
+      "name": "simple metal floor"
+    },
+    {
+      "id": "t_scrap_wall",
+      "name": "simple metal wall"
+    },
+    {
+      "id": "t_scrap_wall_halfway",
+      "name": "half-built simple metal wall"
+    },
+    {
+      "id": "t_screen_door_c",
+      "name": "closed screen door"
+    },
+    {
+      "id": "t_screen_door_o",
+      "name": "open screen door"
+    },
+    {
+      "id": "t_screened_porch_wall",
+      "name": "screen mesh wall"
+    },
+    {
+      "id": "t_secretdoor_metal_c",
+      "name": "metal wall"
+    },
+    {
+      "id": "t_secretdoor_metal_o",
+      "name": "open secret door"
+    },
+    {
+      "id": "t_sewage",
+      "name": "sewage"
+    },
+    {
+      "id": "t_sewage_pipe",
+      "name": "high gauge pipe"
+    },
+    {
+      "id": "t_sewage_pump",
+      "name": "high gauge pump"
+    },
+    {
+      "id": "t_sh_bridge",
+      "name": "shallow bridge"
+    },
+    {
+      "id": "t_shingle_flat_roof",
+      "name": "shingle flat roof"
+    },
+    {
+      "id": "t_shrub",
+      "name": "shrub"
+    },
+    {
+      "id": "t_shrub_blackberry",
+      "name": "blackberry bush"
+    },
+    {
+      "id": "t_shrub_blackberry_harvested",
+      "name": "blackberry bush"
+    },
+    {
+      "id": "t_shrub_blueberry",
+      "name": "blueberry bush"
+    },
+    {
+      "id": "t_shrub_blueberry_harvested",
+      "name": "blueberry bush"
+    },
+    {
+      "id": "t_shrub_fungal",
+      "name": "fungal shrub"
+    },
+    {
+      "id": "t_shrub_grape",
+      "name": "grape bush"
+    },
+    {
+      "id": "t_shrub_grape_harvested",
+      "name": "grape bush"
+    },
+    {
+      "id": "t_shrub_huckleberry",
+      "name": "huckleberry bush"
+    },
+    {
+      "id": "t_shrub_huckleberry_harvested",
+      "name": "huckleberry bush"
+    },
+    {
+      "id": "t_shrub_hydrangea",
+      "name": "hydrangea bush"
+    },
+    {
+      "id": "t_shrub_hydrangea_harvested",
+      "name": "hydrangea bush"
+    },
+    {
+      "id": "t_shrub_lilac",
+      "name": "lilac bush"
+    },
+    {
+      "id": "t_shrub_lilac_harvested",
+      "name": "lilac bush"
+    },
+    {
+      "id": "t_shrub_peanut",
+      "name": "peanut bush"
+    },
+    {
+      "id": "t_shrub_peanut_harvested",
+      "name": "peanut bush"
+    },
+    {
+      "id": "t_shrub_raspberry",
+      "name": "raspberry bush"
+    },
+    {
+      "id": "t_shrub_raspberry_harvested",
+      "name": "raspberry bush"
+    },
+    {
+      "id": "t_shrub_rose",
+      "name": "rose bush"
+    },
+    {
+      "id": "t_shrub_rose_harvested",
+      "name": "rose bush"
+    },
+    {
+      "id": "t_shrub_strawberry",
+      "name": "strawberry bush"
+    },
+    {
+      "id": "t_shrub_strawberry_harvested",
+      "name": "strawberry bush"
+    },
+    {
+      "id": "t_sidewalk",
+      "name": "sidewalk"
+    },
+    {
+      "id": "t_sidewalk_bg_dp",
+      "name": "bridge sidewalk"
+    },
+    {
+      "id": "t_sidewalk_hw_air",
+      "name": "bridge sidewalk"
+    },
+    {
+      "id": "t_sidewalk_ramp_down_high",
+      "name": "sidewalk ramp down (high end)"
+    },
+    {
+      "id": "t_sidewalk_ramp_down_low",
+      "name": "sidewalk ramp down (low end)"
+    },
+    {
+      "id": "t_sidewalk_ramp_up_high",
+      "name": "sidewalk ramp up (high end)"
+    },
+    {
+      "id": "t_sidewalk_ramp_up_low",
+      "name": "sidewalk ramp up (low end)"
+    },
+    {
+      "id": "t_single_pane_glass",
+      "name": "Single glazed glass window"
+    },
+    {
+      "id": "t_single_pane_glass_open",
+      "name": "Single glazed glass window open"
+    },
+    {
+      "id": "t_single_pane_glass_with_curtain",
+      "name": "Single glazed glass window with a curtain"
+    },
+    {
+      "id": "t_single_pane_glass_with_curtain_open",
+      "name": "Single glazed glass window with a curtain"
+    },
+    {
+      "id": "t_single_pane_glass_with_curtain_open_window_closed",
+      "name": "Single glazed glass window with a curtain"
+    },
+    {
+      "id": "t_skylight_frame",
+      "name": "Skylight frame"
+    },
+    {
+      "id": "t_slide",
+      "name": "slide"
+    },
+    {
+      "id": "t_slime",
+      "name": "slime"
+    },
+    {
+      "id": "t_slope_down",
+      "name": "downward slope"
+    },
+    {
+      "id": "t_slope_up",
+      "name": "upward slope"
+    },
+    {
+      "id": "t_slot_machine",
+      "name": "slot machine"
+    },
+    {
+      "id": "t_splitrail_fence",
+      "name": "split rail fence"
+    },
+    {
+      "id": "t_splitrail_fencegate_c",
+      "name": "closed wooden split rail gate"
+    },
+    {
+      "id": "t_splitrail_fencegate_o",
+      "name": "open wooden split rail gate"
+    },
+    {
+      "id": "t_stairs_down",
+      "name": "stairs"
+    },
+    {
+      "id": "t_stairs_up",
+      "name": "stairs"
+    },
+    {
+      "id": "t_station_disc",
+      "name": "disconnect switch"
+    },
+    {
+      "id": "t_strconc_floor",
+      "name": "reinforced concrete floor"
+    },
+    {
+      "id": "t_strconc_floor_halfway",
+      "name": "half-built reinforced concrete floor"
+    },
+    {
+      "id": "t_strconc_wall",
+      "name": "reinforced concrete wall"
+    },
+    {
+      "id": "t_strconc_wall_halfway",
+      "name": "half-built reinforced concrete wall"
+    },
+    {
+      "id": "t_stump",
+      "name": "tree stump"
+    },
+    {
+      "id": "t_support_l",
+      "name": "large metal support"
+    },
+    {
+      "id": "t_support_s",
+      "name": "small metal support"
+    },
+    {
+      "id": "t_swater_dp",
+      "name": "deep water"
+    },
+    {
+      "id": "t_swater_dp_underground",
+      "name": "deep water"
+    },
+    {
+      "id": "t_swater_sh",
+      "name": "shallow water"
+    },
+    {
+      "id": "t_swater_sh_underground",
+      "name": "shallow water"
+    },
+    {
+      "id": "t_switch_even",
+      "name": "checkered switch"
+    },
+    {
+      "id": "t_switch_gb",
+      "name": "cyan switch"
+    },
+    {
+      "id": "t_switch_rb",
+      "name": "purple switch"
+    },
+    {
+      "id": "t_switch_rg",
+      "name": "yellow switch"
+    },
+    {
+      "id": "t_switchgear_l",
+      "name": "large switchgear"
+    },
+    {
+      "id": "t_switchgear_s",
+      "name": "small switchgear"
+    },
+    {
+      "id": "t_tar_flat_roof",
+      "name": "tar paper flat roof"
+    },
+    {
+      "id": "t_tarptent",
+      "name": "tarp lean-to"
+    },
+    {
+      "id": "t_tempered_glass_open",
+      "name": "Tempered glass window open"
+    },
+    {
+      "id": "t_tempered_glass_window",
+      "name": "Tempered glass window"
+    },
+    {
+      "id": "t_tempered_glass_with_curtain",
+      "name": "tempered glass window with a curtain"
+    },
+    {
+      "id": "t_tempered_glass_with_curtain_open",
+      "name": "Tempered glass window with a curtain"
+    },
+    {
+      "id": "t_tempered_glass_with_curtain_open_window_closed",
+      "name": "Tempered glass window with a curtain"
+    },
+    {
+      "id": "t_thatch_roof",
+      "name": "thatched roof"
+    },
+    {
+      "id": "t_thconc_floor",
+      "name": "concrete floor"
+    },
+    {
+      "id": "t_thconc_floor_olight",
+      "name": "concrete floor, overhead light"
+    },
+    {
+      "id": "t_thconc_y",
+      "name": "concrete floor"
+    },
+    {
+      "id": "t_ticket_machine",
+      "name": "ticket machine"
+    },
+    {
+      "id": "t_ticket_vendor",
+      "name": "ticket vendor"
+    },
+    {
+      "id": "t_tile_flat_roof",
+      "name": "tile flat roof"
+    },
+    {
+      "id": "t_tree",
+      "name": "oak tree"
+    },
+    {
+      "id": "t_tree_almond",
+      "name": "almond tree"
+    },
+    {
+      "id": "t_tree_almond_harvested",
+      "name": "almond tree"
+    },
+    {
+      "id": "t_tree_apple",
+      "name": "apple tree"
+    },
+    {
+      "id": "t_tree_apple_harvested",
+      "name": "apple tree"
+    },
+    {
+      "id": "t_tree_apricot",
+      "name": "apricot tree"
+    },
+    {
+      "id": "t_tree_apricot_harvested",
+      "name": "apricot tree"
+    },
+    {
+      "id": "t_tree_beech",
+      "name": "beech tree"
+    },
+    {
+      "id": "t_tree_beech_harvested",
+      "name": "beech tree"
+    },
+    {
+      "id": "t_tree_birch",
+      "name": "birch tree"
+    },
+    {
+      "id": "t_tree_birch_harvested",
+      "name": "birch tree"
+    },
+    {
+      "id": "t_tree_blackjack",
+      "name": "blackjack oak"
+    },
+    {
+      "id": "t_tree_blackjack_harvested",
+      "name": "blackjack oak"
+    },
+    {
+      "id": "t_tree_cherry",
+      "name": "cherry tree"
+    },
+    {
+      "id": "t_tree_cherry_harvested",
+      "name": "cherry tree"
+    },
+    {
+      "id": "t_tree_chestnut",
+      "name": "chestnut tree"
+    },
+    {
+      "id": "t_tree_chestnut_harvested",
+      "name": "chestnut tree"
+    },
+    {
+      "id": "t_tree_coffee",
+      "name": "coffee tree"
+    },
+    {
+      "id": "t_tree_coffee_harvested",
+      "name": "coffee tree"
+    },
+    {
+      "id": "t_tree_cottonwood",
+      "name": "cottonwood tree"
+    },
+    {
+      "id": "t_tree_dead",
+      "name": "dead tree"
+    },
+    {
+      "id": "t_tree_deadpine",
+      "name": "dead pine tree"
+    },
+    {
+      "id": "t_tree_elderberry",
+      "name": "elderberry tree"
+    },
+    {
+      "id": "t_tree_elderberry_harvested",
+      "name": "elderberry tree"
+    },
+    {
+      "id": "t_tree_elm",
+      "name": "elm tree"
+    },
+    {
+      "id": "t_tree_fungal",
+      "name": "fungal tree"
+    },
+    {
+      "id": "t_tree_fungal_young",
+      "name": "young fungal tree"
+    },
+    {
+      "id": "t_tree_harvested",
+      "name": "oak tree"
+    },
+    {
+      "id": "t_tree_hazelnut",
+      "name": "hazelnut tree"
+    },
+    {
+      "id": "t_tree_hazelnut_harvested",
+      "name": "hazelnut tree"
+    },
+    {
+      "id": "t_tree_hickory",
+      "name": "hickory tree"
+    },
+    {
+      "id": "t_tree_hickory_dead",
+      "name": "dead hickory tree"
+    },
+    {
+      "id": "t_tree_hickory_harvested",
+      "name": "hickory tree"
+    },
+    {
+      "id": "t_tree_juniper",
+      "name": "juniper tree"
+    },
+    {
+      "id": "t_tree_juniper_harvested",
+      "name": "juniper tree"
+    },
+    {
+      "id": "t_tree_maple",
+      "name": "maple tree"
+    },
+    {
+      "id": "t_tree_maple_tapped",
+      "name": "maple tree"
+    },
+    {
+      "id": "t_tree_mulberry",
+      "name": "mulberry tree"
+    },
+    {
+      "id": "t_tree_mulberry_harvested",
+      "name": "mulberry tree"
+    },
+    {
+      "id": "t_tree_peach",
+      "name": "peach tree"
+    },
+    {
+      "id": "t_tree_peach_harvested",
+      "name": "peach tree"
+    },
+    {
+      "id": "t_tree_pear",
+      "name": "pear tree"
+    },
+    {
+      "id": "t_tree_pear_harvested",
+      "name": "pear tree"
+    },
+    {
+      "id": "t_tree_pecan",
+      "name": "pecan tree"
+    },
+    {
+      "id": "t_tree_pecan_harvested",
+      "name": "pecan tree"
+    },
+    {
+      "id": "t_tree_pine",
+      "name": "pine tree"
+    },
+    {
+      "id": "t_tree_pine_harvested",
+      "name": "pine tree"
+    },
+    {
+      "id": "t_tree_pistachio",
+      "name": "pistachio tree"
+    },
+    {
+      "id": "t_tree_pistachio_harvested",
+      "name": "pistachio tree"
+    },
+    {
+      "id": "t_tree_plum",
+      "name": "plum tree"
+    },
+    {
+      "id": "t_tree_plum_harvested",
+      "name": "plum tree"
+    },
+    {
+      "id": "t_tree_walnut",
+      "name": "walnut tree"
+    },
+    {
+      "id": "t_tree_walnut_harvested",
+      "name": "walnut tree"
+    },
+    {
+      "id": "t_tree_willow",
+      "name": "willow tree"
+    },
+    {
+      "id": "t_tree_willow_harvested",
+      "name": "willow tree"
+    },
+    {
+      "id": "t_tree_young",
+      "name": "young tree"
+    },
+    {
+      "id": "t_triple_pane_glass",
+      "name": "Triple glazed glass window"
+    },
+    {
+      "id": "t_triple_pane_glass_open",
+      "name": "Triple glazed glass window"
+    },
+    {
+      "id": "t_triple_pane_glass_with_curtain",
+      "name": "Triple glazed glass window with a curtain"
+    },
+    {
+      "id": "t_triple_pane_glass_with_curtain_open",
+      "name": "Triple-pane glass window With a curtain"
+    },
+    {
+      "id": "t_triple_pane_glass_with_curtain_open_window_closed",
+      "name": "Triple glazed glass window with a curtain"
+    },
+    {
+      "id": "t_trunk",
+      "name": "tree trunk"
+    },
+    {
+      "id": "t_underbrush",
+      "name": "underbrush"
+    },
+    {
+      "id": "t_underbrush_harvested_autumn",
+      "name": "underbrush"
+    },
+    {
+      "id": "t_underbrush_harvested_spring",
+      "name": "underbrush"
+    },
+    {
+      "id": "t_underbrush_harvested_summer",
+      "name": "underbrush"
+    },
+    {
+      "id": "t_underbrush_harvested_winter",
+      "name": "underbrush"
+    },
+    {
+      "id": "t_utility_light",
+      "name": "utility light"
+    },
+    {
+      "id": "t_utility_light_off",
+      "name": "utility light (off)"
+    },
+    {
+      "id": "t_vat",
+      "name": "cloning vat"
+    },
+    {
+      "id": "t_wall",
+      "name": "wall"
+    },
+    {
+      "id": "t_wall_P",
+      "name": "pink wall"
+    },
+    {
+      "id": "t_wall_b",
+      "name": "blue wall"
+    },
+    {
+      "id": "t_wall_g",
+      "name": "green wall"
+    },
+    {
+      "id": "t_wall_glass",
+      "name": "glass wall"
+    },
+    {
+      "id": "t_wall_glass_alarm",
+      "name": "glass wall"
+    },
+    {
+      "id": "t_wall_half",
+      "name": "half-built wall"
+    },
+    {
+      "id": "t_wall_log",
+      "name": "log wall"
+    },
+    {
+      "id": "t_wall_log_broken",
+      "name": "broken log wall"
+    },
+    {
+      "id": "t_wall_log_chipped",
+      "name": "chipped log wall"
+    },
+    {
+      "id": "t_wall_log_half",
+      "name": "half-built log wall"
+    },
+    {
+      "id": "t_wall_metal",
+      "name": "metal wall"
+    },
+    {
+      "id": "t_wall_p",
+      "name": "purple wall"
+    },
+    {
+      "id": "t_wall_r",
+      "name": "red wall"
+    },
+    {
+      "id": "t_wall_rammed_earth",
+      "name": "rammed earth wall"
+    },
+    {
+      "id": "t_wall_resin",
+      "name": "resin wall"
+    },
+    {
+      "id": "t_wall_resin_cage",
+      "name": "resin cage"
+    },
+    {
+      "id": "t_wall_w",
+      "name": "white wall"
+    },
+    {
+      "id": "t_wall_wattle",
+      "name": "wattle-and-daub wall"
+    },
+    {
+      "id": "t_wall_wattle_broken",
+      "name": "broken wattle-and-daub wall"
+    },
+    {
+      "id": "t_wall_wattle_half",
+      "name": "half-built wattle-and-daub wall"
+    },
+    {
+      "id": "t_wall_wood",
+      "name": "wooden wall"
+    },
+    {
+      "id": "t_wall_wood_broken",
+      "name": "broken wood wall"
+    },
+    {
+      "id": "t_wall_wood_chipped",
+      "name": "chipped wood wall"
+    },
+    {
+      "id": "t_wall_y",
+      "name": "yellow wall"
+    },
+    {
+      "id": "t_water_cube",
+      "name": "submersed water"
+    },
+    {
+      "id": "t_water_dispenser",
+      "name": "water dispenser"
+    },
+    {
+      "id": "t_water_dp",
+      "name": "deep water"
+    },
+    {
+      "id": "t_water_dp_underground",
+      "name": "deep water"
+    },
+    {
+      "id": "t_water_moving_dp",
+      "name": "flowing deep water"
+    },
+    {
+      "id": "t_water_moving_dp_underground",
+      "name": "flowing deep water"
+    },
+    {
+      "id": "t_water_moving_sh",
+      "name": "flowing shallow water"
+    },
+    {
+      "id": "t_water_moving_sh_underground",
+      "name": "flowing shallow water"
+    },
+    {
+      "id": "t_water_murky",
+      "name": "murky shallow water"
+    },
+    {
+      "id": "t_water_pool",
+      "name": "pool water"
+    },
+    {
+      "id": "t_water_pool_outdoors",
+      "name": "pool water"
+    },
+    {
+      "id": "t_water_pool_shallow",
+      "name": "shallow pool water"
+    },
+    {
+      "id": "t_water_pool_shallow_outdoors",
+      "name": "shallow pool water"
+    },
+    {
+      "id": "t_water_pump",
+      "name": "water pump"
+    },
+    {
+      "id": "t_water_sh",
+      "name": "shallow water"
+    },
+    {
+      "id": "t_water_sh_murky_underground",
+      "name": "murky shallow water"
+    },
+    {
+      "id": "t_water_sh_underground",
+      "name": "shallow water"
+    },
+    {
+      "id": "t_wax",
+      "name": "wax wall"
+    },
+    {
+      "id": "t_web_bridge",
+      "name": "web bridge"
+    },
+    {
+      "id": "t_window",
+      "name": "window"
+    },
+    {
+      "id": "t_window_alarm",
+      "name": "window"
+    },
+    {
+      "id": "t_window_alarm_taped",
+      "name": "taped window"
+    },
+    {
+      "id": "t_window_bars",
+      "name": "window frame with metal bars"
+    },
+    {
+      "id": "t_window_bars_alarm",
+      "name": "window with metal bars"
+    },
+    {
+      "id": "t_window_bars_curtains",
+      "name": "window with metal bars and curtains"
+    },
+    {
+      "id": "t_window_bars_domestic",
+      "name": "window with metal bars and curtains"
+    },
+    {
+      "id": "t_window_boarded",
+      "name": "boarded up window"
+    },
+    {
+      "id": "t_window_boarded_noglass",
+      "name": "boarded up window"
+    },
+    {
+      "id": "t_window_domestic",
+      "name": "window with curtains"
+    },
+    {
+      "id": "t_window_domestic_taped",
+      "name": "taped window"
+    },
+    {
+      "id": "t_window_empty",
+      "name": "empty window"
+    },
+    {
+      "id": "t_window_enhanced",
+      "name": "armored boarded up window"
+    },
+    {
+      "id": "t_window_enhanced_noglass",
+      "name": "armored boarded up window"
+    },
+    {
+      "id": "t_window_frame",
+      "name": "window frame"
+    },
+    {
+      "id": "t_window_no_curtains",
+      "name": "window without curtains"
+    },
+    {
+      "id": "t_window_no_curtains_open",
+      "name": "open window without curtains"
+    },
+    {
+      "id": "t_window_no_curtains_taped",
+      "name": "taped window"
+    },
+    {
+      "id": "t_window_open",
+      "name": "open window with curtains"
+    },
+    {
+      "id": "t_window_reinforced",
+      "name": "reinforced boarded up window"
+    },
+    {
+      "id": "t_window_reinforced_noglass",
+      "name": "reinforced boarded up window"
+    },
+    {
+      "id": "t_window_stained_blue",
+      "name": "high stained glass window"
+    },
+    {
+      "id": "t_window_stained_green",
+      "name": "high stained glass window"
+    },
+    {
+      "id": "t_window_stained_red",
+      "name": "high stained glass window"
+    },
+    {
+      "id": "t_window_taped",
+      "name": "taped window"
+    },
+    {
+      "id": "t_wood_stairs_down",
+      "name": "wooden stairs"
+    },
+    {
+      "id": "t_wood_stairs_up",
+      "name": "wooden stairs"
+    },
+    {
+      "id": "t_wood_stairs_up_broken",
+      "name": "broken wooden stairs"
+    },
+    {
+      "id": "t_wood_stairs_up_half",
+      "name": "half-built wooden stairs"
+    },
+    {
+      "id": "t_woodchips",
+      "name": "woodchips",
+      "flags": [
+        "PLOWABLE"
+      ]
+    }
+  ],
+  "furniture": [
+    {
+      "id": "f_30gal_firebarrel",
+      "name": "fire barrel (100L)"
+    },
+    {
+      "id": "f_55gal_firebarrel",
+      "name": "fire barrel (200L)"
+    },
+    {
+      "id": "f_CTscan",
+      "name": "CT scanner"
+    },
+    {
+      "id": "f_GC",
+      "name": "gas chromatographer"
+    },
+    {
+      "id": "f_HPLC",
+      "name": "high performance liquid chromatographer"
+    },
+    {
+      "id": "f_IV_pole",
+      "name": "IV pole"
+    },
+    {
+      "id": "f_MRI",
+      "name": "MRI machine"
+    },
+    {
+      "id": "f_MS",
+      "name": "mass spectrometer"
+    },
+    {
+      "id": "f_NMR",
+      "name": "nuclear magnetic resonance spectrometer"
+    },
+    {
+      "id": "f_TV_antenna",
+      "name": "TV antenna"
+    },
+    {
+      "id": "f_air_compressor",
+      "name": "air compressor"
+    },
+    {
+      "id": "f_air_conditioner",
+      "name": "cooling unit"
+    },
+    {
+      "id": "f_air_filter",
+      "name": "central air filter"
+    },
+    {
+      "id": "f_alien_anemone",
+      "name": "wafting anemone"
+    },
+    {
+      "id": "f_alien_gasper",
+      "name": "gasping tube"
+    },
+    {
+      "id": "f_alien_nerve",
+      "name": "nerve cluster"
+    },
+    {
+      "id": "f_alien_pod",
+      "name": "slimy pod"
+    },
+    {
+      "id": "f_alien_pod_organ",
+      "name": "organ pod"
+    },
+    {
+      "id": "f_alien_pod_resin",
+      "name": "resin pod"
+    },
+    {
+      "id": "f_alien_scar",
+      "name": "scarred lump"
+    },
+    {
+      "id": "f_alien_scar_small",
+      "name": "seeping scar"
+    },
+    {
+      "id": "f_alien_table",
+      "name": "fleshy altar"
+    },
+    {
+      "id": "f_alien_tendril",
+      "name": "glowing tendril"
+    },
+    {
+      "id": "f_alien_zapper",
+      "name": "twitching frond"
+    },
+    {
+      "id": "f_anesthetic",
+      "name": "anesthetic machine"
+    },
+    {
+      "id": "f_anvil",
+      "name": "anvil"
+    },
+    {
+      "id": "f_arc_furnace",
+      "name": "electric arc furnace"
+    },
+    {
+      "id": "f_arcade_machine",
+      "name": "arcade machine"
+    },
+    {
+      "id": "f_arcfurnace_empty",
+      "name": "arc furnace"
+    },
+    {
+      "id": "f_arcfurnace_full",
+      "name": "filled arc furnace"
+    },
+    {
+      "id": "f_armchair",
+      "name": "arm chair"
+    },
+    {
+      "id": "f_ash",
+      "name": "pile of ash"
+    },
+    {
+      "id": "f_aut_gas_console",
+      "name": "automated gas console"
+    },
+    {
+      "id": "f_aut_gas_console_o",
+      "name": "broken automated gas console"
+    },
+    {
+      "id": "f_autoclave",
+      "name": "laboratory autoclave"
+    },
+    {
+      "id": "f_autodoc",
+      "name": "Autodoc Mk. XI"
+    },
+    {
+      "id": "f_autodoc_couch",
+      "name": "Autodoc operation couch"
+    },
+    {
+      "id": "f_ball_mach",
+      "name": "ball machine"
+    },
+    {
+      "id": "f_bandsaw",
+      "name": "bandsaw"
+    },
+    {
+      "id": "f_barricade_road",
+      "name": "road barricade"
+    },
+    {
+      "id": "f_bathtub",
+      "name": "bathtub"
+    },
+    {
+      "id": "f_battery",
+      "name": "mounted battery"
+    },
+    {
+      "id": "f_battery_huge",
+      "name": "mounted large storage battery"
+    },
+    {
+      "id": "f_battery_large",
+      "name": "mounted storage battery"
+    },
+    {
+      "id": "f_beaded_door",
+      "name": "beaded curtain"
+    },
+    {
+      "id": "f_beaded_door_o",
+      "name": "open beaded curtain"
+    },
+    {
+      "id": "f_bed",
+      "name": "bed"
+    },
+    {
+      "id": "f_bed_frame",
+      "name": "bed frame"
+    },
+    {
+      "id": "f_bellows",
+      "name": "blacksmith bellows"
+    },
+    {
+      "id": "f_bench",
+      "name": "bench"
+    },
+    {
+      "id": "f_bigmirror",
+      "name": "standing mirror"
+    },
+    {
+      "id": "f_bigmirror_b",
+      "name": "broken standing mirror"
+    },
+    {
+      "id": "f_birdbath",
+      "name": "birdbath"
+    },
+    {
+      "id": "f_bitts",
+      "name": "bitts"
+    },
+    {
+      "id": "f_black_eyed_susan",
+      "name": "black eyed susan"
+    },
+    {
+      "id": "f_bluebell",
+      "name": "bluebell"
+    },
+    {
+      "id": "f_bookcase",
+      "name": "bookcase"
+    },
+    {
+      "id": "f_boulder_large",
+      "name": "large boulder"
+    },
+    {
+      "id": "f_boulder_medium",
+      "name": "medium boulder"
+    },
+    {
+      "id": "f_boulder_small",
+      "name": "small boulder"
+    },
+    {
+      "id": "f_brazier",
+      "name": "brazier"
+    },
+    {
+      "id": "f_bulletin",
+      "name": "bulletin board"
+    },
+    {
+      "id": "f_bunkbed",
+      "name": "bunk bed"
+    },
+    {
+      "id": "f_burdock",
+      "name": "burdock"
+    },
+    {
+      "id": "f_butcher_rack",
+      "name": "butchering rack"
+    },
+    {
+      "id": "f_butter_churn",
+      "name": "butter churn"
+    },
+    {
+      "id": "f_cable_connector",
+      "name": "jumper cable connector"
+    },
+    {
+      "id": "f_camp_chair",
+      "name": "camp chair"
+    },
+    {
+      "id": "f_canvas_door",
+      "name": "canvas flap"
+    },
+    {
+      "id": "f_canvas_door_o",
+      "name": "open canvas flap"
+    },
+    {
+      "id": "f_canvas_floor",
+      "name": "canvas floor"
+    },
+    {
+      "id": "f_canvas_wall",
+      "name": "canvas wall"
+    },
+    {
+      "id": "f_cardboard_box",
+      "name": "large cardboard box"
+    },
+    {
+      "id": "f_cardboard_fort",
+      "name": "cardboard fort"
+    },
+    {
+      "id": "f_cardboard_wall",
+      "name": "cardboard wall"
+    },
+    {
+      "id": "f_cattails",
+      "name": "cattails"
+    },
+    {
+      "id": "f_cellphone_booster",
+      "name": "cell phone signal booster"
+    },
+    {
+      "id": "f_center_groundsheet",
+      "name": "groundsheet"
+    },
+    {
+      "id": "f_centrifuge",
+      "name": "centrifuge"
+    },
+    {
+      "id": "f_chair",
+      "name": "chair"
+    },
+    {
+      "id": "f_chamomile",
+      "name": "chamomile"
+    },
+    {
+      "id": "f_charger",
+      "name": "battery charger"
+    },
+    {
+      "id": "f_chemical_mixer",
+      "name": "chemical mixer"
+    },
+    {
+      "id": "f_chemistry_set",
+      "name": "grid chemistry set"
+    },
+    {
+      "id": "f_chemlab",
+      "name": "grid chemistry lab"
+    },
+    {
+      "id": "f_chicory",
+      "name": "chicory"
+    },
+    {
+      "id": "f_chimney",
+      "name": "chimney crown"
+    },
+    {
+      "id": "f_clay_kiln",
+      "name": "clay kiln"
+    },
+    {
+      "id": "f_clothing_rail",
+      "name": "clothing rail"
+    },
+    {
+      "id": "f_coffee_table",
+      "name": "table"
+    },
+    {
+      "id": "f_coffin_c",
+      "name": "coffin"
+    },
+    {
+      "id": "f_coffin_o",
+      "name": "open coffin"
+    },
+    {
+      "id": "f_counter",
+      "name": "counter"
+    },
+    {
+      "id": "f_counter_gate_c",
+      "name": "closed counter gate"
+    },
+    {
+      "id": "f_counter_gate_o",
+      "name": "open counter gate"
+    },
+    {
+      "id": "f_craftrig",
+      "name": "grid FOODCO kitchen buddy"
+    },
+    {
+      "id": "f_crate_c",
+      "name": "crate"
+    },
+    {
+      "id": "f_crate_o",
+      "name": "open crate"
+    },
+    {
+      "id": "f_cupboard",
+      "name": "cupboard"
+    },
+    {
+      "id": "f_curtain",
+      "name": "privacy curtain"
+    },
+    {
+      "id": "f_curtain_open",
+      "name": "open privacy curtain"
+    },
+    {
+      "id": "f_dahlia",
+      "name": "dahlia"
+    },
+    {
+      "id": "f_dancing_pole",
+      "name": "dancing pole"
+    },
+    {
+      "id": "f_dandelion",
+      "name": "dandelion"
+    },
+    {
+      "id": "f_datura",
+      "name": "datura"
+    },
+    {
+      "id": "f_deckchair",
+      "name": "deck chair"
+    },
+    {
+      "id": "f_decorative_tree",
+      "name": "decorative tree"
+    },
+    {
+      "id": "f_desk",
+      "name": "desk"
+    },
+    {
+      "id": "f_dialysis",
+      "name": "dialysis machine"
+    },
+    {
+      "id": "f_dishwasher",
+      "name": "dishwasher"
+    },
+    {
+      "id": "f_displaycase",
+      "name": "display case"
+    },
+    {
+      "id": "f_displaycase_b",
+      "name": "broken display case"
+    },
+    {
+      "id": "f_dive_block",
+      "name": "diving block"
+    },
+    {
+      "id": "f_down_mattress",
+      "name": "down mattress"
+    },
+    {
+      "id": "f_dresser",
+      "name": "dresser"
+    },
+    {
+      "id": "f_drill_press",
+      "name": "drill press"
+    },
+    {
+      "id": "f_drophammer",
+      "name": "blacksmith drop hammer"
+    },
+    {
+      "id": "f_dryer",
+      "name": "dryer"
+    },
+    {
+      "id": "f_dumpster",
+      "name": "dumpster"
+    },
+    {
+      "id": "f_earthbag_half",
+      "name": "earthbag barricade"
+    },
+    {
+      "id": "f_earthbag_wall",
+      "name": "earthbag wall"
+    },
+    {
+      "id": "f_egg_sackbw",
+      "name": "spider egg sack"
+    },
+    {
+      "id": "f_egg_sackcs",
+      "name": "spider egg sack"
+    },
+    {
+      "id": "f_egg_sacke",
+      "name": "ruptured egg sack"
+    },
+    {
+      "id": "f_egg_sackws",
+      "name": "spider egg sack"
+    },
+    {
+      "id": "f_electron_microscope",
+      "name": "electron microscope"
+    },
+    {
+      "id": "f_entertainment_center",
+      "name": "entertainment center"
+    },
+    {
+      "id": "f_ergometer",
+      "name": "ergometer"
+    },
+    {
+      "id": "f_exercise",
+      "name": "exercise machine"
+    },
+    {
+      "id": "f_eyewash",
+      "name": "emergency wash station"
+    },
+    {
+      "id": "f_fake_bench_hands",
+      "name": "fake workbench hands"
+    },
+    {
+      "id": "f_fema_groundsheet",
+      "name": "groundsheet"
+    },
+    {
+      "id": "f_fiber_mat",
+      "name": "fiber mat"
+    },
+    {
+      "id": "f_filing_cabinet",
+      "name": "filing cabinet"
+    },
+    {
+      "id": "f_fireplace",
+      "name": "fireplace"
+    },
+    {
+      "id": "f_firering",
+      "name": "fire ring"
+    },
+    {
+      "id": "f_floor_lamp",
+      "name": "floor lamp (no power)"
+    },
+    {
+      "id": "f_floor_lamp_off",
+      "name": "floor lamp (off)"
+    },
+    {
+      "id": "f_floor_lamp_on",
+      "name": "floor lamp (on)"
+    },
+    {
+      "id": "f_floor_mattress",
+      "name": "mattress"
+    },
+    {
+      "id": "f_flower_fungal",
+      "name": "fungal flower"
+    },
+    {
+      "id": "f_flower_marloss",
+      "name": "marloss flower"
+    },
+    {
+      "id": "f_flower_spurge",
+      "name": "spurge flower"
+    },
+    {
+      "id": "f_flower_tulip",
+      "name": "tulip"
+    },
+    {
+      "id": "f_fog",
+      "name": "fog"
+    },
+    {
+      "id": "f_forge",
+      "name": "forge"
+    },
+    {
+      "id": "f_forge_rock",
+      "name": "rock forge"
+    },
+    {
+      "id": "f_forgerig",
+      "name": "grid forge rig"
+    },
+    {
+      "id": "f_freezer",
+      "name": "freezer"
+    },
+    {
+      "id": "f_freezer_off",
+      "name": "freezer (off)"
+    },
+    {
+      "id": "f_freezer_on",
+      "name": "freezer (on)"
+    },
+    {
+      "id": "f_fridge",
+      "name": "refrigerator"
+    },
+    {
+      "id": "f_fridge_off",
+      "name": "refrigerator (off)"
+    },
+    {
+      "id": "f_fridge_on",
+      "name": "refrigerator (on)"
+    },
+    {
+      "id": "f_fume_hood",
+      "name": "fume hood"
+    },
+    {
+      "id": "f_fungal_clump",
+      "name": "fungal clump"
+    },
+    {
+      "id": "f_fungal_mass",
+      "name": "fungal mass"
+    },
+    {
+      "id": "f_fungal_tangle",
+      "name": "fungal tangle"
+    },
+    {
+      "id": "f_fvat_empty",
+      "name": "fermenting vat"
+    },
+    {
+      "id": "f_fvat_full",
+      "name": "filled fermenting vat"
+    },
+    {
+      "id": "f_glass_cabinet",
+      "name": "glass front cabinet"
+    },
+    {
+      "id": "f_glass_freezer",
+      "name": "glass door freezer"
+    },
+    {
+      "id": "f_glass_freezer_off",
+      "name": "glass door freezer (off)"
+    },
+    {
+      "id": "f_glass_freezer_on",
+      "name": "glass freezer (on)"
+    },
+    {
+      "id": "f_glass_fridge",
+      "name": "glass door fridge"
+    },
+    {
+      "id": "f_glass_fridge_off",
+      "name": "glass door fridge (off)"
+    },
+    {
+      "id": "f_glass_fridge_on",
+      "name": "glass door fridge (on)"
+    },
+    {
+      "id": "f_grave_head",
+      "name": "headstone"
+    },
+    {
+      "id": "f_grave_monument",
+      "name": "obelisk"
+    },
+    {
+      "id": "f_grave_stone",
+      "name": "gravestone"
+    },
+    {
+      "id": "f_grave_stone_old",
+      "name": "worn gravestone"
+    },
+    {
+      "id": "f_gridautoclave",
+      "name": "grid autoclave"
+    },
+    {
+      "id": "f_griddehydrator",
+      "name": "grid food dehydrator"
+    },
+    {
+      "id": "f_gridelectrolysis_kit",
+      "name": "grid electrolysis kit"
+    },
+    {
+      "id": "f_gridfood_processor",
+      "name": "grid food processor"
+    },
+    {
+      "id": "f_gridforge",
+      "name": "grid forge"
+    },
+    {
+      "id": "f_gridkiln",
+      "name": "grid kiln"
+    },
+    {
+      "id": "f_gridsolderingiron",
+      "name": "grid soldering iron"
+    },
+    {
+      "id": "f_gridvac_sealer",
+      "name": "grid vacuum sealer"
+    },
+    {
+      "id": "f_gridwelder",
+      "name": "grid welder"
+    },
+    {
+      "id": "f_ground_crafting_spot",
+      "name": "ground crafting spot"
+    },
+    {
+      "id": "f_groundsheet",
+      "name": "groundsheet"
+    },
+    {
+      "id": "f_gun_safe_el",
+      "name": "electronic gun safe"
+    },
+    {
+      "id": "f_gunsafe_mj",
+      "name": "jammed gun safe"
+    },
+    {
+      "id": "f_gunsafe_ml",
+      "name": "gun safe"
+    },
+    {
+      "id": "f_hanging_meathook",
+      "name": "hanging meathook"
+    },
+    {
+      "id": "f_hay",
+      "name": "bale of hay"
+    },
+    {
+      "id": "f_heavy_lathe",
+      "name": "power lathe"
+    },
+    {
+      "id": "f_hobo_stove",
+      "name": "hobo stove"
+    },
+    {
+      "id": "f_home_furnace",
+      "name": "furnace"
+    },
+    {
+      "id": "f_hydraulic_press",
+      "name": "hydraulic press"
+    },
+    {
+      "id": "f_indoor_plant",
+      "name": "indoor plant"
+    },
+    {
+      "id": "f_indoor_plant_y",
+      "name": "yellow indoor plant"
+    },
+    {
+      "id": "f_jointer",
+      "name": "jointer"
+    },
+    {
+      "id": "f_kiln_empty",
+      "name": "charcoal kiln"
+    },
+    {
+      "id": "f_kiln_full",
+      "name": "filled charcoal kiln"
+    },
+    {
+      "id": "f_kiln_metal_empty",
+      "name": "metal charcoal kiln"
+    },
+    {
+      "id": "f_kiln_metal_full",
+      "name": "filled metal charcoal kiln"
+    },
+    {
+      "id": "f_lab_bench",
+      "name": "lab workbench"
+    },
+    {
+      "id": "f_ladder",
+      "name": "stepladder"
+    },
+    {
+      "id": "f_lane",
+      "name": "lane guard"
+    },
+    {
+      "id": "f_large_canvas_door",
+      "name": "canvas flap"
+    },
+    {
+      "id": "f_large_canvas_door_o",
+      "name": "open canvas flap"
+    },
+    {
+      "id": "f_large_canvas_wall",
+      "name": "canvas wall"
+    },
+    {
+      "id": "f_large_groundsheet",
+      "name": "groundsheet"
+    },
+    {
+      "id": "f_leather_tarp",
+      "name": "leather tarp"
+    },
+    {
+      "id": "f_leaves_pile",
+      "name": "pile of leaves"
+    },
+    {
+      "id": "f_lily",
+      "name": "lily"
+    },
+    {
+      "id": "f_lilypad",
+      "name": "lilypad"
+    },
+    {
+      "id": "f_locker",
+      "name": "locker"
+    },
+    {
+      "id": "f_logstool",
+      "name": "log stool"
+    },
+    {
+      "id": "f_lotus",
+      "name": "lotus"
+    },
+    {
+      "id": "f_mailbox",
+      "name": "mailbox"
+    },
+    {
+      "id": "f_makeshift_bed",
+      "name": "makeshift bed"
+    },
+    {
+      "id": "f_mannequin",
+      "name": "mannequin"
+    },
+    {
+      "id": "f_metal_bench",
+      "name": "metal bench"
+    },
+    {
+      "id": "f_metal_butcher_rack",
+      "name": "metal butchering rack"
+    },
+    {
+      "id": "f_metal_smoking_rack",
+      "name": "metal smoking rack"
+    },
+    {
+      "id": "f_metal_smoking_rack_active",
+      "name": "active metal smoking rack"
+    },
+    {
+      "id": "f_minifreezer",
+      "name": "minifreezer"
+    },
+    {
+      "id": "f_minifreezer_off",
+      "name": "minifreezer (off)"
+    },
+    {
+      "id": "f_minifreezer_on",
+      "name": "minifreezer (on)"
+    },
+    {
+      "id": "f_mitresaw",
+      "name": "mitre saw"
+    },
+    {
+      "id": "f_mustard",
+      "name": "mustard"
+    },
+    {
+      "id": "f_mutpoppy",
+      "name": "mutated poppy flower"
+    },
+    {
+      "id": "f_no_item",
+      "name": "seeing this is a bug"
+    },
+    {
+      "id": "f_organ",
+      "name": "pipe organ"
+    },
+    {
+      "id": "f_oven",
+      "name": "oven"
+    },
+    {
+      "id": "f_piano",
+      "name": "piano"
+    },
+    {
+      "id": "f_pillow_fort",
+      "name": "pillow fort"
+    },
+    {
+      "id": "f_pinball_machine",
+      "name": "pinball machine"
+    },
+    {
+      "id": "f_planer",
+      "name": "planer"
+    },
+    {
+      "id": "f_plant_harvest",
+      "name": "harvestable plant",
+      "flags": [
+        "PLANT",
+        "GROWTH_HARVEST"
+      ],
+      "plant_data": {
+        "transform": "f_null",
+        "base": "f_null"
+      }
+    },
+    {
+      "id": "f_plant_mature",
+      "name": "mature plant",
+      "flags": [
+        "PLANT",
+        "GROWTH_MATURE"
+      ],
+      "plant_data": {
+        "transform": "f_plant_harvest",
+        "base": "f_null"
+      }
+    },
+    {
+      "id": "f_plant_seed",
+      "name": "seed",
+      "flags": [
+        "PLANT",
+        "GROWTH_SEED"
+      ],
+      "plant_data": {
+        "transform": "f_plant_seedling",
+        "base": "f_null"
+      }
+    },
+    {
+      "id": "f_plant_seedling",
+      "name": "seedling",
+      "flags": [
+        "PLANT",
+        "GROWTH_SEEDLING"
+      ],
+      "plant_data": {
+        "transform": "f_plant_mature",
+        "base": "f_null"
+      }
+    },
+    {
+      "id": "f_planter",
+      "name": "planter",
+      "flags": [
+        "PLANTABLE"
+      ],
+      "plant_data": {
+        "transform": "f_planter_seed"
+      }
+    },
+    {
+      "id": "f_planter_harvest",
+      "name": "planter with harvestable plant",
+      "flags": [
+        "PLANT",
+        "GROWTH_HARVEST"
+      ],
+      "plant_data": {
+        "transform": "f_planter",
+        "base": "f_planter"
+      }
+    },
+    {
+      "id": "f_planter_mature",
+      "name": "planter with mature plant",
+      "flags": [
+        "PLANT",
+        "GROWTH_MATURE"
+      ],
+      "plant_data": {
+        "transform": "f_planter_harvest",
+        "base": "f_planter"
+      }
+    },
+    {
+      "id": "f_planter_seed",
+      "name": "planter with seed",
+      "flags": [
+        "PLANT",
+        "GROWTH_SEED"
+      ],
+      "plant_data": {
+        "transform": "f_planter_seedling",
+        "base": "f_planter"
+      }
+    },
+    {
+      "id": "f_planter_seedling",
+      "name": "planter with seedling",
+      "flags": [
+        "PLANT",
+        "GROWTH_SEEDLING"
+      ],
+      "plant_data": {
+        "transform": "f_planter_mature",
+        "base": "f_planter"
+      }
+    },
+    {
+      "id": "f_plastic_groundsheet",
+      "name": "plastic groundsheet"
+    },
+    {
+      "id": "f_pool_table",
+      "name": "pool table"
+    },
+    {
+      "id": "f_punching_bag",
+      "name": "heavy punching bag"
+    },
+    {
+      "id": "f_rack",
+      "name": "display rack"
+    },
+    {
+      "id": "f_rack_coat",
+      "name": "coat rack"
+    },
+    {
+      "id": "f_rack_wood",
+      "name": "wooden rack"
+    },
+    {
+      "id": "f_recycle_bin",
+      "name": "recycle bin"
+    },
+    {
+      "id": "f_region_flower",
+      "name": "this should never actually show up, it's a pseudo furniture"
+    },
+    {
+      "id": "f_region_flower_decorative",
+      "name": "this should never actually show up, it's a pseudo furniture"
+    },
+    {
+      "id": "f_region_water_plant",
+      "name": "this should never actually show up, it's a pseudo furniture"
+    },
+    {
+      "id": "f_region_weed",
+      "name": "this should never actually show up, it's a pseudo furniture"
+    },
+    {
+      "id": "f_robotic_arm",
+      "name": "robotic arm"
+    },
+    {
+      "id": "f_robotic_assembler",
+      "name": "robotic assembler"
+    },
+    {
+      "id": "f_roof_turbine_vent",
+      "name": "roof turbine vent"
+    },
+    {
+      "id": "f_rope_up",
+      "name": "rope leading up"
+    },
+    {
+      "id": "f_rope_up_web",
+      "name": "web rope leading up"
+    },
+    {
+      "id": "f_rotary_clothesline",
+      "name": "rotary clothes dryer line"
+    },
+    {
+      "id": "f_roulette_table",
+      "name": "roulette table"
+    },
+    {
+      "id": "f_router",
+      "name": "router table"
+    },
+    {
+      "id": "f_rubble",
+      "name": "pile of rubble"
+    },
+    {
+      "id": "f_rubble_landfill",
+      "name": "pile of trashy rubble"
+    },
+    {
+      "id": "f_rubble_rock",
+      "name": "pile of rocky rubble"
+    },
+    {
+      "id": "f_rvoven",
+      "name": "RV kitchen unit"
+    },
+    {
+      "id": "f_safe_c",
+      "name": "safe"
+    },
+    {
+      "id": "f_safe_l",
+      "name": "safe"
+    },
+    {
+      "id": "f_safe_o",
+      "name": "open safe"
+    },
+    {
+      "id": "f_sample_freezer",
+      "name": "sample freezer"
+    },
+    {
+      "id": "f_sandbag_half",
+      "name": "sandbag barricade"
+    },
+    {
+      "id": "f_sandbag_wall",
+      "name": "sandbag wall"
+    },
+    {
+      "id": "f_satellite",
+      "name": "large satellite dish"
+    },
+    {
+      "id": "f_scan_bed",
+      "name": "scanner bed"
+    },
+    {
+      "id": "f_seat_airplane",
+      "name": "airplane seat"
+    },
+    {
+      "id": "f_server",
+      "name": "server stack"
+    },
+    {
+      "id": "f_shackle",
+      "name": "manacles"
+    },
+    {
+      "id": "f_shaker",
+      "name": "shaker incubator"
+    },
+    {
+      "id": "f_shower",
+      "name": "shower"
+    },
+    {
+      "id": "f_shredder",
+      "name": "document shredder"
+    },
+    {
+      "id": "f_sign",
+      "name": "sign"
+    },
+    {
+      "id": "f_sign_warning",
+      "name": "warning sign"
+    },
+    {
+      "id": "f_sink",
+      "name": "sink"
+    },
+    {
+      "id": "f_skin_door",
+      "name": "animalskin flap"
+    },
+    {
+      "id": "f_skin_door_o",
+      "name": "open animalskin flap"
+    },
+    {
+      "id": "f_skin_groundsheet",
+      "name": "animalskin floor"
+    },
+    {
+      "id": "f_skin_wall",
+      "name": "animalskin wall"
+    },
+    {
+      "id": "f_slab",
+      "name": "stone slab"
+    },
+    {
+      "id": "f_small_satelitte_dish",
+      "name": "satellite dish"
+    },
+    {
+      "id": "f_smoking_rack",
+      "name": "smoking rack"
+    },
+    {
+      "id": "f_smoking_rack_active",
+      "name": "active smoking rack"
+    },
+    {
+      "id": "f_sofa",
+      "name": "sofa"
+    },
+    {
+      "id": "f_solar_unit",
+      "name": "mounted solar panel"
+    },
+    {
+      "id": "f_solar_unit_v2",
+      "name": "mounted upgraded solar panel"
+    },
+    {
+      "id": "f_space_heater",
+      "name": "space heater (no power)"
+    },
+    {
+      "id": "f_space_heater_large",
+      "name": "large space heater (no power)"
+    },
+    {
+      "id": "f_space_heater_large_off",
+      "name": "large space heater (off)"
+    },
+    {
+      "id": "f_space_heater_large_on",
+      "name": "large space heater (on)"
+    },
+    {
+      "id": "f_space_heater_off",
+      "name": "space heater (off)"
+    },
+    {
+      "id": "f_space_heater_on",
+      "name": "space heater (on)"
+    },
+    {
+      "id": "f_speaker_cabinet",
+      "name": "speaker cabinet"
+    },
+    {
+      "id": "f_standing_tank",
+      "name": "standing tank"
+    },
+    {
+      "id": "f_statue",
+      "name": "statue"
+    },
+    {
+      "id": "f_still",
+      "name": "still"
+    },
+    {
+      "id": "f_stool",
+      "name": "stool"
+    },
+    {
+      "id": "f_straw_bed",
+      "name": "straw bed"
+    },
+    {
+      "id": "f_street_light",
+      "name": "street light"
+    },
+    {
+      "id": "f_sunflower",
+      "name": "sunflower"
+    },
+    {
+      "id": "f_swamp_gas",
+      "name": "swamp gas"
+    },
+    {
+      "id": "f_table",
+      "name": "table"
+    },
+    {
+      "id": "f_tablesaw",
+      "name": "tablesaw"
+    },
+    {
+      "id": "f_target",
+      "name": "target"
+    },
+    {
+      "id": "f_tatami",
+      "name": "tatami mat"
+    },
+    {
+      "id": "f_toilet",
+      "name": "toilet"
+    },
+    {
+      "id": "f_tourist_table",
+      "name": "tourist table"
+    },
+    {
+      "id": "f_traffic_light",
+      "name": "traffic light"
+    },
+    {
+      "id": "f_trashcan",
+      "name": "trash can"
+    },
+    {
+      "id": "f_treadmill",
+      "name": "treadmill"
+    },
+    {
+      "id": "f_utility_pole",
+      "name": "utility pole"
+    },
+    {
+      "id": "f_utility_shelf",
+      "name": "utility shelf"
+    },
+    {
+      "id": "f_vending_c",
+      "name": "vending machine"
+    },
+    {
+      "id": "f_vending_o",
+      "name": "broken vending machine"
+    },
+    {
+      "id": "f_vending_reinforced",
+      "name": "reinforced vending machine"
+    },
+    {
+      "id": "f_vent_pipe",
+      "name": "vent pipe"
+    },
+    {
+      "id": "f_ventilator",
+      "name": "medical ventilator"
+    },
+    {
+      "id": "f_wardrobe",
+      "name": "wardrobe"
+    },
+    {
+      "id": "f_warehouse_shelf",
+      "name": "warehouse shelf"
+    },
+    {
+      "id": "f_washer",
+      "name": "washing machine"
+    },
+    {
+      "id": "f_water_heater",
+      "name": "water heater"
+    },
+    {
+      "id": "f_water_mill",
+      "name": "water mill"
+    },
+    {
+      "id": "f_water_mill_active",
+      "name": "active water mill"
+    },
+    {
+      "id": "f_water_purifier",
+      "name": "water purifier"
+    },
+    {
+      "id": "f_welderrig",
+      "name": "grid welding rig"
+    },
+    {
+      "id": "f_wind_mill",
+      "name": "wind mill"
+    },
+    {
+      "id": "f_wind_mill_active",
+      "name": "active wind mill"
+    },
+    {
+      "id": "f_winter_wreath",
+      "name": "pine wreath"
+    },
+    {
+      "id": "f_wood_keg",
+      "name": "wooden keg"
+    },
+    {
+      "id": "f_woodchips",
+      "name": "pile of woodchips"
+    },
+    {
+      "id": "f_woodstove",
+      "name": "wood stove"
+    },
+    {
+      "id": "f_workbench",
+      "name": "workbench"
+    },
+    {
+      "id": "f_wreckage",
+      "name": "metal wreckage"
+    }
+  ]
+}

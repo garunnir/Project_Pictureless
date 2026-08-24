@@ -20,8 +20,6 @@ public enum NpcCombatState
 
 public static class NpcAgentDefaults
 {
-    public const float DetectRadius = 10f;
-    public const float LoseRadius = 14f;
     public const float AttackStandDistance = 1.1f;
     public const float AlertSeconds = 0.35f;
     public const float StoppingDistance = 0.1f;
@@ -35,10 +33,9 @@ public sealed class NpcAgentEntry
     public MovementStyle patrolStyle;
     public MovementStyle chaseStyle;
     public MovementStyle holdStyle;
-    [Min(0f)] public float detectRadius = NpcAgentDefaults.DetectRadius;
-    [Min(0f)] public float loseRadius = NpcAgentDefaults.LoseRadius;
     [Min(0f)] public float attackStandDistance = NpcAgentDefaults.AttackStandDistance;
     [Min(0f)] public float alertSeconds = NpcAgentDefaults.AlertSeconds;
+    [Tooltip("무력화: 조준 다리.")]
     public bool suppressMode;
 }
 
@@ -123,6 +120,8 @@ public sealed class NpcManager : MonoBehaviour
         CharacterState _characterState;
         CharacterBodyHost _selfHost;
         CharacterPainHost _painHost;
+        CharacterFactionHost _selfFactionHost;
+        CharacterVision _vision;
         ICharacterDefeat _defeat;
 
         NpcCombatState _state = NpcCombatState.Idle;
@@ -145,6 +144,8 @@ public sealed class NpcManager : MonoBehaviour
             _characterState = go.GetComponent<CharacterState>();
             _selfHost = go.GetComponent<CharacterBodyHost>();
             _painHost = go.GetComponent<CharacterPainHost>();
+            _selfFactionHost = go.GetComponent<CharacterFactionHost>();
+            _vision = go.GetComponent<CharacterVision>();
 
             if (_motor == null || _attacker == null || _selfHost == null)
             {
@@ -327,10 +328,6 @@ public sealed class NpcManager : MonoBehaviour
             if (action == WeaponAction.Raise)
                 return;
 
-            if (_attacker.GetCooldown(_attacker.ActiveWieldHand) > 0f ||
-                _attacker.HasPendingFor(_attacker.ActiveWieldHand))
-                return;
-
             AttackPerformResult result = _attacker.TryPerformSelected(_target);
             if (result == AttackPerformResult.OutOfRange)
                 EnterChase();
@@ -364,7 +361,8 @@ public sealed class NpcManager : MonoBehaviour
                 else
                 {
                     _distanceToTarget = HorizontalDistance(_target.transform.position);
-                    if (_distanceToTarget > _entry.loseRadius)
+                    float loseRadius = _vision != null ? _vision.LoseRadius : CharacterVisionDefaults.LoseRadius;
+                    if (_distanceToTarget > loseRadius)
                         ClearTarget();
                     return;
                 }
@@ -382,27 +380,35 @@ public sealed class NpcManager : MonoBehaviour
                     continue;
 
                 float dist = HorizontalDistance(host.transform.position);
-                if (dist > _entry.detectRadius || dist >= bestDist)
+                float detectRadius = _vision != null ? _vision.EffectiveDetectRadius : CharacterVisionDefaults.DetectRadius;
+                if (dist > detectRadius || dist >= bestDist)
                     continue;
 
                 best = host;
                 bestDist = dist;
             }
 
-            _target = best;
-            _distanceToTarget = best != null ? bestDist : float.MaxValue;
+            BindTarget(best, best != null ? bestDist : float.MaxValue);
+        }
+
+        void BindTarget(CharacterBodyHost host, float distance)
+        {
+            _target = host;
+            _distanceToTarget = distance;
         }
 
         void ClearTarget()
         {
-            _target = null;
-            _distanceToTarget = float.MaxValue;
+            BindTarget(null, float.MaxValue);
         }
 
-        static bool IsPreferredHostile(CharacterBodyHost host)
+        bool IsPreferredHostile(CharacterBodyHost host)
         {
-            ICharacterBody body = host.Body;
-            return body != null && ReferenceEquals(body, GameplayData.Body);
+            if (host == null)
+                return false;
+            if (!host.TryGetComponent(out CharacterFactionHost otherFaction))
+                return false;
+            return CharacterHostility.IsHostile(_selfFactionHost, otherFaction);
         }
 
         static bool IsUsableTarget(CharacterBodyHost host)
@@ -410,7 +416,15 @@ public sealed class NpcManager : MonoBehaviour
             if (host == null || !host.isActiveAndEnabled)
                 return false;
             ICharacterBody body = host.Body;
-            return body != null && !body.IsDeadState;
+            if (body == null || body.IsDeadState)
+                return false;
+            if (host.TryGetComponent(out CharacterPainHost painHost) && painHost.IsPainShocked)
+                return false;
+            if (host.TryGetComponent(out CharacterSkillsHost skillsHost) &&
+                skillsHost.Defeat != null &&
+                skillsHost.Defeat.IsDefeated)
+                return false;
+            return true;
         }
 
         float HorizontalDistance(Vector3 world)

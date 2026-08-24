@@ -56,10 +56,15 @@ namespace Garunnir.Runtime.Gameplay.Data
         public static readonly string[] MainConditionParts =
         {
             Head, Neck, Chest, Belly, Pelvis,
-            UpperArmL, LowerArmL, HandL,
-            UpperArmR, LowerArmR, HandR,
+            UpperArmL, LowerArmL, HandL, FingerThumbL, FingerIndexL,
+            UpperArmR, LowerArmR, HandR, FingerThumbR, FingerIndexR,
             ThighL, CalfL, FootL,
             ThighR, CalfR, FootR
+        };
+
+        public static readonly string[] FingerParts =
+        {
+            FingerThumbL, FingerIndexL, FingerThumbR, FingerIndexR
         };
 
         /// <summary>장기 노드. 조준·절단·체온 목록 밖.</summary>
@@ -91,17 +96,17 @@ namespace Garunnir.Runtime.Gameplay.Data
             FootL, FootR
         };
 
-        /// <summary>Cold 지속 시 frostbite가 붙는 말단.</summary>
+        /// <summary>FrostbiteOnsetTempC 이하 지속 시 frostbite가 붙는 말단.</summary>
         public static readonly string[] FrostbiteParts =
         {
             Head, HandL, HandR, FootL, FootR
         };
 
-        /// <summary>HP 0일 때 RemovePart 대상. 팔/다리 체인만 (head/neck/chest/belly/pelvis 제외).</summary>
+        /// <summary>HP 0일 때 RemovePart 대상. 팔/다리 체인 + 손가락 (head/neck/chest/belly/pelvis·장기 제외).</summary>
         public static readonly string[] SeverableParts =
         {
-            UpperArmL, LowerArmL, HandL,
-            UpperArmR, LowerArmR, HandR,
+            UpperArmL, LowerArmL, HandL, FingerThumbL, FingerIndexL,
+            UpperArmR, LowerArmR, HandR, FingerThumbR, FingerIndexR,
             ThighL, CalfL, FootL,
             ThighR, CalfR, FootR
         };
@@ -127,14 +132,14 @@ namespace Garunnir.Runtime.Gameplay.Data
             [UpperArmL] = UpperArmL,
             [LowerArmL] = LowerArmL,
             [HandL] = HandL,
-            [FingerThumbL] = HandL,
-            [FingerIndexL] = HandL,
+            [FingerThumbL] = FingerThumbL,
+            [FingerIndexL] = FingerIndexL,
             [ArmL] = UpperArmL,
             [UpperArmR] = UpperArmR,
             [LowerArmR] = LowerArmR,
             [HandR] = HandR,
-            [FingerThumbR] = HandR,
-            [FingerIndexR] = HandR,
+            [FingerThumbR] = FingerThumbR,
+            [FingerIndexR] = FingerIndexR,
             [ArmR] = UpperArmR,
             [ThighL] = ThighL,
             [CalfL] = CalfL,
@@ -208,10 +213,14 @@ namespace Garunnir.Runtime.Gameplay.Data
             [Pelvis] = new[] { Belly, ThighL, ThighR },
             [UpperArmL] = new[] { Chest, LowerArmL },
             [LowerArmL] = new[] { UpperArmL, HandL },
-            [HandL] = new[] { LowerArmL },
+            [HandL] = new[] { LowerArmL, FingerThumbL, FingerIndexL },
+            [FingerThumbL] = new[] { HandL },
+            [FingerIndexL] = new[] { HandL },
             [UpperArmR] = new[] { Chest, LowerArmR },
             [LowerArmR] = new[] { UpperArmR, HandR },
-            [HandR] = new[] { LowerArmR },
+            [HandR] = new[] { LowerArmR, FingerThumbR, FingerIndexR },
+            [FingerThumbR] = new[] { HandR },
+            [FingerIndexR] = new[] { HandR },
             [ThighL] = new[] { Pelvis, CalfL },
             [CalfL] = new[] { ThighL, FootL },
             [FootL] = new[] { CalfL },
@@ -350,6 +359,21 @@ namespace Garunnir.Runtime.Gameplay.Data
             return n;
         }
 
+        public static bool IsFinger(string partId)
+        {
+            if (string.IsNullOrEmpty(partId))
+                return false;
+
+            string id = ResolveNodeId(partId);
+            for (int i = 0; i < FingerParts.Length; i++)
+            {
+                if (FingerParts[i] == id)
+                    return true;
+            }
+
+            return false;
+        }
+
         public static bool IsSeverable(string partId)
         {
             if (string.IsNullOrEmpty(partId))
@@ -405,6 +429,8 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (id == FootL) return CalfL;
             if (id == CalfR) return ThighR;
             if (id == FootR) return CalfR;
+            if (id == FingerThumbL || id == FingerIndexL) return HandL;
+            if (id == FingerThumbR || id == FingerIndexR) return HandR;
             return null;
         }
     }

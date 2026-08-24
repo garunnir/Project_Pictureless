@@ -6,12 +6,15 @@ using IsoTilemap;
 using UnityEngine;
 
 [DisallowMultipleComponent]
+[DefaultExecutionOrder(50)]
 public sealed class MapBloodParticleStampWriter : MonoBehaviour
 {
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
     [SerializeField] float _nearGroundY = MapBloodConsts.ParticleNearGroundY;
     [SerializeField] float _minInterval = MapBloodConsts.ParticleStampMinInterval;
     [SerializeField] int _maxPerBurst = MapBloodConsts.ParticleStampMaxPerBurst;
+    [SerializeField] float _stampScale = MapBloodConsts.ParticleStampScale;
+    [SerializeField] float _stampAlpha = MapBloodConsts.ParticleStampAlpha;
 
     ParticleSystem[] _systems;
     ParticleSystem.Particle[] _buffer;
@@ -82,8 +85,8 @@ public sealed class MapBloodParticleStampWriter : MonoBehaviour
                 host.AddStamp(
                     world,
                     Random.Range(0f, 360f),
-                    MapBloodConsts.ParticleStampScale * Random.Range(0.8f, 1.2f),
-                    MapBloodConsts.ParticleStampAlpha);
+                    _stampScale * Random.Range(0.8f, 1.2f),
+                    _stampAlpha);
                 _stampedThisBurst++;
                 _cooldown = _minInterval;
                 if (_cooldown > 0f)

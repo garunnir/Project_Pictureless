@@ -68,7 +68,11 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
         UIItemListRow.RightClicked += OnItemRightClickedHideDetail;
     }
 
-    void OnEnable() => PlayerInventoryRuntime.ActiveChanged += OnActivePlayerChanged;
+    void OnEnable()
+    {
+        PlayerInventoryRuntime.ActiveChanged += OnActivePlayerChanged;
+        CharacterMoodHost.AnyControlYielded += CloseInventory;
+    }
 
     void Start()
     {
@@ -79,6 +83,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
     void OnDisable()
     {
         PlayerInventoryRuntime.ActiveChanged -= OnActivePlayerChanged;
+        CharacterMoodHost.AnyControlYielded -= CloseInventory;
         ClearMouseActionSuppressions();
         CloseAllWindows();
     }
@@ -456,7 +461,7 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
     {
         if (_isLootOpen)
             CloseLootWindow();
-        else
+        else if (!MoodGameplayGate.IsBlocked)
             OpenLootWindow(null);
     }
 
@@ -464,6 +469,9 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
     public void OpenPrimaryWindow()
     {
+        if (MoodGameplayGate.IsBlocked)
+            return;
+
         if (_isPrimaryOpen)
             return;
 
@@ -584,6 +592,9 @@ public sealed class UIInventoryController : MonoBehaviour, IInventoryOverlayCont
 
     public void OpenLoot(InventoryContainer focusContainer)
     {
+        if (MoodGameplayGate.IsBlocked)
+            return;
+
         PlayerInventoryRuntime runtime = PlayerInventoryRuntime.Active;
         if (runtime == null)
         {

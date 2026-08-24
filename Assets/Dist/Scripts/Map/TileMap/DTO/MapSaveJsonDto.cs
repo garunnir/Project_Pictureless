@@ -18,5 +18,13 @@ namespace IsoTilemap
 
         /// <summary>맵 혈흔 스탬프 (월드 좌표). tiles와 별 레이어. 구 JSON 누락 시 empty.</summary>
         public List<BloodStampSaveData> bloodStamps = new List<BloodStampSaveData>();
+
+        /// <summary>맵 식물 셀. tiles와 별 레이어. 구 JSON 누락 시 empty.</summary>
+        public List<PlantCellSaveData> plantCells = new List<PlantCellSaveData>();
+
+        /// <summary>WorldClock 스냅샷. 구 JSON은 false — 로드 시 SetTime 생략.</summary>
+        public bool hasClockSnapshot;
+        public int dayIndex;
+        public int minuteOfDay;
     }
 }

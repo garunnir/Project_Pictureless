@@ -153,6 +153,16 @@ AdvanceMinutes(
 
 수동 설정: `SetTime(dayIndex, minuteOfDay)`, `SetSettings(so)`.
 
+Play 디버그: `Tools/Environment Runtime Debug` (Odin). 구현: `EnvironmentRuntimeDebugWindow` / `EnvironmentRuntimeDebugModel` (`EnvironmentRuntimeDebugDomain` = Time / Weather / Outdoor).
+
+| 입력 | API |
+|------|-----|
+| Day / Hour / Minute, Period 점프 | `WorldClock.SetTime` (기간 시작 분 = `WorldClockSettings`) |
+| WeatherKind | `PlayerGearHost.Active.SetWeatherKind` |
+| 실내외 강제 | `CharacterClimateHost.DebugOutdoorOverride` (에디터 전용. Play 시작·종료 시 Map으로 리셋) |
+
+배속은 HUD `GameplayTimeScale`. 낮/밤 라이팅은 Pending. 체온·습윤 직접 편집은 `Tools/Character Runtime Debug` Climate.
+
 ### WorldClockSettings (SO)
 
 메뉴: `Create → Dist/Time/World Clock Settings`  
@@ -164,7 +174,22 @@ AdvanceMinutes(
 | `StartingDayIndex` | `1` | 시작 일 |
 | `StartingMinuteOfDay` | `0` | 시작 시각(분) |
 | `WorldMinutesPerRealtimeSecond` | `1` | World scale=1일 때 실시간 1초당 월드 분 |
+| `DaysPerYear` | `364` | 파생 달력 연 길이. **DayIndex는 절대값이며 여기서 wrap하지 않는다.** |
+| `DaysPerSeason` | `91` | 이름 있는 계절 길이 (`91 × 4 = 364`) |
 | Dawn / Day / Dusk / Night start | 5:00 / 7:00 / 18:00 / 20:00 | `DayPeriod` 경계 (분, inclusive start). Night는 자정 wrap |
+
+### Derived calendar (season)
+
+계절은 `WorldClock` 상태가 아니다. `DayIndex`는 계속 절대 일수이고, `SetTime(dayIndex, minuteOfDay)` API는 그대로다.
+
+파생은 `WorldCalendar` (`Gameplay/Time/WorldCalendar.cs`):
+
+| 값 | 식 |
+|----|----|
+| `dayOfYear` | `DayIndex % DaysPerYear` (0 .. DaysPerYear-1, 음수 DayIndex는 양수 wrap) |
+| `Season` | `dayOfYear / DaysPerSeason` → Spring / Summer / Autumn / Winter (index ≥3 은 Winter clamp) |
+
+농사 서리(식물 고사)는 이 **Winter** 파생 + 야외 + 비온실만 본다. `CharacterClimateHost` frostbite와 별개다. 낮/밤 `Period`와도 별개다.
 
 ---
 
@@ -227,6 +252,7 @@ IsoLand에는 Setup이 적용·저장되어 있다. Full bake 정책: `.cursor/r
 | Context menus | Realtime | `WaitForSecondsRealtime` (기존) |
 | `PlayerGearHost` (Gear timed / `HelmetVision`) | World | `Delta` |
 | `CharacterClimateHost` (BodyTemp / WearEnvExposure / frostbite·heat / env move) | World | `Delta` + `WorldClock.Period` |
+| `CharacterHitStop` (로컬 히트스톱 지속) | Realtime | `Delta` (타이머만. World/Player Push 없음) |
 | `WeatherExposure.Resolve` (ClimateHost) | WorldClock `Period` + World dt 틱 | `Resolve(kind, period, outdoor)` |
 | `UICraftingWindow` (제작 대기) | WorldClock 게임 분 | `WorldClock.DeltaGameMinutes` |
 

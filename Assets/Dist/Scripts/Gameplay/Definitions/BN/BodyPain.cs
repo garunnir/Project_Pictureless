@@ -6,13 +6,21 @@ using System.Collections.Generic;
 
 namespace Garunnir.Runtime.Gameplay.Data
 {
-    /// <summary>손실 HP × 부위 가중 × painFactor. 의식 공식·다운이 공유.</summary>
+    /// <summary>부상 심각도 × painFactor. 의식 공식·다운이 공유.</summary>
     public static class BodyPain
     {
         public const float PainShockThreshold = 0.8f;
+        /// <summary>쇼크 래치 해제. 진입은 <see cref="PainShockThreshold"/>, 기상은 이 값 아래.</summary>
+        public const float PainWakeThreshold = 0.5f;
+        const float PainShockEpsilon = 0.0001f;
         public const float PainHudMin = 0.2f;
         public const float SeverePainHudMin = 0.55f;
         public const float AdrenalinePainFactor = 0.5f;
+
+        /// <summary>조직 부상(타박·베임·총상) 1 HP당 고통. 한 부위 ~80이면 쇼크 문턱.</summary>
+        public const float InjuryPainPerHp = 0.01f;
+        public const float BleedPainPerIntensity = 0.025f;
+        public const float FracturePainPerIntensity = 0.04f;
 
         public const float WeightHead = 0.25f;
         public const float WeightNeck = 0.08f;
@@ -32,6 +40,16 @@ namespace Garunnir.Runtime.Gameplay.Data
         public const float WeightStomach = 0.08f;
         public const float WeightKidney = 0.05f;
         public const float WeightOther = 0.02f;
+
+        public static bool IsPainShocked(float effectivePain01) =>
+            effectivePain01 >= PainShockThreshold - PainShockEpsilon;
+
+        public static bool IsPainDown(float effectivePain01, bool latched)
+        {
+            if (latched)
+                return effectivePain01 >= PainWakeThreshold - PainShockEpsilon;
+            return IsPainShocked(effectivePain01);
+        }
 
         public static float PartWeight(string partId)
         {
@@ -80,14 +98,17 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return 0f;
 
             float sum = 0f;
-            sum += SumMissing(body, BodyPartIds.MainConditionParts);
-            sum += SumMissing(body, BodyPartIds.VitalOrgans);
+            sum += SumPartPain(body, BodyPartIds.MainConditionParts);
+            sum += SumPartPain(body, BodyPartIds.VitalOrgans);
             if (sum < 0f)
                 return 0f;
             if (sum > 1f)
                 return 1f;
             return sum;
         }
+
+        /// <summary>단일 부위 고통 기여(0–1). 디버그·HUD 분해용.</summary>
+        public static float PartPain01(ICharacterBody body, string partId) => PartPain(body, partId);
 
         public static float PainFactor(ICharacterBody body, List<BodyPartEffect> scratch)
         {
@@ -122,25 +143,31 @@ namespace Garunnir.Runtime.Gameplay.Data
             return value;
         }
 
-        static float SumMissing(ICharacterBody body, string[] partIds)
+        static float SumPartPain(ICharacterBody body, string[] partIds)
         {
             float sum = 0f;
             for (int i = 0; i < partIds.Length; i++)
+                sum += PartPain(body, partIds[i]);
+            return sum;
+        }
+
+        static float PartPain(ICharacterBody body, string id)
+        {
+            if (!body.TryGet(id, out BodyPartNode node) || node == null)
+                return 0f;
+
+            float pain = 0f;
+            var effects = node.Effects;
+            for (int i = 0; i < effects.Count; i++)
             {
-                string id = partIds[i];
-                int max = body.GetConditionMax(id);
-                if (max <= 0)
-                    continue;
-                int cur = body.GetConditionCur(id);
-                if (cur < 0)
-                    cur = 0;
-                if (cur > max)
-                    cur = max;
-                float missing01 = (max - cur) / (float)max;
-                sum += missing01 * PartWeight(id);
+                BodyPartEffect e = effects[i];
+                if (e.EffectId == BodyPartEffectIds.Bleed)
+                    pain += e.Intensity * BleedPainPerIntensity;
+                else
+                    pain += e.Intensity * BodyInjury.PainPerIntensity(e.EffectId);
             }
 
-            return sum;
+            return pain;
         }
 
         static bool HasAdrenaline(ICharacterBody body, List<BodyPartEffect> scratch)

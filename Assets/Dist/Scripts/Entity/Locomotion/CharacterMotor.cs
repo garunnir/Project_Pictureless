@@ -35,6 +35,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     CharacterLocomotion _locomotion;
     MapCollisionServices _pendingMapCollision;
     ICharacterMotorDrive _drive;
+    CharacterHitStop _hitStop;
     bool _possessed;
     bool _hasTravelLimit;
     float _remainingTravelDistance;
@@ -110,6 +111,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
             _collision.TopologyPushMaxIterations);
         _locomotion.BindMapCollision(_pendingMapCollision);
         _possessed = false;
+        _hitStop = CharacterHitStop.Find(this);
     }
 
     void FixedUpdate()
@@ -117,6 +119,10 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
         // 할당 없음. _hits는 CapsuleCastNonAlloc 재사용.
         float deltaTime = TimeScaleService.FixedDelta(
             _possessed ? TimeScaleChannel.Player : TimeScaleChannel.World);
+        if (_hitStop != null)
+            deltaTime *= _hitStop.SimScale;
+        if (deltaTime <= 0f)
+            return;
 
         TickKnockback(deltaTime);
 

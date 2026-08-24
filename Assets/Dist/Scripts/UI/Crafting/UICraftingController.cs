@@ -36,11 +36,13 @@ public sealed class UICraftingController : MonoBehaviour
     void OnEnable()
     {
         PlayerInventoryRuntime.ActiveChanged += OnActivePlayerChanged;
+        CharacterMoodHost.AnyControlYielded += Close;
     }
 
     void OnDisable()
     {
         PlayerInventoryRuntime.ActiveChanged -= OnActivePlayerChanged;
+        CharacterMoodHost.AnyControlYielded -= Close;
         if (_isOpen)
             Close();
     }
@@ -62,6 +64,9 @@ public sealed class UICraftingController : MonoBehaviour
 
     public void Open()
     {
+        if (MoodGameplayGate.IsBlocked)
+            return;
+
         if (_isOpen)
             return;
 

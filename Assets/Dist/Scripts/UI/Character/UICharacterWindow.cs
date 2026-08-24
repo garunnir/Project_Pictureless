@@ -356,7 +356,7 @@ public sealed class UICharacterWindow : MonoBehaviour
                 if (string.IsNullOrEmpty(partId))
                     continue;
 
-                _graphics[i].Bind(partId, OnPartHover, OnPartExit, OnPartClick);
+                _graphics[i].Bind(partId, OnPartHover, OnPartExit, OnPartClick, OnPartRightClick);
             }
             return;
         }
@@ -377,7 +377,7 @@ public sealed class UICharacterWindow : MonoBehaviour
         }
 
         for (int i = 0; i < mains.Length && i < _rows.Count; i++)
-            _rows[i].Bind(mains[i], OnPartHover, OnPartExit);
+            _rows[i].Bind(mains[i], OnPartHover, OnPartExit, OnPartRightClick);
     }
 
     void OnPartHover(string partId, RectTransform anchor)
@@ -416,6 +416,13 @@ public sealed class UICharacterWindow : MonoBehaviour
             _gearPanel.ClearCoverFilter();
         else
             _gearPanel.SetCoverFilter(partId);
+    }
+
+    void OnPartRightClick(string partId, Vector2 screenPosition)
+    {
+        if (_tab != CharacterWindowTab.Status)
+            return;
+        BodyPartHealContextMenuBuilder.TryShow(partId, screenPosition);
     }
 
     void OnPartExit()
@@ -470,7 +477,7 @@ public sealed class UICharacterWindow : MonoBehaviour
         bool showNumeric = _viewModel.CanShowNumericVitals;
         PlayerNeedsHost needs = PlayerNeedsHost.Active;
         PlayerNeedsSettings settings = needs != null ? needs.Settings : null;
-        var lines = new List<string>(VitalKeys.All.Length + 1)
+        var lines = new List<string>(VitalKeys.All.Length + 12)
         {
             PlayerStatusLabels.VitalsSection
         };
@@ -503,6 +510,13 @@ public sealed class UICharacterWindow : MonoBehaviour
             {
                 lines.Add(PlayerStatusLabels.FormatVitalProse(key, cur, max));
             }
+        }
+
+        CharacterMoodHost mood = CharacterMoodHost.Active;
+        if (mood != null)
+        {
+            lines.Add(string.Empty);
+            MoodThoughtLabels.AppendStatusLines(lines, mood.Mood, mood.Thoughts, mood.BreakKind);
         }
 
         _vitalsText.text = string.Join("\n", lines);

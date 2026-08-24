@@ -104,9 +104,16 @@ namespace Garunnir.Runtime.Gameplay.Data
                 BodyPartEffect e = _effects[i];
                 if (e.EffectId != effectId)
                     continue;
-                if (e.Intensity >= intensity)
+
+                int nextIntensity = e.Intensity >= intensity ? e.Intensity : intensity;
+                float nextSeconds = MergeRemainingSeconds(e.RemainingSeconds, remainingSeconds);
+                if (nextIntensity == e.Intensity &&
+                    nextSeconds == e.RemainingSeconds)
+                {
                     return false;
-                _effects[i] = new BodyPartEffect(effectId, intensity, e.RemainingSeconds);
+                }
+
+                _effects[i] = new BodyPartEffect(effectId, nextIntensity, nextSeconds);
                 return true;
             }
 
@@ -169,6 +176,13 @@ namespace Garunnir.Runtime.Gameplay.Data
             }
 
             return changed;
+        }
+
+        static float MergeRemainingSeconds(float existing, float incoming)
+        {
+            if (existing < 0f || incoming < 0f)
+                return -1f;
+            return incoming > existing ? incoming : existing;
         }
     }
 }

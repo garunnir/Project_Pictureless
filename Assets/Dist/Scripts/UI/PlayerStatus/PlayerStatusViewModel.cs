@@ -12,7 +12,9 @@ public sealed class PlayerStatusViewModel
     IPlayerVitals _vitals;
     IPlayerStats _stats;
     PlayerNeedsHost _needs;
+    CharacterMoodHost _mood;
     CharacterImbalanceHost _imbalance;
+    ICharacterDefeat _defeat;
 
     readonly List<MoodEntry> _moodEntries = new(UIPlayerStatusSummaryPanel.MaxSlots);
     readonly List<MoodEntry> _moodSnapshot = new(UIPlayerStatusSummaryPanel.MaxSlots);
@@ -35,9 +37,6 @@ public sealed class PlayerStatusViewModel
         _vitals = vitals;
         _stats = stats;
 
-        if (_stats is DefaultPlayerStats dps)
-            dps.BindBody(_body);
-
         if (_body != null)
             _body.Changed += OnBodyChanged;
         if (_vitals != null)
@@ -48,7 +47,9 @@ public sealed class PlayerStatusViewModel
         PlayerEncumbranceHost.StageChanged += OnEncumbranceChanged;
         PlayerEncumbranceHost.ActiveChanged += OnEncumbranceChanged;
         BindNeeds(PlayerNeedsHost.Active);
+        BindMood(CharacterMoodHost.Active);
         BindImbalance(CharacterImbalanceHost.Active);
+        BindDefeat(GameplayData.Defeat);
 
         RebuildMoodEntries();
         Changed?.Invoke();
@@ -67,7 +68,9 @@ public sealed class PlayerStatusViewModel
         PlayerEncumbranceHost.StageChanged -= OnEncumbranceChanged;
         PlayerEncumbranceHost.ActiveChanged -= OnEncumbranceChanged;
         BindNeeds(null);
+        BindMood(null);
         BindImbalance(null);
+        BindDefeat(null);
 
         _body = null;
         _vitals = null;
@@ -83,9 +86,6 @@ public sealed class PlayerStatusViewModel
 
     void OnBodyChanged()
     {
-        if (_stats is DefaultPlayerStats dps)
-            dps.Skills.Refresh();
-
         RaiseMoodIfChanged();
         Changed?.Invoke();
     }
@@ -113,7 +113,9 @@ public sealed class PlayerStatusViewModel
     bool RebuildMoodEntries()
     {
         BindNeeds(PlayerNeedsHost.Active);
+        BindMood(CharacterMoodHost.Active);
         BindImbalance(CharacterImbalanceHost.Active);
+        BindDefeat(GameplayData.Defeat);
         PlayerEncumbranceStage stage = PlayerEncumbranceHost.Active != null
             ? PlayerEncumbranceHost.Active.Stage
             : PlayerEncumbranceStage.None;
@@ -160,6 +162,25 @@ public sealed class PlayerStatusViewModel
             _needs.Changed += OnNeedsChanged;
     }
 
+    void BindMood(CharacterMoodHost mood)
+    {
+        if (_mood == mood)
+            return;
+
+        if (_mood != null)
+            _mood.Changed -= OnMoodNeedChanged;
+
+        _mood = mood;
+        if (_mood != null)
+            _mood.Changed += OnMoodNeedChanged;
+    }
+
+    void OnMoodNeedChanged()
+    {
+        RaiseMoodIfChanged();
+        Changed?.Invoke();
+    }
+
     void BindImbalance(CharacterImbalanceHost imbalance)
     {
         if (_imbalance == imbalance)
@@ -174,6 +195,25 @@ public sealed class PlayerStatusViewModel
     }
 
     void OnImbalanceChanged()
+    {
+        RaiseMoodIfChanged();
+        Changed?.Invoke();
+    }
+
+    void BindDefeat(ICharacterDefeat defeat)
+    {
+        if (_defeat == defeat)
+            return;
+
+        if (_defeat != null)
+            _defeat.Changed -= OnDefeatChanged;
+
+        _defeat = defeat;
+        if (_defeat != null)
+            _defeat.Changed += OnDefeatChanged;
+    }
+
+    void OnDefeatChanged()
     {
         RaiseMoodIfChanged();
         Changed?.Invoke();

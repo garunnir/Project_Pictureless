@@ -9,6 +9,9 @@ public static class InventoryContextMenuCatalog
     static readonly IContextMenuContributor[] Contributors =
     {
         new ConsumeContextContributor(),
+        new PlantContextContributor(),
+        new TillContextContributor(),
+        new FertilizeContextContributor(),
         new GearContextContributor(),
         new AmmoContextContributor(),
         new CraftContextContributor(),

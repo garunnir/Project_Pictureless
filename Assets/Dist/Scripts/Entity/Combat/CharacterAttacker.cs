@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterAttacker — Action 시그널 시전 + 클립 큐에서 IActionHandler 실행
+// CharacterAttacker — 들기 손 시전(듀얼 포함) + 클립 큐에서 IActionHandler 실행
 // ============================================================
 
 using System;
@@ -33,6 +33,8 @@ public sealed class CharacterAttacker : MonoBehaviour
     [SerializeField] WieldHand _activeWieldHand = WieldHand.TwoHand;
     ItemInstance _wieldedInstance;
     ItemStack _wieldedStack;
+    WieldSlotId _lastDualSlot;
+    bool _hasLastDualSlot;
 
     CharacterAimIntent _aimIntent;
     CharacterSkillsHost _skillsHost;
@@ -46,6 +48,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     CharacterState _characterState;
     PlayerAimController _aimController;
     CharacterLocomotionAnim _locAnim;
+    CharacterHitStop _hitStop;
     MapTopologyLineCast _mapLineCast;
     Collider _selfCollider;
     readonly Collider[] _meleeColliders = new Collider[MeleeHitbox.BufferSize];
@@ -197,6 +200,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         TryGetComponent(out _locAnim);
         if (_locAnim == null)
             _locAnim = GetComponentInChildren<CharacterLocomotionAnim>();
+        _hitStop = CharacterHitStop.Find(this);
         _selfCollider = GetComponentInChildren<Collider>();
         if (_presentation != null)
             _presentation.RebuildSupportedActions();
@@ -230,6 +234,8 @@ public sealed class CharacterAttacker : MonoBehaviour
         float dt = TimeScaleService.Delta(_timeChannel);
         if (_actionHost != null)
             dt *= _actionHost.ActionTickScale;
+        if (_hitStop != null)
+            dt *= _hitStop.SimScale;
         if (dt <= 0f)
             return;
 
@@ -261,9 +267,19 @@ public sealed class CharacterAttacker : MonoBehaviour
         _wieldedStack = stack;
         _wieldedInstance = instance;
         _itemId = itemId ?? string.Empty;
-        RefreshPresentationFromCatalog();
+        RefreshPresentationFromCatalog(notifyPresentation: !IsOccupiedDualHandSwap(stack));
         RebuildAvailableActions();
         ApplySelectedFromInstance();
+    }
+
+    bool IsOccupiedDualHandSwap(ItemStack stack)
+    {
+        WieldSlots slots = _gearHost != null ? _gearHost.Wield : null;
+        if (slots == null || slots.IsTwoHand || stack == null)
+            return false;
+        if (slots.Left?.Item == null || slots.Right?.Item == null)
+            return false;
+        return slots.Contains(stack);
     }
 
     [Obsolete("Use SetWieldedItem")]
@@ -381,6 +397,9 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (GetCooldown(_activeWieldHand) > 0f)
             return AttackPerformResult.Cooling;
 
+        if (_hitStop != null && _hitStop.IsFrozen)
+            return AttackPerformResult.Cooling;
+
         if (_painHost != null && _painHost.IsPainShocked)
             return AttackPerformResult.Cooling;
         if (_imbalanceHost != null && _imbalanceHost.IsFullyUnbalanced)
@@ -420,6 +439,13 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (bodyTemp == null || env == null)
             return 1f;
         return GearEnvPenalties.HitAccuracyFactor(bodyTemp.Feeling, env.Wetness01);
+    }
+
+    float ResolveAttackerImbalanceAccuracyFactor()
+    {
+        if (_imbalanceHost == null)
+            return 1f;
+        return _imbalanceHost.HitAccuracyFactor;
     }
 
     static EquipmentWearState ResolveTargetWear(CharacterBodyHost targetHost)
@@ -556,10 +582,96 @@ public sealed class CharacterAttacker : MonoBehaviour
         return targetCenter - direction * radius;
     }
 
+    /// <summary>
+    /// Occupied 손 시전. 호출 1회=시전 의도 1회 (플레이어 클릭·NPC Attack 틱 공통).
+    /// <see cref="IsActionBusy"/>면 Cooling. TwoHand·한손=그 손 1회.
+    /// 듀얼=이번 손 1회, 그 손이 NoAmmo/Unsupported면 같은 호출 안 반대손.
+    /// 손별 액션은 인스턴스 Selected.
+    /// </summary>
     public AttackPerformResult TryPerformSelected(CharacterBodyHost targetHost)
     {
-        SyncActiveHandFromGear();
-        return TryPerform(_selectedAction, targetHost);
+        if (IsActionBusy)
+            return AttackPerformResult.Cooling;
+
+        CharacterGearService gear = _gearHost != null ? _gearHost.Service : null;
+        WieldSlots slots = gear != null ? gear.Wield : null;
+        ICharacterSkills skills = _skillsHost != null ? _skillsHost.Skills : null;
+        if (slots == null ||
+            !PrimaryWieldResolver.TryResolvePrimary(
+                slots,
+                _catalog,
+                skills,
+                out PrimaryWieldResolver.HandScore primary,
+                out PrimaryWieldResolver.HandScore secondary))
+        {
+            _hasLastDualSlot = false;
+            SyncActiveHandFromGear();
+            return TryPerform(_selectedAction, targetHost);
+        }
+
+        bool hasPrimary = primary.Action != null && primary.Stack?.Item != null;
+        bool hasSecondary = !slots.IsTwoHand
+            && secondary.Stack?.Item != null
+            && secondary.Action != null
+            && secondary.IsOffHand;
+        if (!hasPrimary && !hasSecondary)
+        {
+            _hasLastDualSlot = false;
+            SyncActiveHandFromGear();
+            return TryPerform(_selectedAction, targetHost);
+        }
+
+        if (!hasSecondary)
+        {
+            _hasLastDualSlot = false;
+            return PerformOccupiedHand(primary, slots, skills, targetHost);
+        }
+
+        if (!hasPrimary)
+        {
+            _hasLastDualSlot = false;
+            return PerformOccupiedHand(secondary, slots, skills, targetHost);
+        }
+
+        bool preferSecondary = _hasLastDualSlot && _lastDualSlot == primary.Slot;
+        PrimaryWieldResolver.HandScore first = preferSecondary ? secondary : primary;
+        PrimaryWieldResolver.HandScore second = preferSecondary ? primary : secondary;
+        AttackPerformResult result = PerformOccupiedHand(first, slots, skills, targetHost);
+        if (result == AttackPerformResult.Performed)
+            return result;
+        return PerformOccupiedHand(second, slots, skills, targetHost);
+    }
+
+    AttackPerformResult PerformOccupiedHand(
+        PrimaryWieldResolver.HandScore score,
+        WieldSlots slots,
+        ICharacterSkills skills,
+        CharacterBodyHost targetHost)
+    {
+        if (score.Action == null || score.Stack?.Item == null)
+            return AttackPerformResult.Unsupported;
+
+        WieldHand hand = AnimHandFrom(slots, score.Slot);
+        float factor = score.IsOffHand
+            ? PrimaryWieldResolver.OffHandFactor(skills, hand)
+            : 1f;
+        ApplyWieldStep(score, hand);
+        AttackPerformResult result = TryPerform(score.Action.Value, targetHost, factor);
+        if (result == AttackPerformResult.Performed)
+        {
+            _lastDualSlot = score.Slot;
+            _hasLastDualSlot = true;
+        }
+
+        return result;
+    }
+
+    void ApplyWieldStep(PrimaryWieldResolver.HandScore score, WieldHand hand)
+    {
+        if (score.Stack == null || score.Action == null)
+            return;
+        SetActiveWieldHand(hand);
+        SetWieldedItem(score.Stack);
     }
 
     void SyncActiveHandFromGear()
@@ -652,6 +764,27 @@ public sealed class CharacterAttacker : MonoBehaviour
     /// <summary>동작 쿨·무기 쿨 중 큰 쪽. cue 핸들러는 <see cref="GetWeaponCooldown"/>만 본다.</summary>
     public float GetCooldown(WieldHand hand) =>
         Mathf.Max(GetActionCooldown(hand), GetWeaponCooldown(hand));
+
+    /// <summary>슬롯 radial fill. 동작·무기 쿨 중 남은 비율 (1=쿨 시작, 0=준비).</summary>
+    public float GetCooldownOverlay01(WieldHand hand)
+    {
+        int index = CooldownIndex(hand);
+        float remaining = 0f;
+        float duration = 0f;
+        ConsiderSlot(
+            _actionCooldownRemaining[index],
+            _actionCooldownDuration[index],
+            ref remaining,
+            ref duration);
+        ConsiderSlot(
+            _weaponCooldownRemaining[index],
+            _weaponCooldownDuration[index],
+            ref remaining,
+            ref duration);
+        if (duration <= 0f)
+            return 0f;
+        return Mathf.Clamp01(remaining / duration);
+    }
 
     public ItemData ItemFor(string itemId) =>
         string.IsNullOrEmpty(itemId) ? null : GameplayData.GetItem(itemId);
@@ -1073,7 +1206,8 @@ public sealed class CharacterAttacker : MonoBehaviour
                     rangedEffectiveDispersion)
                 * factor
                 * ResolveAttackerWearEncAccuracyFactor()
-                * ResolveAttackerEnvAccuracyFactor();
+                * ResolveAttackerEnvAccuracyFactor()
+                * ResolveAttackerImbalanceAccuracyFactor();
 
             if (UnityEngine.Random.value > hitChance)
                 aimedPart = AimPartResolver.ScatterToNeighbor(targetHost.Body, aimedPart);
@@ -1083,6 +1217,9 @@ public sealed class CharacterAttacker : MonoBehaviour
         int damage = 0;
         int rawDamage = 0;
         string hitPart = OrganHitResolver.Resolve(targetHost.Body, aimedPart);
+        string appliedTissueId = string.Empty;
+        bool didSeverPart = false;
+        int tissueRank = 0;
         for (int i = 0; i < channelCount; i++)
         {
             string damageTag = _hitChannelScratch[i];
@@ -1093,18 +1230,32 @@ public sealed class CharacterAttacker : MonoBehaviour
                     * factor
                     * CombatImpulse.HpFactor(item)));
             rawDamage += channelRaw;
-            int channelDamage = WearCombatDefense.MitigateDamage(
+            WearCombatDefense.ArmorMitigateResult mitigated = WearCombatDefense.MitigateDamage(
                 wear,
                 aimedPart,
                 channelRaw,
                 damageTag,
                 CombatImpulse.ArmorPen(ammo));
             BodyPartEffect[] seeds =
-                string.Equals(damageTag, AttackDamageTags.Cut, StringComparison.Ordinal)
+                string.Equals(mitigated.DamageTag, AttackDamageTags.Cut, StringComparison.Ordinal)
                     ? BuildSeeds(_presentation, context.Action, context.Attack)
                     : null;
-            BodyDamageService.ApplyHit(targetHost.Body, hitPart, channelDamage, seeds);
-            damage += channelDamage;
+            BodyHitApplyResult applied = BodyDamageService.ApplyHit(
+                targetHost.Body,
+                hitPart,
+                mitigated.Damage,
+                seeds,
+                mitigated.DamageTag);
+            if (applied.Severed)
+                didSeverPart = true;
+            int rank = BodyInjury.OverlayRank(applied.TissueId);
+            if (rank > tissueRank)
+            {
+                tissueRank = rank;
+                appliedTissueId = applied.TissueId;
+            }
+
+            damage += mitigated.Damage;
         }
 
         if (CombatImpulse.IsBeanbag(ammo))
@@ -1127,7 +1278,9 @@ public sealed class CharacterAttacker : MonoBehaviour
             ammo,
             weaponReach01,
             rawDamage,
-            CombatImpulse.HitJin(jinIn, impulseContinues, p));
+            CombatImpulse.HitJin(jinIn, impulseContinues, p),
+            appliedTissueId,
+            didSeverPart);
         return p;
     }
 
@@ -1167,7 +1320,9 @@ public sealed class CharacterAttacker : MonoBehaviour
         ItemData ammo = null,
         float weaponReach01 = 0f,
         int rawDamage = 0,
-        float impulseJinOverride = -1f)
+        float impulseJinOverride = -1f,
+        string appliedTissueId = null,
+        bool didSeverPart = false)
     {
         if (item == null)
             item = ItemFor(context.ItemId);
@@ -1195,7 +1350,9 @@ public sealed class CharacterAttacker : MonoBehaviour
             context.Attack,
             weaponReach01,
             rawDamage,
-            impulseJin);
+            impulseJin,
+            appliedTissueId,
+            didSeverPart);
         AttackJudged?.Invoke(outcome);
         AnyAttackJudged?.Invoke(outcome);
     }
@@ -1305,6 +1462,18 @@ public sealed class CharacterAttacker : MonoBehaviour
         }
     }
 
+    static void ConsiderSlot(
+        float remaining,
+        float duration,
+        ref float bestRemaining,
+        ref float bestDuration)
+    {
+        if (remaining <= bestRemaining)
+            return;
+        bestRemaining = remaining;
+        bestDuration = duration;
+    }
+
     static int CooldownIndex(WieldHand hand)
     {
         int index = (int)hand;
@@ -1398,7 +1567,7 @@ public sealed class CharacterAttacker : MonoBehaviour
 
     void OnSkillsRefreshed() => RebuildAvailableActions();
 
-    void RefreshPresentationFromCatalog()
+    void RefreshPresentationFromCatalog(bool notifyPresentation = true)
     {
         if (_catalog == null)
             return;
@@ -1410,7 +1579,8 @@ public sealed class CharacterAttacker : MonoBehaviour
         _presentation = resolved;
         if (_presentation != null)
             _presentation.RebuildSupportedActions();
-        PresentationChanged?.Invoke();
+        if (notifyPresentation)
+            PresentationChanged?.Invoke();
     }
 
     void RebuildAvailableActions()

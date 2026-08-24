@@ -1,3 +1,7 @@
+// ============================================================
+// TileDefinition — Prefab/placement/collision bake plus BN-style gameplay flags
+// ============================================================
+using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
 
@@ -24,6 +28,12 @@ namespace IsoTilemap
 
         [VerticalGroup("Row/Info"), LabelWidth(70)]
         public TilePlacementSlot placementSlot = TilePlacementSlot.None;
+
+        [FoldoutGroup("Flags", expanded: true)]
+        [LabelText("플래그")]
+        [Tooltip("BN-style gameplay flags (TileFlags SSOT). Not used for collision or occlusion.")]
+        [ListDrawerSettings(DraggableItems = true, ShowFoldout = false)]
+        public List<string> flags = new List<string>();
 
 #if UNITY_EDITOR
         [FoldoutGroup("충돌·오클루전", expanded: true)]

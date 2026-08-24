@@ -26,11 +26,23 @@ namespace IsoTilemap
         public const float HitSprayMaxDist = 0.85f;
         public const float HitSprayGroundBias = 0.08f;
 
+        public const int SeverSprayMinCount = 10;
+        public const int SeverSprayMaxCount = 22;
+        public const float SeverSprayConeHalfRad = 0.85f;
+        public const float SeverSprayMinDist = 0.08f;
+        public const float SeverSprayMaxDist = 1.45f;
+        public const float SeverSprayGroundBias = 0.12f;
+        public const float SeverSprayScale = 0.52f;
+        public const float SeverSprayAlpha = 0.95f;
+
         public const float ParticleNearGroundY = 0.12f;
         public const float ParticleStampMinInterval = 0.04f;
         public const int ParticleStampMaxPerBurst = 8;
         public const float ParticleStampScale = 0.2f;
         public const float ParticleStampAlpha = 0.65f;
+        public const int ParticleStampMaxPerBurstSever = 16;
+        public const float ParticleStampScaleSever = 0.32f;
+        public const float ParticleStampAlphaSever = 0.85f;
 
         public const float StainYOffset = 0.02f;
     }

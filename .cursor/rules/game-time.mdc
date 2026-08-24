@@ -23,7 +23,7 @@ alwaysApply: false
 - Dist 게임플레이 SSOT로 Unity **`Time.timeScale`** 사용 (불릿타임·채널 분리 붕괴)
 - Pixel Crushers `GameTime` / `DialogueTime`을 Dist 시계 SSOT로 채택
 - 배속을 단일 float에 덮어쓰기 (Push/Pop 없이)
-- `deltaTime` 경로 대량 교체·표급을 migration-parity 없이 진행
+- `deltaTime` 경로를 대량 교체한 뒤 기본 경로로 켜기를 migration-parity 없이 진행
 
 ## Channels
 | Channel | Use |

@@ -41,5 +41,5 @@ Setup: `Dist/MCP/Inventory/Setup Canvas Overlays In Open Scene` (ghost + text ho
 |-----------|--------|--------|------|
 | Item detail | `(16, -16)` | yes | TopMost, `ShowAtScreen` |
 | Mood tooltip | `(0, 28)` | no | TopMost, `ShowNearAnchor` |
-| Body detail | `(16, -16)` | no | TopMost, `ShowNearAnchor` (`UIPlayerStatusDetailPanel`) |
+| Body detail | `(16, -16)` | no | TopMost, `ShowNearAnchor` (`UIPlayerStatusDetailPanel`). Status: 특이사항 없으면 Hide |
 | Gear / HUD text | `(16, -16)` | no | TopMost, `UITextHoverService` (`DefaultStyle`) |

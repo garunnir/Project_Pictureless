@@ -67,6 +67,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     CharacterAttacker _attacker;
     PlayerGearHost _gearHost;
     CharacterSkillsHost _skillsHost;
+    CharacterHitStop _hitStop;
     ICharacterLocomotion _locomotion;
     bool _manualControl;
     bool _pendingBind = true;
@@ -103,6 +104,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     bool _hasHitFlinch;
     bool _hasHitStagger;
     bool _hasPainShocked;
+    bool _hasDefeated;
     int _hashAttackState;
     int _hashHoldState;
     int _hashAimState;
@@ -118,9 +120,11 @@ public class CharacterLocomotionAnim : MonoBehaviour
     int _hashHurtFlinch;
     int _hashHurtStagger;
     int _hashHurtPainShocked;
+    int _hashHurtDefeated;
     int _hashHurtFlinchState;
     int _hashHurtStaggerState;
     int _hashHurtPainDownState;
+    int _hashHurtDeadState;
     float _impactWeightTarget;
     float _flinchWeightTarget;
     float _hurtWeightTarget;
@@ -141,6 +145,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
     WeaponAction _mappedActionL = (WeaponAction)(-1);
     WeaponAction _mappedActionR = (WeaponAction)(-1);
     WeaponAction _mappedAction2H = (WeaponAction)(-1);
+    WeaponPresentation _mappedPresentationL;
+    WeaponPresentation _mappedPresentationR;
+    WeaponPresentation _mappedPresentation2H;
 
     readonly WeaponAction[] _attackActionQueue = new WeaponAction[2];
     readonly WieldHand[] _attackHandQueue = new WieldHand[2];
@@ -177,6 +184,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _locomotion = GetComponentInParent<ICharacterLocomotion>();
         if (_locomotion == null)
             _locomotion = GetComponent<ICharacterLocomotion>();
+
+        _hitStop = CharacterHitStop.Find(this);
 
         if (_animator == null)
             _animator = GetComponentInChildren<Animator>();
@@ -245,6 +254,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
             _pendingBind = false;
             rebound = true;
         }
+
+        if (_hitStop != null && _hitStop.IsFrozen)
+            return;
 
         float speedNorm = ResolveNormalizedSpeed();
         if (_hasSpeed)
@@ -328,7 +340,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
         if (actionL == _mappedActionL &&
             actionR == _mappedActionR &&
-            action2H == _mappedAction2H)
+            action2H == _mappedAction2H &&
+            ReferenceEquals(presentationL, _mappedPresentationL) &&
+            ReferenceEquals(presentationR, _mappedPresentationR) &&
+            ReferenceEquals(presentation2H, _mappedPresentation2H))
             return;
 
         ArmAnimSlotResolver.RemapThinKeys(
@@ -343,6 +358,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _mappedActionL = actionL;
         _mappedActionR = actionR;
         _mappedAction2H = action2H;
+        _mappedPresentationL = presentationL;
+        _mappedPresentationR = presentationR;
+        _mappedPresentation2H = presentation2H;
         RefreshActionClipSpeeds();
     }
 
@@ -453,7 +471,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
             return;
 
         bool hurt = false;
-        if (_hasPainShocked && _animator.GetBool(_hashHurtPainShocked))
+        if (_hasDefeated && _animator.GetBool(_hashHurtDefeated))
+            hurt = true;
+        else if (_hasPainShocked && _animator.GetBool(_hashHurtPainShocked))
             hurt = true;
         else
         {
@@ -474,7 +494,8 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     bool IsHurtPlayingState(int shortNameHash) =>
         shortNameHash == _hashHurtStaggerState ||
-        shortNameHash == _hashHurtPainDownState;
+        shortNameHash == _hashHurtPainDownState ||
+        shortNameHash == _hashHurtDeadState;
 
     void TickImpactEmpty()
     {
@@ -497,7 +518,17 @@ public class CharacterLocomotionAnim : MonoBehaviour
             _impactWeightTarget = 0f;
     }
 
-    void OnPresentationChanged() => ApplyWeaponAnimOverride(forceRebind: true);
+    void OnPresentationChanged()
+    {
+        // Dual hand swap only changes CharacterAttacker.Presentation.
+        // Full rebind pops Attack overlay; thin remap from gear slots is enough.
+        _mappedActionL = (WeaponAction)(-1);
+        _mappedActionR = (WeaponAction)(-1);
+        _mappedAction2H = (WeaponAction)(-1);
+        _mappedPresentationL = null;
+        _mappedPresentationR = null;
+        _mappedPresentation2H = null;
+    }
 
     void ApplyWeaponAnimOverride(bool forceRebind)
     {
@@ -530,6 +561,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _mappedActionL = (WeaponAction)(-1);
         _mappedActionR = (WeaponAction)(-1);
         _mappedAction2H = (WeaponAction)(-1);
+        _mappedPresentationL = null;
+        _mappedPresentationR = null;
+        _mappedPresentation2H = null;
 
         ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H);
         ResolveHandPresentations(
@@ -550,6 +584,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
             _mappedActionL = actionL;
             _mappedActionR = actionR;
             _mappedAction2H = action2H;
+            _mappedPresentationL = presentationL;
+            _mappedPresentationR = presentationR;
+            _mappedPresentation2H = presentation2H;
             RefreshActionClipSpeeds();
             RefreshImpactClipSpeeds();
         }
@@ -789,6 +826,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _hasHitFlinch = false;
         _hasHitStagger = false;
         _hasPainShocked = false;
+        _hasDefeated = false;
         _rightArmLayerIndex = -1;
         _leftArmLayerIndex = -1;
         _twoHandLayerIndex = -1;
@@ -810,9 +848,11 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _hashHurtFlinch = Hash(CharacterHitReact.ParamFlinch);
         _hashHurtStagger = Hash(CharacterHitReact.ParamStagger);
         _hashHurtPainShocked = Hash(CharacterHitReact.ParamPainShocked);
+        _hashHurtDefeated = Hash(CharacterHitReact.ParamDefeated);
         _hashHurtFlinchState = Hash(CharacterHitReact.StateFlinch);
         _hashHurtStaggerState = Hash(CharacterHitReact.StateStagger);
         _hashHurtPainDownState = Hash(CharacterHitReact.StatePainDown);
+        _hashHurtDeadState = Hash(CharacterHitReact.StateDead);
 
         if (_animator == null || _animator.runtimeAnimatorController == null)
             return;
@@ -845,6 +885,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
             if (Match(CharacterHitReact.ParamFlinch, _hashHurtFlinch, nameHash)) _hasHitFlinch = true;
             if (Match(CharacterHitReact.ParamStagger, _hashHurtStagger, nameHash)) _hasHitStagger = true;
             if (Match(CharacterHitReact.ParamPainShocked, _hashHurtPainShocked, nameHash)) _hasPainShocked = true;
+            if (Match(CharacterHitReact.ParamDefeated, _hashHurtDefeated, nameHash)) _hasDefeated = true;
         }
 
         if (!string.IsNullOrEmpty(_rightArmLayerName))

@@ -1,5 +1,5 @@
 // ============================================================
-// UICharacterWieldSlotView — L/R 들기 슬롯 (아이콘·액션·탄약·호버·해제)
+// UICharacterWieldSlotView — L/R 들기 슬롯 (아이콘·액션·탄약·쿨·호버·해제)
 // ============================================================
 
 using System;
@@ -21,12 +21,14 @@ public sealed class UICharacterWieldSlotView :
 {
     const string AmmoObjectName = "Ammo";
     const string LegacyAmmoObjectName = "tmp";
+    public const string CooldownFillObjectName = "CoolTime_Radial_Fill";
 
     [SerializeField] Image _itemIcon;
     [SerializeField] Image _actionIcon;
     [SerializeField] TMP_Text _actionLabel;
     [SerializeField] TMP_Text _ammoLabel;
     [SerializeField] TMP_Text _label;
+    [SerializeField] Image _cooldownFill;
 
     ItemNameStatusBar _nameBar;
     CharacterGearService _gear;
@@ -45,12 +47,14 @@ public sealed class UICharacterWieldSlotView :
         EnsureActionIcon();
         EnsureAmmoLabel();
         EnsureLabelForProgressBar();
+        EnsureCooldownFill();
     }
 
     void EnsureDropRaycast()
     {
         if (!TryGetComponent(out Image bg))
         {
+            WarnRuntimeAddComponentFallback("Image");
             bg = gameObject.AddComponent<Image>();
             bg.color = new Color(0.18f, 0.18f, 0.18f, 0.9f);
         }
@@ -72,6 +76,7 @@ public sealed class UICharacterWieldSlotView :
             return;
         }
 
+        WarnRuntimeAddComponentFallback("Icon");
         GameObject go = new("Icon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         go.transform.SetParent(transform, false);
         RectTransform rt = go.GetComponent<RectTransform>();
@@ -109,6 +114,7 @@ public sealed class UICharacterWieldSlotView :
             return;
         }
 
+        WarnRuntimeAddComponentFallback("ActionIcon");
         GameObject go = new("ActionIcon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         go.transform.SetParent(transform, false);
         RectTransform rt = go.GetComponent<RectTransform>();
@@ -160,6 +166,7 @@ public sealed class UICharacterWieldSlotView :
             return;
         }
 
+        WarnRuntimeAddComponentFallback(AmmoObjectName);
         GameObject go = new(AmmoObjectName, typeof(RectTransform), typeof(CanvasRenderer));
         go.transform.SetParent(transform, false);
         RectTransform rt = go.GetComponent<RectTransform>();
@@ -189,6 +196,7 @@ public sealed class UICharacterWieldSlotView :
             _label = labelChild.GetComponent<TMP_Text>();
         if (_label == null)
         {
+            WarnRuntimeAddComponentFallback(ItemNameStatusBar.LabelObjectName);
             GameObject labelGo = new(ItemNameStatusBar.LabelObjectName, typeof(RectTransform), typeof(CanvasRenderer));
             labelGo.transform.SetParent(transform, false);
             RectTransform labelRt = labelGo.GetComponent<RectTransform>();
@@ -206,6 +214,45 @@ public sealed class UICharacterWieldSlotView :
         _label.raycastTarget = false;
         DistUiFont.Apply(_label);
         _nameBar = ItemNameStatusBar.Ensure(ref _label);
+    }
+
+    void EnsureCooldownFill()
+    {
+        if (_cooldownFill == null)
+        {
+            Transform t = transform.Find(CooldownFillObjectName);
+            if (t != null)
+                t.TryGetComponent(out _cooldownFill);
+        }
+
+        if (_cooldownFill == null)
+            return;
+
+        _cooldownFill.raycastTarget = false;
+        _cooldownFill.fillAmount = 0f;
+    }
+
+    void WarnRuntimeAddComponentFallback(string chromeName)
+    {
+        Debug.LogWarning(
+            $"[UICharacterWieldSlotView] runtime AddComponent fallback: '{chromeName}'. Prefab should already have it.",
+            this);
+    }
+
+    public void RefreshCooldownFill(CharacterAttacker attacker)
+    {
+        if (_cooldownFill == null)
+            return;
+
+        ItemStack stack = _gear?.Wield?.Get(_slot);
+        if (attacker == null || stack?.Item == null)
+        {
+            _cooldownFill.fillAmount = 0f;
+            return;
+        }
+
+        WieldHand hand = CharacterAttacker.AnimHandFrom(_gear.Wield, _slot);
+        _cooldownFill.fillAmount = attacker.GetCooldownOverlay01(hand);
     }
 
     public void Bind(
@@ -237,6 +284,8 @@ public sealed class UICharacterWieldSlotView :
             SetActionVisual(null);
             SetAmmoVisual(null);
             _nameBar?.Clear();
+            if (_cooldownFill != null)
+                _cooldownFill.fillAmount = 0f;
             return;
         }
 

@@ -9,7 +9,11 @@ using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-public sealed class UIPlayerStatusBodyPartRow : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public sealed class UIPlayerStatusBodyPartRow :
+    MonoBehaviour,
+    IPointerEnterHandler,
+    IPointerExitHandler,
+    IPointerClickHandler
 {
     [SerializeField] TMP_Text _nameText;
     [FormerlySerializedAs("_hpText")]
@@ -20,14 +24,20 @@ public sealed class UIPlayerStatusBodyPartRow : MonoBehaviour, IPointerEnterHand
     string _partId;
     Action<string, RectTransform> _onHover;
     Action _onExit;
+    Action<string, Vector2> _onRightClick;
 
     public string PartId => _partId;
 
-    public void Bind(string partId, Action<string, RectTransform> onHover, Action onExit)
+    public void Bind(
+        string partId,
+        Action<string, RectTransform> onHover,
+        Action onExit,
+        Action<string, Vector2> onRightClick = null)
     {
         _partId = partId;
         _onHover = onHover;
         _onExit = onExit;
+        _onRightClick = onRightClick;
     }
 
     public void SetDisplay(string name, int cur, int max, bool present)
@@ -61,6 +71,14 @@ public sealed class UIPlayerStatusBodyPartRow : MonoBehaviour, IPointerEnterHand
     }
 
     public void OnPointerExit(PointerEventData eventData) => _onExit?.Invoke();
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (string.IsNullOrEmpty(_partId))
+            return;
+        if (eventData.button == PointerEventData.InputButton.Right)
+            _onRightClick?.Invoke(_partId, eventData.position);
+    }
 
     public void Wire(
         TMP_Text nameText,

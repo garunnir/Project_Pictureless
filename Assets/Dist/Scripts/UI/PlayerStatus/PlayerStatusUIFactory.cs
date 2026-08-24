@@ -35,7 +35,7 @@ public static class PlayerStatusUIFactory
     public static readonly Vector2 BodyDiagramSize = new(147f, 220f);
     public const float RowHeight = 28f;
     public const float HeaderHeight = 32f;
-    public const float ResizeEdgeThickness = 8f;
+    public const float ResizeEdgeThickness = UIWindowResizeHandles.DefaultHandleWidth;
     public const int FontSizeBody = 14;
     public const int FontSizeHeader = 18;
 

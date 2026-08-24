@@ -1,5 +1,5 @@
 // ============================================================
-// GameDatabase — JSON 데이터의 인메모리 인덱스 (아이템·레시피·컨테이너 조회)
+// GameDatabase — JSON 데이터의 인메모리 인덱스 (아이템·레시피·컨테이너·지형·가구 조회)
 // ============================================================
 
 using System.Collections.Generic;
@@ -15,6 +15,8 @@ namespace Garunnir.Runtime.Gameplay.Data
         public IReadOnlyList<QualityData> Qualities => _qualities;
         public IReadOnlyList<ContainerData> Containers => _containers;
         public IReadOnlyList<SkillData> Skills => _skills;
+        public IReadOnlyList<TerrainData> Terrain => _terrain;
+        public IReadOnlyList<FurnitureData> Furniture => _furniture;
 
         readonly List<ItemData> _items;
         readonly List<RecipeData> _recipes;
@@ -23,17 +25,24 @@ namespace Garunnir.Runtime.Gameplay.Data
         readonly List<QualityData> _qualities;
         readonly List<ContainerData> _containers;
         readonly List<SkillData> _skills;
+        readonly List<TerrainData> _terrain;
+        readonly List<FurnitureData> _furniture;
 
         readonly Dictionary<string, ItemData> _itemById = new();
         readonly Dictionary<string, ContainerData> _containerById = new();
         readonly Dictionary<string, SkillData> _skillById = new();
         readonly Dictionary<string, MaterialData> _materialById = new();
+        readonly Dictionary<string, TerrainData> _terrainById = new();
+        readonly Dictionary<string, FurnitureData> _furnitureById = new();
         readonly Dictionary<string, List<RecipeData>> _recipesByResult = new();
         readonly Dictionary<string, List<RecipeData>> _recipesByCategory = new();
         readonly Dictionary<string, List<RecipeData>> _recipesByIngredient = new();
         readonly Dictionary<string, List<RecipeData>> _uncraftsByResult = new();
 
-        public GameDatabase(ItemsFileRoot itemsRoot, RecipesFileRoot recipesRoot)
+        public GameDatabase(
+            ItemsFileRoot itemsRoot,
+            RecipesFileRoot recipesRoot,
+            TerrainFurnitureFileRoot terrainFurnitureRoot = null)
         {
             _items = itemsRoot?.items ?? new List<ItemData>();
             _materials = itemsRoot?.materials ?? new List<MaterialData>();
@@ -42,6 +51,8 @@ namespace Garunnir.Runtime.Gameplay.Data
             _skills = itemsRoot?.skills ?? new List<SkillData>();
             _recipes = recipesRoot?.recipes ?? new List<RecipeData>();
             _uncrafts = recipesRoot?.uncraft ?? new List<RecipeData>();
+            _terrain = terrainFurnitureRoot?.terrain ?? new List<TerrainData>();
+            _furniture = terrainFurnitureRoot?.furniture ?? new List<FurnitureData>();
 
             BuildIndices();
         }
@@ -70,6 +81,18 @@ namespace Garunnir.Runtime.Gameplay.Data
             {
                 if (!string.IsNullOrEmpty(container.id))
                     _containerById[container.id] = container;
+            }
+
+            foreach (TerrainData terrain in _terrain)
+            {
+                if (!string.IsNullOrEmpty(terrain?.id))
+                    _terrainById[terrain.id] = terrain;
+            }
+
+            foreach (FurnitureData furniture in _furniture)
+            {
+                if (!string.IsNullOrEmpty(furniture?.id))
+                    _furnitureById[furniture.id] = furniture;
             }
 
             foreach (RecipeData recipe in _recipes)
@@ -172,6 +195,20 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (string.IsNullOrEmpty(id)) return null;
             _materialById.TryGetValue(id, out var material);
             return material;
+        }
+
+        public TerrainData GetTerrain(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return null;
+            _terrainById.TryGetValue(id, out var terrain);
+            return terrain;
+        }
+
+        public FurnitureData GetFurniture(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return null;
+            _furnitureById.TryGetValue(id, out var furniture);
+            return furniture;
         }
 
         public List<RecipeData> GetUncraftForResult(string itemId)

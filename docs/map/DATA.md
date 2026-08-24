@@ -110,7 +110,26 @@ classDiagram
 | `yaw, scale, alpha` | 수평 회전·크기·진하기 |
 | `cx,cy,cz` | 소속 walkable 셀 (`OccupiedCellCoord.ResolveFromWorld`) — 청소/쿼리용 |
 
-SSOT 런타임: `MapBloodOverlay` (`MapBloodHost`). 그리기: `MapBloodStainRenderer` (`DrawMeshInstanced`, 스탬프당 GO 없음). 쓰기: 출혈 drip · 히트 콘 spray · (선택) 피 VFX 파티클 위치 샘플. 청소: `ClearCell` API (UI 없음).
+SSOT 런타임: `MapBloodOverlay` (`MapBloodHost`). 그리기: `MapBloodStainRenderer` (`DrawMeshInstanced`, 스탬프당 GO 없음). 쓰기: 출혈 drip · 자상/절단 히트 콘 spray · (선택) 피 VFX 파티클 착지 샘플. 청소: `ClearCell` API (UI 없음).
+
+### 맵 식물 (`plantCells[]`) + 시계 스냅샷
+
+`tiles` / `wallEdges` / `floorFaces` / `bloodStamps`와 **별 레이어**. 구 JSON에 없으면 empty. 세이브 UI 없음.
+
+| 필드 | 의미 |
+|------|------|
+| `cx,cy,cz` | 심은 walkable 셀 (`OccupiedCellCoord.ResolveFromWorld`) |
+| `seedItemId` | Dist `ItemData.id` (seed_data 있는 씨앗) |
+| `plantedWorldMinute` | 심은 시점 월드 분 (`ItemRot.CurrentWorldMinute`) |
+
+시계 스냅샷 (`hasClockSnapshot`이 true일 때만 로드 시 `WorldClock.SetTime`):
+
+| 필드 | 의미 |
+|------|------|
+| `dayIndex` | `WorldClock.DayIndex` |
+| `minuteOfDay` | `WorldClock.MinuteOfDay` |
+
+SSOT 런타임: `MapPlantOverlay` (`MapPlantHost`). 모델은 청크 TileView unload와 무관. Stage/wither는 분당 tick 없이 inspect/harvest/load에서 `elapsed = CurrentWorldMinute - planted` vs `seed.grow_minutes` (+ `PlantGrowth.WitherSlackMinutes`). 심기 게이트: 해당 셀 floor `TileDefinition`의 `TileFlags.HasFlag(PLANTABLE)`. BN furniture/`examine_action`/prefabId→`t_*` 맵 없음.
 
 ### TileDefinition 필수
 

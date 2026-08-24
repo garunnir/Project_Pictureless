@@ -10,6 +10,13 @@ namespace Garunnir.Runtime.Gameplay.Data
     public static class BodyCapacity
     {
         public const float ConsciousnessDownedThreshold = 0.3f;
+        /// <summary>HUD 의식 무드 하한. 이보다 낮으면 Fading.</summary>
+        public const float ConsciousnessHudMin = 0.7f;
+        /// <summary>HUD 혈량 무드 하한. 이보다 낮으면 Pale.</summary>
+        public const float BloodHudMin = 0.85f;
+        /// <summary>혈량 위험 툴팁 하한.</summary>
+        public const float BloodHudCritical = 0.3f;
+        public const float MoodIntensityBucket = 0.05f;
         public const float MovingDownedThreshold = 0.15f;
         public const float MissingFootAsMove = 0.5f;
         public const float MissingHandAsManip = 0.35f;
@@ -44,9 +51,9 @@ namespace Garunnir.Runtime.Gameplay.Data
             float blood = BloodFactor(body.Blood01);
             float infection = 1f - BodyIllness.InfectionConsciousnessK * body.InfectionProgress01;
             float toxin = 1f - BodyIllness.ToxinConsciousnessK * body.Toxin01;
-            float pain = 1f - BodyPain.EffectivePain01NoScratch(body);
 
-            float value = brain * blood * Clamp01NonNeg(infection) * Clamp01NonNeg(toxin) * Clamp01NonNeg(pain);
+            // 고통은 의식에 곱하지 않음. 쇼크는 CharacterPainHost (쓰러짐, 사망 아님).
+            float value = brain * blood * Clamp01NonNeg(infection) * Clamp01NonNeg(toxin);
             return Clamp01NonNeg(value);
         }
 
@@ -135,6 +142,35 @@ namespace Garunnir.Runtime.Gameplay.Data
             return blood01;
         }
 
+        /// <summary>
+        /// HUD 생명 위험 비니엣 강도 0..1.
+        /// 의식 &lt; ConsciousnessHudMin 또는 혈량 ≤ BloodHudCritical.
+        /// </summary>
+        public static float LifeThreat01(ICharacterBody body)
+        {
+            if (body == null)
+                return 0f;
+
+            float conThreat = ThreatFromHighToLow(
+                ConsciousnessHudMin,
+                0f,
+                Consciousness(body));
+            float bloodThreat = body.Blood01 <= BloodHudCritical
+                ? ThreatFromHighToLow(BloodHudCritical, 0f, body.Blood01)
+                : 0f;
+            return conThreat > bloodThreat ? conThreat : bloodThreat;
+        }
+
+        /// <summary>HUD 무드 intensity 버킷 (ViewModel 스로틀).</summary>
+        public static float MoodBucket01(float value01)
+        {
+            float v = Clamp01NonNeg(value01);
+            float bucket = MoodIntensityBucket;
+            if (bucket <= 0f)
+                return v;
+            return (int)(v / bucket) * bucket;
+        }
+
         public static float ManipulationTickScale(ICharacterBody body)
         {
             float manip = Manipulation(body);
@@ -212,6 +248,21 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (value > 1f)
                 return 1f;
             return value;
+        }
+
+        /// <summary>value ≥ high → 0, value ≤ low → 1.</summary>
+        static float ThreatFromHighToLow(float high, float low, float value)
+        {
+            if (value >= high)
+                return 0f;
+            if (value <= low)
+                return 1f;
+
+            float range = high - low;
+            if (range <= 0f)
+                return value <= low ? 1f : 0f;
+
+            return Clamp01NonNeg((high - value) / range);
         }
     }
 }

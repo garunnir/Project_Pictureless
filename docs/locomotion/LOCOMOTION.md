@@ -25,7 +25,7 @@ flowchart LR
 - `PlayerMovement`: Input System, 달리기, 관성. `PlayerPossessedInputHost`가 possessed `CharacterMotor`에 바인드. 물리 소유 없음.
 - `MapGameplayBootstrap`: 씬 캐릭터 Find + `BindSpawnedCharacter` 증분 바인드
 - `NpcSteer`: 목표점/Transform을 월드 XZ 방향으로 변환 (`NpcManager`가 호출, 인스턴스 MB 없음).
-- `NpcManager`: 비possessed 유닛 FSM (Patrol/Alert/Chase/Attack/Return/Dead). 상태·웨이포인트는 행 단위.
+- `NpcManager`: 비possessed 유닛 FSM (Patrol/Alert/Chase/Attack/Return/Dead). 상태·웨이포인트는 행 단위. `suppressMode`면 조준 다리. 타겟은 `CharacterVision` 반경 + `CharacterFactionCatalog` 적대(`Hostile`)만 추적. Attack 시전은 `TryPerformSelected` (busy 게이트는 그 메서드).
 - `KinematicMover`: 플레이어 속도/관성 또는 NPC 등속 desired delta 산출
 - `CharacterLocomotion`: CapsuleCast, slide, topology clamp, logical floor,
   depenetration, Rigidbody 이동, `CharacterState` 위치 갱신
@@ -52,7 +52,7 @@ flowchart LR
 - `TimeScaleChannel.Player`
 
 패리티가 깨지면 `PlayerMovement` 내부 이동 경로로 되돌리고 공용 경로를
-표급하지 않는다. 공통 이주 절차는
+기본 경로로 켜지 않는다. 공통 이주 절차는
 [`migration-parity.md`](../../../../../.claude/checklists/migration-parity.md)를 따른다.
 
 ### Gear / body 이동 배율 (교차)
@@ -76,11 +76,14 @@ flowchart LR
     applyHit[ApplyHit]
     judged[AnyAttackJudged]
     hitReact[CharacterHitReact]
+    hitStop[CharacterHitStop]
     pain[CharacterPainHost]
     motor[CharacterMotor]
     applyHit --> pain
     judged --> hitReact
+    judged --> hitStop
     hitReact --> motor
+    hitStop --> motor
     pain --> motor
 ```
 
@@ -90,9 +93,11 @@ flowchart LR
 - **피해자 Δv:** `(J_hit / m) × VictimDeltaVScale`. 사수 킥은 기존 `J / m` (스케일 없음).
 - **질량 m:** `CharacterAppearanceHost.RemainingMassKg` + 착용·들기 `ItemStack.TotalWeight`(kg). 양손 같은 스택은 한 번만.
 - **Flinch:** 접촉이면 hp 0이어도. `HitFlinch` → Flinch Layer (Additive, Head+Body). 쇼크 중 생략.
-- **불균형 (Imbalance 0..1):** 피격 `Δv`만큼 `+= clamp01(Δv / StaggerDeltaV)`. 시간으로 `RecoverPerSecond` 회복. 능동 이속 × `(1 − Imbalance)` (1이면 목표 속도 0). 관성·넉백은 이속에 안 곱함. 별도 Stagger 이동 잠금 타이머 없음.
+- **히트스톱:** 근접 히트/차단만. 맞붙은 둘의 애니·이동·시전 틱을 Realtime 수십 ms 정지 (`CharacterHitStop`). 시계·다른 NPC·배속 HUD는 그대로. 풀린 뒤에 Hurt/넉백이 흐름. 전역 채널 Push 아님 (`docs/time/TIME.md`).
+- **불균형 (Imbalance 0..1):** 피격 `Δv`만큼 `+= clamp01(Δv / StaggerDeltaV)`. 시간으로 `RecoverPerSecond` 회복. 능동 이속·원거리 HitChance 모두 × `(1 − Imbalance)` (1이면 목표 속도 0 / 명중 0). 필드 읽기만. 관성·넉백은 이속에 안 곱함. 별도 Stagger 이동 잠금 타이머 없음. 근접 확정 히트는 미적용.
 - **자빠짐:** Imbalance가 1에 닿는 프레임 && 능동 `|CurrentSpeed| ≥ FallSpeedMin`. 넉백만으로는 안 넘어짐. 효과: 기존 `HitStagger` + `CancelAll` + cue 폐기. 전투 쿨은 남김. 서 있는 채 1이면 애니 없이 이속 0만.
-- **고통 쇼크:** effective Pain ≥ 0.8 **또는** `BodyCapacity.IsCapacityDowned`(의식 &lt; 0.3 / Moving &lt; 0.15 / Breathing ≤ 0)이면 살아 있는 다운 (`SetMoveLocked`). `ICharacterDefeat` / `NpcManager.EnterDead`에 넣지 않는다. 기상: 조건이 문턱 아래. NPC는 `NpcSteer.Stop` 후 return.
+- **고통 쇼크:** effective Pain ≥ 0.8로 진입 **또는** `BodyCapacity.IsCapacityDowned`(의식 &lt; 0.3 / Moving &lt; 0.15 / Breathing ≤ 0)이면 살아 있는 다운 (`SetMoveLocked`). Hurt `PainDown` (`IsPainShocked`). `ICharacterDefeat` / `NpcManager.EnterDead`에 넣지 않는다. 고통 래치 기상: `PainWakeThreshold`(0.5) 아래. NPC는 `NpcSteer.Stop` 후 return. `PainHost`는 사망(의식 ≤ 0 — [`BODY.md`](../body/BODY.md))이면 쇼크를 끈다. 고통 SSOT는 조직 부상: [`BODY.md`](../body/BODY.md) PainTotal.
+- **사망 포즈:** `IsDefeated` → Hurt `Dead` (`HitDead_Slot` ← `Dying1`, 1회 후 마지막 프레임). PainDown과 별 상태. 렉돌은 후속.
 - **이속:** `BodyLocomotionPenalties` 절뚝 유지. Moving 용량을 이속에 곱하지 않는다.
 - **사수 킥:** `AddRecoilKick`가 `ShooterDeltaV`를 모터에 넣고, 같은 Δv로 조준 분산 킥을 올린다. handling은 사수만.
 - `ApplyHit`(출혈·체온)로 Flinch/넉백 금지.
@@ -158,7 +163,7 @@ SSOT: `CombatImpulse` · `CombatImbalance` · `CombatPain`. STR 기준은 `Comba
 
 **Pending (몸 경로):** Animancer 구매 후 적용 (할인 대기·지금은 Mecanim 유지). 계약 후보: Dynamic Layers(정지=전신·이동=상체) — playtest상 Mecanim Full은 Idle 발이 어색해 미채택. 이주 시 TimeScale 채널 틱·thin 클립 SSOT 유지.
 
-**Action vs Reaction vs Hit vs Hurt:** Action = 동사 자세·시전. Reaction = Recoil/Blocked (`ArmImpactKind`, 애니 Impact Layer) — **공격자** 반응. Hit = 특성(bash/cut/bullet) 타격 결과 — `WeaponImpactVfxDefaults`. Hurt = **피해자** Flinch/Stagger/PainDown (`CharacterHitReact` 큐, `CharacterLocomotionAnim` weight). Flinch는 Additive `Flinch Layer`(Head+Body), Stagger/PainDown은 Override `Hurt Layer`. Impact Recoil/Blocked와 Hurt를 섞지 않는다. `ArmAnimSlotCatalog`에 피해자 클립을 넣지 않는다.  
+**Action vs Reaction vs Hit vs Hurt:** Action = 동사 자세·시전. Reaction = Recoil/Blocked (`ArmImpactKind`, 애니 Impact Layer) — **공격자** 반응. Hit = 특성(bash/cut/bullet) 타격 결과 — `WeaponImpactVfxDefaults`. 자상(`cut` 조직)이면 피 오버레이, 절단이면 더 큰 피 오버레이(일반 hitVfx와 별도). Hurt = **피해자** Flinch/Stagger/PainDown (`CharacterHitReact` 큐, `CharacterLocomotionAnim` weight). Flinch는 Additive `Flinch Layer`(Head+Body), Stagger/PainDown은 Override `Hurt Layer`. Impact Recoil/Blocked와 Hurt를 섞지 않는다. `ArmAnimSlotCatalog`에 피해자 클립을 넣지 않는다.  
 **근접 판정:** `melee_hit`는 `AttackResolved`로 스윙을 올리고, cue에서 `MeleeHitbox` 겹침만 확정 히트. 타깃 없음·사거리 밖이어도 모션은 재생. [`GEAR.md`](../equipment/GEAR.md) Melee connect.  
 **Hit 키 = 채널 문자열.** 계산기와 Hit 테이블이 같은 키를 쓴다. Action이 채널을 고르지 않는다.  
 **Entry 소유권:** `WeaponPresentation.Entry` = 동사 라우팅 행(가용·`attack`·Action VFX·`useHold`). Hit coalesce = Entry → Attack VFX → Defaults[HitTag]. Reaction과 섞지 않음.
@@ -167,7 +172,7 @@ SSOT: `CombatImpulse` · `CombatImbalance` · `CombatPain`. STR 기준은 `Comba
 `Entry.useHold=false`면 비조준·비Attack일 때 해당 손 arm overlay weight 0 (몸 Locomotion Idle). Aim/Attack 중에는 overlay 유지.  
 Impact SM: **Empty** → **Recoil** / **Blocked** (`ImpactRecoil` / `ImpactBlocked` trigger) → ExitTime → Empty.  
 Flinch SM: **Empty** → **Flinch** (`HitFlinch`) → ExitTime → Empty. Additive + `HeadTorso.mask`.  
-Hurt SM: **Empty** → **Stagger** (`HitStagger`) → ExitTime → Empty. **PainDown**은 `IsPainShocked` 루프. 쇼크 중 Flinch/Stagger 트리거 생략. 자빠짐 애니만 큐; 능동 이속은 `CombatImbalance` 배율 SSOT. 실클립은 thin(`HitFlinch_Slot` / `HitStagger_Slot` / `HitPainDown_Slot`).
+Hurt SM: **Empty** → **Stagger** (`HitStagger`) → ExitTime → Empty. **PainDown**은 `IsPainShocked` 루프 (살아 있는 쇼크만). **Dead**는 `IsDefeated` (사망 클립, 루프 없음). 다운·사망 중 Flinch/Stagger 생략. 자빠짐 애니만 큐; 능동 이속은 `CombatImbalance` 배율 SSOT. 실클립은 thin(`HitFlinch_Slot` / `HitStagger_Slot` / `HitPainDown_Slot` / `HitDead_Slot`).
 
 | Param | Type | Source |
 |-------|------|--------|
@@ -176,8 +181,9 @@ Hurt SM: **Empty** → **Stagger** (`HitStagger`) → ExitTime → Empty. **Pain
 | `IsAiming` | bool | `CharacterState.IsAiming` |
 | `AttackR` / `AttackL` / `Attack2H` | trigger | `AttackResolved` 큐 → `AttackOutcome.Hand` |
 | `ImpactRecoil` / `ImpactBlocked` | trigger | cue → Recoil; `Obstructed` → Blocked |
-| `HitFlinch` / `HitStagger` | trigger | 피해자 `CharacterHitReact`. 쇼크 중 생략 |
-| `IsPainShocked` | bool | `CharacterPainHost` |
+| `HitFlinch` / `HitStagger` | trigger | 피해자 `CharacterHitReact`. 쇼크·사망 중 생략 |
+| `IsPainShocked` | bool | `CharacterPainHost` (살아 있는 다운) |
+| `IsDefeated` | bool | `ICharacterDefeat` → Hurt `Dead` |
 | `WeaponPresentation.AnimatorOverride` | Override | 클립 배속 테이블 호스트. Hold/Aim/Attack/Recoil/Blocked는 동작 줄. 컨트롤러에 AnimVerb 키 없음. Speed=`WeaponAnimClipSpeeds`(슬롯 속도 아님) |
 | `ArmSpeedR` / `ArmSpeedL` / `ArmSpeed2H` / `ImpactSpeed` | float | Override 클립 배속. 표에 없거나 Catalog 폴백이면 `1`. `Animator.speed` 아님 |
 | `ArmAnimSlotCatalog` + runtime Override | resolve | Entry 클립→없으면 Catalog Leaf→Action thin. Recoil/Blocked: Entry→Catalog Impact 행→Impact thin. 동사/Impact **VFX는 같은 행** |
@@ -186,10 +192,10 @@ Move Layer `Locomotion`: **2D Freeform Directional** (`MoveX`/`MoveZ`). Idle + W
 
 **Thin 키 (Action SM):** `Hold|Aim|Attack_{Left,Right,TwoHand}_Slot` — 컨트롤러가 아는 전부(동작 이름 없음).  
 **Thin 키 (Impact SM):** `ImpactRecoil_Slot`, `ImpactBlocked_Slot`  
-**Thin 키 (Hurt SM):** `HitFlinch_Slot` (Flinch Layer), `HitStagger_Slot` / `HitPainDown_Slot` (Hurt Layer) — Catalog·무기 Override 밖. Rebuild가 재생성.  
+**Thin 키 (Hurt SM):** `HitFlinch_Slot` (Flinch Layer), `HitStagger_Slot` / `HitPainDown_Slot` / `HitDead_Slot` (Hurt Layer) — Catalog·무기 Override 밖. Rebuild가 재생성.  
 **Pipeline 라이브러리 (컨트롤러 밖):** `Hold|Aim|Attack{Leaf}_{Hand}_Slot` — Catalog Leaf 행. SM에 동작 이름/LibraryKeys 없음.
 
-`WeaponAction` **Leaf** → Entry 클립, 비면 Catalog **같은 Leaf** 행을 thin에 리맵. Recoil/Blocked → Entry, 비면 Catalog Impact 행. Action 전환은 **Rebind 없이** thin 키만 갱신. Presentation 교체 시에만 풀 resolve + Rebind.
+`WeaponAction` **Leaf** → Entry 클립, 비면 Catalog **같은 Leaf** 행을 thin에 리맵. Recoil/Blocked → Entry, 비면 Catalog Impact 행. Action 전환·듀얼 활성 손 교체는 **Rebind 없이** thin 키만 갱신. **슬롯 로드아웃**(빈 손↔스택, 든 아이템 교체) Presentation 교체에만 풀 resolve + Rebind. 듀얼 시전 `SetWieldedItem`은 로드아웃 변경이 아님.
 
 **층:** Family(UI 묶음) / Leaf(선택·Catalog 폴백 행) / 동작 줄 클립(무기×Leaf, Recoil/Blocked 포함). Terms: [`GEAR.md`](../equipment/GEAR.md). Semi/Burst/Auto는 각자 Catalog 행(클릭 볼리; Auto 홀드 Pending).
 
@@ -223,11 +229,11 @@ Aim/Attack 라이브러리 클립이 없으면 같은 손 Hold thin으로 내린
 | 들기 | 시전 | 애니 |
 |------|------|------|
 | `IsTwoHand` | 1회 | TwoHand layer + `Attack2H` |
-| L·R 듀얼 | Primary→Offhand (`AttackResolved` 체인) | 양팔 overlay 동시 + 시전 트리거만 교대 (이종 Action → 손별 thin 리맵) |
+| L·R 듀얼 | 호출 1회=한 손 (`TryPerformSelected`). busy는 메서드 진입 게이트 | 양팔 overlay 유지 + 이번 손 Attack 트리거. 손·Entry 바뀌면 thin 리맵 (Rebind 아님) |
 | 한 손만 | 1회 | 해당 Arm layer + AttackR/L |
 
 - 플레이어 동사는 `WeaponAction` 유지. `TriggerPistol` 동명 액션 금지.
-- 무기 Override 없거나 비무장 → `_defaultController` + catalog resolve. Presentation 변경 시 Rebind.
+- 무기 Override 없거나 비무장 → `_defaultController` + catalog resolve. 로드아웃 Presentation 교체 시에만 Rebind. 듀얼 손 교체는 thin 리맵.
 - 조준 중 루트는 에임(`SightDir`). `AimYaw` / MoveDir-only 루트 없음 — 스트레이프는 **발(MoveXZ)** 만.
 - 애니 시간 = `TimeScaleService`만 (`CharacterLocomotionAnim` 수동 틱).
 - Play 중 `Animator.enabled == false`는 **정상**. `_poseRate`(기본 10) 플립북 양자화; `0`이면 연속 틱.
@@ -242,4 +248,4 @@ Collision Inspector는 `CharacterLocomotionCollisionSettings`이며 기본값은
 - 길찾기, 장애물 우회, stuck 재탐색은 구현하지 않는다.
 - 활성 NPC 시뮬레이션은 카메라 청크 로드 범위 안이라는 기존 전제를 따른다.
 - 청크 컬링·공간 해시는 후속. `NpcManager`는 씬 활성 유닛만 틱한다.
-- Hurt 실클립: Flinch=`Reaction`, Stagger=`Stunned`, PainDown=`Pistol Kneeling Idle` (Slots 복사). 전용 모션 교체는 후속.
+- Hurt 실클립: Flinch=`Reaction`, Stagger=`Stunned`, PainDown=`Pistol Kneeling Idle`, Dead=`Dying1` (Slots 복사, 1회). `Dying2` 교체·렉돌은 후속.

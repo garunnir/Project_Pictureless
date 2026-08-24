@@ -1,8 +1,8 @@
-# Needs (hunger / thirst / consume)
+# Needs (hunger / thirst / consume / sleep)
 
-> LLM/에이전트용 Dist 위장·저장 kcal·갈증·섭취 SSOT.
+> LLM/에이전트용 Dist 위장·저장 kcal·갈증·섭취·수면 피로 SSOT.
 > 진입: `docs/README.md`
-> **PlayerNeedsHost / ConsumeService / 허기·갈증 HUD·상태창 산문을 쓰거나 고치기 전에 이 문서를 읽는다.**
+> **PlayerNeedsHost / ConsumeService / 허기·갈증·수면 HUD·상태창 산문을 쓰거나 고치기 전에 이 문서를 읽는다.**
 
 경로(호스트): `Assets/Dist/Scripts/Entity/Character/PlayerNeedsHost.cs`  
 경로(섭취·부패): `Assets/Dist/Scripts/Gameplay/Needs/`  
@@ -19,8 +19,8 @@
 
 | Type | Role |
 |------|------|
-| `PlayerNeedsSettings` | 위장 ml·소화율·일일 kcal/갈증·활동 배율·무드/산문 비율·팽만/부패/경고 SSOT |
-| `PlayerNeedsHost` | possessed 플레이어 위장·대사 틱. `Active` |
+| `PlayerNeedsSettings` | 위장 ml·소화율·일일 kcal/갈증·활동 배율·무드/산문 비율·팽만/부패/경고·수면 τ SSOT |
+| `PlayerNeedsHost` | possessed 플레이어 위장·대사·수면 피로 틱. `Active` |
 | `ConsumeService` | 인벤 1개 Eat/Drink/Use → 위장·대사·MED heal. 실행은 `TryBegin` (`CharacterHandWork`) |
 | `ConsumeDuration` | Eat/Drink mealtime=250 moves→초 (`CombatMath.MovesPerSecond`). Use/MED는 0. 아이템 JSON 없음 |
 | `ItemRot` | `CreatedWorldMinute` + 부패 판정. 호스트가 possessed+open 컨테이너 스캔 |
@@ -37,6 +37,7 @@
 digest mlWater (빠름) / mlFood / kcal→stored
   → burn stored × activity (Sprint > Busy > Walk > Idle)
   → drain thirst
+  → fatigue/debt: 각성 포화 상승 / 수면 지수 감쇠
   → rot scan possessed + open loot
   → stored≤0 또는 thirst≤0 → chest ApplyHit 전부 (1회). 가슴 0은 즉사 아님 — 흉부 장기 무효 + 파괴 출혈 → 과다출혈로 BodyFatal. 소화 용량과 허기 틱은 섞지 않음.
   → 매 N 월드시간 → AnyNeedsWarning
@@ -46,9 +47,30 @@ digest mlWater (빠름) / mlFood / kcal→stored
 
 ---
 
+## 수면 / 피로
+
+의식(`BodyCapacity.Consciousness`)에 곱하지 않는다. 사망·다운 문과 분리.
+
+| 층 | 필드 | 각성 | 수면 |
+|----|------|------|------|
+| Rest | `Fatigue01` | `1 − (1−F)·e^(−dt / (τ_wake / activity))` | `F · e^(−dt / τ_sleep)` |
+| Debt | `SleepDebt01` | 같은 포화, `τ_debt_wake` (일) | 같은 지수, `τ_debt_sleep` (더 큼) |
+
+τ·무드 비율은 `PlayerNeedsSettings` (`TauFatigueWakeHours` 27, `TauFatigueSleepHours` 1.9, `TauDebtWakeDays` 5, `TauDebtSleepHours` 13). 기본값이면 한두 시간 낮잠에 당일 피로 대부분, 누적 빚은 하룻밤에 일부만 빠진다.
+
+`SleepDisplay01` = max(`PerceivedFatigue01`, `SleepDebt01`). Stim ≥ \|`RotFunPenalty`\| 이면 당일 피로만 `StimFatigueMask`로 가린다. Debt는 가리지 않는다.
+
+`TrySleep` / `Wake`: 기립 휴식. 이동(`CurrentSpeed` ≥ `WalkActivitySpeedMin`)·행동(`IsBusy`)·ESC(`IUiCancelConsumer`)면 기상. 침대·배속 자동·붕괴·마이크로슬립 없음. Play 중 Inspector `Needs/Sleep`.
+
+HUD: `SleepDisplay01` ≥ `MoodNeedRestRatio` → NeedRest, ≥ `MoodVeryTiredRatio` → VeryTired, ≥ `MoodTiredRatio` → Tired. 그 아래 아이콘 없음.
+
+---
+
 ## 섭취
 
 우클릭 `ConsumeContextContributor` → `ConsumeContextAction` → `ConsumeService.TryBegin`.
+
+heal `use_action`은 **부위 Leaf**가 필요하다 (`TryBegin(..., partId)`). Use Group → 후보 `MainConditionParts`. HUD/Status 실루엣 RMB는 `BodyPartHealContextMenuBuilder`(몸통 인벤+들기 + 벗기).
 
 손 파이프(`CharacterHandWork`, [`GEAR.md`](../equipment/GEAR.md)): 든 다른 스택을 body로 Unwield → 대상을 Wield(인출=`InventoryTransferDuration`) → mealtime 후 1개 제거. 이미 손에 있으면 1·2 생략. ESC=`CharacterActionHost.CancelAll` — **완료된 단계는 유지**(손을 비운 뒤 뒤적이다 취소하면 손은 빈 채). 진행 중 단계는 apply 없이 중단.
 
@@ -56,11 +78,11 @@ digest mlWater (빠름) / mlFood / kcal→stored
 |------|------|--------|-----|
 | Eat | FOOD / calories>0 | `IngestFood` (ml+kcal) | `ConsumeDuration.MealtimeSeconds` |
 | Drink | DRINK | `IngestDrink` (ml+quench) | 동일 mealtime |
-| Use | MED / heal·consume_drug | 대사 + `BodyPartRestoreService` + 감염/독소/Bleed 감소 (`BodyIllness.Med*`) | 0 (손 파이프만) |
+| Use | MED / heal·consume_drug | heal: `BodyHealApply.TryApply(partId)` 즉시 HP + `bandaged` 또는 지혈. consume_drug: 대사 + Med*. antibiotic: 면역 | 0 (손 파이프만) |
 
 캡은 `mlFood+mlWater`와 stored+stomach kcal. 넘치면 버림 + 가슴 `BodyPartEffectIds.Bloated` (`MoodIconId.Discomfort`). 팽만 중 재섭취 → 구토 + `OvereatHit`.
 
-Fun/Healthy/Stim은 호스트가 보관. 틱 감쇠는 없음.
+Fun/Healthy/Stim은 호스트가 보관. 틱 감쇠는 없음. 식사 `fun`은 기분 Memory(`AteMeal`) 입력 — [`../mood/MOOD.md`](../mood/MOOD.md).
 
 ---
 
@@ -85,6 +107,7 @@ Fun/Healthy/Stim은 호스트가 보관. 틱 감쇠는 없음.
 | Fun | GoodMood / Sad | \|Fun\| ≥ \|`RotFunPenalty`\| (부호로 극성) |
 | Healthy | Sick | Healthy ≤ −\|`RotHealthyPenalty`\| |
 | Stim | Adrenaline | Stim ≥ \|`RotFunPenalty`\|. 바디 아드레날린이 있으면 슬롯 유지 |
+| 수면 1칸 | Tired / VeryTired / NeedRest | `SleepDisplay01` ≥ `MoodTiredRatio` / `MoodVeryTiredRatio` / `MoodNeedRestRatio`. 중간·WellRested 아이콘 없음 |
 
 `CollectVitals`는 Stamina Low/Critical만. `MoodIconId.Hunger` / `Thirst` 단일 슬롯은 쓰지 않는다.
 

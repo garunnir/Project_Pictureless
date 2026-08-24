@@ -1,15 +1,17 @@
 // ============================================================
-// PlayerNeedsHost — 플레이어 위장·저장 kcal·갈증 분 틱 + 섭취/대사 API
+// PlayerNeedsHost — 플레이어 위장·저장 kcal·갈증·수면 피로 분 틱 + 섭취/대사 API
 // ============================================================
 // WorldClock.MinuteChanged
 //   → digest mlWater (fast) / mlFood / kcal→stored
 //   → burn stored * activity (Sprint > Busy > Walk > Idle)
 //   → drain thirst
+//   → fatigue/debt: awake saturating rise / sleep exp decay
 //   → rot scan possessed + open containers
 //   → stored/thirst <=0 → chest ApplyHit (파괴 출혈 → 과다출혈 BodyFatal)
 //   → every N world hours → needs warning events
 // ConsumeService → IngestFood / IngestDrink / ApplyMetabolites / RotToxin / MedIllnessRelief
 // Ingest overflow → Bloated; ingest while bloated → vomit + OvereatHit
+// TrySleep / Wake — 기립 휴식. 이동·행동·ESC면 기상. 의식 공식에 안 곱음.
 
 using System;
 using System.Collections.Generic;
@@ -17,7 +19,7 @@ using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class PlayerNeedsHost : MonoBehaviour
+public sealed class PlayerNeedsHost : MonoBehaviour, IUiCancelConsumer
 {
     [SerializeField] PlayerNeedsSettings _settings;
 
@@ -44,6 +46,10 @@ public sealed class PlayerNeedsHost : MonoBehaviour
     int _addictionPotential;
     Dictionary<string, int> _vitamins;
 
+    float _fatigue01;
+    float _sleepDebt01;
+    bool _isSleeping;
+
     public static PlayerNeedsHost Active { get; private set; }
 
     public static event Action AnyNeedsVomit;
@@ -62,6 +68,31 @@ public sealed class PlayerNeedsHost : MonoBehaviour
     public int Stim => _stim;
     public string AddictionType => _addictionType;
     public int AddictionPotential => _addictionPotential;
+    public float Fatigue01 => _fatigue01;
+    public float SleepDebt01 => _sleepDebt01;
+    public bool IsSleeping => _isSleeping;
+    public int CancelPriority => UiCancelPriority.CharacterAction;
+
+    public float PerceivedFatigue01
+    {
+        get
+        {
+            float mask = ResolveStimFatigueMask();
+            float value = _fatigue01 * (1f - mask);
+            if (value < 0f)
+                return 0f;
+            return value > 1f ? 1f : value;
+        }
+    }
+
+    public float SleepDisplay01
+    {
+        get
+        {
+            float perceived = PerceivedFatigue01;
+            return perceived > _sleepDebt01 ? perceived : _sleepDebt01;
+        }
+    }
 
     public void ClaimActive() => Active = this;
 
@@ -75,6 +106,7 @@ public sealed class PlayerNeedsHost : MonoBehaviour
     void OnEnable()
     {
         SubscribeClock();
+        UiCancelRouter.Register(this);
         if (IsPlayerBody())
             BindPlayer();
     }
@@ -92,9 +124,31 @@ public sealed class PlayerNeedsHost : MonoBehaviour
 
     void OnDisable()
     {
+        UiCancelRouter.Unregister(this);
         UnsubscribeClock();
+        if (_isSleeping)
+            _isSleeping = false;
         if (Active == this)
             Active = null;
+    }
+
+    void Update()
+    {
+        // Hot path: wake checks only. No alloc/LINQ/string.
+        if (!_isSleeping || !IsPlayerBody())
+            return;
+
+        if (_actionHost != null && _actionHost.IsBusy)
+        {
+            Wake();
+            return;
+        }
+
+        float walkMin = _settings != null
+            ? _settings.WalkActivitySpeedMin
+            : PlayerNeedsSettings.DefaultWalkActivitySpeedMin;
+        if (_motor != null && _motor.CurrentSpeed >= walkMin)
+            Wake();
     }
 
     /// <summary>S3 ConsumeService: food volume + calories into stomach. Overflow discarded.</summary>
@@ -168,6 +222,33 @@ public sealed class PlayerNeedsHost : MonoBehaviour
         _fun += funDelta;
         _healthy += healthyDelta;
         _stim += stimDelta;
+        RaiseChanged();
+    }
+
+    /// <summary>디버그/치트용. Fun/Healthy/Stim 절대값.</summary>
+    public void SetMetabolites(int fun, int healthy, int stim)
+    {
+        _fun = fun;
+        _healthy = healthy;
+        _stim = stim;
+        RaiseChanged();
+    }
+
+    public void SetFatigue01(float value)
+    {
+        float next = Mathf.Clamp01(value);
+        if (Mathf.Abs(next - _fatigue01) < 1e-6f)
+            return;
+        _fatigue01 = next;
+        RaiseChanged();
+    }
+
+    public void SetSleepDebt01(float value)
+    {
+        float next = Mathf.Clamp01(value);
+        if (Mathf.Abs(next - _sleepDebt01) < 1e-6f)
+            return;
+        _sleepDebt01 = next;
         RaiseChanged();
     }
 
@@ -248,6 +329,7 @@ public sealed class PlayerNeedsHost : MonoBehaviour
         DigestStomach(vitals, ref changed);
         BurnStored(vitals, ref changed);
         DrainThirst(vitals, ref changed);
+        TickSleepPressure(ref changed);
         ScanPossessedAndOpenRot();
         bool fatalThisTick = TryApplyNeedsFatal(vitals);
         if (!fatalThisTick)
@@ -341,6 +423,111 @@ public sealed class PlayerNeedsHost : MonoBehaviour
 
         vitals.SetCurrent(VitalKeys.Thirst, next);
         changed = true;
+    }
+
+    public bool TrySleep()
+    {
+        if (!IsPlayerBody() || _isSleeping)
+            return false;
+
+        _actionHost?.CancelAll();
+        _isSleeping = true;
+        RaiseChanged();
+        return true;
+    }
+
+    public void Wake()
+    {
+        if (!_isSleeping)
+            return;
+
+        _isSleeping = false;
+        RaiseChanged();
+    }
+
+    public bool TryHandleCancel()
+    {
+        if (!IsPlayerBody() || !_isSleeping)
+            return false;
+
+        Wake();
+        return true;
+    }
+
+    void TickSleepPressure(ref bool changed)
+    {
+        if (_settings == null)
+            return;
+
+        const float dtMinutes = 1f;
+        int minutesPerDay = ResolveMinutesPerDay();
+        float nextFatigue;
+        float nextDebt;
+        if (_isSleeping)
+        {
+            nextFatigue = ExpDecay01(_fatigue01, _settings.FatigueSleepTauMinutes, dtMinutes);
+            nextDebt = ExpDecay01(_sleepDebt01, _settings.DebtSleepTauMinutes, dtMinutes);
+        }
+        else
+        {
+            float activityMul = ResolveActivityMul();
+            if (activityMul < 0.01f)
+                activityMul = 0.01f;
+            float wakeTau = _settings.FatigueWakeTauMinutes / activityMul;
+            nextFatigue = SaturatingRise01(_fatigue01, wakeTau, dtMinutes);
+            nextDebt = SaturatingRise01(
+                _sleepDebt01,
+                _settings.DebtWakeTauMinutes(minutesPerDay),
+                dtMinutes);
+        }
+
+        if (Mathf.Abs(nextFatigue - _fatigue01) < 0.0001f
+            && Mathf.Abs(nextDebt - _sleepDebt01) < 0.0001f)
+            return;
+
+        _fatigue01 = nextFatigue;
+        _sleepDebt01 = nextDebt;
+        changed = true;
+    }
+
+    float ResolveStimFatigueMask()
+    {
+        if (_settings == null)
+            return 0f;
+
+        int gate = _settings.RotFunPenalty;
+        if (gate < 0)
+            gate = -gate;
+        if (gate <= 0 || _stim < gate)
+            return 0f;
+        return _settings.StimFatigueMask;
+    }
+
+    static float SaturatingRise01(float current, float tauMinutes, float dtMinutes)
+    {
+        if (dtMinutes <= 0f)
+            return current < 0f ? 0f : current > 1f ? 1f : current;
+        if (tauMinutes <= 0f)
+            return 1f;
+
+        float remain = 1f - current;
+        if (remain <= 0f)
+            return 1f;
+        float next = 1f - remain * Mathf.Exp(-dtMinutes / tauMinutes);
+        if (next < 0f)
+            return 0f;
+        return next > 1f ? 1f : next;
+    }
+
+    static float ExpDecay01(float current, float tauMinutes, float dtMinutes)
+    {
+        if (current <= 0f || dtMinutes <= 0f)
+            return current < 0f ? 0f : current;
+        if (tauMinutes <= 0f)
+            return 0f;
+
+        float next = current * Mathf.Exp(-dtMinutes / tauMinutes);
+        return next < 0.0001f ? 0f : next;
     }
 
     float ResolveActivityMul()
@@ -614,6 +801,28 @@ public sealed class PlayerNeedsHost : MonoBehaviour
     }
 
     void RaiseChanged() => Changed?.Invoke();
+
+#if UNITY_EDITOR
+    [ContextMenu("Needs/Sleep")]
+    void DebugSleep() => TrySleep();
+
+    [ContextMenu("Needs/Wake")]
+    void DebugWake() => Wake();
+
+    [ContextMenu("Needs/Add Fatigue 0.3")]
+    void DebugAddFatigue()
+    {
+        _fatigue01 = Mathf.Clamp01(_fatigue01 + 0.3f);
+        RaiseChanged();
+    }
+
+    [ContextMenu("Needs/Add Sleep Debt 0.3")]
+    void DebugAddSleepDebt()
+    {
+        _sleepDebt01 = Mathf.Clamp01(_sleepDebt01 + 0.3f);
+        RaiseChanged();
+    }
+#endif
 }
 
 public enum NeedsFatalKind

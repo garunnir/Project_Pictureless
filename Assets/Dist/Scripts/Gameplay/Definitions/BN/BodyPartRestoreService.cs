@@ -5,7 +5,7 @@
 namespace Garunnir.Runtime.Gameplay.Data
 {
     /// <summary>
-    /// 절단 복원은 <see cref="ICharacterBody.TryAttach"/>, heal은 <see cref="ICharacterBody.SetCondition"/>.
+    /// 절단 복원은 <see cref="ICharacterBody.TryAttach"/>, heal은 부상 감소 또는 condition.
     /// </summary>
     /// <remarks>
     /// flowchart LR
@@ -24,7 +24,29 @@ namespace Garunnir.Runtime.Gameplay.Data
         public static bool TryAttachProsthetic(ICharacterBody body, string partId) =>
             TryAttachLimb(body, partId, BodyPartKind.Prosthetic, addRegenerating: false);
 
-        /// <summary>MED heal consume: restore condition on an existing part (chest default).</summary>
+        /// <summary><see cref="TryHeal"/>가 성공할 여지가 있는지. <see cref="BodyHealApply.CanApplyTo"/>와 동일 기준.</summary>
+        public static bool CanHeal(ICharacterBody body, string partId, int amount)
+        {
+            if (body == null || amount <= 0 || string.IsNullOrEmpty(partId))
+                return false;
+
+            string main = BodyPartIds.GetMainConditionPart(partId) ?? partId;
+            if (string.IsNullOrEmpty(main) || !body.Has(main))
+                return false;
+
+            if (BodyInjury.IsOrganicCondition(body, main, out _))
+            {
+                if (!body.TryGet(main, out BodyPartNode node) || node == null)
+                    return false;
+                return BodyInjury.SumTissue(node) > 0;
+            }
+
+            int cur = body.GetConditionCur(main);
+            int max = body.GetConditionMax(main);
+            return max > 0 && cur < max;
+        }
+
+        /// <summary>MED heal: 유기 부위는 부상 심각도를 줄인다. 의체는 condition.</summary>
         public static bool TryHeal(ICharacterBody body, string partId, int amount)
         {
             if (body == null || amount <= 0 || string.IsNullOrEmpty(partId))
@@ -33,6 +55,14 @@ namespace Garunnir.Runtime.Gameplay.Data
             string main = BodyPartIds.GetMainConditionPart(partId) ?? partId;
             if (string.IsNullOrEmpty(main) || !body.Has(main))
                 return false;
+
+            if (BodyInjury.IsOrganicCondition(body, main, out _))
+            {
+                BodyInjury.Reconcile(body, main);
+                bool reduced = BodyInjury.ReduceTissue(body, main, amount);
+                BodyInjury.SyncPart(body, main);
+                return reduced;
+            }
 
             int cur = body.GetConditionCur(main);
             int max = body.GetConditionMax(main);

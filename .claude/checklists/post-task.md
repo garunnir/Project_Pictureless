@@ -23,7 +23,7 @@ Before reporting completion, verify ALL of the following:
 - [ ] Flag anything uncertain or requiring human review
 
 ## Migration / hybrid path switch — if this task did that
-- [ ] `.claude/checklists/migration-parity.md` 계약을 표급 전에 통과했거나, 미완이면 구경로·Revert·flag off·Pending을 명시했다
+- [ ] `.claude/checklists/migration-parity.md` 계약을 기본 경로로 켜기 전에 통과했거나, 미완이면 구경로·Revert·flag off·Pending을 명시했다
 - [ ] 예상 가능 공백을 사용자 재현 뺑뺑이로 메우지 않았다 (룰: `migration-parity.mdc`)
 
 ## Dist UI — if this task created/edited UI paths

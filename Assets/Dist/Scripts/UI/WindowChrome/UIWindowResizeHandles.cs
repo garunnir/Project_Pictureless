@@ -14,7 +14,7 @@ using UnityEngine.UI;
     InfoMessageType.Info)]
 public sealed class UIWindowResizeHandles : MonoBehaviour
 {
-    public const float DefaultHandleWidth = 8f;
+    public const float DefaultHandleWidth = 4f;
     public const float DefaultMinSize = 80f;
     public const float DefaultMaxSize = 4096f;
 
@@ -123,6 +123,8 @@ public sealed class UIWindowResizeHandles : MonoBehaviour
 
             UIWindowResizeProximity proximity = GetComponent<UIWindowResizeProximity>();
             proximity?.SetResizeHandlesActive(active);
+            if (active)
+                RaiseChromeButtonsAboveHandles();
             return;
         }
 
@@ -146,6 +148,9 @@ public sealed class UIWindowResizeHandles : MonoBehaviour
                 }
             }
         }
+
+        if (active)
+            RaiseChromeButtonsAboveHandles();
     }
 
     void RebuildHandles()
@@ -220,6 +225,18 @@ public sealed class UIWindowResizeHandles : MonoBehaviour
         };
 
         _handlesBuilt = true;
+        RaiseChromeButtonsAboveHandles();
+    }
+
+    void RaiseChromeButtonsAboveHandles()
+    {
+        Transform strip = transform.Find(UIWindowChromeLayout.ButtonStripAreaName);
+        if (strip != null)
+            strip.SetAsLastSibling();
+
+        Transform header = transform.Find(UIWindowChromeLayout.HeaderAreaName);
+        if (header != null)
+            header.SetAsLastSibling();
     }
 
     void DestroyLegacyPrefabHandles()

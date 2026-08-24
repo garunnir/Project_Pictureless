@@ -23,8 +23,11 @@ public sealed class BodyTemp
     /// <summary>코어(가슴) 체온 상한 (°C).</summary>
     public const float BodyTempMaxC = 43f;
 
-    /// <summary>말단 체온 하한 (°C). 코어 min보다 낮아 frostbite가 도달 가능하다.</summary>
-    public const float ExtremityTempMinC = 12f;
+    /// <summary>말단 체온 하한 (°C). FrostbiteOnsetTempC보다 낮아 동상 구간이 열린다.</summary>
+    public const float ExtremityTempMinC = -10f;
+
+    /// <summary>이 온도(°C) 이하가 동상. Feeling Cold(~34°C)·야간 맑음(~12°C)과 분리.</summary>
+    public const float FrostbiteOnsetTempC = 0f;
 
     /// <summary>말단 체온 상한 (°C).</summary>
     public const float ExtremityTempMaxC = 48f;
@@ -189,6 +192,22 @@ public sealed class BodyTemp
         return true;
     }
 
+    /// <summary>디버그/치트용. 추적 중인 thermal 부위 온도만 설정. 변경 시 true.</summary>
+    public bool SetPartTempC(string partId, float tempC)
+    {
+        int i = ResolveThermalIndex(partId);
+        if (i < 0 || !_present[i])
+            return false;
+
+        float next = Mathf.Clamp(tempC, MinCForIndex(i), MaxCForIndex(i));
+        if (Mathf.Abs(next - _tempC[i]) < 1e-4f)
+            return false;
+
+        _tempC[i] = next;
+        Changed?.Invoke();
+        return true;
+    }
+
     public bool TryGetPartTargetTempC(string partId, out float targetC)
     {
         targetC = ComfortBodyTempC;
@@ -314,6 +333,9 @@ public sealed class BodyTemp
             ? ClassifyFeeling(tempC)
             : BodyTempFeeling.Comfortable;
     }
+
+    public static bool IsFrostbiteTemp(float partTempC) =>
+        partTempC <= FrostbiteOnsetTempC;
 
     /// <summary>표시용 소수 1자리 코어 체온.</summary>
     public float BodyTempDisplayC => Mathf.Round(BodyTempC * 10f) * 0.1f;

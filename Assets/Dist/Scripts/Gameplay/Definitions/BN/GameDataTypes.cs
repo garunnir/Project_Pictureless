@@ -1,5 +1,5 @@
 // ============================================================
-// GameDataTypes — JSON 데이터 역직렬화용 POCO (아이템·레시피·컨테이너)
+// GameDataTypes — JSON 데이터 역직렬화용 POCO (아이템·레시피·컨테이너·지형·가구)
 // ============================================================
 
 using System;
@@ -28,6 +28,43 @@ namespace Garunnir.Runtime.Gameplay.Data
         public string _source;
         public List<RecipeData> recipes;
         public List<RecipeData> uncraft;
+    }
+
+    [Serializable]
+    public sealed class TerrainFurnitureFileRoot
+    {
+        public string _license;
+        public string _source;
+        public List<TerrainData> terrain;
+        public List<FurnitureData> furniture;
+    }
+
+    [Serializable]
+    public sealed class TerrainData
+    {
+        public string id;
+        public string name;
+        /// <summary>Farming-flag whitelist only (PLANTABLE, PLOWABLE, …).</summary>
+        public List<string> flags;
+    }
+
+    [Serializable]
+    public sealed class FurniturePlantData
+    {
+        public string transform;
+        public string @base;
+        public float growth_multiplier = 1f;
+        public float harvest_multiplier = 1f;
+    }
+
+    [Serializable]
+    public sealed class FurnitureData
+    {
+        public string id;
+        public string name;
+        /// <summary>Farming-flag whitelist only (PLANT, GROWTH_*, PLANTABLE, …).</summary>
+        public List<string> flags;
+        public FurniturePlantData plant_data;
     }
 
     // ── Item ───────────────────────────────────────────────────
@@ -69,12 +106,14 @@ namespace Garunnir.Runtime.Gameplay.Data
         public GunDetailData gun;
         public ToolDetailData tool;
         public ComestibleDetailData comestible;
-        /// <summary>Consume-only heal / consume_drug. Other BN actions stay Parked.</summary>
+        /// <summary>Consume-only heal / consume_drug / antibiotic family. Other BN actions stay Parked.</summary>
         public UseActionData use_action;
         public AmmoDetailData ammo;
         public MagazineDetailData magazine;
         public BookDetailData book;
         public ContainerDetailData container_detail;
+        /// <summary>BN seed_data whitelist. Null if the item is not a seed.</summary>
+        public SeedDetailData seed;
 
         public float Weight => weight_g / 1000f;
         public float Volume => volume_ml / 1000f;

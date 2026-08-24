@@ -131,7 +131,7 @@
 
 캔버스 오버레이 배선: `Dist/MCP/Inventory/Setup Canvas Overlays In Open Scene` (IsoLand 등 씬 1회 실행).
 
-**유의사항 (이주/하이브리드):** uGUI와 UI Toolkit 등 **다른 UI 경로를 한 화면에 섞거나** 리스트만 갈아끼울 때, 변경 전 동작 패리티 없이 표급하지 말 것. 반쯤 켠 채 증상별 재현으로 메우지 말 것 — `.cursor/rules/migration-parity.mdc`, `.claude/checklists/migration-parity.md`.
+**유의사항 (이주/하이브리드):** uGUI와 UI Toolkit 등 **다른 UI 경로를 한 화면에 섞거나** 리스트만 갈아끼울 때, 변경 전 동작 패리티 없이 기본 경로로 켜지 말 것. 반쯤 켠 채 증상별 재현으로 메우지 말 것 — `.cursor/rules/migration-parity.mdc`, `.claude/checklists/migration-parity.md`.
 
 ### 월드 컨테이너 프리팹 (인벤 관련)
 
@@ -278,7 +278,7 @@
 - **사람용 사용법:** [`ItemContextMenu-usage.md`](ItemContextMenu-usage.md)
 - 기술 경계·항목 추가: [`ItemContextMenu.md`](ItemContextMenu.md)
 - 프리팹: `ItemContextMenu.prefab` (HierarchyBuilder bake). 메뉴 항목 추가는 Contributor/Action만 — UI 프리팹 변경 불필요.
-- 섭취: `ConsumeContextContributor` — Eat / Drink / Use. 라벨 `ItemContextMenu.Eat` · `.Drink` · `.Use`. 실행은 `ConsumeService.TryBegin` → `CharacterHandWork` ([`needs/NEEDS.md`](../needs/NEEDS.md)).
+- 섭취: `ConsumeContextContributor` — Eat / Drink / Use. heal은 Use Group → 부위 Leaf. 라벨 `ItemContextMenu.Eat` · `.Drink` · `.Use` · `.Unwrap`. 실행은 `ConsumeService.TryBegin(..., partId?)` → `CharacterHandWork` ([`needs/NEEDS.md`](../needs/NEEDS.md)). HUD Status 실루엣 RMB: `BodyPartHealContextMenuBuilder`.
 - 부패 병합: `ItemMergeKey.IsRotten`이 다르면 합치지 않는다 (`ItemMergePolicy`).
 
 

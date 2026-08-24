@@ -10,10 +10,11 @@
       "max_stack": 10,
       "comestible": {
         "calories": 80,
-        "quench": 0,
-        "fun": 0,
-        "spoils_in_minutes": 1440
-      }
+        "spoils_in_minutes": 1440.0
+      },
+      "Weight": 0.1,
+      "Volume": 0.1,
+      "MaxStack": 10
     },
     {
       "id": "weapon_killing_sword",
@@ -22,7 +23,19 @@
       "category": "weapons",
       "weight_g": 1000,
       "volume_ml": 1000,
-      "max_stack": 1
+      "max_stack": 1,
+      "materials": [
+        ""
+      ],
+      "flags": [
+        ""
+      ],
+      "qualities": [],
+      "weapon_category": [],
+      "techniques": [],
+      "Weight": 1.0,
+      "Volume": 1.0,
+      "MaxStack": 1
     },
     {
       "id": "weapon_bat",
@@ -36,7 +49,10 @@
       "to_hit": 1,
       "weapon_category": [
         "BAT"
-      ]
+      ],
+      "Weight": 1.2,
+      "Volume": 1.5,
+      "MaxStack": 1
     },
     {
       "id": "weapon_knife",
@@ -46,12 +62,19 @@
       "weight_g": 200,
       "volume_ml": 250,
       "max_stack": 1,
+      "materials": [],
+      "flags": [],
+      "qualities": [],
       "bashing": 2,
       "cutting": 9,
       "to_hit": 1,
       "weapon_category": [
         "KNIFE"
-      ]
+      ],
+      "techniques": [],
+      "Weight": 0.2,
+      "Volume": 0.25,
+      "MaxStack": 1
     },
     {
       "id": "weapon_pistol",
@@ -79,7 +102,10 @@
         "clip_size": 12,
         "reload": 100,
         "burst": 1
-      }
+      },
+      "Weight": 0.9,
+      "Volume": 0.5,
+      "MaxStack": 1
     },
     {
       "id": "clothing_plain",
@@ -104,12 +130,12 @@
             "moves": 100
           }
         ],
-        "environmental_protection": 0,
         "material_thickness": 1,
-        "power_armor": false,
-        "layer": "NORMAL",
-        "sided": false
-      }
+        "layer": "NORMAL"
+      },
+      "Weight": 1.0,
+      "Volume": 1.0,
+      "MaxStack": 1
     },
     {
       "id": "clothing_jacket",
@@ -127,13 +153,13 @@
         "encumbrance": 4,
         "max_encumbrance": 12,
         "warmth": 25,
-        "storage": 0,
         "environmental_protection": 1,
         "material_thickness": 2,
-        "power_armor": false,
-        "layer": "NORMAL",
-        "sided": false
-      }
+        "layer": "NORMAL"
+      },
+      "Weight": 1.2,
+      "Volume": 1.5,
+      "MaxStack": 1
     },
     {
       "id": "clothing_undershirt",
@@ -148,16 +174,14 @@
           "torso"
         ],
         "coverage": 30,
-        "encumbrance": 0,
         "max_encumbrance": 4,
         "warmth": 5,
-        "storage": 0,
-        "environmental_protection": 0,
         "material_thickness": 1,
-        "power_armor": false,
-        "layer": "UNDER",
-        "sided": false
-      }
+        "layer": "UNDER"
+      },
+      "Weight": 0.2,
+      "Volume": 0.3,
+      "MaxStack": 1
     },
     {
       "id": "clothing_glove",
@@ -176,13 +200,13 @@
         "encumbrance": 1,
         "max_encumbrance": 5,
         "warmth": 8,
-        "storage": 0,
-        "environmental_protection": 0,
         "material_thickness": 1,
-        "power_armor": false,
         "layer": "NORMAL",
         "sided": true
-      }
+      },
+      "Weight": 0.08,
+      "Volume": 0.1,
+      "MaxStack": 1
     },
     {
       "id": "container_bag",
@@ -193,7 +217,10 @@
       "volume_ml": 3000,
       "max_stack": 1,
       "is_container": true,
-      "container_id": "bag_default"
+      "container_id": "bag_default",
+      "Weight": 2.0,
+      "Volume": 3.0,
+      "MaxStack": 1
     }
   ],
   "containers": [
@@ -201,25 +228,33 @@
       "id": "bag_default",
       "name": "가방",
       "max_weight": 20.0,
-      "max_volume": 15.0
+      "max_volume": 15.0,
+      "MaxWeight": 20.0,
+      "MaxVolume": 15.0
     },
     {
       "id": "floor_loot",
       "name": "바닥",
       "max_weight": 9999.0,
-      "max_volume": 9999.0
+      "max_volume": 9999.0,
+      "MaxWeight": 9999.0,
+      "MaxVolume": 9999.0
     },
     {
       "id": "crate",
       "name": "상자",
       "max_weight": 100.0,
-      "max_volume": 80.0
+      "max_volume": 80.0,
+      "MaxWeight": 100.0,
+      "MaxVolume": 80.0
     },
     {
       "id": "player_body",
       "name": "인벤토리",
       "max_weight": 50.0,
-      "max_volume": 30.0
+      "max_volume": 30.0,
+      "MaxWeight": 50.0,
+      "MaxVolume": 30.0
     }
   ]
 }

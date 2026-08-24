@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterCombatVfx — Action 시전 VFX + Hit(특성) + Reaction(Recoil/Blocked)
+// CharacterCombatVfx — Action 시전 VFX + Hit(특성) + 자상/절단 피 오버레이 + Reaction
 // ============================================================
 
 using Lean.Pool;
@@ -68,6 +68,7 @@ public sealed class CharacterCombatVfx : MonoBehaviour
             ? _attacker.Catalog.ImpactVfxDefaults
             : null;
 
+        GameObject woundPrefab = ResolveWoundOverlay(outcome, impactDefaults);
         WeaponActionVfx vfx = WeaponActionVfxResolver.ResolveImpact(
             outcome.Attack,
             _attacker.Presentation,
@@ -75,25 +76,46 @@ public sealed class CharacterCombatVfx : MonoBehaviour
             ResolvePipeline(),
             impactDefaults,
             outcome.HitTag);
-        if (vfx == null)
+
+        GameObject impactPrefab = null;
+        if (vfx != null)
+            impactPrefab = outcome.DidHit ? vfx.hitVfx : vfx.missVfx;
+
+        if (impactPrefab == null && woundPrefab == null)
             return;
 
-        GameObject impactPrefab = outcome.DidHit ? vfx.hitVfx : vfx.missVfx;
+        Vector3 impactForward = -outcome.Direction;
         if (outcome.ResolveMode == WeaponResolveMode.RangedRay)
         {
             if (WeaponAttack.UsesFlightProjectile(outcome.Attack))
             {
-                if (impactPrefab != null)
-                    Spawn(impactPrefab, outcome.ImpactPoint, -outcome.Direction);
+                Spawn(impactPrefab, outcome.ImpactPoint, impactForward);
+                Spawn(woundPrefab, outcome.ImpactPoint, impactForward);
                 return;
             }
 
-            if (!SpawnTracer(vfx.tracerVfx, outcome, impactPrefab) && impactPrefab != null)
-                Spawn(impactPrefab, outcome.ImpactPoint, -outcome.Direction);
+            GameObject tracerPrefab = vfx != null ? vfx.tracerVfx : null;
+            if (SpawnTracer(tracerPrefab, outcome, impactPrefab, woundPrefab))
+                return;
+
+            Spawn(impactPrefab, outcome.ImpactPoint, impactForward);
+            Spawn(woundPrefab, outcome.ImpactPoint, impactForward);
             return;
         }
 
-        Spawn(impactPrefab, outcome.ImpactPoint, -outcome.Direction);
+        Spawn(impactPrefab, outcome.ImpactPoint, impactForward);
+        Spawn(woundPrefab, outcome.ImpactPoint, impactForward);
+    }
+
+    static GameObject ResolveWoundOverlay(AttackOutcome outcome, WeaponImpactVfxDefaults defaults)
+    {
+        if (defaults == null || !outcome.DidHit)
+            return null;
+        if (outcome.DidSeverPart)
+            return defaults.SeverBleedVfx;
+        if (outcome.LeftCutWound)
+            return defaults.CutBleedVfx;
+        return null;
     }
 
     void OnAttackCueFired(WieldHand hand, WeaponAction action)
@@ -139,7 +161,11 @@ public sealed class CharacterCombatVfx : MonoBehaviour
     }
 
     /// <summary>true = 트레이서가 착탄 VFX를 맡음. false = 호출측이 즉시 스폰.</summary>
-    bool SpawnTracer(GameObject prefab, AttackOutcome outcome, GameObject impactPrefab)
+    bool SpawnTracer(
+        GameObject prefab,
+        AttackOutcome outcome,
+        GameObject impactPrefab,
+        GameObject woundPrefab)
     {
         GameObject instance = Spawn(prefab, outcome.OriginPoint, outcome.Direction);
         if (instance == null)
@@ -149,7 +175,12 @@ public sealed class CharacterCombatVfx : MonoBehaviour
         if (tracer == null)
             return false;
 
-        tracer.Play(outcome.OriginPoint, outcome.ImpactPoint, impactPrefab, _timeChannel);
+        tracer.Play(
+            outcome.OriginPoint,
+            outcome.ImpactPoint,
+            impactPrefab,
+            _timeChannel,
+            woundPrefab);
         return true;
     }
 }

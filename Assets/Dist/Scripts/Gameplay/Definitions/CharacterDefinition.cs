@@ -75,6 +75,7 @@ public sealed class CharacterDefinition : ScriptableObject
     [SerializeField] string _id;
     [SerializeField] string _displayName;
     [SerializeField] Sprite _portraitSprite;
+    [SerializeField] CharacterFaction _faction;
     [SerializeField] Vector2 _alignment;
     [SerializeField] CharacterAttributeBlock _attributes = CharacterAttributeBlock.Default;
     [SerializeField] List<CharacterSkillOverrideEntry> _skillOverrides = new();
@@ -92,6 +93,7 @@ public sealed class CharacterDefinition : ScriptableObject
     public string Id => _id;
     public string DisplayNameOverride => _displayName;
     public Sprite PortraitSprite => _portraitSprite;
+    public CharacterFaction Faction => _faction;
     public Vector2 Alignment => _alignment;
     public CharacterAttributeBlock Attributes => _attributes;
     public IReadOnlyList<CharacterSkillOverrideEntry> SkillOverrides => _skillOverrides;

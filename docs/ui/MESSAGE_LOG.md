@@ -38,6 +38,7 @@ CharacterAttacker.AnyAttackResolved ──┐
 GameplayData.Defeat.Changed ──────────┼─► MessageLogPlayerCombatSink
 PlayerMovement.AnyImmobileMoveAttempted ► MessageLogPlayerEncumbranceSink
 PlayerNeedsHost.AnyNeedsVomit/Fatal/Warning ► MessageLogNeedsSink
+CharacterMoodHost break start/end ─────► GameplayMessageLog
                                       ▼
                               GameplayMessageLog (ring buffer)
                                       │
@@ -73,6 +74,7 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 | 과식 구토 | `PlayerNeedsHost` 팽만 중 재섭취 | Status / Normal |
 | 아사/탈수 | stored kcal≤0 또는 thirst≤0 (1회) | Status / Critical |
 | 허기/갈증 경고 | 매 6 월드시간, kcal% below 70/50/25/10 또는 갈증 danger | Status / Normal |
+| 정신붕괴 시작/종료 | `CharacterMoodHost` Wander 양도 | Status / Critical·Normal |
 
 **남기지 않음**: miss, 플레이어→적 공격, NPC↔NPC, 출혈 틱, 바이탈 소량, **Light~Heavy 과적**(상태 HUD 아이콘만).
 
@@ -97,6 +99,8 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 | `msg.status.needs_hunger_25` | `매우 배가 고프다.` |
 | `msg.status.needs_hunger_10` | `굶주리고 있다.` |
 | `msg.status.needs_thirst_danger` | `목이 타들어간다.` |
+| `msg.status.mood_break_wander` | `순간 이성을 잃고 배회하기 시작했다.` |
+| `msg.status.mood_break_end` | `이성을 되찾았다.` |
 | `MessageLog.Title` | `메시지` |
 
 부위 표시: 기존 `PlayerStatus.Part.{id}`.

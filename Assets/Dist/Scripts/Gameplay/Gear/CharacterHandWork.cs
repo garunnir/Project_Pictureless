@@ -61,6 +61,8 @@ public static class CharacterHandWork
         float actDurationSeconds,
         Action apply)
     {
+        if (MoodGameplayGate.IsBlocked)
+            return false;
         if (apply == null || GetBlockedReason(stack, source, hand) != null)
             return false;
 

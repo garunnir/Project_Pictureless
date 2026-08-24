@@ -11,7 +11,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         None = 0,
         /// <summary>해부학적 치명 (의식 0 — 뇌/피/감염/고통1/독소).</summary>
         BodyFatal = 1,
-        /// <summary>기본 능력치 최종값 0 — 스톤수프식.</summary>
+        /// <summary>기본 능력치 최종값(Buffed) 0 — 스톤수프식. 흔하면 안 됨 — 래치 시 [StatCollapse] 로그.</summary>
         StatCollapse = 2
     }
 

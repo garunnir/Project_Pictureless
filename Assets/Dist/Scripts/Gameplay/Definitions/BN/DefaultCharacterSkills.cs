@@ -147,6 +147,17 @@ namespace Garunnir.Runtime.Gameplay.Data
         {
             if (source == null || _sources.Contains(source))
                 return;
+
+            // 같은 테이블에 Body aggregator가 둘이면 동상 퍼센트가 2배가 되어 Buffed 0 → StatCollapse.
+            if (source is BodySkillModifierAggregator)
+            {
+                for (int i = 0; i < _sources.Count; i++)
+                {
+                    if (_sources[i] is BodySkillModifierAggregator)
+                        return;
+                }
+            }
+
             _sources.Add(source);
         }
 

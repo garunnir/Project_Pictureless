@@ -15,6 +15,7 @@ MonoBehaviour:
   _id: 
   _displayName: 
   _portraitSprite: {fileID: 0}
+  _faction: {fileID: 11400000, guid: c6b7d8e9f0a14cd2e3f48697a0b1c2d3, type: 2}
   _alignment: {x: 0, y: 0}
   _attributes:
     str: 20
@@ -36,10 +37,14 @@ MonoBehaviour:
   _wieldLoadout:
   - itemId: weapon_pistol
     hand: 1
+  - itemId: weapon_knife
+    hand: 0
   _bodyItemSeeds:
   - itemId: container_bag
     count: 1
   - itemId: consumable_egg
     count: 3
   - itemId: candy
+    count: 3
+  - itemId: bandages
     count: 3

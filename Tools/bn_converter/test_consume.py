@@ -51,7 +51,7 @@ def test_export_comestible_consume_fields():
     _eq(comestible["vitamins"], {"vitC": 6}, "vitamins")
 
 
-def test_export_heal_flattens_limb_power_object():
+def test_export_heal_keeps_limb_power_key():
     action = export_consume_use_action(
         {
             "use_action": {
@@ -61,15 +61,58 @@ def test_export_heal_flattens_limb_power_object():
             }
         }
     )
-    _eq(action, {"type": "heal", "heal_amount": 7}, "heal object")
+    _eq(action, {"type": "heal", "limb_power": 7}, "heal limb_power object")
+    _eq("heal_amount" in action, False, "no Dist heal_amount")
 
 
-def test_export_heal_flattens_limb_power_range():
+def test_export_heal_keeps_limb_power_range():
     action = export_consume_use_action(
         {"use_action": {"type": "heal", "limb_power": [3, 8]}}
     )
     _eq(action["type"], "heal", "heal type")
-    _eq(action["heal_amount"], 3, "heal range first")
+    _eq(action["limb_power"], 3, "heal range first")
+    _eq("heal_amount" in action, False, "no Dist heal_amount")
+
+
+def test_export_heal_keeps_all_power_keys():
+    action = export_consume_use_action(
+        {
+            "use_action": {
+                "type": "heal",
+                "limb_power": 2,
+                "bandages_power": 4,
+                "head_power": 1,
+            }
+        }
+    )
+    _eq(
+        action,
+        {
+            "type": "heal",
+            "limb_power": 2,
+            "bandages_power": 4,
+            "head_power": 1,
+        },
+        "heal keeps BN keys",
+    )
+
+
+def test_export_heal_keeps_bleed_key():
+    action = export_consume_use_action(
+        {"use_action": {"type": "heal", "bleed": 0.9, "limb_power": 0}}
+    )
+    _eq(action["type"], "heal", "heal type")
+    _eq(action["bleed"], 1, "bleed rounded")
+    _eq(action["limb_power"], 0, "limb_power zero kept")
+    _eq("bandages_power" in action, False, "no invented bandages_power")
+
+
+def test_export_heal_omits_absent_bleed():
+    action = export_consume_use_action(
+        {"use_action": {"type": "heal", "bandages_power": 4}}
+    )
+    _eq("bleed" in action, False, "absent bleed omitted")
+    _eq(action["bandages_power"], 4, "bandages_power")
 
 
 def test_export_consume_drug_flattens_effect():
@@ -86,6 +129,30 @@ def test_export_consume_drug_flattens_effect():
         action,
         {"type": "consume_drug", "effect_id": "pkill1", "duration": 720},
         "consume_drug",
+    )
+
+
+def test_export_antibiotic_string():
+    _eq(
+        export_consume_use_action({"use_action": "ANTIBIOTIC"}),
+        {"type": "antibiotic"},
+        "ANTIBIOTIC string",
+    )
+
+
+def test_export_weak_antibiotic_string():
+    _eq(
+        export_consume_use_action({"use_action": "WEAK_ANTIBIOTIC"}),
+        {"type": "weak_antibiotic"},
+        "WEAK_ANTIBIOTIC string",
+    )
+
+
+def test_export_strong_antibiotic_object():
+    _eq(
+        export_consume_use_action({"use_action": {"type": "STRONG_ANTIBIOTIC"}}),
+        {"type": "strong_antibiotic"},
+        "STRONG_ANTIBIOTIC object",
     )
 
 
@@ -110,7 +177,7 @@ def test_item_detail_exports_consume_use_action_only():
         },
         "COMESTIBLE",
     )
-    _eq(detail["use_action"], {"type": "heal", "heal_amount": 4}, "use_action")
+    _eq(detail["use_action"], {"type": "heal", "limb_power": 4}, "use_action")
     for key in (
         "drop_action",
         "tick_action",
@@ -126,9 +193,15 @@ if __name__ == "__main__":
         test_flatten_vitamins_pairs,
         test_flatten_vitamins_object,
         test_export_comestible_consume_fields,
-        test_export_heal_flattens_limb_power_object,
-        test_export_heal_flattens_limb_power_range,
+        test_export_heal_keeps_limb_power_key,
+        test_export_heal_keeps_limb_power_range,
+        test_export_heal_keeps_all_power_keys,
+        test_export_heal_keeps_bleed_key,
+        test_export_heal_omits_absent_bleed,
         test_export_consume_drug_flattens_effect,
+        test_export_antibiotic_string,
+        test_export_weak_antibiotic_string,
+        test_export_strong_antibiotic_object,
         test_export_ignores_non_consume_use_action,
         test_item_detail_exports_consume_use_action_only,
     ]

@@ -19,6 +19,8 @@ namespace Garunnir.Runtime.Gameplay.Data
         public const int OrganConditionLung = 25;
         public const int OrganConditionStomach = 25;
         public const int OrganConditionKidney = 15;
+        /// <summary>손가락 HP. STR 가산 없음. 림월드 finger 8에 맞춤.</summary>
+        public const int FingerCondition = 8;
 
         readonly List<BodyPartNode> _roots = new();
 
@@ -378,6 +380,11 @@ namespace Garunnir.Runtime.Gameplay.Data
                 !node.HasCondition)
                 return;
 
+            int nextMax = max < 0 ? 0 : max;
+            int nextCur = current < 0 ? 0 : (current > nextMax ? nextMax : current);
+            if (node.ConditionCur == nextCur && node.ConditionMax == nextMax)
+                return;
+
             node.SetCondition(current, max);
             Changed?.Invoke();
         }
@@ -530,6 +537,12 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return false;
 
             string id = BodyPartIds.ResolveNodeId(startPartId);
+            if (BodyPartIds.IsFinger(id))
+            {
+                subtree = new BodyPartNode(id, true, FingerCondition, kind);
+                return true;
+            }
+
             if (id == BodyPartIds.UpperArmL)
             {
                 subtree = CreateArm(
@@ -694,8 +707,8 @@ namespace Garunnir.Runtime.Gameplay.Data
             BodyPartKind kind)
         {
             BodyPartNode hand = new(handId, true, conditionMax, kind);
-            hand.AddChild(new BodyPartNode(thumbId, false, 0, kind));
-            hand.AddChild(new BodyPartNode(indexId, false, 0, kind));
+            hand.AddChild(new BodyPartNode(thumbId, true, FingerCondition, kind));
+            hand.AddChild(new BodyPartNode(indexId, true, FingerCondition, kind));
             return hand;
         }
 

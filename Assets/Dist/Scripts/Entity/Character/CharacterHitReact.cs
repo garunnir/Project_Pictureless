@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterHitReact — 피격 밀침·Flinch·Δv Stagger·고통 쇼크 애니 큐 (ApplyHit 미구독)
+// CharacterHitReact — 피격 밀침·Flinch·Stagger·PainDown·사망 Dead 애니 큐 (ApplyHit 미구독)
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
@@ -15,13 +15,16 @@ public sealed class CharacterHitReact : MonoBehaviour
     public const string ParamFlinch = "HitFlinch";
     public const string ParamStagger = "HitStagger";
     public const string ParamPainShocked = "IsPainShocked";
+    public const string ParamDefeated = "IsDefeated";
     public const string StateEmpty = "Empty";
     public const string StateFlinch = "Flinch";
     public const string StateStagger = "Stagger";
     public const string StatePainDown = "PainDown";
+    public const string StateDead = "Dead";
     public const string ClipFlinch = "HitFlinch_Slot";
     public const string ClipStagger = "HitStagger_Slot";
     public const string ClipPainDown = "HitPainDown_Slot";
+    public const string ClipDead = "HitDead_Slot";
 
     CharacterBodyHost _bodyHost;
     CharacterMotor _motor;
@@ -30,16 +33,20 @@ public sealed class CharacterHitReact : MonoBehaviour
     CharacterAppearanceHost _appearance;
     PlayerGearHost _gear;
     CharacterPainHost _pain;
+    CharacterSkillsHost _skillsHost;
+    ICharacterDefeat _defeat;
     CharacterImbalanceHost _imbalance;
     Animator _animator;
     int _hashFlinch;
     int _hashStagger;
     int _hashPainShocked;
+    int _hashDefeated;
     int _hurtLayerIndex = -1;
     int _flinchLayerIndex = -1;
     bool _hasFlinch;
     bool _hasStagger;
     bool _hasPainShocked;
+    bool _hasDefeated;
 
     void Awake()
     {
@@ -50,6 +57,7 @@ public sealed class CharacterHitReact : MonoBehaviour
         TryGetComponent(out _appearance);
         TryGetComponent(out _gear);
         TryGetComponent(out _pain);
+        TryGetComponent(out _skillsHost);
         TryGetComponent(out _imbalance);
         TryGetComponent(out _animator);
         if (_animator == null)
@@ -62,7 +70,9 @@ public sealed class CharacterHitReact : MonoBehaviour
         CharacterAttacker.AnyAttackJudged += OnAnyAttackJudged;
         if (_pain != null)
             _pain.Changed += OnPainChanged;
+        BindDefeat();
         SyncPainBool();
+        SyncDeadBool();
     }
 
     void OnDisable()
@@ -70,6 +80,7 @@ public sealed class CharacterHitReact : MonoBehaviour
         CharacterAttacker.AnyAttackJudged -= OnAnyAttackJudged;
         if (_pain != null)
             _pain.Changed -= OnPainChanged;
+        UnbindDefeat();
     }
 
     void CacheHurtParams()
@@ -77,6 +88,7 @@ public sealed class CharacterHitReact : MonoBehaviour
         _hasFlinch = false;
         _hasStagger = false;
         _hasPainShocked = false;
+        _hasDefeated = false;
         _hurtLayerIndex = -1;
         _flinchLayerIndex = -1;
         if (_animator == null)
@@ -85,6 +97,7 @@ public sealed class CharacterHitReact : MonoBehaviour
         _hashFlinch = Animator.StringToHash(ParamFlinch);
         _hashStagger = Animator.StringToHash(ParamStagger);
         _hashPainShocked = Animator.StringToHash(ParamPainShocked);
+        _hashDefeated = Animator.StringToHash(ParamDefeated);
         _hurtLayerIndex = _animator.GetLayerIndex(HurtLayerName);
         _flinchLayerIndex = _animator.GetLayerIndex(FlinchLayerName);
 
@@ -97,10 +110,33 @@ public sealed class CharacterHitReact : MonoBehaviour
                 _hasStagger = true;
             else if (p.nameHash == _hashPainShocked && p.type == AnimatorControllerParameterType.Bool)
                 _hasPainShocked = true;
+            else if (p.nameHash == _hashDefeated && p.type == AnimatorControllerParameterType.Bool)
+                _hasDefeated = true;
         }
     }
 
     void OnPainChanged() => SyncPainBool();
+
+    void OnDefeatChanged() => SyncDeadBool();
+
+    void BindDefeat()
+    {
+        UnbindDefeat();
+        _defeat = _skillsHost != null ? _skillsHost.Defeat : null;
+        if (_defeat != null)
+            _defeat.Changed += OnDefeatChanged;
+    }
+
+    void UnbindDefeat()
+    {
+        if (_defeat != null)
+            _defeat.Changed -= OnDefeatChanged;
+        _defeat = null;
+    }
+
+    bool IsHurtLocked =>
+        (_pain != null && _pain.IsPainShocked) ||
+        (_defeat != null && _defeat.IsDefeated);
 
     void SyncPainBool()
     {
@@ -109,6 +145,16 @@ public sealed class CharacterHitReact : MonoBehaviour
         bool shocked = _pain != null && _pain.IsPainShocked;
         _animator.SetBool(_hashPainShocked, shocked);
         if (shocked)
+            LiftHurtLayer();
+    }
+
+    void SyncDeadBool()
+    {
+        if (!_hasDefeated || _animator == null)
+            return;
+        bool dead = _defeat != null && _defeat.IsDefeated;
+        _animator.SetBool(_hashDefeated, dead);
+        if (dead)
             LiftHurtLayer();
     }
 
@@ -121,8 +167,8 @@ public sealed class CharacterHitReact : MonoBehaviour
         if (body == null || body.IsDeadState)
             return;
 
-        bool shocked = _pain != null && _pain.IsPainShocked;
-        if (!shocked)
+        bool locked = IsHurtLocked;
+        if (!locked)
             PlayFlinch();
 
         float mass = CombatImpulse.InertialMassKg(
@@ -154,7 +200,7 @@ public sealed class CharacterHitReact : MonoBehaviour
                 _attacker?.CancelAllPendingCues();
             }
 
-            if (!shocked)
+            if (!locked)
                 PlayStagger();
         }
 

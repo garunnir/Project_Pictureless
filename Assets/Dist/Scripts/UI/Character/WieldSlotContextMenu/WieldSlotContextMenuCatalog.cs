@@ -8,6 +8,7 @@ public static class WieldSlotContextMenuCatalog
 {
     static readonly IWieldSlotContextMenuContributor[] Contributors =
     {
+        new WieldSlotConsumeContributor(),
         new WieldSlotActionsContributor(),
     };
 

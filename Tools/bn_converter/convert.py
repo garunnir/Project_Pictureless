@@ -86,10 +86,23 @@ def deep_merge(base: dict, override: dict) -> dict:
     return result
 
 
-def parse_time_to_minutes(t) -> float:
-    """BN 시간 문자열 → 분(float). 예: '7 h 40 m' → 460.0"""
-    if isinstance(t, (int, float)):
-        return t / 100.0  # movement points → minutes (rough)
+# Dist WorldClockSettings.DefaultMinutesPerDay. Converter cannot import C#.
+MINUTES_PER_DAY = 24 * 60
+
+# Terrain/furniture flags Dist farming actually consumes. All other flags are dropped.
+FARMING_FLAGS = frozenset({
+    "PLANTABLE",
+    "PLOWABLE",
+    "PLANT",
+    "GROWTH_SEED",
+    "GROWTH_SEEDLING",
+    "GROWTH_MATURE",
+    "GROWTH_HARVEST",
+})
+
+
+def parse_duration_to_minutes(t) -> float:
+    """BN duration string → minutes. Example: '7 h 40 m' → 460.0. Does not accept ints."""
     if not isinstance(t, str):
         return 0.0
     t = t.strip()
@@ -110,11 +123,29 @@ def parse_time_to_minutes(t) -> float:
         elif unit.startswith("h"):
             total += num * 60.0
         elif unit.startswith("d"):
-            total += num * 1440.0
+            total += num * MINUTES_PER_DAY
         else:
             total += num
         i += 2
     return round(total, 2) if total else 0.0
+
+
+def parse_time_to_minutes(t) -> float:
+    """Recipe/comestible time. Int = moves/100. Strings = parse_duration_to_minutes."""
+    if isinstance(t, bool):
+        return 0.0
+    if isinstance(t, (int, float)):
+        return t / 100.0  # movement points → minutes (rough)
+    return parse_duration_to_minutes(t)
+
+
+def parse_grow_to_minutes(t) -> float:
+    """BN seed grow → minutes. Int = season-days × MINUTES_PER_DAY. Never moves/100."""
+    if isinstance(t, bool):
+        return 0.0
+    if isinstance(t, (int, float)):
+        return float(t) * MINUTES_PER_DAY
+    return parse_duration_to_minutes(t)
 
 
 def parse_weight_to_g(w) -> int:
@@ -636,9 +667,34 @@ def export_tool_detail(entry: dict, item_type: str) -> dict | None:
 
 USE_ACTION_TYPE_HEAL = "heal"
 USE_ACTION_TYPE_CONSUME_DRUG = "consume_drug"
-CONSUME_USE_ACTION_TYPES = frozenset({USE_ACTION_TYPE_HEAL, USE_ACTION_TYPE_CONSUME_DRUG})
+USE_ACTION_TYPE_ANTIBIOTIC = "antibiotic"
+USE_ACTION_TYPE_WEAK_ANTIBIOTIC = "weak_antibiotic"
+USE_ACTION_TYPE_STRONG_ANTIBIOTIC = "strong_antibiotic"
+CONSUME_USE_ACTION_TYPES = frozenset(
+    {
+        USE_ACTION_TYPE_HEAL,
+        USE_ACTION_TYPE_CONSUME_DRUG,
+        USE_ACTION_TYPE_ANTIBIOTIC,
+        USE_ACTION_TYPE_WEAK_ANTIBIOTIC,
+        USE_ACTION_TYPE_STRONG_ANTIBIOTIC,
+    }
+)
+ANTIBIOTIC_USE_ACTION_TYPES = frozenset(
+    {
+        USE_ACTION_TYPE_ANTIBIOTIC,
+        USE_ACTION_TYPE_WEAK_ANTIBIOTIC,
+        USE_ACTION_TYPE_STRONG_ANTIBIOTIC,
+    }
+)
 
-_HEAL_AMOUNT_KEYS = ("limb_power", "bandages_power", "head_power", "torso_power", "amount")
+_HEAL_POWER_KEYS = (
+    "limb_power",
+    "bandages_power",
+    "head_power",
+    "torso_power",
+    "amount",
+    "bleed",
+)
 _SCALAR_AMOUNT_KEYS = ("amount", "min", "limb_power")
 _VITAMIN_ID_KEYS = ("id", "vitamin")
 _VITAMIN_AMOUNT_KEYS = ("amount", "vitamins")
@@ -752,21 +808,22 @@ def _first_consume_effect(action: dict) -> dict | None:
 
 
 def export_consume_use_action(entry: dict) -> dict | None:
-    """Whitelist heal / consume_drug only. Flatten nested objects. Never drop/tick/countdown."""
+    """Whitelist heal / consume_drug / antibiotic family. Unwrap nested values on the same BN key. Never drop/tick/countdown."""
     for action in _iter_use_actions(entry.get("use_action")):
         action_type = _use_action_type(action)
         if action_type not in CONSUME_USE_ACTION_TYPES:
             continue
         out = {"type": action_type}
+        if action_type in ANTIBIOTIC_USE_ACTION_TYPES:
+            return out
         if isinstance(action, dict):
             if action_type == USE_ACTION_TYPE_HEAL:
-                for key in _HEAL_AMOUNT_KEYS:
+                for key in _HEAL_POWER_KEYS:
                     if key not in action:
                         continue
                     amount = _flatten_scalar_amount(action.get(key))
                     if amount is not None:
-                        out["heal_amount"] = amount
-                        break
+                        out[key] = amount
             elif action_type == USE_ACTION_TYPE_CONSUME_DRUG:
                 effect = _first_consume_effect(action)
                 if effect:
@@ -948,8 +1005,53 @@ def export_item_game_detail(entry: dict, item_type: str) -> dict:
     use_action = export_consume_use_action(entry)
     if use_action:
         detail["use_action"] = use_action
+    seed = export_seed_detail(entry)
+    if seed:
+        detail["seed"] = seed
 
     return detail
+
+
+def export_seed_detail(entry: dict) -> dict | None:
+    """Whitelist seed_data when present. brewable/milling/fuel stay Parked."""
+    source = entry.get("seed_data")
+    if not isinstance(source, dict):
+        return None
+
+    seed: dict[str, Any] = {}
+    if source.get("fruit"):
+        seed["fruit"] = str(source.get("fruit"))
+
+    plant_name = source.get("plant_name")
+    if plant_name:
+        if isinstance(plant_name, dict):
+            plant_name = plant_name.get("str", plant_name.get("str_sp", ""))
+        if plant_name:
+            seed["plant_name"] = str(plant_name)
+
+    if source.get("grow") is not None:
+        seed["grow_minutes"] = parse_grow_to_minutes(source.get("grow"))
+
+    seed["seeds"] = True if "seeds" not in source else bool(source.get("seeds"))
+
+    if "fruit_div" in source:
+        fruit_div = _int_or_zero(source.get("fruit_div"))
+        seed["fruit_div"] = fruit_div if fruit_div > 0 else 1
+    else:
+        seed["fruit_div"] = 1
+
+    byproducts = source.get("byproducts")
+    if byproducts:
+        seed["byproducts"] = (
+            [str(item) for item in byproducts if item]
+            if isinstance(byproducts, list)
+            else [str(byproducts)]
+        )
+
+    if source.get("required_terrain_flag"):
+        seed["required_terrain_flag"] = str(source.get("required_terrain_flag"))
+
+    return seed
 
 
 def export_items_and_containers(resolved: dict[str, dict]) -> tuple[list[dict], list[dict]]:
@@ -1190,6 +1292,145 @@ def load_skills(bn_path: Path) -> list[dict]:
         skills_out.append({"id": sid, "name": str(name)})
     print(f"[skills] Loaded {len(skills_out)} skills")
     return skills_out
+
+
+# ── Phase: Terrain & furniture (farming whitelist) ─────────────────
+
+TERRAIN_TYPE = "terrain"
+FURNITURE_TYPE = "furniture"
+
+
+def _entry_id(entry: dict) -> str | None:
+    eid = entry.get("id") or entry.get("abstract")
+    if isinstance(eid, list):
+        eid = eid[0] if len(eid) > 0 and isinstance(eid[0], str) else None
+    if not isinstance(eid, str) or not eid:
+        return None
+    return eid
+
+
+def resolve_copy_from_entries(raw: list[dict], allowed_types: set[str]) -> dict[str, dict]:
+    """copy-from resolve for a type set. Abstracts are merged but not emitted."""
+    by_id: dict[str, dict] = {}
+    abstracts: dict[str, dict] = {}
+
+    for entry in raw:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("type") not in allowed_types:
+            continue
+        eid = _entry_id(entry)
+        if not eid:
+            continue
+        if "abstract" in entry:
+            abstracts[eid] = entry
+        else:
+            by_id[eid] = entry
+
+    resolved: dict[str, dict] = {}
+    resolve_stack: set[str] = set()
+
+    def resolve(eid: str) -> dict | None:
+        if eid in resolved:
+            return resolved[eid]
+        if eid in resolve_stack:
+            return None
+        resolve_stack.add(eid)
+
+        entry = by_id.get(eid) or abstracts.get(eid)
+        if entry is None:
+            resolve_stack.discard(eid)
+            return None
+
+        parent_id = entry.get("copy-from")
+        if parent_id and parent_id != eid:
+            parent = resolve(parent_id)
+            if parent:
+                entry = deep_merge(parent, entry)
+
+        if eid in by_id:
+            resolved[eid] = entry
+        resolve_stack.discard(eid)
+        return entry
+
+    for eid in list(by_id.keys()):
+        resolve(eid)
+    for eid in list(abstracts.keys()):
+        resolve(eid)
+    return resolved
+
+
+def load_furniture_and_terrain(bn_path: Path) -> tuple[dict[str, dict], dict[str, dict]]:
+    src_dir = bn_path / "data" / "json" / "furniture_and_terrain"
+    print(f"[terrain/furniture] Loading from {src_dir} ...")
+    raw = load_all_json(src_dir) if src_dir.exists() else []
+    terrain = resolve_copy_from_entries(raw, {TERRAIN_TYPE})
+    furniture = resolve_copy_from_entries(raw, {FURNITURE_TYPE})
+    print(f"[terrain/furniture] Resolved {len(terrain)} terrain, {len(furniture)} furniture")
+    return terrain, furniture
+
+
+def export_farming_flags(entry: dict) -> list[str]:
+    flags = entry.get("flags", [])
+    if isinstance(flags, str):
+        flags = [flags]
+    if not isinstance(flags, list):
+        return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for flag in flags:
+        if flag is None:
+            continue
+        key = str(flag).strip()
+        if key not in FARMING_FLAGS or key in seen:
+            continue
+        seen.add(key)
+        out.append(key)
+    return out
+
+
+def export_furniture_plant_data(entry: dict) -> dict | None:
+    source = entry.get("plant_data")
+    if not isinstance(source, dict):
+        return None
+    plant: dict[str, Any] = {}
+    if source.get("transform") is not None and source.get("transform") != "":
+        plant["transform"] = str(source.get("transform"))
+    if source.get("base") is not None and source.get("base") != "":
+        plant["base"] = str(source.get("base"))
+    if "growth_multiplier" in source:
+        plant["growth_multiplier"] = _float_or_zero(source.get("growth_multiplier"))
+    if "harvest_multiplier" in source:
+        plant["harvest_multiplier"] = _float_or_zero(source.get("harvest_multiplier"))
+    return plant or None
+
+
+def export_terrain_entry(entry: dict, eid: str | None = None) -> dict:
+    out: dict[str, Any] = {
+        "id": eid or entry.get("id") or "",
+        "name": get_item_name(entry),
+    }
+    flags = export_farming_flags(entry)
+    if flags:
+        out["flags"] = flags
+    return out
+
+
+def export_furniture_entry(entry: dict, eid: str | None = None) -> dict:
+    out = export_terrain_entry(entry, eid)
+    plant = export_furniture_plant_data(entry)
+    if plant:
+        out["plant_data"] = plant
+    return out
+
+
+def export_terrain_and_furniture(
+    terrain: dict[str, dict],
+    furniture: dict[str, dict],
+) -> tuple[list[dict], list[dict]]:
+    terrain_out = [export_terrain_entry(entry, eid) for eid, entry in sorted(terrain.items())]
+    furniture_out = [export_furniture_entry(entry, eid) for eid, entry in sorted(furniture.items())]
+    return terrain_out, furniture_out
 
 
 # ── Phase: Recipes ──────────────────────────────────────────────────
@@ -1804,6 +2045,12 @@ def main():
     # 4) Recipes
     recipes_out, uncraft_out = load_recipes(bn_path, requirements)
 
+    # 4.5) Terrain / furniture (farming whitelist)
+    terrain_resolved, furniture_resolved = load_furniture_and_terrain(bn_path)
+    terrain_out, furniture_out = export_terrain_and_furniture(
+        terrain_resolved, furniture_resolved,
+    )
+
     # 5) Catalog locale (id → en/ko/ja); po is import-only
     ko_map, ja_map = load_po_maps(bn_path)
     item_names = export_item_names(items_out, ko_map, ja_map)
@@ -1839,6 +2086,19 @@ def main():
     names_file = out_dir / "item_names.json"
     write_item_names_file(names_file, item_names, item_descriptions, recipe_categories, quality_names)
 
+    terrain_furniture_file = out_dir / "terrain_furniture.json"
+    with open(terrain_furniture_file, "w", encoding="utf-8") as f:
+        json.dump({
+            "_license": LICENSE,
+            "_source": SOURCE,
+            "terrain": terrain_out,
+            "furniture": furniture_out,
+        }, f, ensure_ascii=False, indent=2)
+    print(
+        f"[output] {terrain_furniture_file}  "
+        f"({len(terrain_out)} terrain, {len(furniture_out)} furniture)"
+    )
+
     # 통계 요약
     categories = set()
     skills = set()
@@ -1853,6 +2113,8 @@ def main():
     print(f"  Qualities:  {len(qualities)}")
     print(f"  Recipes:    {len(recipes_out)}")
     print(f"  Uncraft:    {len(uncraft_out)}")
+    print(f"  Terrain:    {len(terrain_out)}")
+    print(f"  Furniture:  {len(furniture_out)}")
     print(f"  ItemNames:  {len(item_names)}")
     print(f"  ItemDescs:  {len(item_descriptions)}")
     print(f"  RecipeCats: {len(recipe_categories)}")

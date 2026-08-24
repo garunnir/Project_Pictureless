@@ -16,7 +16,7 @@ MonoBehaviour:
   - action: 5
     attack: {fileID: 11400000, guid: 7ebf51a4dc62897be40319f7da2658c4, type: 2}
     useHold: 1
-    actionCooldownSeconds: 0
+    actionCooldownSeconds: 0.01
     holdClips:
       leftBase: {fileID: 0}
       rightBase: {fileID: 0}
@@ -83,7 +83,7 @@ MonoBehaviour:
   - action: 6
     attack: {fileID: 11400000, guid: 7ebf51a4dc62897be40319f7da2658c4, type: 2}
     useHold: 1
-    actionCooldownSeconds: 0
+    actionCooldownSeconds: 0.5
     holdClips:
       leftBase: {fileID: 0}
       rightBase: {fileID: 0}

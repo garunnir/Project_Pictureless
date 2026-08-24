@@ -9,6 +9,7 @@ using Garunnir.Runtime.Gameplay.Data;
 public static class CombatPain
 {
     public const float PainShockThreshold = BodyPain.PainShockThreshold;
+    public const float PainWakeThreshold = BodyPain.PainWakeThreshold;
     public const float PainHudMin = BodyPain.PainHudMin;
     public const float SeverePainHudMin = BodyPain.SeverePainHudMin;
     public const float AdrenalinePainFactor = BodyPain.AdrenalinePainFactor;
@@ -30,9 +31,17 @@ public static class CombatPain
 
     public static float PainTotal01(ICharacterBody body) => BodyPain.PainTotal01(body);
 
+    public static float PartPain01(ICharacterBody body, string partId) => BodyPain.PartPain01(body, partId);
+
     public static float PainFactor(ICharacterBody body, List<BodyPartEffect> scratch) =>
         BodyPain.PainFactor(body, scratch);
 
     public static float EffectivePain01(ICharacterBody body, List<BodyPartEffect> scratch) =>
         BodyPain.EffectivePain01(body, scratch);
+
+    public static bool IsPainShocked(float effectivePain01) =>
+        BodyPain.IsPainShocked(effectivePain01);
+
+    public static bool IsPainDown(float effectivePain01, bool latched) =>
+        BodyPain.IsPainDown(effectivePain01, latched);
 }

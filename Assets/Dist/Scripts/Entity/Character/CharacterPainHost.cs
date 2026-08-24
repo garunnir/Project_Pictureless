@@ -19,6 +19,7 @@ public sealed class CharacterPainHost : MonoBehaviour
     CharacterAttacker _attacker;
     ICharacterBody _subscribed;
     bool _painShocked;
+    bool _painLatched;
     float _lastEffective;
 
     public event Action Changed;
@@ -64,14 +65,16 @@ public sealed class CharacterPainHost : MonoBehaviour
         ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
         if (body == null || body.IsDeadState)
         {
+            _painLatched = false;
             SetShocked(false);
             _lastEffective = 0f;
             return;
         }
 
         _lastEffective = CombatPain.EffectivePain01(body, _effectScratch);
-        bool shocked = _lastEffective >= CombatPain.PainShockThreshold
-                       || BodyCapacity.IsCapacityDowned(body);
+        bool painDown = CombatPain.IsPainDown(_lastEffective, _painLatched);
+        _painLatched = painDown;
+        bool shocked = painDown || BodyCapacity.IsCapacityDowned(body);
         SetShocked(shocked);
     }
 

@@ -3660,7 +3660,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67a879edb601b7242b1fb9310f4e4ea5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::UIWindowResizeHandles
-  _handleWidth: 8
+  _handleWidth: 4
   _window: {fileID: 2698181760353360957}
   _canvas: {fileID: 0}
   _minSize: {x: 280, y: 360}

@@ -34,20 +34,40 @@ namespace Garunnir.Runtime.Gameplay.Data
 
             into.Clear();
 
-            if (vitals != null)
-                CollectVitals(vitals, into);
+            CollectMoodNeed(into);
 
             if (body != null)
             {
+                CollectActiveBleed(body, into);
                 CollectBodyEffects(body, into);
                 CollectIllness(body, into);
             }
 
+            if (vitals != null)
+                CollectVitals(vitals, into);
+
             CollectNeeds(needs, vitals, into);
             CollectEncumbrance(encumbranceStage, into);
             CollectPain(body, into);
+            CollectBlood(body, into);
+            CollectConsciousness(body, into);
+            CollectDefeat(into);
             CollectImbalance(into);
             CollectCoreFeeling(PlayerGearHost.Active?.BodyTemperature, into);
+        }
+
+        static void CollectMoodNeed(List<MoodEntry> into)
+        {
+            CharacterMoodHost mood = CharacterMoodHost.Active;
+            if (mood == null)
+                return;
+
+            float value = mood.Mood;
+            into.Add(new MoodEntry(
+                MoodThoughtLabels.ResolveMoodIcon(value),
+                MoodThoughtLabels.ResolveMoodPolarity(value),
+                value / 100f,
+                MoodThoughtLabels.FormatHudTooltip(value, mood.Thoughts, mood.BreakKind)));
         }
 
         static void CollectImbalance(List<MoodEntry> into)
@@ -69,6 +89,96 @@ namespace Garunnir.Runtime.Gameplay.Data
         }
 
         static readonly List<BodyPartEffect> PainEffectScratch = new(16);
+
+        static void CollectActiveBleed(ICharacterBody body, List<MoodEntry> into)
+        {
+            int intensitySum = 0;
+            IReadOnlyList<BodyPartNode> roots = body.Roots;
+            for (int r = 0; r < roots.Count; r++)
+                intensitySum += SumOrganicBleed(roots[r]);
+
+            if (intensitySum <= 0)
+                return;
+
+            into.Add(new MoodEntry(
+                MoodIconId.Bleed,
+                MoodPolarity.Negative,
+                ResolveEffectIntensity(intensitySum),
+                PlayerStatusLabels.GetEffectName(BodyPartEffectIds.Bleed)));
+        }
+
+        static int SumOrganicBleed(BodyPartNode node)
+        {
+            if (node == null || node.Kind == BodyPartKind.Prosthetic)
+                return 0;
+
+            int sum = 0;
+            IReadOnlyList<BodyPartEffect> effects = node.Effects;
+            for (int i = 0; i < effects.Count; i++)
+            {
+                if (effects[i].EffectId != BodyPartEffectIds.Bleed)
+                    continue;
+                int intensity = effects[i].Intensity;
+                sum += intensity < 1 ? 1 : intensity;
+            }
+
+            IReadOnlyList<BodyPartNode> children = node.Children;
+            for (int c = 0; c < children.Count; c++)
+                sum += SumOrganicBleed(children[c]);
+            return sum;
+        }
+
+        static void CollectBlood(ICharacterBody body, List<MoodEntry> into)
+        {
+            if (body == null)
+                return;
+
+            float blood = body.Blood01;
+            if (blood >= BodyCapacity.BloodHudMin)
+                return;
+
+            bool critical = blood <= BodyCapacity.BloodHudCritical;
+            into.Add(new MoodEntry(
+                MoodIconId.Pale,
+                MoodPolarity.Negative,
+                BodyCapacity.MoodBucket01(1f - blood),
+                PlayerStatusLabels.GetBloodTooltip(critical)));
+        }
+
+        static void CollectConsciousness(ICharacterBody body, List<MoodEntry> into)
+        {
+            if (body == null)
+                return;
+
+            float con = BodyCapacity.Consciousness(body);
+            if (con >= BodyCapacity.ConsciousnessHudMin)
+                return;
+
+            bool fatal = con <= 0f;
+            bool downed = !fatal && con < BodyCapacity.ConsciousnessDownedThreshold;
+            into.Add(new MoodEntry(
+                MoodIconId.Fading,
+                MoodPolarity.Negative,
+                BodyCapacity.MoodBucket01(1f - con),
+                PlayerStatusLabels.GetConsciousnessTooltip(downed, fatal)));
+        }
+
+        static void CollectDefeat(List<MoodEntry> into)
+        {
+            ICharacterDefeat defeat = GameplayData.Defeat;
+            if (defeat == null || !defeat.IsDefeated)
+                return;
+            if (defeat.Cause != DefeatCause.StatCollapse)
+                return;
+            if (ContainsIcon(into, MoodIconId.StatCollapse))
+                return;
+
+            into.Add(new MoodEntry(
+                MoodIconId.StatCollapse,
+                MoodPolarity.Negative,
+                1f,
+                PlayerStatusLabels.GetStatCollapseTooltip()));
+        }
 
         static void CollectPain(ICharacterBody body, List<MoodEntry> into)
         {
@@ -171,6 +281,7 @@ namespace Garunnir.Runtime.Gameplay.Data
             PlayerNeedsSettings settings = needs.Settings;
             CollectFoodMood(needs, vitals, settings, into);
             CollectThirstMood(vitals, settings, into);
+            CollectSleepMood(needs, settings, into);
             CollectMetaboliteMoods(needs, settings, into);
         }
 
@@ -291,6 +402,52 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return;
 
             into.Add(new MoodEntry(iconId, polarity, intensity, PlayerStatusLabels.GetMoodTooltip(iconId)));
+        }
+
+        static void CollectSleepMood(
+            PlayerNeedsHost needs,
+            PlayerNeedsSettings settings,
+            List<MoodEntry> into)
+        {
+            float tired = settings != null
+                ? settings.MoodTiredRatio
+                : PlayerNeedsSettings.DefaultMoodTiredRatio;
+            float veryTired = settings != null
+                ? settings.MoodVeryTiredRatio
+                : PlayerNeedsSettings.DefaultMoodVeryTiredRatio;
+            float needRest = settings != null
+                ? settings.MoodNeedRestRatio
+                : PlayerNeedsSettings.DefaultMoodNeedRestRatio;
+
+            float display = needs.SleepDisplay01;
+            MoodIconId iconId;
+            float intensity;
+            if (display >= needRest)
+            {
+                iconId = MoodIconId.NeedRest;
+                intensity = PlayerStatusMoodVisuals.VitalCriticalIntensity;
+            }
+            else if (display >= veryTired)
+            {
+                iconId = MoodIconId.VeryTired;
+                intensity = PlayerStatusMoodVisuals.VitalCriticalIntensity;
+            }
+            else if (display >= tired)
+            {
+                iconId = MoodIconId.Tired;
+                intensity = PlayerStatusMoodVisuals.VitalLowIntensity;
+            }
+            else
+                return;
+
+            if (ContainsIcon(into, iconId))
+                return;
+
+            into.Add(new MoodEntry(
+                iconId,
+                MoodPolarity.Negative,
+                intensity,
+                PlayerStatusLabels.GetMoodTooltip(iconId)));
         }
 
         static void CollectMetaboliteMoods(
@@ -414,6 +571,9 @@ namespace Garunnir.Runtime.Gameplay.Data
             for (int i = 0; i < effects.Count; i++)
             {
                 BodyPartEffect effect = effects[i];
+                if (effect.EffectId == BodyPartEffectIds.Bleed)
+                    continue;
+
                 if (!PlayerStatusMoodEffectCatalog.TryGet(
                         effect.EffectId,
                         out MoodIconId iconId,
@@ -423,10 +583,9 @@ namespace Garunnir.Runtime.Gameplay.Data
                 }
 
                 float intensity = ResolveEffectIntensity(effect.Intensity);
-                if (bestIntensity.TryGetValue(iconId, out float existing))
-                    intensity = intensity > existing ? intensity : existing;
-                else
-                    bestIntensity[iconId] = intensity;
+                if (bestIntensity.TryGetValue(iconId, out float existing) && existing > intensity)
+                    intensity = existing;
+                bestIntensity[iconId] = intensity;
 
                 polarities[iconId] = polarity;
                 tooltips[iconId] = PlayerStatusLabels.GetEffectName(effect.EffectId);

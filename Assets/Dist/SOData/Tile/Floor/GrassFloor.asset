@@ -18,6 +18,9 @@ MonoBehaviour:
   category: 
   size: {x: 1, y: 1, z: 1}
   placementSlot: 3
+  flags:
+  - PLOWABLE
+  - PLANTABLE
   occupied:
     providesLogicalFloor: 1
     blocksPassageAndOcclusion: 0

@@ -98,8 +98,9 @@ Editor: `Assets/Dist/Scripts/Editor/Settings/SettingsUISetupMenu.cs`
 
 **조정(ON):** `Area_Header`·크롬바 **상시 표시** + `Area_LayoutHit` 드래그·리사이즈.
 
-**참조 배선 계약:** `HudLayoutParticipant`의 `_headerDrag/_layoutDrag/_chromeBar/_resizeHandles/_resizeProximity`는
+**참조 배선 계약:** `HudLayoutParticipant`의 `_headerDrag/_layoutDrag/_chromeBar/_resizeHandles`는
 런타임 탐색으로 채우지 않고, HUD 프리팹에 **직렬화 선배선**해야 한다.
+`_resizeProximity`는 Time처럼 평소 근접 리빌이 있는 HUD만. Summary 등 조정 모드 전용 리사이즈는 `UIWindowResizeHandles`만(AlwaysHit).
 누락 배선은 `Dist/MCP/HudLayout/Patch HUD Layout Participants`로 복구한다.
 
 **리사이즈 제한 계약:** 기본은 제한 OFF.

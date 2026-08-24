@@ -16,6 +16,8 @@ MonoBehaviour:
   _startingDayIndex: 1
   _startingMinuteOfDay: 0
   _worldMinutesPerRealtimeSecond: 1
+  _daysPerYear: 364
+  _daysPerSeason: 91
   _dawnStartMinute: 300
   _dayStartMinute: 420
   _duskStartMinute: 1080

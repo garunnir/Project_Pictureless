@@ -10,6 +10,24 @@ Data Definitions (`Tools/Data Definitions`) **Characters** 탭이 편집 진입�
 
 Inspector CustomEditor는 같은 Alignment 위젯을 쓴다 (`CharacterAlignmentDrawer`).
 
+## Runtime debug
+
+Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterBodyHost`. Hierarchy 선택 또는 창 상단 라이브 호스트 드롭다운. 인벤·Wear/Wield·정의 SO와 분리한다. 구현: `CharacterRuntimeDebugWindow` / `CharacterRuntimeDebugModel` (`CharacterRuntimeDebugDomain` = 커버 목록 SSOT).
+
+| 탭 | 내용 |
+|----|------|
+| Target | possessed / Faction / Dead / Defeat·Revive / CancelAll |
+| Body | `StatusConditionParts` HP(max−부상 합)·절단·복원·부위 효과 (`bruise`/`cut`/`gunshot`/`fracture`, intensity=HP 점수; `bandaged`/`bandage_dirty`/`hemostatic`는 붕대·지혈) |
+| Illness | Blood/Toxin/Infection |
+| Needs | 위장·Vitals·대사·Fatigue/SleepDebt·TrySleep/Wake ([`../needs/NEEDS.md`](../needs/NEEDS.md), possessed만) |
+| Climate | Thermal °C·Wetness ([`../body/BODY.md`](../body/BODY.md)) |
+| Skills | Attribute + 카탈로그 Base/Potential/Practice |
+| Combat | Imbalance·**Pain**(Total/Effective/Factor·shock/wake 문턱·부위 Pain)·Capacity·과적 Stage |
+| Mood | `CharacterMoodHost` 수치·사고·기억·Wander 붕괴 ([`../mood/MOOD.md`](../mood/MOOD.md), possessed만). HUD 칩과 별개 |
+| Chips | `PlayerStatusMoodEntries` HUD 칩 읽기 전용 |
+
+**MUST:** 새 런타임 스테이터스(`ICharacterBody` 필드, `*Host` 시뮬 값, Vital 키, `BodyPartEffectIds`, `ThoughtId`/붕괴, 칩 입력, Defeat/Capacity 레이어)를 넣으면 **같은 변경에서** 위 인벤토리 행 + `CharacterRuntimeDebugDomain` + 창 탭을 갱신한다. BODY/NEEDS/MOOD 문서만 늘리고 창을 미루면 미완.
+
 ## 역할
 
 `CharacterDefinition` SO는 캐릭터 **생성 스펙**이다. PC/NPC 구분은 스펙에 없다. Dist는 Dialogue `Actor` / `ActorSO`에 의존하지 않는다.
@@ -51,6 +69,7 @@ Inspector CustomEditor는 같은 Alignment 위젯을 쓴다 (`CharacterAlignment
 | `id` | `Name` (Loc 키) | `Loc.Get(id)` |
 | `displayName` | Display Name | 비어 있으면 `id` Loc |
 | `portraitSprite` | spritePortrait | 저장만 |
+| `faction` | (신규) | `CharacterFaction` SO 참조. 적대 판정은 `CharacterFactionCatalog` 관계표 |
 | `alignment` | Status.Alignment | Vector2, 전용 에디터, 소비처 없음 |
 | `attributes` | Status.Str..Cha | 기본 8 (`SkillGrowth.DefaultAttributeLevel`) |
 | `skillOverrides` | Skill.Active* | BN `skillId` — 레거시 인덱스 아님 |
@@ -72,6 +91,8 @@ UseGameplayData* 또는 호스트 없음 → GameplayData.Stats / Body
 그 외 → CharacterBodyHost.BindBody + CharacterSkillsHost.BindSkills
 ```
 
+부위효과→숙련 수식(`BodySkillModifierAggregator`)은 `CharacterSkillsHost`만 붙인다. HUD ViewModel·`GameplayData` Body setter는 붙이지 않는다.
+
 ## 본체 vs 매니저
 
 PC와 NPC는 **같은 본체 프리팹** (`NpcSample`: 모터·몸·Binder·공격·애니)을 쓴다. SO는 정보만 채운다. NPC 인스턴스에 `NpcCombatBehavior` / `NpcSenses` / `NpcSteerToPoint`를 Add하지 않는다.
@@ -84,6 +105,7 @@ PC와 NPC는 **같은 본체 프리팹** (`NpcSample`: 모터·몸·Binder·공�
 | `NpcSteer` | 조향 헬퍼 (MB 아님) |
 | `CharacterActionHost` | 행위자 1줄 행동 큐(종류별)·게이지·CancelAll. [`ACTION.md`](ACTION.md) |
 | `CharacterSessionHub` | 본체 세션 입구. possessed만 `BecomePlayer` |
+| `CharacterMoodHost` | 기분·사고·Wander 양도. [`../mood/MOOD.md`](../mood/MOOD.md) |
 
 `CharacterKind`로 PC/NPC를 나누지 않는다. 조종 여부는 `CharacterMotor.IsPossessed` (`PlayerManager.Possess`).
 

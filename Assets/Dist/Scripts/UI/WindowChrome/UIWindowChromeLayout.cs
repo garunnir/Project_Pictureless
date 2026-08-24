@@ -12,6 +12,9 @@ public static class UIWindowChromeLayout
     public const float FoldedHeaderHeight = 16f;
     public const int ButtonFontSize = 13;
 
+    public const string HeaderAreaName = "Area_Header";
+    public const string ButtonStripAreaName = "Area_ButtonStrip";
+
     public const string FoldExpandedLabel = "−";
     public const string FoldCollapsedLabel = "+";
     public const string CloseLabel = "×";

@@ -77,6 +77,11 @@ static class HudLayoutPrefabPatch
         layoutSo.ApplyModifiedPropertiesWithoutUndo();
         layoutDrag.SetVisualActive(false);
 
+        // 루트 Drag는 Time 시계용. HUD는 Area_Header + Area_LayoutHit만.
+        UIWindowDragHandler rootDrag = root.GetComponent<UIWindowDragHandler>();
+        if (rootDrag != null && (headerDrag != null || layoutDrag != null))
+            Object.DestroyImmediate(rootDrag);
+
         UIWindowResizeHandles resizeHandles = root.GetComponent<UIWindowResizeHandles>();
         UIWindowResizeProximity proximity = root.GetComponent<UIWindowResizeProximity>();
 
@@ -85,20 +90,15 @@ static class HudLayoutPrefabPatch
             resizeHandles = UIWindowResizeHandlesPrefabPatch.Apply(
                 root,
                 resizeEdgeThickness,
-                proximityReveal: true,
+                proximityReveal: false,
                 minSize,
                 maxSize);
 
+            // HUD 조정 모드는 AlwaysHit. Time 근접 리빌은 ensureResizeChrome=false 경로만 유지.
             proximity = root.GetComponent<UIWindowResizeProximity>();
-            if (proximity == null)
-                proximity = root.AddComponent<UIWindowResizeProximity>();
-
-            var proxSo = new SerializedObject(proximity);
-            proxSo.FindProperty("_enabled").boolValue = true;
-            proxSo.FindProperty("_window").objectReferenceValue = window;
-            if (headerDrag != null)
-                proxSo.FindProperty("_dragHeader").objectReferenceValue = headerDrag;
-            proxSo.ApplyModifiedPropertiesWithoutUndo();
+            if (proximity != null)
+                Object.DestroyImmediate(proximity);
+            proximity = null;
         }
 
         HudLayoutParticipant participant = root.GetComponent<HudLayoutParticipant>();

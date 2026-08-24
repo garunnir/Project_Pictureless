@@ -26,11 +26,6 @@ public static class CharacterGearSetupMenu
         if (go.GetComponent<PlayerGearHost>() == null)
             Undo.AddComponent<PlayerGearHost>(go);
 
-        PlayerCombatController combat = go.GetComponent<PlayerCombatController>()
-            ?? go.GetComponentInChildren<PlayerCombatController>();
-        if (combat != null && combat.GetComponent<DualWieldAttackDriver>() == null)
-            Undo.AddComponent<DualWieldAttackDriver>(combat.gameObject);
-
         EditorUtility.SetDirty(go);
         Debug.Log("[CharacterGearSetupMenu] Player gear components ensured.", go);
     }

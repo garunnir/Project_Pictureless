@@ -13,7 +13,7 @@ using UnityEngine;
 [DefaultExecutionOrder(10)]
 public sealed class CharacterClimateHost : MonoBehaviour
 {
-    /// <summary>머리/손/발이 Cold 이하로 이 시간(World초) 유지되면 frostbite.</summary>
+    /// <summary>머리/손/발이 FrostbiteOnsetTempC 이하로 이 시간(World초) 유지되면 frostbite.</summary>
     public const float FrostbiteOnsetSeconds = 30f;
 
     /// <summary>코어 Hot 이상으로 이 시간(World초) 유지되면 heat 효과.</summary>
@@ -50,6 +50,37 @@ public sealed class CharacterClimateHost : MonoBehaviour
     public WeatherExposure Weather => _weather;
 
     public event Action Changed;
+
+#if UNITY_EDITOR
+    public enum EditorOutdoorOverride
+    {
+        Map = 0,
+        ForceOutdoor = 1,
+        ForceIndoor = 2
+    }
+
+    public static EditorOutdoorOverride DebugOutdoorOverride;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetEditorOutdoorOverride() =>
+        DebugOutdoorOverride = EditorOutdoorOverride.Map;
+
+    public static bool TryGetDebugOutdoorOverride(out bool outdoor)
+    {
+        switch (DebugOutdoorOverride)
+        {
+            case EditorOutdoorOverride.ForceOutdoor:
+                outdoor = true;
+                return true;
+            case EditorOutdoorOverride.ForceIndoor:
+                outdoor = false;
+                return true;
+            default:
+                outdoor = false;
+                return false;
+        }
+    }
+#endif
 
     void Awake()
     {
@@ -93,6 +124,7 @@ public sealed class CharacterClimateHost : MonoBehaviour
     void Update()
     {
         // Hot path: World dt, 10 thermal parts, floor-cell outdoor query, no LINQ/alloc (preallocated arrays + effect scratch).
+        // UNITY_EDITOR: DebugOutdoorOverride is a static enum read before the map query.
         float dt = TimeScaleService.Delta(TimeScaleChannel.World);
         if (dt <= 0f)
             return;
@@ -150,6 +182,16 @@ public sealed class CharacterClimateHost : MonoBehaviour
 
     bool ResolveOutdoor()
     {
+#if UNITY_EDITOR
+        if (TryGetDebugOutdoorOverride(out bool forced))
+            return forced;
+#endif
+        return EvaluateMapOutdoor();
+    }
+
+    /// <summary>맵 셀 실내외. 에디터 오버라이드 무시.</summary>
+    public bool EvaluateMapOutdoor()
+    {
         TileMapCacheHub hub = TileMapCacheHub.Runtime;
         if (hub == null)
             return true;
@@ -196,8 +238,8 @@ public sealed class CharacterClimateHost : MonoBehaviour
                 continue;
             }
 
-            BodyTempFeeling feeling = _bodyTemp.FeelingForPart(partId);
-            if (feeling > BodyTempFeeling.Cold)
+            if (!_bodyTemp.TryGetPartTempC(partId, out float partTempC)
+                || !BodyTemp.IsFrostbiteTemp(partTempC))
             {
                 _frostbiteElapsed[i] = 0f;
                 continue;

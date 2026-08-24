@@ -118,7 +118,7 @@ public sealed class WeaponAttack : ScriptableObject
 
     public bool PlayBlockedImpact => _playBlockedImpact;
 
-    /// <summary>null Attack은 기존과 같이 반응 on (표급 패리티).</summary>
+    /// <summary>null Attack은 기존과 같이 반응 on (동작 유지).</summary>
     public static bool AllowsImpactReaction(WeaponAttack attack, ArmImpactKind kind)
     {
         if (attack == null)

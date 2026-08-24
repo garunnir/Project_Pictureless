@@ -12,10 +12,9 @@ public sealed class CharacterSpawnNpcSettings
     public MovementStyle patrolStyle;
     public MovementStyle chaseStyle;
     public MovementStyle holdStyle;
-    [Min(0f)] public float detectRadius = NpcAgentDefaults.DetectRadius;
-    [Min(0f)] public float loseRadius = NpcAgentDefaults.LoseRadius;
     [Min(0f)] public float attackStandDistance = NpcAgentDefaults.AttackStandDistance;
     [Min(0f)] public float alertSeconds = NpcAgentDefaults.AlertSeconds;
+    [Tooltip("무력화: 조준 다리.")]
     public bool suppressMode;
 
     public NpcAgentEntry ToAgentEntry(Transform character)
@@ -27,8 +26,6 @@ public sealed class CharacterSpawnNpcSettings
             patrolStyle = patrolStyle,
             chaseStyle = chaseStyle,
             holdStyle = holdStyle,
-            detectRadius = detectRadius,
-            loseRadius = loseRadius,
             attackStandDistance = attackStandDistance,
             alertSeconds = alertSeconds,
             suppressMode = suppressMode

@@ -26,6 +26,7 @@ public sealed class VfxTracerLine : MonoBehaviour
     bool _armed;
     bool _arrived;
     GameObject _impactPrefab;
+    GameObject _woundPrefab;
     TimeScaleChannel _timeChannel = TimeScaleChannel.World;
 
     void Awake()
@@ -40,18 +41,21 @@ public sealed class VfxTracerLine : MonoBehaviour
         _arrived = false;
         _travelled = 0f;
         _impactPrefab = null;
+        _woundPrefab = null;
     }
 
     public void Play(
         Vector3 start,
         Vector3 end,
         GameObject impactPrefab,
-        TimeScaleChannel timeChannel)
+        TimeScaleChannel timeChannel,
+        GameObject woundPrefab = null)
     {
         EnsureLine();
         _start = start;
         _end = end;
         _impactPrefab = impactPrefab;
+        _woundPrefab = woundPrefab;
         _timeChannel = timeChannel;
         _travelled = 0f;
         _arrived = false;
@@ -105,19 +109,25 @@ public sealed class VfxTracerLine : MonoBehaviour
         _arrived = true;
         ApplyLineAt(_distance);
 
-        if (_impactPrefab != null)
-        {
-            Quaternion rotation = _direction.sqrMagnitude > 1e-6f
-                ? Quaternion.LookRotation(-_direction, Vector3.up)
-                : Quaternion.identity;
-            GameObject impact = LeanPool.Spawn(_impactPrefab, _end, rotation);
-            if (impact != null)
-            {
-                VfxChannelTicker ticker = impact.GetComponent<VfxChannelTicker>();
-                if (ticker != null)
-                    ticker.SetChannel(_timeChannel);
-            }
-        }
+        SpawnImpact(_impactPrefab);
+        SpawnImpact(_woundPrefab);
+    }
+
+    void SpawnImpact(GameObject prefab)
+    {
+        if (prefab == null)
+            return;
+
+        Quaternion rotation = _direction.sqrMagnitude > 1e-6f
+            ? Quaternion.LookRotation(-_direction, Vector3.up)
+            : Quaternion.identity;
+        GameObject impact = LeanPool.Spawn(prefab, _end, rotation);
+        if (impact == null)
+            return;
+
+        VfxChannelTicker ticker = impact.GetComponent<VfxChannelTicker>();
+        if (ticker != null)
+            ticker.SetChannel(_timeChannel);
     }
 
     void ApplyLineAt(float headDistance)

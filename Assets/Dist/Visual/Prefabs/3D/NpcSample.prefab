@@ -84,6 +84,10 @@ GameObject:
   - component: {fileID: 2114695070956075501}
   - component: {fileID: 3428796886242963462}
   - component: {fileID: 3325427700038724279}
+  - component: {fileID: 8704135846961281814}
+  - component: {fileID: 6213374509182736401}
+  - component: {fileID: 6213374509182736402}
+  - component: {fileID: 3512971667477225611}
   m_Layer: 6
   m_Name: NpcSample
   m_TagString: Untagged
@@ -542,6 +546,59 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49bd65d988e0726488607cc42bee200f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterImbalanceHost
+--- !u!114 &8704135846961281814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46d9a88e7fefefa48b455e4e609cf4f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterMoodHost
+  _settings: {fileID: 11400000, guid: a7d36eb5a6ed6bd4ea3db628e7dd6876, type: 2}
+--- !u!114 &6213374509182736401
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82d3f4a5b6c7489dab0c1d2e3f445566, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterFactionHost
+  _faction: {fileID: 0}
+--- !u!114 &6213374509182736402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4f5b6c7d8e94ab0c1d2e3f467788990, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterVision
+  _detectRadius: 10
+  _loseRadius: 14
+--- !u!114 &3512971667477225611
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7c3e91f4b2d4809a1e6c8d5f0b3a247, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterHitStop
+  _settings: {fileID: 11400000, guid: a8dca67c35d37e24aae2bc3fe7681240, type: 2}
 --- !u!1 &8110232566133532116
 GameObject:
   m_ObjectHideFlags: 0

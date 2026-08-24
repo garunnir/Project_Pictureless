@@ -131,6 +131,9 @@ static class QuickSlotWieldPatchMenu
         so.FindProperty("_actionLabel").objectReferenceValue = actionLabel;
         so.FindProperty("_ammoLabel").objectReferenceValue = ammo;
         so.FindProperty("_label").objectReferenceValue = nameLabel;
+        Transform cooldownTf = slotTf.Find(UICharacterWieldSlotView.CooldownFillObjectName);
+        if (cooldownTf != null)
+            so.FindProperty("_cooldownFill").objectReferenceValue = cooldownTf.GetComponent<Image>();
         so.ApplyModifiedPropertiesWithoutUndo();
 
         view.EnsureChrome();

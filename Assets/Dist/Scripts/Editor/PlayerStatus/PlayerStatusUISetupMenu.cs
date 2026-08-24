@@ -3,6 +3,7 @@
 // ============================================================
 
 #if UNITY_EDITOR
+using System.IO;
 using System.Text;
 using Garunnir.Runtime.Gameplay.Data;
 using TMPro;
@@ -18,6 +19,12 @@ static class PlayerStatusUISetupMenu
     const string WindowPrefabPath = PrefabFolder + "/Grp_PlayerStatusWindow.prefab";
     const string SummaryPrefabPath = PrefabFolder + "/Grp_PlayerStatusSummary.prefab";
     const string BodyChibiPrefabPath = PrefabFolder + "/Grp_PlayerStatusBodyChibi.prefab";
+    const string BodyChibiSpriteFolder =
+        "Assets/Dist/Visual/Sprites/UI/PlayerStatus/Body/ChibiBody";
+    const string BandageSourcePath = BodyChibiSpriteFolder + "/bodyStatBandage.png";
+    const string BandageSliceFolder = BodyChibiSpriteFolder + "/Bandage";
+    const string FullBandageObjectName = "bandage";
+    const float BandageMaskAlphaMin = 0.5f;
     const string MoodSpriteFolder = "Assets/Dist/Visual/Sprites/UI/PlayerStatus/Mood";
     const string MoodCatalogAssetPath =
         "Assets/Dist/SOData/Gameplay/PlayerStatus/PlayerStatusMoodIconCatalog.asset";
@@ -289,6 +296,247 @@ static class PlayerStatusUISetupMenu
     }
 
     /// <summary>
+    /// bodyStatBandage × 파츠 알파 슬라이스 베이크 후 부위 자식 Img_Bandage 배선.
+    /// 통짜 bandage 오브젝트는 끈다. 레이아웃 유지.
+    /// </summary>
+    [MenuItem(DistMcpMenus.PlayerStatusPatchBodyBandageOverlays)]
+    static void PatchBodyBandageOverlays()
+    {
+        Sprite bandageSource = AssetDatabase.LoadAssetAtPath<Sprite>(BandageSourcePath);
+        if (bandageSource == null)
+        {
+            Debug.LogError($"[PlayerStatusUISetupMenu] Missing bandage sprite: {BandageSourcePath}");
+            return;
+        }
+
+        EnsureBandageSliceFolder();
+        int summaryWired = PatchBandageOverlaysOnPrefab(
+            SummaryPrefabPath,
+            bandageSource,
+            HideSummaryFullBandage);
+        int chibiWired = PatchBandageOverlaysOnPrefab(
+            BodyChibiPrefabPath,
+            bandageSource,
+            HideChibiFullBandage);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log(
+            $"[PlayerStatusUISetupMenu] Bandage overlays wired summary={summaryWired} chibi={chibiWired}.");
+    }
+
+    static int PatchBandageOverlaysOnPrefab(
+        string prefabPath,
+        Sprite bandageSource,
+        System.Action<GameObject> hideFullBandage)
+    {
+        GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
+        if (root == null)
+        {
+            Debug.LogError($"[PlayerStatusUISetupMenu] Failed to load: {prefabPath}");
+            return 0;
+        }
+
+        int wired = 0;
+        try
+        {
+            hideFullBandage?.Invoke(root);
+            UIPlayerStatusBodyPartGraphic[] graphics =
+                root.GetComponentsInChildren<UIPlayerStatusBodyPartGraphic>(true);
+            for (int i = 0; i < graphics.Length; i++)
+            {
+                UIPlayerStatusBodyPartGraphic graphic = graphics[i];
+                Image visual = graphic.PartImage;
+                if (visual == null || visual.sprite == null)
+                {
+                    Debug.LogError(
+                        $"[PlayerStatusUISetupMenu] Bandage skip: no visual sprite on {graphic.name}.",
+                        graphic);
+                    continue;
+                }
+
+                Sprite slice = BakeBandageSlice(bandageSource, visual.sprite, visual.name);
+                if (slice == null)
+                    continue;
+
+                Image bandageImage = EnsureBandageOverlay(visual.rectTransform, slice);
+                graphic.Wire(visual, graphic.PartId, bandageImage);
+                wired++;
+            }
+
+            PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+        }
+
+        return wired;
+    }
+
+    static void HideSummaryFullBandage(GameObject root)
+    {
+        Transform body = root.transform.Find("Area_Status/Grp_Body");
+        Transform found = body != null ? body.Find(FullBandageObjectName) : null;
+        if (found != null)
+            found.gameObject.SetActive(false);
+    }
+
+    static void HideChibiFullBandage(GameObject root)
+    {
+        Transform found = root.transform.Find(FullBandageObjectName);
+        if (found != null)
+            found.gameObject.SetActive(false);
+    }
+
+    static void EnsureBandageSliceFolder()
+    {
+        if (AssetDatabase.IsValidFolder(BandageSliceFolder))
+            return;
+
+        AssetDatabase.CreateFolder(BodyChibiSpriteFolder, "Bandage");
+    }
+
+    static Sprite BakeBandageSlice(Sprite bandage, Sprite partMask, string sliceName)
+    {
+        if (!TryReadSpritePixels(bandage, out Color[] bandagePixels, out int bandageW, out int bandageH))
+            return null;
+        if (!TryReadSpritePixels(partMask, out Color[] maskPixels, out int maskW, out int maskH))
+            return null;
+
+        var tex = new Texture2D(bandageW, bandageH, TextureFormat.RGBA32, false)
+        {
+            filterMode = FilterMode.Point,
+            wrapMode = TextureWrapMode.Clamp
+        };
+
+        Color32 clear = new(0, 0, 0, 0);
+        for (int y = 0; y < bandageH; y++)
+        {
+            for (int x = 0; x < bandageW; x++)
+            {
+                Color bandagePixel = bandagePixels[y * bandageW + x];
+                Color maskPixel = SampleNearest(maskPixels, maskW, maskH, x, y, bandageW, bandageH);
+                bool keep = bandagePixel.a >= BandageMaskAlphaMin &&
+                            maskPixel.a >= BandageMaskAlphaMin;
+                tex.SetPixel(x, y, keep ? bandagePixel : (Color)clear);
+            }
+        }
+
+        tex.Apply();
+        string assetPath = BandageSliceFolder + "/" + sliceName + ".png";
+        File.WriteAllBytes(assetPath, tex.EncodeToPNG());
+        Object.DestroyImmediate(tex);
+        EnsureBandageSliceImportSettings(assetPath);
+        Sprite slice = AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+        if (slice == null)
+        {
+            Debug.LogError($"[PlayerStatusUISetupMenu] Bandage slice import failed: {assetPath}");
+        }
+
+        return slice;
+    }
+
+    static bool TryReadSpritePixels(Sprite sprite, out Color[] pixels, out int width, out int height)
+    {
+        pixels = null;
+        width = 0;
+        height = 0;
+        if (sprite == null || sprite.texture == null)
+            return false;
+
+        Texture2D tex = sprite.texture;
+        width = tex.width;
+        height = tex.height;
+        if (width <= 0 || height <= 0)
+            return false;
+
+        try
+        {
+            pixels = tex.GetPixels();
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError(
+                $"[PlayerStatusUISetupMenu] GetPixels failed for {sprite.name}: {ex.Message}",
+                sprite);
+            return false;
+        }
+
+        return pixels != null && pixels.Length == width * height;
+    }
+
+    static Color SampleNearest(Color[] src, int srcW, int srcH, int x, int y, int dstW, int dstH)
+    {
+        int sx = srcW * x / dstW;
+        int sy = srcH * y / dstH;
+        if (sx < 0)
+            sx = 0;
+        else if (sx >= srcW)
+            sx = srcW - 1;
+        if (sy < 0)
+            sy = 0;
+        else if (sy >= srcH)
+            sy = srcH - 1;
+        return src[sy * srcW + sx];
+    }
+
+    static Image EnsureBandageOverlay(RectTransform visualRoot, Sprite slice)
+    {
+        Transform existing = visualRoot.Find(UIPlayerStatusBodyPartGraphic.BandageChildName);
+        GameObject go;
+        if (existing != null)
+        {
+            go = existing.gameObject;
+        }
+        else
+        {
+            go = new GameObject(
+                UIPlayerStatusBodyPartGraphic.BandageChildName,
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image));
+            go.layer = visualRoot.gameObject.layer;
+            go.transform.SetParent(visualRoot, false);
+        }
+
+        RectTransform rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = Vector2.zero;
+        rt.sizeDelta = Vector2.zero;
+        rt.localScale = Vector3.one;
+
+        Image image = go.GetComponent<Image>();
+        image.sprite = slice;
+        image.color = Color.white;
+        image.raycastTarget = false;
+        image.preserveAspect = false;
+        image.enabled = false;
+        go.SetActive(true);
+        return image;
+    }
+
+    static void EnsureBandageSliceImportSettings(string assetPath)
+    {
+        AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+        var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+        if (importer == null)
+            return;
+
+        importer.textureType = TextureImporterType.Sprite;
+        importer.spriteImportMode = SpriteImportMode.Single;
+        importer.spritePixelsPerUnit = 100f;
+        importer.alphaIsTransparency = true;
+        importer.mipmapEnabled = false;
+        importer.filterMode = FilterMode.Point;
+        importer.wrapMode = TextureWrapMode.Clamp;
+        importer.textureCompression = TextureImporterCompression.Uncompressed;
+        importer.isReadable = false;
+        importer.SaveAndReimport();
+    }
+
+    /// <summary>
     /// HUD Grp_Body/Parts Graphic 배선 + Grp_Switch 탭 펼침 스트립. 레이아웃 유지.
     /// </summary>
     [MenuItem(DistMcpMenus.PlayerStatusPatchSummaryBodyHits)]
@@ -361,6 +609,10 @@ static class PlayerStatusUISetupMenu
             SerializedObject so = new(panel);
             so.FindProperty("_bodyPartsRoot").objectReferenceValue = partsRoot;
             so.FindProperty("_bodyTabStrip").objectReferenceValue = tabStrip;
+            so.FindProperty("_consciousnessFill").objectReferenceValue =
+                FindSummaryFill(root, UIPlayerStatusSummaryPanel.ConsciousnessFillPath);
+            so.FindProperty("_bloodFill").objectReferenceValue =
+                FindSummaryFill(root, UIPlayerStatusSummaryPanel.BloodFillPath);
             so.ApplyModifiedPropertiesWithoutUndo();
 
             PrefabUtility.SaveAsPrefabAsset(root, SummaryPrefabPath);
@@ -374,6 +626,21 @@ static class PlayerStatusUISetupMenu
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
+    }
+
+    static Image FindSummaryFill(GameObject root, string path)
+    {
+        Transform found = root.transform.Find(path);
+        if (found == null)
+        {
+            Debug.LogError($"[PlayerStatusUISetupMenu] Fill missing at {path}.", root);
+            return null;
+        }
+
+        Image image = found.GetComponent<Image>();
+        if (image == null)
+            Debug.LogError($"[PlayerStatusUISetupMenu] Image missing on {path}.", found);
+        return image;
     }
 
     static UIPlayerStatusBodyTabStrip PatchSummaryBodyTabStrip(Transform switchT)
@@ -1471,6 +1738,8 @@ static class PlayerStatusUISetupMenu
         MoodIconId.Respect,
         MoodIconId.Overencumbered,
         MoodIconId.OffBalance,
+        MoodIconId.Fading,
+        MoodIconId.StatCollapse,
     };
 
     static void EnsureMoodAssets()
@@ -1698,6 +1967,7 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.DetailEffects", "상태 이상");
         Put("PlayerStatus.NoEffects", "이상 없음");
         Put("PlayerStatus.Lost", "상실");
+        Put("PlayerStatus.Kind.Prosthetic", "의체");
         Put("PlayerStatus.ConditionFormat", "{0}/{1}");
         Put("PlayerStatus.VitalFormat", "{0}/{1}");
         Put("PlayerStatus.SkillFormat", "{0}  Lv.{1}");
@@ -1765,11 +2035,18 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.VitalProse.Stamina.Critical", "기진맥진하다");
 
         Put("PlayerStatus.Effect.bleed", "출혈");
+        Put("PlayerStatus.Effect.bruise", "타박상");
+        Put("PlayerStatus.Effect.cut", "베임");
+        Put("PlayerStatus.Effect.gunshot", "총상");
         Put("PlayerStatus.Effect.fracture", "골절");
         Put("PlayerStatus.Effect.infected", "감염");
         Put("PlayerStatus.Effect.regenerating", "재생 중");
         Put("PlayerStatus.Effect.adrenaline", "아드레날린");
         Put("PlayerStatus.Effect.bloated", "팽만");
+        Put("PlayerStatus.Effect.bandaged", "붕대");
+        Put("PlayerStatus.Effect.bandage_dirty", "더러운 붕대");
+        Put("PlayerStatus.BandageDirtyFormat", "오염 {0}%");
+        Put("PlayerStatus.Effect.hemostatic", "지혈");
 
         Put("PlayerStatus.Mood.Full", "배가 부르다");
         Put("PlayerStatus.Mood.Fed", "배가 든든하다");
@@ -1782,6 +2059,10 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.Mood.Sad", "기분이 처진다");
         Put("PlayerStatus.Mood.Sick", "몸이 아프다");
         Put("PlayerStatus.Mood.Adrenaline", "아드레날린");
+        Put("PlayerStatus.Mood.Tired", "피곤하다");
+        Put("PlayerStatus.Mood.VeryTired", "매우 피곤하다");
+        Put("PlayerStatus.Mood.NeedRest", "잠이 쏟아진다");
+        Put("PlayerStatus.Mood.WellRested", "개운하다");
         Put("PlayerStatus.Mood.Overencumbered", "과적");
         Put("PlayerStatus.Mood.Overencumbered.Light", "짐이 조금 무겁다");
         Put("PlayerStatus.Mood.Overencumbered.Medium", "짐이 무겁다");
@@ -1789,10 +2070,17 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.Mood.Overencumbered.Extreme", "움직일 수 없을 만큼 무겁다");
         Put("PlayerStatus.Mood.OffBalance", "중심이 흔들린다");
         Put("PlayerStatus.Mood.OffBalance.Fallen", "중심을 잃고 쓰러졌다");
+        Put("PlayerStatus.Mood.Pale", "핏기가 없다");
+        Put("PlayerStatus.Mood.Pale.Critical", "과다출혈로 쓰러질 것 같다");
+        Put("PlayerStatus.Mood.Fading", "의식이 흐릿하다");
+        Put("PlayerStatus.Mood.Fading.Downed", "의식이 가물거린다");
+        Put("PlayerStatus.Mood.Fading.Fatal", "의식이 끊겼다");
+        Put("PlayerStatus.Mood.StatCollapse", "정신이 무너졌다");
 
         Put("ItemContextMenu.Eat", "먹기");
         Put("ItemContextMenu.Drink", "마시기");
         Put("ItemContextMenu.Use", "사용");
+        Put("ItemContextMenu.Unwrap", "붕대 벗기");
         Put("msg.status.needs_vomit", "너무 많이 먹어 토했다.");
         Put("msg.status.needs_starve", "굶주림으로 쓰러졌다.");
         Put("msg.status.needs_dehydrate", "갈증으로 쓰러졌다.");

@@ -120,6 +120,7 @@ public static class ArmOverlayAnimatorBuilder
         EnsureParam(controller, CharacterHitReact.ParamFlinch, AnimatorControllerParameterType.Trigger);
         EnsureParam(controller, CharacterHitReact.ParamStagger, AnimatorControllerParameterType.Trigger);
         EnsureParam(controller, CharacterHitReact.ParamPainShocked, AnimatorControllerParameterType.Bool);
+        EnsureParam(controller, CharacterHitReact.ParamDefeated, AnimatorControllerParameterType.Bool);
         EnsureFloatParam(controller, WeaponAnimClipSpeeds.ParamRight, WeaponAnimClipSpeeds.DefaultSpeed);
         EnsureFloatParam(controller, WeaponAnimClipSpeeds.ParamLeft, WeaponAnimClipSpeeds.DefaultSpeed);
         EnsureFloatParam(controller, WeaponAnimClipSpeeds.ParamTwoHand, WeaponAnimClipSpeeds.DefaultSpeed);
@@ -343,6 +344,10 @@ public static class ArmOverlayAnimatorBuilder
             CharacterHitReact.ClipPainDown,
             "Assets/Dist/Visual/Anim/SourceRef/ActMotion/Pistol Kneeling Idle.anim",
             true);
+        EnsureHurtFromSource(
+            CharacterHitReact.ClipDead,
+            "Assets/Dist/Visual/Anim/SourceRef/ActMotion/Dying1.anim",
+            false);
     }
 
     static void EnsureHurtFromSource(string destName, string sourcePath, bool loop)
@@ -484,13 +489,41 @@ public static class ArmOverlayAnimatorBuilder
             CharacterHitReact.StatePainDown,
             FlatClip(CharacterHitReact.ClipPainDown),
             new Vector3(200, 180, 0));
+        AnimatorState dead = AddState(
+            sm,
+            CharacterHitReact.StateDead,
+            FlatClip(CharacterHitReact.ClipDead),
+            new Vector3(420, 180, 0));
         sm.defaultState = empty;
 
         AddHurtTrigger(empty, stagger, CharacterHitReact.ParamStagger);
-        AddExitToEmpty(stagger, empty);
-        AddBoolTransition(empty, painDown, CharacterHitReact.ParamPainShocked, true);
-        AddBoolTransition(stagger, painDown, CharacterHitReact.ParamPainShocked, true);
-        AddBoolTransition(painDown, empty, CharacterHitReact.ParamPainShocked, false);
+        AddExitToEmpty(
+            stagger,
+            empty,
+            CharacterHitReact.ParamPainShocked,
+            CharacterHitReact.ParamDefeated);
+        AddBoolTransition(
+            empty,
+            painDown,
+            CharacterHitReact.ParamPainShocked,
+            true,
+            CharacterHitReact.ParamDefeated);
+        AddBoolTransition(
+            stagger,
+            painDown,
+            CharacterHitReact.ParamPainShocked,
+            true,
+            CharacterHitReact.ParamDefeated);
+        AddBoolTransition(
+            painDown,
+            empty,
+            CharacterHitReact.ParamPainShocked,
+            false,
+            CharacterHitReact.ParamDefeated);
+        AddBoolTransition(empty, dead, CharacterHitReact.ParamDefeated, true);
+        AddBoolTransition(stagger, dead, CharacterHitReact.ParamDefeated, true);
+        AddBoolTransition(painDown, dead, CharacterHitReact.ParamDefeated, true);
+        AddBoolTransition(dead, empty, CharacterHitReact.ParamDefeated, false);
     }
 
     static void AddHurtTrigger(AnimatorState from, AnimatorState to, string trigger)
@@ -500,6 +533,7 @@ public static class ArmOverlayAnimatorBuilder
         t.duration = 0.05f;
         t.AddCondition(AnimatorConditionMode.If, 0, trigger);
         t.AddCondition(AnimatorConditionMode.IfNot, 0, CharacterHitReact.ParamPainShocked);
+        t.AddCondition(AnimatorConditionMode.IfNot, 0, CharacterHitReact.ParamDefeated);
     }
 
     static void AddImpactLayer(AnimatorController controller)
@@ -544,12 +578,19 @@ public static class ArmOverlayAnimatorBuilder
         AddExitToEmpty(blocked, empty);
     }
 
-    static void AddExitToEmpty(AnimatorState from, AnimatorState empty)
+    static void AddExitToEmpty(AnimatorState from, AnimatorState empty, params string[] ifNot)
     {
         var t = from.AddTransition(empty);
         t.hasExitTime = true;
         t.exitTime = 0.85f;
         t.duration = 0.05f;
+        if (ifNot == null)
+            return;
+        for (int i = 0; i < ifNot.Length; i++)
+        {
+            if (!string.IsNullOrEmpty(ifNot[i]))
+                t.AddCondition(AnimatorConditionMode.IfNot, 0, ifNot[i]);
+        }
     }
 
     static AnimationClip FlatClip(string fileName) =>
@@ -665,12 +706,19 @@ public static class ArmOverlayAnimatorBuilder
         return state;
     }
 
-    static void AddBoolTransition(AnimatorState from, AnimatorState to, string param, bool value)
+    static void AddBoolTransition(
+        AnimatorState from,
+        AnimatorState to,
+        string param,
+        bool value,
+        string ifNot = null)
     {
         var t = from.AddTransition(to);
         t.hasExitTime = false;
         t.duration = 0.05f;
         t.AddCondition(value ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot, 0, param);
+        if (!string.IsNullOrEmpty(ifNot))
+            t.AddCondition(AnimatorConditionMode.IfNot, 0, ifNot);
     }
 
     static void AddAttackFrom(AnimatorState from, AnimatorState to, string attackParam)

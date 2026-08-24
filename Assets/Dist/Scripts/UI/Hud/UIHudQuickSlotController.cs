@@ -12,6 +12,7 @@ public sealed class UIHudQuickSlotController : MonoBehaviour
 
     CharacterGearService _gear;
     PlayerGearHost _gearHost;
+    CharacterAttacker _attacker;
     Canvas _rootCanvas;
     bool _bound;
 
@@ -38,6 +39,10 @@ public sealed class UIHudQuickSlotController : MonoBehaviour
     {
         if (!_bound)
             TryBind();
+
+        // Rule 6: fillAmount·name bar만. 할당 없음.
+        _leftSlot?.RefreshCooldownFill(_attacker);
+        _rightSlot?.RefreshCooldownFill(_attacker);
 
         if (_gear == null || !_gear.IsBusy)
             return;
@@ -83,6 +88,9 @@ public sealed class UIHudQuickSlotController : MonoBehaviour
         Unbind();
         _gear = gear;
         _gearHost = host;
+        _attacker = null;
+        if (host != null)
+            host.TryGetComponent(out _attacker);
         _gear.Changed += OnGearChanged;
         if (_gearHost != null)
             _gearHost.Changed += OnGearChanged;
@@ -98,6 +106,7 @@ public sealed class UIHudQuickSlotController : MonoBehaviour
         if (_gearHost != null)
             _gearHost.Changed -= OnGearChanged;
         _gearHost = null;
+        _attacker = null;
         _bound = false;
     }
 
@@ -112,6 +121,8 @@ public sealed class UIHudQuickSlotController : MonoBehaviour
         int strength = ResolveStrength();
         _leftSlot?.Bind(_gear, WieldSlotId.Left, strength, ShowHover, HideHover, OnSlotUnequip);
         _rightSlot?.Bind(_gear, WieldSlotId.Right, strength, ShowHover, HideHover, OnSlotUnequip);
+        _leftSlot?.RefreshCooldownFill(_attacker);
+        _rightSlot?.RefreshCooldownFill(_attacker);
     }
 
     static int ResolveStrength()

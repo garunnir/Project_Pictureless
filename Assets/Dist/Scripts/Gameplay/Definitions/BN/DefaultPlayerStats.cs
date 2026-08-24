@@ -1,5 +1,5 @@
 // ============================================================
-// DefaultPlayerStats — IPlayerStats ??? (DefaultCharacterSkills ???)
+// DefaultPlayerStats  IPlayerStats ??? (DefaultCharacterSkills ???)
 // ============================================================
 
 using System;
@@ -10,7 +10,6 @@ namespace Garunnir.Runtime.Gameplay.Data
     public sealed class DefaultPlayerStats : IPlayerStats
     {
         readonly DefaultCharacterSkills _skills;
-        BodySkillModifierAggregator _bodyAggregator;
 
         public DefaultCharacterSkills Skills => _skills;
 
@@ -44,17 +43,5 @@ namespace Garunnir.Runtime.Gameplay.Data
         public void SetPotential(string skillId, int value) => _skills.SetPotential(skillId, value);
 
         public void ModifyPotential(string skillId, int delta) => _skills.ModifyPotential(skillId, delta);
-
-        public void BindBody(ICharacterBody body)
-        {
-            if (_bodyAggregator != null)
-                _skills.RemoveModifierSource(_bodyAggregator);
-
-            _bodyAggregator = body != null ? new BodySkillModifierAggregator(body) : null;
-            if (_bodyAggregator != null)
-                _skills.AddModifierSource(_bodyAggregator);
-
-            _skills.Refresh();
-        }
     }
 }

@@ -162,6 +162,8 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
 
     bool RunOrEnqueue(Func<bool> start)
     {
+        if (MoodGameplayGate.IsBlocked)
+            return false;
         if (start == null)
             return false;
         if (_actionHost == null)

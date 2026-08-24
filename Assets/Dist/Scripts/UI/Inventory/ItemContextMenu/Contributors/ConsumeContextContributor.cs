@@ -3,6 +3,7 @@
 // ============================================================
 
 using System.Collections.Generic;
+using Garunnir.Runtime.Gameplay.Data;
 
 public sealed class ConsumeContextContributor : IContextMenuContributor
 {
@@ -12,6 +13,8 @@ public sealed class ConsumeContextContributor : IContextMenuContributor
         InventorySession session,
         List<ContextMenuEntry> roots)
     {
+        if (MoodGameplayGate.IsBlocked)
+            return;
         if (stack?.Item == null || roots == null)
             return;
 
@@ -34,11 +37,27 @@ public sealed class ConsumeContextContributor : IContextMenuContributor
                     new ConsumeContextAction(stack, container)));
                 break;
             case ConsumeKind.Use:
-                roots.Add(ContextMenuEntry.Leaf(
-                    ConsumeMenuIds.Use,
-                    ItemContextMenuLabels.Use,
-                    new ConsumeContextAction(stack, container)));
+                ContributeUse(stack, container, roots);
                 break;
         }
+    }
+
+    static void ContributeUse(ItemStack stack, InventoryContainer container, List<ContextMenuEntry> roots)
+    {
+        if (ConsumeService.IsHealItem(stack.Item))
+        {
+            var leaves = new List<ContextMenuEntry>();
+            HealConsumeContextMenuEntries.AppendPartLeavesFromItem(stack, container, leaves);
+            if (leaves.Count == 0)
+                return;
+
+            roots.Add(ContextMenuEntry.Group(ConsumeMenuIds.Use, ItemContextMenuLabels.Use, leaves));
+            return;
+        }
+
+        roots.Add(ContextMenuEntry.Leaf(
+            ConsumeMenuIds.Use,
+            ItemContextMenuLabels.Use,
+            new ConsumeContextAction(stack, container)));
     }
 }

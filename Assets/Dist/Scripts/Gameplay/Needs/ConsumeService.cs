@@ -6,7 +6,9 @@
 //   Contrib --> Action[ConsumeContextAction]
 //   Action --> Svc[ConsumeService]
 //   Svc --> Host[PlayerNeedsHost]
-//   Svc --> Restore[BodyPartRestoreService]
+//   Svc --> Heal[BodyHealApply]
+//   Heal --> Restore[BodyPartRestoreService]
+//   Heal --> Wrap[bandaged]
 //   Svc --> Hand[CharacterHandWork]
 //   Hand --> Inv[container_or_wield take 1]
 
@@ -31,6 +33,9 @@ public static class ConsumeService
     public const string TypeMed = "MED";
     public const string UseActionHeal = "heal";
     public const string UseActionConsumeDrug = "consume_drug";
+    public const string UseActionAntibiotic = "antibiotic";
+    public const string UseActionWeakAntibiotic = "weak_antibiotic";
+    public const string UseActionStrongAntibiotic = "strong_antibiotic";
 
     public static ConsumeKind? Classify(ItemData item)
     {
@@ -50,44 +55,57 @@ public static class ConsumeService
         return null;
     }
 
-    public static bool CanConsume(ItemStack stack, InventoryContainer container)
+    public static bool CanConsume(ItemStack stack, InventoryContainer container) =>
+        CanConsume(stack, container, partId: null);
+
+    public static bool CanConsume(ItemStack stack, InventoryContainer container, string partId)
     {
+        if (MoodGameplayGate.IsBlocked)
+            return false;
         if (PlayerNeedsHost.Active == null)
             return false;
         if (stack?.Item == null || stack.Count < 1)
             return false;
-        if (!OwnsForConsume(stack, container))
+        if (!PlayerItemAccess.OwnsInBodyOrWield(stack, container))
             return false;
-        return Classify(stack.Item) != null;
+        if (Classify(stack.Item) == null)
+            return false;
+        return CanApplyUse(stack.Item, partId);
     }
 
-    public static bool TryBegin(ItemStack stack, InventoryContainer container)
+    public static bool TryBegin(ItemStack stack, InventoryContainer container) =>
+        TryBegin(stack, container, partId: null);
+
+    public static bool TryBegin(ItemStack stack, InventoryContainer container, string partId)
     {
-        if (!CanConsume(stack, container))
+        if (!CanConsume(stack, container, partId))
             return false;
 
         ConsumeKind kind = Classify(stack.Item).Value;
         if (PlayerGearHost.Active?.Service == null)
-            return TryConsume(stack, container);
+            return TryConsume(stack, container, partId);
 
         return CharacterHandWork.TryBegin(
             stack,
             container,
             CharacterHandWork.DefaultHand(stack),
             ConsumeDuration.ActSeconds(kind),
-            () => TryConsume(stack, container));
+            () => TryConsume(stack, container, partId));
     }
 
-    public static bool TryConsume(ItemStack stack, InventoryContainer container)
+    public static bool TryConsume(ItemStack stack, InventoryContainer container) =>
+        TryConsume(stack, container, partId: null);
+
+    public static bool TryConsume(ItemStack stack, InventoryContainer container, string partId)
     {
-        if (!CanConsume(stack, container))
+        if (!CanConsume(stack, container, partId))
             return false;
 
         PlayerNeedsHost host = PlayerNeedsHost.Active;
         ItemData item = stack.Item;
         ConsumeKind kind = Classify(item).Value;
 
-        if (TryTakeOne(stack, container) <= 0)
+        if (PlayerItemAccess.TryTakeOne(stack, container) <= 0)
             return false;
 
         switch (kind)
@@ -99,14 +117,33 @@ public static class ConsumeService
                 ApplyDrink(host, item);
                 break;
             case ConsumeKind.Use:
-                ApplyMed(host, item);
+                ApplyMed(host, item, partId);
                 break;
         }
 
         ApplyComestibleSideEffects(host, item);
-        if (ItemRot.IsRottenNow(stack.Instance))
+        bool rotten = ItemRot.IsRottenNow(stack.Instance);
+        if (rotten)
             ApplyRotPenalty(host);
+
+        RememberConsumeMood(item, kind, rotten);
         return true;
+    }
+
+    static void RememberConsumeMood(ItemData item, ConsumeKind kind, bool rotten)
+    {
+        CharacterMoodHost mood = CharacterMoodHost.Active;
+        if (mood == null)
+            return;
+
+        if (rotten)
+            mood.AddMemory(ThoughtId.AteRotten);
+
+        if (kind != ConsumeKind.Eat && kind != ConsumeKind.Drink)
+            return;
+
+        int fun = item?.comestible != null ? item.comestible.fun : 0;
+        mood.AddMemory(ThoughtId.AteMeal, fun != 0 ? fun : (int?)null);
     }
 
     static void ApplyRotPenalty(PlayerNeedsHost host)
@@ -143,19 +180,20 @@ public static class ConsumeService
         host.IngestDrink(ml, quench);
     }
 
-    static void ApplyMed(PlayerNeedsHost host, ItemData item)
+    static void ApplyMed(PlayerNeedsHost host, ItemData item, string partId)
     {
+        ICharacterBody body = GameplayData.Body;
+        if (TryApplyAntibiotic(body, item))
+            return;
+
         UseActionData action = item.use_action;
         if (action == null || string.IsNullOrEmpty(action.type))
             return;
 
-        ICharacterBody body = GameplayData.Body;
         if (IsType(action.type, UseActionHeal))
         {
-            if (action.heal_amount > 0 && body != null)
-                BodyPartRestoreService.TryHeal(body, BodyPartIds.Chest, action.heal_amount);
-            if (body != null)
-                ApplyMedIllnessRelief(body);
+            if (body != null && !string.IsNullOrEmpty(partId))
+                BodyHealApply.TryApply(body, action, partId);
             return;
         }
 
@@ -178,10 +216,28 @@ public static class ConsumeService
             ApplyMedIllnessRelief(body);
     }
 
+    static bool TryApplyAntibiotic(ICharacterBody body, ItemData item)
+    {
+        if (item == null)
+            return false;
+
+        string actionType = item.use_action != null ? item.use_action.type : null;
+        bool fromAction = BodyIllness.TryAntibioticIntensity(actionType, out int intensity);
+        if (!fromAction && !BodyIllness.TryAntibioticIntensity(item.id, out intensity))
+            return false;
+        if (body == null)
+            return true;
+
+        body.EnsureEffectMinIntensity(
+            BodyPartIds.Chest,
+            BodyPartEffectIds.Antibiotic,
+            intensity,
+            BodyIllness.MedImmunityDurationSeconds);
+        return true;
+    }
+
     static void ApplyMedIllnessRelief(ICharacterBody body)
     {
-        body.SetInfectionProgress01(
-            body.InfectionProgress01 - BodyIllness.MedInfectionClear);
         body.SetToxin01(body.Toxin01 - BodyIllness.MedToxinClear);
         ReduceBleedIntensity(body, BodyIllness.MedBleedIntensityReduce);
     }
@@ -234,22 +290,29 @@ public static class ConsumeService
             host.AddVitamin(pair.Key, pair.Value);
     }
 
-    static bool OwnsForConsume(ItemStack stack, InventoryContainer container)
-    {
-        if (container != null && container.ContainsStackReference(stack))
-            return true;
+    public static bool IsHealItem(ItemData item) => IsHealAction(item);
 
-        CharacterGearService gear = PlayerGearHost.Active?.Service;
-        return gear != null && gear.Wield.Contains(stack);
+    public static bool IsHealAction(UseActionData action)
+    {
+        return action != null && IsType(action.type, UseActionHeal);
     }
 
-    static int TryTakeOne(ItemStack stack, InventoryContainer container)
+    static bool CanApplyUse(ItemData item, string partId)
     {
-        if (container != null && container.ContainsStackReference(stack))
-            return container.TryTakeFromStack(stack, 1);
+        if (!IsHealAction(item))
+            return true;
 
-        CharacterGearService gear = PlayerGearHost.Active?.Service;
-        return gear != null ? gear.TryTakeFromWielded(stack, 1) : 0;
+        ICharacterBody body = GameplayData.Body;
+        UseActionData action = item.use_action;
+        if (string.IsNullOrEmpty(partId))
+            return BodyHealApply.CanApply(body, action);
+        return BodyHealApply.CanApplyTo(body, action, partId);
+    }
+
+    static bool IsHealAction(ItemData item)
+    {
+        UseActionData action = item != null ? item.use_action : null;
+        return IsHealAction(action);
     }
 
     static bool HasRawWithoutCooked(ItemData item)

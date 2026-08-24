@@ -25,6 +25,9 @@ namespace Garunnir.Runtime.Gameplay.Data
             new(StringComparer.Ordinal)
             {
                 [BodyPartEffectIds.Bleed] = new(MoodIconId.Bleed, MoodPolarity.Negative),
+                [BodyPartEffectIds.Bruise] = new(MoodIconId.Injured, MoodPolarity.Negative),
+                [BodyPartEffectIds.Cut] = new(MoodIconId.Injured, MoodPolarity.Negative),
+                [BodyPartEffectIds.Gunshot] = new(MoodIconId.Injured, MoodPolarity.Negative),
                 [BodyPartEffectIds.Fracture] = new(MoodIconId.Fracture, MoodPolarity.Negative),
                 [BodyPartEffectIds.Infected] = new(MoodIconId.Infected, MoodPolarity.Negative),
                 [BodyPartEffectIds.Regenerating] = new(MoodIconId.Regenerating, MoodPolarity.Positive),

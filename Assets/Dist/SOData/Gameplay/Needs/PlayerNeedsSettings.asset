@@ -45,3 +45,11 @@ MonoBehaviour:
   _warningKcalPct50: 50
   _warningKcalPct25: 25
   _warningKcalPct10: 10
+  _tauFatigueWakeHours: 27
+  _tauFatigueSleepHours: 1.9
+  _tauDebtWakeDays: 5
+  _tauDebtSleepHours: 13
+  _moodTiredRatio: 0.35
+  _moodVeryTiredRatio: 0.55
+  _moodNeedRestRatio: 0.75
+  _stimFatigueMask: 0.4

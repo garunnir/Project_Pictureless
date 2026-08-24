@@ -12,6 +12,10 @@ using UnityEngine.UI;
 public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
 {
     public const int MaxSlots = 8;
+    public const string ConsciousnessFillPath =
+        "Area_Status/Grp_Body/BodyGrapicSet/Img_Layer1BodyOutline_consciousness_Fill";
+    public const string BloodFillPath =
+        "Area_Status/Grp_Body/BodyGrapicSet/Img_Layer1BodyOutline_blood_Fill";
     const string BodyPartsPath = "Area_Status/Grp_Body/Parts";
     const string SwitchPath = "Area_Status/Grp_Switch";
 
@@ -25,6 +29,8 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
     [SerializeField] UIHoverPanelShell _tooltipShell;
     [SerializeField] RectTransform _bodyPartsRoot;
     [SerializeField] UIPlayerStatusBodyTabStrip _bodyTabStrip;
+    [SerializeField] Image _consciousnessFill;
+    [SerializeField] Image _bloodFill;
 
     readonly List<UIPlayerStatusMoodIconSlot> _slots = new(MaxSlots);
     readonly Dictionary<MoodIconId, float> _lastIntensityByIcon = new(MaxSlots);
@@ -79,6 +85,7 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
 
     public void RefreshBody()
     {
+        RefreshCapacityFills();
         EnsureBodyGraphics();
         if (_graphics.Count == 0)
             return;
@@ -100,6 +107,30 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
         Transform switchT = transform.Find(SwitchPath);
         if (switchT != null)
             _bodyTabStrip = switchT.GetComponent<UIPlayerStatusBodyTabStrip>();
+    }
+
+    void RefreshCapacityFills()
+    {
+        EnsureCapacityFills();
+        ICharacterBody body = _viewModel != null ? _viewModel.Body : null;
+        if (_consciousnessFill != null)
+            _consciousnessFill.fillAmount = body != null ? BodyCapacity.Consciousness(body) : 0f;
+        if (_bloodFill != null)
+            _bloodFill.fillAmount = body != null ? body.Blood01 : 0f;
+    }
+
+    void EnsureCapacityFills()
+    {
+        if (_consciousnessFill == null)
+            _consciousnessFill = FindFill(ConsciousnessFillPath);
+        if (_bloodFill == null)
+            _bloodFill = FindFill(BloodFillPath);
+    }
+
+    Image FindFill(string path)
+    {
+        Transform found = transform.Find(path);
+        return found != null ? found.GetComponent<Image>() : null;
     }
 
     void EnsureBodyGraphics()
@@ -130,7 +161,19 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
         }
 
         for (int i = 0; i < found.Length; i++)
-            _graphics.Add(found[i]);
+        {
+            UIPlayerStatusBodyPartGraphic graphic = found[i];
+            _graphics.Add(graphic);
+            if (graphic != null && !string.IsNullOrEmpty(graphic.PartId))
+                graphic.Bind(graphic.PartId, onHover: null, onExit: null, onClick: null, OnPartRightClick);
+        }
+    }
+
+    void OnPartRightClick(string partId, Vector2 screenPosition)
+    {
+        if (_tab != CharacterWindowTab.Status)
+            return;
+        BodyPartHealContextMenuBuilder.TryShow(partId, screenPosition);
     }
 
     public void Refresh()
@@ -140,7 +183,7 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
 
         IReadOnlyList<MoodEntry> entries = _viewModel.MoodEntries;
 
-        EnsureSlots();
+        EnsureSlots(entries.Count);
 
         for (int i = 0; i < _slots.Count; i++)
         {
@@ -171,6 +214,7 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
 
         UpdateIntensitySnapshot(entries);
         SyncHoveredTooltip();
+        RefreshCapacityFills();
     }
 
     bool ShouldAttentionShake(MoodEntry entry)
@@ -191,7 +235,7 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
         }
     }
 
-    void EnsureSlots()
+    void EnsureSlots(int needed)
     {
         if (_slotRoot == null || _slotPrefab == null)
             return;
@@ -199,7 +243,7 @@ public sealed class UIPlayerStatusSummaryPanel : MonoBehaviour
         if (_slotPrefab.gameObject.activeSelf)
             _slotPrefab.gameObject.SetActive(false);
 
-        while (_slots.Count < MaxSlots)
+        while (_slots.Count < needed)
         {
             UIPlayerStatusMoodIconSlot slot = Instantiate(_slotPrefab, _slotRoot);
             slot.Initialize(this);

@@ -34,6 +34,8 @@ internal static class DistMcpMenus
         Root + "/PlayerStatus/Patch Window Body Chibi Collider Hits";
     public const string PlayerStatusPatchSummaryBodyHits =
         Root + "/PlayerStatus/Patch Summary Body Hits";
+    public const string PlayerStatusPatchBodyBandageOverlays =
+        Root + "/PlayerStatus/Patch Body Bandage Overlays";
     public const string PlayerStatusPatchCharacterTabsAndGearPanel =
         Root + "/PlayerStatus/Patch Character Tabs And Gear Panel";
     public const string PlayerStatusSetupCanvas =
@@ -68,6 +70,8 @@ internal static class DistMcpMenus
         Root + "/Character/Ensure Player Gear Components";
     public const string CharacterPatchActionGaugeOnPlayer =
         Root + "/Character/Patch Action Gauge On Player";
+    public const string CharacterEnsureHitStop =
+        Root + "/Character/Ensure Combat Hit Stop";
 
     public const string LocalizationSelectOrCreateUiKo =
         Root + "/Localization/Select Or Create UI_ko Table";
@@ -98,6 +102,10 @@ internal static class DistMcpMenus
 
     public const string HudPatchQuickSlotWield =
         Root + "/Hud/Patch QuickSlot Wield";
+    public const string HudCreateLifeThreatPrefabIfMissing =
+        Root + "/Hud/Create Life Threat Prefab If Missing";
+    public const string HudSetupLifeThreatOverlayInOpenScene =
+        Root + "/Hud/Setup Life Threat Overlay In Open Scene";
 
     public const string TimeScaleCreateHudPrefabIfMissing =
         Root + "/Time/Create TimeScale HUD Prefab If Missing";

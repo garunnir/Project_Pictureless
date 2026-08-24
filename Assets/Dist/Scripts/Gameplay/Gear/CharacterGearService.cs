@@ -573,6 +573,8 @@ public sealed class CharacterGearService
 
     bool RunOrEnqueue(CharacterActionKind kind, Func<bool> start)
     {
+        if (MoodGameplayGate.IsBlocked)
+            return false;
         if (start == null)
             return false;
         if (_actionHost == null)

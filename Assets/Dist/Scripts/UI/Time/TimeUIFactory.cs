@@ -16,7 +16,7 @@ public static class TimeUIFactory
     public static readonly Vector2 MaxPanelSize = new(480f, 96f);
     public const int FontSize = 16;
     public const float HeaderHeight = 16f;
-    public const float ResizeEdgeThickness = 8f;
+    public const float ResizeEdgeThickness = UIWindowResizeHandles.DefaultHandleWidth;
     public const float ResizeProximityPadding = UIWindowResizeProximity.DefaultProximityPadding;
 
     static readonly Color PanelColor = new(0.12f, 0.12f, 0.12f, 0.75f);

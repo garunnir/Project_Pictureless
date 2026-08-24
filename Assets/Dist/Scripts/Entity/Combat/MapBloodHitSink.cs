@@ -1,5 +1,5 @@
 // ============================================================
-// MapBloodHitSink — 히트 시 Impact+Direction 콘 혈흔 spray
+// MapBloodHitSink — 자상·절단 히트 시 Impact 콘 혈흔 spray
 // ============================================================
 
 using IsoTilemap;
@@ -22,11 +22,33 @@ public static class MapBloodHitSink
 
     static void OnAnyAttackJudged(AttackOutcome outcome)
     {
-        if (!outcome.DidHit || outcome.Damage <= 0)
+        if (!outcome.DidHit)
             return;
 
         MapBloodHost host = MapBloodHost.Runtime;
         if (host == null)
+            return;
+
+        if (outcome.DidSeverPart)
+        {
+            int severCount = Mathf.Clamp(
+                MapBloodConsts.SeverSprayMinCount + outcome.Damage / 3,
+                MapBloodConsts.SeverSprayMinCount,
+                MapBloodConsts.SeverSprayMaxCount);
+            host.Spray(
+                outcome.ImpactPoint,
+                outcome.Direction,
+                severCount,
+                MapBloodConsts.SeverSprayConeHalfRad,
+                MapBloodConsts.SeverSprayMinDist,
+                MapBloodConsts.SeverSprayMaxDist,
+                MapBloodConsts.SeverSprayGroundBias,
+                MapBloodConsts.SeverSprayScale,
+                MapBloodConsts.SeverSprayAlpha);
+            return;
+        }
+
+        if (!outcome.LeftCutWound)
             return;
 
         int count = Mathf.Clamp(

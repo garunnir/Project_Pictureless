@@ -5,11 +5,17 @@
       "result": "clothing_plain",
       "category": "CC_ARMOR",
       "skill_used": "",
-      "difficulty": 0,
-      "time_minutes": 5,
+      "time_minutes": 5.0,
       "result_count": 1,
       "components": [
-        {"alternatives": [{"item": "consumable_egg", "count": 3}]}
+        {
+          "alternatives": [
+            {
+              "item": "consumable_egg",
+              "count": 3
+            }
+          ]
+        }
       ]
     }
   ]

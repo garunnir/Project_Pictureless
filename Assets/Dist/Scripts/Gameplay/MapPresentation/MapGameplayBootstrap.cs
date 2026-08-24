@@ -10,6 +10,7 @@ using UnityEngine;
 public sealed class MapGameplayBootstrap : MonoBehaviour
 {
     [SerializeField] TileMapManager _tileMapManager;
+    [SerializeField] CharacterFactionCatalog _factionCatalog;
 
     void Start()
     {
@@ -18,6 +19,15 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
 
         if (_tileMapManager == null)
             return;
+
+        if (_factionCatalog == null)
+        {
+            Debug.LogError(
+                "[MapGameplayBootstrap] CharacterFactionCatalog is not assigned.",
+                this);
+        }
+
+        CharacterHostility.BindCatalog(_factionCatalog);
 
         IWorldGrid worldGrid = _tileMapManager.WorldGrid;
         if (worldGrid != null)

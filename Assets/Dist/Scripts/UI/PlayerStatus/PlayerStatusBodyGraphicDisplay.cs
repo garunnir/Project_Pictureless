@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerStatusBodyGraphicDisplay — 창·HUD 피격도 부위 색 SSOT
+// PlayerStatusBodyGraphicDisplay — 창·HUD 피격도 부위 색·밴디지 SSOT
 // ============================================================
 
 using System.Collections.Generic;
@@ -9,6 +9,7 @@ using UnityEngine;
 public static class PlayerStatusBodyGraphicDisplay
 {
     const int TempComfortDisplayScale = 100;
+    static readonly List<BodyPartEffect> EffectScratch = new(16);
 
     public static void Apply(
         IReadOnlyList<UIPlayerStatusBodyPartGraphic> graphics,
@@ -35,18 +36,21 @@ public static class PlayerStatusBodyGraphicDisplay
             {
                 int enc = WearStatsAggregator.EncumbranceForPart(wear, partId);
                 graphic.SetDisplay(enc, Mathf.Max(enc, 1), present);
-                continue;
             }
-
-            if (tab == CharacterWindowTab.BodyTemp)
+            else if (tab == CharacterWindowTab.BodyTemp)
             {
                 ApplyBodyTempGraphic(graphic, bodyTemp, partId, present);
-                continue;
+            }
+            else
+            {
+                int cur = present ? body.GetConditionCur(partId) : 0;
+                int max = present ? body.GetConditionMax(partId) : 0;
+                graphic.SetDisplay(cur, max, present);
             }
 
-            int cur = present ? body.GetConditionCur(partId) : 0;
-            int max = present ? body.GetConditionMax(partId) : 0;
-            graphic.SetDisplay(cur, max, present);
+            graphic.SetBandaged(
+                present && BodyHealApply.HasBandagedUnder(body, partId, EffectScratch),
+                present ? BodyHealApply.BandageDirty01Under(body, partId, EffectScratch) : 0f);
         }
     }
 

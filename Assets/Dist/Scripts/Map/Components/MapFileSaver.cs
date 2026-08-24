@@ -23,7 +23,11 @@ public class MapFileSaver : MonoBehaviour
     public void Save()
     {
         float cellSize = _worldGrid != null ? _worldGrid.CellSize : 1f;
-        new MapSavePipeline(_model, _mapper).Save(GetFullPath(), cellSize, MapBloodHost.Runtime);
+        new MapSavePipeline(_model, _mapper).Save(
+            GetFullPath(),
+            cellSize,
+            MapBloodHost.Runtime,
+            MapPlantHost.Runtime);
     }
 
     private string GetFullPath()
@@ -50,12 +54,14 @@ public class MapFileSaver : MonoBehaviour
         MapSaveJsonDto jsonDto = mapper.FromPrepared(dtoModel);
         jsonDto.gridCellSize = _worldGrid != null ? _worldGrid.CellSize : 1f;
         MapBloodHost.Runtime?.WriteToDto(jsonDto);
+        MapPlantHost.Runtime?.WriteToDto(jsonDto);
+        MapClockSnapshot.WriteToDto(jsonDto);
 
         _model?.Initialize(dtoModel);
 
         File.WriteAllText(GetFullPath(), JsonUtility.ToJson(jsonDto, true));
         Debug.Log(
-            $"TileMap saved to: {GetFullPath()} (tiles: {jsonDto.tiles.Count}, wallEdges: {jsonDto.wallEdges?.Count ?? 0}, bloodStamps: {jsonDto.bloodStamps?.Count ?? 0})");
+            $"TileMap saved to: {GetFullPath()} (tiles: {jsonDto.tiles.Count}, wallEdges: {jsonDto.wallEdges?.Count ?? 0}, bloodStamps: {jsonDto.bloodStamps?.Count ?? 0}, plantCells: {jsonDto.plantCells?.Count ?? 0})");
     }
 #endif
 }

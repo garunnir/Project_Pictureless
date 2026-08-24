@@ -45,8 +45,6 @@ public static class GameplayData
             if (_body == null)
             {
                 _body = CharacterBody.CreateHumanDefault(Stats.GetStat(AttributeIds.Str));
-                if (_stats is DefaultPlayerStats dps)
-                    dps.BindBody(_body);
                 InvalidateDefeat();
             }
 
@@ -55,8 +53,6 @@ public static class GameplayData
         set
         {
             _body = value;
-            if (_stats is DefaultPlayerStats dps)
-                dps.BindBody(_body);
             InvalidateDefeat();
         }
     }
@@ -110,6 +106,16 @@ public static class GameplayData
     public static ContainerData GetContainer(string id)
     {
         return GameItems?.GetContainer(id) ?? RefData?.GetContainer(id);
+    }
+
+    public static Garunnir.Runtime.Gameplay.Data.TerrainData GetTerrain(string id)
+    {
+        return GameItems?.GetTerrain(id) ?? RefData?.GetTerrain(id);
+    }
+
+    public static FurnitureData GetFurniture(string id)
+    {
+        return GameItems?.GetFurniture(id) ?? RefData?.GetFurniture(id);
     }
 
     public static MaterialData GetMaterial(string id)

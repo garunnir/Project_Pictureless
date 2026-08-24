@@ -12,6 +12,7 @@ public static class PlayerStatusLabels
     const string KeyDetailEffects = "PlayerStatus.DetailEffects";
     const string KeyNoEffects = "PlayerStatus.NoEffects";
     const string KeyLost = "PlayerStatus.Lost";
+    const string KeyProsthetic = "PlayerStatus.Kind.Prosthetic";
     const string KeyConditionFormat = "PlayerStatus.ConditionFormat";
     const string KeyVitalFormat = "PlayerStatus.VitalFormat";
     const string KeySkillFormat = "PlayerStatus.SkillFormat";
@@ -20,6 +21,7 @@ public static class PlayerStatusLabels
     const string KeyVitalProsePrefix = "PlayerStatus.VitalProse.";
     const string KeySkillPrefix = "PlayerStatus.Skill.";
     const string KeyEffectPrefix = "PlayerStatus.Effect.";
+    const string KeyBandageDirtyFormat = "PlayerStatus.BandageDirtyFormat";
     const string KeyDebugSeverArmL = "PlayerStatus.DebugSeverArmL";
 
     public static string Title => Loc.Get(KeyTitle);
@@ -30,6 +32,8 @@ public static class PlayerStatusLabels
     public static string DetailEffects => Loc.Get(KeyDetailEffects);
     public static string NoEffects => Loc.Get(KeyNoEffects);
     public static string Lost => Loc.Get(KeyLost);
+    public static string Prosthetic =>
+        Loc.TryGet(KeyProsthetic, out string text) ? text : "의체";
     public static string DebugSeverArmL => Loc.Get(KeyDebugSeverArmL);
 
     public static string FormatCondition(int cur, int max) =>
@@ -110,6 +114,16 @@ public static class PlayerStatusLabels
         return Loc.TryGet(KeyEffectPrefix + effectId, out string name) ? name : effectId;
     }
 
+    public static string FormatBandageDirty(float dirty01)
+    {
+        int percent = dirty01 <= 0f
+            ? 0
+            : dirty01 >= 1f
+                ? 100
+                : (int)(dirty01 * 100f + 0.5f);
+        return Loc.Format(KeyBandageDirtyFormat, percent);
+    }
+
     public static string GetEncumbranceTooltip(PlayerEncumbranceStage stage)
     {
         if (stage == PlayerEncumbranceStage.None)
@@ -138,5 +152,37 @@ public static class PlayerStatusLabels
         if (Loc.TryGet(key, out string text))
             return text;
         return fallen ? "중심을 잃고 쓰러졌다" : "중심이 흔들린다";
+    }
+
+    public static string GetBloodTooltip(bool critical)
+    {
+        string key = critical ? "PlayerStatus.Mood.Pale.Critical" : "PlayerStatus.Mood.Pale";
+        if (Loc.TryGet(key, out string text))
+            return text;
+        return critical ? "과다출혈로 쓰러질 것 같다" : "핏기가 없다";
+    }
+
+    public static string GetConsciousnessTooltip(bool downed, bool fatal)
+    {
+        string key = fatal
+            ? "PlayerStatus.Mood.Fading.Fatal"
+            : downed
+                ? "PlayerStatus.Mood.Fading.Downed"
+                : "PlayerStatus.Mood.Fading";
+        if (Loc.TryGet(key, out string text))
+            return text;
+        if (fatal)
+            return "의식이 끊겼다";
+        if (downed)
+            return "의식이 가물거린다";
+        return "의식이 흐릿하다";
+    }
+
+    public static string GetStatCollapseTooltip()
+    {
+        const string key = "PlayerStatus.Mood.StatCollapse";
+        if (Loc.TryGet(key, out string text))
+            return text;
+        return "정신이 무너졌다";
     }
 }

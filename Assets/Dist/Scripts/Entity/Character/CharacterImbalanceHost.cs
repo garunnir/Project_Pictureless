@@ -23,8 +23,22 @@ public sealed class CharacterImbalanceHost : MonoBehaviour
     public float Imbalance01 => _imbalance;
     public bool IsFullyUnbalanced => _imbalance >= 1f - 1e-4f;
     public float MoveSpeedFactor => CombatImbalance.MoveSpeedFactor(_imbalance);
+    public float HitAccuracyFactor => CombatImbalance.HitAccuracyFactor(_imbalance);
 
     public void ClaimActive() => Active = this;
+
+    /// <summary>디버그/치트용. 클램프 후 이속 배율 적용 + Changed.</summary>
+    public void SetImbalance01(float value)
+    {
+        float next = Mathf.Clamp01(value);
+        if (Mathf.Abs(next - _imbalance) < 1e-6f)
+            return;
+
+        _imbalance = next;
+        ApplySpeedFactor(MoveSpeedFactor);
+        _lastEmittedBucket = CombatImbalance.BucketIntensity(_imbalance);
+        Changed?.Invoke();
+    }
 
     void Awake()
     {

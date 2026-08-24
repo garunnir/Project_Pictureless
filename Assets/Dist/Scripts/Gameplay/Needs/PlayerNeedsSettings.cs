@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerNeedsSettings — 플레이어 위장·저장 kcal·갈증·활동 BMR 비율 SSOT
+// PlayerNeedsSettings — 플레이어 위장·저장 kcal·갈증·활동 BMR·수면 피로 비율 SSOT
 // ============================================================
 
 using UnityEngine;
@@ -44,6 +44,15 @@ public sealed class PlayerNeedsSettings : ScriptableObject
     public const int DefaultWarningKcalPct50 = 50;
     public const int DefaultWarningKcalPct25 = 25;
     public const int DefaultWarningKcalPct10 = 10;
+
+    public const float DefaultTauFatigueWakeHours = 27f;
+    public const float DefaultTauFatigueSleepHours = 1.9f;
+    public const float DefaultTauDebtWakeDays = 5f;
+    public const float DefaultTauDebtSleepHours = 13f;
+    public const float DefaultMoodTiredRatio = 0.35f;
+    public const float DefaultMoodVeryTiredRatio = 0.55f;
+    public const float DefaultMoodNeedRestRatio = 0.75f;
+    public const float DefaultStimFatigueMask = 0.4f;
 
     [Header("Stored Energy")]
     [SerializeField] int _dailyKcalBurn = DefaultDailyKcalBurn;
@@ -96,6 +105,16 @@ public sealed class PlayerNeedsSettings : ScriptableObject
     [SerializeField] int _warningKcalPct25 = DefaultWarningKcalPct25;
     [SerializeField] int _warningKcalPct10 = DefaultWarningKcalPct10;
 
+    [Header("Sleep / Fatigue")]
+    [SerializeField] float _tauFatigueWakeHours = DefaultTauFatigueWakeHours;
+    [SerializeField] float _tauFatigueSleepHours = DefaultTauFatigueSleepHours;
+    [SerializeField] float _tauDebtWakeDays = DefaultTauDebtWakeDays;
+    [SerializeField] float _tauDebtSleepHours = DefaultTauDebtSleepHours;
+    [SerializeField] float _moodTiredRatio = DefaultMoodTiredRatio;
+    [SerializeField] float _moodVeryTiredRatio = DefaultMoodVeryTiredRatio;
+    [SerializeField] float _moodNeedRestRatio = DefaultMoodNeedRestRatio;
+    [SerializeField] float _stimFatigueMask = DefaultStimFatigueMask;
+
     public int DailyKcalBurn => Mathf.Max(0, _dailyKcalBurn);
     public int MaxStoredKcal => Mathf.Max(0, _maxStoredKcal);
     public float StomachCapacityMl => Mathf.Max(0f, _stomachCapacityMl);
@@ -129,4 +148,22 @@ public sealed class PlayerNeedsSettings : ScriptableObject
     public int WarningKcalPct50 => Mathf.Clamp(_warningKcalPct50, 0, 100);
     public int WarningKcalPct25 => Mathf.Clamp(_warningKcalPct25, 0, 100);
     public int WarningKcalPct10 => Mathf.Clamp(_warningKcalPct10, 0, 100);
+    public float TauFatigueWakeHours => Mathf.Max(0.01f, _tauFatigueWakeHours);
+    public float TauFatigueSleepHours => Mathf.Max(0.01f, _tauFatigueSleepHours);
+    public float TauDebtWakeDays => Mathf.Max(0.01f, _tauDebtWakeDays);
+    public float TauDebtSleepHours => Mathf.Max(0.01f, _tauDebtSleepHours);
+    public float MoodTiredRatio => Mathf.Clamp01(_moodTiredRatio);
+    public float MoodVeryTiredRatio => Mathf.Clamp01(_moodVeryTiredRatio);
+    public float MoodNeedRestRatio => Mathf.Clamp01(_moodNeedRestRatio);
+    public float StimFatigueMask => Mathf.Clamp01(_stimFatigueMask);
+
+    public float FatigueWakeTauMinutes => TauFatigueWakeHours * 60f;
+    public float FatigueSleepTauMinutes => TauFatigueSleepHours * 60f;
+    public float DebtSleepTauMinutes => TauDebtSleepHours * 60f;
+
+    public float DebtWakeTauMinutes(int minutesPerDay)
+    {
+        int day = minutesPerDay > 0 ? minutesPerDay : WorldClockSettings.DefaultMinutesPerDay;
+        return TauDebtWakeDays * day;
+    }
 }

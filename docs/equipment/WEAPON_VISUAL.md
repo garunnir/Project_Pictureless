@@ -26,7 +26,7 @@ MovementStyle (NPC)                  SOData/Locomotion/       ← Combat 아님
 | Path | Role | MUST NOT |
 |------|------|----------|
 | `Catalog/` | 진입 허브만 (`WeaponPresentationCatalog`) | Fallbacks·Attack·클립 |
-| `Fallbacks/` | Leaf 기본 동사 Catalog · HitDefaults · Fallbacks 묶음 | 컨트롤러에 동작 이름 |
+| `Fallbacks/` | Leaf 기본 동사 Catalog · HitDefaults · HitStop · Fallbacks 묶음 | 컨트롤러에 동작 이름 |
 | `Presentations/` | 무기별 `WeaponPresentation` | Catalog·Pipeline |
 | `Attacks/` | `WeaponAttack` 레시피 | Presentation·VFX 표 |
 
@@ -49,6 +49,8 @@ MovementStyle (NPC)                  SOData/Locomotion/       ← Combat 아님
 | 아이템 / `gun.skill` / category → Leaf Presentation | `SOData/Combat/Catalog/WeaponPresentationCatalog` |
 | 공용 AnimVerb 팔 애니·동작 VFX | `SOData/Combat/Fallbacks/ArmAnimSlotCatalog` |
 | bash/cut/bullet Hit VFX | `SOData/Combat/Fallbacks/WeaponImpactVfxDefaults` |
+| 자상/절단 피 오버레이 | 같은 Defaults의 `CutBleedVfx` / `SeverBleedVfx` (`Vfx_HitBleed`, `Vfx_HitBleedSever`) |
+| 근접 히트스톱 지속 | `SOData/Combat/Fallbacks/CombatHitStopSettings` |
 | Attack 레시피 | `SOData/Combat/Attacks/` |
 | `spawn_projectile` | Attack.`ProjectilePrefab` 있으면 비행(pierce 0). 없으면 cue 히트스캔. `tracerVfx`는 히트스캔 연출 |
 | NPC 이동 프로파일 | `SOData/Locomotion/` · 메뉴 `Dist/Locomotion/Movement Style` |

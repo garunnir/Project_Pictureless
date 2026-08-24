@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Garunnir.Runtime.Gameplay.Data;
+using IsoTilemap;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -14,7 +15,7 @@ using UnityEngine;
 public sealed class GameDataEditorWindow : EditorWindow
 {
     enum Source { Reference, Custom }
-    enum Tab { Items, Recipes, Characters }
+    enum Tab { Items, Recipes, Characters, Tiles }
 
     [MenuItem("Tools/Data Definitions")]
     static void Open() => GetWindow<GameDataEditorWindow>("Data Definitions");
@@ -39,6 +40,12 @@ public sealed class GameDataEditorWindow : EditorWindow
     List<CharacterDefinition> _filteredCharacters = new();
     SerializedObject _characterSerialized;
     CharacterDefinition _characterSerializedTarget;
+    List<TileDefinition> _tileDefs = new();
+    List<TileDefinition> _filteredTiles = new();
+    SerializedObject _tileSerialized;
+    TileDefinition _tileSerializedTarget;
+    string _tileBnId = "";
+    string _tileBnCopyStatus;
     string _lastSearch = "\0";
     string _lastCategory = "\0";
     Tab _lastTab;
@@ -78,7 +85,11 @@ public sealed class GameDataEditorWindow : EditorWindow
 
     void OnEnable() => ReloadAll();
 
-    void OnDisable() => BindCharacterSerialized(null);
+    void OnDisable()
+    {
+        BindCharacterSerialized(null);
+        BindTileSerialized(null);
+    }
 
     void ReloadAll()
     {
@@ -97,6 +108,7 @@ public sealed class GameDataEditorWindow : EditorWindow
         SeedCustomItemNames();
         _iconCatalog = EnsureIconCatalog();
         LoadCharacters();
+        LoadTiles();
         InvalidateFilter();
     }
 
@@ -192,6 +204,10 @@ public sealed class GameDataEditorWindow : EditorWindow
     GameDatabase ActiveDb => _source == Source.Reference ? _bnDb : _customDb;
     bool IsCustom => _source == Source.Custom;
     bool IsCharactersTab => _tab == Tab.Characters;
+    bool IsTilesTab => _tab == Tab.Tiles;
+    bool IsDistSoTab => IsCharactersTab || IsTilesTab;
+
+    const string TileDefinitionFolder = "Assets/Dist/SOData/Tile";
 
     void LoadCharacters()
     {
@@ -213,6 +229,46 @@ public sealed class GameDataEditorWindow : EditorWindow
             _characterSerialized = new SerializedObject(def);
     }
 
+    void LoadTiles()
+    {
+        _tileDefs = LoadTileDefinitions();
+        BindTileSerialized(null);
+        InvalidateFilter();
+    }
+
+    static List<TileDefinition> LoadTileDefinitions()
+    {
+        var list = new List<TileDefinition>();
+        if (!AssetDatabase.IsValidFolder(TileDefinitionFolder))
+            return list;
+
+        string[] guids = AssetDatabase.FindAssets("t:TileDefinition", new[] { TileDefinitionFolder });
+        for (int i = 0; i < guids.Length; i++)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+            TileDefinition def = AssetDatabase.LoadAssetAtPath<TileDefinition>(path);
+            if (def != null)
+                list.Add(def);
+        }
+
+        list.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+        return list;
+    }
+
+    void BindTileSerialized(TileDefinition def)
+    {
+        if (_tileSerialized != null)
+        {
+            _tileSerialized.Dispose();
+            _tileSerialized = null;
+        }
+
+        _tileSerializedTarget = def;
+        _tileBnCopyStatus = null;
+        if (def != null)
+            _tileSerialized = new SerializedObject(def);
+    }
+
     // ── OnGUI ──────────────────────────────────────────────────
 
     void OnGUI()
@@ -225,6 +281,11 @@ public sealed class GameDataEditorWindow : EditorWindow
         {
             DrawCharacterList();
             DrawCharacterDetail();
+        }
+        else if (IsTilesTab)
+        {
+            DrawTileList();
+            DrawTileDetail();
         }
         else if (ActiveDb == null)
         {
@@ -251,6 +312,13 @@ public sealed class GameDataEditorWindow : EditorWindow
         {
             EditorGUILayout.LabelField(
                 "Characters (Dist SO)",
+                EditorStyles.miniLabel,
+                GUILayout.Width(360));
+        }
+        else if (IsTilesTab)
+        {
+            EditorGUILayout.LabelField(
+                "Tiles (Dist SO)",
                 EditorStyles.miniLabel,
                 GUILayout.Width(360));
         }
@@ -311,9 +379,10 @@ public sealed class GameDataEditorWindow : EditorWindow
             {
                 $"Items ({itemCount})",
                 $"Recipes ({recipeCount})",
-                $"Characters ({_characterDefs.Count})"
+                $"Characters ({_characterDefs.Count})",
+                $"Tiles ({_tileDefs.Count})"
             },
-            EditorStyles.toolbarButton, GUILayout.Width(420));
+            EditorStyles.toolbarButton, GUILayout.Width(560));
         if (newTab != _tab)
         {
             _tab = newTab;
@@ -321,12 +390,13 @@ public sealed class GameDataEditorWindow : EditorWindow
             _categoryIndex = 0;
             _categoryFilter = "";
             BindCharacterSerialized(null);
+            BindTileSerialized(null);
             InvalidateFilter();
         }
 
         GUILayout.Space(8);
 
-        if (!IsCharactersTab)
+        if (!IsDistSoTab)
         {
             string[] catLabels = _tab == Tab.Items ? _itemTypeLabels : _recipeCategoryLabels;
             int newCatIdx = EditorGUILayout.Popup(_categoryIndex, catLabels,
@@ -351,6 +421,7 @@ public sealed class GameDataEditorWindow : EditorWindow
             _searchText = newSearch;
             _selectedIndex = -1;
             BindCharacterSerialized(null);
+            BindTileSerialized(null);
             InvalidateFilter();
         }
 
@@ -359,7 +430,7 @@ public sealed class GameDataEditorWindow : EditorWindow
             if (GUILayout.Button("+", EditorStyles.toolbarButton, GUILayout.Width(24)))
                 AddNewCharacter();
         }
-        else if (IsCustom)
+        else if (IsCustom && !IsTilesTab)
         {
             if (GUILayout.Button("+", EditorStyles.toolbarButton, GUILayout.Width(24)))
             {
@@ -406,6 +477,30 @@ public sealed class GameDataEditorWindow : EditorWindow
                 }
 
                 _filteredCharacters.Add(def);
+            }
+
+            return;
+        }
+
+        if (_tab == Tab.Tiles)
+        {
+            _filteredTiles.Clear();
+            for (int i = 0; i < _tileDefs.Count; i++)
+            {
+                TileDefinition def = _tileDefs[i];
+                if (def == null)
+                    continue;
+                if (!string.IsNullOrEmpty(lower))
+                {
+                    string prefabId = def.prefabId ?? string.Empty;
+                    string category = def.category ?? string.Empty;
+                    if (!(def.name ?? string.Empty).ToLowerInvariant().Contains(lower) &&
+                        !prefabId.ToLowerInvariant().Contains(lower) &&
+                        !category.ToLowerInvariant().Contains(lower))
+                        continue;
+                }
+
+                _filteredTiles.Add(def);
             }
 
             return;
@@ -598,6 +693,164 @@ public sealed class GameDataEditorWindow : EditorWindow
 
         EditorGUILayout.EndScrollView();
         EditorGUILayout.EndVertical();
+    }
+
+    void DrawTileList()
+    {
+        RebuildFilterIfNeeded();
+        EditorGUILayout.BeginVertical(GUILayout.Width(320));
+        int count = _filteredTiles.Count;
+        EditorGUILayout.LabelField($"{count} entries", EditorStyles.miniLabel);
+
+        _listScroll = EditorGUILayout.BeginScrollView(_listScroll);
+        const int PAGE = 200;
+        int show = Mathf.Min(count, PAGE);
+
+        for (int i = 0; i < show; i++)
+        {
+            bool selected = i == _selectedIndex;
+            TileDefinition def = _filteredTiles[i];
+            string prefabId = def != null ? def.prefabId : string.Empty;
+            string assetName = def != null ? def.name : "(missing)";
+            string label = assetName;
+            if (!string.IsNullOrEmpty(prefabId))
+                label += $"  —  {prefabId}";
+
+            if (GUILayout.Toggle(selected, label, "SelectionRect") && !selected)
+            {
+                _selectedIndex = i;
+                BindTileSerialized(def);
+            }
+        }
+
+        if (count > PAGE)
+            EditorGUILayout.HelpBox($"검색을 좁혀주세요. {count - PAGE}개 항목 추가.", MessageType.Info);
+
+        EditorGUILayout.EndScrollView();
+        EditorGUILayout.EndVertical();
+    }
+
+    void DrawTileDetail()
+    {
+        EditorGUILayout.BeginVertical("box");
+        _detailScroll = EditorGUILayout.BeginScrollView(_detailScroll);
+
+        if (_selectedIndex < 0 || _selectedIndex >= _filteredTiles.Count)
+        {
+            EditorGUILayout.LabelField("항목을 선택하세요", EditorStyles.centeredGreyMiniLabel);
+            EditorGUILayout.EndScrollView();
+            EditorGUILayout.EndVertical();
+            return;
+        }
+
+        TileDefinition def = _filteredTiles[_selectedIndex];
+        if (def == null)
+        {
+            EditorGUILayout.HelpBox("에셋을 로드할 수 없습니다.", MessageType.Warning);
+            EditorGUILayout.EndScrollView();
+            EditorGUILayout.EndVertical();
+            return;
+        }
+
+        if (_tileSerializedTarget != def)
+            BindTileSerialized(def);
+
+        EditorGUILayout.LabelField("Tile (Dist SO)", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "BN JSON이 아닙니다. 저장은 Unity 에셋(Ctrl+S). Save Changes는 아이템/레시피 전용입니다. 충돌·오클루전은 Dist 필드를 씁니다.",
+            MessageType.None);
+
+        _tileSerialized.Update();
+        EditorGUI.BeginChangeCheck();
+        SerializedProperty iterator = _tileSerialized.GetIterator();
+        bool enterChildren = true;
+        while (iterator.NextVisible(enterChildren))
+        {
+            enterChildren = false;
+            if (iterator.name == "m_Script")
+                continue;
+            EditorGUILayout.PropertyField(iterator, true);
+        }
+
+        if (EditorGUI.EndChangeCheck())
+        {
+            _tileSerialized.ApplyModifiedProperties();
+            EditorUtility.SetDirty(def);
+            InvalidateFilter();
+        }
+
+        DrawTileBnCopyFrom(def);
+
+        EditorGUILayout.Space(8);
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Ping Asset", GUILayout.Width(100)))
+        {
+            Selection.activeObject = def;
+            EditorGUIUtility.PingObject(def);
+        }
+
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.EndScrollView();
+        EditorGUILayout.EndVertical();
+    }
+
+    void DrawTileBnCopyFrom(TileDefinition def)
+    {
+        EditorGUILayout.Space(8);
+        EditorGUILayout.LabelField("BN terrain copy-from (선택)", EditorStyles.boldLabel);
+        _tileBnId = EditorGUILayout.TextField("bnId", _tileBnId ?? "");
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("BN flags 복사", GUILayout.Width(120)))
+            TryCopyTileFlagsFromBnTerrain(def);
+        EditorGUILayout.EndHorizontal();
+        if (!string.IsNullOrEmpty(_tileBnCopyStatus))
+            EditorGUILayout.HelpBox(_tileBnCopyStatus, MessageType.Info);
+    }
+
+    void TryCopyTileFlagsFromBnTerrain(TileDefinition def)
+    {
+        if (def == null)
+            return;
+
+        if (!TryGetGameplayDataTerrainFlags(_tileBnId, out List<string> bnFlags))
+        {
+            _tileBnCopyStatus = "GameplayData에 terrain이 없거나 해당 bnId를 찾지 못해 복사를 건너뜁니다.";
+            return;
+        }
+
+        if (def.flags == null)
+            def.flags = new List<string>();
+
+        if (bnFlags != null)
+        {
+            for (int i = 0; i < bnFlags.Count; i++)
+            {
+                string flag = bnFlags[i];
+                if (string.IsNullOrEmpty(flag) || TileFlags.HasFlag(def, flag))
+                    continue;
+                def.flags.Add(flag);
+            }
+        }
+
+        EditorUtility.SetDirty(def);
+        if (_tileSerialized != null)
+            _tileSerialized.Update();
+        _tileBnCopyStatus = "BN terrain flags를 복사했습니다.";
+    }
+
+    static bool TryGetGameplayDataTerrainFlags(string bnId, out List<string> flags)
+    {
+        flags = null;
+        if (string.IsNullOrEmpty(bnId))
+            return false;
+
+        Garunnir.Runtime.Gameplay.Data.TerrainData terrain = GameplayData.GetTerrain(bnId);
+        if (terrain == null)
+            return false;
+
+        flags = terrain.flags;
+        return true;
     }
 
     bool _foldIdentity = true;

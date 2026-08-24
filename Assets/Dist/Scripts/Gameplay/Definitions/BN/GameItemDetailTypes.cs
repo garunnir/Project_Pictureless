@@ -93,14 +93,70 @@ namespace Garunnir.Runtime.Gameplay.Data
         public Dictionary<string, int> vitamins;
     }
 
-    /// <summary>Consume-only BN use_action (heal / consume_drug). Flattened scalars.</summary>
+    /// <summary>BN heal_actor HP 부위 축. Dist 메인 부위는 <see cref="BodyHealApply.RegionOf"/>.</summary>
+    public enum HealRegion
+    {
+        Limb = 0,
+        Head = 1,
+        Torso = 2
+    }
+
+    /// <summary>
+    /// Consume-only BN use_action (heal / consume_drug / antibiotic family).
+    /// Heal power keys keep BN names. Nested objects unwrap to the same key.
+    /// </summary>
     [Serializable]
     public sealed class UseActionData
     {
         public string type;
+        public int limb_power;
+        public int bandages_power;
+        public int head_power;
+        public int torso_power;
+        public int amount;
+        /// <summary>BN heal_actor bleed. Absent in JSON → 0. Converter must not invent the key.</summary>
+        public int bleed;
+        /// <summary>Pre-fix Dist bake only. Converter must not write this key.</summary>
         public int heal_amount;
         public string effect_id;
         public int duration;
+
+        /// <summary>붕대. Dist는 <see cref="bleed"/>를 무시한다.</summary>
+        public bool IsBandage => bandages_power > 0;
+
+        /// <summary>지혈제. <see cref="bandages_power"/>가 없고 BN <see cref="bleed"/>만 있을 때.</summary>
+        public bool IsHemostatic => bandages_power <= 0 && bleed > 0;
+
+        /// <summary>BN heal_actor load() 기본. 빠진 head/torso는 limb에 이 배율.</summary>
+        public const float HeadPowerFromLimb = 0.8f;
+        public const float TorsoPowerFromLimb = 1.5f;
+
+        /// <summary>
+        /// 그 부위 즉시 HP. <see cref="bandages_power"/>는 넣지 않는다.
+        /// JSON 0은 미기입으로 보고 limb 기본을 쓴다.
+        /// </summary>
+        public int ResolveInstantHeal(HealRegion region)
+        {
+            int limb = limb_power;
+            int head = head_power != 0
+                ? head_power
+                : (int)System.Math.Round(limb * HeadPowerFromLimb);
+            int torso = torso_power != 0
+                ? torso_power
+                : (int)System.Math.Round(limb * TorsoPowerFromLimb);
+
+            int resolved = limb;
+            if (region == HealRegion.Head)
+                resolved = head;
+            else if (region == HealRegion.Torso)
+                resolved = torso;
+
+            if (resolved != 0)
+                return resolved;
+            if (amount != 0)
+                return amount;
+            return heal_amount;
+        }
     }
 
     [Serializable]
@@ -148,6 +204,19 @@ namespace Garunnir.Runtime.Gameplay.Data
         public bool seals;
         public bool watertight;
         public bool preserves;
+    }
+
+    /// <summary>BN seed_data whitelist. Int grow is season-days, not moves.</summary>
+    [Serializable]
+    public sealed class SeedDetailData
+    {
+        public string fruit;
+        public string plant_name;
+        public float grow_minutes;
+        public bool seeds = true;
+        public int fruit_div = 1;
+        public List<string> byproducts;
+        public string required_terrain_flag;
     }
 
     [Serializable]

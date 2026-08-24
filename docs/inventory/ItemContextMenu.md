@@ -30,10 +30,12 @@
 
 ## 항목 추가 체크리스트
 
-1. `Actions/`에 `IContextMenuAction` 구현 (`GetDisabledReason` / `Execute`)
+1. `Actions/`에 `IContextMenuAction` 구현 (`GetDisabledReason` / `Execute`) — 섭취·힐은 `Assets/Dist/Scripts/Gameplay/Needs/` (`ConsumeContextAction`, `UnwrapBandageContextAction`)
 2. `Contributors/`에 `IContextMenuContributor` 구현 (Entry 트리 + Action 연결)
 3. `InventoryContextMenuCatalog`에 등록 (순서 = 루트 표시 순서)
 4. View/프리팹 변경 불필요 (보통)
+
+heal 부위 Leaf / HUD RMB 항목 SSOT: `HealConsumeContextMenuEntries` (`Gameplay/Needs/`). Status 실루엣 RMB: `BodyPartHealContextMenuBuilder`.
 
 ## UX SSOT
 

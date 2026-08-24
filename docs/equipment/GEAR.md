@@ -47,10 +47,10 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | `ItemTimedNameProgress` | Name-bar query SSOT: inv transfer → gear timed → durability |
 | `WornPocketRules` | Wear 목록 → Nested ensure / owner lookup (사이드바) |
 | `ArmorStorageNested` | Dist.Inventory — storage/pockets → Nested + draw_moves |
-| `DualWieldAttackDriver` | TwoHand=1회; 듀얼=Primary→Offhand (`AttackResolved`); 양팔 overlay 동시·시전 트리거 교대; OffHandDpsFactor는 offense만 |
+| `CharacterAttacker` dual | TwoHand=1회; 듀얼=호출 1회에 한 손 (`TryPerformSelected`, busy면 Cooling). 이번 손 NoAmmo/Unsupported면 **같은 호출 안** 반대손. OffHandDpsFactor는 offense만. 든 양손 사이 `SetWieldedItem`은 `PresentationChanged` 없음 ([`LOCOMOTION.md`](../locomotion/LOCOMOTION.md) 시전 분기) |
 | `HandProficiencyIds` | `hand_l` / `hand_r` (skills.json seeded) |
 | `WearStatsAggregator` | Wear-only armor aggregates (Phase A fields); combat reads via `WearCombatDefense` |
-| `WearCombatDefense` | Phase D: ArmorEngage / ArmorAbsorb / MitigatedDamage + WearEncAccuracyFactor |
+| `WearCombatDefense` | Phase D: ArmorRating 3단 주사 / MitigateDamage + WearEncAccuracyFactor |
 | `WearEnvExposure` | Phase E/G: weather wetness rate + env_prot → ExposureFactor |
 | `BodyTemp` | 부위별 °C (`ThermalParts`). 코어 getter = chest. 틱 소유 = `CharacterClimateHost`. [`docs/body/BODY.md`](../body/BODY.md) |
 | `WeatherExposure` | `Resolve(kind, period, outdoor)` → AmbientTempC + wetness gain |
@@ -63,7 +63,20 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | `WeaponAttack` | 핸들러·cue·발사체·Recoil/Blocked·근접 히트박스 (`Attack_MeleeHit` = logic 이름, **채널 아님**). 동작 쿨 아님 |
 | `AttackDamageTags` | 특성 채널. Trigger→탄 `damage_type`(없으면 bullet). 근접은 양 있는 채널 전부(cut+bash 가능). 원거리 양 = 탄 `damage` + 총 `ranged_damage`. 계산기·Hit 키 공유 |
 | `MeleeHitbox` | 근접 cue OverlapBox. 겹침 = 확정 히트. `WeaponReach01` 기록(치명타 Pending) |
-| `WeaponImpactVfxDefaults` | Hit 테이블(bash/cut/bullet + fallback). Recoil/Blocked(Reaction) 아님 |
+| `WeaponImpactVfxDefaults` | Hit 테이블(bash/cut/bullet + fallback) + 자상/절단 피 오버레이. Recoil/Blocked(Reaction) 아님 |
+| `CombatHitStopSettings` | 근접 로컬 히트스톱 지속(Realtime). 전역 `TimeScaleService` Push 아님 |
+| `CharacterHitStop` | 공격자+피격자만 애니·모터·시전 틱 정지. `AnyAttackJudged` / 공격자 `AttackJudged` |
+
+### Dual perform (호출 공통)
+
+`TryPerformSelected`는 시전 **의도 1회**. 플레이어 클릭과 NPC Attack 틱이 같은 계약을 쓴다.
+
+| 들기 | 한 호출 |
+|------|---------|
+| TwoHand / 한 손만 | 그 손 1회 |
+| L·R 듀얼 | 교대할 손 1회. 그 손이 NoAmmo/Unsupported면 반대손만 이어서 시도 |
+
+`TryPerformSelected` 진입에서 `IsActionBusy`(pending cue 또는 어느 손 쿨)면 Cooling — 호출측이 가드를 복제하지 않음. 듀얼에서 활성 손을 `SetWieldedItem`하는 것은 데미지·Entry resolve용이며, 이미 든 양손 스택 사이 교체는 `PresentationChanged`를 올리지 않는다.
 
 ### Melee connect (cue 히트박스)
 
@@ -77,6 +90,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | 판정 시점 | 이번 Attack 사이클이 cue 미만을 지난 뒤 `CueNormalizedTime`(또는 Animation Event). 잔여 Attack이 이미 cue를 지났다고 즉시 발사하지 않음 |
 | 연결 | `MeleeHitbox` OverlapBox (조준 축, 길이 `CombatMath.RangeMeters`, 반폭/반높이 `WeaponAttack`) |
 | 확정 | 겹친 `CharacterBodyHost`마다 `HitChance` 없이 피해. 방어는 `WearCombatDefense.MitigateDamage` 유지 |
+| 히트스톱 | 근접 `Performed`/`Obstructed`만. 공격자+피격자 `CharacterHitStop` (지속=`CombatHitStopSettings`, Realtime, 겹치면 max). 원거리·미스 없음. `Time.timeScale` / 채널 Push 금지 |
 | 허공 | 쿨·연습치만. `AttackJudged` Miss 없음 |
 | 치명타 | `AttackOutcome.WeaponReach01` (0=손/자루 … 1=끝)만 기록. **로직 Pending** |
 | 디버그 | `DebugLogController` Player → Melee Hitbox (`Config.DebugMode.MeleeHitbox`). GL 와이어. 노랑=현재 자세, 주황=cue 허공, 초록=cue 히트 + 접촉점 |
@@ -183,7 +197,7 @@ Wear stacks only (Wield excluded).
 | `coverage` | **max** | `MaxCoverage` | % semantics — sum would exceed 100 across layers |
 | `max_encumbrance` | sum | `TotalMaxEncumbrance` | |
 | `environmental_protection` | sum | `TotalEnvironmentalProtection` | **Phase E** → `WearEnvExposure` |
-| `material_thickness` | sum | `TotalMaterialThickness` | combat absorb = Phase D |
+| `material_thickness` | sum | `TotalMaterialThickness` | combat ArmorRating = Phase D |
 | `power_armor` | any covering piece | `AnyPowerArmor` | boolean OR |
 
 API: `Aggregate(wear) → WearArmorTotals`, `ForPart(wear, partId) → WearPartArmorStats`, plus thin `*ForPart` helpers.
@@ -291,7 +305,7 @@ Promote fields in `BN_BAKE.md` + `convert.py` together — do not grow a second 
 
 ## Phase D — Coverage / thickness combat + WearEnc hit hook
 
-**Scope:** On hit, mitigate damage with worn coverage + thickness (+ material resist when baked). Attacker WearEnc multiplies **ranged** stay-on-part chance (`HitChance`). Fail = neighbor scatter, still damage. Melee connect is overlap (no HitChance). **No** E env/wetness, F BodyTemp, G weather/vision.
+**Scope:** On hit, mitigate with worn layers (thickness+resist → ArmorRating, 3-way roll). Attacker WearEnc multiplies **ranged** stay-on-part chance (`HitChance`). Fail = neighbor scatter, still damage. Melee connect is overlap (no HitChance). **No** E env/wetness, F BodyTemp, G weather/vision.
 
 ### Parity contract (combat path) — before switch defaults
 
@@ -310,12 +324,14 @@ Boundary SSOT: `CombatMath` = offense numbers; `WearCombatDefense` = Wear defens
 | Name | Formula |
 |------|---------|
 | `WearEncAccuracyFactor` | `1 − min(TotalEnc × WearEncHitPenaltyPerPoint, WearEncHitPenaltyCap)` |
-| `ArmorEngageChance` | `Clamp01(coverage / CoveragePercentScale)` — **조각마다** roll. miss → 그 조각 흡수 0 |
-| `ArmorAbsorb` | 맞은 조각 `thickness × ThicknessAbsorbPerUnit + materialResist × MaterialResistAbsorbPerUnit` 합 |
-| `MitigatedDamage` | `max(0, raw − max(0, ArmorAbsorb − ArmorPen))`. ArmorPen = 원거리 `ammo.pierce` |
-| `MaterialResistForPart` | UI용: covering pieces max resist. 히트 흡수는 조각별 `MaxMaterialResist` |
+| `ArmorRating` | `min(ArmorRatingCap, thickness × ThicknessToArmorRating + resist × ResistToArmorRating)` |
+| `ArmorPen` | 원거리 `ammo.pierce` &gt; 0이면 그 값. 아니면 `raw × MeleeArmorPenPerDamage` |
+| `MitigateDamage` | 덮는 조각 바깥→안. `유효=Rating−AP`. 0–100 난수: &lt;유효/2 튕김(0), ≤유효 절반, 아니면 무시. 완화 후 Sharp(cut/bullet)→bash |
+| `MaterialResistForPart` | UI용: covering pieces max resist. 히트 Rating은 조각별 `MaxMaterialResist` |
 
-Consts: `CoveragePercentScale=100`, `ThicknessAbsorbPerUnit=1`, `MaterialResistAbsorbPerUnit=1`, `WearEncHitPenaltyPerPoint=0.01`, `WearEncHitPenaltyCap=0.35`.
+Consts: `ThicknessToArmorRating=10`, `ResistToArmorRating=10`, `ArmorRatingCap=200`, `ArmorRollMax=100`, `MeleeArmorPenPerDamage=1.5`, `WearEncHitPenaltyPerPoint=0.01`, `WearEncHitPenaltyCap=0.35`. Layer 순서: `GearConstants.ArmorLayerOutsideRank` (AURA→…→PERSONAL).
+
+**Lock (2026-08):** Phase D 완화는 **림월드 3단 주사**. BN `raw − (absorb − AP)` 차감은 폐기. 두께+resist는 ArmorRating만 — 차감과 동시에 쓰지 않음. coverage 주사는 히트에 쓰지 않음(`CoversPart`만). 이 공식을 다시 바꾸면 BN 데이터와 더 어긋남. **적용 전 사용자에게 알릴 것.**
 
 ```mermaid
 flowchart LR
@@ -337,7 +353,7 @@ flowchart LR
 
 - Dual wield / OffHand factor / obstruction Miss unchanged
 - Ranged `HitChance` fail = neighbor scatter (body hit never Miss)
-- Armor Engage is post-hit only (does not convert to Miss). **조각마다** coverage 주사, 맞은 조각만 흡수 합. `ammo.pierce`는 AP (횟수 관통은 히트스캔/발사체와 공유)
+- Armor is post-hit only (does not convert to Miss). **덮는 조각** 바깥→안 3단 주사. 튕김=피해 0. Sharp 완화=bash(Bleed 시드 없음). `ammo.pierce`는 Rating 공간 AP (횟수 관통은 히트스캔/발사체와 공유)
 - Outcome damage = post-mitigation. **하한 1 없음. HP 0 허용** (막힌 타 = 밀침 최대). Defeat BodyFatal = 의식 0 (뇌/피/감염/고통1/독소). 가슴·장기 HP0만으로는 즉사 아님 — [`docs/body/BODY.md`](../body/BODY.md)
 - Phase B/C Wear/pockets/overlap untouched
 
@@ -417,7 +433,7 @@ F 당시 단일 코어. **Shipped:** 부위 `WarmthForPart` + heat flow — [`BO
 | `BodyTempC` / `Feeling` | **chest**. 가슴 없으면 Comfort. Feeling 밴드 unchanged |
 | Heat flow | arms←chest, hands←arms, legs←chest, feet←legs |
 
-Consts: `ComfortBodyTempC=37`, `BodyTempMinC=27`, `BodyTempMaxC=43`, `ExtremityTempMinC=12`, `ExtremityTempMaxC=48`, `BaseAmbientTempC=18`, `DegreesPerWarmth=0.5`, `WetnessCoolDegreesC=2`, `ConvergencePerSecond=0.08`, `ComfortBandHalfWidthC=1`, `HypothermiaBodyTempC=32`.
+Consts: `ComfortBodyTempC=37`, `BodyTempMinC=27`, `BodyTempMaxC=43`, `ExtremityTempMinC=-10`, `ExtremityTempMaxC=48`, `FrostbiteOnsetTempC=0`, `BaseAmbientTempC=18`, `DegreesPerWarmth=0.5`, `WetnessCoolDegreesC=2`, `ConvergencePerSecond=0.08`, `ComfortBandHalfWidthC=1`, `HypothermiaBodyTempC=32`.
 
 ```mermaid
 flowchart LR
@@ -522,7 +538,7 @@ flowchart LR
 
 **Scope:** Consume Feeling + wetness for locomotion and attacker stay-on-part chance. Named consts in `GearEnvPenalties`. **No** Gear redesign; **no** new UI.
 
-**Feeling still drives `GearEnvPenalties`:** 코어 `BodyTemp.Feeling` (chest) + `Wetness01`만. 부위별 °C/`FeelingForPart`는 frostbite용 — 이동·히트 배율에 안 넣음.
+**Feeling still drives `GearEnvPenalties`:** 코어 `BodyTemp.Feeling` (chest) + `Wetness01`만. 부위별 °C는 frostbite(`FrostbiteOnsetTempC`)용 — 이동·히트 배율에 안 넣음.
 
 Boundary SSOT: Feeling + wetness → `GearEnvPenalties`; ClimateHost → `CharacterMotor.SetEnvMovement`와 possessed `PlayerMovement.SetEnvMovement` **같은 값** (`BodyLocomotionPenalties.CombinedMoveSpeedFactor`); `CharacterAttacker.ResolveAttackerEnvAccuracyFactor`는 ClimateHost Feeling+wetness (없으면 1). 근접 확정 히트는 미적용. Checklist: `.claude/checklists/migration-parity.md`. See [`docs/locomotion/LOCOMOTION.md`](../locomotion/LOCOMOTION.md) · [`docs/body/BODY.md`](../body/BODY.md).
 
@@ -531,7 +547,7 @@ Boundary SSOT: Feeling + wetness → `GearEnvPenalties`; ClimateHost → `Charac
 | Before H | After H (then) | Now |
 |----------|----------------|-----|
 | Move = base × enc × LiftStrain | × **`GearEnvPenalties.MoveSpeedFactor`** | × combined (Feeling+wetness × limp) |
-| HitChance = CombatMath × offense × WearEnc | × **`GearEnvPenalties.HitAccuracyFactor`** (원거리만, 부위 유지) | ClimateHost Feeling. 호스트 없으면 1. 실패=산란 |
+| HitChance = CombatMath × offense × WearEnc | × **`GearEnvPenalties.HitAccuracyFactor`** × **`CombatImbalance.HitAccuracyFactor`** (원거리만, 부위 유지) | ClimateHost Feeling. Imbalance는 `1 − Imbalance`(호스트 없으면 1). 실패=산란 |
 | Feeling / wetness UI-only (E/F) | Consumed for gameplay penalties | 코어 Feeling 유지 |
 | No `PlayerGearHost` | NPC factors = **1** (스탠드인) | **ClimateHost가 대체.** 모터 env + 공격자 ClimateHost |
 

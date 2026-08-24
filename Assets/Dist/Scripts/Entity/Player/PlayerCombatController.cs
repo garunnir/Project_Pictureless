@@ -13,7 +13,6 @@ public sealed class PlayerCombatController : MonoBehaviour
 {
     CharacterAttacker _attacker;
     CharacterState _characterState;
-    DualWieldAttackDriver _dualDriver;
     CharacterActionHost _actionHost;
     readonly List<RaycastResult> _uiRaycastResults = new();
     bool _connected;
@@ -21,12 +20,10 @@ public sealed class PlayerCombatController : MonoBehaviour
     public void BindBody(
         CharacterAttacker attacker,
         CharacterState characterState,
-        DualWieldAttackDriver dualDriver,
         CharacterActionHost actionHost)
     {
         _attacker = attacker;
         _characterState = characterState;
-        _dualDriver = dualDriver;
         _actionHost = actionHost;
     }
 
@@ -34,7 +31,6 @@ public sealed class PlayerCombatController : MonoBehaviour
     {
         _attacker = GetComponent<CharacterAttacker>();
         _characterState = GetComponent<CharacterState>();
-        _dualDriver = GetComponent<DualWieldAttackDriver>();
         TryGetComponent(out _actionHost);
     }
 
@@ -107,9 +103,6 @@ public sealed class PlayerCombatController : MonoBehaviour
 
     bool ExecuteAttack()
     {
-        if (_dualDriver != null && _dualDriver.TryPerformDual(null))
-            return _attacker != null && _attacker.IsActionBusy;
-
         if (_attacker == null)
             return false;
         _attacker.TryPerformSelected(null);

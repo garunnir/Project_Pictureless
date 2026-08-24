@@ -3,7 +3,7 @@
 // ============================================================
 
 /// <summary>
-/// 피격 Δv로 쌓이고 시간에 회복. 이속 × (1 − Imbalance). 1 + 능동 속도면 자빠짐.
+/// 피격 Δv로 쌓이고 시간에 회복. 이속·HitChance × (1 − Imbalance). 1 + 능동 속도면 자빠짐.
 /// 문서: docs/locomotion/LOCOMOTION.md.
 /// </summary>
 public static class CombatImbalance
@@ -20,9 +20,13 @@ public static class CombatImbalance
     /// <summary>무드 intensity 버킷 (ViewModel 리빌드 스로틀).</summary>
     public const float HudIntensityBucket = 0.05f;
 
-    /// <summary>이속 배율. imbalance 1 → 0.</summary>
+    /// <summary>이속·히트 공통 배율. imbalance 1 → 0. 필드 읽기만, 재계산 없음.</summary>
     public static float MoveSpeedFactor(float imbalance01) =>
         1f - UnityEngine.Mathf.Clamp01(imbalance01);
+
+    /// <summary>HitChance 배율. 이속과 동일식 (1 − Imbalance).</summary>
+    public static float HitAccuracyFactor(float imbalance01) =>
+        MoveSpeedFactor(imbalance01);
 
     /// <summary>피격 Δv → 불균형 증가분. StaggerDeltaV에서 풀 게이지.</summary>
     public static float DrainFromDeltaV(float deltaV)

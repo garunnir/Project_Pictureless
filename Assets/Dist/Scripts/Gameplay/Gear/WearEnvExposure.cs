@@ -52,6 +52,12 @@ public sealed class WearEnvExposure
         LastEnvProtection = 0;
     }
 
+    /// <summary>디버그/치트용. 노출 배율·env_prot는 유지하고 wetness만 설정.</summary>
+    public void SetWetness01(float wetness01)
+    {
+        _wetness = Mathf.Clamp(wetness01, WetnessMin, WetnessMax);
+    }
+
     /// <summary>
     /// ExposureFactor = 1 − min(env × PerPoint, Cap).
     /// Wetness += (ambientGain × ExposureFactor − BaseDry × (1 − ExposureFactor)) × dt.

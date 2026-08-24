@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterSkillsHost ? ???? ??∑Defeat ?? (BodyHost? ??)
+// CharacterSkillsHost ? ???? ??ùDefeat ?? (BodyHost? ??)
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
@@ -119,15 +119,9 @@ public sealed class CharacterSkillsHost : MonoBehaviour
             _bodyAggregator = null;
         }
 
-        _bodyAggregator = new BodySkillModifierAggregator(body);
+        _bodyAggregator = new BodySkillModifierAggregator(body, _skills);
         _skills.AddModifierSource(_bodyAggregator);
         _skills.Refresh();
-
-        if (_useGameplayDataSkills &&
-            GameplayData.Stats is DefaultPlayerStats dps)
-        {
-            dps.BindBody(body);
-        }
     }
 
     void EnsureDefeat()

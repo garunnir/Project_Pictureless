@@ -51,13 +51,12 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
 
         CharacterMotor motor = body != null ? body.GetComponent<CharacterMotor>() : null;
         CharacterAttacker attacker = body != null ? body.GetComponent<CharacterAttacker>() : null;
-        DualWieldAttackDriver dual = body != null ? body.GetComponent<DualWieldAttackDriver>() : null;
         CharacterActionHost actionHost = body != null ? body.GetComponent<CharacterActionHost>() : null;
         CharacterFacingAnim facing = body != null ? body.GetComponent<CharacterFacingAnim>() : null;
 
         _movement?.BindBody(motor, _bodyState, facing);
         _aimController?.BindBody(_bodyState, _bodyTransform);
-        _combatController?.BindBody(attacker, _bodyState, dual, actionHost);
+        _combatController?.BindBody(attacker, _bodyState, actionHost);
 
         _floorVisibility?.SetPlayerState(_bodyState);
         _sightLineBlend?.SetPlayerState(_bodyState);

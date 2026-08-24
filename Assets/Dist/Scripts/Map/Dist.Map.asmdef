@@ -4,6 +4,7 @@
     "references": [
         "Config",
         "Dist.Camera",
+        "GUID:dfdf6672b695eda4f896fc0156a20b18",
         "Dist.Visual",
         "UniTask",
         "Unity.Cinemachine",

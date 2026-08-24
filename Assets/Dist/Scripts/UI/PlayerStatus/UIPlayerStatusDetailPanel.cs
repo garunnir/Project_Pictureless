@@ -1,5 +1,5 @@
 // ============================================================
-// UIPlayerStatusDetailPanel — Status/Gear 호버 상세 패널
+// UIPlayerStatusDetailPanel — Status 부위 호버 (특이사항만)
 // ============================================================
 
 using System.Collections.Generic;
@@ -18,7 +18,7 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
     [SerializeField] TMP_Text _bodyText;
 
     readonly StringBuilder _builder = new(256);
-    readonly List<BodyPartEffect> _effectBuffer = new(16);
+    readonly List<string> _lostBuffer = new(8);
 
     Canvas _rootCanvas;
 
@@ -49,6 +49,12 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
             return;
         }
 
+        if (!PlayerStatusBodyPartNoteworthy.HasUnder(body, mainPartId))
+        {
+            Hide();
+            return;
+        }
+
         EnsureShell();
         if (_shell == null)
             return;
@@ -57,7 +63,12 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
         UITextHoverService.HideOn(canvas);
 
         PrepareHoverShow();
-        BindPart(body, mainPartId);
+        if (!BindPart(body, mainPartId))
+        {
+            Hide();
+            return;
+        }
+
         RebuildLayout();
         _shell.ShowNearAnchor(anchor, PartHoverStyle);
     }
@@ -100,25 +111,44 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
         UIHoverCanvasLayer.BringToFront(transform);
     }
 
-    void BindPart(ICharacterBody body, string mainPartId)
+    bool BindPart(ICharacterBody body, string mainPartId)
     {
+        _builder.Clear();
         if (!body.TryGet(mainPartId, out BodyPartNode node))
         {
-            if (_bodyText != null)
-            {
-                _bodyText.text =
-                    $"{PlayerStatusLabels.GetPartName(mainPartId)}\n" +
-                    PlayerStatusLabels.Lost;
-            }
-
-            return;
+            AppendLost(mainPartId);
+            return ApplyBodyText();
         }
 
-        _builder.Clear();
-        _builder.Append(PlayerStatusLabels.DetailHeader);
-        _builder.Append('\n');
+        WalkNoteworthy(body, node);
+        return ApplyBodyText();
+    }
+
+    void WalkNoteworthy(ICharacterBody body, BodyPartNode node)
+    {
+        if (PlayerStatusBodyPartNoteworthy.IsSelf(node))
+            AppendPresent(node);
+
+        IReadOnlyList<BodyPartNode> children = node.Children;
+        for (int i = 0; i < children.Count; i++)
+            WalkNoteworthy(body, children[i]);
+
+        _lostBuffer.Clear();
+        PlayerStatusBodyPartNoteworthy.CollectMissingExpectedChildren(
+            body,
+            node.PartId,
+            _lostBuffer);
+        for (int i = 0; i < _lostBuffer.Count; i++)
+            AppendLost(_lostBuffer[i]);
+    }
+
+    void AppendPresent(BodyPartNode node)
+    {
+        if (_builder.Length > 0)
+            _builder.Append('\n');
+
         _builder.Append(PlayerStatusLabels.GetPartName(node.PartId));
-        if (node.HasCondition)
+        if (node.HasCondition && node.ConditionCur < node.ConditionMax)
         {
             _builder.Append("  ");
             _builder.Append(
@@ -127,69 +157,55 @@ public sealed class UIPlayerStatusDetailPanel : MonoBehaviour
                     node.ConditionMax));
         }
 
-        _builder.Append("\n\n");
-        _builder.Append(PlayerStatusLabels.DetailSubparts);
-        _builder.Append('\n');
-        AppendSubtree(node, 0);
-
-        _builder.Append('\n');
-        _builder.Append(PlayerStatusLabels.DetailEffects);
-        _builder.Append('\n');
-        _effectBuffer.Clear();
-        body.CollectEffectsUnder(mainPartId, _effectBuffer, includeDescendants: true);
-        if (_effectBuffer.Count == 0)
+        if (node.Kind == BodyPartKind.Prosthetic)
         {
-            _builder.Append(PlayerStatusLabels.NoEffects);
+            _builder.Append('\n');
+            _builder.Append(PlayerStatusLabels.Prosthetic);
         }
-        else
-        {
-            for (int i = 0; i < _effectBuffer.Count; i++)
-            {
-                BodyPartEffect effect = _effectBuffer[i];
-                _builder.Append("- ");
-                _builder.Append(PlayerStatusLabels.GetEffectName(effect.EffectId));
-                if (effect.Intensity > 1)
-                {
-                    _builder.Append(" x");
-                    _builder.Append(effect.Intensity);
-                }
 
-                _builder.Append('\n');
+        IReadOnlyList<BodyPartEffect> effects = node.Effects;
+        for (int i = 0; i < effects.Count; i++)
+        {
+            BodyPartEffect effect = effects[i];
+            _builder.Append('\n');
+            _builder.Append("- ");
+            _builder.Append(PlayerStatusLabels.GetEffectName(effect.EffectId));
+            if (effect.EffectId == BodyPartEffectIds.Bandaged)
+            {
+                float dirty01 = BodyHealApply.BandageDirty01(node);
+                if (dirty01 > 0f)
+                {
+                    _builder.Append(' ');
+                    _builder.Append(PlayerStatusLabels.FormatBandageDirty(dirty01));
+                }
+            }
+
+            if (effect.Intensity > 1)
+            {
+                _builder.Append(" x");
+                _builder.Append(effect.Intensity);
             }
         }
+    }
+
+    void AppendLost(string partId)
+    {
+        if (_builder.Length > 0)
+            _builder.Append('\n');
+
+        _builder.Append(PlayerStatusLabels.GetPartName(partId));
+        _builder.Append('\n');
+        _builder.Append(PlayerStatusLabels.Lost);
+    }
+
+    bool ApplyBodyText()
+    {
+        if (_builder.Length == 0)
+            return false;
 
         if (_bodyText != null)
             _bodyText.text = _builder.ToString();
-    }
-
-    void AppendSubtree(BodyPartNode node, int depth)
-    {
-        IReadOnlyList<BodyPartNode> children = node.Children;
-        for (int i = 0; i < children.Count; i++)
-        {
-            BodyPartNode child = children[i];
-            for (int d = 0; d < depth; d++)
-                _builder.Append("  ");
-            _builder.Append("- ");
-            _builder.Append(PlayerStatusLabels.GetPartName(child.PartId));
-
-            IReadOnlyList<BodyPartEffect> effects = child.Effects;
-            if (effects.Count > 0)
-            {
-                _builder.Append(" (");
-                for (int e = 0; e < effects.Count; e++)
-                {
-                    if (e > 0)
-                        _builder.Append(", ");
-                    _builder.Append(PlayerStatusLabels.GetEffectName(effects[e].EffectId));
-                }
-
-                _builder.Append(')');
-            }
-
-            _builder.Append('\n');
-            AppendSubtree(child, depth + 1);
-        }
+        return true;
     }
 
     public void Wire(TMP_Text bodyText)

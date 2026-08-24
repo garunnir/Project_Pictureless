@@ -45,7 +45,7 @@ public static class CraftingWindowLayout
     public const float CloseButtonSize = 24f;
     public const float ChromePadding = 8f;
     public const float ColumnSpacing = 6f;
-    public const float ResizeEdgeThickness = 8f;
+    public const float ResizeEdgeThickness = UIWindowResizeHandles.DefaultHandleWidth;
     public const float VisibleRowBuffer = 2f;
 
     public const int FontSizeHeader = 18;
