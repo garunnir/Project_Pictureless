@@ -24,7 +24,7 @@
 | Locomotion | [`locomotion/LOCOMOTION.md`](locomotion/LOCOMOTION.md) | `locomotion.mdc` |
 | Character definition / spawn | [`character/DEFINITION.md`](character/DEFINITION.md) | — |
 | Character action / gauge | [`character/ACTION.md`](character/ACTION.md) | (행위자 큐·TickScale·CancelAll) |
-| Body / anatomy / climate | [`body/BODY.md`](body/BODY.md) | — |
+| Body / anatomy / climate | [`body/BODY.md`](body/BODY.md) · 밸런스 인덱스 [`body/TUNING.md`](body/TUNING.md) | — |
 | Needs / hunger / thirst / consume / sleep | [`needs/NEEDS.md`](needs/NEEDS.md) | — |
 | Mood / thoughts / mental break | [`mood/MOOD.md`](mood/MOOD.md) | — |
 | Legacy | [`legacy/LEGACY_README.md`](legacy/LEGACY_README.md) | `legacy.mdc` |

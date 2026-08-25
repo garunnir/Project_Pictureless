@@ -1,6 +1,7 @@
 // ============================================================
 // BodyEffectTicker — 부상 tend·출혈→혈액·맵 drip, 감염 onset/레이스, 독소 감쇠
 // ============================================================
+// 밸런스 상수: BodyIllness (docs/body/TUNING.md)
 
 using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;

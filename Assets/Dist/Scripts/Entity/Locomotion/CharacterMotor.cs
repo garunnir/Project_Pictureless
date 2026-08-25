@@ -37,6 +37,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     ICharacterMotorDrive _drive;
     CharacterHitStop _hitStop;
     bool _possessed;
+    int _scriptedLocomotionDepth;
     bool _hasTravelLimit;
     float _remainingTravelDistance;
     float _envSpeedMultiplier = 1f;
@@ -51,10 +52,20 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     public Vector3 KnockbackVelocity => _knockbackVelocity;
 
     public bool IsPossessed => _possessed;
+    public bool IsScriptedLocomotion => _scriptedLocomotionDepth > 0;
     public bool IsStuck => _locomotion != null && _locomotion.IsStuck;
     public float CurrentSpeed => _mover != null ? _mover.CurrentSpeed : 0f;
-    public float AnimSpeedReference =>
-        _possessed && _drive != null ? _drive.AnimSpeedReference : EffectiveMoveSpeed;
+    public float AnimSpeedReference
+    {
+        get
+        {
+            if (_possessed && _drive != null && !IsScriptedLocomotion)
+                return _drive.AnimSpeedReference;
+            if (IsScriptedLocomotion && CurrentSpeed > 0.01f)
+                return CurrentSpeed;
+            return EffectiveMoveSpeed;
+        }
+    }
     public MovementStyle ActiveStyle => _activeStyle;
     public KinematicMover Mover => _mover;
     public CapsuleCollider Capsule => _capsule;
@@ -131,7 +142,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
         {
             desiredMove = _knockbackVelocity * deltaTime;
         }
-        else if (_possessed && _drive != null)
+        else if (_possessed && _drive != null && !IsScriptedLocomotion)
         {
             desiredMove = _drive.CalcDesiredMove(_mover, deltaTime)
                 + _knockbackVelocity * deltaTime;
@@ -152,7 +163,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
 
         LastAppliedDelta = _locomotion.Move(desiredMove, deltaTime);
 
-        if (!_possessed && _hasTravelLimit)
+        if ((!_possessed || IsScriptedLocomotion) && _hasTravelLimit)
         {
             _remainingTravelDistance = Mathf.Max(
                 0f,
@@ -161,7 +172,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
                 _mover.SetWorldDirection(Vector3.zero);
         }
 
-        if (_possessed)
+        if (_possessed && !IsScriptedLocomotion)
             _drive?.AfterMove(this);
     }
 
@@ -179,8 +190,27 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     public void SetPossessed(bool possessed)
     {
         _possessed = possessed;
-        if (possessed)
+        if (possessed && !IsScriptedLocomotion)
             ClearTravelLimit();
+    }
+
+    /// <summary>NpcSteer 등 스크립트 조향. possessed여도 NPC와 동일 등속·travel limit.</summary>
+    public void BeginScriptedLocomotion()
+    {
+        _scriptedLocomotionDepth++;
+    }
+
+    public void EndScriptedLocomotion()
+    {
+        if (_scriptedLocomotionDepth <= 0)
+            return;
+
+        _scriptedLocomotionDepth--;
+        if (_scriptedLocomotionDepth > 0)
+            return;
+
+        _mover?.SetWorldDirection(Vector3.zero);
+        ClearTravelLimit();
     }
 
     public void BindMapCollision(MapCollisionServices services)

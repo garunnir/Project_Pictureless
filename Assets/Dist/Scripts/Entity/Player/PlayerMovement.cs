@@ -135,7 +135,26 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         else
         {
             DisconnectController();
+            ActiveMover?.SetInput(Vector2.zero, _refCam);
+            _characterState?.SetMoveDir(Vector3.zero);
         }
+    }
+
+    /// <summary>입력만 끔. possessed·Player TimeScale 유지. NpcSteer 스크립트 조향용.</summary>
+    public void SetMovementInputEnabled(bool enabled)
+    {
+        _controlEnabled = enabled;
+        if (enabled)
+        {
+            _pendingInitialVelocity = true;
+            ConnectController();
+            return;
+        }
+
+        DisconnectController();
+        KinematicMover mover = ActiveMover;
+        mover?.SetInput(Vector2.zero, _refCam);
+        _characterState?.SetMoveDir(Vector3.zero);
     }
 
     void Awake()

@@ -3,6 +3,7 @@
 > LLM/에이전트용 Dist 신체 트리·체온·절단·기후 호스트 SSOT.
 > 인덱스: `docs/README.md`
 > **anatomy / BodyTemp / sever / CharacterClimateHost 스크립트를 쓰거나 고치기 전에 이 문서를 읽는다.**
+> **밸런스 상수(출혈·감염·붕대·고통 등) 인덱스:** [`TUNING.md`](TUNING.md) — 숫자는 코드 SSOT만.
 
 경로: `Assets/Dist/Scripts/Gameplay/Definitions/BN/` · `Assets/Dist/Scripts/Gameplay/Gear/BodyTemp.cs` · `Assets/Dist/Scripts/Entity/Character/CharacterClimateHost.cs`
 

@@ -7,7 +7,7 @@
 //   Memory[Eat/Vomit/Rot] --> Host
 //   Host --> Mood[clamp Base+sum]
 //   Mood -->|below threshold| BreakRoll
-//   BreakRoll -->|Wander| Yield[SetControlEnabled false + NpcSteer]
+//   BreakRoll -->|Wander| Yield[SetScriptedLocomotionInput false + NpcSteer]
 //   Yield --> Windows[Close inv/craft]
 
 using System;
@@ -292,7 +292,7 @@ public sealed class CharacterMoodHost : MonoBehaviour
         if (input == null)
             return;
 
-        input.SetControlEnabled(!yielded);
+        input.SetScriptedLocomotionInput(!yielded);
     }
 
     void SubscribeClock()

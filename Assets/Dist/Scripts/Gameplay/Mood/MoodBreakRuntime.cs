@@ -31,6 +31,7 @@ public sealed class MoodBreakRuntime
         _kind = MoodBreakKind.Wander;
         _remainingMinutes = durationMinutes < 1 ? 1 : durationMinutes;
         _hasDestination = false;
+        _motor?.BeginScriptedLocomotion();
         PickDestination();
     }
 
@@ -79,6 +80,7 @@ public sealed class MoodBreakRuntime
             return;
 
         NpcSteer.Stop(_motor);
+        _motor?.EndScriptedLocomotion();
         _kind = MoodBreakKind.None;
         _remainingMinutes = 0;
         _hasDestination = false;

@@ -1,6 +1,7 @@
 // ============================================================
 // BodyPain — PainTotal / EffectivePain SSOT (Gameplay.Data)
 // ============================================================
+// LLM 인덱스: docs/body/TUNING.md
 
 using System.Collections.Generic;
 

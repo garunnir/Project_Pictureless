@@ -26,6 +26,7 @@ public sealed class CharacterActionHost : MonoBehaviour
     PlayerGearHost _gearHost;
     InventoryTimedMoveHost _moveHost;
     CharacterAttacker _attacker;
+    CharacterArriveHost _arriveHost;
     CharacterActionKind _currentKind;
     bool _dispatching;
     float _tickScale = 1f;
@@ -58,6 +59,8 @@ public sealed class CharacterActionHost : MonoBehaviour
                     return _crafting != null ? _crafting.CraftProgress01 : 0f;
                 case CharacterActionKind.Combat:
                     return _attacker != null ? _attacker.CooldownProgress01 : 0f;
+                case CharacterActionKind.Map:
+                    return 0f;
                 default:
                     return 0f;
             }
@@ -70,6 +73,7 @@ public sealed class CharacterActionHost : MonoBehaviour
         TryGetComponent(out _gearHost);
         TryGetComponent(out _moveHost);
         TryGetComponent(out _attacker);
+        TryGetComponent(out _arriveHost);
         if (_crafting == null)
             _crafting = FindAnyObjectByType<UICraftingController>();
         RefreshTickScale();
@@ -206,6 +210,8 @@ public sealed class CharacterActionHost : MonoBehaviour
                 return _crafting != null && _crafting.IsCraftRunning;
             case CharacterActionKind.Combat:
                 return _attacker != null && _attacker.IsActionBusy;
+            case CharacterActionKind.Map:
+                return _arriveHost != null && _arriveHost.IsBusy;
             default:
                 return false;
         }
@@ -223,6 +229,9 @@ public sealed class CharacterActionHost : MonoBehaviour
                 break;
             case CharacterActionKind.Craft:
                 _crafting?.CancelRunningCraft();
+                break;
+            case CharacterActionKind.Map:
+                _arriveHost?.Cancel();
                 break;
         }
     }

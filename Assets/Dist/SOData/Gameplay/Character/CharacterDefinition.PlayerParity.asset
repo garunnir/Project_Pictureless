@@ -48,3 +48,9 @@ MonoBehaviour:
     count: 3
   - itemId: bandages
     count: 3
+  - itemId: seed_oats
+    count: 3
+  - itemId: hoe
+    count: 1
+  - itemId: fertilizer_commercial
+    count: 1

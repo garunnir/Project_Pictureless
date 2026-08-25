@@ -79,4 +79,13 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
         _combatController?.SetEnabled(enabled);
         _tileObjectPointer?.SetEnabled(enabled);
     }
+
+    /// <summary>스크립트 조향 중 입력 차단. possessed·Player 채널 유지.</summary>
+    public void SetScriptedLocomotionInput(bool allowPlayerInput)
+    {
+        _movement?.SetMovementInputEnabled(allowPlayerInput);
+        _aimController?.SetEnabled(allowPlayerInput);
+        _combatController?.SetEnabled(allowPlayerInput);
+        _tileObjectPointer?.SetEnabled(allowPlayerInput);
+    }
 }

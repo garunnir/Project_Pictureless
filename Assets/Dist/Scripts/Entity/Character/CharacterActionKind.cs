@@ -8,5 +8,6 @@ public enum CharacterActionKind
     Gear = 1,
     Inventory = 2,
     Combat = 3,
-    Craft = 4
+    Craft = 4,
+    Map = 5
 }
