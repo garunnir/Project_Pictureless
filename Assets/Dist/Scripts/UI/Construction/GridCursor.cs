@@ -11,9 +11,12 @@ public class GridCursor : MonoBehaviour
     [SerializeField] GameObject _cursorVisual;
     [SerializeField] Camera _camera;
 
-    private static readonly Plane GroundPlane = new Plane(Vector3.up, Vector3.zero);
-
     private Vector3Int _cursorGridPos;
+    IFarmCellTargetSession _targetSession;
+    Renderer _cursorRenderer;
+    Material _cursorMaterial;
+    Color _targetTint = Color.white;
+    bool _targetingActive;
 
     private Vector2 _heldDir;
     private float _holdTimer;
@@ -22,9 +25,18 @@ public class GridCursor : MonoBehaviour
     const float HOLD_THRESHOLD = 1f;
     const float REPEAT_INTERVAL = 0.15f;
 
+    Transform _visualOriginalParent;
+    bool _visualReparented;
+
+    public bool IsTargeting => _targetingActive;
+
+    bool UsesWorldPointerSync =>
+        _targetingActive || (_placementState != null && _placementState.Selected != null);
+
     void Start()
     {
         if (_camera == null) _camera = Camera.main;
+        CacheCursorRenderer();
 
         InputManager input = InputManager.Instance;
         input.UiNavigateStarted += OnNavigateStarted;
@@ -34,39 +46,99 @@ public class GridCursor : MonoBehaviour
 
     void Update()
     {
-        UpdateFromPointer();
+        SyncFromPointer();
         UpdateHoldRepeat();
 
         InputManager input = InputManager.Instance;
         if (input != null &&
             input.TryReadPointerPressedThisFrame(out bool pressed) &&
             pressed)
-            TryPlace();
+            OnPrimaryClick();
     }
 
-    // 포인터(마우스)가 이 프레임에 움직였을 때만 커서 위치를 절대 좌표로 갱신한다.
-    // 움직이지 않으면 키보드 Navigate 입력이 우선된다.
+    /// <summary>매 프레임 포인터→셀 동기화. 부모 UI 비활성 시 FarmCellTargetSession이 호출.</summary>
+    public void SyncFromPointer() => UpdateFromPointer();
+
+    public void BeginTargeting(IFarmCellTargetSession session)
+    {
+        _targetSession = session;
+        _targetingActive = true;
+        enabled = true;
+        EnsureCamera();
+        CacheCursorRenderer();
+        SyncCursorVisualParent();
+
+        SyncFromPointer();
+        NotifyHover();
+    }
+
+    public void EndTargeting()
+    {
+        _targetSession = null;
+        _targetingActive = false;
+        SyncCursorVisualParent();
+        if (_placementState == null || _placementState.Selected == null)
+            SetActive(false);
+        ClearTargetTint();
+    }
+
+    public void SetTargetTint(Color tint)
+    {
+        _targetTint = tint;
+        ApplyCursorTint();
+    }
+
+    public bool TryConfirmTargetingClick()
+    {
+        if (!_targetingActive || _targetSession == null)
+            return false;
+
+        return _targetSession.TryConfirm(_cursorGridPos);
+    }
+
+    void OnPrimaryClick()
+    {
+        if (_targetingActive && _targetSession != null)
+        {
+            TryConfirmTargetingClick();
+            return;
+        }
+
+        TryPlace();
+    }
+
     void UpdateFromPointer()
     {
-        InputManager input = InputManager.Instance;
-        if (input == null)
+        EnsureCamera();
+        SyncCursorVisualParent();
+
+        if (!TrySyncCellFromCameraRay(out Vector3Int grid, out Vector3 worldCenter))
             return;
 
-        if (!input.TryReadPointerDelta(out Vector2 delta) || delta == Vector2.zero)
+        _cursorGridPos = grid;
+        UpdateVisual(worldCenter);
+
+        if (_targetingActive)
+            NotifyHover();
+    }
+
+    bool TrySyncCellFromCameraRay(out Vector3Int cell, out Vector3 worldCenter) =>
+        PlayerSightTarget.TryResolveOccupiedCellFromCameraRay(
+            out cell,
+            out worldCenter,
+            ResolveCellSize(),
+            _camera);
+
+    void SyncCursorVisualParent() =>
+        ReparentCursorVisualForTargeting(UsesWorldPointerSync);
+
+    void NotifyHover()
+    {
+        if (!_targetingActive || _targetSession == null)
             return;
 
-        if (!input.TryReadPointerScreenPosition(out Vector2 screenPos))
-            return;
-
-        Ray ray = _camera.ScreenPointToRay(screenPos);
-        if (!GroundPlane.Raycast(ray, out float dist)) return;
-
-        float cellSize = ResolveCellSize();
-        Vector3Int newGrid = TileHelper.ConvertWorldToGrid(ray.GetPoint(dist), cellSize);
-        if (newGrid == _cursorGridPos) return;
-
-        _cursorGridPos = newGrid;
-        UpdateVisual();
+        bool canApply = _targetSession.CanApply(_cursorGridPos);
+        _targetSession.OnCellHover(_cursorGridPos, canApply);
     }
 
     void UpdateHoldRepeat()
@@ -103,50 +175,25 @@ public class GridCursor : MonoBehaviour
 
     void MoveCursor(Vector2 dir)
     {
-        // 아이소메트릭 기준: 입력 x → grid x, 입력 y → grid z
         _cursorGridPos += new Vector3Int(
             Mathf.RoundToInt(dir.x),
             0,
             Mathf.RoundToInt(dir.y)
         );
         UpdateVisual();
+        NotifyHover();
     }
 
-    void OnSubmit(InputAction.CallbackContext ctx) => TryPlace();
+    void OnSubmit(InputAction.CallbackContext ctx) => OnPrimaryClick();
 
     void TryPlace()
     {
-        if (_placementState.Selected == null) return;
+        if (_targetingActive || _placementState.Selected == null) return;
 
         var def = _placementState.Selected;
-        var slot = TileIdentityUtil.ResolvePlacementSlot(def, def.prefabId);
-        var sizeUnit = new Vector3Int(
-            Mathf.Max(1, def.size.x),
-            Mathf.Max(1, def.size.y),
-            Mathf.Max(1, def.size.z));
-        Vector3Int gridPos = slot == TilePlacementSlot.HorizontalFace
-            ? _cursorGridPos + Vector3Int.down
-            : _cursorGridPos;
+        if (!TilePlaceUtil.TryBuildTileData(def, _cursorGridPos, out TileData tileData))
+            return;
 
-        var identity = new TileIdentity
-        {
-            PrefabId = def.prefabId,
-            GridPos = gridPos,
-            sizeUnit = sizeUnit,
-            placementSlot = (byte)slot,
-            wallFace = slot == TilePlacementSlot.VerticalFace ? (byte)0 : (byte)0,
-            floorFace = slot == TilePlacementSlot.HorizontalFace
-                ? (byte)FloorFace.PosY
-                : (byte)0,
-            collisionFlags = TileCollisionProfile.FromDefinitionForSlot(slot, def),
-        };
-
-        var tileData = new TileData
-        {
-            tileDefId = Guid.NewGuid(),
-            state = new TileState(),
-            identity = identity,
-        };
         _controller.AddAndFlush(tileData);
     }
 
@@ -154,21 +201,99 @@ public class GridCursor : MonoBehaviour
     {
         UpdateVisual(TileHelper.ConvertGridToWorldPos(_cursorGridPos, ResolveCellSize()));
     }
+
     void UpdateVisual(Vector3 worldPos)
     {
         if (_cursorVisual == null) return;
         _cursorVisual.transform.position = worldPos;
+        ApplyCursorTint();
     }
 
     public void SetActive(bool active)
     {
+        if (_targetingActive && !active)
+            return;
+
+        if (!active)
+            ReparentCursorVisualForTargeting(false);
+
         enabled = active;
         if (_cursorVisual != null)
-            _cursorVisual.SetActive(active);
+            _cursorVisual.SetActive(active || UsesWorldPointerSync);
     }
 
     float ResolveCellSize() =>
         _tileMapManager?.WorldGrid != null ? _tileMapManager.WorldGrid.CellSize : 1f;
+
+    void EnsureCamera()
+    {
+        // 픽·visual은 플레이 뷰(MainCamera)와 같아야 함. 씬에 IsoCam 등이 배선돼 있어도 무시.
+        Camera main = Camera.main;
+        if (main != null)
+        {
+            _camera = main;
+            return;
+        }
+
+        if (_camera == null)
+            _camera = FindFirstObjectByType<Camera>();
+    }
+
+    void ReparentCursorVisualForTargeting(bool targeting)
+    {
+        if (_cursorVisual == null)
+            return;
+
+        if (targeting)
+        {
+            if (_visualReparented)
+                return;
+
+            _visualOriginalParent = _cursorVisual.transform.parent;
+            _cursorVisual.transform.SetParent(null, true);
+            _visualReparented = true;
+            _cursorVisual.SetActive(true);
+            return;
+        }
+
+        if (!_visualReparented)
+            return;
+
+        if (_visualOriginalParent != null)
+            _cursorVisual.transform.SetParent(_visualOriginalParent, true);
+
+        _visualReparented = false;
+        if (_placementState == null || _placementState.Selected == null)
+            _cursorVisual.SetActive(false);
+    }
+
+    void CacheCursorRenderer()
+    {
+        if (_cursorVisual == null)
+            return;
+
+        _cursorRenderer = _cursorVisual.GetComponentInChildren<Renderer>();
+        if (_cursorRenderer != null && _cursorRenderer.sharedMaterial != null)
+            _cursorMaterial = _cursorRenderer.material;
+    }
+
+    void ApplyCursorTint()
+    {
+        if (_cursorMaterial == null)
+            return;
+
+        Color color = _targetingActive ? _targetTint : Color.white;
+        if (_cursorMaterial.HasProperty("_BaseColor"))
+            _cursorMaterial.SetColor("_BaseColor", color);
+        else if (_cursorMaterial.HasProperty("_Color"))
+            _cursorMaterial.SetColor("_Color", color);
+    }
+
+    void ClearTargetTint()
+    {
+        _targetTint = Color.white;
+        ApplyCursorTint();
+    }
 
     void OnDestroy()
     {

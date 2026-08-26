@@ -132,18 +132,12 @@ public sealed class GameDataEditorWindow : EditorWindow
     static LocalizationBundle EnsureLocalizationBundle()
     {
         LocalizationBundle bundle =
-            AssetDatabase.LoadAssetAtPath<LocalizationBundle>(LocalizationBundle.AssetPath);
+            AssetDatabase.LoadAssetAtPath<LocalizationBundle>(LocalizationBundle.DefaultAssetPath);
         if (bundle != null)
             return bundle;
 
-        string dir = Path.GetDirectoryName(LocalizationBundle.AssetPath)?.Replace('\\', '/');
-        if (!string.IsNullOrEmpty(dir) && !AssetDatabase.IsValidFolder(dir))
-        {
-            Directory.CreateDirectory(dir);
-            AssetDatabase.Refresh();
-        }
-
-        bundle = ScriptableObject.CreateInstance<LocalizationBundle>();
+        bundle = DistScriptableObjectEnsure.LoadOrCreate<LocalizationBundle>(
+            LocalizationBundle.DefaultAssetPath);
         TMP_FontAsset katuri =
             AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(DistUiFont.AssetPath);
         if (katuri != null)
@@ -152,9 +146,9 @@ public sealed class GameDataEditorWindow : EditorWindow
             bundle.EditorSetFont(DisplayLanguage.Ko, katuri);
         }
 
-        AssetDatabase.CreateAsset(bundle, LocalizationBundle.AssetPath);
+        EditorUtility.SetDirty(bundle);
         AssetDatabase.SaveAssets();
-        Debug.Log($"[GameDataEditor] Created {LocalizationBundle.AssetPath}");
+        Debug.Log($"[GameDataEditor] Created {LocalizationBundle.DefaultAssetPath}");
         return bundle;
     }
 
@@ -1076,30 +1070,21 @@ public sealed class GameDataEditorWindow : EditorWindow
         if (_iconCatalog != null)
             return _iconCatalog;
 
-        _iconCatalog = AssetDatabase.LoadAssetAtPath<ItemIconCatalog>(ItemIconCatalog.AssetPath);
+        _iconCatalog = AssetDatabase.LoadAssetAtPath<ItemIconCatalog>(ItemIconCatalog.DefaultAssetPath);
         if (_iconCatalog != null)
         {
             ItemVisualPresenter.BindCatalog(_iconCatalog);
             return _iconCatalog;
         }
 
-        string resourcesFolder = "Assets/Dist/Resources";
-        if (!AssetDatabase.IsValidFolder(resourcesFolder))
-        {
-            if (!AssetDatabase.IsValidFolder("Assets/Dist"))
-                AssetDatabase.CreateFolder("Assets", "Dist");
-            AssetDatabase.CreateFolder("Assets/Dist", "Resources");
-        }
-
-        _iconCatalog = ScriptableObject.CreateInstance<ItemIconCatalog>();
+        _iconCatalog = DistScriptableObjectEnsure.LoadOrCreate<ItemIconCatalog>(ItemIconCatalog.DefaultAssetPath);
         Sprite fallback = LoadEmptyIconSprite();
         if (fallback != null)
             _iconCatalog.SetDefaultIcon(fallback);
-
-        AssetDatabase.CreateAsset(_iconCatalog, ItemIconCatalog.AssetPath);
+        EditorUtility.SetDirty(_iconCatalog);
         AssetDatabase.SaveAssets();
         ItemVisualPresenter.BindCatalog(_iconCatalog);
-        Debug.Log($"[GameDataEditor] Created {ItemIconCatalog.AssetPath}");
+        Debug.Log($"[GameDataEditor] Created {ItemIconCatalog.DefaultAssetPath}");
         return _iconCatalog;
     }
 

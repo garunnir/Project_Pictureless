@@ -28,6 +28,15 @@ public class CharacterFacingRotator : MonoBehaviour
     private Quaternion _lastAppliedRotation;
     private bool _hasLastAppliedRotation;
 
+    public CharacterState BoundState => _state;
+
+    /// <summary>시스템 리그(PlayerSight 등)가 possess 시 CharacterState를 주입합니다.</summary>
+    public void BindState(CharacterState state)
+    {
+        _state = state;
+        _hasLastAppliedRotation = false;
+    }
+
     void LateUpdate()
     {
         if (_state == null) return;

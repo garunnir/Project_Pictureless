@@ -17,6 +17,7 @@ public sealed class CharacterArriveHost : MonoBehaviour
     float _stoppingDistance;
     Action _onArrived;
     Action _onCancelled;
+    Func<bool> _tryIsArrived;
 
     public bool IsBusy => _active;
 
@@ -30,6 +31,12 @@ public sealed class CharacterArriveHost : MonoBehaviour
     {
         if (!_active || _motor == null)
             return;
+
+        if (_tryIsArrived != null && _tryIsArrived())
+        {
+            CompleteArrive();
+            return;
+        }
 
         if (NpcSteer.TryArriveOrSteer(
                 _motor,
@@ -48,17 +55,30 @@ public sealed class CharacterArriveHost : MonoBehaviour
         float stoppingDistance,
         Action onArrived,
         Action onCancelled = null,
-        bool suppressInput = true)
+        bool suppressInput = true,
+        Func<bool> tryIsArrived = null)
     {
         if (_motor == null || onArrived == null)
             return false;
 
         if (_actionHost == null)
-            return TryBegin(destination, stoppingDistance, onArrived, onCancelled, suppressInput);
+            return TryBegin(
+                destination,
+                stoppingDistance,
+                onArrived,
+                onCancelled,
+                suppressInput,
+                tryIsArrived);
 
         return _actionHost.TryRunOrEnqueue(
             CharacterActionKind.Map,
-            () => TryBegin(destination, stoppingDistance, onArrived, onCancelled, suppressInput));
+            () => TryBegin(
+                destination,
+                stoppingDistance,
+                onArrived,
+                onCancelled,
+                suppressInput,
+                tryIsArrived));
     }
 
     public bool TryBegin(
@@ -66,7 +86,8 @@ public sealed class CharacterArriveHost : MonoBehaviour
         float stoppingDistance,
         Action onArrived,
         Action onCancelled = null,
-        bool suppressInput = true)
+        bool suppressInput = true,
+        Func<bool> tryIsArrived = null)
     {
         if (_active || _motor == null || onArrived == null)
             return false;
@@ -75,6 +96,7 @@ public sealed class CharacterArriveHost : MonoBehaviour
         _stoppingDistance = Mathf.Max(0f, stoppingDistance);
         _onArrived = onArrived;
         _onCancelled = onCancelled;
+        _tryIsArrived = tryIsArrived;
         _suppressInput = suppressInput;
 
         _motor.BeginScriptedLocomotion();
@@ -118,6 +140,7 @@ public sealed class CharacterArriveHost : MonoBehaviour
         _active = false;
         _onArrived = null;
         _onCancelled = null;
+        _tryIsArrived = null;
 
         if (_motor != null)
         {

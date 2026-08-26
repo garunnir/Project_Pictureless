@@ -18,15 +18,8 @@ static class LocalizationTableSetupMenu
         if (!AssetDatabase.IsValidFolder(AssetFolder))
             AssetDatabase.CreateFolder("Assets/Dist/Resources", "Localization");
 
-        LocalizationTable table = AssetDatabase.LoadAssetAtPath<LocalizationTable>(LocalizationTable.AssetPath);
-        if (table == null)
-        {
-            table = ScriptableObject.CreateInstance<LocalizationTable>();
-            AssetDatabase.CreateAsset(table, LocalizationTable.AssetPath);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-        }
-
+        LocalizationTable table =
+            DistScriptableObjectEnsure.LoadOrCreate<LocalizationTable>(LocalizationTable.DefaultAssetPath);
         Selection.activeObject = table;
     }
 }

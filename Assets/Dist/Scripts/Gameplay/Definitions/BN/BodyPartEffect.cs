@@ -29,6 +29,8 @@ namespace Garunnir.Runtime.Gameplay.Data
     public static class BodyPartEffectIds
     {
         public const string Bleed = "bleed";
+        /// <summary>장기 HP0·흉복부 연쇄 파괴 출혈. drain은 <see cref="BodyIllness.OrganBleedBloodPerIntensityPerSecond"/>.</summary>
+        public const string OrganBleed = "organ_bleed";
         public const string Bruise = "bruise";
         public const string Cut = "cut";
         public const string Gunshot = "gunshot";

@@ -10,7 +10,8 @@ using UnityEngine;
 public sealed class ItemIconCatalog : ScriptableObject
 {
     public const string ResourcesLoadName = "ItemIconCatalog";
-    public const string AssetPath = "Assets/Dist/Resources/ItemIconCatalog.asset";
+    public const string DefaultAssetPath = "Assets/Dist/Resources/ItemIconCatalog.asset";
+    public const string AssetPath = DefaultAssetPath;
 
     [Serializable]
     public sealed class Entry

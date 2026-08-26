@@ -35,7 +35,7 @@ CancelAll → 현재 작업 취소(적용 없음) + 큐 전부 폐기
 
 | Kind | busy일 때 | 이유 |
 |------|-----------|------|
-| Gear / Inventory / Craft / Map | FIFO append | 클릭 1 = 작업 1. 착용 중 인벤 이동은 대기. Map = `CharacterArriveHost` 도착 |
+| Gear / Inventory / Craft / Map | FIFO append | 클릭 1 = 작업 1. 착용 중 인벤 이동은 대기. Map = `CharacterArriveHost` 도착 + `CharacterFarmWorkHost` 대기(`Progress01`). Arrive 중 게이지는 `Img_AutoProgressIcon` |
 | Combat | 큐에 **최대 1개**. 이미 Combat이 있으면 Start만 교체 | LMB 연타는 “지금 한 대”이지 N대 예약이 아님 |
 
 교차 종류는 그대로 한 줄: 착용 중 공격은 Combat 1칸이 뒤에 앉는다. 쿨 중 연타는 그 1칸만 최신 클릭으로 덮는다.

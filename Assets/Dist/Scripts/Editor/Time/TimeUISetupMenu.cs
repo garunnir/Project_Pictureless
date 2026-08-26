@@ -12,9 +12,7 @@ static class TimeUISetupMenu
 {
     const string PrefabFolder = "Assets/Dist/Visual/Prefabs/UIComponents/Time";
     const string DisplayPrefabPath = PrefabFolder + "/Grp_TimeDisplay.prefab";
-    const string SoGameplayFolder = "Assets/Dist/SOData/Gameplay";
-    const string SoTimeFolder = SoGameplayFolder + "/Time";
-    const string SettingsAssetPath = SoTimeFolder + "/WorldClockSettings.asset";
+    const string SettingsAssetPath = WorldClockSettings.DefaultAssetPath;
 
     [MenuItem(DistMcpMenus.TimeEnsureWorldClockSettings)]
     static void EnsureSettingsAssetMenu()
@@ -219,19 +217,8 @@ static class TimeUISetupMenu
         return instance.GetComponent<T>();
     }
 
-    static WorldClockSettings EnsureSettingsAsset()
-    {
-        EnsureSoFolder();
-        WorldClockSettings settings =
-            AssetDatabase.LoadAssetAtPath<WorldClockSettings>(SettingsAssetPath);
-        if (settings != null)
-            return settings;
-
-        settings = ScriptableObject.CreateInstance<WorldClockSettings>();
-        AssetDatabase.CreateAsset(settings, SettingsAssetPath);
-        AssetDatabase.SaveAssets();
-        return settings;
-    }
+    static WorldClockSettings EnsureSettingsAsset() =>
+        DistScriptableObjectEnsure.LoadOrCreate<WorldClockSettings>(SettingsAssetPath);
 
     static T EnsureComponentOnChild<T>(Transform parent, string childName) where T : Component
     {
@@ -292,16 +279,6 @@ static class TimeUISetupMenu
         }
 
         return Object.FindAnyObjectByType<Canvas>();
-    }
-
-    static void EnsureSoFolder()
-    {
-        if (!AssetDatabase.IsValidFolder("Assets/Dist/SOData"))
-            AssetDatabase.CreateFolder("Assets/Dist", "SOData");
-        if (!AssetDatabase.IsValidFolder(SoGameplayFolder))
-            AssetDatabase.CreateFolder("Assets/Dist/SOData", "Gameplay");
-        if (!AssetDatabase.IsValidFolder(SoTimeFolder))
-            AssetDatabase.CreateFolder(SoGameplayFolder, "Time");
     }
 }
 #endif

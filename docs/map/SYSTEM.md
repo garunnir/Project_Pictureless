@@ -106,7 +106,7 @@ graph TD
 
 ### 맵 식물
 
-경로: `Assets/Dist/Scripts/Map/Plant/`. `TileMapManager`가 `MapPlantHost`를 바인딩·DTO 로드. 세이브 시 `MapSavePipeline`이 `plantCells`를 JSON에 병합. 모델은 청크 unload와 무관하게 유지; 뷰는 Dist 오버레이 GO만 (BN furniture 스프라이트 아님). 계약: [`docs/farming/FARMING.md`](../farming/FARMING.md).
+경로: `Assets/Dist/Scripts/Map/Plant/`. `TileMapManager`가 `MapPlantHost`를 바인딩·구 `plantCells` 마이그레이션. Plant는 OccupiedCell `tiles` (+ floor `Floor/Tilled`). 뷰는 청크 TileView (`Furniture/Plant_*`). 설치: `TilePlaceUtil` (건설과 공유). 계약: [`docs/farming/FARMING.md`](../farming/FARMING.md).
 
 ---
 

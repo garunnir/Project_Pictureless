@@ -40,3 +40,4 @@ MonoBehaviour:
   - itemId: weapon_knife
     hand: 0
   _bodyItemSeeds: []
+  _spotAngleDegrees: 160

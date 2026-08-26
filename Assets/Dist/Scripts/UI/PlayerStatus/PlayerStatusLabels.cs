@@ -23,6 +23,13 @@ public static class PlayerStatusLabels
     const string KeyEffectPrefix = "PlayerStatus.Effect.";
     const string KeyBandageDirtyFormat = "PlayerStatus.BandageDirtyFormat";
     const string KeyDebugSeverArmL = "PlayerStatus.DebugSeverArmL";
+    const string KeyBleedDrainRateFormat = "PlayerStatus.Bleed.DrainRateFormat";
+    const string KeyBleedEtaFormat = "PlayerStatus.Bleed.EtaFormat";
+    const string KeyBleedBandagedBlock = "PlayerStatus.Bleed.BandagedBlock";
+    const string KeyBleedProsePrefix = "PlayerStatus.Bleed.Prose.";
+    const string KeyBleedVitalsNumeric = "PlayerStatus.Bleed.VitalsNumeric";
+    const string KeyBleedDurationMinutes = "PlayerStatus.Bleed.DurationMinutes";
+    const string KeyBleedDurationSeconds = "PlayerStatus.Bleed.DurationSeconds";
 
     public static string Title => Loc.Get(KeyTitle);
     public static string VitalsSection => Loc.Get(KeyVitalsSection);
@@ -152,6 +159,109 @@ public static class PlayerStatusLabels
         if (Loc.TryGet(key, out string text))
             return text;
         return fallen ? "중심을 잃고 쓰러졌다" : "중심이 흔들린다";
+    }
+
+    public static string GetBloodTooltip(bool critical, PlayerStatusBleedSnapshot bleed, bool showNumeric)
+    {
+        string headline = GetBloodTooltip(critical);
+        return AppendBleedDetails(headline, bleed, showNumeric);
+    }
+
+    public static string FormatBleedTooltip(PlayerStatusBleedSnapshot bleed, bool showNumeric)
+    {
+        string headline = GetEffectName(Garunnir.Runtime.Gameplay.Data.BodyPartEffectIds.Bleed);
+        return AppendBleedDetails(headline, bleed, showNumeric);
+    }
+
+    public static string FormatBleedVitalsLine(PlayerStatusBleedSnapshot bleed, bool showNumeric)
+    {
+        if (!bleed.HasAnyBleed)
+            return string.Empty;
+
+        if (showNumeric)
+        {
+            if (!bleed.HasOpenDrain)
+                return Loc.TryGet(KeyBleedBandagedBlock, out string blocked) ? blocked : "붕대로 출혈이 막혀 있다";
+
+            float percentPerSec = bleed.OpenDrainPerSecond * 100f;
+            return Loc.Format(
+                KeyBleedVitalsNumeric,
+                percentPerSec.ToString("0.##"),
+                FormatBleedDuration(bleed.SecondsToEmpty));
+        }
+
+        return FormatBleedProse(bleed);
+    }
+
+    public static string FormatBleedDuration(float seconds)
+    {
+        if (seconds <= 0f || float.IsInfinity(seconds) || float.IsNaN(seconds))
+            return "-";
+
+        if (seconds >= 60f)
+        {
+            int minutes = (int)(seconds / 60f);
+            int secs = (int)(seconds % 60f + 0.5f);
+            if (secs >= 60)
+            {
+                minutes++;
+                secs = 0;
+            }
+
+            return Loc.Format(KeyBleedDurationMinutes, minutes, secs);
+        }
+
+        int wholeSeconds = seconds < 1f ? 1 : (int)(seconds + 0.5f);
+        return Loc.Format(KeyBleedDurationSeconds, wholeSeconds);
+    }
+
+    static string AppendBleedDetails(string headline, PlayerStatusBleedSnapshot bleed, bool showNumeric)
+    {
+        if (!bleed.HasAnyBleed)
+            return headline;
+
+        if (showNumeric)
+            return AppendNumericBleedDetails(headline, bleed);
+
+        string prose = FormatBleedProse(bleed);
+        if (string.IsNullOrEmpty(prose))
+            return headline;
+
+        return string.IsNullOrEmpty(headline) ? prose : headline + "\n" + prose;
+    }
+
+    static string AppendNumericBleedDetails(string headline, PlayerStatusBleedSnapshot bleed)
+    {
+        if (!bleed.HasOpenDrain)
+        {
+            string blocked = Loc.TryGet(KeyBleedBandagedBlock, out string text)
+                ? text
+                : "붕대로 출혈이 막혀 있다";
+            return string.IsNullOrEmpty(headline) ? blocked : headline + "\n" + blocked;
+        }
+
+        float percentPerSec = bleed.OpenDrainPerSecond * 100f;
+        string drainLine = Loc.Format(KeyBleedDrainRateFormat, percentPerSec.ToString("0.##"));
+        string etaLine = Loc.Format(KeyBleedEtaFormat, FormatBleedDuration(bleed.SecondsToEmpty));
+        string details = drainLine + "\n" + etaLine;
+        return string.IsNullOrEmpty(headline) ? details : headline + "\n" + details;
+    }
+
+    static string FormatBleedProse(PlayerStatusBleedSnapshot bleed)
+    {
+        PlayerStatusBleedDisplay.ProseBand band =
+            PlayerStatusBleedDisplay.ResolveProseBand(bleed.OpenDrainPerSecond, bleed.HasOpenDrain);
+        string key = KeyBleedProsePrefix + band;
+        if (Loc.TryGet(key, out string prose))
+            return prose;
+
+        return band switch
+        {
+            PlayerStatusBleedDisplay.ProseBand.Bandaged => "붕대로 출혈이 막혀 있다",
+            PlayerStatusBleedDisplay.ProseBand.Severe => "피가 빠르게 줄어든다",
+            PlayerStatusBleedDisplay.ProseBand.Moderate => "피가 계속 빠진다",
+            _ => "피가 서서히 빠진다",
+        };
     }
 
     public static string GetBloodTooltip(bool critical)

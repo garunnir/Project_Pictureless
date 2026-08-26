@@ -58,7 +58,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 
 `CharacterMotor`는 `IPlayControllable` 존재만으로 possessed가 되지 않는다. `PlayerManager`가 켠 것만.
 
-플레이어 전용 장치(카메라, 층 가시성, 시야 블렌드, `PlayerSight`)는 시스템. 입력(`PlayerMovement` / Aim / Combat / Pointer)은 `PlayerPossessedInputHost`에 두고 본체 공용 API만 부른다. `PlayerController`를 `NpcSample`에 올리지 않는다.
+플레이어 전용 장치(카메라, 층 가시성, 시야 블렌드, `PlayerSight`, **캐릭터 시야 페이드** `CharacterSightFadeDriver`)는 시스템. 입력(`PlayerMovement` / Aim / Combat / Pointer)은 `PlayerPossessedInputHost`에 두고 본체 공용 API만 부른다. `PlayerController`를 `NpcSample`에 올리지 않는다. `PlayerSight`는 씬 시스템 리그: `PossessedTransformFollower`(위치) + `PlayerSightVisionBinder`(`CharacterVision` → Spot **시각 동기**/루트 **yaw**). 시야 **로직**(각·탐지·소실 부채꼴)은 본체 `CharacterVision` 공통 — NPC AI도 동일. 페이드 **표현**만 시스템 Driver/Host — [`SIGHT_FADE.md`](SIGHT_FADE.md).
 
 인벤·기어 호스트는 본체 프리팹에 두고 **인스턴스마다** 컨테이너를 갖는다. 몸 그래프 입구는 `CharacterSessionHub` (NpcSample). NPC는 `BecomePlayer`를 부르지 않고 `Active`를 건드리지 않는다. Possessed만 허브가 `PlayerInventoryRuntime` Bind + Gear/Encumbrance/TimedMove `ClaimActive` + `GameplayData` + 상태 UI rebind를 한 번에 한다. 인벤 이동 게이지는 그 몸의 `CharacterActionHost`를 본다. possessed 몸은 `player-body`, 나머지는 `character-body-*` (레지스트리 충돌 방지). 살아 있는 NPC 몸은 Nearby 루트에 안 뜬다 (`IsAvailableToPlayer`). 쓰러진·고통 쇼크는 그 게이트를 연다 (`IsDefeated || IsPainShocked`).
 
@@ -80,6 +80,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 | `wearItemIds` | — | 스폰 즉시 Wear. 겹치면 이후 항목 스킵 |
 | `wieldLoadout` | — | `itemId` + `WieldHand`. 양손 무기는 TwoHand. 실패 시 몸통 폴백 |
 | `bodyItemSeeds` | — | 몸통 `AddItem`. 테스터 컨테이너 시드 대체 |
+| `spotAngleDegrees` | — | 시야각 → `CharacterVision`. 반경·inner는 `CharacterVisionDefaults` |
 
 **미이관:** HP 풀, Passive 슬롯, Equipment 인덱스, Dialogue int id, Bark 테이블.
 
@@ -89,6 +90,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 definition == null  → BodyHost/SkillsHost 기존 시드 (CreateHumanDefault(8), CreateSeededSkills)
 UseGameplayData* 또는 호스트 없음 → GameplayData.Stats / Body
 그 외 → CharacterBodyHost.BindBody + CharacterSkillsHost.BindSkills
++ Appearance / Faction / CharacterVision(시야각)
 ```
 
 부위효과→숙련 수식(`BodySkillModifierAggregator`)은 `CharacterSkillsHost`만 붙인다. HUD ViewModel·`GameplayData` Body setter는 붙이지 않는다.

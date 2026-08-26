@@ -19,6 +19,7 @@ namespace Garunnir.Runtime.Gameplay.Data
             {
                 [BodyPartEffectIds.Fracture] = 0.8f,
                 [BodyPartEffectIds.Bleed] = 0.9f,
+                [BodyPartEffectIds.OrganBleed] = 0.9f,
                 [BodyPartEffectIds.Infected] = 0.9f,
                 [BodyPartEffectIds.Frostbite] = 0.85f,
                 [BodyPartEffectIds.Heat] = 0.85f,

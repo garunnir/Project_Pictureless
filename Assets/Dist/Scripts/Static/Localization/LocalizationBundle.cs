@@ -9,7 +9,9 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "LocalizationBundle", menuName = "Dist/Localization Bundle")]
 public sealed class LocalizationBundle : ScriptableObject
 {
-    public const string AssetPath = "Assets/Dist/Resources/Localization/LocalizationBundle.asset";
+    public const string DefaultAssetPath =
+        "Assets/Dist/Resources/Localization/LocalizationBundle.asset";
+    public const string AssetPath = DefaultAssetPath;
     public const string ResourcesLoadName = "Localization/LocalizationBundle";
 
     [SerializeField] DisplayLanguage _activeLanguage = DisplayLanguage.Ko;

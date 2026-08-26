@@ -9,6 +9,9 @@ internal static class DistMcpMenus
 {
     public const string Root = "Dist/MCP";
 
+    public const string EnsureSampleScriptableObjects =
+        Root + "/Ensure Sample ScriptableObject Assets";
+
     public const string InventorySyncListColumnLayout =
         Root + "/Inventory/Sync List Column Layout";
     public const string InventoryPatchWindowScrollbars =

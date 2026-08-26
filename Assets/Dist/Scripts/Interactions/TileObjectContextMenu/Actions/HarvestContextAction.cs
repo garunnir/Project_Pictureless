@@ -17,5 +17,5 @@ public sealed class HarvestContextAction : IContextMenuAction
         MapPlantService.GetHarvestBlockedReason(_cell);
 
     public void Execute() =>
-        MapPlantService.TryHarvest(_cell);
+        FarmCellTargetFlow.BeginHarvest();
 }

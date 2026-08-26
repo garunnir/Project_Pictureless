@@ -13,6 +13,9 @@ using UnityEditor;
     menuName = "Dist/Combat/Weapon Combat Fallbacks")]
 public sealed class WeaponCombatFallbacks : ScriptableObject
 {
+    public const string DefaultAssetPath =
+        "Assets/Dist/SOData/Combat/Fallbacks/WeaponCombatFallbacks.asset";
+
     const string TabAttack = "팔 애니";
     const string TabHit = "타격 VFX";
     const string TabProjectile = "발사체";

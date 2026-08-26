@@ -1,12 +1,15 @@
 // ============================================================
-// PlayerStatusUIBridge — PlayerStatusViewModel 씬 수명주기 + GameplayData bind (Possess 시 rebind)
+// PlayerStatusUIBridge — PlayerStatusViewModel 씬 SSOT + GameplayData bind (Possess 시 rebind)
 // ============================================================
 
 using UnityEngine;
 
 [DefaultExecutionOrder(-50)]
+[DisallowMultipleComponent]
 public sealed class PlayerStatusUIBridge : MonoBehaviour
 {
+    public static PlayerStatusUIBridge Instance { get; private set; }
+
     PlayerStatusViewModel _viewModel;
 
     public PlayerStatusViewModel ViewModel
@@ -18,10 +21,26 @@ public sealed class PlayerStatusUIBridge : MonoBehaviour
         }
     }
 
-    void Awake() => BindFromGameplayData();
+    void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogError(
+                "[PlayerStatusUIBridge] Duplicate bridge. Keep one under System/PlayerStatus.",
+                this);
+            enabled = false;
+            return;
+        }
+
+        Instance = this;
+        BindFromGameplayData();
+    }
 
     void OnDestroy()
     {
+        if (Instance == this)
+            Instance = null;
+
         _viewModel?.Unbind();
         _viewModel = null;
     }
@@ -44,21 +63,24 @@ public sealed class PlayerStatusUIBridge : MonoBehaviour
 
     public static void RebindFromGameplayData()
     {
-        PlayerStatusUIBridge bridge = FindAnyObjectByType<PlayerStatusUIBridge>();
-        if (bridge == null)
+        if (Instance == null)
+        {
+            Debug.LogError(
+                "[PlayerStatusUIBridge] Rebind skipped — bridge missing. " +
+                "Run Dist/MCP/PlayerStatus/Setup Canvas In Open Scene.");
             return;
+        }
 
-        bridge.BindFromGameplayData();
+        Instance.BindFromGameplayData();
     }
 
     public static bool TryResolve(out PlayerStatusViewModel viewModel)
     {
         viewModel = null;
-        PlayerStatusUIBridge bridge = FindAnyObjectByType<PlayerStatusUIBridge>();
-        if (bridge == null)
+        if (Instance == null)
             return false;
 
-        viewModel = bridge.ViewModel;
+        viewModel = Instance.ViewModel;
         return viewModel != null;
     }
 }

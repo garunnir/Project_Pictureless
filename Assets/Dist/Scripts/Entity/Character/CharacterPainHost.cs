@@ -41,7 +41,35 @@ public sealed class CharacterPainHost : MonoBehaviour
         Refresh();
     }
 
-    void OnDisable() => UnbindBody();
+    void OnDisable()
+    {
+        UnbindBody();
+        ReleasePossessedInputPolicy();
+    }
+
+    /// <summary>
+    /// possessed 전환 후 호출. 다운 중이면 <see cref="InputManager"/> Move/Aim 억제를 맞춘다.
+    /// </summary>
+    public void SyncPossessedInputPolicy()
+    {
+        InputManager input = InputManager.Instance;
+        if (input == null)
+            return;
+
+        bool suppress = _painShocked && _motor != null && _motor.IsPossessed;
+        input.SuppressPlayerAction(PlayerAction.Move, this, suppress);
+        input.SuppressPlayerAction(PlayerAction.Aim, this, suppress);
+    }
+
+    void ReleasePossessedInputPolicy()
+    {
+        InputManager input = InputManager.Instance;
+        if (input == null)
+            return;
+
+        input.SuppressPlayerAction(PlayerAction.Move, this, false);
+        input.SuppressPlayerAction(PlayerAction.Aim, this, false);
+    }
 
     void BindBody()
     {
@@ -85,6 +113,7 @@ public sealed class CharacterPainHost : MonoBehaviour
 
         _painShocked = shocked;
         _motor?.SetMoveLocked(shocked);
+        SyncPossessedInputPolicy();
         if (shocked)
         {
             _actionHost?.CancelAll();

@@ -92,19 +92,15 @@ namespace Garunnir.Runtime.Gameplay.Data
 
         static void CollectActiveBleed(ICharacterBody body, List<MoodEntry> into)
         {
-            int intensitySum = 0;
-            IReadOnlyList<BodyPartNode> roots = body.Roots;
-            for (int r = 0; r < roots.Count; r++)
-                intensitySum += SumOrganicBleed(roots[r]);
-
-            if (intensitySum <= 0)
+            if (!PlayerStatusBleedDisplay.TrySnapshot(body, out PlayerStatusBleedSnapshot bleed))
                 return;
 
+            bool showNumeric = PlayerStatusVitalDisplay.CanShowNumericVitals(GameplayData.Stats);
             into.Add(new MoodEntry(
                 MoodIconId.Bleed,
                 MoodPolarity.Negative,
-                ResolveEffectIntensity(intensitySum),
-                PlayerStatusLabels.GetEffectName(BodyPartEffectIds.Bleed)));
+                ResolveEffectIntensity(bleed.TotalBleedIntensity),
+                PlayerStatusLabels.FormatBleedTooltip(bleed, showNumeric)));
         }
 
         static int SumOrganicBleed(BodyPartNode node)
@@ -116,7 +112,8 @@ namespace Garunnir.Runtime.Gameplay.Data
             IReadOnlyList<BodyPartEffect> effects = node.Effects;
             for (int i = 0; i < effects.Count; i++)
             {
-                if (effects[i].EffectId != BodyPartEffectIds.Bleed)
+                if (effects[i].EffectId != BodyPartEffectIds.Bleed
+                    && effects[i].EffectId != BodyPartEffectIds.OrganBleed)
                     continue;
                 int intensity = effects[i].Intensity;
                 sum += intensity < 1 ? 1 : intensity;
@@ -138,11 +135,15 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return;
 
             bool critical = blood <= BodyCapacity.BloodHudCritical;
+            bool showNumeric = PlayerStatusVitalDisplay.CanShowNumericVitals(GameplayData.Stats);
+            string tooltip = PlayerStatusBleedDisplay.TrySnapshot(body, out PlayerStatusBleedSnapshot bleed)
+                ? PlayerStatusLabels.GetBloodTooltip(critical, bleed, showNumeric)
+                : PlayerStatusLabels.GetBloodTooltip(critical);
             into.Add(new MoodEntry(
                 MoodIconId.Pale,
                 MoodPolarity.Negative,
                 BodyCapacity.MoodBucket01(1f - blood),
-                PlayerStatusLabels.GetBloodTooltip(critical)));
+                tooltip));
         }
 
         static void CollectConsciousness(ICharacterBody body, List<MoodEntry> into)
@@ -571,7 +572,8 @@ namespace Garunnir.Runtime.Gameplay.Data
             for (int i = 0; i < effects.Count; i++)
             {
                 BodyPartEffect effect = effects[i];
-                if (effect.EffectId == BodyPartEffectIds.Bleed)
+                if (effect.EffectId == BodyPartEffectIds.Bleed
+                    || effect.EffectId == BodyPartEffectIds.OrganBleed)
                     continue;
 
                 if (!PlayerStatusMoodEffectCatalog.TryGet(

@@ -15,10 +15,8 @@ using UnityEngine;
 public static class ArmAnimSlotCatalogBaker
 {
     const string SlotDir = "Assets/Dist/Visual/Anim/CharacterAnimator/Slots";
-    const string CatalogPath =
-        "Assets/Dist/SOData/Combat/Fallbacks/ArmAnimSlotCatalog.asset";
-    const string PresentationCatalogPath =
-        "Assets/Dist/SOData/Combat/Catalog/WeaponPresentationCatalog.asset";
+    const string CatalogPath = ArmAnimSlotCatalog.DefaultAssetPath;
+    const string PresentationCatalogPath = WeaponPresentationCatalog.DefaultAssetPath;
 
     static readonly string[] Hands = { "Left", "Right", "TwoHand" };
     static readonly string[] Phases = { "Hold", "Aim", "Attack" };
@@ -172,12 +170,8 @@ public static class ArmAnimSlotCatalogBaker
 
     static void EnsureCatalog()
     {
-        var catalog = AssetDatabase.LoadAssetAtPath<ArmAnimSlotCatalog>(CatalogPath);
-        if (catalog == null)
-        {
-            catalog = ScriptableObject.CreateInstance<ArmAnimSlotCatalog>();
-            AssetDatabase.CreateAsset(catalog, CatalogPath);
-        }
+        ArmAnimSlotCatalog catalog =
+            DistScriptableObjectEnsure.LoadOrCreate<ArmAnimSlotCatalog>(CatalogPath);
 
         catalog.SetHoldThin(LoadHandClips("Hold"));
         catalog.SetAimThin(LoadHandClips("Aim"));

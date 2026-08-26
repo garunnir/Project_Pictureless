@@ -89,6 +89,9 @@ public sealed class CharacterDefinition : ScriptableObject
     [SerializeField] List<string> _wearItemIds = new();
     [SerializeField] List<CharacterWieldLoadoutEntry> _wieldLoadout = new();
     [SerializeField] List<CharacterBodyItemSeed> _bodyItemSeeds = new();
+    [SerializeField, Range(CharacterVisionDefaults.SpotAngleMinDegrees, CharacterVisionDefaults.SpotAngleMaxDegrees)]
+    [Tooltip("시야 부채꼴 전체 각(도). Spot Light/프리팹이 아니라 이 SO가 SSOT. 예: 180≈전방 반원, 360≈전방위.")]
+    float _spotAngleDegrees = CharacterVisionDefaults.SpotAngleDegrees;
 
     public string Id => _id;
     public string DisplayNameOverride => _displayName;
@@ -107,6 +110,7 @@ public sealed class CharacterDefinition : ScriptableObject
     public IReadOnlyList<string> WearItemIds => _wearItemIds;
     public IReadOnlyList<CharacterWieldLoadoutEntry> WieldLoadout => _wieldLoadout;
     public IReadOnlyList<CharacterBodyItemSeed> BodyItemSeeds => _bodyItemSeeds;
+    public float SpotAngleDegrees => _spotAngleDegrees;
 
     public float GetPartMassKg(string partId) => LookupPartMassKg(_partMasses, partId);
 

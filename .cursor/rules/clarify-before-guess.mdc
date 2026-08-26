@@ -1,0 +1,31 @@
+---
+description: 의도·증상·구현 갈림이 불명확하면 추측 패치 전 질문 1개 (항상)
+alwaysApply: true
+---
+
+# Clarify Before Guess
+
+## When
+버그·UX·좌표·아키텍처 등 **사용자 의도가 한 가지로 안 좁혀질 때**.  
+증상만 있고 원하는 동작·완료 조건이 여러 갈래일 때.
+
+## MUST
+1. **패치·Plan·대규모 탐색 전** 질문 **1개** (독립 전제 ≥2면 같은 턴 ≤3). `collaboration-rules.mdc` Rule 3.
+2. 질문은 **갈림을 가르는** 것 — 예: “커서 visual만?” / “적용 셀?” / “카메라 레이 vs 평면?”
+3. Play·씬·로그로 **확실**히 가릴 수 있으면 그 한 가지 확인을 질문에 넣기.
+4. 진단은 `epistemic-labels.mdc` — **추측만으로 원인 단정·패치 금지**.
+
+## MUST NOT
+- 두 갈래 이상인데 질문 없이 한쪽 구현 (`agent-scope.mdc`)
+- “일단 고쳐보고” fail-open 편집 (`collaboration-rules.mdc`)
+- 증상마다 다른 패치를 연속 시도하며 사용자 재현만 요청 (`migration-parity.mdc`)
+
+## OK
+| OK | Condition |
+|----|-----------|
+| 바로 구현 | 사용자가 방향·완료 조건을 이미 명시했거나, 직전 턴에서 합의됨 |
+| 질문 없이 읽기만 | Ask 모드·단순 사실 조회 |
+| 짧은 가설 + 질문 | 패치 없이 “A/B 중 어느 쪽인가요?” 한 줄 |
+
+## See also
+`collaboration-rules.mdc` Rule 3 · `agent-scope.mdc` · `epistemic-labels.mdc` · `CLAUDE.md` (When unsure → ask)

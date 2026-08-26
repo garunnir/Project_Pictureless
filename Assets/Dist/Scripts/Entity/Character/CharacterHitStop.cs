@@ -8,8 +8,7 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterBodyHost))]
 public sealed class CharacterHitStop : MonoBehaviour
 {
-    public const string DefaultSettingsPath =
-        "Assets/Dist/SOData/Combat/Fallbacks/CombatHitStopSettings.asset";
+    public const string DefaultSettingsPath = CombatHitStopSettings.DefaultAssetPath;
 
     [SerializeField] CombatHitStopSettings _settings;
 

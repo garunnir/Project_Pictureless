@@ -17,5 +17,5 @@ public sealed class TillContextAction : IContextMenuAction
         MapPlantService.CanTill(_stack, _container) ? null : ItemContextMenuLabels.TillBlocked;
 
     public void Execute() =>
-        MapPlantService.TryTill(_stack, _container);
+        FarmCellTargetFlow.BeginTill(_stack, _container);
 }

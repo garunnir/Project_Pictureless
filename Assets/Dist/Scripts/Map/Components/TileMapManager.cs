@@ -49,6 +49,10 @@ public class TileMapManager : MonoBehaviour
     [SerializeField] private StructuralHidePresentationMode _structuralHidePresentationMode =
         StructuralHidePresentationMode.DisableGameObject;
 
+    [Header("Character Sight Fade")]
+    [Tooltip("possessed 시야 반경 밖 NPC 메시 페이드. IMapSightFadeDriver 구현체. 비우면 Find로 탐색.")]
+    [SerializeField] private MonoBehaviour _characterSightFadeDriver;
+
     [Header("Tile Pooling (chunk streaming only)")]
     [SerializeField] private bool _enableTilePooling = true;
     [SerializeField, Min(0)] private int _maxPooledInstances = 2000;
@@ -102,6 +106,49 @@ public class TileMapManager : MonoBehaviour
 
         ctx = _floorPolicy.ResolveContext(playerWorld.y, playerWorld);
         return true;
+    }
+
+    /// <summary>
+    /// 월드 발밑 점유셀의 Floor(없으면 임의 타일)가 structural show인지.
+    /// 타일 없으면 false. 정책 미초기화면 true(페이드는 거리·LOS만).
+    /// </summary>
+    public bool IsWorldStructurallyVisible(Vector3 world, in FloorVisibilityContext ctx)
+    {
+        if (_floorPolicy == null || _mapCacheHub == null)
+            return true;
+
+        float cellSize = _worldGrid != null ? _worldGrid.CellSize : _gridCellSize;
+        Vector3Int cell = OccupiedCellCoord.ResolveFromWorld(_mapCacheHub, world, cellSize, world.y);
+        if (!_mapCacheHub.TryGetCellTiles(cell.x, cell.z, cell.y, out var tiles) ||
+            tiles == null ||
+            tiles.Count == 0)
+        {
+            return false;
+        }
+
+        bool anyFloor = false;
+        for (int i = 0; i < tiles.Count; i++)
+        {
+            TileData tile = tiles[i];
+            if (!TileIdentityUtil.IsFloorTile(tile.identity))
+                continue;
+
+            anyFloor = true;
+            if (_floorPolicy.IsTileVisible(tile, in ctx))
+                return true;
+        }
+
+        if (anyFloor)
+            return false;
+
+        for (int i = 0; i < tiles.Count; i++)
+        {
+            TileData tile = tiles[i];
+            if (_floorPolicy.IsTileVisible(tile, in ctx))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -191,6 +238,22 @@ public class TileMapManager : MonoBehaviour
         SetupMapCollisionServices();
         SetupMapBlood();
         SetupMapPlant();
+
+        if (_characterSightFadeDriver == null)
+        {
+            MonoBehaviour[] behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (int i = 0; i < behaviours.Length; i++)
+            {
+                if (behaviours[i] is IMapSightFadeDriver)
+                {
+                    _characterSightFadeDriver = behaviours[i];
+                    break;
+                }
+            }
+        }
+
+        if (_characterSightFadeDriver is IMapSightFadeDriver sightFade)
+            sightFade.Init(this);
     }
 
     void SetupMapBlood()
@@ -211,7 +274,7 @@ public class TileMapManager : MonoBehaviour
             _plantHost = gameObject.AddComponent<MapPlantHost>();
 
         float cellSize = _worldGrid != null ? _worldGrid.CellSize : _gridCellSize;
-        _plantHost.BindMapContext(_mapCacheHub, cellSize, _prefabDB);
+        _plantHost.BindMapContext(_mapCacheHub, cellSize, _prefabDB, _controller, Model);
         MapClockSnapshot.RestoreFromDto(_loader != null ? _loader.LastLoadedDto : null);
         _plantHost.LoadFromDto(_loader != null ? _loader.LastLoadedDto : null);
     }
@@ -224,6 +287,8 @@ public class TileMapManager : MonoBehaviour
         if (_proximityBlendDriver is IProximityBlendDriver proximityBlend)
             proximityBlend.Shutdown();
         _occlusionDisplayDriver?.Shutdown();
+        if (_characterSightFadeDriver is IMapSightFadeDriver sightFade)
+            sightFade.Shutdown();
     }
 
     private void WireTilePresentationApplier()

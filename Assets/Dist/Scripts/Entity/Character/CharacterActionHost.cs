@@ -27,6 +27,7 @@ public sealed class CharacterActionHost : MonoBehaviour
     InventoryTimedMoveHost _moveHost;
     CharacterAttacker _attacker;
     CharacterArriveHost _arriveHost;
+    FarmCellActionHost _farmActionHost;
     CharacterActionKind _currentKind;
     bool _dispatching;
     float _tickScale = 1f;
@@ -42,6 +43,12 @@ public sealed class CharacterActionHost : MonoBehaviour
         (_currentKind != CharacterActionKind.None && _currentKind != CharacterActionKind.Combat);
 
     public event Action Changed;
+
+    /// <summary>Map Arrive(자동이동) 중 — 게이지는 fill 대신 AutoProgressIcon.</summary>
+    public bool IsMapArriving =>
+        _currentKind == CharacterActionKind.Map &&
+        _arriveHost != null &&
+        _arriveHost.IsBusy;
 
     public float Progress01
     {
@@ -60,7 +67,7 @@ public sealed class CharacterActionHost : MonoBehaviour
                 case CharacterActionKind.Combat:
                     return _attacker != null ? _attacker.CooldownProgress01 : 0f;
                 case CharacterActionKind.Map:
-                    return 0f;
+                    return _farmActionHost != null ? _farmActionHost.WorkProgress01 : 0f;
                 default:
                     return 0f;
             }
@@ -74,6 +81,7 @@ public sealed class CharacterActionHost : MonoBehaviour
         TryGetComponent(out _moveHost);
         TryGetComponent(out _attacker);
         TryGetComponent(out _arriveHost);
+        TryGetComponent(out _farmActionHost);
         if (_crafting == null)
             _crafting = FindAnyObjectByType<UICraftingController>();
         RefreshTickScale();
@@ -211,7 +219,8 @@ public sealed class CharacterActionHost : MonoBehaviour
             case CharacterActionKind.Combat:
                 return _attacker != null && _attacker.IsActionBusy;
             case CharacterActionKind.Map:
-                return _arriveHost != null && _arriveHost.IsBusy;
+                return (_farmActionHost != null && _farmActionHost.IsBusy) ||
+                       (_arriveHost != null && _arriveHost.IsBusy);
             default:
                 return false;
         }
@@ -231,7 +240,10 @@ public sealed class CharacterActionHost : MonoBehaviour
                 _crafting?.CancelRunningCraft();
                 break;
             case CharacterActionKind.Map:
-                _arriveHost?.Cancel();
+                if (_farmActionHost != null)
+                    _farmActionHost.Cancel();
+                else
+                    _arriveHost?.Cancel();
                 break;
         }
     }

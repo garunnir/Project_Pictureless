@@ -9,6 +9,9 @@ using UnityEngine;
     menuName = "Dist/Time/World Clock Settings")]
 public sealed class WorldClockSettings : ScriptableObject
 {
+    public const string DefaultAssetPath =
+        "Assets/Dist/SOData/Gameplay/Time/WorldClockSettings.asset";
+
     public const int DefaultMinutesPerDay = 24 * 60;
     public const float DefaultWorldMinutesPerRealtimeSecond = 1f;
     public const int DefaultDaysPerYear = 364;

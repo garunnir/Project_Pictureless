@@ -12,6 +12,9 @@ using UnityEngine.Serialization;
     menuName = "Dist/Combat/Arm Anim Pipeline")]
 public sealed class ArmAnimSlotCatalog : ScriptableObject
 {
+    public const string DefaultAssetPath =
+        "Assets/Dist/SOData/Combat/Fallbacks/ArmAnimSlotCatalog.asset";
+
     const string TabVerbs = "동사 기본";
     const string TabImpact = "Impact 반응";
     const string TabThin = "thin SM";

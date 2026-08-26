@@ -9,6 +9,18 @@ namespace IsoTilemap
         public Guid tileDefId{init; get;}
         public TileState state;
         public TileIdentity identity{init; get;}
+        /// <summary>OccupiedCell plant instance. Empty seedItemId = not a plant tile.</summary>
+        public PlantTileInstance plant;
+    }
+
+    [Serializable]
+    public struct PlantTileInstance
+    {
+        public string seedItemId;
+        public int plantedWorldMinute;
+        public bool fertilized;
+
+        public bool HasSeed => !string.IsNullOrEmpty(seedItemId);
     }
     public struct TileState
     {

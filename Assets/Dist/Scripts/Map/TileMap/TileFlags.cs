@@ -11,6 +11,12 @@ namespace IsoTilemap
         public const string Plantable = "PLANTABLE";
         public const string Plowable = "PLOWABLE";
         public const string Diggable = "DIGGABLE";
+        public const string Plant = "PLANT";
+        public const string GrowthSeed = "GROWTH_SEED";
+        public const string GrowthSeedling = "GROWTH_SEEDLING";
+        public const string GrowthMature = "GROWTH_MATURE";
+        public const string GrowthHarvest = "GROWTH_HARVEST";
+        public const string GrowthWithered = "GROWTH_WITHERED";
 
         public static bool HasFlag(TileDefinition definition, string flag)
         {

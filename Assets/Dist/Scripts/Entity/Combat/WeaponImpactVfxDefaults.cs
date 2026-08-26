@@ -11,6 +11,9 @@ using UnityEngine;
     menuName = "Dist/Combat/Weapon Impact Vfx Defaults")]
 public sealed class WeaponImpactVfxDefaults : ScriptableObject
 {
+    public const string DefaultAssetPath =
+        "Assets/Dist/SOData/Combat/Fallbacks/WeaponImpactVfxDefaults.asset";
+
     [Serializable]
     public sealed class Entry
     {

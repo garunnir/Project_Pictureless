@@ -11,17 +11,28 @@ namespace IsoTilemap
     public sealed class MapPlantInteractable : MonoBehaviour
     {
         MeshFilter _filter;
-        MeshRenderer _renderer;
+        MeshRenderer _meshRenderer;
+        SpriteRenderer _spriteRenderer;
         int _appliedWorldMinute = int.MinValue;
         bool _appliedFertilized;
+        string _appliedSeedItemId;
         bool _hasApplied;
 
         public Vector3Int Cell { get; private set; }
 
         void Awake()
         {
-            TryGetComponent(out _filter);
-            TryGetComponent(out _renderer);
+            MapPlantVisualHierarchy.CacheFromRoot(
+                transform,
+                out _filter,
+                out _meshRenderer,
+                out _spriteRenderer);
+            if (_filter == null)
+                TryGetComponent(out _filter);
+            if (_meshRenderer == null)
+                TryGetComponent(out _meshRenderer);
+            if (_spriteRenderer == null)
+                TryGetComponent(out _spriteRenderer);
         }
 
         public void BindCell(Vector3Int cell)
@@ -43,19 +54,23 @@ namespace IsoTilemap
             int worldMinute = MapClockSnapshot.CurrentWorldMinute();
             if (_hasApplied &&
                 worldMinute == _appliedWorldMinute &&
-                plant.Fertilized == _appliedFertilized)
+                plant.Fertilized == _appliedFertilized &&
+                plant.SeedItemId == _appliedSeedItemId)
                 return;
 
             PlantGrowthStage stage = MapPlantOverlayVisual.ResolveStage(in plant);
             MapPlantOverlayVisual.Apply(
                 transform,
                 _filter,
-                _renderer,
+                _meshRenderer,
+                _spriteRenderer,
                 Cell,
                 host.CellSize,
-                stage);
+                stage,
+                plant.SeedItemId);
             _appliedWorldMinute = worldMinute;
             _appliedFertilized = plant.Fertilized;
+            _appliedSeedItemId = plant.SeedItemId;
             _hasApplied = true;
         }
     }

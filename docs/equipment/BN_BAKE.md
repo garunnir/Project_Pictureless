@@ -29,6 +29,14 @@ python Tools/bn_converter/export_tileset_icons.py --bn-path <Cataclysm-BN> --ite
 
 Writes `BNData/tileset/item_sprites.json` + referenced PNG. Runtime: `ItemVisualPresenter` (catalog override → tileset → default). Bake follows BN `looks_like` and implicit `copy-from` (item_factory, max 10 hops) from Cataclysm-BN JSON — still not a Dist POCO. Chain miss → default icon.
 
+Plant **map overlay** stage sprites (separate from item icons):
+
+```text
+python Tools/bn_converter/export_plant_sprites.py --bn-path <Cataclysm-BN> --output Assets/StreamingAssets/BNData/tileset
+```
+
+Writes `BNData/tileset/plant_sprites.json` (reuses furniture atlas PNG). Runtime: `PlantOverlayVisualPresenter` (Catalog override → BN stages → primitive fallback). Maps `f_plant_seed` / `seedling` / `mature` / `harvest` → `PlantGrowthStage`. `Withered` has no BN furniture id.
+
 ## Baked ( Dist typed fields )
 
 Item common: `id`, `name`(singular), `type`, `category`, `subcategory`, `description`, `weight`→`weight_g`, `volume`→`volume_ml`, `stack_size`/`count`→`max_stack`, `material`→`materials`, `flags`, `qualities`, `comestible_type`, `has_durability`, `repairs_like`, `repair_difficulty`, `bashing`, `cutting`, `to_hit`, `weapon_category`, `techniques`, consume `use_action` (`heal` / `consume_drug` / `ANTIBIOTIC` / `WEAK_ANTIBIOTIC` / `STRONG_ANTIBIOTIC`: `type`; heal keeps BN power keys `limb_power` / `bandages_power` / `head_power` / `torso_power` / `amount` / `bleed`; consume_drug `effect_id`/`duration`). Dist JSON `type` is lowercase (`antibiotic`, `weak_antibiotic`, `strong_antibiotic`). **BN 키 이름 유지** — 여러 BN 키를 Dist 한 키로 접거나 개명 금지 (`heal_amount` 금지). BN에 없는 키는 출력에 넣지 않음(`bleed` 포함). 중첩 객체는 **같은 키**에서 스칼라로만 unwrap.

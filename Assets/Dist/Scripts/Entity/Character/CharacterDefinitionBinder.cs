@@ -15,6 +15,7 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
     CharacterSkillsHost _skillsHost;
     CharacterAppearanceHost _appearanceHost;
     CharacterFactionHost _factionHost;
+    CharacterVision _vision;
 
     public CharacterDefinition Definition => _definition;
 
@@ -37,6 +38,14 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
             _appearanceHost.ApplyFromDefinition(definition);
         if (_factionHost != null)
             _factionHost.ApplyFromDefinition(definition);
+        if (_vision != null)
+            _vision.ApplyFromDefinition(definition);
+        else
+        {
+            Debug.LogError(
+                $"[CharacterDefinitionBinder] '{name}' needs CharacterVision on the prefab.",
+                this);
+        }
 
         DefaultCharacterSkills skills = definition.CreateSkills();
         CharacterBody body = definition.CreateBody();
@@ -75,6 +84,7 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
         _skillsHost = GetComponent<CharacterSkillsHost>();
         _appearanceHost ??= GetComponent<CharacterAppearanceHost>();
         _factionHost ??= GetComponent<CharacterFactionHost>();
+        _vision ??= GetComponent<CharacterVision>();
         if (_appearanceHost == null)
         {
             Debug.LogError(

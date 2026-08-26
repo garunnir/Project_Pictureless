@@ -48,6 +48,8 @@ public class CharacterState : MonoBehaviour
         MoveDir = desiredMove;
     }
 
+    internal void ClearMoveDir() => MoveDir = Vector3.zero;
+
     internal void SetAimDir(Vector3 dir, Vector3 aimWorldPoint, float interactionReach)
     {
         if (dir == Vector3.zero) return;

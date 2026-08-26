@@ -54,3 +54,4 @@ MonoBehaviour:
     count: 1
   - itemId: fertilizer_commercial
     count: 1
+  _spotAngleDegrees: 179

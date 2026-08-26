@@ -32,7 +32,8 @@
 
 | 심볼 | 소비 |
 |------|------|
-| `BleedBloodPerIntensityPerSecond` | `BodyEffectTicker` — Bleed intensity → `Blood01` drain |
+| `BleedBloodPerIntensityPerSecond` | `BodyEffectTicker` — 상처 bleed → `Blood01` drain |
+| `OrganBleedBloodPerIntensityPerSecond` | `BodyEffectTicker` — `organ_bleed` drain |
 | `CutBleedMinIntensity` | `BleedIntensityForCut` |
 | `BleedIntensityForCut(cutHp)` | `BodyInjury.SyncBleedFromOpenCut`, `EnsureBleedFromOpenCut` |
 

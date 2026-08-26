@@ -6,6 +6,7 @@ using UnityEngine;
 
 public sealed class UIPlayerStatusSummaryController : MonoBehaviour
 {
+    [SerializeField] PlayerStatusUIBridge _bridge;
     [SerializeField] UIPlayerStatusSummaryPanel _panel;
     [SerializeField] UICharacterController _characterController;
 
@@ -14,20 +15,29 @@ public sealed class UIPlayerStatusSummaryController : MonoBehaviour
 
     void Awake()
     {
-        if (_panel == null)
+        if (_bridge == null)
+            _bridge = PlayerStatusUIBridge.Instance;
+
+        if (_panel == null || _bridge == null)
         {
             Debug.LogError(
-                "[UIPlayerStatusSummaryController] _panel is not assigned. " +
-                "Run Dist/MCP/PlayerStatus/Setup Canvas In Open Scene to place HUD in the scene.",
+                "[UIPlayerStatusSummaryController] Bridge/panel missing — HUD disabled. " +
+                "Run Dist/MCP/PlayerStatus/Setup Canvas In Open Scene.",
                 this);
+            enabled = false;
+            if (_panel != null)
+                _panel.gameObject.SetActive(false);
             return;
         }
 
-        if (!PlayerStatusUIBridge.TryResolve(out _viewModel))
+        _viewModel = _bridge.ViewModel;
+        if (_viewModel == null)
         {
             Debug.LogError(
-                "[UIPlayerStatusSummaryController] PlayerStatusUIBridge not found in scene.",
+                "[UIPlayerStatusSummaryController] ViewModel null — HUD disabled.",
                 this);
+            enabled = false;
+            _panel.gameObject.SetActive(false);
             return;
         }
 

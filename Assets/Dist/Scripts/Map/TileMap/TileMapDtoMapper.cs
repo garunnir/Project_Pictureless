@@ -44,7 +44,15 @@ namespace IsoTilemap
                         td.prefabId,
                         new Vector3Int(td.x, td.y, td.z),
                         out var occupied))
-                    prepareData.Add(MakeTile(occupied));
+                {
+                    var plant = new PlantTileInstance
+                    {
+                        seedItemId = td.seedItemId,
+                        plantedWorldMinute = td.plantedWorldMinute,
+                        fertilized = td.fertilized,
+                    };
+                    prepareData.Add(MakeTile(occupied, plant));
+                }
             }
 
             if (tileMapData.wallEdges != null)
@@ -114,6 +122,9 @@ namespace IsoTilemap
                             y = ti.identity.GridPos.y,
                             z = ti.identity.GridPos.z,
                             prefabId = ti.identity.PrefabId,
+                            seedItemId = ti.plant.HasSeed ? ti.plant.seedItemId : null,
+                            plantedWorldMinute = ti.plant.plantedWorldMinute,
+                            fertilized = ti.plant.fertilized,
                         });
                         break;
                 }
@@ -137,11 +148,15 @@ namespace IsoTilemap
         }
 
         static TileData MakeTile(in TileIdentity identity) =>
+            MakeTile(identity, default);
+
+        static TileData MakeTile(in TileIdentity identity, in PlantTileInstance plant) =>
             new TileData
             {
                 tileDefId = Guid.NewGuid(),
                 state = new TileState(),
                 identity = identity,
+                plant = plant,
             };
 
         static bool TryMakeHorizontalFaceIdentity(string prefabId, Vector3Int anchor, out TileIdentity identity) =>

@@ -17,5 +17,5 @@ public sealed class FertilizeContextAction : IContextMenuAction
         MapPlantService.GetFertilizeBlockedReason(_cell);
 
     public void Execute() =>
-        MapPlantService.TryFertilize(_cell);
+        FarmCellTargetFlow.BeginFertilizeTile();
 }

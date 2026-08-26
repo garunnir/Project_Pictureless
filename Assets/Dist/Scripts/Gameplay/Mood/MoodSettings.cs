@@ -8,6 +8,9 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "MoodSettings", menuName = "Dist/Mood/Settings")]
 public sealed class MoodSettings : ScriptableObject
 {
+    public const string DefaultAssetPath =
+        "Assets/Dist/SOData/Gameplay/Mood/MoodSettings.asset";
+
     public const float DefaultBaseMood = 50f;
     public const float DefaultMoodMin = 0f;
     public const float DefaultMoodMax = 100f;

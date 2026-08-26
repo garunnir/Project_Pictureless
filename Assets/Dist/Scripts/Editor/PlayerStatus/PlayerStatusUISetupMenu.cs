@@ -26,8 +26,7 @@ static class PlayerStatusUISetupMenu
     const string FullBandageObjectName = "bandage";
     const float BandageMaskAlphaMin = 0.5f;
     const string MoodSpriteFolder = "Assets/Dist/Visual/Sprites/UI/PlayerStatus/Mood";
-    const string MoodCatalogAssetPath =
-        "Assets/Dist/SOData/Gameplay/PlayerStatus/PlayerStatusMoodIconCatalog.asset";
+    const string MoodCatalogAssetPath = PlayerStatusMoodIconCatalog.DefaultAssetPath;
     const string SoGameplayFolder = "Assets/Dist/SOData/Gameplay";
     const string SoPlayerStatusFolder = SoGameplayFolder + "/PlayerStatus";
 
@@ -1486,8 +1485,6 @@ static class PlayerStatusUISetupMenu
             layerHost = Undo.AddComponent<UICanvasLayerHost>(canvas.gameObject);
         layerHost.EditorSetupLayerHierarchy();
 
-        EnsureBridge(canvas);
-
         Transform systemRoot = SystemHierarchySetup.ResolveSystemRoot();
         if (systemRoot == null)
         {
@@ -1499,6 +1496,9 @@ static class PlayerStatusUISetupMenu
         Transform playerStatusRoot = SystemHierarchySetup.EnsureCategory(
             systemRoot,
             SystemHierarchySetup.PlayerStatus);
+
+        PlayerStatusUIBridge bridge = EnsureBridge(playerStatusRoot);
+        RemoveLegacyCanvasBridge(canvas, bridge);
 
         UICharacterController controller = Object.FindAnyObjectByType<UICharacterController>();
         if (controller == null)
@@ -1536,6 +1536,10 @@ static class PlayerStatusUISetupMenu
         PlayerStatusWindowLauncher launcher = EnsureHudLauncher(layerHost, controller);
         so.FindProperty("_launcher").objectReferenceValue = launcher;
 
+        SerializedProperty bridgeOnController = so.FindProperty("_bridge");
+        if (bridgeOnController != null)
+            bridgeOnController.objectReferenceValue = bridge;
+
         UIPlayerStatusSummaryController summaryController =
             EnsureSummaryController(playerStatusRoot);
         so.ApplyModifiedPropertiesWithoutUndo();
@@ -1564,6 +1568,9 @@ static class PlayerStatusUISetupMenu
 
         SerializedObject summarySo = new(summaryController);
         summarySo.FindProperty("_panel").objectReferenceValue = summaryPanel;
+        SerializedProperty bridgeOnSummary = summarySo.FindProperty("_bridge");
+        if (bridgeOnSummary != null)
+            bridgeOnSummary.objectReferenceValue = bridge;
         SerializedProperty characterCtrlProp = summarySo.FindProperty("_characterController");
         if (characterCtrlProp != null)
             characterCtrlProp.objectReferenceValue = controller;
@@ -1576,19 +1583,63 @@ static class PlayerStatusUISetupMenu
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
+        WireLifeThreatBridge(layerHost, bridge);
+
         MergeLocalizationKeys();
         EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
         Debug.Log(
-            "[PlayerStatusUISetupMenu] Controller + summary HUD scene instance wired.",
+            "[PlayerStatusUISetupMenu] Bridge SSOT + controller + summary HUD wired.",
             summaryPanel);
     }
 
-    static PlayerStatusUIBridge EnsureBridge(Canvas canvas)
+    static PlayerStatusUIBridge EnsureBridge(Transform playerStatusRoot)
     {
-        PlayerStatusUIBridge bridge = canvas.GetComponent<PlayerStatusUIBridge>();
-        if (bridge == null)
-            bridge = Undo.AddComponent<PlayerStatusUIBridge>(canvas.gameObject);
-        return bridge;
+        PlayerStatusUIBridge onRoot = playerStatusRoot.GetComponent<PlayerStatusUIBridge>();
+        if (onRoot != null)
+            return onRoot;
+
+        PlayerStatusUIBridge existing = Object.FindAnyObjectByType<PlayerStatusUIBridge>();
+        if (existing != null && existing.transform.IsChildOf(playerStatusRoot))
+            return existing;
+
+        if (existing != null)
+            Undo.DestroyObjectImmediate(existing);
+
+        return Undo.AddComponent<PlayerStatusUIBridge>(playerStatusRoot.gameObject);
+    }
+
+    static void RemoveLegacyCanvasBridge(Canvas canvas, PlayerStatusUIBridge keep)
+    {
+        if (canvas == null)
+            return;
+
+        PlayerStatusUIBridge onCanvas = canvas.GetComponent<PlayerStatusUIBridge>();
+        if (onCanvas == null || onCanvas == keep)
+            return;
+
+        Undo.DestroyObjectImmediate(onCanvas);
+    }
+
+    static void WireLifeThreatBridge(UICanvasLayerHost layerHost, PlayerStatusUIBridge bridge)
+    {
+        if (layerHost == null || bridge == null)
+            return;
+
+        Transform hud = layerHost.GetLayerRoot(UICanvasLayer.HUD);
+        if (hud == null)
+            return;
+
+        UIHudLifeThreatOverlay overlay = hud.GetComponentInChildren<UIHudLifeThreatOverlay>(true);
+        if (overlay == null)
+            return;
+
+        SerializedObject overlaySo = new(overlay);
+        SerializedProperty bridgeProp = overlaySo.FindProperty("_bridge");
+        if (bridgeProp == null)
+            return;
+
+        bridgeProp.objectReferenceValue = bridge;
+        overlaySo.ApplyModifiedPropertiesWithoutUndo();
     }
 
     static UIPlayerStatusSummaryController EnsureSummaryController(Transform playerStatusRoot)
@@ -1770,12 +1821,7 @@ static class PlayerStatusUISetupMenu
         AssetDatabase.SaveAssets();
 
         PlayerStatusMoodIconCatalog catalog =
-            AssetDatabase.LoadAssetAtPath<PlayerStatusMoodIconCatalog>(MoodCatalogAssetPath);
-        if (catalog == null)
-        {
-            catalog = ScriptableObject.CreateInstance<PlayerStatusMoodIconCatalog>();
-            AssetDatabase.CreateAsset(catalog, MoodCatalogAssetPath);
-        }
+            DistScriptableObjectEnsure.LoadOrCreate<PlayerStatusMoodIconCatalog>(MoodCatalogAssetPath);
 
         SerializedObject catalogSo = new(catalog);
         catalogSo.FindProperty("_backPlate").objectReferenceValue =
@@ -2072,6 +2118,16 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.Mood.OffBalance.Fallen", "중심을 잃고 쓰러졌다");
         Put("PlayerStatus.Mood.Pale", "핏기가 없다");
         Put("PlayerStatus.Mood.Pale.Critical", "과다출혈로 쓰러질 것 같다");
+        Put("PlayerStatus.Bleed.DrainRateFormat", "혈량 감소: {0}%/초");
+        Put("PlayerStatus.Bleed.EtaFormat", "완전 출혈까지: {0}");
+        Put("PlayerStatus.Bleed.BandagedBlock", "붕대로 출혈이 막혀 있다");
+        Put("PlayerStatus.Bleed.Prose.Bandaged", "붕대로 출혈이 막혀 있다");
+        Put("PlayerStatus.Bleed.Prose.Mild", "피가 서서히 빠진다");
+        Put("PlayerStatus.Bleed.Prose.Moderate", "피가 계속 빠진다");
+        Put("PlayerStatus.Bleed.Prose.Severe", "피가 빠르게 줄어든다");
+        Put("PlayerStatus.Bleed.VitalsNumeric", "출혈  감소 {0}%/초 · 완전 출혈 {1}");
+        Put("PlayerStatus.Bleed.DurationMinutes", "{0}분 {1}초");
+        Put("PlayerStatus.Bleed.DurationSeconds", "{0}초");
         Put("PlayerStatus.Mood.Fading", "의식이 흐릿하다");
         Put("PlayerStatus.Mood.Fading.Downed", "의식이 가물거린다");
         Put("PlayerStatus.Mood.Fading.Fatal", "의식이 끊겼다");

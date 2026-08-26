@@ -26,7 +26,7 @@ Editor: `Assets/Dist/Scripts/Editor/Settings/SettingsUISetupMenu.cs`
 
 
 
-- **ESC** → `UiCancelRouter`가 우선순위대로 Cancel 1명만 처리. 세팅은 **폴백**(Priority `0`).
+- **ESC** → `UiCancelRouter`가 우선순위대로 Cancel 1명만 처리. 세팅은 **폴백**(Priority `-100`, 맨 뒤).
 
 - 세팅 **Overlay** (`UICanvasLayer.Overlay`): 좌측 패널, HUD는 뒤에 보임.
 
@@ -54,11 +54,13 @@ Editor: `Assets/Dist/Scripts/Editor/Settings/SettingsUISetupMenu.cs`
 
 | 80 | `UiCancelPriority.ModalPopup` | (예약) |
 
+| 75 | `UiCancelPriority.FarmCellTarget` | `FarmCellTargetSession` |
+
 | 60 | `UiCancelPriority.CharacterAction` | `CharacterActionCancelConsumer` (possessed `CancelAll`) |
 
 | 40 | `UiCancelPriority.OverlayWindow` | (예약) |
 
-| 0 | `UiCancelPriority.Settings` | `UISettingsController` |
+| -100 | `UiCancelPriority.Settings` | `UISettingsController` (ESC 폴백) |
 
 
 

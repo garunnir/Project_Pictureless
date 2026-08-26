@@ -9,6 +9,9 @@ using UnityEngine;
     menuName = "Dist/Needs/Player Needs Settings")]
 public sealed class PlayerNeedsSettings : ScriptableObject
 {
+    public const string DefaultAssetPath =
+        "Assets/Dist/SOData/Gameplay/Needs/PlayerNeedsSettings.asset";
+
     public const int DefaultDailyKcalBurn = 2500;
     public const int DefaultMaxStoredKcal = 17500;
     public const float DefaultStomachCapacityMl = 1500f;

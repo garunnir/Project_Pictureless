@@ -7,6 +7,15 @@ using IsoTilemap;
 [RequireComponent(typeof(UiMenuInputBehaviour))]
 public class UIConstruction : MonoBehaviour
 {
+    public static bool IsOpen
+    {
+        get
+        {
+            UIConstruction ui = FindFirstObjectByType<UIConstruction>(FindObjectsInactive.Include);
+            return ui != null && ui.isActiveAndEnabled;
+        }
+    }
+
     [SerializeField] Button prevBtn;
     [SerializeField] Button nextBtn;
     [SerializeField] Button closeBtn;
@@ -97,6 +106,8 @@ public class UIConstruction : MonoBehaviour
         btn.image.color = Color.yellow;
 
         _placementState.Select(def);
+        _gridCursor.SetActive(true);
+        _gridCursor.SyncFromPointer();
     }
 
     void OnPagination(InputAction.CallbackContext context)
@@ -123,12 +134,16 @@ public class UIConstruction : MonoBehaviour
     void Close()
     {
         _placementState.Clear();
-        _gridCursor.SetActive(false);
+        if (!FarmCellTargetSession.IsActive)
+            _gridCursor.SetActive(false);
         gameObject.SetActive(false);
     }
 
     public void Open()
     {
+        if (FarmCellTargetSession.IsActive)
+            return;
+
         gameObject.SetActive(true);
         _gridCursor.SetActive(true);
     }

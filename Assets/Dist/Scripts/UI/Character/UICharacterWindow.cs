@@ -512,6 +512,13 @@ public sealed class UICharacterWindow : MonoBehaviour
             }
         }
 
+        ICharacterBody body = _viewModel?.Body;
+        if (body != null && PlayerStatusBleedDisplay.TrySnapshot(body, out PlayerStatusBleedSnapshot bleedSnap))
+        {
+            lines.Add(string.Empty);
+            lines.Add(PlayerStatusLabels.FormatBleedVitalsLine(bleedSnap, showNumeric));
+        }
+
         CharacterMoodHost mood = CharacterMoodHost.Active;
         if (mood != null)
         {

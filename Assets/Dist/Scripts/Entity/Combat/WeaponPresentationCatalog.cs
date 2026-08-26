@@ -15,8 +15,10 @@ using UnityEditor;
     menuName = "Dist/Combat/Weapon Presentation Catalog")]
 public sealed class WeaponPresentationCatalog : ScriptableObject
 {
-    const string FallbacksAssetPath =
-        "Assets/Dist/SOData/Combat/Fallbacks/WeaponCombatFallbacks.asset";
+    public const string DefaultAssetPath =
+        "Assets/Dist/SOData/Combat/Catalog/WeaponPresentationCatalog.asset";
+
+    const string FallbacksAssetPath = WeaponCombatFallbacks.DefaultAssetPath;
 
     [Serializable]
     public sealed class Binding

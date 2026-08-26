@@ -10,13 +10,12 @@ using UnityEngine;
 
 public static class WeaponRangedLeafEnsurer
 {
-    const string CatalogPath =
-        "Assets/Dist/SOData/Combat/Catalog/WeaponPresentationCatalog.asset";
+    const string CatalogPath = WeaponPresentationCatalog.DefaultAssetPath;
 
     [MenuItem("Dist/MCP/Ensure Ranged Leaf Entries")]
     public static void EnsureAll()
     {
-        var catalog = AssetDatabase.LoadAssetAtPath<WeaponPresentationCatalog>(CatalogPath);
+        var catalog = DistScriptableObjectEnsure.LoadOrCreate<WeaponPresentationCatalog>(CatalogPath);
         if (catalog == null)
         {
             Debug.LogError("[WeaponRangedLeafEnsurer] Catalog missing.");

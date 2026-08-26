@@ -9,6 +9,9 @@ using UnityEngine;
     menuName = "Dist/Combat/Hit Stop Settings")]
 public sealed class CombatHitStopSettings : ScriptableObject
 {
+    public const string DefaultAssetPath =
+        "Assets/Dist/SOData/Combat/Fallbacks/CombatHitStopSettings.asset";
+
     public const float DefaultHitSeconds = 0.05f;
     public const float DefaultBlockedSeconds = 0.08f;
     public const float DefaultSeverSeconds = 0.12f;

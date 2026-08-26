@@ -10,6 +10,7 @@ public static class CharacterActionGaugeLayout
         "Assets/Dist/Visual/Prefabs/UIComponents/Character/Grp_CharacterActionGauge.prefab";
     public const string RootName = "Grp_CharacterActionGauge";
     public const string FillName = "Img_Fill";
+    public const string AutoProgressIconName = "Img_AutoProgressIcon";
     public const float WorldScale = 0.01f;
     public const float LocalY = 2.2f;
     public static readonly Vector2 Size = new(120f, 14f);

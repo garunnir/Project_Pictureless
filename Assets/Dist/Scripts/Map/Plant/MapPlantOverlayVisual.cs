@@ -1,5 +1,5 @@
 // ============================================================
-// MapPlantOverlayVisual — Dist-only plant overlay look by PlantGrowthStage
+// MapPlantOverlayVisual — plant overlay look by PlantGrowthStage (sprite or primitive)
 // ============================================================
 
 using UnityEngine;
@@ -33,12 +33,84 @@ namespace IsoTilemap
         public static void Apply(
             Transform transform,
             MeshFilter filter,
+            MeshRenderer meshRenderer,
+            SpriteRenderer spriteRenderer,
+            Vector3Int cell,
+            float cellSize,
+            PlantGrowthStage stage,
+            string seedItemId = null)
+        {
+            EnsureAssets();
+            Sprite sprite = PlantOverlayVisualPresenter.GetStageSprite(stage, seedItemId);
+            bool useSprite = sprite != null && spriteRenderer != null;
+
+            if (useSprite)
+                ApplySprite(transform, filter, meshRenderer, spriteRenderer, cell, cellSize, stage, sprite);
+            else
+                ApplyPrimitive(transform, filter, meshRenderer, spriteRenderer, cell, cellSize, stage);
+        }
+
+        /// <summary>Legacy call sites without SpriteRenderer — primitive path only.</summary>
+        public static void Apply(
+            Transform transform,
+            MeshFilter filter,
             MeshRenderer renderer,
             Vector3Int cell,
             float cellSize,
             PlantGrowthStage stage)
         {
-            EnsureAssets();
+            Apply(transform, filter, renderer, null, cell, cellSize, stage, null);
+        }
+
+        static void ApplySprite(
+            Transform transform,
+            MeshFilter filter,
+            MeshRenderer meshRenderer,
+            SpriteRenderer spriteRenderer,
+            Vector3Int cell,
+            float cellSize,
+            PlantGrowthStage stage,
+            Sprite sprite)
+        {
+            float scale = SpriteScaleFor(stage);
+            if (transform != null)
+            {
+                transform.localScale = new Vector3(scale, scale, scale);
+                Vector3 pos = TileHelper.ConvertGridToWorldPos(cell, cellSize);
+                pos.y += MapPlantConsts.OverlayYOffset;
+                transform.position = pos;
+            }
+
+            if (filter != null)
+                filter.sharedMesh = null;
+
+            if (meshRenderer != null)
+                meshRenderer.enabled = false;
+
+            spriteRenderer.enabled = true;
+            spriteRenderer.sprite = sprite;
+            spriteRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            spriteRenderer.receiveShadows = false;
+            spriteRenderer.color = stage == PlantGrowthStage.Withered
+                ? MapPlantConsts.OverlayColorWithered
+                : Color.white;
+        }
+
+        static void ApplyPrimitive(
+            Transform transform,
+            MeshFilter filter,
+            MeshRenderer meshRenderer,
+            SpriteRenderer spriteRenderer,
+            Vector3Int cell,
+            float cellSize,
+            PlantGrowthStage stage)
+        {
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.sprite = null;
+                spriteRenderer.enabled = false;
+            }
+
             Vector3 scale = ScaleFor(stage);
             if (transform != null)
             {
@@ -51,13 +123,31 @@ namespace IsoTilemap
             if (filter != null)
                 filter.sharedMesh = MeshFor(stage);
 
-            if (renderer != null)
+            if (meshRenderer != null)
             {
-                renderer.shadowCastingMode = ShadowCastingMode.Off;
-                renderer.receiveShadows = false;
+                meshRenderer.enabled = true;
+                meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                meshRenderer.receiveShadows = false;
                 int index = StageIndex(stage);
                 if (_materials != null && index >= 0 && index < _materials.Length)
-                    renderer.sharedMaterial = _materials[index];
+                    meshRenderer.sharedMaterial = _materials[index];
+            }
+        }
+
+        static float SpriteScaleFor(PlantGrowthStage stage)
+        {
+            switch (stage)
+            {
+                case PlantGrowthStage.Seedling:
+                    return MapPlantConsts.SpriteWorldScaleSeedling;
+                case PlantGrowthStage.Mature:
+                    return MapPlantConsts.SpriteWorldScaleMature;
+                case PlantGrowthStage.Harvestable:
+                    return MapPlantConsts.SpriteWorldScaleHarvestable;
+                case PlantGrowthStage.Withered:
+                    return MapPlantConsts.SpriteWorldScaleWithered;
+                default:
+                    return MapPlantConsts.SpriteWorldScaleSeed;
             }
         }
 

@@ -1,0 +1,48 @@
+{
+  "_license": "CC BY-SA 3.0 — derived from Cataclysm: Bright Nights tileset",
+  "_source": "https://github.com/cataclysmbnteam/Cataclysm-BN",
+  "tileset": "MSX++UnDeadPeopleEdition",
+  "ppu": 100,
+  "files": {
+    "normal_furniture.png": {
+      "sprite_width": 32,
+      "sprite_height": 32
+    }
+  },
+  "stages": {
+    "Harvestable": {
+      "file": "normal_furniture.png",
+      "index": 244
+    },
+    "Mature": {
+      "file": "normal_furniture.png",
+      "index": 261
+    },
+    "Seed": {
+      "file": "normal_furniture.png",
+      "index": 278
+    },
+    "Seedling": {
+      "file": "normal_furniture.png",
+      "index": 295
+    }
+  },
+  "furniture": {
+    "f_plant_harvest": {
+      "file": "normal_furniture.png",
+      "index": 244
+    },
+    "f_plant_mature": {
+      "file": "normal_furniture.png",
+      "index": 261
+    },
+    "f_plant_seed": {
+      "file": "normal_furniture.png",
+      "index": 278
+    },
+    "f_plant_seedling": {
+      "file": "normal_furniture.png",
+      "index": 295
+    }
+  }
+}

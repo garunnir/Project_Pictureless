@@ -19,8 +19,7 @@ public static class PlayerStatusUIFactory
     const string ArmRSpritePath = BodyPartSpriteFolder + "PlayerStatus_ArmR.png";
     const string LegLSpritePath = BodyPartSpriteFolder + "PlayerStatus_LegL.png";
     const string LegRSpritePath = BodyPartSpriteFolder + "PlayerStatus_LegR.png";
-    const string MoodCatalogAssetPath =
-        "Assets/Dist/SOData/Gameplay/PlayerStatus/PlayerStatusMoodIconCatalog.asset";
+    const string MoodCatalogAssetPath = PlayerStatusMoodIconCatalog.DefaultAssetPath;
     const string OutlineSpriteFolder = "Assets/Dist/Visual/Sprites/UI/Outline/";
     const string MoodFillSpritePath = OutlineSpriteFolder + "fill.png";
     const string MoodMaskSpritePath = OutlineSpriteFolder + "outlineMask.png";

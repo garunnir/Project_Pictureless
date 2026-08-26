@@ -162,7 +162,8 @@ namespace Garunnir.Runtime.Gameplay.Data
             for (int i = 0; i < effects.Count; i++)
             {
                 BodyPartEffect e = effects[i];
-                if (e.EffectId == BodyPartEffectIds.Bleed)
+                if (e.EffectId == BodyPartEffectIds.Bleed
+                    || e.EffectId == BodyPartEffectIds.OrganBleed)
                     pain += e.Intensity * BleedPainPerIntensity;
                 else
                     pain += e.Intensity * BodyInjury.PainPerIntensity(e.EffectId);

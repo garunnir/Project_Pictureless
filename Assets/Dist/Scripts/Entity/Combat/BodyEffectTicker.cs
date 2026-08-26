@@ -68,10 +68,15 @@ public sealed class BodyEffectTicker : MonoBehaviour
         if (!body.TryGet(node.PartId, out node) || node == null)
             return;
 
-        int bleed = BleedIntensityOn(node);
+        int woundBleed = BleedIntensityOn(node, BodyPartEffectIds.Bleed);
+        int organBleed = BleedIntensityOn(node, BodyPartEffectIds.OrganBleed);
+        int bleed = woundBleed + organBleed;
         if (bleed > 0)
         {
-            float drain = bleed * BodyIllness.BleedBloodPerIntensityPerSecond * dt;
+            float drain = (
+                              woundBleed * BodyIllness.BleedBloodPerIntensityPerSecond
+                              + organBleed * BodyIllness.OrganBleedBloodPerIntensityPerSecond)
+                          * dt;
             if (HasEffect(node, BodyPartEffectIds.Bandaged))
                 AbsorbIntoBandage(body, node, drain);
             else
@@ -152,7 +157,7 @@ public sealed class BodyEffectTicker : MonoBehaviour
 
         if (node.HasCondition)
         {
-            int bleed = BleedIntensityOn(node);
+            int bleed = TotalBleedIntensityOn(node);
             bool hasInfected = HasEffect(node, BodyPartEffectIds.Infected);
             if (bleed > 0 && !hasInfected)
             {
@@ -230,13 +235,13 @@ public sealed class BodyEffectTicker : MonoBehaviour
         body.SetToxin01(body.Toxin01 - clear);
     }
 
-    static int BleedIntensityOn(BodyPartNode node)
+    static int BleedIntensityOn(BodyPartNode node, string effectId)
     {
         int sum = 0;
         IReadOnlyList<BodyPartEffect> effects = node.Effects;
         for (int i = 0; i < effects.Count; i++)
         {
-            if (effects[i].EffectId != BodyPartEffectIds.Bleed)
+            if (effects[i].EffectId != effectId)
                 continue;
             int intensity = effects[i].Intensity;
             sum += intensity < 1 ? 1 : intensity;
@@ -244,6 +249,10 @@ public sealed class BodyEffectTicker : MonoBehaviour
 
         return sum;
     }
+
+    static int TotalBleedIntensityOn(BodyPartNode node) =>
+        BleedIntensityOn(node, BodyPartEffectIds.Bleed)
+        + BleedIntensityOn(node, BodyPartEffectIds.OrganBleed);
 
     static int EffectIntensity(BodyPartNode node, string effectId)
     {

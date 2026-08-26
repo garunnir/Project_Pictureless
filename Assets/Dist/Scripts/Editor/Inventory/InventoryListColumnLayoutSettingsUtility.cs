@@ -1,34 +1,15 @@
 #if UNITY_EDITOR
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
 static class InventoryListColumnLayoutSettingsUtility
 {
-    public const string SettingsAssetPath =
-        "Assets/Dist/Resources/Inventory/InventoryListColumnLayoutSettings.asset";
+    public const string SettingsAssetPath = InventoryListColumnLayoutSettings.DefaultAssetPath;
 
     public static InventoryListColumnLayoutSettings LoadOrCreateSettings()
     {
-        var existing = AssetDatabase.LoadAssetAtPath<InventoryListColumnLayoutSettings>(SettingsAssetPath);
-        if (existing != null)
-        {
-            InventoryListColumnLayoutSettings.SetCachedDefault(existing);
-            return existing;
-        }
-
-        string folder = Path.GetDirectoryName(SettingsAssetPath)?.Replace('\\', '/');
-        if (!string.IsNullOrEmpty(folder) && !AssetDatabase.IsValidFolder(folder))
-        {
-            string parent = Path.GetDirectoryName(folder)?.Replace('\\', '/');
-            string leaf = Path.GetFileName(folder);
-            if (!string.IsNullOrEmpty(parent) && !string.IsNullOrEmpty(leaf))
-                AssetDatabase.CreateFolder(parent, leaf);
-        }
-
-        var settings = ScriptableObject.CreateInstance<InventoryListColumnLayoutSettings>();
-        AssetDatabase.CreateAsset(settings, SettingsAssetPath);
-        AssetDatabase.SaveAssets();
+        InventoryListColumnLayoutSettings settings =
+            DistScriptableObjectEnsure.LoadOrCreate<InventoryListColumnLayoutSettings>(SettingsAssetPath);
         InventoryListColumnLayoutSettings.SetCachedDefault(settings);
         return settings;
     }

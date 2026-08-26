@@ -29,6 +29,23 @@ public class PlayerAimController : MonoBehaviour
     public float SphereRadius => _sphereRadius;
     public float MaxAimDistance => _maxAimDistance;
 
+    public bool TryResolveSightWorldPoint(out Vector3 aimWorldPoint) =>
+        PlayerSightTarget.TryResolveWorldPoint(
+            _bodyTransform != null ? _bodyTransform : transform,
+            _refCam != null ? _refCam : Camera.main,
+            _topologyLineCast,
+            BuildSightSettings(),
+            out aimWorldPoint);
+
+    PlayerSightTarget.Settings BuildSightSettings() => new()
+    {
+        CastOriginYOffset = _castOriginYOffset,
+        SphereRadius = _sphereRadius,
+        MaxDistance = _maxAimDistance,
+        FlattenAimYToPlayerHeight = _flattenAimYToPlayerHeight,
+        ObstructionMask = _aimObstructionMask,
+    };
+
     void Awake()
     {
         _characterState = GetComponent<CharacterState>();
@@ -98,46 +115,21 @@ public class PlayerAimController : MonoBehaviour
         if (_characterState == null || !_isAiming || InputManager.Instance == null)
             return;
         if (!InputManager.Instance.IsPlayerActionEnabled(PlayerAction.Aim))
-            return;
-
-        Camera cam = _refCam != null ? _refCam : Camera.main;
-        Transform body = _bodyTransform != null ? _bodyTransform : transform;
-        Vector3 origin = body.position + Vector3.up * _castOriginYOffset;
-
-        // 마우스 교차 평면을 조준 높이(origin.y)에 맞춤 — 발 평면 교차 후 올리면 아이소에서 커서와 어긋남.
-        if (!ScreenRaycaster.TryGetMouseWorldPosition(cam, origin.y, out Vector3 mousePlanePos)) return;
-
-        Vector3 flatTarget = mousePlanePos;
-        flatTarget.y = origin.y;
-
-        Vector3 toTarget = flatTarget - origin;
-        toTarget.y = 0f;
-        float maxDist = Mathf.Min(toTarget.magnitude, _maxAimDistance);
-        if (maxDist < 1e-4f) return;
-        Vector3 dir = toTarget.normalized;
-
-        if (_topologyLineCast != null)
         {
-            Vector3 feetWorld = CharacterFeetPose.GetFeetWorld(body);
-            if (_topologyLineCast.TryGetBlockingDistance(feetWorld, dir, maxDist, out float blockDist))
-                maxDist = Mathf.Min(maxDist, blockDist);
+            _isAiming = false;
+            return;
         }
 
-        RaycastHit hit = default;
-        bool hasHit = Physics.SphereCast(origin, _sphereRadius, dir, out hit, maxDist,
-                _aimObstructionMask, QueryTriggerInteraction.Ignore);
-        Vector3 aimPoint;
-        if (hasHit)
-            aimPoint = hit.point;
-        else
-            aimPoint = origin + dir * maxDist;
+        if (!TryResolveSightWorldPoint(out Vector3 aimPoint))
+            return;
 
-        if (_flattenAimYToPlayerHeight)
-            aimPoint.y = body.position.y + _castOriginYOffset;
-
+        Transform body = _bodyTransform != null ? _bodyTransform : transform;
+        Vector3 origin = body.position + Vector3.up * _castOriginYOffset;
         Vector3 sightFlat = aimPoint - origin;
         sightFlat.y = 0f;
-        if (sightFlat.sqrMagnitude < 1e-4f) return;
+        if (sightFlat.sqrMagnitude < 1e-4f)
+            return;
+
         _characterState.SetAimDir(sightFlat.normalized, aimPoint, sightFlat.magnitude);
 
         if (ShouldDrawAimDebug)

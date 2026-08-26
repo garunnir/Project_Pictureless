@@ -54,10 +54,7 @@ public sealed class MoodBreakRuntime
             return;
 
         if (_pain != null && _pain.IsPainShocked)
-        {
-            NpcSteer.Stop(_motor);
             return;
-        }
 
         if (!_hasDestination)
             PickDestination();

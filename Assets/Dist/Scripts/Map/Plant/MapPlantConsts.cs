@@ -37,5 +37,34 @@ namespace IsoTilemap
         public static readonly Color OverlayColorMature = new Color(0.22f, 0.55f, 0.18f, 1f);
         public static readonly Color OverlayColorHarvestable = new Color(0.72f, 0.78f, 0.18f, 1f);
         public static readonly Color OverlayColorWithered = new Color(0.38f, 0.30f, 0.22f, 1f);
+
+        /// <summary>BN 32px@100ppu 기준 월드 스케일 (Catalog/BN 스프라이트 경로).</summary>
+        public const float SpriteWorldScaleSeed = 1.6f;
+        public const float SpriteWorldScaleSeedling = 2.2f;
+        public const float SpriteWorldScaleMature = 2.8f;
+        public const float SpriteWorldScaleHarvestable = 3.2f;
+        public const float SpriteWorldScaleWithered = 2.4f;
+
+        public const float OverlayColliderHeight = 0.5f;
+
+        public const float TargetPreviewAlpha = 0.55f;
+        public static readonly Color TargetPreviewValid = new Color(0.28f, 0.82f, 0.32f, TargetPreviewAlpha);
+        public static readonly Color TargetPreviewInvalid = new Color(0.88f, 0.22f, 0.18f, TargetPreviewAlpha);
+
+        public const string MeshVisualChildName = "MeshVisual";
+        public const string SpriteVisualChildName = "SpriteVisual";
+        public const string TargetPreviewResourcesName = "Farming/FarmPlantTargetPreview";
+
+        /// <summary>심기 Work/적용 가능 XZ Chebyshev 셀 반경 (목표 셀 포함).</summary>
+        public const int PlantActionRangeCells = 1;
+
+        /// <summary>비-Plant 농사 Arrive 월드 stopping = CellSize × 이 배율.</summary>
+        public const float CellArriveStoppingCellFraction = 0.55f;
+
+        /// <summary>심기 Work 대기초 (Catalog/_clips null 폴백).</summary>
+        public const float PlantWorkDurationSeconds = 1f;
+
+        /// <summary>경작 Work 대기초 (Catalog/_clips null 폴백).</summary>
+        public const float TillWorkDurationSeconds = 2f;
     }
 }

@@ -1,12 +1,6 @@
 // ============================================================
-// MapPlantService — 심기·수확·시듦·오버레이 타겟 GO 오케스트레이션
+// MapPlantService — 심기·수확·시듦·경작 오케스트레이션 (OccupiedCell plant)
 // ============================================================
-// flowchart LR
-//   Clock[WorldClock] --> Bridge[MapClockSnapshot]
-//   Load[MapPlantHost.Load] --> CatchUp
-//   CatchUp --> Wither[byproducts + remove]
-//   Plant[Inventory seed] --> Host[MapPlantHost]
-//   Harvest --> Loot[body or SmallItem floor]
 
 using System;
 using System.Collections.Generic;
@@ -18,21 +12,15 @@ public static class MapPlantService
 {
     const string NullItemId = "null";
 
-    static readonly Dictionary<Vector3Int, GameObject> Views = new();
     static readonly List<Vector3Int> RemoveScratch = new();
     static MapPlantHost _boundHost;
-    static Material _overlayMaterial;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void DomainReset()
     {
         MapPlantHost.RuntimeAssigned -= OnHostAssigned;
         MapPlantHost.AfterLoaded -= CatchUpAll;
-        if (_boundHost != null)
-            _boundHost.Overlay.Changed -= SyncViews;
         _boundHost = null;
-        Views.Clear();
-        _overlayMaterial = null;
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -63,26 +51,12 @@ public static class MapPlantService
         };
     }
 
-    static void OnHostAssigned(MapPlantHost host)
-    {
-        if (_boundHost != null)
-            _boundHost.Overlay.Changed -= SyncViews;
-
-        _boundHost = host;
-        if (host == null)
-        {
-            ClearViews();
-            return;
-        }
-
-        host.Overlay.Changed += SyncViews;
-        SyncViews();
-    }
+    static void OnHostAssigned(MapPlantHost host) => _boundHost = host;
 
     public static bool CanPlant(ItemStack stack, InventoryContainer container) =>
-        GetPlantBlockedReason(stack, container) == null;
+        GetPlantSessionBlockedReason(stack, container) == null;
 
-    public static string GetPlantBlockedReason(ItemStack stack, InventoryContainer container)
+    public static string GetPlantSessionBlockedReason(ItemStack stack, InventoryContainer container)
     {
         if (MoodGameplayGate.IsBlocked)
             return HarvestContextLabels.HarvestBlocked;
@@ -90,30 +64,56 @@ public static class MapPlantService
             return HarvestContextLabels.HarvestBlocked;
         if (!PlayerItemAccess.OwnsInBodyOrWield(stack, container))
             return HarvestContextLabels.HarvestBlocked;
-
-        MapPlantHost host = MapPlantHost.Runtime;
-        if (host == null)
-            return HarvestContextLabels.HarvestBlocked;
-        if (!TryResolvePlayerWorld(out Vector3 world))
-            return HarvestContextLabels.HarvestBlocked;
-
-        Vector3Int cell = host.ResolveCellFromWorld(world);
-        if (!host.IsPlantable(cell) || host.HasPlant(cell))
+        if (MapPlantHost.Runtime == null)
             return HarvestContextLabels.HarvestBlocked;
 
         return null;
     }
 
-    public static bool TryPlant(ItemStack stack, InventoryContainer container)
+    public static bool CanPlantAt(Vector3Int cell, ItemStack stack, InventoryContainer container) =>
+        GetPlantBlockedReasonAt(cell, stack, container) == null;
+
+    public static string GetPlantBlockedReasonAt(
+        Vector3Int cell,
+        ItemStack stack,
+        InventoryContainer container)
     {
-        if (GetPlantBlockedReason(stack, container) != null)
-            return false;
+        string session = GetPlantSessionBlockedReason(stack, container);
+        if (session != null)
+            return session;
 
         MapPlantHost host = MapPlantHost.Runtime;
-        if (!TryResolvePlayerWorld(out Vector3 world))
+        if (host == null || !host.IsPlantable(cell) || host.HasPlant(cell))
+            return HarvestContextLabels.HarvestBlocked;
+
+        return null;
+    }
+
+    public static bool TryPlant(ItemStack stack, InventoryContainer container) =>
+        TryPlantAt(default, stack, container, usePlayerCellFallback: true);
+
+    public static bool TryPlantAt(
+        Vector3Int cell,
+        ItemStack stack,
+        InventoryContainer container,
+        bool usePlayerCellFallback = false)
+    {
+        if (usePlayerCellFallback)
+        {
+            if (GetPlantSessionBlockedReason(stack, container) != null)
+                return false;
+            if (!TryResolvePlayerCell(out cell))
+                return false;
+        }
+        else if (GetPlantBlockedReasonAt(cell, stack, container) != null)
+        {
+            return false;
+        }
+
+        MapPlantHost host = MapPlantHost.Runtime;
+        if (host == null)
             return false;
 
-        Vector3Int cell = host.ResolveCellFromWorld(world);
         string seedId = stack.Item.id;
         int planted = ItemRot.CurrentWorldMinute();
 
@@ -178,19 +178,15 @@ public static class MapPlantService
     }
 
     public static bool CanTill(ItemStack stack, InventoryContainer container) =>
-        GetTillBlockedReason(stack, container) == null;
+        GetTillSessionBlockedReason(stack, container) == null;
 
-    public static string GetTillBlockedReason(ItemStack stack, InventoryContainer container)
+    public static string GetTillSessionBlockedReason(ItemStack stack, InventoryContainer container)
     {
         if (MoodGameplayGate.IsBlocked)
             return HarvestContextLabels.TillBlocked;
         if (!HasDigQuality(stack?.Item) || !PlayerItemAccess.OwnsInBodyOrWield(stack, container))
             return HarvestContextLabels.TillBlocked;
-        if (!TryResolvePlayerCell(out Vector3Int cell))
-            return HarvestContextLabels.TillBlocked;
-
-        MapPlantHost host = MapPlantHost.Runtime;
-        if (host == null || !host.IsTillable(cell))
+        if (MapPlantHost.Runtime == null)
             return HarvestContextLabels.TillBlocked;
 
         return null;
@@ -210,12 +206,26 @@ public static class MapPlantService
         return null;
     }
 
-    public static bool TryTill(ItemStack stack, InventoryContainer container)
+    public static bool TryTill(ItemStack stack, InventoryContainer container) =>
+        TryTillAt(default, stack, container, usePlayerCellFallback: true);
+
+    public static bool TryTillAt(
+        Vector3Int cell,
+        ItemStack stack,
+        InventoryContainer container,
+        bool usePlayerCellFallback = false)
     {
-        if (GetTillBlockedReason(stack, container) != null)
+        if (usePlayerCellFallback)
+        {
+            if (GetTillSessionBlockedReason(stack, container) != null)
+                return false;
+            if (!TryResolvePlayerCell(out cell))
+                return false;
+        }
+        else if (GetTillBlockedReason(cell) != null)
+        {
             return false;
-        if (!TryResolvePlayerCell(out Vector3Int cell))
-            return false;
+        }
 
         MapPlantHost host = MapPlantHost.Runtime;
         return host != null && host.TryTill(cell);
@@ -231,9 +241,9 @@ public static class MapPlantService
     }
 
     public static bool CanFertilize(ItemStack stack, InventoryContainer container) =>
-        GetFertilizeBlockedReason(stack, container) == null;
+        GetFertilizeSessionBlockedReason(stack, container) == null;
 
-    public static string GetFertilizeBlockedReason(ItemStack stack, InventoryContainer container)
+    public static string GetFertilizeSessionBlockedReason(ItemStack stack, InventoryContainer container)
     {
         if (MoodGameplayGate.IsBlocked)
             return HarvestContextLabels.FertilizeBlocked;
@@ -242,10 +252,10 @@ public static class MapPlantService
             stack.Count < 1 ||
             !PlayerItemAccess.OwnsInBodyOrWield(stack, container))
             return HarvestContextLabels.FertilizeBlocked;
-        if (!TryResolvePlayerCell(out Vector3Int cell))
+        if (MapPlantHost.Runtime == null)
             return HarvestContextLabels.FertilizeBlocked;
 
-        return GetFertilizePlantBlockedReason(cell);
+        return null;
     }
 
     public static string GetFertilizeBlockedReason(Vector3Int cell)
@@ -258,12 +268,26 @@ public static class MapPlantService
         return GetFertilizePlantBlockedReason(cell);
     }
 
-    public static bool TryFertilize(ItemStack stack, InventoryContainer container)
+    public static bool TryFertilize(ItemStack stack, InventoryContainer container) =>
+        TryFertilizeAt(default, stack, container, usePlayerCellFallback: true);
+
+    public static bool TryFertilizeAt(
+        Vector3Int cell,
+        ItemStack stack,
+        InventoryContainer container,
+        bool usePlayerCellFallback = false)
     {
-        if (GetFertilizeBlockedReason(stack, container) != null)
+        if (usePlayerCellFallback)
+        {
+            if (GetFertilizeSessionBlockedReason(stack, container) != null)
+                return false;
+            if (!TryResolvePlayerCell(out cell))
+                return false;
+        }
+        else if (GetFertilizeBlockedReason(cell) != null)
+        {
             return false;
-        if (!TryResolvePlayerCell(out Vector3Int cell))
-            return false;
+        }
 
         MapPlantHost host = MapPlantHost.Runtime;
         if (host == null)
@@ -297,6 +321,58 @@ public static class MapPlantService
         RefundSeed(stack.Item.id, container);
         return false;
     }
+
+    public static bool CanApplyAtCell(
+        FarmCellActionKind kind,
+        Vector3Int cell,
+        ItemStack stack = null,
+        InventoryContainer container = null)
+    {
+        switch (kind)
+        {
+            case FarmCellActionKind.Plant:
+                return CanPlantAt(cell, stack, container);
+            case FarmCellActionKind.Till:
+                return GetTillBlockedReason(cell) == null;
+            case FarmCellActionKind.Fertilize:
+                return GetFertilizeBlockedReason(cell) == null;
+            case FarmCellActionKind.Harvest:
+                return GetHarvestBlockedReason(cell) == null;
+            default:
+                return false;
+        }
+    }
+
+    public static Vector3 CellArriveWorld(Vector3Int cell)
+    {
+        MapPlantHost host = MapPlantHost.Runtime;
+        float cellSize = host != null ? host.CellSize : 1f;
+        return TileHelper.ConvertGridToWorldPos(cell, cellSize);
+    }
+
+    /// <summary>비-Plant 농사 Arrive 월드 stoppingDistance (인접 칸 접근 허용).</summary>
+    public static float CellArriveStoppingDistance()
+    {
+        MapPlantHost host = MapPlantHost.Runtime;
+        float cellSize = host != null ? host.CellSize : 1f;
+        return cellSize * MapPlantConsts.CellArriveStoppingCellFraction;
+    }
+
+    /// <summary>
+    /// 심기 수행 범위 — XZ Chebyshev ≤ <see cref="MapPlantConsts.PlantActionRangeCells"/>, 동일 Y.
+    /// </summary>
+    public static bool IsWithinPlantActionRange(Vector3Int playerCell, Vector3Int targetCell)
+    {
+        if (playerCell.y != targetCell.y)
+            return false;
+
+        int dx = Mathf.Abs(playerCell.x - targetCell.x);
+        int dz = Mathf.Abs(playerCell.z - targetCell.z);
+        return Mathf.Max(dx, dz) <= MapPlantConsts.PlantActionRangeCells;
+    }
+
+    public static bool TryResolveActorCell(out Vector3Int cell) =>
+        TryResolvePlayerCell(out cell);
 
     public static bool TryHarvest(Vector3Int cell)
     {
@@ -343,9 +419,15 @@ public static class MapPlantService
         if (host == null || !host.TryGetPlant(cell, out PlantCell plant))
             return;
 
-        if (!PlantGrowth.IsWithered(ResolveStage(plant)))
+        PlantGrowthStage stage = ResolveStage(plant);
+        string desiredPrefab = PlantTileIds.PrefabIdForStage(stage);
+        host.TrySetPlantStage(cell, desiredPrefab);
+
+        if (!PlantGrowth.IsWithered(stage))
             return;
 
+        if (!host.TryGetPlant(cell, out plant))
+            return;
         Wither(host, plant);
     }
 
@@ -510,101 +592,6 @@ public static class MapPlantService
         }
 
         return null;
-    }
-
-    static void SyncViews()
-    {
-        MapPlantHost host = MapPlantHost.Runtime;
-        if (host == null)
-        {
-            ClearViews();
-            return;
-        }
-
-        IReadOnlyList<PlantCell> plants = host.Overlay.Plants;
-        var desired = new HashSet<Vector3Int>();
-        for (int i = 0; i < plants.Count; i++)
-        {
-            PlantCell plant = plants[i];
-            desired.Add(plant.Cell);
-            if (!Views.ContainsKey(plant.Cell))
-                Views[plant.Cell] = CreateView(host, plant);
-        }
-
-        RemoveScratch.Clear();
-        foreach (KeyValuePair<Vector3Int, GameObject> pair in Views)
-        {
-            if (!desired.Contains(pair.Key))
-                RemoveScratch.Add(pair.Key);
-        }
-
-        for (int i = 0; i < RemoveScratch.Count; i++)
-        {
-            Vector3Int cell = RemoveScratch[i];
-            if (Views.TryGetValue(cell, out GameObject go) && go != null)
-                UnityEngine.Object.Destroy(go);
-            Views.Remove(cell);
-        }
-    }
-
-    static void ClearViews()
-    {
-        foreach (KeyValuePair<Vector3Int, GameObject> pair in Views)
-        {
-            if (pair.Value != null)
-                UnityEngine.Object.Destroy(pair.Value);
-        }
-
-        Views.Clear();
-    }
-
-    static GameObject CreateView(MapPlantHost host, PlantCell plant)
-    {
-        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        go.name = "Plant_" + plant.Cell.x + "_" + plant.Cell.y + "_" + plant.Cell.z;
-        go.transform.SetParent(host.transform, true);
-        go.transform.position = CellWorld(host, plant.Cell);
-        go.transform.localScale = new Vector3(
-            MapPlantConsts.OverlayScale,
-            MapPlantConsts.OverlayHeight,
-            MapPlantConsts.OverlayScale);
-
-        if (go.TryGetComponent(out Collider col))
-            col.isTrigger = true;
-
-        if (go.TryGetComponent(out MeshRenderer renderer))
-        {
-            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
-            Material mat = OverlayMaterial();
-            if (mat != null)
-                renderer.sharedMaterial = mat;
-        }
-
-        var interactable = go.AddComponent<MapPlantInteractable>();
-        interactable.BindCell(plant.Cell);
-        go.AddComponent<TileObjectInteractionTarget>();
-        return go;
-    }
-
-    static Material OverlayMaterial()
-    {
-        if (_overlayMaterial != null)
-            return _overlayMaterial;
-
-        Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
-        if (shader == null)
-            shader = Shader.Find("Unlit/Color");
-        if (shader == null)
-            return null;
-
-        _overlayMaterial = new Material(shader) { name = "MapPlantOverlay" };
-        var color = new Color(0.22f, 0.55f, 0.18f, 1f);
-        if (_overlayMaterial.HasProperty("_BaseColor"))
-            _overlayMaterial.SetColor("_BaseColor", color);
-        else if (_overlayMaterial.HasProperty("_Color"))
-            _overlayMaterial.SetColor("_Color", color);
-        return _overlayMaterial;
     }
 
     static Vector3 CellWorld(MapPlantHost host, Vector3Int cell)

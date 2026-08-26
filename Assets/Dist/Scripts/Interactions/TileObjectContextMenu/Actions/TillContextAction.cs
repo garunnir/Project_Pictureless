@@ -17,5 +17,5 @@ public sealed class TillContextAction : IContextMenuAction
         MapPlantService.GetTillBlockedReason(_cell);
 
     public void Execute() =>
-        MapPlantService.TryTill(_cell);
+        FarmCellTargetFlow.BeginTillTile();
 }

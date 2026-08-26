@@ -17,5 +17,5 @@ public sealed class FertilizeContextAction : IContextMenuAction
         MapPlantService.CanFertilize(_stack, _container) ? null : ItemContextMenuLabels.FertilizeBlocked;
 
     public void Execute() =>
-        MapPlantService.TryFertilize(_stack, _container);
+        FarmCellTargetFlow.BeginFertilize(_stack, _container);
 }

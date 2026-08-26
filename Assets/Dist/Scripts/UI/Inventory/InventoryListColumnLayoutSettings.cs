@@ -9,6 +9,9 @@ using UnityEngine;
     menuName = "Dist/Inventory/List Column Layout Settings")]
 public sealed class InventoryListColumnLayoutSettings : ScriptableObject
 {
+    public const string DefaultAssetPath =
+        "Assets/Dist/Resources/Inventory/InventoryListColumnLayoutSettings.asset";
+
     const string DefaultResourcePath = "Inventory/InventoryListColumnLayoutSettings";
 
     static InventoryListColumnLayoutSettings _cachedDefault;

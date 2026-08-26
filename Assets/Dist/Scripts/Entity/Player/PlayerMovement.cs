@@ -121,12 +121,14 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         if (_motor != null)
             _motor.BindDrive(this);
         ApplyDriveMoverSettings();
+        SyncBodyPainInputPolicy();
     }
 
     public void SetControllEnabled(bool enabled)
     {
         _controlEnabled = enabled;
         _motor?.SetPossessed(enabled);
+        SyncBodyPainInputPolicy();
         if (enabled)
         {
             _pendingInitialVelocity = true;
@@ -136,7 +138,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         {
             DisconnectController();
             ActiveMover?.SetInput(Vector2.zero, _refCam);
-            _characterState?.SetMoveDir(Vector3.zero);
+            _characterState?.ClearMoveDir();
         }
     }
 
@@ -154,7 +156,13 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         DisconnectController();
         KinematicMover mover = ActiveMover;
         mover?.SetInput(Vector2.zero, _refCam);
-        _characterState?.SetMoveDir(Vector3.zero);
+        _characterState?.ClearMoveDir();
+    }
+
+    void SyncBodyPainInputPolicy()
+    {
+        if (_motor != null && _motor.TryGetComponent(out CharacterPainHost pain))
+            pain.SyncPossessedInputPolicy();
     }
 
     void Awake()
@@ -226,7 +234,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
                 AnyImmobileMoveAttempted?.Invoke();
 
             mover.SetInput(Vector2.zero, _refCam);
-            _characterState.SetMoveDir(Vector3.zero);
+            _characterState?.ClearMoveDir();
             _characterState.UpdateGridPos(_motor != null ? _motor.transform.position : transform.position);
             return;
         }

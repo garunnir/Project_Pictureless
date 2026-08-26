@@ -154,30 +154,41 @@ namespace Garunnir.Runtime.Gameplay.Data
 
             if (BodyPartIds.IsVitalOrgan(id))
             {
-                EnsureBleed(body, id, BodyCapacity.DestroyedBleedIntensity(id));
+                EnsureOrganBleed(body, id, BodyCapacity.DestroyedBleedIntensity(id));
                 return;
             }
 
             if (id == BodyPartIds.Chest)
             {
-                EnsureBleed(body, BodyPartIds.Heart, BodyIllness.OrganDestroyedBleedHeart);
-                EnsureBleed(body, BodyPartIds.LungL, BodyIllness.OrganDestroyedBleedLung);
-                EnsureBleed(body, BodyPartIds.LungR, BodyIllness.OrganDestroyedBleedLung);
+                EnsureOrganBleed(body, BodyPartIds.Heart, BodyIllness.OrganDestroyedBleedHeart);
+                EnsureOrganBleed(body, BodyPartIds.LungL, BodyIllness.OrganDestroyedBleedLung);
+                EnsureOrganBleed(body, BodyPartIds.LungR, BodyIllness.OrganDestroyedBleedLung);
                 ApplyDestroyedBleed(body, BodyPartIds.Belly);
                 return;
             }
 
             if (id == BodyPartIds.Belly)
             {
-                EnsureBleed(body, BodyPartIds.Liver, BodyIllness.OrganDestroyedBleedLiver);
-                EnsureBleed(body, BodyPartIds.Stomach, BodyIllness.OrganDestroyedBleedStomach);
-                EnsureBleed(body, BodyPartIds.KidneyL, BodyIllness.OrganDestroyedBleedKidney);
-                EnsureBleed(body, BodyPartIds.KidneyR, BodyIllness.OrganDestroyedBleedKidney);
+                EnsureOrganBleed(body, BodyPartIds.Liver, BodyIllness.OrganDestroyedBleedLiver);
+                EnsureOrganBleed(body, BodyPartIds.Stomach, BodyIllness.OrganDestroyedBleedStomach);
+                EnsureOrganBleed(body, BodyPartIds.KidneyL, BodyIllness.OrganDestroyedBleedKidney);
+                EnsureOrganBleed(body, BodyPartIds.KidneyR, BodyIllness.OrganDestroyedBleedKidney);
                 return;
             }
 
             if (id == BodyPartIds.Neck || id == BodyPartIds.Head)
                 EnsureBleed(body, id, BodyIllness.OrganDestroyedBleedDefault);
+        }
+
+        static void EnsureOrganBleed(ICharacterBody body, string partId, int intensity)
+        {
+            if (!body.Has(partId))
+                return;
+            body.EnsureEffectMinIntensity(
+                partId,
+                BodyPartEffectIds.OrganBleed,
+                intensity,
+                remainingSeconds: -1f);
         }
 
         static void EnsureBleed(ICharacterBody body, string partId, int intensity)

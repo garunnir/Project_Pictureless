@@ -12,6 +12,7 @@ public sealed class UIHudLifeThreatOverlay : MonoBehaviour
 {
     [SerializeField] CanvasGroup _canvasGroup;
     [SerializeField] Image _vignetteImage;
+    [SerializeField] PlayerStatusUIBridge _bridge;
     [SerializeField] Color _tintColor = new Color(0.85f, 0.08f, 0.06f, 1f);
     [SerializeField] float _maxAlpha = 0.45f;
     [SerializeField] float _pulseAmplitude = 0.08f;
@@ -62,7 +63,14 @@ public sealed class UIHudLifeThreatOverlay : MonoBehaviour
         if (_bound)
             return;
 
-        if (!PlayerStatusUIBridge.TryResolve(out _viewModel))
+        if (_bridge == null)
+            _bridge = PlayerStatusUIBridge.Instance;
+
+        if (_bridge == null)
+            return;
+
+        _viewModel = _bridge.ViewModel;
+        if (_viewModel == null)
             return;
 
         _viewModel.Changed += OnViewModelChanged;

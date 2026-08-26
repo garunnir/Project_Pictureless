@@ -10,8 +10,7 @@ using UnityEngine;
 public static class CharacterHitStopSetupMenu
 {
     const string NpcSamplePath = "Assets/Dist/Visual/Prefabs/3D/NpcSample.prefab";
-    const string SettingsFolder = "Assets/Dist/SOData/Combat/Fallbacks";
-    const string SettingsPath = CharacterHitStop.DefaultSettingsPath;
+    const string SettingsPath = CombatHitStopSettings.DefaultAssetPath;
 
     [MenuItem(DistMcpMenus.CharacterEnsureHitStop)]
     public static void EnsureCombatHitStop()
@@ -27,24 +26,8 @@ public static class CharacterHitStopSetupMenu
             settings);
     }
 
-    static CombatHitStopSettings EnsureSettingsAsset()
-    {
-        CombatHitStopSettings settings =
-            AssetDatabase.LoadAssetAtPath<CombatHitStopSettings>(SettingsPath);
-        if (settings != null)
-            return settings;
-
-        if (!AssetDatabase.IsValidFolder(SettingsFolder))
-        {
-            Debug.LogError($"[CharacterHitStopSetupMenu] Folder missing: {SettingsFolder}");
-            return null;
-        }
-
-        settings = ScriptableObject.CreateInstance<CombatHitStopSettings>();
-        AssetDatabase.CreateAsset(settings, SettingsPath);
-        AssetDatabase.SaveAssets();
-        return settings;
-    }
+    static CombatHitStopSettings EnsureSettingsAsset() =>
+        DistScriptableObjectEnsure.LoadOrCreate<CombatHitStopSettings>(SettingsPath);
 
     static int PatchNpcSamplePrefab(CombatHitStopSettings settings)
     {

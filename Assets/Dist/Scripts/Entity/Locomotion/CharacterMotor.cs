@@ -221,7 +221,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
 
     public void SetDesiredWorldDir(Vector3 worldDirXZ)
     {
-        if (_mover == null)
+        if (_mover == null || _moveLocked)
             return;
 
         _mover.SetWorldDirection(worldDirXZ);
@@ -277,8 +277,13 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     public void SetMoveLocked(bool locked)
     {
         _moveLocked = locked;
-        if (locked)
-            _mover?.SetWorldDirection(Vector3.zero);
+        if (!locked)
+            return;
+
+        _mover?.SetWorldDirection(Vector3.zero);
+        ClearTravelLimit();
+        _characterState?.ClearMoveDir();
+        _characterState?.ClearAim();
     }
 
     void TickKnockback(float deltaTime)

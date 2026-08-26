@@ -12,7 +12,8 @@ public sealed class LocalizationTable : ScriptableObject, ILocalizationSource
     /// <summary>Resources.Load 경로 — ConstDataTable.AssetPath.LocalizeTable.UI SSOT.</summary>
     public static string ResourcesLoadName => ConstDataTable.AssetPath.LocalizeTable.UI;
 
-    public const string AssetPath = "Assets/Dist/Resources/Localization/UI_ko.asset";
+    public const string DefaultAssetPath = "Assets/Dist/Resources/Localization/UI_ko.asset";
+    public const string AssetPath = DefaultAssetPath;
 
     [Serializable]
     public sealed class Entry

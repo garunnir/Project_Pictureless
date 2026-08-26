@@ -111,6 +111,9 @@ public sealed class TileObjectPointerController : MonoBehaviour
 
     void OnLookAtTapPerformed(InputAction.CallbackContext context)
     {
+        if (FarmCellTargetSession.TryConsumeRightClick())
+            return;
+
         InputManager input = InputManager.Instance;
         if (input == null || !input.TryReadPointerScreenPosition(out Vector2 screenPos))
             return;

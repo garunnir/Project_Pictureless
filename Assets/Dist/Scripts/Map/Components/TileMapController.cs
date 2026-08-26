@@ -1,5 +1,6 @@
 using UnityEngine;
 using IsoTilemap;
+using System.Collections.Generic;
 
 // 타일 편집 "명령"만 담당합니다. 렌더 반영은 모델 이벤트 -> Visualizer가 담당합니다.
 public class TileMapController : MonoBehaviour
@@ -36,6 +37,22 @@ public class TileMapController : MonoBehaviour
     public void RemoveAndFlush(TileData tileData)
     {
         RemoveTile(tileData);
+    }
+
+    /// <summary>
+    /// Walkable cell floor-material layer: same HorizontalFace key replaces previous
+    /// (TileMapModel.SetFloorFaceTile). Returns false if definition missing or build fails.
+    /// </summary>
+    public bool TryReplaceFloorMaterial(Vector3Int walkableCell, TileDefinition floorDef)
+    {
+        if (_model == null || floorDef == null)
+            return false;
+        if (!TilePlaceUtil.TryBuildTileData(floorDef, walkableCell, out TileData tileData))
+            return false;
+        if (TileIdentityUtil.GetPlacementSlot(tileData.identity) != TilePlacementSlot.HorizontalFace)
+            return false;
+        AddAndFlush(tileData);
+        return true;
     }
 
     private void ApplyTileMutation(TileData tileData)

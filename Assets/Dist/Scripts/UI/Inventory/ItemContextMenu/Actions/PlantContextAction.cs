@@ -1,5 +1,5 @@
 // ============================================================
-// PlantContextAction — 발밑 PLANTABLE 셀에 씨앗 1개 소비·심기
+// PlantContextAction — 셀 타겟팅 후 심기
 // ============================================================
 
 public sealed class PlantContextAction : IContextMenuAction
@@ -17,5 +17,5 @@ public sealed class PlantContextAction : IContextMenuAction
         MapPlantService.CanPlant(_stack, _container) ? null : ItemContextMenuLabels.PlantBlocked;
 
     public void Execute() =>
-        MapPlantService.TryPlant(_stack, _container);
+        FarmCellTargetFlow.BeginPlant(_stack, _container);
 }

@@ -14,6 +14,7 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
     [SerializeField] PlayerFloorVisibilityDriver _floorVisibility;
     [SerializeField] SightLineProximityBlendDriver _sightLineBlend;
     [SerializeField] CharacterVisibilityBroadcaster _visibilityBroadcaster;
+    [SerializeField] CharacterSightFadeDriver _sightFade;
     [SerializeField] PlayerInventoryRuntime _inventoryRuntime;
 
     GameObject _body;
@@ -38,6 +39,8 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
             TryGetComponent(out _combatController);
         if (_tileObjectPointer == null)
             TryGetComponent(out _tileObjectPointer);
+        if (_sightFade == null)
+            TryGetComponent(out _sightFade);
         if (_inventoryRuntime == null)
             TryGetComponent(out _inventoryRuntime);
     }
@@ -61,14 +64,23 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
         _floorVisibility?.SetPlayerState(_bodyState);
         _sightLineBlend?.SetPlayerState(_bodyState);
         _visibilityBroadcaster?.BindPlayerState(_bodyState);
+        _sightFade?.SetPlayerState(_bodyState);
+        _sightFade?.SetPlayerBody(_bodyTransform);
 
         TileMapManager map = FindFirstObjectByType<TileMapManager>();
         if (map != null && map.MapCollisionServices != null)
             _aimController?.BindMapCollision(map.MapCollisionServices.LineCast);
+        if (map != null)
+            _sightFade?.Init(map);
+
+        if (body != null)
+            PlayerSightVisionBinder.Bind(this);
+        else
+            PlayerSightVisionBinder.Clear();
 
         if (body != null && body.TryGetComponent(out CharacterSessionHub session))
             session.BecomePlayer(_movement, _inventoryRuntime);
-        else
+        else if (body != null)
             Debug.LogError("[PlayerPossessedInputHost] CharacterSessionHub is required on the possessed body.", this);
     }
 

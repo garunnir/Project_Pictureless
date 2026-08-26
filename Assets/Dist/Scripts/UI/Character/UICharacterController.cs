@@ -18,6 +18,7 @@ public sealed class UICharacterController : MonoBehaviour
     [SerializeField] UICanvasLayerHost _layerHost;
     [SerializeField] PlayerStatusWindowLauncher _launcher;
     [SerializeField] UIPlayerStatusSummaryPanel _summaryPanel;
+    [SerializeField] PlayerStatusUIBridge _bridge;
     [SerializeField] Vector2 _windowInitialPosition = new(220f, 40f);
 
     bool _isOpen;
@@ -34,11 +35,26 @@ public sealed class UICharacterController : MonoBehaviour
             _window.gameObject.SetActive(false);
         SyncLauncher();
 
-        if (!PlayerStatusUIBridge.TryResolve(out _viewModel))
+        if (_bridge == null)
+            _bridge = PlayerStatusUIBridge.Instance;
+
+        if (_bridge == null)
         {
             Debug.LogError(
-                "[UICharacterController] PlayerStatusUIBridge not found in scene.",
+                "[UICharacterController] PlayerStatusUIBridge missing — status window disabled. " +
+                "Run Dist/MCP/PlayerStatus/Setup Canvas In Open Scene.",
                 this);
+            enabled = false;
+            return;
+        }
+
+        _viewModel = _bridge.ViewModel;
+        if (_viewModel == null)
+        {
+            Debug.LogError(
+                "[UICharacterController] ViewModel null — status window disabled.",
+                this);
+            enabled = false;
         }
     }
 

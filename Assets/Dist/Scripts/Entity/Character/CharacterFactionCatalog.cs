@@ -24,6 +24,9 @@ public struct CharacterFactionRelation
 [CreateAssetMenu(fileName = "CharacterFactionCatalog", menuName = "Dist/Character/Faction Catalog")]
 public sealed class CharacterFactionCatalog : ScriptableObject
 {
+    public const string DefaultAssetPath =
+        "Assets/Dist/SOData/Gameplay/Character/CharacterFactionCatalog.Default.asset";
+
     [SerializeField] List<CharacterFactionRelation> _relations = new();
 
     public bool TryGetStance(CharacterFaction a, CharacterFaction b, out FactionStance stance)

@@ -8,8 +8,7 @@ using UnityEngine;
 
 static class GameDataWeaponPresentationEditor
 {
-    public const string CatalogPath =
-        "Assets/Dist/SOData/Combat/Catalog/WeaponPresentationCatalog.asset";
+    public const string CatalogPath = WeaponPresentationCatalog.DefaultAssetPath;
     public const string PresentationsFolder =
         "Assets/Dist/SOData/Combat/Presentations";
 

@@ -197,10 +197,7 @@ public sealed class NpcManager : MonoBehaviour
             }
 
             if (_painHost != null && _painHost.IsPainShocked)
-            {
-                NpcSteer.Stop(_motor);
                 return;
-            }
 
             RefreshTarget();
 
@@ -352,6 +349,12 @@ public sealed class NpcManager : MonoBehaviour
 
         void RefreshTarget()
         {
+            Vector3 selfFeet = CharacterFeetPose.GetFeetWorld(_transform);
+            Vector3 forward = _characterState != null
+                ? _characterState.GetFacingDir()
+                : _transform.forward;
+            forward.y = 0f;
+
             if (_target != null)
             {
                 if (!IsUsableTarget(_target))
@@ -360,9 +363,17 @@ public sealed class NpcManager : MonoBehaviour
                 }
                 else
                 {
+                    Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(_target.transform);
                     _distanceToTarget = HorizontalDistance(_target.transform.position);
-                    float loseRadius = _vision != null ? _vision.LoseRadius : CharacterVisionDefaults.LoseRadius;
-                    if (_distanceToTarget > loseRadius)
+                    bool keep = _vision != null
+                        ? _vision.CanKeepTarget(selfFeet, forward, targetFeet)
+                        : CharacterVisionDefaults.IsWithinConeXZ(
+                            selfFeet,
+                            forward,
+                            targetFeet,
+                            CharacterVisionDefaults.LoseRadius,
+                            CharacterVisionDefaults.SpotAngleDegrees);
+                    if (!keep)
                         ClearTarget();
                     return;
                 }
@@ -379,9 +390,17 @@ public sealed class NpcManager : MonoBehaviour
                 if (!IsPreferredHostile(host))
                     continue;
 
+                Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(host.transform);
                 float dist = HorizontalDistance(host.transform.position);
-                float detectRadius = _vision != null ? _vision.EffectiveDetectRadius : CharacterVisionDefaults.DetectRadius;
-                if (dist > detectRadius || dist >= bestDist)
+                bool detect = _vision != null
+                    ? _vision.CanDetect(selfFeet, forward, targetFeet)
+                    : CharacterVisionDefaults.IsWithinConeXZ(
+                        selfFeet,
+                        forward,
+                        targetFeet,
+                        CharacterVisionDefaults.DetectRadius,
+                        CharacterVisionDefaults.SpotAngleDegrees);
+                if (!detect || dist >= bestDist)
                     continue;
 
                 best = host;

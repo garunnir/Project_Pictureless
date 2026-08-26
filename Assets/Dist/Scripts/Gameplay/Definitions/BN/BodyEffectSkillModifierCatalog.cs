@@ -47,6 +47,10 @@ namespace Garunnir.Runtime.Gameplay.Data
                 {
                     new BodySkillMod(AttributeIds.Con, -1)
                 },
+                [BodyPartEffectIds.OrganBleed] = new[]
+                {
+                    new BodySkillMod(AttributeIds.Con, -1)
+                },
                 [BodyPartEffectIds.Infected] = new[]
                 {
                     new BodySkillMod(AttributeIds.Con, -1),

@@ -1,5 +1,5 @@
 // ============================================================
-// UICharacterActionGauge — 행위자 Host 진행을 월드 fill로 표시
+// UICharacterActionGauge — 행위자 Host 진행 fill / 자동이동 아이콘
 // ============================================================
 
 using UnityEngine;
@@ -10,6 +10,7 @@ public sealed class UICharacterActionGauge : MonoBehaviour
     [SerializeField] CharacterActionHost _host;
     [SerializeField] Image _fill;
     [SerializeField] Canvas _canvas;
+    [SerializeField] GameObject _autoProgressIcon;
 
     void Awake()
     {
@@ -22,8 +23,13 @@ public sealed class UICharacterActionGauge : MonoBehaviour
                 fill.TryGetComponent(out _fill);
         }
 
+        if (_autoProgressIcon == null)
+            _autoProgressIcon = ResolveAutoProgressIcon();
+
         if (_canvas == null)
             TryGetComponent(out _canvas);
+        if (_canvas == null && transform.parent != null)
+            transform.parent.TryGetComponent(out _canvas);
     }
 
     void OnEnable()
@@ -31,23 +37,53 @@ public sealed class UICharacterActionGauge : MonoBehaviour
         if (_canvas != null && _canvas.worldCamera == null)
             _canvas.worldCamera = Camera.main;
         ApplyVisible(false);
+        SetAutoProgressIcon(false);
     }
 
     void LateUpdate()
     {
-        // Rule 6: fillAmount만. 할당 없음.
-        if (_host == null || _fill == null)
+        // Rule 6: fillAmount·SetActive만. 할당 없음.
+        if (_host == null)
         {
             ApplyVisible(false);
+            SetAutoProgressIcon(false);
             return;
         }
 
         bool show = _host.CurrentKind != CharacterActionKind.None;
         ApplyVisible(show);
         if (!show)
+        {
+            SetAutoProgressIcon(false);
             return;
+        }
 
-        _fill.fillAmount = _host.Progress01;
+        bool autoMove = _host.IsMapArriving;
+        SetAutoProgressIcon(autoMove);
+
+        if (_fill != null)
+        {
+            if (_fill.enabled == autoMove)
+                _fill.enabled = !autoMove;
+            if (!autoMove)
+                _fill.fillAmount = _host.Progress01;
+        }
+    }
+
+    GameObject ResolveAutoProgressIcon()
+    {
+        Transform icon = transform.Find(CharacterActionGaugeLayout.AutoProgressIconName);
+        if (icon == null && transform.parent != null)
+            icon = transform.parent.Find(CharacterActionGaugeLayout.AutoProgressIconName);
+        return icon != null ? icon.gameObject : null;
+    }
+
+    void SetAutoProgressIcon(bool show)
+    {
+        if (_autoProgressIcon == null)
+            return;
+        if (_autoProgressIcon.activeSelf != show)
+            _autoProgressIcon.SetActive(show);
     }
 
     void ApplyVisible(bool show)

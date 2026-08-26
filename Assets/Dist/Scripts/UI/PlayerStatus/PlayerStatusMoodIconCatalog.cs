@@ -11,6 +11,9 @@ using UnityEngine;
     menuName = "Dist/PlayerStatus/Mood Icon Catalog")]
 public sealed class PlayerStatusMoodIconCatalog : ScriptableObject
 {
+    public const string DefaultAssetPath =
+        "Assets/Dist/SOData/Gameplay/PlayerStatus/PlayerStatusMoodIconCatalog.asset";
+
     [Serializable]
     public struct Entry
     {

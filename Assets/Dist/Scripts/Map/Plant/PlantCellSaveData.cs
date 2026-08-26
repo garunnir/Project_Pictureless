@@ -1,5 +1,5 @@
 // ============================================================
-// PlantCellSaveData — 맵 JSON 식물 셀 1건 (till overlay + fertilized)
+// PlantCellSaveData — legacy plantCells[] DTO (load-migrate only)
 // ============================================================
 
 using System;

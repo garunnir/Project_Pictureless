@@ -66,7 +66,8 @@ public static class MoodSituationalCollector
         IReadOnlyList<BodyPartEffect> effects = node.Effects;
         for (int i = 0; i < effects.Count; i++)
         {
-            if (effects[i].EffectId != BodyPartEffectIds.Bleed)
+            if (effects[i].EffectId != BodyPartEffectIds.Bleed
+                && effects[i].EffectId != BodyPartEffectIds.OrganBleed)
                 continue;
             int intensity = effects[i].Intensity;
             sum += intensity < 1 ? 1 : intensity;
