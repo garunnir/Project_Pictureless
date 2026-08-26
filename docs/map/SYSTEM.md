@@ -114,7 +114,7 @@ graph TD
 
 | 모드 | 소비자 | 동작 |
 |------|--------|------|
-| `KillOnLand` | `Vfx_Rain` | Y 스냅 → particle kill → Sub Emitter Death 스플래시 |
+| `KillOnLand` | `Vfx_Rain` | Y 스냅 → Manual `TriggerSubEmitter` → kill (`SetParticles`는 Death를 안 탐) |
 | `NotifyOnly` | `Vfx_HitBleed*` | 파티클 유지, `OnLanded`만 (스탬프 등) |
 
 ### 맵 식물

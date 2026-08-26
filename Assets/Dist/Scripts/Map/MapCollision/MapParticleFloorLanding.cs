@@ -9,7 +9,10 @@ namespace IsoTilemap
 {
     public enum MapParticleLandingMode
     {
-        /// <summary>착지 시 Y 스냅 + remainingLifetime=0 (Sub Emitter Death용).</summary>
+        /// <summary>
+        /// Y 스냅 + Manual Sub Emitter 트리거 + remainingLifetime=0.
+        /// SetParticles로 kill하면 Death Sub Emitter가 안 뜨므로 Manual을 씁니다.
+        /// </summary>
         KillOnLand = 0,
         /// <summary>파티클 유지, OnLanded만 (혈흔 스탬프 등).</summary>
         NotifyOnly = 1,
@@ -95,6 +98,9 @@ namespace IsoTilemap
 
                 bool worldSpace = ps.main.simulationSpace == ParticleSystemSimulationSpace.World;
                 bool dirty = false;
+                int manualSubIndex = _mode == MapParticleLandingMode.KillOnLand
+                    ? FindManualSubEmitterIndex(ps)
+                    : -1;
 
                 for (int i = 0; i < n; i++)
                 {
@@ -141,6 +147,10 @@ namespace IsoTilemap
                     else
                         _buffer[i].position = ps.transform.InverseTransformPoint(landWorld);
 
+                    // SetParticles kill은 Death Sub Emitter를 안 탐 → Manual로 명시 발사.
+                    if (manualSubIndex >= 0)
+                        ps.TriggerSubEmitter(manualSubIndex, ref _buffer[i]);
+
                     _buffer[i].remainingLifetime = 0f;
                     dirty = true;
                 }
@@ -148,6 +158,21 @@ namespace IsoTilemap
                 if (dirty)
                     ps.SetParticles(_buffer, n);
             }
+        }
+
+        static int FindManualSubEmitterIndex(ParticleSystem ps)
+        {
+            ParticleSystem.SubEmittersModule sub = ps.subEmitters;
+            if (!sub.enabled)
+                return -1;
+
+            for (int i = 0; i < sub.subEmittersCount; i++)
+            {
+                if (sub.GetSubEmitterType(i) == ParticleSystemSubEmitterType.Manual)
+                    return i;
+            }
+
+            return -1;
         }
 
         void RaiseLanded(Vector3 world)

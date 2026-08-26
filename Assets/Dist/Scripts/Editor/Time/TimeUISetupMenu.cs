@@ -298,7 +298,8 @@ static class TimeUISetupMenu
     }
 
     /// <summary>
-    /// Rain PS에 Splash 자식 + Sub Emitter(Death) + <see cref="MapParticleFloorLanding"/>을 보장합니다.
+    /// Rain PS에 Splash 자식 + Sub Emitter(Manual·Death) + <see cref="MapParticleFloorLanding"/>을 보장합니다.
+    /// 착지 kill은 Manual Trigger; 자연사는 Death.
     /// </summary>
     static void EnsureRainFloorLanding(ParticleSystem rain)
     {
@@ -342,15 +343,26 @@ static class TimeUISetupMenu
 
         ParticleSystem.SubEmittersModule sub = rain.subEmitters;
         sub.enabled = true;
+        bool hasManual = false;
         bool hasDeath = false;
         for (int i = 0; i < sub.subEmittersCount; i++)
         {
-            if (sub.GetSubEmitterSystem(i) == splashPs &&
-                sub.GetSubEmitterType(i) == ParticleSystemSubEmitterType.Death)
-            {
+            if (sub.GetSubEmitterSystem(i) != splashPs)
+                continue;
+
+            ParticleSystemSubEmitterType t = sub.GetSubEmitterType(i);
+            if (t == ParticleSystemSubEmitterType.Manual)
+                hasManual = true;
+            else if (t == ParticleSystemSubEmitterType.Death)
                 hasDeath = true;
-                break;
-            }
+        }
+
+        if (!hasManual)
+        {
+            sub.AddSubEmitter(
+                splashPs,
+                ParticleSystemSubEmitterType.Manual,
+                ParticleSystemSubEmitterProperties.InheritNothing);
         }
 
         if (!hasDeath)
