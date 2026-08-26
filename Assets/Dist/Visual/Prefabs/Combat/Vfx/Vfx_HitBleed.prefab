@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 2927889641646981919}
   - component: {fileID: 5227124449028701787}
   - component: {fileID: 8045625000813174746}
+  - component: {fileID: 1409127150040721504}
   m_Layer: 0
   m_Name: Vfx_HitBleed
   m_TagString: Untagged
@@ -4924,8 +4925,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DistScript::MapBloodParticleStampWriter
   _timeChannel: 1
-  _nearGroundY: 0.12
   _minInterval: 0.04
   _maxPerBurst: 8
   _stampScale: 0.2
   _stampAlpha: 0.65
+--- !u!114 &1409127150040721504
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6057288306708094213}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f28d189350d824448a3086bb7618d3ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Dist.Map::IsoTilemap.MapParticleFloorLanding
+  _systems:
+  - {fileID: 2090616473190294667}
+  _mode: 1
+  _timeChannel: 1
+  _surfaceYOffset: 0.02
+  _maxLandingsPerFrame: 1
+  _onLanded:
+    m_PersistentCalls:
+      m_Calls: []

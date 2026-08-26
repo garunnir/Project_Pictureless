@@ -3,6 +3,7 @@
 // ============================================================
 
 #if UNITY_EDITOR
+using IsoTilemap;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -231,6 +232,7 @@ static class TimeUISetupMenu
         }
 
         ParticleSystem rain = EnsureWeatherParticle(presenter.transform, "Vfx_Rain", new Color(0.55f, 0.7f, 1f, 0.7f), 80f);
+        EnsureRainFloorLanding(rain);
         ParticleSystem wind = EnsureWeatherParticle(presenter.transform, "Vfx_Wind", new Color(0.85f, 0.85f, 0.9f, 0.35f), 40f);
         ParticleSystem snow = EnsureWeatherParticle(presenter.transform, "Vfx_Snow", Color.white, 50f);
 
@@ -295,6 +297,87 @@ static class TimeUISetupMenu
         return ps;
     }
 
+    /// <summary>
+    /// Rain PS에 Splash 자식 + Sub Emitter(Death) + <see cref="MapParticleFloorLanding"/>을 보장합니다.
+    /// </summary>
+    static void EnsureRainFloorLanding(ParticleSystem rain)
+    {
+        if (rain == null)
+            return;
+
+        Transform splashT = rain.transform.Find("Splash");
+        GameObject splashGo;
+        if (splashT != null)
+        {
+            splashGo = splashT.gameObject;
+        }
+        else
+        {
+            splashGo = new GameObject("Splash");
+            Undo.RegisterCreatedObjectUndo(splashGo, "Create Rain Splash");
+            splashGo.transform.SetParent(rain.transform, false);
+        }
+
+        ParticleSystem splashPs = splashGo.GetComponent<ParticleSystem>();
+        if (splashPs == null)
+            splashPs = Undo.AddComponent<ParticleSystem>(splashGo);
+
+        ParticleSystem.MainModule splashMain = splashPs.main;
+        splashMain.loop = false;
+        splashMain.playOnAwake = false;
+        splashMain.startLifetime = 0.35f;
+        splashMain.startSize = 0.15f;
+        splashMain.startColor = new Color(0.7f, 0.85f, 1f, 0.55f);
+        splashMain.simulationSpace = ParticleSystemSimulationSpace.World;
+        splashMain.maxParticles = 128;
+
+        ParticleSystem.EmissionModule splashEmission = splashPs.emission;
+        splashEmission.rateOverTime = 0f;
+
+        ParticleSystem.CollisionModule splashCol = splashPs.collision;
+        splashCol.enabled = false;
+
+        ParticleSystem.CollisionModule rainCol = rain.collision;
+        rainCol.enabled = false;
+
+        ParticleSystem.SubEmittersModule sub = rain.subEmitters;
+        sub.enabled = true;
+        bool hasDeath = false;
+        for (int i = 0; i < sub.subEmittersCount; i++)
+        {
+            if (sub.GetSubEmitterSystem(i) == splashPs &&
+                sub.GetSubEmitterType(i) == ParticleSystemSubEmitterType.Death)
+            {
+                hasDeath = true;
+                break;
+            }
+        }
+
+        if (!hasDeath)
+        {
+            sub.AddSubEmitter(
+                splashPs,
+                ParticleSystemSubEmitterType.Death,
+                ParticleSystemSubEmitterProperties.InheritNothing);
+        }
+
+        splashPs.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+        MapParticleFloorLanding landing = rain.GetComponent<MapParticleFloorLanding>();
+        if (landing == null)
+            landing = Undo.AddComponent<MapParticleFloorLanding>(rain.gameObject);
+
+        SerializedObject so = new(landing);
+        so.FindProperty("_mode").enumValueIndex = (int)MapParticleLandingMode.KillOnLand;
+        so.FindProperty("_maxLandingsPerFrame").intValue =
+            MapParticleFloorLandingConsts.DefaultMaxLandingsPerFrame;
+        so.FindProperty("_surfaceYOffset").floatValue =
+            MapParticleFloorLandingConsts.DefaultSurfaceYOffset;
+        SerializedProperty sysProp = so.FindProperty("_systems");
+        sysProp.arraySize = 1;
+        sysProp.GetArrayElementAtIndex(0).objectReferenceValue = rain;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
 
     static T EnsureHudPrefabInstance<T>(
         UICanvasLayerHost layerHost,

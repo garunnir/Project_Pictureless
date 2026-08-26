@@ -29,6 +29,8 @@ namespace IsoTilemap
         readonly HashSet<(int x, int z, int y)> _anyTileAt = new();
         readonly Dictionary<Vector3Int, List<WallEdgeKey>> _wallKeysAtCell = new();
         readonly Dictionary<Vector3Int, List<FloorFaceKey>> _floorKeysAtCell = new();
+        /// <summary>(x,z) 컬럼 → walkable floor cellY 오름차순. 파티클 착지 조회용.</summary>
+        readonly Dictionary<(int x, int z), List<int>> _walkableFloorYsByColumn = new();
         readonly HashSet<System.Guid> _collectDedupeScratch = new();
 
         readonly struct TileRef
@@ -78,6 +80,7 @@ namespace IsoTilemap
             _occupiedEntries.Clear();
             _wallKeysAtCell.Clear();
             _floorKeysAtCell.Clear();
+            _walkableFloorYsByColumn.Clear();
 
             foreach (var kv in _tiles)
             {
@@ -150,6 +153,10 @@ namespace IsoTilemap
                 int sy = kv.Value.identity.sizeUnit.y;
                 if (sy < 1) sy = 1;
 
+                bool providesLogicalFloor = TileCollisionFlagsUtil.Has(
+                    kv.Value.identity.collisionFlags,
+                    TileCollisionFlags.ProvidesLogicalFloor);
+
                 for (int dy = 0; dy < sy; dy++)
                 {
                     var yOffset = new Vector3Int(0, dy, 0);
@@ -159,8 +166,71 @@ namespace IsoTilemap
                     _anyTileAt.Add((above.x, above.z, above.y));
                     RegisterFloorIncident(below, faceKey);
                     RegisterFloorIncident(above, faceKey);
+
+                    if (providesLogicalFloor)
+                        RegisterWalkableFloorColumn(above.x, above.z, above.y);
                 }
             }
+
+            foreach (var kv in _walkableFloorYsByColumn)
+                kv.Value.Sort();
+        }
+
+        /// <summary>
+        /// (x,z) 컬럼에서 <paramref name="maxCellY"/> 이하 최상단 walkable floor cellY.
+        /// 없으면 false (void — minCellY fallback 금지).
+        /// </summary>
+        public bool TryGetHighestWalkableFloorAtOrBelow(
+            int x,
+            int z,
+            int maxCellY,
+            out int floorCellY)
+        {
+            floorCellY = 0;
+            if (!_walkableFloorYsByColumn.TryGetValue((x, z), out var ys) || ys == null || ys.Count == 0)
+                return false;
+
+            int lo = 0;
+            int hi = ys.Count - 1;
+            int best = -1;
+            while (lo <= hi)
+            {
+                int mid = (lo + hi) >> 1;
+                int y = ys[mid];
+                if (y <= maxCellY)
+                {
+                    best = mid;
+                    lo = mid + 1;
+                }
+                else
+                {
+                    hi = mid - 1;
+                }
+            }
+
+            if (best < 0)
+                return false;
+
+            floorCellY = ys[best];
+            return true;
+        }
+
+        void RegisterWalkableFloorColumn(int x, int z, int cellY)
+        {
+            var key = (x, z);
+            if (!_walkableFloorYsByColumn.TryGetValue(key, out var list))
+            {
+                list = new List<int>(2);
+                _walkableFloorYsByColumn[key] = list;
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] == cellY)
+                    return;
+            }
+
+            list.Add(cellY);
         }
 
         /// <summary>

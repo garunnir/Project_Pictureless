@@ -104,6 +104,19 @@ graph TD
 
 경로: `Assets/Dist/Scripts/Map/Blood/`. `TileMapManager`가 `MapBloodHost`를 바인딩·DTO 로드. 세이브 시 `MapSavePipeline`이 `bloodStamps`를 JSON에 병합. 모델(스탬프)은 청크 unload와 무관하게 유지; 뷰는 인스턴스 드로우만.
 
+혈흔 VFX 파티클 착지: 공용 `MapParticleFloorLanding` (`NotifyOnly`) + `MapBloodParticleStampWriter`가 `Landed`를 구독해 스탬프. 바닥 높이는 `FloorMapIndex.TryGetHighestWalkableFloorAtOrBelow` 컬럼 인덱스 (`MapParticleFloorLandingProbe`) — Physics Collider / `ResolveFromWorld` Y루프 아님.
+
+### 파티클 논리 바닥 착지 (공용)
+
+경로: `Assets/Dist/Scripts/Map/MapCollision/MapParticleFloorLanding*.cs`.
+
+수직 교차 판정 SSOT: `MapLogicalFloorCross` (캐릭터 `MapLogicalFloorProbe`와 동일 — curr/pred 1스텝). 투사체 `MapTopologyLineCast`와 별개.
+
+| 모드 | 소비자 | 동작 |
+|------|--------|------|
+| `KillOnLand` | `Vfx_Rain` | Y 스냅 → particle kill → Sub Emitter Death 스플래시 |
+| `NotifyOnly` | `Vfx_HitBleed*` | 파티클 유지, `OnLanded`만 (스탬프 등) |
+
 ### 맵 식물
 
 경로: `Assets/Dist/Scripts/Map/Plant/`. `TileMapManager`가 `MapPlantHost`를 바인딩·구 `plantCells` 마이그레이션. Plant는 OccupiedCell `tiles` (+ floor `Floor/Tilled`). 뷰는 청크 TileView (`Furniture/Plant_*`). 설치: `TilePlaceUtil` (건설과 공유). 계약: [`docs/farming/FARMING.md`](../farming/FARMING.md).

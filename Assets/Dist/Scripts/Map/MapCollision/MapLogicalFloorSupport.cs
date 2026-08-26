@@ -44,6 +44,7 @@ namespace IsoTilemap
                     feet.X,
                     feet.Z,
                     feet.GridY,
+                    feet.FeetY,
                     predictedFeetY,
                     out float landingSurfaceY))
             {

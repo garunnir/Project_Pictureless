@@ -1,15 +1,16 @@
+// ============================================================
+// MapLogicalFloorProbe — 발이 위치한 (x,z,gridY) Floor 한 칸 착지 스냅
+// ============================================================
 namespace IsoTilemap
 {
     /// <summary>
     /// 발이 위치한 (x,z,gridY) Floor 한 칸만 검사합니다.
-    /// Floor가 있고 다음 프레임 발이 바닥면 아래로 교차하면 스냅합니다.
+    /// Floor가 있고 curr→pred 스텝이 바닥면을 교차하면 스냅합니다.
     /// </summary>
     public sealed class MapLogicalFloorProbe
     {
         readonly IMapTopologyQuery _query;
         readonly float _cellSize;
-
-        const float CrossTolerance = 0.05f;
 
         public MapLogicalFloorProbe(IMapTopologyQuery query)
         {
@@ -21,6 +22,7 @@ namespace IsoTilemap
             int x,
             int z,
             int feetGridY,
+            float currFeetY,
             float predictedFeetY,
             out float landingSurfaceY)
         {
@@ -30,7 +32,7 @@ namespace IsoTilemap
                 return false;
 
             float surfaceY = MapCollisionGrid.GridYToSurfaceY(feetGridY, _cellSize);
-            if (predictedFeetY >= surfaceY + CrossTolerance)
+            if (!MapLogicalFloorCross.StepCrossesOrLands(currFeetY, predictedFeetY, surfaceY))
                 return false;
 
             landingSurfaceY = surfaceY;

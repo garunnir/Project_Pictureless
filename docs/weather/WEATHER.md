@@ -14,6 +14,7 @@
 | `WeatherKind.Snow` | Shipped |
 | Global season scheduler (`WorldWeatherSettings`) | Shipped (Phase D 전 임시) |
 | Period lighting + Kind VFX (`WorldEnvironmentPresenter`) | Shipped |
+| Rain splash (grid landing + PS Sub Emitters Death) | Shipped |
 | XZ Perlin weather field + BN climate bake | **Parked (Phase D)** |
 
 ---
@@ -28,6 +29,7 @@
 | Gear UI forward | `PlayerGearHost.WorldWeatherKind` (read-only forward) |
 | Farm grow factor | `MapPlantService` via `TryGetKindAt(cell.x, cell.z)` |
 | Lighting + VFX | `WorldEnvironmentPresenter` (Period + Kind; mute when indoor) |
+| Rain floor splash | `MapParticleFloorLanding` (KillOnLand) + Rain PS Sub Emitters Death → Splash child — **Physics Collision 모듈 미사용** |
 
 ```mermaid
 flowchart LR
