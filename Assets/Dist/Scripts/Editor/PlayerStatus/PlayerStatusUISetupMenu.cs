@@ -2053,6 +2053,8 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.Vital.Stamina", "스태미나");
 
         Put("PlayerStatus.Skill.survival", "생존술");
+        Put("PlayerStatus.Trait.survival", "생존술");
+        Put("PlayerStatus.Trait.omniscience", "전지");
 
         Put("PlayerStatus.VitalProse.Hunger.Full", "배가 부르다");
         Put("PlayerStatus.VitalProse.Hunger.Ok", "배가 든든하다");

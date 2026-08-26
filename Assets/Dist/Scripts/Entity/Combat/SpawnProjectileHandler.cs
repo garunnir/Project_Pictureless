@@ -30,7 +30,8 @@ public sealed class SpawnProjectileHandler : IActionHandler
         }
 
         ItemData ammoProbe = WeaponChamber.ResolveAmmo(context.Stack, context.Instance);
-        float range = CombatHitscan.EffectiveRange(item, context.Action, ammoProbe, origin);
+        Vector3 feet = CharacterFeetPose.GetFeetWorld(attacker.transform);
+        float range = CombatHitscan.EffectiveRange(item, context.Action, ammoProbe, origin, feet);
 
         int shots = WeaponActionUtil.ShotsPerPerform(context.Action, item);
         if (shots < 1)

@@ -103,13 +103,13 @@ heal `use_action`: **부위 지정 필수** (`ConsumeService.TryBegin(..., partI
 |--|------------------|------------------------|
 | 누가 | 플레이어 Wear 호스트 (인벤 의존) | `CharacterBodyHost` 있는 엔티티 |
 | 틱 | Gear timed + `HelmetVision` | `BodyTemp` / `WearEnvExposure` / frostbite·heat / env 이동 |
-| 날씨 Kind | 씬 `WorldWeatherKind` (`SetWeatherKind`) | Kind만 읽음 |
+| 날씨 Kind | `WorldWeatherHost` **포워드** (`WorldWeatherKind`) | `WorldWeatherHost.TryGetKindAt` (발 셀; stub=글로벌) |
 | ambient 캐시 | ClimateHost에서 **포워드** (`Weather`) | `WeatherExposure` 1개. `Resolve(kind, period, outdoor)` |
 | 실내외 | 안 함 | `TileMapCacheHub.IsOutdoorEvaluation` per entity |
 | BodyTemp 소유 | ClimateHost에서 **포워드** | `_bodyTemp` 소유. `ApplyBodyTempDto` |
-| Wear 없을 때 | (호스트 없음) | warmth 0, env_prot 0. Kind는 `Active` 또는 `Clear` |
+| Wear 없을 때 | (호스트 없음) | warmth 0, env_prot 0. Kind는 WorldWeatherHost 또는 `Clear` |
 
-`PlayerGearHost.BodyTemperature` / `EnvExposure` / `Weather`는 ClimateHost 참조. 틱·ambient 캐시는 ClimateHost `Update`만 (`TimeScaleService.Delta(World)`). GearHost는 Kind-only — 인자 없는 `WeatherExposure.Resolve()`(Day+야외)를 호출하지 않음.
+`PlayerGearHost.BodyTemperature` / `EnvExposure` / `Weather`는 ClimateHost 참조. 틱·ambient 캐시는 ClimateHost `Update`만 (`TimeScaleService.Delta(World)`). Kind SSOT: [`docs/weather/WEATHER.md`](../weather/WEATHER.md).
 
 Checklist: [`.claude/checklists/migration-parity.md`](../../.claude/checklists/migration-parity.md).
 
@@ -143,7 +143,7 @@ Consts: `ComfortBodyTempC=37`, 코어 min/max `27`/`43`, 말단 min/max `-10`/`4
 
 ```mermaid
 flowchart LR
-  kind[WorldWeatherKind]
+  kind[WorldWeatherHost]
   period[WorldClock_Period]
   outdoor[IsOutdoorEvaluation]
   wx[WeatherExposure_Resolve]
@@ -171,8 +171,8 @@ flowchart LR
 
 - 실내: `IndoorAmbientTempC` (= Clear 18°C), wetness 0. 비/바람·기간 오프셋 무시
 - 야외: kind ambient + `ResolvePeriodOffsetC` (`Night=-6`, `Dawn=-3`, Day/Dusk=0)
-- Kind: Clear 18 / Rain 10 / Wind `Clear − WindChillDegreesC(4)`
-- Wetness/s 야외: Clear 0 / Rain 0.02 / Wind 0.002
+- Kind: Clear 18 / Rain 10 / Wind `Clear − WindChillDegreesC(4)` / Snow −4
+- Wetness/s 야외: Clear 0 / Rain 0.02 / Wind 0.002 / Snow 0.004
 
 `CharacterClimateHost.ResolveOutdoor`: 에디터 `DebugOutdoorOverride`(ForceOutdoor/ForceIndoor)가 있으면 그걸 쓰고, 없으면 `OccupiedCellCoord` → `TileMapCacheHub.Runtime.IsOutdoorEvaluation(floor.y, x, z)`. 허브 없으면 outdoor true. Play 디버그: `Tools/Environment Runtime Debug` (`docs/time/TIME.md`). 체온·습윤 값은 `Tools/Character Runtime Debug` Climate.
 
@@ -186,7 +186,7 @@ ClimateHost, World초.
 
 | 효과 | 조건 | 부여 |
 |------|------|------|
-| `BodyPartEffectIds.Frostbite` | `FrostbiteParts`가 `FrostbiteOnsetTempC`(0°C) 이하 `FrostbiteOnsetSeconds`(30) 유지. Feeling Cold(~34°C)·야간 맑음(~12°C)과 분리. 현재 날씨 최저(밤+비 ≈ 4°C)는 미도달 | 해당 부위, 이미 있으면 스킵 |
+| `BodyPartEffectIds.Frostbite` | `FrostbiteParts`가 `FrostbiteOnsetTempC`(0°C) 이하 `FrostbiteOnsetSeconds`(30) 유지. Feeling Cold(~34°C)·야간 맑음(~12°C)과 분리. Snow+Night ≈ −10°C로 도달 가능 | 해당 부위, 이미 있으면 스킵 |
 | `BodyPartEffectIds.Heat` | 코어 Feeling ≥ Hot `HeatOnsetSeconds`(20) | `chest` |
 | 극단 코어 피해 | `BodyTempC` ≤ min 또는 ≥ max | `BodyDamageService.ApplyHit(chest, ExtremeCoreDamage=1)` 매 `ExtremeCoreDamageIntervalSeconds`(4) |
 

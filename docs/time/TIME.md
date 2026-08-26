@@ -158,10 +158,23 @@ Play 디버그: `Tools/Environment Runtime Debug` (Odin). 구현: `EnvironmentRu
 | 입력 | API |
 |------|-----|
 | Day / Hour / Minute, Period 점프 | `WorldClock.SetTime` (기간 시작 분 = `WorldClockSettings`) |
-| WeatherKind | `PlayerGearHost.Active.SetWeatherKind` |
+| WeatherKind | `WorldWeatherHost.Instance.SetKind` (디버그 포워드: `PlayerGearHost.SetWeatherKind`) |
 | 실내외 강제 | `CharacterClimateHost.DebugOutdoorOverride` (에디터 전용. Play 시작·종료 시 Map으로 리셋) |
 
-배속은 HUD `GameplayTimeScale`. 낮/밤 라이팅은 Pending. 체온·습윤 직접 편집은 `Tools/Character Runtime Debug` Climate.
+배속은 HUD `GameplayTimeScale`. Period 라이팅·Kind VFX는 `WorldEnvironmentPresenter` ([`weather/WEATHER.md`](../weather/WEATHER.md)). 체온·습윤 직접 편집은 `Tools/Character Runtime Debug` Climate.
+
+### WorldWeatherHost / Settings
+
+메뉴: `Create → Dist/Time/World Weather Settings` · MCP `Dist/MCP/Time/Ensure World Weather*`.  
+기본 에셋: `Assets/Dist/SOData/Gameplay/Time/WorldWeatherSettings.asset`.
+
+| API | 의미 |
+|-----|------|
+| `CurrentKind` | 글로벌 Kind (Phase D: 플레이어 셀 샘플) |
+| `TryGetKindAt(x,z)` | 공간 샘플 — 지금은 stub → `CurrentKind` |
+| `SchedulerEnabled` | 계절 가중치 자동 전환 on/off |
+
+SSOT: [`weather/WEATHER.md`](../weather/WEATHER.md).
 
 ### WorldClockSettings (SO)
 

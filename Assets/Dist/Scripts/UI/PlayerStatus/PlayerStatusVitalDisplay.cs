@@ -41,6 +41,9 @@ public static class PlayerStatusVitalDisplay
 
     public static bool CanShowNumericVitals(IPlayerStats stats)
     {
+        if (GameplayData.Traits != null && GameplayData.Traits.Has(TraitIds.Survival))
+            return true;
+
         if (stats == null)
             return false;
 

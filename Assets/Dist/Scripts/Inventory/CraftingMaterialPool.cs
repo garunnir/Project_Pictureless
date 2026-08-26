@@ -126,11 +126,20 @@ public sealed class CraftingMaterialPool : IItemContainer
 
     public int TryAddResult(string itemId, int count)
     {
+        return TryAddResult(itemId, count, cooked: false, hot: false);
+    }
+
+    public int TryAddResult(string itemId, int count, bool cooked, bool hot)
+    {
         if (string.IsNullOrEmpty(itemId) || count <= 0)
             return 0;
 
         InventoryContainer dest = FindPlayerBody() ?? (_sources.Count > 0 ? _sources[0] : null);
-        return dest != null ? dest.AddItem(itemId, count) : 0;
+        if (dest == null)
+            return 0;
+
+        ItemData item = GameplayData.GetItem(itemId);
+        return item != null ? dest.AddItem(item, count, 0, cooked, hot) : 0;
     }
 
     InventoryContainer FindPlayerBody()

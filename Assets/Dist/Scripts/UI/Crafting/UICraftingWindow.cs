@@ -78,6 +78,7 @@ public sealed class UICraftingWindow : MonoBehaviour
     Action _onClose;
     RecipeData _selected;
     string _selectedCategoryId = CraftingWindowLabels.CategoryAllId;
+    string _toolFilter;
     string _search = string.Empty;
     bool _bound;
     int _quantity = 1;
@@ -375,6 +376,9 @@ public sealed class UICraftingWindow : MonoBehaviour
                 RecipeData recipe = all[i];
                 if (recipe == null || string.IsNullOrEmpty(recipe.result) || recipe.is_uncraft)
                     continue;
+                if (!string.IsNullOrEmpty(_toolFilter) &&
+                    !CraftingService.RecipeUsesTool(recipe, _toolFilter))
+                    continue;
 
                 _allRecipes.Add(recipe);
                 _recipeNames.Add(UITextPresenter.GetItemName(recipe.result) ?? string.Empty);
@@ -623,7 +627,8 @@ public sealed class UICraftingWindow : MonoBehaviour
             DistUiFont.Apply(_timeText);
             _timeText.gameObject.SetActive(has);
             if (has)
-                _timeText.text = CraftingWindowLabels.FormatTimeMinutes(_selected.time_minutes);
+                _timeText.text = CraftingWindowLabels.FormatTimeMinutes(
+                    CraftingService.GetCraftTimeMinutes(_selected, 1));
         }
 
         bool hasBooks = has && _selected.book_learn != null && _selected.book_learn.Count > 0;
@@ -649,8 +654,33 @@ public sealed class UICraftingWindow : MonoBehaviour
                 _workbenchText.text = UITextPresenter.GetContainerName(bench.Definition);
         }
 
-        if (_lightIcon != null)
-            _lightIcon.gameObject.SetActive(false);
+        BindLightIcon();
+    }
+
+    void BindLightIcon()
+    {
+        if (_lightIcon == null)
+            return;
+
+        bool needsLight = _selected != null && CraftingLightGate.RequiresLight(_selected);
+        _lightIcon.gameObject.SetActive(needsLight);
+        if (!needsLight)
+            return;
+
+        bool met = CraftingLightGate.MeetsLight(_selected, _pool);
+        _lightIcon.color = met
+            ? CraftingWindowLayout.SkillMetColor
+            : CraftingWindowLayout.SkillUnmetColor;
+    }
+
+    public void SetToolFilter(string toolId)
+    {
+        _toolFilter = string.IsNullOrEmpty(toolId) ? null : toolId;
+        if (_runtime == null)
+            return;
+        CacheRecipes();
+        ApplyFilter();
+        Refresh();
     }
 
     void BindTitle()
@@ -948,7 +978,7 @@ public sealed class UICraftingWindow : MonoBehaviour
         if (remaining)
             gameMinutes = Mathf.Max(0f, _craftDuration - _craftElapsed);
         else if (_selected != null)
-            gameMinutes = _selected.time_minutes * CraftQuantity;
+            gameMinutes = CraftingService.GetCraftTimeMinutes(_selected, CraftQuantity);
         else
             gameMinutes = 0f;
         float displaySeconds = gameMinutes * CraftingWindowLayout.SecondsPerMinute;
@@ -1364,7 +1394,7 @@ public sealed class UICraftingWindow : MonoBehaviour
             return false;
 
         _pendingCraftQuantity = qty;
-        _craftDuration = _selected.time_minutes * qty;
+        _craftDuration = CraftingService.GetCraftTimeMinutes(_selected, qty);
         _craftElapsed = 0f;
         _craftRunning = true;
         SetQuantityInteractable(false);

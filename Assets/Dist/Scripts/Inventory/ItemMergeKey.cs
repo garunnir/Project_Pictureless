@@ -19,6 +19,8 @@ public readonly struct ItemMergeKey
     public readonly string SupplyAmmoId;
     public readonly int ToolCharges;
     public readonly bool IsRotten;
+    public readonly bool IsCooked;
+    public readonly bool IsHot;
 
     public ItemMergeKey(
         string kindId,
@@ -29,7 +31,9 @@ public readonly struct ItemMergeKey
         int toolCharges = 0,
         int supplyRounds = 0,
         string supplyAmmoId = null,
-        bool isRotten = false)
+        bool isRotten = false,
+        bool isCooked = false,
+        bool isHot = false)
     {
         KindId = kindId ?? string.Empty;
         DamageLevel = Math.Max(0, damageLevel);
@@ -40,6 +44,8 @@ public readonly struct ItemMergeKey
         SupplyAmmoId = supplyAmmoId ?? string.Empty;
         ToolCharges = Math.Max(0, toolCharges);
         IsRotten = isRotten;
+        IsCooked = isCooked;
+        IsHot = isHot;
     }
 
     public static ItemMergeKey From(ItemStack stack)
@@ -57,7 +63,9 @@ public readonly struct ItemMergeKey
             instance.ToolCharges,
             instance.SupplyRounds,
             instance.SupplyAmmoId,
-            instance.IsRotten);
+            instance.IsRotten,
+            instance.IsCooked,
+            instance.IsHot);
     }
 
     public static ItemMergeKey From(ItemData item, int damageLevel)

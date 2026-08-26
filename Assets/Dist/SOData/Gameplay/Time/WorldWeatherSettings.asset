@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cc3faefdb632f345b1d04e10e5a9f44, type: 3}
+  m_Name: WorldWeatherSettings
+  m_EditorClassIdentifier: DistScript::WorldWeatherSettings
+  _minDurationWorldMinutes: 60
+  _spring:
+    Clear: 4
+    Rain: 3
+    Wind: 2
+    Snow: 0
+  _summer:
+    Clear: 5
+    Rain: 2
+    Wind: 1
+    Snow: 0
+  _autumn:
+    Clear: 3
+    Rain: 3
+    Wind: 3
+    Snow: 0.5
+  _winter:
+    Clear: 2
+    Rain: 0.5
+    Wind: 3
+    Snow: 4

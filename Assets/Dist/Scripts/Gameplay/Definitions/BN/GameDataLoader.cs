@@ -14,6 +14,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         const string ITEMS_FILE = "items.json";
         const string RECIPES_FILE = "recipes.json";
         const string TERRAIN_FURNITURE_FILE = "terrain_furniture.json";
+        const string PROFICIENCIES_FILE = "proficiencies.json";
 
         static GameDatabase _refDatabase;
         static GameDatabase _gameDatabase;
@@ -52,10 +53,12 @@ namespace Garunnir.Runtime.Gameplay.Data
             string itemsPath = Path.Combine(basePath, ITEMS_FILE);
             string recipesPath = Path.Combine(basePath, RECIPES_FILE);
             string terrainFurniturePath = Path.Combine(basePath, TERRAIN_FURNITURE_FILE);
+            string proficienciesPath = Path.Combine(basePath, PROFICIENCIES_FILE);
 
             ItemsFileRoot itemsRoot = null;
             RecipesFileRoot recipesRoot = null;
             TerrainFurnitureFileRoot terrainFurnitureRoot = null;
+            ProficienciesFileRoot proficienciesRoot = null;
 
             if (File.Exists(itemsPath))
             {
@@ -80,7 +83,15 @@ namespace Garunnir.Runtime.Gameplay.Data
                     $"furniture: {terrainFurnitureRoot?.furniture?.Count ?? 0}");
             }
 
-            return new GameDatabase(itemsRoot, recipesRoot, terrainFurnitureRoot);
+            if (File.Exists(proficienciesPath))
+            {
+                string json = File.ReadAllText(proficienciesPath);
+                proficienciesRoot = GameDataJson.Deserialize<ProficienciesFileRoot>(json);
+                Debug.Log(
+                    $"[GameDataLoader:{tag}] proficiencies: {proficienciesRoot?.proficiencies?.Count ?? 0}");
+            }
+
+            return new GameDatabase(itemsRoot, recipesRoot, terrainFurnitureRoot, proficienciesRoot);
         }
 
         public static void Unload()

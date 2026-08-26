@@ -11,6 +11,8 @@ public static class TileObjectContextMenuCatalog
         new DoorToggleContextContributor(),
         new OpenLootContextContributor(),
         new HarvestContextContributor(),
+        new ChopContextContributor(),
+        new CollectTrapContextContributor(),
         new TillContextContributor(),
         new FertilizeContextContributor(),
     };

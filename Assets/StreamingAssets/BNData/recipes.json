@@ -3773,6 +3773,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -20835,6 +20838,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -23136,6 +23142,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -23165,6 +23174,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -23194,6 +23206,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -23219,6 +23234,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -23524,6 +23542,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -24351,6 +24372,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -25715,6 +25739,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -25744,6 +25771,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -25773,6 +25803,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -25798,6 +25831,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -26169,6 +26205,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -26700,6 +26739,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -26793,6 +26835,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -27119,6 +27164,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -27464,6 +27512,12 @@
           "book": "textbook_electronics",
           "level": 6
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 4
+        }
       ]
     },
     {
@@ -27543,6 +27597,12 @@
         },
         {
           "book": "textbook_electronics",
+          "level": 4
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
           "level": 4
         }
       ]
@@ -30909,6 +30969,12 @@
           "book": "textbook_gaswarfare",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 3
+        }
       ]
     },
     {
@@ -31256,6 +31322,12 @@
         },
         {
           "book": "textbook_gaswarfare",
+          "level": 3
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
           "level": 3
         }
       ]
@@ -32007,6 +32079,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -32861,6 +32936,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -33920,6 +33998,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -34242,6 +34323,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -35944,6 +36028,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -36103,6 +36190,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -36132,6 +36222,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -38256,6 +38349,12 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 0
+        }
       ]
     },
     {
@@ -39177,6 +39276,12 @@
           "book": "textbook_gaswarfare",
           "level": 4
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 4
+        }
       ]
     },
     {
@@ -39218,6 +39323,12 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 2
+        }
       ]
     },
     {
@@ -39258,6 +39369,12 @@
               "count": 1
             }
           ]
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 2
         }
       ]
     },
@@ -39379,6 +39496,12 @@
         },
         {
           "book": "textbook_gaswarfare",
+          "level": 4
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
           "level": 4
         }
       ]
@@ -39524,6 +39647,12 @@
         {
           "book": "pocket_survival",
           "level": 1
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 4
         }
       ]
     },
@@ -40805,6 +40934,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -41514,6 +41646,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -41543,6 +41678,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -42241,6 +42379,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -42274,6 +42415,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -42405,6 +42549,12 @@
           "book": "recipe_arrows",
           "level": 1
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 3
+        }
       ]
     },
     {
@@ -42449,6 +42599,12 @@
         {
           "book": "recipe_arrows",
           "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 3
         }
       ]
     },
@@ -42531,6 +42687,12 @@
           "book": "recipe_arrows",
           "level": 2
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 3
+        }
       ]
     },
     {
@@ -42575,6 +42737,12 @@
         {
           "book": "recipe_arrows",
           "level": 3
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 4
         }
       ]
     },
@@ -43730,6 +43898,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -48625,6 +48796,12 @@
           "book": "textbook_tailor",
           "level": 0
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 0
+        }
       ]
     },
     {
@@ -50143,6 +50320,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -50172,6 +50352,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -50201,6 +50384,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -50226,6 +50412,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -51926,6 +52115,15 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 0
+        }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -51959,6 +52157,15 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 0
+        }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -51992,6 +52199,15 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 0
+        }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -52025,6 +52241,15 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 0
+        }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -52057,6 +52282,12 @@
               "count": 8
             }
           ]
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 4
         }
       ]
     },
@@ -54462,6 +54693,12 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 6
+        }
       ]
     },
     {
@@ -55961,6 +56198,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -58332,6 +58572,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -58407,6 +58650,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -65253,6 +65499,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -65298,6 +65547,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -66034,6 +66286,12 @@
           "book": "mag_electronics",
           "level": 2
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 3
+        }
       ]
     },
     {
@@ -66250,6 +66508,12 @@
           "book": "textbook_anarch",
           "level": 5
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 3
+        }
       ]
     },
     {
@@ -66325,6 +66589,12 @@
         },
         {
           "book": "manual_electronics",
+          "level": 1
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
           "level": 1
         }
       ]
@@ -66555,6 +66825,12 @@
           "book": "textbook_electronics",
           "level": 2
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 2
+        }
       ]
     },
     {
@@ -66644,6 +66920,12 @@
           "book": "textbook_anarch",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 3
+        }
       ]
     },
     {
@@ -66731,6 +67013,12 @@
         },
         {
           "book": "textbook_anarch",
+          "level": 4
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
           "level": 4
         }
       ]
@@ -66826,6 +67114,12 @@
         {
           "book": "recipe_lab_elec",
           "level": 7
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 4
         }
       ]
     },
@@ -67082,6 +67376,12 @@
           "book": "textbook_anarch",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 4
+        }
       ]
     },
     {
@@ -67169,6 +67469,12 @@
           "skill": "mechanics",
           "level": 2
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 2
+        }
       ]
     },
     {
@@ -67241,6 +67547,12 @@
         },
         {
           "book": "advanced_electronics",
+          "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
           "level": 2
         }
       ]
@@ -67317,6 +67629,12 @@
           "book": "advanced_electronics",
           "level": 2
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 2
+        }
       ]
     },
     {
@@ -67389,6 +67707,12 @@
         },
         {
           "book": "advanced_electronics",
+          "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
           "level": 2
         }
       ]
@@ -67505,6 +67829,12 @@
           "book": "textbook_robots",
           "level": 7
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 5
+        }
       ]
     },
     {
@@ -67580,6 +67910,12 @@
         {
           "book": "advanced_electronics",
           "level": 3
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 2
         }
       ]
     },
@@ -67911,6 +68247,12 @@
           "book": "mag_electronics",
           "level": 2
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "mechanics",
+          "level": 1
+        }
       ]
     },
     {
@@ -67982,6 +68324,12 @@
         {
           "book": "mag_electronics",
           "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "mechanics",
+          "level": 1
         }
       ]
     },
@@ -68055,6 +68403,12 @@
           "book": "mag_electronics",
           "level": 2
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "mechanics",
+          "level": 1
+        }
       ]
     },
     {
@@ -68126,6 +68480,12 @@
         {
           "book": "mag_electronics",
           "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "mechanics",
+          "level": 1
         }
       ]
     },
@@ -68446,6 +68806,12 @@
           "level": 6
         }
       ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 5
+        }
+      ],
       "byproducts": [
         {
           "item": "sheet_metal_small",
@@ -68581,6 +68947,12 @@
           "book": "textbook_robots",
           "level": 7
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 7
+        }
       ]
     },
     {
@@ -68705,6 +69077,12 @@
         },
         {
           "book": "textbook_robots",
+          "level": 7
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
           "level": 7
         }
       ]
@@ -68833,6 +69211,12 @@
           "book": "textbook_robots",
           "level": 8
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 8
+        }
       ]
     },
     {
@@ -68957,6 +69341,12 @@
         },
         {
           "book": "textbook_robots",
+          "level": 7
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
           "level": 7
         }
       ]
@@ -69085,6 +69475,12 @@
           "book": "textbook_robots",
           "level": 7
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 7
+        }
       ]
     },
     {
@@ -69211,6 +69607,12 @@
           "book": "textbook_robots",
           "level": 7
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 7
+        }
       ]
     },
     {
@@ -69335,6 +69737,12 @@
         },
         {
           "book": "textbook_robots",
+          "level": 7
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
           "level": 7
         }
       ]
@@ -69494,6 +69902,12 @@
         {
           "book": "recipe_lab_elec",
           "level": 8
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 9
         }
       ]
     },
@@ -69669,6 +70083,12 @@
           "book": "schematics_nursebot",
           "level": 7
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 8
+        }
       ]
     },
     {
@@ -69843,6 +70263,12 @@
           "book": "schematics_grocerybot",
           "level": 7
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 8
+        }
       ]
     },
     {
@@ -70000,6 +70426,12 @@
         {
           "book": "schematics_hazmatbot",
           "level": 7
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 8
         }
       ]
     },
@@ -70247,6 +70679,12 @@
           "book": "schematics_haulerbot",
           "level": 6
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 7
+        }
       ]
     },
     {
@@ -70429,6 +70867,12 @@
           "book": "schematics_copbot",
           "level": 7
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 8
+        }
       ]
     },
     {
@@ -70603,6 +71047,12 @@
           "book": "schematics_eyebot",
           "level": 7
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 5
+        }
       ]
     },
     {
@@ -70752,6 +71202,12 @@
         {
           "book": "schematics_molebot",
           "level": 7
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 5
         }
       ]
     },
@@ -70934,6 +71390,12 @@
         {
           "book": "schematics_riotbot",
           "level": 7
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 8
         }
       ]
     },
@@ -71125,6 +71587,12 @@
           "book": "schematics_secubot",
           "level": 7
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 8
+        }
       ]
     },
     {
@@ -71315,6 +71783,12 @@
           "book": "schematics_secubot",
           "level": 7
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 8
+        }
       ]
     },
     {
@@ -71464,6 +71938,12 @@
         {
           "book": "schematics_skitterbot",
           "level": 7
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 5
         }
       ]
     },
@@ -71639,6 +72119,12 @@
           "book": "schematics_sciencebot",
           "level": 7
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 8
+        }
       ]
     },
     {
@@ -71772,6 +72258,12 @@
         {
           "book": "schematics_searchlight",
           "level": 7
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 5
         }
       ]
     },
@@ -71943,6 +72435,12 @@
           "book": "textbook_robots",
           "level": 9
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 8
+        }
       ]
     },
     {
@@ -72109,6 +72607,12 @@
           "book": "textbook_robots",
           "level": 9
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 8
+        }
       ]
     },
     {
@@ -72263,6 +72767,12 @@
           "book": "textbook_robots",
           "level": 9
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 8
+        }
       ]
     },
     {
@@ -72413,6 +72923,12 @@
           "book": "schematics_antimateriel",
           "level": 7
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 5
+        }
       ]
     },
     {
@@ -72519,6 +73035,12 @@
           "book": "textbook_electronics",
           "level": 5
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 5
+        }
       ]
     },
     {
@@ -72590,6 +73112,12 @@
       "book_learn": [
         {
           "book": "mag_electronics",
+          "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
           "level": 2
         }
       ]
@@ -72685,6 +73213,12 @@
           "book": "textbook_robots",
           "level": 5
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 6
+        }
       ]
     },
     {
@@ -72771,6 +73305,12 @@
         {
           "skill": "electronics",
           "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 0
         }
       ]
     },
@@ -72860,6 +73400,12 @@
         {
           "book": "advanced_electronics",
           "level": 6
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 5
         }
       ]
     },
@@ -72982,6 +73528,12 @@
         {
           "book": "advanced_electronics",
           "level": 6
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 2
         }
       ]
     },
@@ -73145,6 +73697,12 @@
           "book": "advanced_electronics",
           "level": 6
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 2
+        }
       ]
     },
     {
@@ -73278,6 +73836,12 @@
         {
           "book": "advanced_electronics",
           "level": 6
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 3
         }
       ]
     },
@@ -73429,6 +73993,12 @@
           "book": "advanced_electronics",
           "level": 6
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 3
+        }
       ]
     },
     {
@@ -73517,6 +74087,12 @@
         {
           "book": "textbook_robots",
           "level": 8
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 5
         }
       ]
     },
@@ -73630,6 +74206,12 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "mechanics",
+          "level": 3
+        }
       ]
     },
     {
@@ -73719,6 +74301,12 @@
         {
           "book": "welding_book",
           "level": 5
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 4
         }
       ]
     },
@@ -73810,6 +74398,12 @@
           "book": "welding_book",
           "level": 5
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 4
+        }
       ]
     },
     {
@@ -73882,6 +74476,12 @@
         {
           "book": "welding_book",
           "level": 5
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "mechanics",
+          "level": 4
         }
       ]
     },
@@ -73984,6 +74584,12 @@
         {
           "book": "welding_book",
           "level": 5
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "mechanics",
+          "level": 4
         }
       ]
     },
@@ -74123,6 +74729,12 @@
           "book": "manual_mechanics",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 3
+        }
       ]
     },
     {
@@ -74247,6 +74859,12 @@
         },
         {
           "book": "manual_mechanics",
+          "level": 3
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
           "level": 3
         }
       ]
@@ -74633,6 +75251,12 @@
           "book": "manual_mechanics",
           "level": 2
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 2
+        }
       ]
     },
     {
@@ -74729,6 +75353,12 @@
         },
         {
           "book": "manual_mechanics",
+          "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
           "level": 2
         }
       ]
@@ -75131,6 +75761,12 @@
           "book": "repeater_mod_guide",
           "level": 2
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 4
+        }
       ]
     },
     {
@@ -75212,6 +75848,12 @@
         {
           "book": "mag_electronics",
           "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 3
         }
       ]
     },
@@ -75295,6 +75937,12 @@
           "book": "mag_electronics",
           "level": 2
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 3
+        }
       ]
     },
     {
@@ -75377,6 +76025,12 @@
           "book": "mag_electronics",
           "level": 2
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 3
+        }
       ]
     },
     {
@@ -75458,6 +76112,12 @@
         {
           "book": "mag_electronics",
           "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 3
         }
       ]
     },
@@ -75593,6 +76253,12 @@
           "book": "manual_mechanics",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 2
+        }
       ]
     },
     {
@@ -75727,6 +76393,12 @@
           "book": "manual_mechanics",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 2
+        }
       ]
     },
     {
@@ -75821,6 +76493,12 @@
           "book": "manual_mechanics",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 3
+        }
       ]
     },
     {
@@ -75898,6 +76576,12 @@
         {
           "book": "recipe_atomic_battery",
           "level": 6
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 4
         }
       ]
     },
@@ -75977,6 +76661,12 @@
           "book": "recipe_atomic_battery",
           "level": 6
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 4
+        }
       ]
     },
     {
@@ -76055,6 +76745,12 @@
           "book": "recipe_atomic_battery",
           "level": 6
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 4
+        }
       ]
     },
     {
@@ -76132,6 +76828,12 @@
         {
           "book": "recipe_atomic_battery",
           "level": 6
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 4
         }
       ]
     },
@@ -76350,6 +77052,12 @@
           "book": "advanced_electronics",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 2
+        }
       ]
     },
     {
@@ -76487,6 +77195,12 @@
         {
           "book": "textbook_electronics",
           "level": 3
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 4
         }
       ]
     },
@@ -76638,6 +77352,12 @@
           "book": "textbook_electronics",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 4
+        }
       ]
     },
     {
@@ -76783,6 +77503,12 @@
         {
           "book": "textbook_electronics",
           "level": 4
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 5
         }
       ]
     },
@@ -77023,6 +77749,12 @@
         {
           "skill": "electronics",
           "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 0
         }
       ]
     },
@@ -77356,6 +78088,12 @@
           "book": "manual_electronics",
           "level": 2
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "mechanics",
+          "level": 2
+        }
       ]
     },
     {
@@ -77446,6 +78184,12 @@
         },
         {
           "book": "manual_electronics",
+          "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
           "level": 2
         }
       ]
@@ -77586,6 +78330,12 @@
           "book": "manual_electronics",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 4
+        }
       ]
     },
     {
@@ -77707,6 +78457,12 @@
           "book": "manual_electronics",
           "level": 2
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 2
+        }
       ]
     },
     {
@@ -77786,6 +78542,12 @@
         },
         {
           "book": "textbook_anarch",
+          "level": 3
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
           "level": 3
         }
       ]
@@ -77879,6 +78641,12 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 4
+        }
       ]
     },
     {
@@ -77969,6 +78737,12 @@
           "book": "advanced_electronics",
           "level": 5
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 4
+        }
       ]
     },
     {
@@ -78058,6 +78832,12 @@
           "book": "atomic_survival",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 5
+        }
       ]
     },
     {
@@ -78146,6 +78926,12 @@
         {
           "book": "atomic_survival",
           "level": 5
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 7
         }
       ]
     },
@@ -78349,6 +79135,12 @@
         {
           "book": "advanced_electronics",
           "level": 3
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 4
         }
       ]
     },
@@ -78596,6 +79388,12 @@
           "book": "manual_fabrication",
           "level": 4
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 3
+        }
       ]
     },
     {
@@ -78817,6 +79615,12 @@
           "book": "textbook_electronics",
           "level": 5
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 5
+        }
       ]
     },
     {
@@ -78921,6 +79725,12 @@
         {
           "book": "textbook_electronics",
           "level": 3
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 4
         }
       ]
     },
@@ -85815,6 +86625,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -85848,6 +86661,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -88337,6 +89153,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -88370,6 +89189,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -88570,6 +89392,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -88603,6 +89428,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -88636,6 +89464,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -88669,6 +89500,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -88979,6 +89813,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -89044,6 +89881,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -89101,6 +89941,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -89881,6 +90724,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -91405,6 +92251,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -91487,6 +92336,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -91632,6 +92484,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -95235,6 +96090,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -95273,6 +96131,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -118697,6 +119558,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -118809,6 +119673,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -118847,6 +119714,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -120033,6 +120903,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -120147,6 +121020,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -120186,6 +121062,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -127951,6 +128830,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -127989,6 +128871,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -137808,6 +138693,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -151333,6 +152221,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -151372,6 +152263,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -151426,6 +152320,12 @@
               "count": 4
             }
           ]
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 3
         }
       ]
     },
@@ -151797,6 +152697,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -155464,6 +156367,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -155519,6 +156425,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -155574,6 +156483,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -157628,6 +158540,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -158136,6 +159051,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -158169,6 +159087,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -158608,6 +159529,12 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "survival",
+          "level": 0
+        }
       ]
     },
     {
@@ -158707,6 +159634,12 @@
         },
         {
           "book": "textbook_mechanics",
+          "level": 4
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "mechanics",
           "level": 4
         }
       ]
@@ -159986,6 +160919,12 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 5
+        }
       ]
     },
     {
@@ -160148,6 +161087,12 @@
               "count": 20
             }
           ]
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 5
         }
       ]
     },
@@ -160320,6 +161265,12 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 5
+        }
       ]
     },
     {
@@ -160491,6 +161442,12 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 5
+        }
       ]
     },
     {
@@ -160605,6 +161562,12 @@
               "count": 20
             }
           ]
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 5
         }
       ]
     },
@@ -161962,6 +162925,12 @@
           "book": "textbook_carpentry",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "mechanics",
+          "level": 4
+        }
       ]
     },
     {
@@ -162225,6 +163194,12 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 3
+        }
       ]
     },
     {
@@ -162331,6 +163306,12 @@
               "count": 80
             }
           ]
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 3
         }
       ]
     },
@@ -162766,6 +163747,15 @@
           "book": "manual_tailor",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "tailor",
+          "level": 3
+        }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -165083,6 +166073,15 @@
           "book": "textbook_chemistry",
           "level": 1
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 0
+        }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -165143,6 +166142,15 @@
           "book": "textbook_chemistry",
           "level": 1
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 0
+        }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -165200,6 +166208,15 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 1
+        }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -165503,6 +166520,12 @@
           "skill": "electronics",
           "level": 2
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 2
+        }
       ]
     },
     {
@@ -165649,6 +166672,12 @@
               "count": 1
             }
           ]
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 4
         }
       ]
     },
@@ -168004,6 +169033,12 @@
           "book": "book_icef",
           "level": 6
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "mechanics",
+          "level": 5
+        }
       ]
     },
     {
@@ -168148,6 +169183,12 @@
         },
         {
           "book": "textbook_electronics",
+          "level": 5
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "mechanics",
           "level": 5
         }
       ]
@@ -168627,6 +169668,12 @@
           "book": "cookbook",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 1
+        }
       ]
     },
     {
@@ -169001,6 +170048,12 @@
         },
         {
           "book": "manual_fabrication",
+          "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
           "level": 2
         }
       ]
@@ -175501,6 +176554,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_HARD"
       ]
     },
     {
@@ -176025,6 +177081,12 @@
           "book": "recipe_lab_elec",
           "level": 8
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "traps",
+          "level": 5
+        }
       ]
     },
     {
@@ -176264,6 +177326,12 @@
           "book": "howto_traps",
           "level": 1
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "traps",
+          "level": 2
+        }
       ]
     },
     {
@@ -176341,6 +177409,12 @@
               "count": 300
             }
           ]
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "traps",
+          "level": 2
         }
       ]
     },
@@ -176423,6 +177497,12 @@
               "count": 300
             }
           ]
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "traps",
+          "level": 2
         }
       ]
     },
@@ -176520,6 +177600,12 @@
         {
           "book": "book_icef",
           "level": 4
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "traps",
+          "level": 3
         }
       ]
     },
@@ -176918,6 +178004,12 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 2
+        }
       ]
     },
     {
@@ -177100,6 +178192,12 @@
               "count": 40
             }
           ]
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 3
         }
       ]
     },
@@ -182681,6 +183779,12 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 1
+        }
       ]
     },
     {
@@ -182747,6 +183851,12 @@
               "count": 4
             }
           ]
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 1
         }
       ]
     },
@@ -184726,6 +185836,9 @@
             }
           ]
         }
+      ],
+      "flags": [
+        "BLIND_EASY"
       ]
     },
     {
@@ -186087,6 +187200,12 @@
               "count": 1
             }
           ]
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 1
         }
       ]
     },
@@ -190408,6 +191527,12 @@
           "book": "advanced_electronics",
           "level": 4
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 5
+        }
       ]
     },
     {
@@ -190568,6 +191693,12 @@
         {
           "book": "advanced_electronics",
           "level": 4
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 5
         }
       ]
     },
@@ -199265,6 +200396,12 @@
           "book": "textbook_fabrication",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 3
+        }
       ]
     },
     {
@@ -199403,6 +200540,12 @@
           "book": "textbook_fabrication",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 4
+        }
       ]
     },
     {
@@ -199511,6 +200654,12 @@
         },
         {
           "book": "textbook_fabrication",
+          "level": 4
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
           "level": 4
         }
       ]
@@ -205038,6 +206187,12 @@
           "book": "book_archery",
           "level": 3
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 1
+        }
       ]
     },
     {
@@ -205193,6 +206348,12 @@
         {
           "book": "book_archery",
           "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 1
         }
       ]
     },
@@ -205863,6 +207024,12 @@
           "book": "book_archery",
           "level": 4
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 3
+        }
       ]
     },
     {
@@ -205958,6 +207125,12 @@
         {
           "book": "textbook_armschina",
           "level": 5
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 2
         }
       ]
     },
@@ -206162,6 +207335,12 @@
         },
         {
           "book": "book_archery",
+          "level": 2
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
           "level": 2
         }
       ]
@@ -207067,6 +208246,12 @@
             }
           ]
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "launcher",
+          "level": 0
+        }
       ]
     },
     {
@@ -207663,6 +208848,12 @@
           "book": "textbook_weapwest",
           "level": 6
         }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 5
+        }
       ]
     },
     {
@@ -207758,6 +208949,12 @@
         {
           "book": "textbook_weapeast",
           "level": 6
+        }
+      ],
+      "decomp_learn": [
+        {
+          "skill": "fabrication",
+          "level": 4
         }
       ]
     },
@@ -211656,7 +212853,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_HARD"
+      ]
     },
     {
       "id": "binoculars",
@@ -212198,7 +213398,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "broken_EMP_hack",
@@ -217916,7 +219119,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_HARD"
+      ]
     },
     {
       "id": "cantilever_small",
@@ -219358,7 +220564,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "felt_patch",
@@ -219415,7 +220624,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "fitover_sunglasses",
@@ -219441,7 +220653,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "flyer",
@@ -219467,7 +220682,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "scorecard",
@@ -219493,7 +220711,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "foon",
@@ -221261,7 +222482,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "laptop",
@@ -221737,7 +222961,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_HARD"
+      ]
     },
     {
       "id": "many_years_old_newspaper",
@@ -221763,7 +222990,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "material_shrd_limestone",
@@ -222043,7 +223273,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mininuke",
@@ -222222,7 +223455,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "months_old_newspaper",
@@ -222248,7 +223484,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "motor",
@@ -222640,7 +223879,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "one_year_old_newspaper",
@@ -222666,7 +223908,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "oxy_torch",
@@ -223604,7 +224849,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "gold_ring",
@@ -224199,7 +225447,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "vehicle_controls",
@@ -224262,7 +225513,13 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "decomp_learn": [
+        {
+          "skill": "mechanics",
+          "level": 3
+        }
+      ]
     },
     {
       "id": "robot_controls",
@@ -225826,7 +227083,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "straw_doll",
@@ -225852,7 +227112,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_HARD"
+      ]
     },
     {
       "id": "sunglasses",
@@ -225878,7 +227141,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "survivormap",
@@ -225904,7 +227170,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "survnote",
@@ -225930,7 +227199,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "talking_doll",
@@ -226019,7 +227291,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_HARD"
+      ]
     },
     {
       "id": "television",
@@ -226241,7 +227516,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "tshirt",
@@ -226267,7 +227545,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_HARD"
+      ]
     },
     {
       "id": "tshirt_tour",
@@ -226293,7 +227574,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_HARD"
+      ]
     },
     {
       "id": "usb_drive",
@@ -226508,7 +227792,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "hinge",
@@ -226596,7 +227883,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "wristwatch",
@@ -226669,7 +227959,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "food_processor",
@@ -227393,7 +228686,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "bundle_leather",
@@ -227424,7 +228720,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "bundle_wool",
@@ -227455,7 +228754,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "1st_aid",
@@ -227529,7 +228831,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "survival_kit",
@@ -227619,7 +228924,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "garlic",
@@ -227645,7 +228953,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "styrofoam_cup",
@@ -227679,7 +228990,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "pot_canning",
@@ -227756,7 +229070,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "trailmap",
@@ -227782,7 +229099,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "spectrophotometer",
@@ -228607,7 +229927,17 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 3
+        },
+        {
+          "skill": "fabrication",
+          "level": 1
+        }
+      ]
     },
     {
       "id": "storage_battery",
@@ -228683,7 +230013,17 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "decomp_learn": [
+        {
+          "skill": "electronics",
+          "level": 3
+        },
+        {
+          "skill": "fabrication",
+          "level": 2
+        }
+      ]
     },
     {
       "id": "electric_blanket",
@@ -232650,7 +233990,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_dessert",
@@ -232708,7 +234051,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_chilibeans_box",
@@ -232870,7 +234216,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_bbqbeef_box",
@@ -233032,7 +234381,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_chickennoodle_box",
@@ -233194,7 +234546,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_spaghetti_box",
@@ -233356,7 +234711,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_chicken_box",
@@ -233518,7 +234876,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_beeftaco_box",
@@ -233680,7 +235041,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_beef_box",
@@ -233842,7 +235206,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_meatball_box",
@@ -234004,7 +235371,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_beefstew_box",
@@ -234166,7 +235536,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_chilimac_box",
@@ -234328,7 +235701,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_veggy_box",
@@ -234490,7 +235866,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_macaronimarinara_box",
@@ -234652,7 +236031,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_cheesetort_box",
@@ -234814,7 +236196,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_mushroomfettuccine_box",
@@ -234976,7 +236361,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_mexicanchickenstew_box",
@@ -235138,7 +236526,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_chickenburritobowl_box",
@@ -235300,7 +236691,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_maplesausage_box",
@@ -235462,7 +236856,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_ravioli_box",
@@ -235624,7 +237021,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_pepperjackbeef_box",
@@ -235786,7 +237186,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_hashbrownbacon_box",
@@ -235948,7 +237351,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_lemontuna_box",
@@ -236110,7 +237516,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_asianbeef_box",
@@ -236272,7 +237681,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_chickenpesto_box",
@@ -236434,7 +237846,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_southwestbeef_box",
@@ -236596,7 +238011,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     },
     {
       "id": "mre_hotdog_box",
@@ -236758,7 +238176,10 @@
           ]
         }
       ],
-      "is_uncraft": true
+      "is_uncraft": true,
+      "flags": [
+        "BLIND_EASY"
+      ]
     }
   ]
 }

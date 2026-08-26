@@ -73,6 +73,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 | `alignment` | Status.Alignment | Vector2, 전용 에디터, 소비처 없음 |
 | `attributes` | Status.Str..Cha | 기본 8 (`SkillGrowth.DefaultAttributeLevel`) |
 | `skillOverrides` | Skill.Active* | BN `skillId` — 레거시 인덱스 아님 |
+| `traits` | (신규) | 상시 패시브 id (`TraitIds`: survival, omniscience). Apply → `GameplayData.Traits` / `CharacterSkillsHost` |
 | `bodyMassKg`, 쓰리사이즈 | Body.Personalized | 저장만; 과적 미연동 |
 | `partMasses` | (없음) | `BodyPartIds` 트리 노드 키. 절단 시 `CharacterAppearanceHost.RemainingMassKg`가 없는 부위 kg을 차감. **과적(encumbrance)은 미연동** — [`docs/body/BODY.md`](../body/BODY.md) |
 | `prototypeSeed` | — | `CharacterBody.CreateHumanDefault` |
@@ -88,8 +89,8 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 
 ```text
 definition == null  → BodyHost/SkillsHost 기존 시드 (CreateHumanDefault(8), CreateSeededSkills)
-UseGameplayData* 또는 호스트 없음 → GameplayData.Stats / Body
-그 외 → CharacterBodyHost.BindBody + CharacterSkillsHost.BindSkills
+UseGameplayData* 또는 호스트 없음 → GameplayData.Stats / Body / RecipeMemory(reset) / Traits
+그 외 → CharacterBodyHost.BindBody + CharacterSkillsHost.BindSkills + BindTraits
 + Appearance / Faction / CharacterVision(시야각)
 ```
 

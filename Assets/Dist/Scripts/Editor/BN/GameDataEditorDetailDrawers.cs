@@ -107,6 +107,14 @@ static class GameDataEditorDetailDrawers
                 ReadField($"  {skill.skill}", $"lv{skill.level}");
         }
 
+        if (recipe.decomp_learn is { Count: > 0 })
+        {
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField("Decomp learn", EditorStyles.miniBoldLabel);
+            foreach (SkillReq skill in recipe.decomp_learn)
+                ReadField($"  {skill.skill}", $"lv{skill.level}");
+        }
+
         if (recipe.proficiencies is { Count: > 0 })
         {
             EditorGUILayout.Space(4);
@@ -143,6 +151,7 @@ static class GameDataEditorDetailDrawers
 
         EditSkillReqList(markDirty, "Required skills", ref recipe.skills_required);
         EditSkillReqList(markDirty, "Autolearn skills", ref recipe.autolearn_skills);
+        EditSkillReqList(markDirty, "Decomp learn", ref recipe.decomp_learn);
         EditProficiencyList(markDirty, "Proficiencies", ref recipe.proficiencies);
         EditQualityList(markDirty, "Required qualities", ref recipe.qualities_required);
         DrawEditableTools(recipe, markDirty);

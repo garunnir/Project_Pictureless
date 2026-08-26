@@ -24,13 +24,35 @@ public static class ItemMergePolicy
         return CanMerge(existing.Item, ItemMergeKey.From(existing), ItemMergeKey.From(incoming));
     }
 
-    public static bool CanMerge(ItemStack existing, ItemData incomingItem, int incomingDamage)
+    public static bool CanMerge(
+        ItemStack existing,
+        ItemData incomingItem,
+        int incomingDamage,
+        bool incomingCooked,
+        bool incomingHot)
     {
         if (existing?.Instance == null || incomingItem == null)
             return false;
         if (!HasStackSpace(existing))
             return false;
-        return CanMerge(existing.Item, ItemMergeKey.From(existing), ItemMergeKey.From(incomingItem, incomingDamage));
+        return CanMerge(
+            existing.Item,
+            ItemMergeKey.From(existing),
+            new ItemMergeKey(
+                incomingItem.id,
+                incomingDamage,
+                chamberRounds: 0,
+                hasMagazine: false,
+                toolCharges: incomingItem.tool != null
+                    ? Math.Max(0, incomingItem.tool.initial_charges)
+                    : 0,
+                isCooked: incomingCooked,
+                isHot: incomingHot));
+    }
+
+    public static bool CanMerge(ItemStack existing, ItemData incomingItem, int incomingDamage)
+    {
+        return CanMerge(existing, incomingItem, incomingDamage, incomingCooked: false, incomingHot: false);
     }
 
     static bool CanMerge(ItemData existingItem, ItemMergeKey have, ItemMergeKey incoming)
@@ -39,6 +61,10 @@ public static class ItemMergePolicy
             return false;
 
         if (have.IsRotten != incoming.IsRotten)
+            return false;
+        if (have.IsCooked != incoming.IsCooked)
+            return false;
+        if (have.IsHot != incoming.IsHot)
             return false;
 
         if (AlwaysMerges(existingItem))

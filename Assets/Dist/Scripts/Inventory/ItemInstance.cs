@@ -43,6 +43,15 @@ public sealed class ItemInstance
     /// <summary>Host 스캔이 갱신. 신선/썩음 병합 키.</summary>
     public bool IsRotten { get; private set; }
 
+    /// <summary>조리 결과 — RAW 칼로리 페널티 무시.</summary>
+    public bool IsCooked { get; private set; }
+
+    /// <summary>hot_result 직후. HotUntilWorldMinute 이후 상온.</summary>
+    public bool IsHot { get; private set; }
+
+    /// <summary>Hot 만료 월드 절대 분. UnsetCreatedWorldMinute이면 Hot 아님.</summary>
+    public int HotUntilWorldMinute { get; private set; }
+
     public ItemInstance(ItemData item, int damageLevel = 0)
     {
         Item = item ?? throw new ArgumentNullException(nameof(item));
@@ -56,6 +65,9 @@ public sealed class ItemInstance
         ToolCharges = item.tool != null ? Math.Max(0, item.tool.initial_charges) : 0;
         CreatedWorldMinute = UnsetCreatedWorldMinute;
         IsRotten = false;
+        IsCooked = false;
+        IsHot = false;
+        HotUntilWorldMinute = UnsetCreatedWorldMinute;
     }
 
     public void SetCreatedWorldMinute(int worldMinute)
@@ -66,6 +78,30 @@ public sealed class ItemInstance
     }
 
     public void SetRotten(bool rotten) => IsRotten = rotten;
+
+    public void StampCooked(bool cooked) => IsCooked = cooked;
+
+    public void StampHot(int untilWorldMinute)
+    {
+        IsHot = true;
+        HotUntilWorldMinute = untilWorldMinute;
+    }
+
+    public void ClearHot()
+    {
+        IsHot = false;
+        HotUntilWorldMinute = UnsetCreatedWorldMinute;
+    }
+
+    public void TickHotAt(int worldMinute)
+    {
+        if (!IsHot)
+            return;
+        if (HotUntilWorldMinute == UnsetCreatedWorldMinute)
+            return;
+        if (worldMinute >= HotUntilWorldMinute)
+            ClearHot();
+    }
 
     public void SetChamberRounds(int rounds)
     {

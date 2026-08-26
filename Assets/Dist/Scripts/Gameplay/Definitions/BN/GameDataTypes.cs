@@ -46,6 +46,8 @@ namespace Garunnir.Runtime.Gameplay.Data
         public string name;
         /// <summary>Farming-flag whitelist only (PLANTABLE, PLOWABLE, …).</summary>
         public List<string> flags;
+        /// <summary>Cooking environment whitelist (FIRE, LIT, LIGHT_*, …).</summary>
+        public List<string> crafting_flags;
     }
 
     [Serializable]
@@ -64,7 +66,27 @@ namespace Garunnir.Runtime.Gameplay.Data
         public string name;
         /// <summary>Farming-flag whitelist only (PLANT, GROWTH_*, PLANTABLE, …).</summary>
         public List<string> flags;
+        /// <summary>Cooking environment whitelist (FIRE, LIT, SMOKE, LIGHT_*, …).</summary>
+        public List<string> crafting_flags;
+        /// <summary>BN crafting_pseudo_item — adjacent furniture supplies this tool id.</summary>
+        public string crafting_pseudo_item;
+        public List<QualityEntry> provides_qualities;
         public FurniturePlantData plant_data;
+    }
+
+    [Serializable]
+    public sealed class ProficienciesFileRoot
+    {
+        public string _license;
+        public string _source;
+        public List<ProficiencyData> proficiencies;
+    }
+
+    [Serializable]
+    public sealed class ProficiencyData
+    {
+        public string id;
+        public string name;
     }
 
     // ── Item ───────────────────────────────────────────────────
@@ -106,7 +128,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         public GunDetailData gun;
         public ToolDetailData tool;
         public ComestibleDetailData comestible;
-        /// <summary>Consume-only heal / consume_drug / antibiotic family. Other BN actions stay Parked.</summary>
+        /// <summary>Consume-only heal / consume_drug / antibiotic / multicooker. Other BN actions stay Parked.</summary>
         public UseActionData use_action;
         public AmmoDetailData ammo;
         public MagazineDetailData magazine;
@@ -185,6 +207,8 @@ namespace Garunnir.Runtime.Gameplay.Data
         public bool reversible;
         public bool autolearn;
         public List<SkillReq> autolearn_skills;
+        /// <summary>BN decomp_learn — skill levels required to learn by disassembly.</summary>
+        public List<SkillReq> decomp_learn;
         public int result_count;
         public List<QualityEntry> qualities_required;
         public List<ToolSlot> tools;
@@ -197,6 +221,8 @@ namespace Garunnir.Runtime.Gameplay.Data
         public int morale_modifier;
         public bool hot_result;
         public bool dehydrating;
+        /// <summary>Cooking/light whitelist (DARK, BLIND_*).</summary>
+        public List<string> flags;
     }
 
     [Serializable]

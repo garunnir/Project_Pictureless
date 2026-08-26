@@ -5,6 +5,7 @@
         "Config",
         "Dist.Camera",
         "Dist.Map",
+        "Dist.Map.Fish",
         "Dist.Inventory",
         "Dist.Gameplay.Data",
         "Dist.Visual",

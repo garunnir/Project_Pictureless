@@ -135,11 +135,44 @@ public static class MapPlantService
         if (host == null || !host.TryGetPlant(cell, out PlantCell plant))
             return HarvestContextLabels.HarvestBlocked;
 
-        PlantGrowthStage stage = ResolveStage(plant);
+        if (IsTreeGrowthDormant(plant))
+            return HarvestContextLabels.HarvestNotReady;
+
+        PlantGrowthStage stage = ResolvePlantStage(plant);
         if (PlantGrowth.IsHarvestable(stage))
             return null;
 
         return HarvestContextLabels.HarvestNotReady;
+    }
+
+    public static bool HasAxeQuality(ItemData item) =>
+        ItemQualityUtil.HasQuality(item, MapPlantConsts.AxeQualityId, MapPlantConsts.MinAxeQualityLevel);
+
+    public static string GetChopSessionBlockedReason()
+    {
+        if (MoodGameplayGate.IsBlocked)
+            return HarvestContextLabels.ChopBlocked;
+        if (!PlayerHasAxeTool())
+            return HarvestContextLabels.ChopBlocked;
+        if (MapPlantHost.Runtime == null)
+            return HarvestContextLabels.ChopBlocked;
+
+        return null;
+    }
+
+    public static string GetChopBlockedReason(Vector3Int cell)
+    {
+        string session = GetChopSessionBlockedReason();
+        if (session != null)
+            return session;
+
+        MapPlantHost host = MapPlantHost.Runtime;
+        if (host == null || !host.TryGetPlant(cell, out PlantCell plant))
+            return HarvestContextLabels.ChopBlocked;
+        if (!IsTreePlant(plant))
+            return HarvestContextLabels.ChopBlocked;
+
+        return null;
     }
 
     public static bool HasDigQuality(ItemData item)
@@ -338,6 +371,8 @@ public static class MapPlantService
                 return GetFertilizeBlockedReason(cell) == null;
             case FarmCellActionKind.Harvest:
                 return GetHarvestBlockedReason(cell) == null;
+            case FarmCellActionKind.Chop:
+                return GetChopBlockedReason(cell) == null;
             default:
                 return false;
         }
@@ -382,7 +417,7 @@ public static class MapPlantService
         if (host == null || !host.TryGetPlant(cell, out PlantCell plant))
             return false;
 
-        PlantGrowthStage stage = ResolveStage(plant);
+        PlantGrowthStage stage = ResolvePlantStage(plant);
         if (!PlantGrowth.IsHarvestable(stage))
             return false;
 
@@ -395,7 +430,77 @@ public static class MapPlantService
         if (seed != null && seed.seeds && IsGrantedItemId(plant.SeedItemId))
             GrantItem(plant.SeedItemId, 1, world);
 
+        if (seed != null && seed.IsTree)
+        {
+            int now = ItemRot.CurrentWorldMinute();
+            if (!host.TryRecordFruitHarvest(cell, now))
+                return false;
+
+            host.TrySetPlantStage(cell, PlantTileIds.PrefabIdForStage(PlantGrowthStage.Mature));
+            return true;
+        }
+
         return host.TryRemovePlant(cell);
+    }
+
+    public static bool TryChop(Vector3Int cell)
+    {
+        CatchUpCell(cell);
+
+        MapPlantHost host = MapPlantHost.Runtime;
+        if (host == null || !host.TryGetPlant(cell, out PlantCell plant))
+            return false;
+        if (!IsTreePlant(plant))
+            return false;
+
+        ItemData seedItem = GameplayData.GetItem(plant.SeedItemId);
+        SeedDetailData seed = seedItem?.seed;
+        if (seed == null)
+            return false;
+
+        PlantGrowthStage stage = ResolvePlantStage(plant);
+        Vector3 world = CellWorld(host, cell);
+        if (seed.TryGetChopYield(stage, out string itemId, out int count) && IsGrantedItemId(itemId))
+            GrantItem(itemId, count, world);
+
+        return host.TryRemovePlant(cell);
+    }
+
+    public static PlantGrowthStage ResolvePlantStage(PlantCell plant)
+    {
+        ItemData item = GameplayData.GetItem(plant.SeedItemId);
+        SeedDetailData seed = item?.seed;
+        int current = ItemRot.CurrentWorldMinute();
+        PlantGrowthContext context = BuildGrowthContext(plant, seed, current, out CalendarSnapshot calendar);
+
+        if (seed != null && seed.IsTree)
+        {
+            int growthElapsed = WorldCalendar.ElapsedMinutesExcludingSeason(
+                plant.PlantedWorldMinute,
+                current,
+                WorldSeason.Winter,
+                calendar.MinutesPerDay,
+                calendar.DaysPerYear,
+                calendar.DaysPerSeason);
+            int regrowElapsed = plant.LastFruitHarvestWorldMinute > PlantGrowth.NoFruitHarvestMinute
+                ? WorldCalendar.ElapsedMinutesExcludingSeason(
+                    plant.LastFruitHarvestWorldMinute,
+                    current,
+                    WorldSeason.Winter,
+                    calendar.MinutesPerDay,
+                    calendar.DaysPerYear,
+                    calendar.DaysPerSeason)
+                : 0;
+            return PlantGrowth.ResolveTree(
+                seed,
+                growthElapsed,
+                plant.LastFruitHarvestWorldMinute,
+                regrowElapsed,
+                in context);
+        }
+
+        int elapsed = PlantGrowth.ElapsedMinutes(plant.PlantedWorldMinute, current);
+        return PlantGrowth.ResolveField(seed, elapsed, in context);
     }
 
     public static void CatchUpAll()
@@ -419,11 +524,15 @@ public static class MapPlantService
         if (host == null || !host.TryGetPlant(cell, out PlantCell plant))
             return;
 
-        PlantGrowthStage stage = ResolveStage(plant);
+        PlantGrowthStage stage = ResolvePlantStage(plant);
         string desiredPrefab = PlantTileIds.PrefabIdForStage(stage);
         host.TrySetPlantStage(cell, desiredPrefab);
 
         if (!PlantGrowth.IsWithered(stage))
+            return;
+
+        SeedDetailData seed = GameplayData.GetItem(plant.SeedItemId)?.seed;
+        if (seed != null && seed.IsTree)
             return;
 
         if (!host.TryGetPlant(cell, out plant))
@@ -450,27 +559,82 @@ public static class MapPlantService
         host.TryRemovePlant(plant.Cell);
     }
 
-    static PlantGrowthStage ResolveStage(PlantCell plant)
+    static PlantGrowthContext BuildGrowthContext(
+        PlantCell plant,
+        SeedDetailData seed,
+        int currentWorldMinute,
+        out CalendarSnapshot calendar)
     {
-        ItemData item = GameplayData.GetItem(plant.SeedItemId);
-        return PlantGrowth.Resolve(
-            item,
-            plant.PlantedWorldMinute,
-            ItemRot.CurrentWorldMinute(),
-            BuildGrowthContext(plant));
+        calendar = ResolveCalendar(currentWorldMinute);
+        MapPlantHost host = MapPlantHost.Runtime;
+        WeatherKind kind = WeatherKind.Clear;
+        WorldWeatherHost weather = WorldWeatherHost.Instance;
+        if (weather != null)
+            weather.TryGetKindAt(plant.Cell.x, plant.Cell.z, out kind);
+        else if (PlayerGearHost.Active != null)
+            kind = PlayerGearHost.Active.WorldWeatherKind;
+
+        int plantedDay = calendar.MinutesPerDay > 0
+            ? plant.PlantedWorldMinute / calendar.MinutesPerDay
+            : 0;
+        bool winterSpan = WorldCalendar.SpanIncludesSeason(
+            plantedDay,
+            calendar.CurrentDay,
+            WorldSeason.Winter,
+            calendar.DaysPerYear,
+            calendar.DaysPerSeason);
+        bool outdoor = host == null || host.IsOutdoorCell(plant.Cell);
+        bool greenhouse = host != null && host.IsGreenhouseCell(plant.Cell);
+        bool isTree = seed != null && seed.IsTree;
+        bool frostKills = !isTree && winterSpan && outdoor && !greenhouse;
+        bool currentlyWinter = WorldCalendar.Season(
+                calendar.CurrentDay,
+                calendar.DaysPerYear,
+                calendar.DaysPerSeason) == WorldSeason.Winter;
+        bool growthDormant = isTree && currentlyWinter && outdoor && !greenhouse;
+
+        return new PlantGrowthContext(plant.Fertilized, WeatherGrowFactor(kind), frostKills, growthDormant);
     }
 
-    static PlantGrowthContext BuildGrowthContext(PlantCell plant)
-    {
-        MapPlantHost host = MapPlantHost.Runtime;
-        WeatherKind kind = PlayerGearHost.Active != null
-            ? PlayerGearHost.Active.WorldWeatherKind
-            : WeatherKind.Clear;
+    static bool IsTreePlant(PlantCell plant) =>
+        GameplayData.GetItem(plant.SeedItemId)?.seed?.IsTree ?? false;
 
+    static bool IsTreeGrowthDormant(PlantCell plant)
+    {
+        SeedDetailData seed = GameplayData.GetItem(plant.SeedItemId)?.seed;
+        if (seed == null || !seed.IsTree)
+            return false;
+
+        PlantGrowthContext context = BuildGrowthContext(
+            plant,
+            seed,
+            ItemRot.CurrentWorldMinute(),
+            out _);
+        return context.GrowthDormant;
+    }
+
+    readonly struct CalendarSnapshot
+    {
+        public readonly int CurrentDay;
+        public readonly int DaysPerYear;
+        public readonly int DaysPerSeason;
+        public readonly int MinutesPerDay;
+
+        public CalendarSnapshot(int currentDay, int daysPerYear, int daysPerSeason, int minutesPerDay)
+        {
+            CurrentDay = currentDay;
+            DaysPerYear = daysPerYear;
+            DaysPerSeason = daysPerSeason;
+            MinutesPerDay = minutesPerDay;
+        }
+    }
+
+    static CalendarSnapshot ResolveCalendar(int currentWorldMinute)
+    {
         int daysPerYear = WorldClockSettings.DefaultDaysPerYear;
         int daysPerSeason = WorldClockSettings.DefaultDaysPerSeason;
         int minutesPerDay = WorldClockSettings.DefaultMinutesPerDay;
-        int currentDay = 0;
+        int currentDay = minutesPerDay > 0 ? currentWorldMinute / minutesPerDay : 0;
         WorldClock clock = WorldClock.Instance;
         if (clock != null)
         {
@@ -483,18 +647,13 @@ public static class MapPlantService
             }
         }
 
-        int plantedDay = minutesPerDay > 0 ? plant.PlantedWorldMinute / minutesPerDay : 0;
-        bool winterSpan = WorldCalendar.SpanIncludesSeason(
-            plantedDay,
-            currentDay,
-            WorldSeason.Winter,
-            daysPerYear,
-            daysPerSeason);
-        bool outdoor = host == null || host.IsOutdoorCell(plant.Cell);
-        bool greenhouse = host != null && host.IsGreenhouseCell(plant.Cell);
-        bool frostKills = winterSpan && outdoor && !greenhouse;
+        return new CalendarSnapshot(currentDay, daysPerYear, daysPerSeason, minutesPerDay);
+    }
 
-        return new PlantGrowthContext(plant.Fertilized, WeatherGrowFactor(kind), frostKills);
+    static PlantGrowthContext BuildGrowthContext(PlantCell plant)
+    {
+        SeedDetailData seed = GameplayData.GetItem(plant.SeedItemId)?.seed;
+        return BuildGrowthContext(plant, seed, ItemRot.CurrentWorldMinute(), out _);
     }
 
     static float WeatherGrowFactor(WeatherKind kind)
@@ -505,6 +664,8 @@ public static class MapPlantService
                 return PlantGrowth.WeatherRainGrowFactor;
             case WeatherKind.Wind:
                 return PlantGrowth.WeatherWindGrowFactor;
+            case WeatherKind.Snow:
+                return PlantGrowth.WeatherSnowGrowFactor;
             default:
                 return PlantGrowth.WeatherClearGrowFactor;
         }
@@ -519,7 +680,7 @@ public static class MapPlantService
             return HarvestContextLabels.FertilizeBlocked;
         if (plant.Fertilized)
             return HarvestContextLabels.FertilizeBlocked;
-        if (PlantGrowth.IsWithered(ResolveStage(plant)))
+        if (PlantGrowth.IsWithered(ResolvePlantStage(plant)))
             return HarvestContextLabels.FertilizeBlocked;
 
         return null;
@@ -534,6 +695,13 @@ public static class MapPlantService
 
         cell = host.ResolveCellFromWorld(world);
         return true;
+    }
+
+    static bool PlayerHasAxeTool()
+    {
+        if (FindInBodyAndWield(HasAxeQuality, out _, out _) != null)
+            return true;
+        return false;
     }
 
     static bool PlayerHasDigTool()

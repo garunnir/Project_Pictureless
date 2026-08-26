@@ -2,7 +2,9 @@
 // CombatHitscan — 원거리 cue 히트스캔 (origin overlap + 전구간 레이)
 // ============================================================
 
+using System;
 using Garunnir.Runtime.Gameplay.Data;
+using IsoTilemap;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -14,16 +16,38 @@ public static class CombatHitscan
 {
     public const int BufferSize = 16;
     public const float OriginOverlapRadius = 0.05f;
+    const string UnderwaterGunFlag = "UNDERWATER_GUN";
 
     public static float EffectiveRange(
         ItemData item,
         WeaponAction action,
         ItemData ammo,
-        Vector3 shooterOrigin)
+        Vector3 shooterOrigin,
+        Vector3? shooterFeetWorld = null)
     {
         float weapon = CombatMath.RangeMeters(item, action, ammo);
+        Vector3 feet = shooterFeetWorld ?? shooterOrigin;
+        if (HasItemFlag(item, UnderwaterGunFlag) && !MapFishService.IsShooterOnWaterFloor(feet))
+            return weapon * MapFishConsts.UnderwaterGunLandRangeMultiplier;
+
         float view = ResolveCameraViewReach(shooterOrigin);
         return Mathf.Max(weapon, view);
+    }
+
+    static bool HasItemFlag(ItemData item, string flag)
+    {
+        if (item?.flags == null || string.IsNullOrEmpty(flag))
+            return false;
+
+        for (int i = 0; i < item.flags.Count; i++)
+        {
+            string value = item.flags[i];
+            if (!string.IsNullOrEmpty(value) &&
+                value.Equals(flag, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 
     public static float ResolveCameraViewReach(Vector3 shooterOrigin)

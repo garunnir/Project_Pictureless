@@ -170,6 +170,22 @@ public sealed class CharacterClimateHost : MonoBehaviour
 
     WeatherKind ResolveWorldWeatherKind()
     {
+        WorldWeatherHost weather = WorldWeatherHost.Instance;
+        if (weather != null)
+        {
+            TileMapCacheHub hub = TileMapCacheHub.Runtime;
+            if (hub != null)
+            {
+                EnsureMapCellSize();
+                Vector3 world = ResolveEntityWorld();
+                Vector3Int floor = OccupiedCellCoord.ResolveFromWorld(hub, world, _mapCellSize);
+                if (weather.TryGetKindAt(floor.x, floor.z, out WeatherKind atCell))
+                    return atCell;
+            }
+
+            return weather.CurrentKind;
+        }
+
         PlayerGearHost host = _gearHost != null ? _gearHost : PlayerGearHost.Active;
         return host != null ? host.WorldWeatherKind : WeatherKind.Clear;
     }

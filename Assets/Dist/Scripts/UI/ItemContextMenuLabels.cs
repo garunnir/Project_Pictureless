@@ -22,6 +22,13 @@ public static class ItemContextMenuLabels
     const string KeyFertilize = "ItemContextMenu.Fertilize";
     const string KeyFertilizeBlocked = "ItemContextMenu.FertilizeBlocked";
     const string KeyUnwrap = "ItemContextMenu.Unwrap";
+    const string KeyCook = "ItemContextMenu.Cook";
+    const string KeyCookBlocked = "ItemContextMenu.CookBlocked";
+    const string KeySmoke = "ItemContextMenu.Smoke";
+    const string KeySmokeBlocked = "ItemContextMenu.SmokeBlocked";
+    const string KeyMulticooker = "ItemContextMenu.Multicooker";
+    const string KeyFish = "ItemContextMenu.Fish";
+    const string KeyFishBlocked = "ItemContextMenu.FishBlocked";
 
     public static string Craft => Loc.Get(KeyCraft);
     public static string Uncraft => Loc.Get(KeyUncraft);
@@ -47,5 +54,19 @@ public static class ItemContextMenuLabels
         Loc.TryGet(KeyFertilizeBlocked, out string fertilizeBlocked) ? fertilizeBlocked : "비료를 줄 수 없음";
     public static string Unwrap =>
         Loc.TryGet(KeyUnwrap, out string unwrap) ? unwrap : "붕대 벗기";
+    public static string Cook =>
+        Loc.TryGet(KeyCook, out string cook) ? cook : "굽기";
+    public static string CookBlocked =>
+        Loc.TryGet(KeyCookBlocked, out string cookBlocked) ? cookBlocked : "열원이 필요함";
+    public static string Smoke =>
+        Loc.TryGet(KeySmoke, out string smoke) ? smoke : "훈연";
+    public static string SmokeBlocked =>
+        Loc.TryGet(KeySmokeBlocked, out string smokeBlocked) ? smokeBlocked : "훈연 시설이 필요함";
+    public static string Multicooker =>
+        Loc.TryGet(KeyMulticooker, out string multi) ? multi : "멀티쿠커";
+    public static string Fish =>
+        Loc.TryGet(KeyFish, out string fish) ? fish : "낚시";
+    public static string FishBlocked =>
+        Loc.TryGet(KeyFishBlocked, out string fishBlocked) ? fishBlocked : "낚시할 수 없음";
     public static string SubmenuChevron => ContextMenuChromeLabels.SubmenuChevron;
 }

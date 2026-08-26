@@ -8,6 +8,7 @@ public static class UiCancelPriority
     public const int ContextMenu = 100;
     public const int ModalPopup = 80;
     public const int FarmCellTarget = 75;
+    public const int FishCellTarget = 74;
     public const int CharacterAction = 60;
     public const int OverlayWindow = 40;
     public const int Settings = -100;

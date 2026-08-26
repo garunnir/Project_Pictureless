@@ -34,7 +34,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | `WeaponAmmoService` | 삽탄·장착·교체·분리·탄 빼기. 탄창=`SupplyRounds`, 총=`ItemStack.LoadedMagazine` (Nested 아님) |
 | `WeaponAmmoDuration` | reload moves → 초 (`CombatMath.MovesPerSecond`, 0이면 1s) |
 | `WeaponChamber` | 발사 보급: LoadedMagazine.SupplyRounds → Chamber. clip_size는 클립 용량 |
-| `PlayerGearHost` | Player Wear/Wield + Primary + LiftStrain + 씬 `WorldWeatherKind` + `HelmetVision`. BodyTemp / EnvExposure / **Weather(ambient 캐시)** 는 `CharacterClimateHost` 포워드 |
+| `PlayerGearHost` | Player Wear/Wield + Primary + LiftStrain + `HelmetVision` + Kind **포워드** (`WorldWeatherHost`). BodyTemp / EnvExposure / **Weather(ambient 캐시)** 는 `CharacterClimateHost` 포워드 |
 | `CharacterSpawnGearApplier` | 스폰 직후 Definition 로드아웃 즉시 Wear/Wield + 총 탄 채움 (`WeaponAmmoService` 타이머 아님) |
 | `ItemInstance.SelectedAction` | 선택 동사 SSOT |
 | `WeaponActionRows` | Presentation 행 → available / default / instance select |
@@ -298,7 +298,7 @@ Catalog SSOT: [`BN_BAKE.md`](BN_BAKE.md) (converter whitelist + not-baked list +
 | Dist stand-in | BN not baked |
 |---------------|--------------|
 | `GearActionDuration` | wear/wield move-cost field |
-| `WeatherKind` | overmap climate JSON |
+| `WeatherKind` | overmap climate JSON / Dist `WorldWeatherHost` (XZ field = [`WEATHER.md`](../weather/WEATHER.md) Phase D Parked) |
 | `HelmetVision` | helmet / visor FOV JSON |
 
 Promote fields in `BN_BAKE.md` + `convert.py` together — do not grow a second table here.
@@ -463,7 +463,7 @@ flowchart LR
 
 **Scope:** WeatherKind drives BodyTemp ambient °C and WearEnvExposure wetness gain (replaces F/E hard ambient stand-ins on host path). Head-covering worn armor → `VisionFactor` on `PlayerGearHost` + Character totals/hover line. **No** new window/key; **no** M0–F redesign.
 
-Time base: World delta on `CharacterClimateHost`. Kind는 `PlayerGearHost.WorldWeatherKind`. Period = `WorldClock.Period`. outdoor = `TileMapCacheHub.IsOutdoorEvaluation`. See [`docs/time/TIME.md`](../time/TIME.md) · [`docs/body/BODY.md`](../body/BODY.md).
+Time base: World delta on `CharacterClimateHost`. Kind는 `WorldWeatherHost` (`TryGetKindAt` / `CurrentKind`). Period = `WorldClock.Period`. outdoor = `TileMapCacheHub.IsOutdoorEvaluation`. See [`docs/time/TIME.md`](../time/TIME.md) · [`docs/body/BODY.md`](../body/BODY.md) · [`docs/weather/WEATHER.md`](../weather/WEATHER.md).
 
 ### Parity contract (weather / vision path)
 
@@ -471,11 +471,11 @@ Time base: World delta on `CharacterClimateHost`. Kind는 `PlayerGearHost.WorldW
 |----------|-------------------|-----|
 | BodyTemp ambient = const `BaseAmbientTempC` | Host passes `WeatherExposure.AmbientTempC` | `Resolve(kind, period, outdoor)` |
 | Wetness ambient = const `BaseAmbientWetnessGainPerSecond` | Host passes `WeatherExposure.AmbientWetnessGainPerSecond` | 실내면 wetness 0 |
-| No weather state | `WeatherKind` on host (`Clear`; `SetWeatherKind`) | Kind = GearHost. period/outdoor = ClimateHost |
+| No weather state | `WeatherKind` on GearHost | Kind = `WorldWeatherHost`; period/outdoor = ClimateHost |
 | No helmet vision | `HelmetVision` → `PlayerGearHost.VisionFactor` | 동일 (GearHost) |
 | 방해/체온 totals = E/F lines | + weather ambient + vision% | 체온 그래픽 부위별 |
 
-Boundary SSOT: `WeatherExposure` = ambient; `HelmetVision` = GearHost; BodyTemp/wetness 틱 = ClimateHost. Checklist: `.claude/checklists/migration-parity.md`.
+Boundary SSOT: `WorldWeatherHost` = Kind; `WeatherExposure` = ambient; `HelmetVision` = GearHost; BodyTemp/wetness 틱 = ClimateHost. Checklist: `.claude/checklists/migration-parity.md`.
 
 ### Named formulas (`WeatherExposure` / `HelmetVision`)
 
@@ -485,17 +485,18 @@ Boundary SSOT: `WeatherExposure` = ambient; `HelmetVision` = GearHost; BodyTemp/
 | `AmbientTempC(Clear)` | `ClearAmbientTempC` (= `BodyTemp.BaseAmbientTempC`) |
 | `AmbientTempC(Rain)` | `RainAmbientTempC` |
 | `AmbientTempC(Wind)` | `ClearAmbientTempC − WindChillDegreesC` |
+| `AmbientTempC(Snow)` | `SnowAmbientTempC` |
 | Period offset | Night `-6` / Dawn `-3` / Day·Dusk `0` |
-| `WetnessGain(Clear/Rain/Wind)` | `ClearWetnessGainPerSecond` / `RainWetnessGainPerSecond` / `WindWetnessGainPerSecond` |
+| `WetnessGain(Clear/Rain/Wind/Snow)` | Clear / Rain / Wind / `SnowWetnessGainPerSecond` |
 | `BodyTemp.Target` | `ambient + WarmthForPart × DegreesPerWarmth − Wetness01 × WetnessCool` (부위) |
 | `WetnessDelta` | `(weatherGain × ExposureFactor − BaseDry × (1 − ExposureFactor)) × dt` |
 | `VisionFactor` | head covered → `HeadCoverVisionFactor`; else `FullVisionFactor` |
 
-Consts: `ClearAmbientTempC=18`, `RainAmbientTempC=10`, `WindChillDegreesC=4`, `NightAmbientOffsetC=-6`, `DawnAmbientOffsetC=-3`, `IndoorAmbientTempC=18`, `ClearWetnessGainPerSecond=0`, `RainWetnessGainPerSecond=0.02`, `WindWetnessGainPerSecond=0.002`, `IndoorWetnessGainPerSecond=0`, `HeadCoverVisionFactor=0.85`, `FullVisionFactor=1`, cover part = `BodyPartIds.Head`.
+Consts: `ClearAmbientTempC=18`, `RainAmbientTempC=10`, `SnowAmbientTempC=-4`, `WindChillDegreesC=4`, `NightAmbientOffsetC=-6`, `DawnAmbientOffsetC=-3`, `IndoorAmbientTempC=18`, `ClearWetnessGainPerSecond=0`, `RainWetnessGainPerSecond=0.02`, `WindWetnessGainPerSecond=0.002`, `SnowWetnessGainPerSecond=0.004`, `IndoorWetnessGainPerSecond=0`, `HeadCoverVisionFactor=0.85`, `FullVisionFactor=1`, cover part = `BodyPartIds.Head`.
 
 ```mermaid
 flowchart LR
-  kind[WorldWeatherKind]
+  kind[WorldWeatherHost]
   period[WorldClock_Period]
   outdoor[IsOutdoorEvaluation]
   wx[WeatherExposure_Resolve]

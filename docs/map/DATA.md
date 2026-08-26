@@ -128,6 +128,7 @@ Plant는 **별 레이어가 아니라** OccupiedCell `tiles[]`다. `Furniture/Pl
 | `seedItemId` | Dist `ItemData.id` (비어 있으면 non-plant) |
 | `plantedWorldMinute` | 심은 시점 월드 분 (`ItemRot.CurrentWorldMinute`) |
 | `fertilized` | 비료 1회 |
+| `lastFruitHarvestWorldMinute` | Tree 과일 수확 시각 (생략/≤0 → 미수확) |
 
 경작 표면: `Floor/Tilled` HorizontalFace (덮어쓰기). 별도 `tilledCells` 없음.
 

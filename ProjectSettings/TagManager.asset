@@ -47,5 +47,8 @@ TagManager:
   - name: wall
     uniqueID: 2071592177
     locked: 0
+  - name: weather
+    uniqueID: 168440057
+    locked: 0
   m_RenderingLayers:
   - Default

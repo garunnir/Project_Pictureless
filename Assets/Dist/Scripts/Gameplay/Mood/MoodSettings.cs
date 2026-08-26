@@ -45,6 +45,10 @@ public sealed class MoodSettings : ScriptableObject
     public const int DefaultAteRottenMinutes = 360;
     public const int DefaultCatharsisOffset = 15;
     public const int DefaultCatharsisMinutes = 240;
+    public const int DefaultCraftedOffset = 0;
+    public const int DefaultCraftedMinutes = 30;
+    public const int DefaultAteHotMealOffset = 3;
+    public const int DefaultAteHotMealMinutes = 60;
     public const int DefaultMemoryStackLimit = 1;
 
     [Serializable]
@@ -134,7 +138,9 @@ public sealed class MoodSettings : ScriptableObject
             Memory(ThoughtId.AteMeal, DefaultAteMealOffset, DefaultAteMealMinutes),
             Memory(ThoughtId.Vomited, DefaultVomitedOffset, DefaultVomitedMinutes),
             Memory(ThoughtId.AteRotten, DefaultAteRottenOffset, DefaultAteRottenMinutes),
-            Memory(ThoughtId.Catharsis, DefaultCatharsisOffset, DefaultCatharsisMinutes)
+            Memory(ThoughtId.Catharsis, DefaultCatharsisOffset, DefaultCatharsisMinutes),
+            Memory(ThoughtId.Crafted, DefaultCraftedOffset, DefaultCraftedMinutes),
+            Memory(ThoughtId.AteHotMeal, DefaultAteHotMealOffset, DefaultAteHotMealMinutes)
         };
     }
 

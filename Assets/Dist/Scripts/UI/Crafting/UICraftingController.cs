@@ -64,11 +64,24 @@ public sealed class UICraftingController : MonoBehaviour
 
     public void Open()
     {
+        OpenFiltered(toolFilter: null);
+    }
+
+    public void OpenMulticooker()
+    {
+        OpenFiltered(CraftingPseudoIds.MultiCookerTool);
+    }
+
+    void OpenFiltered(string toolFilter)
+    {
         if (MoodGameplayGate.IsBlocked)
             return;
 
         if (_isOpen)
+        {
+            _window?.SetToolFilter(toolFilter);
             return;
+        }
 
         EnsureWindow();
         if (_window == null)
@@ -87,6 +100,7 @@ public sealed class UICraftingController : MonoBehaviour
         _window.gameObject.SetActive(true);
         _window.ConfigureChrome(_uiCanvas);
         _window.Initialize(runtime, Close);
+        _window.SetToolFilter(toolFilter);
         UIWindowChromeBar.BindCloseOnWindow(_window, Close);
         _isOpen = true;
         SyncLauncher();
@@ -99,6 +113,7 @@ public sealed class UICraftingController : MonoBehaviour
 
         if (_window != null)
         {
+            _window.SetToolFilter(null);
             _window.Unbind();
             _window.gameObject.SetActive(false);
         }

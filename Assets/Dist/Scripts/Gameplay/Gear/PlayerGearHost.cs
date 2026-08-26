@@ -1,5 +1,5 @@
 // ============================================================
-// PlayerGearHost — 플레이어 Wear/Wield 호스트 + Kind + HelmetVision (ambient는 ClimateHost)
+// PlayerGearHost — 플레이어 Wear/Wield 호스트 + HelmetVision (Kind는 WorldWeatherHost 포워드)
 // ============================================================
 
 using System;
@@ -18,14 +18,13 @@ public sealed class PlayerGearHost : MonoBehaviour
     [SerializeField] CharacterAttacker _attacker;
     [SerializeField] PlayerMovement _movement;
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
-    [Tooltip("씬 월드 날씨. ClimateHost는 Kind만 읽고 실내외는 엔티티별로 평가합니다.")]
-    [SerializeField] WeatherKind _weatherKind = WeatherKind.Clear;
 
     CharacterGearService _service;
     CharacterActionHost _actionHost;
     CharacterClimateHost _climateHost;
     CharacterBodyHost _bodyHost;
     ICharacterBody _subscribedBody;
+    WorldWeatherHost _subscribedWeather;
     bool _bound;
     int _lastWetnessPercent = -1;
     int _lastBodyTempTenths = int.MinValue;
@@ -64,6 +63,7 @@ public sealed class PlayerGearHost : MonoBehaviour
         EnsureBound();
         if (_climateHost != null)
             _climateHost.Changed += OnClimateChanged;
+        EnsureWeatherSubscription();
         SubscribeBody();
         _service?.DropWieldForMissingHands(_subscribedBody);
         ApplyLiftStrainMovement();
@@ -83,6 +83,8 @@ public sealed class PlayerGearHost : MonoBehaviour
 
         if (_climateHost != null)
             _climateHost.Changed -= OnClimateChanged;
+
+        UnbindWeatherSubscription();
 
         UnsubscribeBody();
 
@@ -106,6 +108,7 @@ public sealed class PlayerGearHost : MonoBehaviour
 
     void Update()
     {
+        EnsureWeatherSubscription();
         if (_service == null)
             return;
         float dt = TimeScaleService.Delta(_timeChannel);
@@ -115,13 +118,22 @@ public sealed class PlayerGearHost : MonoBehaviour
         TickVisionAndNotify();
     }
 
-    /// <summary>씬 월드 날씨 Kind. 실내외·기간 Resolve·ambient 캐시는 CharacterClimateHost.</summary>
-    public WeatherKind WorldWeatherKind => _weatherKind;
+    /// <summary>월드 날씨 Kind — WorldWeatherHost 포워드. Host 없으면 Clear.</summary>
+    public WeatherKind WorldWeatherKind
+    {
+        get
+        {
+            WorldWeatherHost weather = WorldWeatherHost.Instance;
+            return weather != null ? weather.CurrentKind : WeatherKind.Clear;
+        }
+    }
 
-    /// <summary>Inspector/디버그용 월드 날씨 Kind. ClimateHost 다음 tick에 반영.</summary>
+    /// <summary>디버그·호환용. Kind SSOT는 WorldWeatherHost.SetKind.</summary>
     public void SetWeatherKind(WeatherKind kind)
     {
-        _weatherKind = kind;
+        WorldWeatherHost weather = WorldWeatherHost.Instance;
+        if (weather != null)
+            weather.SetKind(kind, WeatherChangeReason.Debug);
         Changed?.Invoke();
     }
 
@@ -135,7 +147,7 @@ public sealed class PlayerGearHost : MonoBehaviour
         int wetPercent = env != null ? env.WetnessPercent : 0;
         int tempTenths = bodyTemp != null ? bodyTemp.BodyTempTenths : int.MinValue;
         int visionPct = HelmetVision.VisionPercent(VisionFactor);
-        WeatherKind weatherKind = _weatherKind;
+        WeatherKind weatherKind = WorldWeatherKind;
         if (wetPercent == _lastWetnessPercent
             && tempTenths == _lastBodyTempTenths
             && visionPct == _lastVisionPercent
@@ -152,6 +164,27 @@ public sealed class PlayerGearHost : MonoBehaviour
     }
 
     void OnClimateChanged() => Changed?.Invoke();
+
+    void OnWorldWeatherChanged() => Changed?.Invoke();
+
+    void EnsureWeatherSubscription()
+    {
+        WorldWeatherHost weather = WorldWeatherHost.Instance;
+        if (weather == _subscribedWeather)
+            return;
+        UnbindWeatherSubscription();
+        _subscribedWeather = weather;
+        if (_subscribedWeather != null)
+            _subscribedWeather.WeatherKindChanged += OnWorldWeatherChanged;
+    }
+
+    void UnbindWeatherSubscription()
+    {
+        if (_subscribedWeather == null)
+            return;
+        _subscribedWeather.WeatherKindChanged -= OnWorldWeatherChanged;
+        _subscribedWeather = null;
+    }
 
     public void BindMovement(PlayerMovement movement)
     {

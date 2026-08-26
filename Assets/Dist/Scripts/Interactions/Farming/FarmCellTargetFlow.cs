@@ -21,4 +21,7 @@ public static class FarmCellTargetFlow
 
     public static void BeginHarvest() =>
         FarmCellTargetSession.TryBegin(FarmCellActionKind.Harvest, null, null);
+
+    public static void BeginChop() =>
+        FarmCellTargetSession.TryBegin(FarmCellActionKind.Chop, null, null);
 }

@@ -14,8 +14,10 @@ public sealed class FarmWorkClipCatalog : ScriptableObject
     [SerializeField] AnimationClip _plant;
     [SerializeField] AnimationClip _till;
     [SerializeField] AnimationClip _harvest;
+    [SerializeField] AnimationClip _chop;
     [SerializeField, Min(0f)] float _plantDurationSeconds = MapPlantConsts.PlantWorkDurationSeconds;
     [SerializeField, Min(0f)] float _tillDurationSeconds = MapPlantConsts.TillWorkDurationSeconds;
+    [SerializeField, Min(0f)] float _chopDurationSeconds = MapPlantConsts.ChopWorkDurationSeconds;
 
     public AnimationClip Resolve(FarmCellActionKind kind)
     {
@@ -27,6 +29,8 @@ public sealed class FarmWorkClipCatalog : ScriptableObject
                 return _till;
             case FarmCellActionKind.Harvest:
                 return _harvest;
+            case FarmCellActionKind.Chop:
+                return _chop;
             default:
                 return null;
         }
@@ -40,6 +44,8 @@ public sealed class FarmWorkClipCatalog : ScriptableObject
                 return Mathf.Max(0f, _plantDurationSeconds);
             case FarmCellActionKind.Till:
                 return Mathf.Max(0f, _tillDurationSeconds);
+            case FarmCellActionKind.Chop:
+                return Mathf.Max(0f, _chopDurationSeconds);
             default:
                 return 0f;
         }

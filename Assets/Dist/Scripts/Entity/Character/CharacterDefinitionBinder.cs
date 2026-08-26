@@ -49,11 +49,14 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
 
         DefaultCharacterSkills skills = definition.CreateSkills();
         CharacterBody body = definition.CreateBody();
+        DefaultCharacterTraits traits = definition.CreateTraits();
 
         if (UsesGameplayData())
         {
             GameplayData.Stats = new DefaultPlayerStats(skills);
             GameplayData.Body = body;
+            GameplayData.RecipeMemory = new DefaultCharacterRecipeMemory();
+            GameplayData.Traits = traits;
             return;
         }
 
@@ -67,6 +70,7 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
 
         _bodyHost.BindBody(body);
         _skillsHost.BindSkills(skills);
+        _skillsHost.BindTraits(traits);
     }
 
     bool UsesGameplayData()

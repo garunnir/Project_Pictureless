@@ -110,6 +110,7 @@ Feature SSOT when touching that area — **read the Doc before editing related s
 |-------|-----|------|
 | Remaining work / impl guide | `docs/PLAN.md` | (구현되면 항목 삭제) |
 | Game time / scale / day clock | `docs/time/TIME.md` | `.cursor/rules/game-time.mdc` |
+| Weather / climate field | `docs/weather/WEATHER.md` | — |
 | Map / TileMap / bake / visibility | `docs/map/SYSTEM.md` (+ `TILEMAP*.md`) | `.cursor/rules/map-system.mdc` |
 | Inventory UI | `docs/inventory/INVENTORY_UI.md` | `.cursor/rules/inventory-ui.mdc` |
 | Equipment / weapon visual folders | `docs/equipment/GEAR.md` · `WEAPON_VISUAL.md` | (Wear·Wield · anim/VFX 맵) |

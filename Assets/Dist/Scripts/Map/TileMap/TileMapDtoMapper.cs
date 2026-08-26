@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
 namespace IsoTilemap
@@ -19,6 +20,9 @@ namespace IsoTilemap
 
             foreach (var td in tileMapData.tiles)
             {
+                if (MapFishTrapSaveBuffer.IsTrapOnlyRecord(td))
+                    continue;
+
                 TilePlacementSlot slot = ResolveOccupiedTileSlot(td, legacyTiles);
 
                 if (slot == TilePlacementSlot.HorizontalFace)
@@ -50,6 +54,9 @@ namespace IsoTilemap
                         seedItemId = td.seedItemId,
                         plantedWorldMinute = td.plantedWorldMinute,
                         fertilized = td.fertilized,
+                        lastFruitHarvestWorldMinute = td.lastFruitHarvestWorldMinute > PlantGrowth.NoFruitHarvestMinute
+                            ? td.lastFruitHarvestWorldMinute
+                            : MapPlantConsts.NoFruitHarvestMinute,
                     };
                     prepareData.Add(MakeTile(occupied, plant));
                 }
@@ -79,6 +86,8 @@ namespace IsoTilemap
                         prepareData.Add(MakeTile(identity));
                 }
             }
+
+            MapFishTrapSaveBuffer.QueueLoadRecords(tileMapData.tiles);
 
             return new MapModelDTO(prepareData);
         }
@@ -125,10 +134,13 @@ namespace IsoTilemap
                             seedItemId = ti.plant.HasSeed ? ti.plant.seedItemId : null,
                             plantedWorldMinute = ti.plant.plantedWorldMinute,
                             fertilized = ti.plant.fertilized,
+                            lastFruitHarvestWorldMinute = ti.plant.lastFruitHarvestWorldMinute,
                         });
                         break;
                 }
             }
+
+            MapFishTrapSaveBuffer.AppendSaveRecords(dto.tiles);
 
             return dto;
         }

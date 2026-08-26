@@ -79,6 +79,7 @@ public static class CharacterGearLabels
     const string KeyWeatherClear = "Character.Weather.Clear";
     const string KeyWeatherRain = "Character.Weather.Rain";
     const string KeyWeatherWind = "Character.Weather.Wind";
+    const string KeyWeatherSnow = "Character.Weather.Snow";
     const string KeyWeatherLine = "Character.Weather.Line";
     const string KeyVisionLine = "Character.Vision.Line";
     const string KeyEncWeatherVisionLine = "Character.Enc.WeatherVisionLine";
@@ -238,6 +239,8 @@ public static class CharacterGearLabels
                 return GetOr(KeyWeatherRain, "비");
             case WeatherKind.Wind:
                 return GetOr(KeyWeatherWind, "바람");
+            case WeatherKind.Snow:
+                return GetOr(KeyWeatherSnow, "눈");
             default:
                 return GetOr(KeyWeatherClear, "맑음");
         }

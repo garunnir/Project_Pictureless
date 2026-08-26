@@ -33,6 +33,36 @@ public sealed class AmmoContextContributor : IContextMenuContributor
 
         if (stack.Item.gun != null)
             ContributeGun(stack, session, reachable, roots);
+
+        if (WeaponAmmoFit.IsToolAmmoHost(stack.Item))
+            ContributeTool(stack, session, reachable, roots);
+    }
+
+    static void ContributeTool(
+        ItemStack tool,
+        InventorySession session,
+        List<ItemStack> reachable,
+        List<ContextMenuEntry> roots)
+    {
+        var children = new List<ContextMenuEntry>();
+        for (int i = 0; i < reachable.Count; i++)
+        {
+            ItemStack ammo = reachable[i];
+            if (ammo?.Item?.ammo == null || ReferenceEquals(ammo, tool))
+                continue;
+            if (!WeaponAmmoFit.AcceptsToolAmmoType(tool.Item, ammo.Item))
+                continue;
+
+            children.Add(ContextMenuEntry.Leaf(
+                "ammo:tool-load:" + i,
+                FormatStackLabel(ammo),
+                new AmmoLoadContextAction(ammo, tool, session)));
+        }
+
+        if (children.Count == 0)
+            return;
+
+        roots.Add(ContextMenuEntry.Group("ammo:tool-load", WeaponAmmoLabels.Load, children));
     }
 
     static void ContributeAmmo(
@@ -50,16 +80,23 @@ public sealed class AmmoContextContributor : IContextMenuContributor
 
             ItemStack mag = WeaponAmmoFit.ResolveLoadMagazine(target);
             bool clip = mag == null && WeaponAmmoFit.IsClipFed(target.Item);
+            bool tool = mag == null && !clip && WeaponAmmoFit.IsToolAmmoHost(target.Item);
             if (mag != null)
             {
                 if (!WeaponAmmoFit.AcceptsAmmoType(mag.Item, ammo.Item))
                     continue;
             }
-            else if (!clip)
+            else if (clip)
             {
-                continue;
+                if (!WeaponAmmoFit.AcceptsGunAmmoType(target.Item, ammo.Item))
+                    continue;
             }
-            else if (!WeaponAmmoFit.AcceptsGunAmmoType(target.Item, ammo.Item))
+            else if (tool)
+            {
+                if (!WeaponAmmoFit.AcceptsToolAmmoType(target.Item, ammo.Item))
+                    continue;
+            }
+            else
             {
                 continue;
             }

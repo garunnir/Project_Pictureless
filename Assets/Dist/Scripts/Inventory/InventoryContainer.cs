@@ -88,6 +88,11 @@ public sealed class InventoryContainer : IItemContainer
 
     public int AddItem(ItemData item, int count, int damageLevel)
     {
+        return AddItem(item, count, damageLevel, cooked: false, hot: false);
+    }
+
+    public int AddItem(ItemData item, int count, int damageLevel, bool cooked, bool hot)
+    {
         if (item == null || count <= 0)
             return 0;
 
@@ -99,7 +104,7 @@ public sealed class InventoryContainer : IItemContainer
         for (int i = 0; i < _stacks.Count && remaining > 0; i++)
         {
             ItemStack existing = _stacks[i];
-            if (!ItemMergePolicy.CanMerge(existing, item, incomingDamage))
+            if (!ItemMergePolicy.CanMerge(existing, item, incomingDamage, cooked, hot))
                 continue;
 
             int space = item.MaxStack - existing.Count;
@@ -114,7 +119,16 @@ public sealed class InventoryContainer : IItemContainer
         while (remaining > 0)
         {
             int chunk = Math.Min(item.MaxStack, remaining);
-            _stacks.Add(new ItemStack(item, chunk, incomingDamage));
+            var stack = new ItemStack(item, chunk, incomingDamage);
+            if (cooked)
+                stack.Instance.StampCooked(true);
+            if (hot)
+            {
+                int until = CraftingWorldTime.AbsoluteWorldMinute + CraftingPseudoIds.HotCoolMinutes;
+                stack.Instance.StampHot(until);
+            }
+
+            _stacks.Add(stack);
             remaining -= chunk;
         }
 

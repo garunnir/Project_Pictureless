@@ -17,6 +17,9 @@ namespace IsoTilemap
         public const string GrowthMature = "GROWTH_MATURE";
         public const string GrowthHarvest = "GROWTH_HARVEST";
         public const string GrowthWithered = "GROWTH_WITHERED";
+        public const string ShallowWater = "SHALLOW_WATER";
+        public const string DeepWater = "DEEP_WATER";
+        public const string Fishable = "FISHABLE";
 
         public static bool HasFlag(TileDefinition definition, string flag)
         {

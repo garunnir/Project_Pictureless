@@ -119,6 +119,56 @@ public static class WeaponAmmoFit
         return true;
     }
 
+    /// <summary>tool.ammo + max_charges 공구 (fish_trap 등).</summary>
+    public static bool IsToolAmmoHost(ItemData tool) =>
+        tool?.tool != null &&
+        tool.tool.max_charges > 0 &&
+        tool.tool.ammo != null &&
+        tool.tool.ammo.Count > 0;
+
+    public static int ResolveToolCapacity(ItemData tool) =>
+        tool?.tool != null ? Math.Max(0, tool.tool.max_charges) : 0;
+
+    public static bool AcceptsToolAmmoType(ItemData tool, ItemData ammo)
+    {
+        if (!IsToolAmmoHost(tool) || ammo?.ammo == null)
+            return false;
+
+        string ammoId = ammo.id;
+        string ammoType = ammo.ammo.ammo_type;
+        for (int i = 0; i < tool.tool.ammo.Count; i++)
+        {
+            string allowed = tool.tool.ammo[i];
+            if (string.IsNullOrEmpty(allowed))
+                continue;
+            if (allowed.Equals(ammoId, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (!string.IsNullOrEmpty(ammoType) &&
+                allowed.Equals(ammoType, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
+    public static bool CanLoadTool(ItemStack toolStack, ItemData ammo)
+    {
+        if (toolStack?.Instance == null || !IsToolAmmoHost(toolStack.Item))
+            return false;
+        if (!AcceptsToolAmmoType(toolStack.Item, ammo))
+            return false;
+
+        int capacity = ResolveToolCapacity(toolStack.Item);
+        if (capacity <= 0 || toolStack.Instance.SupplyRounds >= capacity)
+            return false;
+
+        if (toolStack.Instance.SupplyRounds > 0 &&
+            !string.Equals(toolStack.Instance.SupplyAmmoId, ammo.id, StringComparison.Ordinal))
+            return false;
+
+        return true;
+    }
+
     public static ItemStack ResolveLoadMagazine(ItemStack target)
     {
         if (target?.Item?.magazine != null)

@@ -48,6 +48,10 @@ internal static class DistMcpMenus
 
     public const string TimeEnsureWorldClockSettings =
         Root + "/Time/Ensure World Clock Settings Asset";
+    public const string TimeEnsureWorldWeatherSettings =
+        Root + "/Time/Ensure World Weather Settings Asset";
+    public const string TimeEnsureWorldWeatherInOpenScene =
+        Root + "/Time/Ensure World Weather In Open Scene";
     public const string TimePatchDisplayResizeHandles =
         Root + "/Time/Patch Display Resize Handles";
     public const string TimeSetupCanvas =

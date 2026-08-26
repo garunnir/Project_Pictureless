@@ -9,6 +9,7 @@
 | Topic | Canonical | Rule |
 |-------|-----------|------|
 | Game time | [`time/TIME.md`](time/TIME.md) | `game-time.mdc` |
+| Weather / climate field | [`weather/WEATHER.md`](weather/WEATHER.md) | (`WorldWeatherHost` · Phase D Parked) |
 | Map / TileMap | [`map/SYSTEM.md`](map/SYSTEM.md) → TileMap 세부 | `map-system.mdc` · `tile-chunk-streaming.mdc` |
 | Inventory UI | [`inventory/INVENTORY_UI.md`](inventory/INVENTORY_UI.md) | `inventory-ui.mdc` |
 | Item catalog locale (name / desc / recipe cat / quality) | [`inventory/ITEM_NAMES.md`](inventory/ITEM_NAMES.md) | (Data Definitions hub · LocalizationBundle) |
@@ -20,6 +21,7 @@
 | UI hover placement | [`ui/HOVER.md`](ui/HOVER.md) | (ContextMenu asm · keep-in-bounds) |
 | Message log HUD | [`ui/MESSAGE_LOG.md`](ui/MESSAGE_LOG.md) | (UI 레이아웃·폰트 룰 공유) |
 | Crafting window | [`crafting/CRAFTING.md`](crafting/CRAFTING.md) | (창 vs 아이템 메뉴 · 재료 풀 · 대체재 드롭) |
+| Cooking (BN parity) | [`cooking/COOKING.md`](cooking/COOKING.md) | (PSEUDO fire · Hot/Cooked · cooks_like · multicooker · light) |
 | Farming / plants | [`farming/FARMING.md`](farming/FARMING.md) | (Dist overlay view · TileFlags · world minutes) |
 | Locomotion | [`locomotion/LOCOMOTION.md`](locomotion/LOCOMOTION.md) | `locomotion.mdc` |
 | Character definition / spawn | [`character/DEFINITION.md`](character/DEFINITION.md) | — |

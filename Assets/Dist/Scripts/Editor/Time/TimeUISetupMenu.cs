@@ -13,12 +13,40 @@ static class TimeUISetupMenu
     const string PrefabFolder = "Assets/Dist/Visual/Prefabs/UIComponents/Time";
     const string DisplayPrefabPath = PrefabFolder + "/Grp_TimeDisplay.prefab";
     const string SettingsAssetPath = WorldClockSettings.DefaultAssetPath;
+    const string WeatherSettingsAssetPath = WorldWeatherSettings.DefaultAssetPath;
 
     [MenuItem(DistMcpMenus.TimeEnsureWorldClockSettings)]
     static void EnsureSettingsAssetMenu()
     {
         WorldClockSettings settings = EnsureSettingsAsset();
         Debug.Log($"[TimeUISetupMenu] Settings ready: {AssetDatabase.GetAssetPath(settings)}", settings);
+    }
+
+    [MenuItem(DistMcpMenus.TimeEnsureWorldWeatherSettings)]
+    static void EnsureWeatherSettingsAssetMenu()
+    {
+        WorldWeatherSettings settings = EnsureWeatherSettingsAsset();
+        Debug.Log(
+            $"[TimeUISetupMenu] Weather settings ready: {AssetDatabase.GetAssetPath(settings)}",
+            settings);
+    }
+
+    [MenuItem(DistMcpMenus.TimeEnsureWorldWeatherInOpenScene)]
+    static void EnsureWorldWeatherInOpenScene()
+    {
+        Transform systemRoot = SystemHierarchySetup.ResolveSystemRoot();
+        if (systemRoot == null)
+        {
+            Debug.LogError("[TimeUISetupMenu] InputManager parent (System root) not found.");
+            return;
+        }
+
+        Transform timeRoot = SystemHierarchySetup.EnsureCategory(
+            systemRoot,
+            SystemHierarchySetup.Time);
+        EnsureWorldWeatherStack(timeRoot);
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        Debug.Log("[TimeUISetupMenu] WorldWeatherHost + WorldEnvironmentPresenter wired.", timeRoot);
     }
 
     /// <summary>
@@ -123,6 +151,8 @@ static class TimeUISetupMenu
         clockSo.FindProperty("_settings").objectReferenceValue = settings;
         clockSo.ApplyModifiedPropertiesWithoutUndo();
 
+        EnsureWorldWeatherStack(timeRoot);
+
         TimeUIBridge bridge = canvas.GetComponent<TimeUIBridge>();
         if (bridge == null)
             bridge = Undo.AddComponent<TimeUIBridge>(canvas.gameObject);
@@ -168,11 +198,103 @@ static class TimeUISetupMenu
 
         EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
         Debug.Log(
-            "[TimeUISetupMenu] TimeScaleService + WorldClock + Time HUD scene instance wired.",
+            "[TimeUISetupMenu] TimeScaleService + WorldClock + WorldWeather + Time HUD scene instance wired.",
             panel);
         _ = scaleService;
         _ = bridge;
     }
+
+    static void EnsureWorldWeatherStack(Transform timeRoot)
+    {
+        WorldWeatherSettings weatherSettings = EnsureWeatherSettingsAsset();
+        WorldWeatherHost weatherHost =
+            EnsureComponentOnChild<WorldWeatherHost>(timeRoot, "WorldWeatherHost");
+        SerializedObject weatherSo = new(weatherHost);
+        weatherSo.FindProperty("_settings").objectReferenceValue = weatherSettings;
+        weatherSo.ApplyModifiedPropertiesWithoutUndo();
+
+        WorldEnvironmentPresenter presenter =
+            EnsureComponentOnChild<WorldEnvironmentPresenter>(timeRoot, "WorldEnvironmentPresenter");
+        Light sun = Object.FindAnyObjectByType<Light>();
+        if (sun != null && sun.type != LightType.Directional)
+        {
+            Light[] lights = Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
+            sun = null;
+            for (int i = 0; i < lights.Length; i++)
+            {
+                if (lights[i] != null && lights[i].type == LightType.Directional)
+                {
+                    sun = lights[i];
+                    break;
+                }
+            }
+        }
+
+        ParticleSystem rain = EnsureWeatherParticle(presenter.transform, "Vfx_Rain", new Color(0.55f, 0.7f, 1f, 0.7f), 80f);
+        ParticleSystem wind = EnsureWeatherParticle(presenter.transform, "Vfx_Wind", new Color(0.85f, 0.85f, 0.9f, 0.35f), 40f);
+        ParticleSystem snow = EnsureWeatherParticle(presenter.transform, "Vfx_Snow", Color.white, 50f);
+
+        SerializedObject presenterSo = new(presenter);
+        if (sun != null)
+            presenterSo.FindProperty("_sunLight").objectReferenceValue = sun;
+        presenterSo.FindProperty("_rainVfx").objectReferenceValue = rain;
+        presenterSo.FindProperty("_windVfx").objectReferenceValue = wind;
+        presenterSo.FindProperty("_snowVfx").objectReferenceValue = snow;
+        presenterSo.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    static ParticleSystem EnsureWeatherParticle(Transform parent, string childName, Color startColor, float rate)
+    {
+        Transform child = parent.Find(childName);
+        GameObject go;
+        if (child != null)
+        {
+            go = child.gameObject;
+        }
+        else
+        {
+            go = new GameObject(childName);
+            Undo.RegisterCreatedObjectUndo(go, $"Create {childName}");
+            go.transform.SetParent(parent, false);
+        }
+
+        ParticleSystem ps = go.GetComponent<ParticleSystem>();
+        if (ps == null)
+            ps = Undo.AddComponent<ParticleSystem>(go);
+
+        ParticleSystem.MainModule main = ps.main;
+        main.loop = true;
+        main.playOnAwake = false;
+        main.startLifetime = 1.2f;
+        main.startSize = 0.08f;
+        main.startColor = startColor;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        main.maxParticles = 400;
+
+        ParticleSystem.EmissionModule emission = ps.emission;
+        emission.rateOverTime = rate;
+
+        ParticleSystem.ShapeModule shape = ps.shape;
+        shape.shapeType = ParticleSystemShapeType.Box;
+        shape.scale = new Vector3(8f, 0.2f, 8f);
+
+        ParticleSystem.VelocityOverLifetimeModule velocity = ps.velocityOverLifetime;
+        velocity.enabled = true;
+        velocity.space = ParticleSystemSimulationSpace.World;
+        if (childName.IndexOf("Snow", System.StringComparison.Ordinal) >= 0)
+            velocity.y = new ParticleSystem.MinMaxCurve(-1.2f);
+        else if (childName.IndexOf("Wind", System.StringComparison.Ordinal) >= 0)
+        {
+            velocity.x = new ParticleSystem.MinMaxCurve(2.5f);
+            velocity.y = new ParticleSystem.MinMaxCurve(-0.2f);
+        }
+        else
+            velocity.y = new ParticleSystem.MinMaxCurve(-6f);
+
+        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        return ps;
+    }
+
 
     static T EnsureHudPrefabInstance<T>(
         UICanvasLayerHost layerHost,
@@ -219,6 +341,9 @@ static class TimeUISetupMenu
 
     static WorldClockSettings EnsureSettingsAsset() =>
         DistScriptableObjectEnsure.LoadOrCreate<WorldClockSettings>(SettingsAssetPath);
+
+    static WorldWeatherSettings EnsureWeatherSettingsAsset() =>
+        DistScriptableObjectEnsure.LoadOrCreate<WorldWeatherSettings>(WeatherSettingsAssetPath);
 
     static T EnsureComponentOnChild<T>(Transform parent, string childName) where T : Component
     {

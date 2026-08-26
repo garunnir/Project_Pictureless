@@ -3,15 +3,16 @@
 // ============================================================
 
 /// <summary>
-/// Clear / Rain / Wind → ambient °C and wetness gain for BodyTemp / WearEnvExposure.
-/// Outdoor day Clear stays <see cref="ClearAmbientTempC"/> (~18°C). Indoor ignores rain/wind.
-/// Docs: docs/equipment/GEAR.md Phase G.
+/// Clear / Rain / Wind / Snow → ambient °C and wetness gain for BodyTemp / WearEnvExposure.
+/// Outdoor day Clear stays <see cref="ClearAmbientTempC"/> (~18°C). Indoor ignores rain/wind/snow.
+/// Docs: docs/equipment/GEAR.md Phase G · docs/weather/WEATHER.md.
 /// </summary>
 public enum WeatherKind
 {
     Clear = 0,
     Rain = 1,
-    Wind = 2
+    Wind = 2,
+    Snow = 3
 }
 
 public sealed class WeatherExposure
@@ -25,13 +26,16 @@ public sealed class WeatherExposure
     /// <summary>Wind 시 Clear ambient에서 차감하는 풍랭 (°C).</summary>
     public const float WindChillDegreesC = 4f;
 
+    /// <summary>Snow 야외 환경 온도 (°C). Night 오프셋과 합치면 frostbite 도달 가능.</summary>
+    public const float SnowAmbientTempC = -4f;
+
     /// <summary>야외 Night: kind ambient에 더하는 오프셋 (°C).</summary>
     public const float NightAmbientOffsetC = -6f;
 
     /// <summary>야외 Dawn: kind ambient에 더하는 오프셋 (°C).</summary>
     public const float DawnAmbientOffsetC = -3f;
 
-    /// <summary>실내 환경 온도 (°C). 비/바람·기간 오프셋 무시.</summary>
+    /// <summary>실내 환경 온도 (°C). 비/바람·눈·기간 오프셋 무시.</summary>
     public const float IndoorAmbientTempC = ClearAmbientTempC;
 
     /// <summary>Clear: 습기 압력 없음 (World초당).</summary>
@@ -43,7 +47,10 @@ public sealed class WeatherExposure
     /// <summary>Wind: 약한 습기 압력 (먼/미스트 스탠드인).</summary>
     public const float WindWetnessGainPerSecond = 0.002f;
 
-    /// <summary>실내 습기 압력 (World초당). 비/바람 무시.</summary>
+    /// <summary>Snow: Rain·Wind 사이 습기 압력 (World초당).</summary>
+    public const float SnowWetnessGainPerSecond = 0.004f;
+
+    /// <summary>실내 습기 압력 (World초당). 비/바람·눈 무시.</summary>
     public const float IndoorWetnessGainPerSecond = 0f;
 
     WeatherKind _kind = WeatherKind.Clear;
@@ -119,6 +126,8 @@ public sealed class WeatherExposure
                 return RainWetnessGainPerSecond;
             case WeatherKind.Wind:
                 return WindWetnessGainPerSecond;
+            case WeatherKind.Snow:
+                return SnowWetnessGainPerSecond;
             default:
                 return ClearWetnessGainPerSecond;
         }
@@ -132,6 +141,8 @@ public sealed class WeatherExposure
                 return "Rain";
             case WeatherKind.Wind:
                 return "Wind";
+            case WeatherKind.Snow:
+                return "Snow";
             default:
                 return "Clear";
         }
@@ -145,6 +156,8 @@ public sealed class WeatherExposure
                 return RainAmbientTempC;
             case WeatherKind.Wind:
                 return ClearAmbientTempC - WindChillDegreesC;
+            case WeatherKind.Snow:
+                return SnowAmbientTempC;
             default:
                 return ClearAmbientTempC;
         }

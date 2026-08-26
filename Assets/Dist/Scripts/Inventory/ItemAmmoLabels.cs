@@ -49,6 +49,13 @@ public static class ItemAmmoLabels
             return Loc.Format(KeyMagSupply, baseName, have, cap);
         }
 
+        if (WeaponAmmoFit.IsToolAmmoHost(stack.Item))
+        {
+            int cap = WeaponAmmoFit.ResolveToolCapacity(stack.Item);
+            int have = stack.Instance != null ? stack.Instance.SupplyRounds : 0;
+            return Loc.Format(KeyMagSupply, baseName, have, cap);
+        }
+
         return baseName;
     }
 

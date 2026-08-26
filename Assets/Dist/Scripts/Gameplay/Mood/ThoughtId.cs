@@ -19,5 +19,7 @@ public enum ThoughtId
     AteMeal,
     Vomited,
     AteRotten,
-    Catharsis
+    Catharsis,
+    Crafted,
+    AteHotMeal
 }

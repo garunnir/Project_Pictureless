@@ -111,6 +111,9 @@ public sealed class TileObjectPointerController : MonoBehaviour
 
     void OnLookAtTapPerformed(InputAction.CallbackContext context)
     {
+        if (FishCellTargetSession.TryConsumeRightClick())
+            return;
+
         if (FarmCellTargetSession.TryConsumeRightClick())
             return;
 

@@ -38,15 +38,16 @@ API·채널 소비 경로만 준비. 키 바인딩·연출 없음.
 
 **도메인:** [`time/TIME.md`](time/TIME.md) · [`tech-stack.md`](tech-stack.md)
 
-### 낮/밤 라이팅·월드 연출
+### 날씨 XZ 그리드 필드 (Parked)
 
-`WorldClock.Period`는 ambient(체온·날씨)만. 씬 라이팅 없음.
+글로벌 `WorldWeatherHost` + 스케줄·Period 라이팅·Kind VFX는 ship. 셀별 Perlin 필드·BN climate bake는 **맵 규모·지역 이동** 전까지 보류.
 
 **지침**
-- Period를 라이팅 SSOT로 쓴다. 별도 낮밤 플래그를 만들지 않는다.
-- Dist 시뮬 시간은 채널 API. 벤더 `Time.*`는 손대지 않는다.
+- Kind 소비는 `WorldWeatherHost.TryGetKindAt`만. 글로벌 Kind를 다시 GearHost에 두지 않는다.
+- 필드는 청크 mesh와 분리 (model memory). player-focus 스트리밍 재도입 금지.
+- 게이트·설계: [`weather/WEATHER.md`](weather/WEATHER.md) Phase D.
 
-**도메인:** [`time/TIME.md`](time/TIME.md) · [`body/BODY.md`](body/BODY.md)
+**도메인:** [`weather/WEATHER.md`](weather/WEATHER.md) · [`time/TIME.md`](time/TIME.md)
 
 ---
 
@@ -194,16 +195,6 @@ provider 훅(`PlayerInventoryHost` Func)만 있음. 한도 상승 미구현.
 - 훅을 버리고 인벤 한도를 본문에 하드코딩하지 않는다. 숙련 Refresh 값을 훅에 공급한다.
 
 **도메인:** [`inventory/INVENTORY_UI.md`](inventory/INVENTORY_UI.md)
-
-### 제작 광원 게이팅
-
-헤더 `Img_Light` 기본 비활성. `CanCraft` 광원·작업대 타입 게이팅 없음.
-
-**지침**
-- 예정 소비자: 헤더 아이콘 + `CanCraft`. 지금은 광원 없어도 제작 가능 — 켤 때 기존 가능 레시피가 갑자기 막히지 않게 게이팅 조건을 명시한다.
-- 창 chrome은 프리팹 SSOT. 런타임으로 헤더 레이아웃을 만들지 않는다.
-
-**도메인:** [`crafting/CRAFTING.md`](crafting/CRAFTING.md)
 
 ---
 

@@ -19,7 +19,7 @@ public sealed class EnvironmentRuntimeDebugModel
 {
     public bool CanWrite => Application.isPlaying && WorldClock.Instance != null;
 
-    public bool CanWriteWeather => CanWrite && PlayerGearHost.Active != null;
+    public bool CanWriteWeather => CanWrite && WorldWeatherHost.Instance != null;
 
     bool ShowBindWarning => !CanWrite;
 
@@ -30,7 +30,7 @@ public sealed class EnvironmentRuntimeDebugModel
 
     [ShowInInspector, ReadOnly, PropertyOrder(-100)]
     [InfoBox("Play mode with a live WorldClock to edit.", InfoMessageType.Warning, nameof(ShowBindWarning))]
-    [InfoBox("No PlayerGearHost.Active — weather Kind writes are disabled.", InfoMessageType.Warning, nameof(ShowWeatherHostWarning))]
+            [InfoBox("No WorldWeatherHost — weather Kind writes are disabled.", InfoMessageType.Warning, nameof(ShowWeatherHostWarning))]
     [InfoBox("Effective indoor: rain/wind and period ambient offsets are ignored.", InfoMessageType.Info, nameof(ShowIndoorWeatherIgnored))]
     public bool Writable => CanWrite;
 
@@ -194,15 +194,33 @@ public sealed class EnvironmentRuntimeDebugModel
     {
         get
         {
-            PlayerGearHost host = PlayerGearHost.Active;
-            return host != null ? host.WorldWeatherKind : WeatherKind.Clear;
+            WorldWeatherHost host = WorldWeatherHost.Instance;
+            return host != null ? host.CurrentKind : WeatherKind.Clear;
         }
         set
         {
-            PlayerGearHost host = PlayerGearHost.Active;
+            WorldWeatherHost host = WorldWeatherHost.Instance;
             if (!CanWriteWeather || host == null)
                 return;
-            host.SetWeatherKind(value);
+            host.SetKind(value, WeatherChangeReason.Debug);
+        }
+    }
+
+    [TabGroup("Env", "Weather")]
+    [ShowInInspector, EnableIf(nameof(CanWriteWeather))]
+    bool SchedulerEnabled
+    {
+        get
+        {
+            WorldWeatherHost host = WorldWeatherHost.Instance;
+            return host != null && host.SchedulerEnabled;
+        }
+        set
+        {
+            WorldWeatherHost host = WorldWeatherHost.Instance;
+            if (!CanWriteWeather || host == null)
+                return;
+            host.SchedulerEnabled = value;
         }
     }
 

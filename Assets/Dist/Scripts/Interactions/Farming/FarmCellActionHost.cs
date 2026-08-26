@@ -185,7 +185,8 @@ public sealed class FarmCellActionHost : MonoBehaviour
     static bool NeedsWork(FarmCellActionKind kind) =>
         kind == FarmCellActionKind.Plant ||
         kind == FarmCellActionKind.Till ||
-        kind == FarmCellActionKind.Harvest;
+        kind == FarmCellActionKind.Harvest ||
+        kind == FarmCellActionKind.Chop;
 
     static void Apply(
         FarmCellActionKind kind,
@@ -212,6 +213,9 @@ public sealed class FarmCellActionHost : MonoBehaviour
                 break;
             case FarmCellActionKind.Harvest:
                 MapPlantService.TryHarvest(cell);
+                break;
+            case FarmCellActionKind.Chop:
+                MapPlantService.TryChop(cell);
                 break;
         }
     }

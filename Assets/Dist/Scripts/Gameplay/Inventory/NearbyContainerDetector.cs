@@ -69,9 +69,25 @@ public sealed class NearbyContainerDetector : MonoBehaviour
             return;
 
         _isActive = true;
+        EnsureCookingHosts();
         _floorLootHost?.BeginContext();
         Subscribe();
         RefreshImmediate();
+    }
+
+    void EnsureCookingHosts()
+    {
+        if (GetComponent<CraftingEnvironmentProvider>() == null)
+            gameObject.AddComponent<CraftingEnvironmentProvider>();
+        if (GetComponent<CraftingWorldTimeBridge>() == null)
+            gameObject.AddComponent<CraftingWorldTimeBridge>();
+        if (GetComponent<CraftingSideEffectsBridge>() == null)
+            gameObject.AddComponent<CraftingSideEffectsBridge>();
+        if (GetComponent<ItemFoodHotTicker>() == null)
+        {
+            var ticker = gameObject.AddComponent<ItemFoodHotTicker>();
+            // PlayerInventoryRuntime may bind later via SerializeField leave null → ticker no-ops until assigned
+        }
     }
 
     public void Deactivate()

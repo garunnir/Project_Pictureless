@@ -19,6 +19,8 @@ namespace IsoTilemap
         public string seedItemId;
         public int plantedWorldMinute;
         public bool fertilized;
+        /// <summary>Tree fruit harvest world minute. <see cref="MapPlantConsts.NoFruitHarvestMinute"/> = never.</summary>
+        public int lastFruitHarvestWorldMinute;
 
         public bool HasSeed => !string.IsNullOrEmpty(seedItemId);
     }

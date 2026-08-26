@@ -82,6 +82,7 @@ public class TileMapManager : MonoBehaviour
     public MapCollisionServices MapCollisionServices => _mapCollisionServices;
     public TilePrefabDB PrefabDB => _prefabDB;
     public IWorldGrid WorldGrid => _worldGrid;
+    public TileMapCacheHub MapCacheHub => _mapCacheHub;
 
     /// <summary>층 가시성과 동일한 playerFloorCellY (몸 위치 기준 점유셀).</summary>
     public int ResolvePlayerFloorCellY(Vector3 playerWorld)

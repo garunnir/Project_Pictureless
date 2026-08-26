@@ -7,5 +7,6 @@ public enum FarmCellActionKind
     Plant = 0,
     Till = 1,
     Fertilize = 2,
-    Harvest = 3
+    Harvest = 3,
+    Chop = 4,
 }

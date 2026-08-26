@@ -5598,6 +5598,34 @@
             "z": 0,
             "face": 1,
             "prefabId": "Floor/GrassFloor"
+        },
+        {
+            "x": -1,
+            "y": 0,
+            "z": -2,
+            "face": 1,
+            "prefabId": "Floor/ShallowWater"
+        },
+        {
+            "x": -2,
+            "y": 0,
+            "z": -1,
+            "face": 1,
+            "prefabId": "Floor/ShallowWater"
+        },
+        {
+            "x": -1,
+            "y": 0,
+            "z": -1,
+            "face": 1,
+            "prefabId": "Floor/DeepWater"
+        },
+        {
+            "x": 0,
+            "y": 0,
+            "z": -2,
+            "face": 1,
+            "prefabId": "Floor/DeepWater"
         }
     ]
 }

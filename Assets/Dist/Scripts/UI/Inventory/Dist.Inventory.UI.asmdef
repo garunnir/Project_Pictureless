@@ -6,6 +6,7 @@
         "DistScript",
         "Dist.Inventory",
         "Dist.Map",
+        "Dist.Map.Fish",
         "Dist.Gameplay.Data",
         "Dist.UI.ContextMenu",
         "LeanPool",

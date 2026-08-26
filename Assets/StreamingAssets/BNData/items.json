@@ -8490,7 +8490,8 @@
         "vitamins": {
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "acorn_roasted"
       }
     },
     {
@@ -8523,7 +8524,8 @@
         "vitamins": {
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "acorn_roasted"
       }
     },
     {
@@ -10115,7 +10117,8 @@
         "vitamins": {
           "calcium": 6,
           "iron": 6
-        }
+        },
+        "smoking_result": "almond_roasted"
       }
     },
     {
@@ -10198,7 +10201,8 @@
         "vitamins": {
           "calcium": 6,
           "iron": 6
-        }
+        },
+        "smoking_result": "almond_roasted"
       }
     },
     {
@@ -11440,7 +11444,8 @@
           "vitA": 2,
           "vitC": 14,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -11569,7 +11574,8 @@
           "vitC": 18,
           "calcium": 2,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -15811,7 +15817,8 @@
           "vitA": 1,
           "vitC": 17,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -15837,7 +15844,8 @@
       },
       "use_action": {
         "type": "heal",
-        "bandages_power": 4
+        "bandages_power": 4,
+        "bleed": 1
       }
     },
     {
@@ -15863,7 +15871,8 @@
       },
       "use_action": {
         "type": "heal",
-        "bandages_power": 2
+        "bandages_power": 2,
+        "bleed": 1
       }
     },
     {
@@ -15889,7 +15898,8 @@
       },
       "use_action": {
         "type": "heal",
-        "bandages_power": 3
+        "bandages_power": 3,
+        "bleed": 1
       }
     },
     {
@@ -15915,7 +15925,8 @@
       },
       "use_action": {
         "type": "heal",
-        "bandages_power": 3
+        "bandages_power": 3,
+        "bleed": 1
       }
     },
     {
@@ -21432,7 +21443,8 @@
           "vitA": 1,
           "vitC": 9,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -22184,7 +22196,8 @@
           "vitC": 24,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -22216,7 +22229,8 @@
           "vitC": 24,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -28236,7 +28250,8 @@
           "vitC": 95,
           "calcium": 5,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -29780,7 +29795,8 @@
           "vitC": 1,
           "calcium": 23,
           "iron": 10
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -30241,7 +30257,8 @@
           "vitC": 56,
           "calcium": 5,
           "iron": 5
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -32154,7 +32171,8 @@
           "vitC": 5,
           "calcium": 3,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -32186,7 +32204,8 @@
           "vitC": 5,
           "calcium": 3,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -32617,7 +32636,8 @@
         "vitamins": {
           "calcium": 5,
           "iron": 5
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -32763,7 +32783,8 @@
           "vitC": 4,
           "calcium": 4,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -33964,7 +33985,8 @@
           "vitA": 5,
           "calcium": 32,
           "iron": 2
-        }
+        },
+        "smoking_result": "cheese_hard"
       }
     },
     {
@@ -35030,7 +35052,8 @@
           "vitC": 11,
           "calcium": 2,
           "iron": 3
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -35096,7 +35119,8 @@
         "vitamins": {
           "vitC": 13,
           "iron": 1
-        }
+        },
+        "smoking_result": "chestnut_roasted"
       }
     },
     {
@@ -35127,7 +35151,8 @@
         "vitamins": {
           "vitC": 13,
           "iron": 1
-        }
+        },
+        "smoking_result": "chestnut_roasted"
       }
     },
     {
@@ -36041,7 +36066,8 @@
           "vitA": 2,
           "vitC": 18,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -39598,7 +39624,8 @@
         "vitamins": {
           "calcium": 5,
           "iron": 5
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -39658,7 +39685,8 @@
           "vitC": 12,
           "calcium": 3,
           "iron": 5
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -40125,7 +40153,8 @@
           "vitA": 2,
           "vitC": 12,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -40657,7 +40686,8 @@
       },
       "use_action": {
         "type": "heal",
-        "bandages_power": 2
+        "bandages_power": 2,
+        "bleed": 1
       }
     },
     {
@@ -40949,7 +40979,8 @@
           "vitA": 1,
           "vitC": 27,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -41488,7 +41519,8 @@
           "vitC": 9,
           "calcium": 6,
           "iron": 6
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -42343,7 +42375,8 @@
           "vitC": 23,
           "calcium": 11,
           "iron": 10
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -42374,7 +42407,8 @@
           "vitC": 23,
           "calcium": 11,
           "iron": 10
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -45361,7 +45395,8 @@
         "vitamins": {
           "calcium": 56,
           "iron": 22
-        }
+        },
+        "cooks_like": "beans_cooked"
       }
     },
     {
@@ -45391,7 +45426,8 @@
           "calcium": 6,
           "iron": 14,
           "vitB": 154
-        }
+        },
+        "smoking_result": "fish_smoked"
       }
     },
     {
@@ -45511,7 +45547,8 @@
         "calories": 174,
         "quench": -3,
         "fun": -4,
-        "spoils_in_minutes": 518400.0
+        "spoils_in_minutes": 518400.0,
+        "smoking_result": "dry_meat_tainted"
       }
     },
     {
@@ -45578,7 +45615,8 @@
         "spoils_in_minutes": 518400.0,
         "vitamins": {
           "iron": 3
-        }
+        },
+        "cooks_like": "rice_cooked"
       }
     },
     {
@@ -45634,7 +45672,8 @@
           "vitC": 36,
           "calcium": 4,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -45665,7 +45704,8 @@
           "vitC": 36,
           "calcium": 4,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -47126,7 +47166,8 @@
           "vitC": 61,
           "calcium": 6,
           "iron": 14
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -50118,7 +50159,8 @@
           "vitC": 6,
           "vitA": 10,
           "calcium": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -50831,7 +50873,8 @@
           "calcium": 6,
           "iron": 14,
           "vitB": 154
-        }
+        },
+        "smoking_result": "fish_smoked"
       }
     },
     {
@@ -50972,7 +51015,8 @@
           "calcium": 6,
           "iron": 14,
           "vitB": 154
-        }
+        },
+        "smoking_result": "fish_smoked"
       }
     },
     {
@@ -51001,7 +51045,8 @@
           "calcium": 6,
           "iron": 14,
           "vitB": 154
-        }
+        },
+        "smoking_result": "fish_smoked"
       }
     },
     {
@@ -51061,7 +51106,8 @@
           "calcium": 6,
           "iron": 14,
           "vitB": 154
-        }
+        },
+        "smoking_result": "fish_smoked"
       }
     },
     {
@@ -51121,7 +51167,8 @@
           "calcium": 6,
           "iron": 14,
           "vitB": 154
-        }
+        },
+        "smoking_result": "dry_fish"
       }
     },
     {
@@ -58452,7 +58499,8 @@
           "vitC": 84,
           "calcium": 5,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -58482,7 +58530,8 @@
           "vitC": 4,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -60637,7 +60686,8 @@
           "vitC": 2,
           "calcium": 3,
           "iron": 7
-        }
+        },
+        "smoking_result": "hazelnut_roasted"
       }
     },
     {
@@ -60669,7 +60719,8 @@
           "vitC": 2,
           "calcium": 3,
           "iron": 7
-        }
+        },
+        "smoking_result": "hazelnut_roasted"
       }
     },
     {
@@ -62713,7 +62764,8 @@
         "vitamins": {
           "calcium": 2,
           "iron": 8
-        }
+        },
+        "smoking_result": "hickory_nut_roasted"
       }
     },
     {
@@ -62770,7 +62822,8 @@
         "vitamins": {
           "calcium": 2,
           "iron": 8
-        }
+        },
+        "smoking_result": "hickory_nut_roasted"
       }
     },
     {
@@ -64966,7 +65019,8 @@
           "vitC": 30,
           "calcium": 2,
           "iron": 3
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -65783,7 +65837,8 @@
           "vitC": 5,
           "calcium": 2,
           "iron": 3
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -65921,7 +65976,9 @@
           "calcium": 2,
           "iron": 53,
           "vitB": 778
-        }
+        },
+        "cooks_like": "human_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -65976,7 +66033,9 @@
           "calcium": 2,
           "iron": 53,
           "vitB": 778
-        }
+        },
+        "cooks_like": "human_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -67375,7 +67434,8 @@
           "vitA": 2,
           "vitC": 14,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -67406,7 +67466,8 @@
           "vitC": 18,
           "calcium": 2,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -67435,7 +67496,8 @@
           "vitA": 1,
           "vitC": 17,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -67466,7 +67528,8 @@
           "vitA": 1,
           "vitC": 9,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -67497,7 +67560,8 @@
           "vitC": 24,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -67528,7 +67592,8 @@
           "vitC": 95,
           "calcium": 5,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -67560,7 +67625,8 @@
           "vitC": 56,
           "calcium": 5,
           "iron": 5
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -67592,7 +67658,8 @@
           "vitC": 5,
           "calcium": 3,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -67642,7 +67709,8 @@
           "vitC": 11,
           "calcium": 2,
           "iron": 3
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -67672,7 +67740,8 @@
           "vitA": 2,
           "vitC": 12,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -67703,7 +67772,8 @@
           "vitA": 1,
           "vitC": 27,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -67758,7 +67828,8 @@
           "vitC": 61,
           "calcium": 6,
           "iron": 14
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -67789,7 +67860,8 @@
           "vitC": 84,
           "calcium": 5,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -67819,7 +67891,8 @@
           "vitC": 4,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -67850,7 +67923,8 @@
           "vitC": 5,
           "calcium": 2,
           "iron": 3
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -67881,7 +67955,8 @@
           "vitC": 80,
           "calcium": 1,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -67912,7 +67987,8 @@
           "vitC": 74,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -67943,7 +68019,8 @@
           "vitC": 4,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -67975,7 +68052,8 @@
           "vitC": 70,
           "calcium": 2,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -68009,7 +68087,8 @@
           "vitC": 65,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -68039,7 +68118,8 @@
           "vitC": 60,
           "calcium": 6,
           "iron": 14
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -68069,7 +68149,8 @@
           "vitC": 12,
           "calcium": 4,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -68100,7 +68181,8 @@
           "vitC": 138,
           "calcium": 4,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -68132,7 +68214,8 @@
           "vitC": 164,
           "calcium": 5,
           "iron": 3
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -68163,7 +68246,8 @@
           "vitC": 12,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -68193,7 +68277,8 @@
           "vitC": 7,
           "calcium": 1,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -68225,7 +68310,8 @@
           "vitC": 93,
           "calcium": 2,
           "iron": 3
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -68253,7 +68339,8 @@
         "spoils_in_minutes": 0.0,
         "vitamins": {
           "vitC": 8
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -68284,7 +68371,8 @@
           "vitC": 21,
           "calcium": 2,
           "iron": 3
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -68314,7 +68402,8 @@
           "vitC": 47,
           "calcium": 3,
           "iron": 9
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -68348,7 +68437,8 @@
           "vitC": 12,
           "calcium": 3,
           "iron": 5
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -68379,7 +68469,8 @@
           "vitC": 64,
           "calcium": 3,
           "iron": 5
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -68410,7 +68501,8 @@
           "vitC": 11,
           "calcium": 11,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -68442,7 +68534,8 @@
           "vitC": 634,
           "calcium": 23,
           "iron": 8
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -68472,7 +68565,8 @@
           "vitC": 140,
           "calcium": 1,
           "iron": 3
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -68501,7 +68595,8 @@
           "vitC": 22,
           "calcium": 3,
           "iron": 6
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -68535,7 +68630,8 @@
           "vitC": 14,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -68564,7 +68660,8 @@
           "vitC": 39,
           "calcium": 3,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -71274,7 +71371,8 @@
         "spoils_in_minutes": 3600.0,
         "vitamins": {
           "vitC": 8
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -72396,7 +72494,8 @@
           "vitC": 80,
           "calcium": 1,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -75924,7 +76023,8 @@
           "vitC": 74,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -76127,7 +76227,8 @@
           "vitC": 4,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -81928,7 +82029,8 @@
           "vitC": 70,
           "calcium": 2,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -85057,7 +85159,9 @@
           "calcium": 2,
           "iron": 53,
           "vitB": 778
-        }
+        },
+        "cooks_like": "meat_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -85120,7 +85224,8 @@
           "iron": 8,
           "vitB": 6,
           "mutant_toxin": 12
-        }
+        },
+        "smoking_result": "dry_meat_tainted"
       }
     },
     {
@@ -85213,7 +85318,8 @@
           "iron": 8,
           "vitB": 6,
           "mutant_toxin": 8
-        }
+        },
+        "smoking_result": "dry_meat_tainted"
       }
     },
     {
@@ -85304,7 +85410,9 @@
           "calcium": 0,
           "iron": 0,
           "vitB": 0
-        }
+        },
+        "cooks_like": "meat_scrap_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -85335,7 +85443,9 @@
           "calcium": 0,
           "iron": 0,
           "vitB": 0
-        }
+        },
+        "cooks_like": "meat_scrap_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -85367,7 +85477,8 @@
           "calcium": 2,
           "iron": 69,
           "vitB": 778
-        }
+        },
+        "smoking_result": "dry_meat"
       }
     },
     {
@@ -85393,7 +85504,8 @@
       "comestible": {
         "calories": 174,
         "fun": -10,
-        "spoils_in_minutes": 240.0
+        "spoils_in_minutes": 240.0,
+        "smoking_result": "dry_meat_tainted"
       }
     },
     {
@@ -85427,7 +85539,8 @@
       "has_durability": false,
       "use_action": {
         "type": "heal",
-        "bandages_power": 4
+        "bandages_power": 4,
+        "bleed": 0
       }
     },
     {
@@ -85658,7 +85771,8 @@
           "vitC": 65,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -86647,7 +86761,8 @@
           "vitB": 2,
           "vitC": 1,
           "calcium": 7
-        }
+        },
+        "cooks_like": "milk"
       }
     },
     {
@@ -88061,7 +88176,8 @@
         "vitamins": {
           "calcium": 2,
           "iron": 52
-        }
+        },
+        "smoking_result": "dry_mushroom"
       }
     },
     {
@@ -88090,7 +88206,8 @@
         "vitamins": {
           "calcium": 2,
           "iron": 52
-        }
+        },
+        "smoking_result": "dry_mushroom"
       }
     },
     {
@@ -90258,7 +90375,8 @@
           "vitC": 60,
           "calcium": 6,
           "iron": 14
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -90286,6 +90404,9 @@
         "ammo": [
           "battery"
         ]
+      },
+      "use_action": {
+        "type": "multicooker"
       }
     },
     {
@@ -90308,6 +90429,9 @@
         "ammo": [
           "battery"
         ]
+      },
+      "use_action": {
+        "type": "multicooker"
       }
     },
     {
@@ -90404,7 +90528,8 @@
         "vitamins": {
           "vitC": 2,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_mushroom"
       }
     },
     {
@@ -90435,7 +90560,8 @@
         "vitamins": {
           "vitC": 4,
           "iron": 7
-        }
+        },
+        "smoking_result": "dry_mushroom"
       }
     },
     {
@@ -90475,7 +90601,8 @@
         "vitamins": {
           "calcium": 2,
           "iron": 52
-        }
+        },
+        "smoking_result": "dry_mushroom"
       }
     },
     {
@@ -91150,7 +91277,9 @@
           "iron": 26,
           "vitB": 389,
           "mutant_toxin": 25
-        }
+        },
+        "cooks_like": "mutant_human_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -91210,7 +91339,9 @@
           "iron": 26,
           "vitB": 389,
           "mutant_toxin": 25
-        }
+        },
+        "cooks_like": "mutant_human_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -91327,7 +91458,9 @@
           "iron": 26,
           "vitB": 389,
           "mutant_toxin": 25
-        }
+        },
+        "cooks_like": "mutant_meat_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -91360,7 +91493,9 @@
           "iron": 26,
           "vitB": 389,
           "mutant_toxin": 25
-        }
+        },
+        "cooks_like": "mutant_meat_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -91387,7 +91522,9 @@
         "spoils_in_minutes": 1440.0,
         "vitamins": {
           "mutant_toxin": 2
-        }
+        },
+        "cooks_like": "mutant_meat_scrap_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -91414,7 +91551,9 @@
         "spoils_in_minutes": 1440.0,
         "vitamins": {
           "mutant_toxin": 2
-        }
+        },
+        "cooks_like": "mutant_meat_scrap_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -91447,7 +91586,9 @@
           "vitB": 389,
           "vitA": 5,
           "mutant_toxin": 50
-        }
+        },
+        "cooks_like": "mutant_meat_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -93806,7 +93947,8 @@
         "spoils_in_minutes": 518400.0,
         "vitamins": {
           "iron": 2
-        }
+        },
+        "cooks_like": "oatmeal_cooked"
       }
     },
     {
@@ -93941,7 +94083,9 @@
           "calcium": 2,
           "iron": 53,
           "vitB": 778
-        }
+        },
+        "cooks_like": "meat_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -93970,7 +94114,9 @@
           "calcium": 2,
           "iron": 53,
           "vitB": 778
-        }
+        },
+        "cooks_like": "meat_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -94001,7 +94147,9 @@
           "calcium": 2,
           "iron": 53,
           "vitB": 778
-        }
+        },
+        "cooks_like": "meat_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -94031,7 +94179,9 @@
           "calcium": 2,
           "iron": 53,
           "vitB": 778
-        }
+        },
+        "cooks_like": "meat_cooked",
+        "smoking_result": "meat_smoked"
       }
     },
     {
@@ -94353,7 +94503,8 @@
           "vitC": 12,
           "calcium": 4,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -94851,7 +95002,8 @@
           "vitC": 138,
           "calcium": 4,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -95913,7 +96065,8 @@
           "vitC": 164,
           "calcium": 5,
           "iron": 3
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -96084,7 +96237,8 @@
           "vitC": 12,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -96245,7 +96399,8 @@
           "vitC": 7,
           "calcium": 1,
           "iron": 1
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -96707,7 +96862,8 @@
         "vitamins": {
           "calcium": 2,
           "iron": 4
-        }
+        },
+        "smoking_result": "pecan_roasted"
       }
     },
     {
@@ -96738,7 +96894,8 @@
         "vitamins": {
           "calcium": 2,
           "iron": 4
-        }
+        },
+        "smoking_result": "pecan_roasted"
       }
     },
     {
@@ -97775,7 +97932,8 @@
           "vitC": 9,
           "calcium": 6,
           "iron": 6
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -98417,7 +98575,8 @@
           "vitC": 93,
           "calcium": 2,
           "iron": 3
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -98678,7 +98837,8 @@
           "vitC": 1,
           "calcium": 3,
           "iron": 7
-        }
+        },
+        "smoking_result": "pistachio_roasted"
       }
     },
     {
@@ -98711,7 +98871,8 @@
           "vitC": 1,
           "calcium": 3,
           "iron": 7
-        }
+        },
+        "smoking_result": "pistachio_roasted"
       }
     },
     {
@@ -99062,7 +99223,8 @@
         "calories": 35,
         "quench": 18,
         "healthy": -1,
-        "spoils_in_minutes": 4800.0
+        "spoils_in_minutes": 4800.0,
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -99889,7 +100051,8 @@
         "spoils_in_minutes": 3600.0,
         "vitamins": {
           "vitC": 8
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -100316,7 +100479,8 @@
           "vitC": 21,
           "calcium": 2,
           "iron": 3
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -101140,7 +101304,8 @@
           "vitC": 47,
           "calcium": 3,
           "iron": 9
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -103236,7 +103401,8 @@
           "vitC": 12,
           "calcium": 3,
           "iron": 5
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -103716,7 +103882,8 @@
         "charges": 6
       },
       "use_action": {
-        "type": "heal"
+        "type": "heal",
+        "bleed": 1
       }
     },
     {
@@ -104206,7 +104373,8 @@
       "has_durability": true,
       "use_action": {
         "type": "heal",
-        "limb_power": 0
+        "limb_power": 0,
+        "bleed": 0
       }
     },
     {
@@ -104483,7 +104651,8 @@
           "vitC": 64,
           "calcium": 3,
           "iron": 5
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -104542,7 +104711,9 @@
         "vitamins": {
           "iron": 2,
           "vitC": 20
-        }
+        },
+        "cooks_like": "beans_cooked",
+        "smoking_result": "dry_beans"
       }
     },
     {
@@ -104573,7 +104744,8 @@
           "vitC": 1,
           "calcium": 23,
           "iron": 10
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -104617,7 +104789,8 @@
           "vitC": 23,
           "calcium": 11,
           "iron": 10
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -104650,7 +104823,8 @@
           "iron": 26,
           "vitC": 16,
           "calcium": 6
-        }
+        },
+        "smoking_result": "edamame_roasted"
       }
     },
     {
@@ -104791,7 +104965,9 @@
           "iron": 3,
           "vitC": 1,
           "vitB": 1
-        }
+        },
+        "cooks_like": "lentils_cooked",
+        "smoking_result": "dry_lentils"
       }
     },
     {
@@ -106315,7 +106491,8 @@
           "calcium": 6,
           "iron": 14,
           "vitB": 154
-        }
+        },
+        "smoking_result": "fish_smoked"
       }
     },
     {
@@ -106410,7 +106587,8 @@
           "vitC": 36,
           "calcium": 4,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -109355,7 +109533,8 @@
           "vitC": 11,
           "calcium": 11,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -109385,7 +109564,8 @@
         "vitamins": {
           "vitA": 1,
           "iron": 11
-        }
+        },
+        "cooks_like": "rice_cooked"
       }
     },
     {
@@ -111366,7 +111546,8 @@
           "vitC": 634,
           "calcium": 23,
           "iron": 8
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -112994,7 +113175,8 @@
           "vitC": 18,
           "iron": 5,
           "calcium": 8
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -113022,7 +113204,8 @@
           "vitC": 18,
           "iron": 5,
           "calcium": 8
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -113107,7 +113290,8 @@
           "calcium": 6,
           "iron": 14,
           "vitB": 154
-        }
+        },
+        "smoking_result": "fish_smoked"
       }
     },
     {
@@ -113995,7 +114179,8 @@
           "calcium": 6,
           "iron": 14,
           "vitB": 154
-        }
+        },
+        "smoking_result": "fish_smoked"
       }
     },
     {
@@ -114156,7 +114341,8 @@
           "calcium": 2,
           "iron": 6,
           "vitB": 36
-        }
+        },
+        "smoking_result": "sausage"
       }
     },
     {
@@ -114208,7 +114394,8 @@
           "calcium": 2,
           "iron": 6,
           "vitB": 36
-        }
+        },
+        "smoking_result": "sausage"
       }
     },
     {
@@ -114239,7 +114426,8 @@
           "calcium": 2,
           "iron": 6,
           "vitB": 36
-        }
+        },
+        "smoking_result": "sausage"
       }
     },
     {
@@ -114270,7 +114458,8 @@
           "calcium": 2,
           "iron": 6,
           "vitB": 36
-        }
+        },
+        "smoking_result": "sausage"
       }
     },
     {
@@ -114301,7 +114490,8 @@
           "calcium": 2,
           "iron": 6,
           "vitB": 36
-        }
+        },
+        "smoking_result": "sausage_wasteland"
       }
     },
     {
@@ -114332,7 +114522,8 @@
           "calcium": 2,
           "iron": 6,
           "vitB": 36
-        }
+        },
+        "smoking_result": "sausage_wasteland"
       }
     },
     {
@@ -124225,7 +124416,8 @@
           "iron": 25,
           "vitC": 1,
           "calcium": 3
-        }
+        },
+        "smoking_result": "soy_nuts"
       }
     },
     {
@@ -127184,7 +127376,8 @@
           "vitC": 140,
           "calcium": 1,
           "iron": 3
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -127215,7 +127408,8 @@
           "vitC": 140,
           "calcium": 1,
           "iron": 3
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -127511,7 +127705,8 @@
           "vitC": 8,
           "calcium": 2,
           "iron": 6
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -133502,7 +133697,8 @@
         "vitamins": {
           "calcium": 20,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_tofu"
       }
     },
     {
@@ -133698,7 +133894,8 @@
           "vitC": 22,
           "calcium": 3,
           "iron": 6
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -137495,7 +137692,8 @@
           "vitC": 36,
           "calcium": 4,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -137575,7 +137773,8 @@
           "vitC": 36,
           "calcium": 4,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -137607,7 +137806,8 @@
           "vitC": 36,
           "calcium": 4,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -137694,7 +137894,8 @@
           "vitC": 36,
           "calcium": 4,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy_tainted"
       }
     },
     {
@@ -137737,7 +137938,8 @@
           "vitC": 36,
           "calcium": 4,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -137766,7 +137968,8 @@
           "vitC": 36,
           "calcium": 4,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {
@@ -138537,7 +138740,8 @@
         "vitamins": {
           "calcium": 2,
           "iron": 4
-        }
+        },
+        "smoking_result": "walnut_roasted"
       }
     },
     {
@@ -138568,7 +138772,8 @@
         "vitamins": {
           "calcium": 2,
           "iron": 4
-        }
+        },
+        "smoking_result": "walnut_roasted"
       }
     },
     {
@@ -139373,7 +139578,8 @@
           "vitC": 14,
           "calcium": 1,
           "iron": 2
-        }
+        },
+        "smoking_result": "dry_fruit"
       }
     },
     {
@@ -142576,7 +142782,8 @@
           "vitC": 39,
           "calcium": 3,
           "iron": 4
-        }
+        },
+        "smoking_result": "dry_veggy"
       }
     },
     {

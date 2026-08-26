@@ -17,6 +17,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         public IReadOnlyList<SkillData> Skills => _skills;
         public IReadOnlyList<TerrainData> Terrain => _terrain;
         public IReadOnlyList<FurnitureData> Furniture => _furniture;
+        public IReadOnlyList<ProficiencyData> Proficiencies => _proficiencies;
 
         readonly List<ItemData> _items;
         readonly List<RecipeData> _recipes;
@@ -27,6 +28,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         readonly List<SkillData> _skills;
         readonly List<TerrainData> _terrain;
         readonly List<FurnitureData> _furniture;
+        readonly List<ProficiencyData> _proficiencies;
 
         readonly Dictionary<string, ItemData> _itemById = new();
         readonly Dictionary<string, ContainerData> _containerById = new();
@@ -34,6 +36,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         readonly Dictionary<string, MaterialData> _materialById = new();
         readonly Dictionary<string, TerrainData> _terrainById = new();
         readonly Dictionary<string, FurnitureData> _furnitureById = new();
+        readonly Dictionary<string, ProficiencyData> _proficiencyById = new();
         readonly Dictionary<string, List<RecipeData>> _recipesByResult = new();
         readonly Dictionary<string, List<RecipeData>> _recipesByCategory = new();
         readonly Dictionary<string, List<RecipeData>> _recipesByIngredient = new();
@@ -42,7 +45,8 @@ namespace Garunnir.Runtime.Gameplay.Data
         public GameDatabase(
             ItemsFileRoot itemsRoot,
             RecipesFileRoot recipesRoot,
-            TerrainFurnitureFileRoot terrainFurnitureRoot = null)
+            TerrainFurnitureFileRoot terrainFurnitureRoot = null,
+            ProficienciesFileRoot proficienciesRoot = null)
         {
             _items = itemsRoot?.items ?? new List<ItemData>();
             _materials = itemsRoot?.materials ?? new List<MaterialData>();
@@ -53,6 +57,7 @@ namespace Garunnir.Runtime.Gameplay.Data
             _uncrafts = recipesRoot?.uncraft ?? new List<RecipeData>();
             _terrain = terrainFurnitureRoot?.terrain ?? new List<TerrainData>();
             _furniture = terrainFurnitureRoot?.furniture ?? new List<FurnitureData>();
+            _proficiencies = proficienciesRoot?.proficiencies ?? new List<ProficiencyData>();
 
             BuildIndices();
         }
@@ -93,6 +98,12 @@ namespace Garunnir.Runtime.Gameplay.Data
             {
                 if (!string.IsNullOrEmpty(furniture?.id))
                     _furnitureById[furniture.id] = furniture;
+            }
+
+            foreach (ProficiencyData proficiency in _proficiencies)
+            {
+                if (!string.IsNullOrEmpty(proficiency?.id))
+                    _proficiencyById[proficiency.id] = proficiency;
             }
 
             foreach (RecipeData recipe in _recipes)
@@ -209,6 +220,13 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (string.IsNullOrEmpty(id)) return null;
             _furnitureById.TryGetValue(id, out var furniture);
             return furniture;
+        }
+
+        public ProficiencyData GetProficiency(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return null;
+            _proficiencyById.TryGetValue(id, out var proficiency);
+            return proficiency;
         }
 
         public List<RecipeData> GetUncraftForResult(string itemId)

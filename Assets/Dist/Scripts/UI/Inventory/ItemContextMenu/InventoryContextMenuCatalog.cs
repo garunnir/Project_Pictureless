@@ -10,11 +10,16 @@ public static class InventoryContextMenuCatalog
     {
         new ConsumeContextContributor(),
         new PlantContextContributor(),
+        new FishRodContextContributor(),
+        new FishTrapContextContributor(),
         new TillContextContributor(),
         new FertilizeContextContributor(),
         new GearContextContributor(),
         new AmmoContextContributor(),
         new CraftContextContributor(),
+        new CookItemContextContributor(),
+        new SmokeItemContextContributor(),
+        new MulticookerContextContributor(),
         new UncraftContextContributor(),
     };
 

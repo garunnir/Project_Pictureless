@@ -5,7 +5,7 @@
 
 경로(호스트·모델·뷰): `Assets/Dist/Scripts/Map/Plant/`  
 경로(규칙): `PlantGrowth` (`Gameplay/Definitions/BN/PlantGrowth.cs`) · `TileFlags`  
-경로(행위): `MapPlantService` · 인벤/타일 컨텍스트 메뉴 (plant / harvest / till / fertilize)  
+경로(행위): `MapPlantService` · 인벤/타일 컨텍스트 메뉴 (plant / harvest / till / fertilize / chop)  
 경로(설치 SSOT): `TilePlaceUtil` (건설 `GridCursor.TryPlace`와 공유)
 
 ---
@@ -67,7 +67,14 @@ CatchUp는 plant prefabId 단계를 `PlantTileIds.PrefabIdForStage`로 패치하
 | Seedling | `≥ 0.25` | `Furniture/Plant_Seedling` |
 | Mature | `≥ 0.75` | `Furniture/Plant_Mature` |
 | Harvestable | `≥ grow` | `Furniture/Plant_Harvestable` |
-| Withered | `≥ grow + WitherSlackMinutes` 또는 frost | `Furniture/Plant_Withered` |
+| Withered | `≥ grow + WitherSlackMinutes` 또는 frost (Field만) | `Furniture/Plant_Withered` |
+
+### Tree (`SeedDetailData.crop_kind = Tree`)
+
+- 시듦 없음. 과일 수확 후 `Mature`로 복귀, `fruit_regrow_minutes` 후 재수확.
+- 겨울 야외: 성장·과일 수확 정지(휴면). 겨울 일수는 성장 elapsed에서 제외(day 단위).
+- 벌목: 성장 단계 무관 항상 가능(`AXE` 품질). `chop_yields`로 단계별 드롭. 제거.
+- 저장: `lastFruitHarvestWorldMinute` (`TileSaveData`, 미수확 시 생략/≤0 → -1).
 
 ---
 
@@ -87,13 +94,15 @@ CatchUp는 plant prefabId 단계를 `PlantTileIds.PrefabIdForStage`로 패치하
 
 ## Weather Kind assumption
 
-성장 배율은 `PlayerGearHost.Active.WorldWeatherKind` 하나를 전제로 한다 (월드 타일 날씨 그리드 없음).
+성장 배율은 `WorldWeatherHost.TryGetKindAt(cell.x, cell.z)` (없으면 Clear).  
+지금은 stub라 **글로벌 Kind**와 동일. 셀별 필드는 Phase D Parked — [`weather/WEATHER.md`](../weather/WEATHER.md).
 
 | Kind | Factor |
 |------|--------|
 | Clear (그 외) | `WeatherClearGrowFactor` (1) |
 | Rain | `WeatherRainGrowFactor` (0.75, 빠름) |
 | Wind | `WeatherWindGrowFactor` (1.25, 느림) |
+| Snow | `WeatherSnowGrowFactor` (1.25, 느림) |
 
 inspect/harvest CatchUp는 이 Kind를 쓴다.
 

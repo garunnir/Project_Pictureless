@@ -14,7 +14,10 @@ namespace IsoTilemap
 
         public const string DigQualityId = "DIG";
         public const int MinDigQualityLevel = 1;
+        public const string AxeQualityId = "AXE";
+        public const int MinAxeQualityLevel = 1;
         public const string FertilizerFlag = "FERTILIZER";
+        public const int NoFruitHarvestMinute = -1;
         public const string GreenhouseFlag = "GREENHOUSE";
 
         /// <summary>
@@ -66,5 +69,8 @@ namespace IsoTilemap
 
         /// <summary>경작 Work 대기초 (Catalog/_clips null 폴백).</summary>
         public const float TillWorkDurationSeconds = 2f;
+
+        /// <summary>벌목 Work 대기초 (Catalog/_clips null 폴백).</summary>
+        public const float ChopWorkDurationSeconds = 2.5f;
     }
 }

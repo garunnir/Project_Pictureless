@@ -26,6 +26,18 @@ static class DistSoSampleEnsureMenu
             created,
             existing);
         EnsureAsset<FarmWorkClipCatalog>(FarmWorkClipCatalog.DefaultAssetPath, created, existing);
+        EnsureAsset<FishWorkClipCatalog>(FishWorkClipCatalog.DefaultAssetPath, created, existing);
+        EnsureAsset<FishingLootCatalog>(FishingLootCatalog.DefaultAssetPath, created, existing);
+        MirrorToResources<FishingLootCatalog>(
+            FishingLootCatalog.DefaultAssetPath,
+            FishingLootCatalog.ResourcesAssetPath,
+            created,
+            existing);
+        MirrorToResources<FishWorkClipCatalog>(
+            FishWorkClipCatalog.DefaultAssetPath,
+            FishWorkClipCatalog.ResourcesAssetPath,
+            created,
+            existing);
         EnsureAsset<PlantOverlaySpriteCatalog>(
             PlantOverlaySpriteCatalog.DefaultAssetPath,
             created,
@@ -83,6 +95,38 @@ static class DistSoSampleEnsureMenu
             created.Add(assetPath);
 
         EditorUtility.SetDirty(asset);
+    }
+
+    static void MirrorToResources<T>(
+        string sourcePath,
+        string resourcesPath,
+        List<string> created,
+        List<string> existing) where T : ScriptableObject
+    {
+        if (string.IsNullOrEmpty(sourcePath) || string.IsNullOrEmpty(resourcesPath))
+            return;
+
+        T source = AssetDatabase.LoadAssetAtPath<T>(sourcePath);
+        if (source == null)
+            return;
+
+        bool hadAsset = AssetDatabase.LoadAssetAtPath<T>(resourcesPath) != null;
+        DistScriptableObjectEnsure.EnsureParentFoldersForAsset(resourcesPath);
+        if (!hadAsset)
+        {
+            if (!AssetDatabase.CopyAsset(sourcePath, resourcesPath))
+                return;
+            created.Add(resourcesPath + " (resources mirror)");
+        }
+        else
+        {
+            EditorUtility.CopySerialized(source, AssetDatabase.LoadAssetAtPath<T>(resourcesPath));
+            existing.Add(resourcesPath + " (resources mirror)");
+        }
+
+        T mirrored = AssetDatabase.LoadAssetAtPath<T>(resourcesPath);
+        if (mirrored != null)
+            EditorUtility.SetDirty(mirrored);
     }
 }
 #endif

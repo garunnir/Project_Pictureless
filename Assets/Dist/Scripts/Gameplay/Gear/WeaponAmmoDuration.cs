@@ -20,6 +20,9 @@ public static class WeaponAmmoDuration
         return MovesToSeconds(moves);
     }
 
+    public static float ToolLoadSeconds(ItemData tool) =>
+        FallbackSeconds;
+
     public static float AttachSeconds(ItemData gun, ItemData magazine)
     {
         int moves = 0;

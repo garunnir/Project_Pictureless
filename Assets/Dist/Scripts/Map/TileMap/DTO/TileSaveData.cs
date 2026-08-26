@@ -23,5 +23,12 @@ namespace IsoTilemap
         public string seedItemId;
         public int plantedWorldMinute;
         public bool fertilized;
+        public int lastFruitHarvestWorldMinute;
+
+        /// <summary>Water-cell fish trap (trap-only tiles[] row: prefabId empty). Omitted in legacy JSON.</summary>
+        public string fishTrapBaitId;
+        public int fishTrapBaitRemaining;
+        public int fishTrapDeployedMinute;
+        public int fishTrapAccumulatedFish;
     }
 }

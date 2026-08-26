@@ -14,6 +14,7 @@ namespace IsoTilemap
         public readonly string SeedItemId;
         public readonly int PlantedWorldMinute;
         public readonly bool Fertilized;
+        public readonly int LastFruitHarvestWorldMinute;
         public readonly Guid TileDefId;
 
         public PlantCell(
@@ -21,12 +22,14 @@ namespace IsoTilemap
             string seedItemId,
             int plantedWorldMinute,
             bool fertilized = false,
+            int lastFruitHarvestWorldMinute = MapPlantConsts.NoFruitHarvestMinute,
             Guid tileDefId = default)
         {
             Cell = cell;
             SeedItemId = seedItemId;
             PlantedWorldMinute = plantedWorldMinute;
             Fertilized = fertilized;
+            LastFruitHarvestWorldMinute = lastFruitHarvestWorldMinute;
             TileDefId = tileDefId;
         }
     }
@@ -200,6 +203,7 @@ namespace IsoTilemap
                 seedItemId = seedItemId,
                 plantedWorldMinute = plantedWorldMinute,
                 fertilized = false,
+                lastFruitHarvestWorldMinute = MapPlantConsts.NoFruitHarvestMinute,
             };
             if (!TilePlaceUtil.TryBuildTileData(def, installCell, out TileData tileData, plant))
                 return false;
@@ -237,16 +241,18 @@ namespace IsoTilemap
             return true;
         }
 
-        public bool TryFertilize(Vector3Int cell)
+        public bool TryRecordFruitHarvest(Vector3Int cell, int harvestWorldMinute)
         {
             if (_controller == null || !TryGetPlantTile(cell, out TileData tile))
                 return false;
-            if (tile.plant.fertilized)
-                return false;
 
             var plant = tile.plant;
-            plant.fertilized = true;
-            // SetTile no-ops when tileDefId+identity match; replace so plant fields persist.
+            plant.lastFruitHarvestWorldMinute = harvestWorldMinute;
+            return TryReplacePlantTile(tile, plant);
+        }
+
+        bool TryReplacePlantTile(TileData tile, PlantTileInstance plant)
+        {
             _controller.RemoveAndFlush(tile);
             var updated = new TileData
             {
@@ -258,6 +264,18 @@ namespace IsoTilemap
             _controller.AddAndFlush(updated);
             Overlay.RaiseChanged();
             return true;
+        }
+
+        public bool TryFertilize(Vector3Int cell)
+        {
+            if (_controller == null || !TryGetPlantTile(cell, out TileData tile))
+                return false;
+            if (tile.plant.fertilized)
+                return false;
+
+            var plant = tile.plant;
+            plant.fertilized = true;
+            return TryReplacePlantTile(tile, plant);
         }
 
         public bool TrySetPlantStage(Vector3Int cell, string stagePrefabId)
@@ -350,6 +368,7 @@ namespace IsoTilemap
                 tile.plant.seedItemId,
                 tile.plant.plantedWorldMinute,
                 tile.plant.fertilized,
+                tile.plant.lastFruitHarvestWorldMinute,
                 tile.tileDefId);
 
         bool CellHasGameplayFlag(Vector3Int cell, string flag)

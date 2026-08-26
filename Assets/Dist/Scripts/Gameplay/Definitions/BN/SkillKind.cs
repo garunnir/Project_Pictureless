@@ -7,7 +7,8 @@ namespace Garunnir.Runtime.Gameplay.Data
     public enum SkillKind
     {
         Skill = 0,
-        Attribute = 1
+        Attribute = 1,
+        Trait = 2
     }
 
     /// <summary>StreamingAssets JSON 행. 로더 연결은 후속.</summary>
@@ -19,10 +20,17 @@ namespace Garunnir.Runtime.Gameplay.Data
         public int initial_level;
         public int initial_potential = SkillGrowth.DefaultPotential;
 
-        public SkillKind ParsedKind =>
-            string.Equals(kind, "attribute", System.StringComparison.OrdinalIgnoreCase)
-                ? SkillKind.Attribute
-                : SkillKind.Skill;
+        public SkillKind ParsedKind
+        {
+            get
+            {
+                if (string.Equals(kind, "attribute", System.StringComparison.OrdinalIgnoreCase))
+                    return SkillKind.Attribute;
+                if (string.Equals(kind, "trait", System.StringComparison.OrdinalIgnoreCase))
+                    return SkillKind.Trait;
+                return SkillKind.Skill;
+            }
+        }
     }
 
     [System.Serializable]

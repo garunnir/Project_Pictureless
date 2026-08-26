@@ -97,6 +97,8 @@ public sealed class CharacterFarmWorkHost : MonoBehaviour
                 return MapPlantConsts.PlantWorkDurationSeconds;
             case FarmCellActionKind.Till:
                 return MapPlantConsts.TillWorkDurationSeconds;
+            case FarmCellActionKind.Chop:
+                return MapPlantConsts.ChopWorkDurationSeconds;
             default:
                 return 0f;
         }

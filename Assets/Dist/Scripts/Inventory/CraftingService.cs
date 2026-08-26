@@ -2,9 +2,123 @@
 // CraftingService — 합성 가능 여부 확인 + 재료 소비 + 결과 생성
 // ============================================================
 
+using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Garunnir.Runtime.Gameplay.Data;
+using UnityEngine;
+using Random = UnityEngine.Random;
+
+public static class CraftingPseudoIds
+{
+    public const string Fire = "fire";
+    public const string Apparatus = "apparatus";
+    public const string Sunlight = "sunlight";
+    public const string PseudoFlag = "PSEUDO";
+    public const string CraftFlagFire = "FIRE";
+    public const string CraftFlagLit = "LIT";
+    public const string CraftFlagCook = "COOK";
+    public const string CraftFlagSmoke = "SMOKE";
+    public const string CraftFlagSmoker = "SMOKER";
+    public const string RecipeFlagDark = "DARK";
+    public const string MultiCookerTool = "multi_cooker";
+    public const string CharSmokerTool = "char_smoker";
+    public const string HotplateTool = "hotplate";
+    public const string ToolsetTool = "toolset";
+    public const string UseActionMulticooker = "multicooker";
+    public static readonly string[] HeatToolIds =
+    {
+        HotplateTool,
+        MultiCookerTool,
+        CharSmokerTool,
+        ToolsetTool,
+    };
+    public const int DefaultCookLikeMinutes = 10;
+    public const int HotCoolMinutes = 60;
+    public const int MinLightForDarkCraft = 1;
+}
+
+public interface ICraftingEnvironment
+{
+    bool HasPseudoTool(string toolId);
+    bool HasEnvTool(string toolId);
+    int GetEnvQualityLevel(string qualityId);
+    int GetLightLevel();
+    bool IsDaylight { get; }
+}
+
+public static class CraftingEnvironment
+{
+    public static ICraftingEnvironment Active { get; set; }
+}
+
+public static class CraftingWorldTime
+{
+    public static int AbsoluteWorldMinute { get; set; }
+}
+
+public static class CraftingLightGate
+{
+    public static bool RequiresLight(RecipeData recipe)
+    {
+        if (recipe?.flags == null || recipe.flags.Count == 0)
+            return false;
+
+        for (int i = 0; i < recipe.flags.Count; i++)
+        {
+            string flag = recipe.flags[i];
+            if (string.IsNullOrEmpty(flag))
+                continue;
+            if (flag.Equals(CraftingPseudoIds.RecipeFlagDark, StringComparison.OrdinalIgnoreCase) ||
+                flag.Equals("BLIND_EASY", StringComparison.OrdinalIgnoreCase) ||
+                flag.Equals("BLIND_HARD", StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
+    public static int ResolveLightLevel(CraftingMaterialPool pool)
+    {
+        int light = 0;
+        ICraftingEnvironment env = CraftingEnvironment.Active;
+        if (env != null)
+            light = Math.Max(light, env.GetLightLevel());
+
+        if (pool == null)
+            return light;
+
+        IReadOnlyList<InventoryContainer> sources = pool.Sources;
+        for (int c = 0; c < sources.Count; c++)
+        {
+            IReadOnlyList<ItemStack> stacks = sources[c].Stacks;
+            for (int s = 0; s < stacks.Count; s++)
+            {
+                ItemData item = stacks[s]?.Item;
+                if (item?.flags == null)
+                    continue;
+                for (int f = 0; f < item.flags.Count; f++)
+                {
+                    string flag = item.flags[f];
+                    if (string.IsNullOrEmpty(flag) ||
+                        !flag.StartsWith("LIGHT_", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    string num = flag.Length > 6 ? flag.Substring(6) : string.Empty;
+                    if (int.TryParse(num, out int level) && level > light)
+                        light = level;
+                }
+            }
+        }
+
+        return light;
+    }
+
+    public static bool MeetsLight(RecipeData recipe, CraftingMaterialPool pool)
+    {
+        if (!RequiresLight(recipe))
+            return true;
+        return ResolveLightLevel(pool) >= CraftingPseudoIds.MinLightForDarkCraft;
+    }
+}
 
 public static class CraftingService
 {
@@ -46,6 +160,17 @@ public static class CraftingService
         if (!MeetsSkillRequirements(recipe))
             return false;
 
+        if (!MeetsProficiencies(recipe))
+            return false;
+
+        if (!CraftingLightGate.MeetsLight(recipe, pool))
+            return false;
+
+        if (recipe.dehydrating &&
+            !IsToolSatisfiedByEnvironment(CraftingPseudoIds.Sunlight) &&
+            pool.CountItem(CraftingPseudoIds.Sunlight) <= 0)
+            return false;
+
         if (!MeetsQualities(recipe, pool))
             return false;
 
@@ -53,6 +178,72 @@ public static class CraftingService
             return false;
 
         return MeetsComponentSlots(recipe, pool, componentAltIndices);
+    }
+
+    public static float GetCraftTimeMinutes(RecipeData recipe, int quantity)
+    {
+        if (recipe == null || quantity <= 0)
+            return 0f;
+        float baseTime = recipe.time_minutes * quantity;
+        float mult = ResolveProficiencyTimeMultiplier(recipe);
+        return baseTime * mult;
+    }
+
+    /// <summary>cooks_like / smoking_result single-item transform.</summary>
+    public static bool TryTransformComestible(
+        ItemStack stack,
+        InventoryContainer container,
+        InventorySession session,
+        string resultItemId,
+        bool requireFire,
+        bool requireApparatus)
+    {
+        if (stack?.Item == null || container == null || string.IsNullOrEmpty(resultItemId))
+            return false;
+        if (GameplayData.GetItem(resultItemId) == null)
+            return false;
+
+        if (requireFire &&
+            !IsToolSatisfiedByEnvironment(CraftingPseudoIds.Fire) &&
+            !HasChargedHeatTool(new CraftingMaterialPool(new[] { container })))
+            return false;
+
+        if (requireApparatus && !IsToolSatisfiedByEnvironment(CraftingPseudoIds.Apparatus))
+            return false;
+
+        if (container.TryTakeFromStack(stack, 1) <= 0)
+            return false;
+
+        container.AddItem(
+            GameplayData.GetItem(resultItemId),
+            1,
+            0,
+            cooked: true,
+            hot: requireFire);
+
+        session?.NotifyExternalStacksChanged(container);
+        return true;
+    }
+
+    public static bool RecipeUsesTool(RecipeData recipe, string toolId)
+    {
+        if (recipe?.tools == null || string.IsNullOrEmpty(toolId))
+            return false;
+        for (int i = 0; i < recipe.tools.Count; i++)
+        {
+            ToolSlot slot = recipe.tools[i];
+            if (slot?.alternatives == null)
+                continue;
+            for (int j = 0; j < slot.alternatives.Count; j++)
+            {
+                ToolAlt alt = slot.alternatives[j];
+                if (alt != null &&
+                    string.Equals(alt.tool, toolId, System.StringComparison.Ordinal))
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     public static int GetMaxCraftCount(
@@ -199,13 +390,16 @@ public static class CraftingService
                         out ToolAlt alt))
                     return false;
 
-                if (alt.charges > 0 && !pool.TryConsumeToolCharges(alt.tool, alt.charges))
+                if (alt.charges > 0 && !IsEnvOnlyTool(alt.tool) &&
+                    !pool.TryConsumeToolCharges(alt.tool, alt.charges))
                     return false;
             }
         }
 
+        bool cooked = ShouldStampCooked(recipe);
+        bool hot = recipe.hot_result;
         int resultCount = recipe.result_count > 0 ? recipe.result_count : 1;
-        pool.TryAddResult(recipe.result, resultCount);
+        pool.TryAddResult(recipe.result, resultCount, cooked, hot);
 
         if (recipe.byproducts != null && recipe.byproducts.Count > 0)
         {
@@ -214,7 +408,7 @@ public static class CraftingService
                 Byproduct bp = recipe.byproducts[i];
                 if (bp == null || string.IsNullOrEmpty(bp.item) || bp.count <= 0)
                     continue;
-                pool.TryAddResult(bp.item, bp.count);
+                pool.TryAddResult(bp.item, bp.count, cooked, hot: false);
             }
         }
 
@@ -223,6 +417,9 @@ public static class CraftingService
             int practiceXp = recipe.difficulty * PracticeDifficultyMultiplier + PracticeDifficultyBonus;
             GameplayData.Stats.AddPractice(recipe.skill_used, practiceXp);
         }
+
+        ApplyProficiencyPractice(recipe);
+        ApplyCraftSideEffects(recipe);
 
         return true;
     }
@@ -342,6 +539,8 @@ public static class CraftingService
                 GameplayData.Stats.AddPractice(recipe.skill_used, practiceXp);
         }
 
+        RecipeKnowledge.TryLearnFromDisassembly(recipe, GameplayData.RecipeMemory);
+
         session?.NotifyExternalStacksChanged(container);
         return true;
     }
@@ -408,7 +607,11 @@ public static class CraftingService
             }
 
             if (!found)
-                return false;
+            {
+                ICraftingEnvironment env = CraftingEnvironment.Active;
+                if (env == null || env.GetEnvQualityLevel(required.id) < required.level)
+                    return false;
+            }
         }
 
         return true;
@@ -535,6 +738,9 @@ public static class CraftingService
         if (alt == null || string.IsNullOrEmpty(alt.tool))
             return false;
 
+        if (IsPseudoOrEnvToolSatisfied(alt.tool, pool))
+            return true;
+
         if (pool.CountItem(alt.tool) <= 0)
             return false;
 
@@ -542,6 +748,161 @@ public static class CraftingService
             return pool.CountToolCharges(alt.tool) >= alt.charges;
 
         return true;
+    }
+
+    static bool IsPseudoOrEnvToolSatisfied(string toolId, CraftingMaterialPool pool)
+    {
+        ItemData item = GameplayData.GetItem(toolId);
+        bool isPseudo = HasItemFlag(item, CraftingPseudoIds.PseudoFlag);
+
+        if (string.Equals(toolId, CraftingPseudoIds.Fire, System.StringComparison.Ordinal))
+        {
+            if (IsToolSatisfiedByEnvironment(CraftingPseudoIds.Fire))
+                return true;
+            return HasChargedHeatTool(pool);
+        }
+
+        if (isPseudo || IsKnownPseudoId(toolId))
+            return IsToolSatisfiedByEnvironment(toolId);
+
+        if (IsToolSatisfiedByEnvironment(toolId))
+            return true;
+
+        ICraftingEnvironment env = CraftingEnvironment.Active;
+        return env != null && env.HasEnvTool(toolId);
+    }
+
+    static bool IsEnvOnlyTool(string toolId)
+    {
+        if (string.IsNullOrEmpty(toolId))
+            return false;
+        if (IsKnownPseudoId(toolId))
+            return true;
+        ItemData item = GameplayData.GetItem(toolId);
+        return HasItemFlag(item, CraftingPseudoIds.PseudoFlag);
+    }
+
+    static bool IsKnownPseudoId(string toolId) =>
+        string.Equals(toolId, CraftingPseudoIds.Fire, System.StringComparison.Ordinal) ||
+        string.Equals(toolId, CraftingPseudoIds.Apparatus, System.StringComparison.Ordinal) ||
+        string.Equals(toolId, CraftingPseudoIds.Sunlight, System.StringComparison.Ordinal);
+
+    static bool IsToolSatisfiedByEnvironment(string toolId)
+    {
+        ICraftingEnvironment env = CraftingEnvironment.Active;
+        return env != null && env.HasPseudoTool(toolId);
+    }
+
+    static bool HasChargedHeatTool(CraftingMaterialPool pool)
+    {
+        if (pool == null)
+            return false;
+        for (int i = 0; i < CraftingPseudoIds.HeatToolIds.Length; i++)
+        {
+            string id = CraftingPseudoIds.HeatToolIds[i];
+            if (pool.CountItem(id) > 0 && pool.CountToolCharges(id) > 0)
+                return true;
+            if (pool.CountItem(id) > 0)
+            {
+                ItemData item = GameplayData.GetItem(id);
+                if (item?.tool == null || item.tool.max_charges <= 0)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    static bool HasItemFlag(ItemData item, string flag)
+    {
+        if (item?.flags == null || string.IsNullOrEmpty(flag))
+            return false;
+        for (int i = 0; i < item.flags.Count; i++)
+        {
+            string value = item.flags[i];
+            if (!string.IsNullOrEmpty(value) &&
+                value.Equals(flag, System.StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
+    static bool ShouldStampCooked(RecipeData recipe)
+    {
+        if (recipe == null)
+            return false;
+        if (recipe.hot_result)
+            return true;
+        if (string.Equals(recipe.skill_used, "cooking", System.StringComparison.OrdinalIgnoreCase))
+            return true;
+        ItemData result = GameplayData.GetItem(recipe.result);
+        return result?.comestible != null;
+    }
+
+    static bool MeetsProficiencies(RecipeData recipe)
+    {
+        if (recipe.proficiencies == null || recipe.proficiencies.Count == 0)
+            return true;
+
+        ICharacterProficiencies profs = GameplayData.Proficiencies;
+        for (int i = 0; i < recipe.proficiencies.Count; i++)
+        {
+            ProficiencyReq req = recipe.proficiencies[i];
+            if (req == null || string.IsNullOrEmpty(req.proficiency) || !req.required)
+                continue;
+            if (!profs.Has(req.proficiency))
+                return false;
+        }
+
+        return true;
+    }
+
+    static float ResolveProficiencyTimeMultiplier(RecipeData recipe)
+    {
+        if (recipe.proficiencies == null || recipe.proficiencies.Count == 0)
+            return 1f;
+
+        ICharacterProficiencies profs = GameplayData.Proficiencies;
+        float mult = 1f;
+        for (int i = 0; i < recipe.proficiencies.Count; i++)
+        {
+            ProficiencyReq req = recipe.proficiencies[i];
+            if (req == null || string.IsNullOrEmpty(req.proficiency))
+                continue;
+            if (profs.Has(req.proficiency))
+                continue;
+            if (req.time_multiplier > 0f)
+                mult *= req.time_multiplier;
+        }
+
+        return mult < 0.01f ? 0.01f : mult;
+    }
+
+    static void ApplyProficiencyPractice(RecipeData recipe)
+    {
+        if (recipe.proficiencies == null || recipe.proficiencies.Count == 0)
+            return;
+
+        ICharacterProficiencies profs = GameplayData.Proficiencies;
+        int xp = recipe.difficulty * PracticeDifficultyMultiplier + PracticeDifficultyBonus;
+        for (int i = 0; i < recipe.proficiencies.Count; i++)
+        {
+            ProficiencyReq req = recipe.proficiencies[i];
+            if (req == null || string.IsNullOrEmpty(req.proficiency))
+                continue;
+            profs.AddPractice(req.proficiency, xp);
+        }
+    }
+
+    /// <summary>Optional Gameplay bridge for activity fatigue / morale.</summary>
+    public static System.Action<RecipeData> CraftCompletedSideEffects;
+
+    static void ApplyCraftSideEffects(RecipeData recipe)
+    {
+        if (recipe == null)
+            return;
+        CraftCompletedSideEffects?.Invoke(recipe);
     }
 
     static bool TryGetForcedIndex(IReadOnlyList<int> indices, int slotIndex, out int forcedIndex)

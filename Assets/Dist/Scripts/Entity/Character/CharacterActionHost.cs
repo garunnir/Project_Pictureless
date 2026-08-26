@@ -28,6 +28,7 @@ public sealed class CharacterActionHost : MonoBehaviour
     CharacterAttacker _attacker;
     CharacterArriveHost _arriveHost;
     FarmCellActionHost _farmActionHost;
+    FishCellActionHost _fishActionHost;
     CharacterActionKind _currentKind;
     bool _dispatching;
     float _tickScale = 1f;
@@ -67,6 +68,8 @@ public sealed class CharacterActionHost : MonoBehaviour
                 case CharacterActionKind.Combat:
                     return _attacker != null ? _attacker.CooldownProgress01 : 0f;
                 case CharacterActionKind.Map:
+                    if (_fishActionHost != null && _fishActionHost.IsBusy)
+                        return _fishActionHost.WorkProgress01;
                     return _farmActionHost != null ? _farmActionHost.WorkProgress01 : 0f;
                 default:
                     return 0f;
@@ -82,6 +85,7 @@ public sealed class CharacterActionHost : MonoBehaviour
         TryGetComponent(out _attacker);
         TryGetComponent(out _arriveHost);
         TryGetComponent(out _farmActionHost);
+        TryGetComponent(out _fishActionHost);
         if (_crafting == null)
             _crafting = FindAnyObjectByType<UICraftingController>();
         RefreshTickScale();
@@ -220,6 +224,7 @@ public sealed class CharacterActionHost : MonoBehaviour
                 return _attacker != null && _attacker.IsActionBusy;
             case CharacterActionKind.Map:
                 return (_farmActionHost != null && _farmActionHost.IsBusy) ||
+                       (_fishActionHost != null && _fishActionHost.IsBusy) ||
                        (_arriveHost != null && _arriveHost.IsBusy);
             default:
                 return false;
@@ -240,10 +245,9 @@ public sealed class CharacterActionHost : MonoBehaviour
                 _crafting?.CancelRunningCraft();
                 break;
             case CharacterActionKind.Map:
-                if (_farmActionHost != null)
-                    _farmActionHost.Cancel();
-                else
-                    _arriveHost?.Cancel();
+                _farmActionHost?.Cancel();
+                _fishActionHost?.Cancel();
+                _arriveHost?.Cancel();
                 break;
         }
     }

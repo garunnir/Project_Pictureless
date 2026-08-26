@@ -100,6 +100,23 @@ FARMING_FLAGS = frozenset({
     "GROWTH_HARVEST",
 })
 
+# Furniture/terrain craft environment flags Dist cooking consumes.
+CRAFTING_FURNITURE_FLAGS = frozenset({
+    "FIRE_CONTAINER",
+    "FIRE",
+    "LIT",
+    "COOK",
+    "SMOKE",
+    "SMOKER",
+})
+
+# Recipe flags Dist cooking/light gate consumes.
+RECIPE_FLAG_WHITELIST = frozenset({
+    "DARK",
+    "BLIND_EASY",
+    "BLIND_HARD",
+})
+
 
 def parse_duration_to_minutes(t) -> float:
     """BN duration string → minutes. Example: '7 h 40 m' → 460.0. Does not accept ints."""
@@ -670,6 +687,7 @@ USE_ACTION_TYPE_CONSUME_DRUG = "consume_drug"
 USE_ACTION_TYPE_ANTIBIOTIC = "antibiotic"
 USE_ACTION_TYPE_WEAK_ANTIBIOTIC = "weak_antibiotic"
 USE_ACTION_TYPE_STRONG_ANTIBIOTIC = "strong_antibiotic"
+USE_ACTION_TYPE_MULTICOOKER = "multicooker"
 CONSUME_USE_ACTION_TYPES = frozenset(
     {
         USE_ACTION_TYPE_HEAL,
@@ -677,6 +695,7 @@ CONSUME_USE_ACTION_TYPES = frozenset(
         USE_ACTION_TYPE_ANTIBIOTIC,
         USE_ACTION_TYPE_WEAK_ANTIBIOTIC,
         USE_ACTION_TYPE_STRONG_ANTIBIOTIC,
+        USE_ACTION_TYPE_MULTICOOKER,
     }
 )
 ANTIBIOTIC_USE_ACTION_TYPES = frozenset(
@@ -808,13 +827,15 @@ def _first_consume_effect(action: dict) -> dict | None:
 
 
 def export_consume_use_action(entry: dict) -> dict | None:
-    """Whitelist heal / consume_drug / antibiotic family. Unwrap nested values on the same BN key. Never drop/tick/countdown."""
+    """Whitelist heal / consume_drug / antibiotic / multicooker. Unwrap nested values on the same BN key. Never drop/tick/countdown."""
     for action in _iter_use_actions(entry.get("use_action")):
         action_type = _use_action_type(action)
         if action_type not in CONSUME_USE_ACTION_TYPES:
             continue
         out = {"type": action_type}
         if action_type in ANTIBIOTIC_USE_ACTION_TYPES:
+            return out
+        if action_type == USE_ACTION_TYPE_MULTICOOKER:
             return out
         if isinstance(action, dict):
             if action_type == USE_ACTION_TYPE_HEAL:
@@ -860,6 +881,10 @@ def export_comestible_detail(entry: dict, item_type: str) -> dict | None:
     vitamins = flatten_vitamins(entry.get("vitamins"))
     if vitamins:
         comestible["vitamins"] = vitamins
+    if entry.get("cooks_like"):
+        comestible["cooks_like"] = str(entry.get("cooks_like"))
+    if entry.get("smoking_result"):
+        comestible["smoking_result"] = str(entry.get("smoking_result"))
     return comestible or None
 
 
@@ -1050,6 +1075,36 @@ def export_seed_detail(entry: dict) -> dict | None:
 
     if source.get("required_terrain_flag"):
         seed["required_terrain_flag"] = str(source.get("required_terrain_flag"))
+
+    crop_kind = source.get("crop_kind")
+    if crop_kind:
+        seed["crop_kind"] = str(crop_kind)
+
+    if source.get("fruit_regrow") is not None:
+        seed["fruit_regrow_minutes"] = parse_grow_to_minutes(source.get("fruit_regrow"))
+    elif source.get("fruit_regrow_minutes") is not None:
+        seed["fruit_regrow_minutes"] = parse_grow_to_minutes(source.get("fruit_regrow_minutes"))
+
+    chop_yields = source.get("chop_yields")
+    if isinstance(chop_yields, list) and chop_yields:
+        out_yields = []
+        for entry in chop_yields:
+            if not isinstance(entry, dict):
+                continue
+            stage = entry.get("stage")
+            item_id = entry.get("item_id") or entry.get("item")
+            count = _int_or_zero(entry.get("count"))
+            if not stage or not item_id:
+                continue
+            out_yields.append(
+                {
+                    "stage": str(stage),
+                    "item_id": str(item_id),
+                    "count": count if count > 0 else 1,
+                }
+            )
+        if out_yields:
+            seed["chop_yields"] = out_yields
 
     return seed
 
@@ -1389,6 +1444,49 @@ def export_farming_flags(entry: dict) -> list[str]:
     return out
 
 
+def export_crafting_furniture_flags(entry: dict) -> list[str]:
+    """Farming flags stay separate. Craft whitelist + LIGHT_* numeric light flags."""
+    flags = entry.get("flags", [])
+    if isinstance(flags, str):
+        flags = [flags]
+    if not isinstance(flags, list):
+        return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for flag in flags:
+        if flag is None:
+            continue
+        key = str(flag).strip()
+        if key in seen:
+            continue
+        keep = key in CRAFTING_FURNITURE_FLAGS or key.startswith("LIGHT_")
+        if not keep:
+            continue
+        # Dist cooking SSOT: FIRE_CONTAINER → FIRE
+        if key == "FIRE_CONTAINER":
+            key = "FIRE"
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(key)
+    return out
+
+
+def export_furniture_provides_qualities(entry: dict) -> list[dict]:
+    qualities = entry.get("qualities")
+    if not isinstance(qualities, list):
+        return []
+    out: list[dict] = []
+    for q in qualities:
+        if not isinstance(q, dict):
+            continue
+        qid = q.get("id") or ""
+        if not qid:
+            continue
+        out.append({"id": str(qid), "level": _int_or_zero(q.get("level", 0))})
+    return out
+
+
 def export_furniture_plant_data(entry: dict) -> dict | None:
     source = entry.get("plant_data")
     if not isinstance(source, dict):
@@ -1413,6 +1511,9 @@ def export_terrain_entry(entry: dict, eid: str | None = None) -> dict:
     flags = export_farming_flags(entry)
     if flags:
         out["flags"] = flags
+    craft_flags = export_crafting_furniture_flags(entry)
+    if craft_flags:
+        out["crafting_flags"] = craft_flags
     return out
 
 
@@ -1421,6 +1522,12 @@ def export_furniture_entry(entry: dict, eid: str | None = None) -> dict:
     plant = export_furniture_plant_data(entry)
     if plant:
         out["plant_data"] = plant
+    provides = export_furniture_provides_qualities(entry)
+    if provides:
+        out["provides_qualities"] = provides
+    pseudo = entry.get("crafting_pseudo_item")
+    if pseudo:
+        out["crafting_pseudo_item"] = str(pseudo)
     return out
 
 
@@ -1641,6 +1748,27 @@ def flatten_recipe(entry: dict, requirements: dict[str, dict],
         if parsed_autolearn:
             rec["autolearn_skills"] = parsed_autolearn
 
+    # decomp_learn: int → skill_used + level; array → [{skill, level}, ...]
+    decomp_raw = entry.get("decomp_learn")
+    if decomp_raw is not None:
+        decomp_out = []
+        if isinstance(decomp_raw, int):
+            skill_used = entry.get("skill_used", "")
+            if skill_used:
+                decomp_out.append({"skill": skill_used, "level": decomp_raw})
+        elif isinstance(decomp_raw, list):
+            if decomp_raw and isinstance(decomp_raw[0], str):
+                decomp_out.append({
+                    "skill": decomp_raw[0],
+                    "level": decomp_raw[1] if len(decomp_raw) > 1 else 0,
+                })
+            else:
+                for sr in decomp_raw:
+                    if isinstance(sr, list) and len(sr) >= 2:
+                        decomp_out.append({"skill": sr[0], "level": sr[1]})
+        if decomp_out:
+            rec["decomp_learn"] = decomp_out
+
     proficiencies_out = []
     for prof in entry.get("proficiencies", []) or []:
         if isinstance(prof, dict):
@@ -1666,6 +1794,23 @@ def flatten_recipe(entry: dict, requirements: dict[str, dict],
         rec["hot_result"] = True
     if entry.get("dehydrating"):
         rec["dehydrating"] = True
+
+    recipe_flags = entry.get("flags", [])
+    if isinstance(recipe_flags, str):
+        recipe_flags = [recipe_flags]
+    if isinstance(recipe_flags, list):
+        kept: list[str] = []
+        seen_flags: set[str] = set()
+        for flag in recipe_flags:
+            if flag is None:
+                continue
+            key = str(flag).strip()
+            if key not in RECIPE_FLAG_WHITELIST or key in seen_flags:
+                continue
+            seen_flags.add(key)
+            kept.append(key)
+        if kept:
+            rec["flags"] = kept
 
     if entry.get("byproducts"):
         rec["byproducts"] = [
@@ -2098,6 +2243,17 @@ def main():
         f"[output] {terrain_furniture_file}  "
         f"({len(terrain_out)} terrain, {len(furniture_out)} furniture)"
     )
+
+    # BN Bright Nights currently has no recipe proficiency catalog; emit empty for Dist schema.
+    proficiencies_out: list[dict] = []
+    proficiencies_file = out_dir / "proficiencies.json"
+    with open(proficiencies_file, "w", encoding="utf-8") as f:
+        json.dump({
+            "_license": LICENSE,
+            "_source": SOURCE,
+            "proficiencies": proficiencies_out,
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[output] {proficiencies_file}  ({len(proficiencies_out)} proficiencies)")
 
     # 통계 요약
     categories = set()

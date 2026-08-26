@@ -2702,11 +2702,17 @@
   "furniture": [
     {
       "id": "f_30gal_firebarrel",
-      "name": "fire barrel (100L)"
+      "name": "fire barrel (100L)",
+      "crafting_flags": [
+        "FIRE"
+      ]
     },
     {
       "id": "f_55gal_firebarrel",
-      "name": "fire barrel (200L)"
+      "name": "fire barrel (200L)",
+      "crafting_flags": [
+        "FIRE"
+      ]
     },
     {
       "id": "f_CTscan",
@@ -2802,11 +2808,15 @@
     },
     {
       "id": "f_anvil",
-      "name": "anvil"
+      "name": "anvil",
+      "crafting_pseudo_item": "anvil"
     },
     {
       "id": "f_arc_furnace",
-      "name": "electric arc furnace"
+      "name": "electric arc furnace",
+      "crafting_flags": [
+        "FIRE"
+      ]
     },
     {
       "id": "f_arcade_machine",
@@ -2814,11 +2824,18 @@
     },
     {
       "id": "f_arcfurnace_empty",
-      "name": "arc furnace"
+      "name": "arc furnace",
+      "crafting_flags": [
+        "FIRE"
+      ],
+      "crafting_pseudo_item": "arcfurnace"
     },
     {
       "id": "f_arcfurnace_full",
-      "name": "filled arc furnace"
+      "name": "filled arc furnace",
+      "crafting_flags": [
+        "FIRE"
+      ]
     },
     {
       "id": "f_armchair",
@@ -2838,7 +2855,8 @@
     },
     {
       "id": "f_autoclave",
-      "name": "laboratory autoclave"
+      "name": "laboratory autoclave",
+      "crafting_pseudo_item": "fake_autoclave"
     },
     {
       "id": "f_autodoc",
@@ -2934,15 +2952,20 @@
     },
     {
       "id": "f_boulder_medium",
-      "name": "medium boulder"
+      "name": "medium boulder",
+      "crafting_pseudo_item": "boulder_anvil"
     },
     {
       "id": "f_boulder_small",
-      "name": "small boulder"
+      "name": "small boulder",
+      "crafting_pseudo_item": "boulder_anvil"
     },
     {
       "id": "f_brazier",
-      "name": "brazier"
+      "name": "brazier",
+      "crafting_flags": [
+        "FIRE"
+      ]
     },
     {
       "id": "f_bulletin",
@@ -2962,7 +2985,8 @@
     },
     {
       "id": "f_butter_churn",
-      "name": "butter churn"
+      "name": "butter churn",
+      "crafting_pseudo_item": "butter_churn"
     },
     {
       "id": "f_cable_connector",
@@ -3014,7 +3038,8 @@
     },
     {
       "id": "f_centrifuge",
-      "name": "centrifuge"
+      "name": "centrifuge",
+      "crafting_pseudo_item": "fake_centrifuge"
     },
     {
       "id": "f_chair",
@@ -3034,11 +3059,13 @@
     },
     {
       "id": "f_chemistry_set",
-      "name": "grid chemistry set"
+      "name": "grid chemistry set",
+      "crafting_pseudo_item": "['fake_oven', 'fake_chemistry_set']"
     },
     {
       "id": "f_chemlab",
-      "name": "grid chemistry lab"
+      "name": "grid chemistry lab",
+      "crafting_pseudo_item": "['fake_oven', 'fake_chemistry_set', 'fake_gridelectrolysis_kit']"
     },
     {
       "id": "f_chicory",
@@ -3050,7 +3077,8 @@
     },
     {
       "id": "f_clay_kiln",
-      "name": "clay kiln"
+      "name": "clay kiln",
+      "crafting_pseudo_item": "brick_kiln"
     },
     {
       "id": "f_clothing_rail",
@@ -3082,7 +3110,8 @@
     },
     {
       "id": "f_craftrig",
-      "name": "grid FOODCO kitchen buddy"
+      "name": "grid FOODCO kitchen buddy",
+      "crafting_pseudo_item": "['fake_gridfood_processor', 'fake_griddehydrator', 'fake_gridvac_sealer', 'fake_gridwater_purifier', 'press']"
     },
     {
       "id": "f_crate_c",
@@ -3238,11 +3267,17 @@
     },
     {
       "id": "f_fireplace",
-      "name": "fireplace"
+      "name": "fireplace",
+      "crafting_flags": [
+        "FIRE"
+      ]
     },
     {
       "id": "f_firering",
-      "name": "fire ring"
+      "name": "fire ring",
+      "crafting_flags": [
+        "FIRE"
+      ]
     },
     {
       "id": "f_floor_lamp",
@@ -3282,15 +3317,18 @@
     },
     {
       "id": "f_forge",
-      "name": "forge"
+      "name": "forge",
+      "crafting_pseudo_item": "char_forge"
     },
     {
       "id": "f_forge_rock",
-      "name": "rock forge"
+      "name": "rock forge",
+      "crafting_pseudo_item": "char_forge"
     },
     {
       "id": "f_forgerig",
-      "name": "grid forge rig"
+      "name": "grid forge rig",
+      "crafting_pseudo_item": "fake_gridforge"
     },
     {
       "id": "f_freezer",
@@ -3318,7 +3356,10 @@
     },
     {
       "id": "f_fume_hood",
-      "name": "fume hood"
+      "name": "fume hood",
+      "crafting_flags": [
+        "FIRE"
+      ]
     },
     {
       "id": "f_fungal_clump",
@@ -3370,7 +3411,8 @@
     },
     {
       "id": "f_grave_head",
-      "name": "headstone"
+      "name": "headstone",
+      "crafting_pseudo_item": "boulder_anvil"
     },
     {
       "id": "f_grave_monument",
@@ -3378,7 +3420,8 @@
     },
     {
       "id": "f_grave_stone",
-      "name": "gravestone"
+      "name": "gravestone",
+      "crafting_pseudo_item": "boulder_anvil"
     },
     {
       "id": "f_grave_stone_old",
@@ -3386,39 +3429,48 @@
     },
     {
       "id": "f_gridautoclave",
-      "name": "grid autoclave"
+      "name": "grid autoclave",
+      "crafting_pseudo_item": "gridautoclave"
     },
     {
       "id": "f_griddehydrator",
-      "name": "grid food dehydrator"
+      "name": "grid food dehydrator",
+      "crafting_pseudo_item": "fake_griddehydrator"
     },
     {
       "id": "f_gridelectrolysis_kit",
-      "name": "grid electrolysis kit"
+      "name": "grid electrolysis kit",
+      "crafting_pseudo_item": "fake_gridelectrolysis_kit"
     },
     {
       "id": "f_gridfood_processor",
-      "name": "grid food processor"
+      "name": "grid food processor",
+      "crafting_pseudo_item": "fake_gridfood_processor"
     },
     {
       "id": "f_gridforge",
-      "name": "grid forge"
+      "name": "grid forge",
+      "crafting_pseudo_item": "fake_gridforge"
     },
     {
       "id": "f_gridkiln",
-      "name": "grid kiln"
+      "name": "grid kiln",
+      "crafting_pseudo_item": "fake_gridkiln"
     },
     {
       "id": "f_gridsolderingiron",
-      "name": "grid soldering iron"
+      "name": "grid soldering iron",
+      "crafting_pseudo_item": "fake_gridsolderingiron"
     },
     {
       "id": "f_gridvac_sealer",
-      "name": "grid vacuum sealer"
+      "name": "grid vacuum sealer",
+      "crafting_pseudo_item": "fake_gridvac_sealer"
     },
     {
       "id": "f_gridwelder",
-      "name": "grid welder"
+      "name": "grid welder",
+      "crafting_pseudo_item": "fake_gridwelder"
     },
     {
       "id": "f_ground_crafting_spot",
@@ -3454,11 +3506,17 @@
     },
     {
       "id": "f_hobo_stove",
-      "name": "hobo stove"
+      "name": "hobo stove",
+      "crafting_flags": [
+        "FIRE"
+      ]
     },
     {
       "id": "f_home_furnace",
-      "name": "furnace"
+      "name": "furnace",
+      "crafting_flags": [
+        "FIRE"
+      ]
     },
     {
       "id": "f_hydraulic_press",
@@ -3478,19 +3536,33 @@
     },
     {
       "id": "f_kiln_empty",
-      "name": "charcoal kiln"
+      "name": "charcoal kiln",
+      "crafting_flags": [
+        "FIRE"
+      ],
+      "crafting_pseudo_item": "char_kiln"
     },
     {
       "id": "f_kiln_full",
-      "name": "filled charcoal kiln"
+      "name": "filled charcoal kiln",
+      "crafting_flags": [
+        "FIRE"
+      ]
     },
     {
       "id": "f_kiln_metal_empty",
-      "name": "metal charcoal kiln"
+      "name": "metal charcoal kiln",
+      "crafting_flags": [
+        "FIRE"
+      ],
+      "crafting_pseudo_item": "char_kiln"
     },
     {
       "id": "f_kiln_metal_full",
-      "name": "filled metal charcoal kiln"
+      "name": "filled metal charcoal kiln",
+      "crafting_flags": [
+        "FIRE"
+      ]
     },
     {
       "id": "f_lab_bench",
@@ -3570,11 +3642,13 @@
     },
     {
       "id": "f_metal_smoking_rack",
-      "name": "metal smoking rack"
+      "name": "metal smoking rack",
+      "crafting_pseudo_item": "char_smoker"
     },
     {
       "id": "f_metal_smoking_rack_active",
-      "name": "active metal smoking rack"
+      "name": "active metal smoking rack",
+      "crafting_pseudo_item": "char_smoker"
     },
     {
       "id": "f_minifreezer",
@@ -3610,7 +3684,11 @@
     },
     {
       "id": "f_oven",
-      "name": "oven"
+      "name": "oven",
+      "crafting_flags": [
+        "FIRE"
+      ],
+      "crafting_pseudo_item": "fake_oven"
     },
     {
       "id": "f_piano",
@@ -3824,7 +3902,11 @@
     },
     {
       "id": "f_rvoven",
-      "name": "RV kitchen unit"
+      "name": "RV kitchen unit",
+      "crafting_flags": [
+        "FIRE"
+      ],
+      "crafting_pseudo_item": "fake_oven"
     },
     {
       "id": "f_safe_c",
@@ -3912,7 +3994,8 @@
     },
     {
       "id": "f_slab",
-      "name": "stone slab"
+      "name": "stone slab",
+      "crafting_pseudo_item": "boulder_anvil"
     },
     {
       "id": "f_small_satelitte_dish",
@@ -3920,11 +4003,13 @@
     },
     {
       "id": "f_smoking_rack",
-      "name": "smoking rack"
+      "name": "smoking rack",
+      "crafting_pseudo_item": "char_smoker"
     },
     {
       "id": "f_smoking_rack_active",
-      "name": "active smoking rack"
+      "name": "active smoking rack",
+      "crafting_pseudo_item": "char_smoker"
     },
     {
       "id": "f_sofa",
@@ -3976,7 +4061,8 @@
     },
     {
       "id": "f_still",
-      "name": "still"
+      "name": "still",
+      "crafting_pseudo_item": "still"
     },
     {
       "id": "f_stool",
@@ -4092,7 +4178,8 @@
     },
     {
       "id": "f_welderrig",
-      "name": "grid welding rig"
+      "name": "grid welding rig",
+      "crafting_pseudo_item": "['fake_gridsolderingiron']"
     },
     {
       "id": "f_wind_mill",
@@ -4116,7 +4203,10 @@
     },
     {
       "id": "f_woodstove",
-      "name": "wood stove"
+      "name": "wood stove",
+      "crafting_flags": [
+        "FIRE"
+      ]
     },
     {
       "id": "f_workbench",

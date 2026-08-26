@@ -151,6 +151,18 @@ MonoBehaviour:
     text: "\uB9C8\uC2DC\uAE30"
   - key: ItemContextMenu.Eat
     text: "\uBA39\uAE30"
+  - key: ItemContextMenu.Fish
+    text: "\uB0AD\uC2DC"
+  - key: ItemContextMenu.FishBlocked
+    text: "\uB0AD\uC2DC\uD560 \uC218 \uC5C6\uC74C"
+  - key: ItemContextMenu.DeployTrap
+    text: "\uD1B5\uBC1C \uC124\uCE58"
+  - key: ItemContextMenu.DeployTrapBlocked
+    text: "\uD1B5\uBC1C\uC744 \uC124\uCE58\uD560 \uC218 \uC5C6\uC74C"
+  - key: Interaction.CollectTrap
+    text: "\uC218\uD65C"
+  - key: Interaction.CollectTrapBlocked
+    text: "\uC218\uD65C\uD560 \uC218 \uC5C6\uC74C"
   - key: ItemContextMenu.LoadAmmo
     text: "\uC0BD\uD0C4"
   - key: ItemContextMenu.MiscGroup
@@ -350,6 +362,10 @@ MonoBehaviour:
     text: "\uC624\uB978\uC704\uD314"
   - key: PlayerStatus.Skill.survival
     text: "\uC0DD\uC874\uC220"
+  - key: PlayerStatus.Trait.omniscience
+    text: "\uC804\uC9C0"
+  - key: PlayerStatus.Trait.survival
+    text: "\uC0DD\uC874\uC220"
   - key: PlayerStatus.SkillFormat
     text: '{0}  Lv.{1}'
   - key: PlayerStatus.SkillsSection
@@ -422,6 +438,8 @@ MonoBehaviour:
     text: '{0} x{1}'
   - key: RecipeKnowledge.BookRequired
     text: "\uCC45 \uD544\uC694"
+  - key: RecipeKnowledge.DecompRequired
+    text: "\uBD84\uD574\uB85C \uC2B5\uB4DD"
   - key: RecipeKnowledge.Invalid
     text: Invalid recipe
   - key: RecipeKnowledge.Locked

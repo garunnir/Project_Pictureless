@@ -8,6 +8,7 @@ using PlantGrowth = global::Garunnir.Runtime.Gameplay.Data.PlantGrowth;
 using PlantGrowthContext = global::Garunnir.Runtime.Gameplay.Data.PlantGrowthContext;
 using PlantGrowthStage = global::Garunnir.Runtime.Gameplay.Data.PlantGrowthStage;
 using ItemData = global::Garunnir.Runtime.Gameplay.Data.ItemData;
+using SeedDetailData = global::Garunnir.Runtime.Gameplay.Data.SeedDetailData;
 
 namespace IsoTilemap
 {
@@ -20,14 +21,29 @@ namespace IsoTilemap
         public static PlantGrowthStage ResolveStage(in PlantCell plant)
         {
             ItemData item = GameplayData.GetItem(plant.SeedItemId);
-            int elapsed = PlantGrowth.ElapsedMinutes(
-                plant.PlantedWorldMinute,
-                MapClockSnapshot.CurrentWorldMinute());
+            SeedDetailData seed = item?.seed;
+            int current = MapClockSnapshot.CurrentWorldMinute();
             var context = new PlantGrowthContext(
                 plant.Fertilized,
                 PlantGrowth.WeatherClearGrowFactor,
                 frostKills: false);
-            return PlantGrowth.Resolve(item?.seed, elapsed, in context);
+
+            if (seed != null && seed.IsTree)
+            {
+                int growthElapsed = PlantGrowth.ElapsedMinutes(plant.PlantedWorldMinute, current);
+                int regrowElapsed = plant.LastFruitHarvestWorldMinute > PlantGrowth.NoFruitHarvestMinute
+                    ? PlantGrowth.ElapsedMinutes(plant.LastFruitHarvestWorldMinute, current)
+                    : 0;
+                return PlantGrowth.ResolveTree(
+                    seed,
+                    growthElapsed,
+                    plant.LastFruitHarvestWorldMinute,
+                    regrowElapsed,
+                    in context);
+            }
+
+            int elapsed = PlantGrowth.ElapsedMinutes(plant.PlantedWorldMinute, current);
+            return PlantGrowth.ResolveField(seed, elapsed, in context);
         }
 
         public static void Apply(

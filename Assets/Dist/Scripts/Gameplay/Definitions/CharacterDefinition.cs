@@ -79,6 +79,7 @@ public sealed class CharacterDefinition : ScriptableObject
     [SerializeField] Vector2 _alignment;
     [SerializeField] CharacterAttributeBlock _attributes = CharacterAttributeBlock.Default;
     [SerializeField] List<CharacterSkillOverrideEntry> _skillOverrides = new();
+    [SerializeField] List<string> _traits = new();
     [SerializeField] float _bodyMassKg;
     [SerializeField] float _bustCm;
     [SerializeField] float _waistCm;
@@ -100,6 +101,7 @@ public sealed class CharacterDefinition : ScriptableObject
     public Vector2 Alignment => _alignment;
     public CharacterAttributeBlock Attributes => _attributes;
     public IReadOnlyList<CharacterSkillOverrideEntry> SkillOverrides => _skillOverrides;
+    public IReadOnlyList<string> Traits => _traits;
     public float BodyMassKg => _bodyMassKg;
     public float BustCm => _bustCm;
     public float WaistCm => _waistCm;
@@ -147,6 +149,13 @@ public sealed class CharacterDefinition : ScriptableObject
         return skills;
     }
 
+    public DefaultCharacterTraits CreateTraits()
+    {
+        var traits = new DefaultCharacterTraits();
+        ApplyTraits(traits);
+        return traits;
+    }
+
     public CharacterBody CreateBody()
     {
         return CharacterBody.CreateHumanDefault(_attributes.Get(AttributeIds.Str), _prototypeSeed);
@@ -173,6 +182,17 @@ public sealed class CharacterDefinition : ScriptableObject
             skills.SetBaseLevel(entry.skillId, entry.level);
             if (entry.potential > 0)
                 skills.SetPotential(entry.skillId, entry.potential);
+        }
+    }
+
+    void ApplyTraits(DefaultCharacterTraits traits)
+    {
+        for (int i = 0; i < _traits.Count; i++)
+        {
+            string id = _traits[i];
+            if (string.IsNullOrEmpty(id))
+                continue;
+            traits.Grant(id);
         }
     }
 }

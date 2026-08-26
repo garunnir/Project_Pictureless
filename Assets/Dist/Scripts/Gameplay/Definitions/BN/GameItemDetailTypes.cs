@@ -91,6 +91,10 @@ namespace Garunnir.Runtime.Gameplay.Data
         public int addiction_potential;
         /// <summary>BN vitamins id→amount. Empty if none.</summary>
         public Dictionary<string, int> vitamins;
+        /// <summary>BN cooks_like — simple cook converts to this item id.</summary>
+        public string cooks_like;
+        /// <summary>BN smoking_result — smoke converts to this item id.</summary>
+        public string smoking_result;
     }
 
     /// <summary>BN heal_actor HP 부위 축. Dist 메인 부위는 <see cref="BodyHealApply.RegionOf"/>.</summary>
@@ -206,6 +210,20 @@ namespace Garunnir.Runtime.Gameplay.Data
         public bool preserves;
     }
 
+    public enum PlantCropKind
+    {
+        Field = 0,
+        Tree = 1,
+    }
+
+    [Serializable]
+    public sealed class TreeChopYield
+    {
+        public PlantGrowthStage stage;
+        public string item_id;
+        public int count = 1;
+    }
+
     /// <summary>BN seed_data whitelist. Int grow is season-days, not moves.</summary>
     [Serializable]
     public sealed class SeedDetailData
@@ -217,6 +235,48 @@ namespace Garunnir.Runtime.Gameplay.Data
         public int fruit_div = 1;
         public List<string> byproducts;
         public string required_terrain_flag;
+        public PlantCropKind crop_kind = PlantCropKind.Field;
+        public float fruit_regrow_minutes;
+        public List<TreeChopYield> chop_yields;
+
+        public bool IsTree => crop_kind == PlantCropKind.Tree;
+
+        public float FruitRegrowMinutes =>
+            fruit_regrow_minutes > 0f ? fruit_regrow_minutes : grow_minutes;
+
+        public bool TryGetChopYield(PlantGrowthStage stage, out string itemId, out int count)
+        {
+            itemId = null;
+            count = 0;
+            if (chop_yields == null || chop_yields.Count == 0)
+                return false;
+
+            TreeChopYield best = null;
+            int bestStage = -1;
+            int stageIndex = (int)stage;
+            for (int i = 0; i < chop_yields.Count; i++)
+            {
+                TreeChopYield entry = chop_yields[i];
+                if (entry == null ||
+                    string.IsNullOrEmpty(entry.item_id) ||
+                    entry.count < 1)
+                    continue;
+
+                int entryStage = (int)entry.stage;
+                if (entryStage > stageIndex || entryStage <= bestStage)
+                    continue;
+
+                best = entry;
+                bestStage = entryStage;
+            }
+
+            if (best == null)
+                return false;
+
+            itemId = best.item_id;
+            count = best.count;
+            return true;
+        }
     }
 
     [Serializable]
@@ -225,5 +285,57 @@ namespace Garunnir.Runtime.Gameplay.Data
         public string proficiency;
         public bool required;
         public float time_multiplier;
+    }
+
+    public interface ICharacterProficiencies
+    {
+        bool Has(string proficiencyId);
+        void Learn(string proficiencyId);
+        void AddPractice(string proficiencyId, int xp);
+        IReadOnlyCollection<string> GetKnownIds();
+    }
+
+    public sealed class DefaultCharacterProficiencies : ICharacterProficiencies
+    {
+        readonly HashSet<string> _known = new();
+        readonly Dictionary<string, int> _xp = new();
+
+        const int PracticeToLearn = 100;
+
+        public bool Has(string proficiencyId)
+        {
+            if (string.IsNullOrEmpty(proficiencyId))
+                return true;
+            return _known.Contains(proficiencyId);
+        }
+
+        public void Learn(string proficiencyId)
+        {
+            if (string.IsNullOrEmpty(proficiencyId))
+                return;
+            _known.Add(proficiencyId);
+        }
+
+        public void AddPractice(string proficiencyId, int xp)
+        {
+            if (string.IsNullOrEmpty(proficiencyId) || xp <= 0)
+                return;
+            if (_known.Contains(proficiencyId))
+                return;
+
+            _xp.TryGetValue(proficiencyId, out int have);
+            have += xp;
+            if (have >= PracticeToLearn)
+            {
+                _known.Add(proficiencyId);
+                _xp.Remove(proficiencyId);
+            }
+            else
+            {
+                _xp[proficiencyId] = have;
+            }
+        }
+
+        public IReadOnlyCollection<string> GetKnownIds() => _known;
     }
 }

@@ -76,6 +76,8 @@ namespace Garunnir.Runtime.Gameplay.Data
             {
                 if (AttributeIds.IsAttribute(pair.Key))
                     continue;
+                if (TraitIds.IsTrait(pair.Key))
+                    continue;
                 if (pair.Value.Level.Base > 0 || pair.Value.Level.Buffed > 0)
                     list.Add(pair.Key);
             }

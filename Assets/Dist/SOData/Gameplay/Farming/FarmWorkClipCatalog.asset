@@ -15,5 +15,7 @@ MonoBehaviour:
   _plant: {fileID: 0}
   _till: {fileID: 0}
   _harvest: {fileID: 0}
+  _chop: {fileID: 0}
   _plantDurationSeconds: 1
   _tillDurationSeconds: 2
+  _chopDurationSeconds: 2.5

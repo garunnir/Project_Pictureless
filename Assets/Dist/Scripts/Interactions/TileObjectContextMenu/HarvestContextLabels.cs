@@ -28,4 +28,12 @@ public static class HarvestContextLabels
         Loc.TryGet(KeyFertilize, out string fertilize) ? fertilize : "비료";
     public static string FertilizeBlocked =>
         Loc.TryGet(KeyFertilizeBlocked, out string fertilizeBlocked) ? fertilizeBlocked : "비료를 줄 수 없음";
+
+    const string KeyChop = "Interaction.Chop";
+    const string KeyChopBlocked = "Interaction.ChopBlocked";
+
+    public static string Chop =>
+        Loc.TryGet(KeyChop, out string chop) ? chop : "벌목";
+    public static string ChopBlocked =>
+        Loc.TryGet(KeyChopBlocked, out string chopBlocked) ? chopBlocked : "벌목할 수 없음";
 }

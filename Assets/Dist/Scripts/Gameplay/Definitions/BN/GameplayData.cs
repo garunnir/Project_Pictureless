@@ -1,5 +1,5 @@
 // ============================================================
-// GameplayData ? ????? ??? SSOT (??? ?? ? ?? fallback)
+// GameplayData — possessed runtime SSOT (items / recipes fallback)
 // ============================================================
 
 using System.Collections.Generic;
@@ -12,9 +12,12 @@ public static class GameplayData
     static ICharacterBody _body;
     static IPlayerVitals _vitals;
     static DefaultCharacterDefeat _defeat;
+    static ICharacterProficiencies _proficiencies;
+    static ICharacterRecipeMemory _recipeMemory;
+    static ICharacterTraits _traits;
 
     /// <summary>
-    /// ???? ??/?? ?? ?? (???? ??; NPC? ?? ICharacterSkills).
+    /// Player-facing stats / vitals host (possessed path; NPC uses ICharacterSkills).
     /// </summary>
     public static IPlayerStats Stats
     {
@@ -31,12 +34,12 @@ public static class GameplayData
         }
     }
 
-    /// <summary>?? ?? API. Stats? DefaultPlayerStats? ?? ??.</summary>
+    /// <summary>Skill API. Stats is DefaultPlayerStats only path.</summary>
     public static ICharacterSkills CharacterSkills =>
         Stats is DefaultPlayerStats dps ? dps.Skills : null;
 
     /// <summary>
-    /// ?? ??? ?? SSOT.
+    /// Body graph SSOT.
     /// </summary>
     public static ICharacterBody Body
     {
@@ -58,7 +61,7 @@ public static class GameplayData
     }
 
     /// <summary>
-    /// ?? ???(??/??/????) SSOT.
+    /// Player vitals SSOT.
     /// </summary>
     public static IPlayerVitals Vitals
     {
@@ -72,7 +75,7 @@ public static class GameplayData
     }
 
     /// <summary>
-    /// ???? ?? ??/?? ?? (Body ? Skills).
+    /// Defeat Body ∨ Skills OR.
     /// </summary>
     public static ICharacterDefeat Defeat
     {
@@ -90,6 +93,42 @@ public static class GameplayData
             else if (value != null)
                 Debug.LogWarning("[GameplayData] Defeat setter expects DefaultCharacterDefeat; ignored.");
         }
+    }
+
+    /// <summary>Craft proficiency SSOT (BN recipe proficiencies).</summary>
+    public static ICharacterProficiencies Proficiencies
+    {
+        get
+        {
+            if (_proficiencies == null)
+                _proficiencies = new DefaultCharacterProficiencies();
+            return _proficiencies;
+        }
+        set => _proficiencies = value;
+    }
+
+    /// <summary>Permanent recipe knowledge (decomp_learn etc). Runtime-only; not saved.</summary>
+    public static ICharacterRecipeMemory RecipeMemory
+    {
+        get
+        {
+            if (_recipeMemory == null)
+                _recipeMemory = new DefaultCharacterRecipeMemory();
+            return _recipeMemory;
+        }
+        set => _recipeMemory = value;
+    }
+
+    /// <summary>Character traits (omniscience, survival, …). Runtime-only; not saved.</summary>
+    public static ICharacterTraits Traits
+    {
+        get
+        {
+            if (_traits == null)
+                _traits = new DefaultCharacterTraits();
+            return _traits;
+        }
+        set => _traits = value;
     }
 
     /// <summary>???? ??? ??? (?? ??)</summary>

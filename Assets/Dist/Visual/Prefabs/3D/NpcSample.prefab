@@ -509,7 +509,6 @@ MonoBehaviour:
   _attacker: {fileID: 8777330253604345042}
   _movement: {fileID: 0}
   _timeChannel: 1
-  _weatherKind: 0
 --- !u!114 &3768835915500036009
 MonoBehaviour:
   m_ObjectHideFlags: 0

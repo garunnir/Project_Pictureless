@@ -53,6 +53,19 @@ public static class WeaponAmmoService
             return null;
         }
 
+        if (WeaponAmmoFit.IsToolAmmoHost(target.Item))
+        {
+            if (!WeaponAmmoFit.AcceptsToolAmmoType(target.Item, ammo.Item))
+                return WeaponAmmoLabels.Blocked;
+            if (target.Instance != null &&
+                target.Instance.SupplyRounds > 0 &&
+                !string.Equals(target.Instance.SupplyAmmoId, ammo.ItemId, System.StringComparison.Ordinal))
+                return WeaponAmmoLabels.Wrong;
+            if (!WeaponAmmoFit.CanLoadTool(target, ammo.Item))
+                return WeaponAmmoLabels.Full;
+            return null;
+        }
+
         return WeaponAmmoLabels.Blocked;
     }
 
@@ -118,14 +131,17 @@ public static class WeaponAmmoService
             return false;
 
         ItemStack mag = WeaponAmmoFit.ResolveLoadMagazine(target);
-        bool clip = mag == null;
-        ItemStack active = clip ? target : mag;
+        bool clip = mag == null && WeaponAmmoFit.IsClipFed(target.Item);
+        bool tool = mag == null && !clip && WeaponAmmoFit.IsToolAmmoHost(target.Item);
+        ItemStack active = clip || tool ? target : mag;
         if (target?.Item?.gun != null && target.LoadedMagazine != null)
             active = target;
 
         float duration = clip
             ? WeaponAmmoDuration.ClipLoadSeconds(target.Item)
-            : WeaponAmmoDuration.LoadSeconds(mag.Item);
+            : tool
+                ? WeaponAmmoDuration.ToolLoadSeconds(target.Item)
+                : WeaponAmmoDuration.LoadSeconds(mag.Item);
 
         return gear.TryBeginDomainTimed(
             active,
@@ -264,6 +280,15 @@ public static class WeaponAmmoService
             int want = ammo.Count < room ? ammo.Count : room;
             int taken = ammoOwner.TryTakeFromStack(ammo, want);
             added = mag.Instance.TryAddSupplyRounds(taken, ammoItem.id, mag.Item.magazine.capacity);
+            Refund(ammoOwner, ammoItem, taken - added);
+        }
+        else if (WeaponAmmoFit.IsToolAmmoHost(target.Item))
+        {
+            int capacity = WeaponAmmoFit.ResolveToolCapacity(target.Item);
+            int room = capacity - target.Instance.SupplyRounds;
+            int want = ammo.Count < room ? ammo.Count : room;
+            int taken = ammoOwner.TryTakeFromStack(ammo, want);
+            added = target.Instance.TryAddSupplyRounds(taken, ammoItem.id, capacity);
             Refund(ammoOwner, ammoItem, taken - added);
         }
         else

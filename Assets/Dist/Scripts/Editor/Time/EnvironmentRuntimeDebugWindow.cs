@@ -95,10 +95,10 @@ public sealed class EnvironmentRuntimeDebugWindow : OdinEditorWindow
             if (clock == null)
                 return "No WorldClock in the loaded scenes.";
 
-            PlayerGearHost gear = PlayerGearHost.Active;
-            string weather = gear != null
-                ? WeatherExposure.KindLabel(gear.WorldWeatherKind)
-                : "(no PlayerGearHost.Active)";
+            WorldWeatherHost weatherHost = WorldWeatherHost.Instance;
+            string weather = weatherHost != null
+                ? WeatherExposure.KindLabel(weatherHost.CurrentKind)
+                : "(no WorldWeatherHost)";
 
             return TimeDisplayFormat.Format(clock.DayIndex, clock.HourOfDay, clock.MinuteOfHour)
                    + "  " + clock.Period

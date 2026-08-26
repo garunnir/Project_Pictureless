@@ -1,0 +1,19 @@
+{
+    "name": "Dist.Map.Fish",
+    "rootNamespace": "",
+    "references": [
+        "Config",
+        "Dist.Gameplay.Data",
+        "Dist.Inventory",
+        "Dist.Map"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

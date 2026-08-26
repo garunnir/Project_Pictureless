@@ -22,6 +22,9 @@ public sealed class HarvestContextContributor : ITileObjectContextMenuContributo
         if (host == null || !host.TryGetPlant(cell, out _))
             return;
 
+        if (MapPlantService.GetHarvestBlockedReason(cell) != null)
+            return;
+
         roots.Add(ContextMenuEntry.Leaf(
             "harvest-plant",
             HarvestContextLabels.Harvest,

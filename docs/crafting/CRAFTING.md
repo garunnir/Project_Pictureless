@@ -51,6 +51,24 @@ sequenceDiagram
 
 ---
 
+## Recipe knowledge
+
+SSOT: `RecipeKnowledge.GetFailureReason` (`null` = Known). `GameplayData.RecipeMemory` (decomp 영구 습득, 런타임만).
+
+| 경로 | 조건 |
+|------|------|
+| memory | `RecipeMemory.IsKnown(recipe.id)` |
+| trait `omniscience` (전지) | `GameplayData.Traits.Has(TraitIds.Omniscience)` → 전부 Known |
+| `autolearn_skills` | 목록 **전부** 스킬 레벨 충족 |
+| `autolearn` (bool만) | `skill_used` ≥ `difficulty` (`autolearn_skills` 없을 때만) |
+| `book_learn` | 인벤에 책 + 스킬 |
+| 게이트 없음 | Known (GameData 커스텀 등) |
+| `decomp_learn`만 | Locked → 분해 성공 + 스킬 충족 시 `TryLearnFromDisassembly` |
+
+`CanCraft` 재료·스킬·proficiency와 별개 (습득 ≠ 제작 가능).
+
+---
+
 ## 대체재 · 드롭 ≠ 이동
 
 - 기본 인덱스: 슬롯에서 **조건을 만족하는 첫 대체재**, 없으면 `0`. 레시피 변경 시 리셋. 품질 칸도 동일 — 요구 품질/레벨을 가진 아이템이 대체재다.
@@ -70,9 +88,13 @@ sequenceDiagram
 
 ---
 
-## Light icon — Pending
+## Light · PSEUDO · proficiency
 
-헤더 `Img_Light`는 기본 비활성. 플레이어 광원 연동은 이후. 예정 소비자: 헤더 아이콘 + `CanCraft` 광원 게이팅. **지금은 광원·작업대 타입 게이팅 없음.**
+요리·광원·환경 도구 SSOT: [`cooking/COOKING.md`](../cooking/COOKING.md).
+
+- `CraftingLightGate` + 헤더 `Img_Light`: 레시피 `flags`에 `DARK`일 때 조도 검사 → `CanCraft`.
+- `CraftingEnvironmentProvider`: `PSEUDO` 도구(`fire`/`apparatus`/`sunlight`)·가구 `COOK` 품질.
+- `ICharacterProficiencies`: required proficiency + `time_multiplier`.
 
 작업대 라벨: 사이드바에서 플레이어 바디·바닥 루트를 제외한 **첫 월드 루트 컨테이너** 이름. 없으면 숨김. `Crafting.TitleOn` vs `Crafting.Title`.
 

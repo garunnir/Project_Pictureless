@@ -104,6 +104,9 @@ public static class ConsumeService
         PlayerNeedsHost host = PlayerNeedsHost.Active;
         ItemData item = stack.Item;
         ConsumeKind kind = Classify(item).Value;
+        bool wasHot = stack.Instance != null && stack.Instance.IsHot;
+        bool wasCooked = stack.Instance != null && stack.Instance.IsCooked;
+        bool rotten = ItemRot.IsRottenNow(stack.Instance);
 
         if (PlayerItemAccess.TryTakeOne(stack, container) <= 0)
             return false;
@@ -111,7 +114,7 @@ public static class ConsumeService
         switch (kind)
         {
             case ConsumeKind.Eat:
-                ApplyFood(host, item);
+                ApplyFood(host, item, wasCooked);
                 break;
             case ConsumeKind.Drink:
                 ApplyDrink(host, item);
@@ -122,15 +125,14 @@ public static class ConsumeService
         }
 
         ApplyComestibleSideEffects(host, item);
-        bool rotten = ItemRot.IsRottenNow(stack.Instance);
         if (rotten)
             ApplyRotPenalty(host);
 
-        RememberConsumeMood(item, kind, rotten);
+        RememberConsumeMood(item, kind, rotten, wasHot);
         return true;
     }
 
-    static void RememberConsumeMood(ItemData item, ConsumeKind kind, bool rotten)
+    static void RememberConsumeMood(ItemData item, ConsumeKind kind, bool rotten, bool wasHot)
     {
         CharacterMoodHost mood = CharacterMoodHost.Active;
         if (mood == null)
@@ -141,6 +143,9 @@ public static class ConsumeService
 
         if (kind != ConsumeKind.Eat && kind != ConsumeKind.Drink)
             return;
+
+        if (wasHot)
+            mood.AddMemory(ThoughtId.AteHotMeal);
 
         int fun = item?.comestible != null ? item.comestible.fun : 0;
         mood.AddMemory(ThoughtId.AteMeal, fun != 0 ? fun : (int?)null);
@@ -163,11 +168,11 @@ public static class ConsumeService
             body.SetToxin01(body.Toxin01 + BodyIllness.RotToxinAdd);
     }
 
-    static void ApplyFood(PlayerNeedsHost host, ItemData item)
+    static void ApplyFood(PlayerNeedsHost host, ItemData item, bool wasCooked)
     {
         float ml = item.volume_ml;
         float kcal = item.comestible != null ? item.comestible.calories : 0f;
-        if (HasRawWithoutCooked(item))
+        if (HasRawWithoutCooked(item, wasCooked))
             kcal *= RawCalorieMultiplier;
 
         host.IngestFood(ml, kcal);
@@ -315,9 +320,13 @@ public static class ConsumeService
         return IsHealAction(action);
     }
 
-    static bool HasRawWithoutCooked(ItemData item)
+    static bool HasRawWithoutCooked(ItemData item, bool wasCooked)
     {
-        return HasFlag(item, FlagRaw) && !HasFlag(item, FlagCooked);
+        if (wasCooked)
+            return false;
+        if (HasFlag(item, FlagCooked))
+            return false;
+        return HasFlag(item, FlagRaw);
     }
 
     static bool HasFlag(ItemData item, string flag)
