@@ -71,13 +71,14 @@ public static class CharacterVisionDefaults
 [DisallowMultipleComponent]
 public sealed class CharacterVision : MonoBehaviour
 {
+    CharacterSenseBlock _senses = CharacterSenseBlock.Default;
     float _spotAngleDegrees = CharacterVisionDefaults.SpotAngleDegrees;
 
     PlayerGearHost _gearHost;
     CharacterDefinitionBinder _definitionBinder;
 
-    public float DetectRadius => CharacterVisionDefaults.DetectRadius;
-    public float LoseRadius => CharacterVisionDefaults.LoseRadius;
+    public float DetectRadius => _senses.sightDetectMeters;
+    public float LoseRadius => _senses.sightLoseMeters;
 
     /// <summary>Definition SO가 있으면 그 시야각(실시간). 없으면 Apply 캐시.</summary>
     public float SpotAngleDegrees => ResolveBaseSpotAngle();
@@ -121,6 +122,7 @@ public sealed class CharacterVision : MonoBehaviour
 
     public void ApplyFromDefinition(CharacterDefinition definition)
     {
+        _senses = definition != null ? definition.Senses : CharacterSenseBlock.Default;
         float angle = definition != null
             ? definition.SpotAngleDegrees
             : CharacterVisionDefaults.SpotAngleDegrees;

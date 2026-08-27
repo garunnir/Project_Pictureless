@@ -122,6 +122,7 @@ public sealed class NpcManager : MonoBehaviour
         CharacterPainHost _painHost;
         CharacterFactionHost _selfFactionHost;
         CharacterVision _vision;
+        CharacterHearing _hearing;
         ICharacterDefeat _defeat;
 
         NpcCombatState _state = NpcCombatState.Idle;
@@ -130,6 +131,9 @@ public sealed class NpcManager : MonoBehaviour
         Vector3 _homePosition;
         CharacterBodyHost _target;
         float _distanceToTarget = float.MaxValue;
+        SenseContactChannel _contact = SenseContactChannel.None;
+        Vector3Int _heardCell;
+        Vector3 _heardWorld;
 
         public bool TryBind(NpcAgentEntry entry)
         {
@@ -146,6 +150,7 @@ public sealed class NpcManager : MonoBehaviour
             _painHost = go.GetComponent<CharacterPainHost>();
             _selfFactionHost = go.GetComponent<CharacterFactionHost>();
             _vision = go.GetComponent<CharacterVision>();
+            _hearing = go.GetComponent<CharacterHearing>();
 
             if (_motor == null || _attacker == null || _selfHost == null)
             {
@@ -226,7 +231,10 @@ public sealed class NpcManager : MonoBehaviour
         {
             if (_target != null)
             {
-                EnterAlert();
+                if (CharacterSenseContactResolver.AllowsAlert(_contact))
+                    EnterAlert();
+                else
+                    EnterChase();
                 return;
             }
 
@@ -277,17 +285,22 @@ public sealed class NpcManager : MonoBehaviour
                 return;
             }
 
-            if (IsSelectedActionInRange(_distanceToTarget))
+            if (CharacterSenseContactResolver.AllowsAttack(_contact) &&
+                IsSelectedActionInRange(_distanceToTarget))
             {
                 EnterAttack();
                 return;
             }
 
             _motor.SetActiveMovementStyle(_entry.chaseStyle);
+            Vector3 steerGoal = CharacterSenseContactResolver.ResolveSteerGoal(
+                _contact,
+                _target.transform,
+                _heardWorld);
             NpcSteer.TryArriveOrSteer(
                 _motor,
                 _transform.position,
-                _target.transform.position,
+                steerGoal,
                 ResolveStoppingDistance(_entry.chaseStyle));
         }
 
@@ -296,6 +309,12 @@ public sealed class NpcManager : MonoBehaviour
             if (_target == null)
             {
                 EnterReturn();
+                return;
+            }
+
+            if (!CharacterSenseContactResolver.AllowsAttack(_contact))
+            {
+                EnterChase();
                 return;
             }
 
@@ -334,7 +353,10 @@ public sealed class NpcManager : MonoBehaviour
         {
             if (_target != null)
             {
-                EnterAlert();
+                if (CharacterSenseContactResolver.AllowsAlert(_contact))
+                    EnterAlert();
+                else
+                    EnterChase();
                 return;
             }
 
@@ -360,27 +382,29 @@ public sealed class NpcManager : MonoBehaviour
                 if (!IsUsableTarget(_target))
                 {
                     ClearTarget();
-                }
-                else
-                {
-                    Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(_target.transform);
-                    _distanceToTarget = HorizontalDistance(_target.transform.position);
-                    bool keep = _vision != null
-                        ? _vision.CanKeepTarget(selfFeet, forward, targetFeet)
-                        : CharacterVisionDefaults.IsWithinConeXZ(
-                            selfFeet,
-                            forward,
-                            targetFeet,
-                            CharacterVisionDefaults.LoseRadius,
-                            CharacterVisionDefaults.SpotAngleDegrees);
-                    if (!keep)
-                        ClearTarget();
                     return;
                 }
+
+                Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(_target.transform);
+                _distanceToTarget = HorizontalDistance(_target.transform.position);
+                _target.TryGetComponent(out CharacterMotor targetMotor);
+
+                bool visionKeep = EvaluateVisionKeep(selfFeet, forward, targetFeet);
+                bool hearingKeep = EvaluateHearingDetect(selfFeet, targetFeet, targetMotor);
+                _contact = CharacterSenseContactResolver.Resolve(visionKeep, hearingKeep);
+                if (_contact == SenseContactChannel.None)
+                {
+                    ClearTarget();
+                    return;
+                }
+
+                UpdateHeardLocation(targetFeet);
+                return;
             }
 
             CharacterBodyHost best = null;
             float bestDist = float.MaxValue;
+            SenseContactChannel bestContact = SenseContactChannel.None;
             int hostCount = CharacterBodyHost.ActiveCount;
             for (int i = 0; i < hostCount; i++)
             {
@@ -392,33 +416,99 @@ public sealed class NpcManager : MonoBehaviour
 
                 Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(host.transform);
                 float dist = HorizontalDistance(host.transform.position);
-                bool detect = _vision != null
-                    ? _vision.CanDetect(selfFeet, forward, targetFeet)
-                    : CharacterVisionDefaults.IsWithinConeXZ(
-                        selfFeet,
-                        forward,
-                        targetFeet,
-                        CharacterVisionDefaults.DetectRadius,
-                        CharacterVisionDefaults.SpotAngleDegrees);
-                if (!detect || dist >= bestDist)
-                    continue;
+                host.TryGetComponent(out CharacterMotor targetMotor);
 
-                best = host;
-                bestDist = dist;
+                bool visionDetect = EvaluateVisionDetect(selfFeet, forward, targetFeet);
+                if (visionDetect && dist < bestDist)
+                {
+                    best = host;
+                    bestDist = dist;
+                    bestContact = SenseContactChannel.Vision;
+                }
             }
 
-            BindTarget(best, best != null ? bestDist : float.MaxValue);
+            if (best == null)
+            {
+                for (int i = 0; i < hostCount; i++)
+                {
+                    CharacterBodyHost host = CharacterBodyHost.GetActive(i);
+                    if (!IsUsableTarget(host) || host == _selfHost)
+                        continue;
+                    if (!IsPreferredHostile(host))
+                        continue;
+
+                    Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(host.transform);
+                    float dist = HorizontalDistance(host.transform.position);
+                    host.TryGetComponent(out CharacterMotor targetMotor);
+                    if (!EvaluateHearingDetect(selfFeet, targetFeet, targetMotor) || dist >= bestDist)
+                        continue;
+
+                    best = host;
+                    bestDist = dist;
+                    bestContact = SenseContactChannel.Hearing;
+                }
+            }
+
+            if (best == null)
+            {
+                ClearTarget();
+                return;
+            }
+
+            BindTarget(best, bestDist, bestContact);
+            UpdateHeardLocation(CharacterFeetPose.GetFeetWorld(best.transform));
         }
 
-        void BindTarget(CharacterBodyHost host, float distance)
+        void BindTarget(CharacterBodyHost host, float distance, SenseContactChannel contact)
         {
             _target = host;
             _distanceToTarget = distance;
+            _contact = contact;
         }
 
         void ClearTarget()
         {
-            BindTarget(null, float.MaxValue);
+            BindTarget(null, float.MaxValue, SenseContactChannel.None);
+            _heardCell = default;
+            _heardWorld = default;
+        }
+
+        void UpdateHeardLocation(Vector3 targetFeet)
+        {
+            if (_contact != SenseContactChannel.Hearing)
+                return;
+
+            float cellSize = _hearing != null ? _hearing.TopologyCellSize : 1f;
+            _heardCell = IsoTilemap.TileHelper.ConvertWorldToGrid(targetFeet, cellSize);
+            _heardWorld = IsoTilemap.TileHelper.ConvertGridToWorldPos(_heardCell, cellSize);
+        }
+
+        bool EvaluateVisionDetect(Vector3 selfFeet, Vector3 forward, Vector3 targetFeet) =>
+            _vision != null
+                ? _vision.CanDetect(selfFeet, forward, targetFeet)
+                : CharacterVisionDefaults.IsWithinConeXZ(
+                    selfFeet,
+                    forward,
+                    targetFeet,
+                    CharacterVisionDefaults.DetectRadius,
+                    CharacterVisionDefaults.SpotAngleDegrees);
+
+        bool EvaluateVisionKeep(Vector3 selfFeet, Vector3 forward, Vector3 targetFeet) =>
+            _vision != null
+                ? _vision.CanKeepTarget(selfFeet, forward, targetFeet)
+                : CharacterVisionDefaults.IsWithinConeXZ(
+                    selfFeet,
+                    forward,
+                    targetFeet,
+                    CharacterVisionDefaults.LoseRadius,
+                    CharacterVisionDefaults.SpotAngleDegrees);
+
+        bool EvaluateHearingDetect(Vector3 selfFeet, Vector3 targetFeet, CharacterMotor targetMotor)
+        {
+            if (_hearing == null)
+                return false;
+
+            return _hearing.CanDetect(selfFeet, targetFeet, targetMotor);
         }
 
         bool IsPreferredHostile(CharacterBodyHost host)

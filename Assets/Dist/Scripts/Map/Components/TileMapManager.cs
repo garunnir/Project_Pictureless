@@ -53,6 +53,10 @@ public class TileMapManager : MonoBehaviour
     [Tooltip("possessed 시야 반경 밖 NPC 메시 페이드. IMapSightFadeDriver 구현체. 비우면 Find로 탐색.")]
     [SerializeField] private MonoBehaviour _characterSightFadeDriver;
 
+    [Header("Character Hearing Ping")]
+    [Tooltip("possessed 청각 핑 오버레이. IMapHearingPingDriver 구현체. 비우면 Find로 탐색.")]
+    [SerializeField] private MonoBehaviour _characterHearingPingDriver;
+
     [Header("Tile Pooling (chunk streaming only)")]
     [SerializeField] private bool _enableTilePooling = true;
     [SerializeField, Min(0)] private int _maxPooledInstances = 2000;
@@ -239,6 +243,7 @@ public class TileMapManager : MonoBehaviour
         SetupMapCollisionServices();
         SetupMapBlood();
         SetupMapPlant();
+        SetupMapHearingPing();
 
         if (_characterSightFadeDriver == null)
         {
@@ -255,6 +260,32 @@ public class TileMapManager : MonoBehaviour
 
         if (_characterSightFadeDriver is IMapSightFadeDriver sightFade)
             sightFade.Init(this);
+
+        if (_characterHearingPingDriver == null)
+        {
+            MonoBehaviour[] behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (int i = 0; i < behaviours.Length; i++)
+            {
+                if (behaviours[i] is IMapHearingPingDriver)
+                {
+                    _characterHearingPingDriver = behaviours[i];
+                    break;
+                }
+            }
+        }
+
+        if (_characterHearingPingDriver is IMapHearingPingDriver hearingPing)
+            hearingPing.Init(this);
+    }
+
+    void SetupMapHearingPing()
+    {
+        MapHearingPingHost host = GetComponent<MapHearingPingHost>();
+        if (host == null)
+            host = gameObject.AddComponent<MapHearingPingHost>();
+
+        float cellSize = _worldGrid != null ? _worldGrid.CellSize : _gridCellSize;
+        host.BindMapContext(cellSize);
     }
 
     void SetupMapBlood()
@@ -290,6 +321,8 @@ public class TileMapManager : MonoBehaviour
         _occlusionDisplayDriver?.Shutdown();
         if (_characterSightFadeDriver is IMapSightFadeDriver sightFade)
             sightFade.Shutdown();
+        if (_characterHearingPingDriver is IMapHearingPingDriver hearingPing)
+            hearingPing.Shutdown();
     }
 
     private void WireTilePresentationApplier()

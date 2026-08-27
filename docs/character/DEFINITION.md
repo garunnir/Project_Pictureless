@@ -22,7 +22,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 | Needs | 위장·Vitals·대사·Fatigue/SleepDebt·TrySleep/Wake ([`../needs/NEEDS.md`](../needs/NEEDS.md), possessed만) |
 | Climate | Thermal °C·Wetness ([`../body/BODY.md`](../body/BODY.md)) |
 | Skills | Attribute + 카탈로그 Base/Potential/Practice |
-| Combat | Imbalance·**Pain**(Total/Effective/Factor·shock/wake 문턱·부위 Pain)·Capacity·과적 Stage |
+| Combat | Imbalance·**Pain**(Total/Effective/Factor·shock/wake 문턱·부위 Pain)·Capacity·과적 Stage·**Senses**(Definition/Effective sight·hearing 반경) |
 | Mood | `CharacterMoodHost` 수치·사고·기억·Wander 붕괴 ([`../mood/MOOD.md`](../mood/MOOD.md), possessed만). HUD 칩과 별개 |
 | Chips | `PlayerStatusMoodEntries` HUD 칩 읽기 전용 |
 
@@ -81,7 +81,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 | `wearItemIds` | — | 스폰 즉시 Wear. 겹치면 이후 항목 스킵 |
 | `wieldLoadout` | — | `itemId` + `WieldHand`. 양손 무기는 TwoHand. 실패 시 몸통 폴백 |
 | `bodyItemSeeds` | — | 몸통 `AddItem`. 테스터 컨테이너 시드 대체 |
-| `spotAngleDegrees` | — | 시야각 → `CharacterVision`. 반경·inner는 `CharacterVisionDefaults` |
+| `spotAngleDegrees` | — | 시야각 → `CharacterVision`. 탐지/유지 반경·청력 반경 → `CharacterSenseBlock` (`Senses`) |
 
 **미이관:** HP 풀, Passive 슬롯, Equipment 인덱스, Dialogue int id, Bark 테이블.
 
@@ -91,7 +91,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 definition == null  → BodyHost/SkillsHost 기존 시드 (CreateHumanDefault(8), CreateSeededSkills)
 UseGameplayData* 또는 호스트 없음 → GameplayData.Stats / Body / RecipeMemory(reset) / Traits
 그 외 → CharacterBodyHost.BindBody + CharacterSkillsHost.BindSkills + BindTraits
-+ Appearance / Faction / CharacterVision(시야각)
++ Appearance / Faction / CharacterVision(시야각·SenseBlock sight) / CharacterHearing(SenseBlock hearing)
 ```
 
 부위효과→숙련 수식(`BodySkillModifierAggregator`)은 `CharacterSkillsHost`만 붙인다. HUD ViewModel·`GameplayData` Body setter는 붙이지 않는다.
@@ -104,7 +104,7 @@ PC와 NPC는 **같은 본체 프리팹** (`NpcSample`: 모터·몸·Binder·공�
 |------|------|
 | `CharacterMotor` | 공용 물리. possessed면 Player 채널, 아니면 World |
 | `PlayerMovement` | 시스템(`PlayerPossessedInputHost`) 입력 드라이버. possessed 모터에 `ICharacterMotorDrive` 바인드. NPC에는 입력을 켜지 않음 |
-| `NpcManager` | 비possessed 유닛을 행 단위 FSM으로 원격 틱 (2대 이상) |
+| `NpcManager` | 비possessed 유닛을 행 단위 FSM으로 원격 틱 (2대 이상). `CharacterSenseContactResolver`로 Vision/Hearing 단일 Chase |
 | `NpcSteer` | 조향 헬퍼 (MB 아님) |
 | `CharacterActionHost` | 행위자 1줄 행동 큐(종류별)·게이지·CancelAll. [`ACTION.md`](ACTION.md) |
 | `CharacterSessionHub` | 본체 세션 입구. possessed만 `BecomePlayer` |

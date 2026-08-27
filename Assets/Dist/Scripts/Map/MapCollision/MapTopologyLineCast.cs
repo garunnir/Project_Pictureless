@@ -20,6 +20,8 @@ namespace IsoTilemap
 
         public float CellSize => _cellSize;
 
+        public IMapTopologyQuery Query => _query;
+
         /// <summary>수평(XZ) LOS. direction.y 무시, origin의 gridY 고정.</summary>
         public bool TryGetBlockingDistance(
             Vector3 origin,

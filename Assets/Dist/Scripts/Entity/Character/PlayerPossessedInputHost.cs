@@ -15,6 +15,7 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
     [SerializeField] SightLineProximityBlendDriver _sightLineBlend;
     [SerializeField] CharacterVisibilityBroadcaster _visibilityBroadcaster;
     [SerializeField] CharacterSightFadeDriver _sightFade;
+    [SerializeField] CharacterHearingPingDriver _hearingPing;
     [SerializeField] PlayerInventoryRuntime _inventoryRuntime;
 
     GameObject _body;
@@ -41,6 +42,8 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
             TryGetComponent(out _tileObjectPointer);
         if (_sightFade == null)
             TryGetComponent(out _sightFade);
+        if (_hearingPing == null)
+            TryGetComponent(out _hearingPing);
         if (_inventoryRuntime == null)
             TryGetComponent(out _inventoryRuntime);
     }
@@ -66,12 +69,17 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
         _visibilityBroadcaster?.BindPlayerState(_bodyState);
         _sightFade?.SetPlayerState(_bodyState);
         _sightFade?.SetPlayerBody(_bodyTransform);
+        _hearingPing?.SetPlayerState(_bodyState);
+        _hearingPing?.SetPlayerBody(_bodyTransform);
 
         TileMapManager map = FindFirstObjectByType<TileMapManager>();
         if (map != null && map.MapCollisionServices != null)
             _aimController?.BindMapCollision(map.MapCollisionServices.LineCast);
         if (map != null)
+        {
             _sightFade?.Init(map);
+            _hearingPing?.Init(map);
+        }
 
         if (body != null)
             PlayerSightVisionBinder.Bind(this);

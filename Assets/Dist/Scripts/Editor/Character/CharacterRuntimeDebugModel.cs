@@ -68,6 +68,9 @@ public sealed class CharacterRuntimeDebugModel
     CharacterAppearanceHost _appearance;
     CharacterFactionHost _factionHost;
     CharacterMotor _motor;
+    CharacterVision _vision;
+    CharacterHearing _hearing;
+    CharacterDefinitionBinder _definitionBinder;
     PlayerEncumbranceHost _encumbrance;
     readonly List<BodyPartEffect> _effectScratch = new(16);
     readonly List<MoodEntry> _chipScratch = new(16);
@@ -93,6 +96,7 @@ public sealed class CharacterRuntimeDebugModel
     public bool HasClimate => CanWrite && _climateHost != null;
     public bool HasSkills => CanWrite && _skillsHost != null;
     public bool HasCombat => CanWrite && (_imbalanceHost != null || _painHost != null);
+    public bool HasSenses => CanWrite && (_vision != null || _hearing != null);
     public bool IsPossessed => _motor != null && _motor.IsPossessed;
 
     [ShowInInspector, HideLabel, DisplayAsString(EnableRichText = true)]
@@ -117,6 +121,9 @@ public sealed class CharacterRuntimeDebugModel
         _appearance = null;
         _factionHost = null;
         _motor = null;
+        _vision = null;
+        _hearing = null;
+        _definitionBinder = null;
         _encumbrance = null;
 
         if (host == null)
@@ -135,6 +142,9 @@ public sealed class CharacterRuntimeDebugModel
         host.TryGetComponent(out _appearance);
         host.TryGetComponent(out _factionHost);
         host.TryGetComponent(out _motor);
+        host.TryGetComponent(out _vision);
+        host.TryGetComponent(out _hearing);
+        host.TryGetComponent(out _definitionBinder);
         host.TryGetComponent(out _encumbrance);
         RebuildRowCaches();
     }
@@ -754,6 +764,63 @@ public sealed class CharacterRuntimeDebugModel
     List<SkillDebugRow> SkillRows => _skillRows;
 
     // ── Combat ───────────────────────────────────────────────
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat), SdfIconType.ShieldFill, TextColor = "orange")]
+    [ShowIf(nameof(HasSenses))]
+    [BoxGroup("Domain/Combat/Senses")]
+    [HorizontalGroup("Domain/Combat/Senses/Sight")]
+    [ShowInInspector, ReadOnly, LabelText("Sight detect (base)")]
+    float SenseSightDetectBase =>
+        _definitionBinder != null && _definitionBinder.Definition != null
+            ? _definitionBinder.Definition.Senses.sightDetectMeters
+            : CharacterSenseBlock.Default.sightDetectMeters;
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
+    [ShowIf(nameof(HasSenses))]
+    [BoxGroup("Domain/Combat/Senses")]
+    [HorizontalGroup("Domain/Combat/Senses/Sight")]
+    [ShowInInspector, ReadOnly, LabelText("effective")]
+    float SenseSightDetectEffective => _vision != null
+        ? _vision.EffectiveDetectRadius
+        : CharacterSenseBlock.Default.sightDetectMeters;
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
+    [ShowIf(nameof(HasSenses))]
+    [BoxGroup("Domain/Combat/Senses")]
+    [HorizontalGroup("Domain/Combat/Senses/Sight")]
+    [ShowInInspector, ReadOnly, LabelText("lose (base)")]
+    float SenseSightLoseBase =>
+        _definitionBinder != null && _definitionBinder.Definition != null
+            ? _definitionBinder.Definition.Senses.sightLoseMeters
+            : CharacterSenseBlock.Default.sightLoseMeters;
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
+    [ShowIf(nameof(HasSenses))]
+    [BoxGroup("Domain/Combat/Senses")]
+    [HorizontalGroup("Domain/Combat/Senses/Sight")]
+    [ShowInInspector, ReadOnly, LabelText("lose effective")]
+    float SenseSightLoseEffective => _vision != null
+        ? _vision.EffectiveLoseRadius
+        : CharacterSenseBlock.Default.sightLoseMeters;
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
+    [ShowIf(nameof(HasSenses))]
+    [BoxGroup("Domain/Combat/Senses")]
+    [HorizontalGroup("Domain/Combat/Senses/Hearing")]
+    [ShowInInspector, ReadOnly, LabelText("Hearing (base)")]
+    float SenseHearingBase =>
+        _definitionBinder != null && _definitionBinder.Definition != null
+            ? _definitionBinder.Definition.Senses.hearingRadiusMeters
+            : CharacterSenseBlock.Default.hearingRadiusMeters;
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
+    [ShowIf(nameof(HasSenses))]
+    [BoxGroup("Domain/Combat/Senses")]
+    [HorizontalGroup("Domain/Combat/Senses/Hearing")]
+    [ShowInInspector, ReadOnly, LabelText("effective")]
+    float SenseHearingEffective => _hearing != null
+        ? _hearing.EffectiveHearingRadius
+        : CharacterSenseBlock.Default.hearingRadiusMeters;
 
     [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat), SdfIconType.ShieldFill, TextColor = "orange")]
     [ShowIf(nameof(HasCombat))]

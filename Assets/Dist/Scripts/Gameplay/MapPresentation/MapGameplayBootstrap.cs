@@ -66,6 +66,9 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         CharacterAttacker attacker = instance.GetComponent<CharacterAttacker>();
         attacker?.BindMapCollision(services.LineCast);
 
+        CharacterHearing hearing = instance.GetComponent<CharacterHearing>();
+        hearing?.BindMapCollision(services.LineCast);
+
         DirectionalRaycaster raycaster = instance.GetComponent<DirectionalRaycaster>();
         if (raycaster != null && state != null)
             raycaster.BindMapCollision(services.LineCast, state);
@@ -91,6 +94,7 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
             return;
 
         BindCharacterLocomotions<CharacterMotor>(services);
+        BindCharacterHearing(services.LineCast);
 
         var attackers = FindObjectsByType<CharacterAttacker>(
             FindObjectsInactive.Include,
@@ -126,6 +130,19 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
 
         for (int i = 0; i < locomotions.Length; i++)
             locomotions[i].BindMapCollision(services);
+    }
+
+    static void BindCharacterHearing(MapTopologyLineCast lineCast)
+    {
+        if (lineCast == null)
+            return;
+
+        var hearings = FindObjectsByType<CharacterHearing>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        for (int i = 0; i < hearings.Length; i++)
+            hearings[i].BindMapCollision(lineCast);
     }
 
     static void BindWorldGridToContainers(IWorldGrid worldGrid)

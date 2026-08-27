@@ -16,6 +16,7 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
     CharacterAppearanceHost _appearanceHost;
     CharacterFactionHost _factionHost;
     CharacterVision _vision;
+    CharacterHearing _hearing;
 
     public CharacterDefinition Definition => _definition;
 
@@ -44,6 +45,15 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
         {
             Debug.LogError(
                 $"[CharacterDefinitionBinder] '{name}' needs CharacterVision on the prefab.",
+                this);
+        }
+
+        if (_hearing != null)
+            _hearing.ApplyFromDefinition(definition);
+        else
+        {
+            Debug.LogError(
+                $"[CharacterDefinitionBinder] '{name}' needs CharacterHearing on the prefab.",
                 this);
         }
 
@@ -89,6 +99,7 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
         _appearanceHost ??= GetComponent<CharacterAppearanceHost>();
         _factionHost ??= GetComponent<CharacterFactionHost>();
         _vision ??= GetComponent<CharacterVision>();
+        _hearing ??= GetComponent<CharacterHearing>();
         if (_appearanceHost == null)
         {
             Debug.LogError(
@@ -99,6 +110,12 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
         {
             Debug.LogError(
                 $"[CharacterDefinitionBinder] '{name}' needs CharacterFactionHost on the prefab.",
+                this);
+        }
+        if (_hearing == null)
+        {
+            Debug.LogError(
+                $"[CharacterDefinitionBinder] '{name}' needs CharacterHearing on the prefab.",
                 this);
         }
     }

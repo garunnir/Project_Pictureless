@@ -164,6 +164,7 @@ GameObject:
   - component: {fileID: 6213374509182736402}
   - component: {fileID: 3512971667477225611}
   - component: {fileID: 6442656269408774878}
+  - component: {fileID: 8163535356648829047}
   m_Layer: 6
   m_Name: NpcSample
   m_TagString: Untagged
@@ -692,6 +693,18 @@ MonoBehaviour:
     LineOfSightEnabled: 1
     LosHeightOffsetMeters: 1
     DrawEditorGizmos: 1
+--- !u!114 &8163535356648829047
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0bbe6c9f05a2dd46a18c32f63b5481d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterHearing
 --- !u!1 &6522531766620283056
 GameObject:
   m_ObjectHideFlags: 0

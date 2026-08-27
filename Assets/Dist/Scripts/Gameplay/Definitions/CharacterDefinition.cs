@@ -41,6 +41,21 @@ public struct CharacterAttributeBlock
 }
 
 [Serializable]
+public struct CharacterSenseBlock
+{
+    [Min(0f)] public float sightDetectMeters;
+    [Min(0f)] public float sightLoseMeters;
+    [Min(0f)] public float hearingRadiusMeters;
+
+    public static CharacterSenseBlock Default => new CharacterSenseBlock
+    {
+        sightDetectMeters = CharacterVisionDefaults.DetectRadius,
+        sightLoseMeters = CharacterVisionDefaults.LoseRadius,
+        hearingRadiusMeters = CharacterHearingDefaults.BaseRadius,
+    };
+}
+
+[Serializable]
 public struct CharacterSkillOverrideEntry
 {
     public string skillId;
@@ -93,6 +108,7 @@ public sealed class CharacterDefinition : ScriptableObject
     [SerializeField, Range(CharacterVisionDefaults.SpotAngleMinDegrees, CharacterVisionDefaults.SpotAngleMaxDegrees)]
     [Tooltip("시야 부채꼴 전체 각(도). Spot Light/프리팹이 아니라 이 SO가 SSOT. 예: 180≈전방 반원, 360≈전방위.")]
     float _spotAngleDegrees = CharacterVisionDefaults.SpotAngleDegrees;
+    [SerializeField] CharacterSenseBlock _senses = CharacterSenseBlock.Default;
 
     public string Id => _id;
     public string DisplayNameOverride => _displayName;
@@ -113,6 +129,7 @@ public sealed class CharacterDefinition : ScriptableObject
     public IReadOnlyList<CharacterWieldLoadoutEntry> WieldLoadout => _wieldLoadout;
     public IReadOnlyList<CharacterBodyItemSeed> BodyItemSeeds => _bodyItemSeeds;
     public float SpotAngleDegrees => _spotAngleDegrees;
+    public CharacterSenseBlock Senses => _senses;
 
     public float GetPartMassKg(string partId) => LookupPartMassKg(_partMasses, partId);
 

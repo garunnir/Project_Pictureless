@@ -1,7 +1,8 @@
 # Character Sight Fade
 
 **구현:** `CharacterSightFadeDriver` · `CharacterSightFadeHost` · `CharacterSightFadeEvaluator`  
-**시야 판정 SSOT (PC/NPC 공통):** `CharacterVision` — 각=`CharacterDefinition.spotAngleDegrees`, 반경=`CharacterVisionDefaults`  
+**시야 판정 SSOT (PC/NPC 공통):** `CharacterVision` — 각=`CharacterDefinition.spotAngleDegrees`, 탐지/유지 반경=`CharacterDefinition.Senses` → `EffectiveDetect/LoseRadius` (× HelmetVision)  
+**청력·채널:** [`SENSES.md`](SENSES.md)  
 **뷰(시스템만):** Driver/Host 페이드 · Spot 동기  
 **페이드 전방:** `PlayerSight` 루트 forward (= Spot)
 
@@ -18,9 +19,10 @@
 | 위치 | 무엇을 |
 |------|------|
 | `CharacterDefinition` | Spot Angle Degrees |
-| `CharacterVisionDefaults` | Detect/Lose 반경 |
+| `CharacterDefinition.Senses` | sightDetect / sightLose / hearingRadius (기본값은 `CharacterVisionDefaults` / `CharacterHearingDefaults`) |
+| `CharacterVisionDefaults` | Detect/Lose **폴백** (SenseBlock default 파생) |
 | Driver Settings | FadeWidth, LOS, LosHeightOffset |
 
 ## See also
 
-[`DEFINITION.md`](DEFINITION.md)
+[`DEFINITION.md`](DEFINITION.md) · [`SENSES.md`](SENSES.md)
