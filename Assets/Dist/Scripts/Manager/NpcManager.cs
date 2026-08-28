@@ -389,8 +389,8 @@ public sealed class NpcManager : MonoBehaviour
                 _distanceToTarget = HorizontalDistance(_target.transform.position);
                 _target.TryGetComponent(out CharacterMotor targetMotor);
 
-                bool visionKeep = EvaluateVisionKeep(selfFeet, forward, targetFeet);
-                bool hearingKeep = EvaluateHearingDetect(selfFeet, targetFeet, targetMotor);
+                bool visionKeep = EvaluateVisionKeep(selfFeet, forward, _target);
+                bool hearingKeep = EvaluateHearingDetect(selfFeet, _target, targetMotor);
                 _contact = CharacterSenseContactResolver.Resolve(visionKeep, hearingKeep);
                 if (_contact == SenseContactChannel.None)
                 {
@@ -418,7 +418,7 @@ public sealed class NpcManager : MonoBehaviour
                 float dist = HorizontalDistance(host.transform.position);
                 host.TryGetComponent(out CharacterMotor targetMotor);
 
-                bool visionDetect = EvaluateVisionDetect(selfFeet, forward, targetFeet);
+                bool visionDetect = EvaluateVisionDetect(selfFeet, forward, host);
                 if (visionDetect && dist < bestDist)
                 {
                     best = host;
@@ -440,7 +440,7 @@ public sealed class NpcManager : MonoBehaviour
                     Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(host.transform);
                     float dist = HorizontalDistance(host.transform.position);
                     host.TryGetComponent(out CharacterMotor targetMotor);
-                    if (!EvaluateHearingDetect(selfFeet, targetFeet, targetMotor) || dist >= bestDist)
+                    if (!EvaluateHearingDetect(selfFeet, host, targetMotor) || dist >= bestDist)
                         continue;
 
                     best = host;
@@ -483,32 +483,73 @@ public sealed class NpcManager : MonoBehaviour
             _heardWorld = IsoTilemap.TileHelper.ConvertGridToWorldPos(_heardCell, cellSize);
         }
 
-        bool EvaluateVisionDetect(Vector3 selfFeet, Vector3 forward, Vector3 targetFeet) =>
-            _vision != null
-                ? _vision.CanDetect(selfFeet, forward, targetFeet)
-                : CharacterVisionDefaults.IsWithinConeXZ(
-                    selfFeet,
-                    forward,
-                    targetFeet,
-                    CharacterVisionDefaults.DetectRadius,
-                    CharacterVisionDefaults.SpotAngleDegrees);
-
-        bool EvaluateVisionKeep(Vector3 selfFeet, Vector3 forward, Vector3 targetFeet) =>
-            _vision != null
-                ? _vision.CanKeepTarget(selfFeet, forward, targetFeet)
-                : CharacterVisionDefaults.IsWithinConeXZ(
-                    selfFeet,
-                    forward,
-                    targetFeet,
-                    CharacterVisionDefaults.LoseRadius,
-                    CharacterVisionDefaults.SpotAngleDegrees);
-
-        bool EvaluateHearingDetect(Vector3 selfFeet, Vector3 targetFeet, CharacterMotor targetMotor)
+        bool EvaluateVisionDetect(Vector3 selfFeet, Vector3 forward, CharacterBodyHost targetHost)
         {
-            if (_hearing == null)
+            if (targetHost == null)
                 return false;
 
-            return _hearing.CanDetect(selfFeet, targetFeet, targetMotor);
+            Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(targetHost.transform);
+            float visibility = CharacterPresenceHost.ResolveVisibility01(targetHost);
+            if (visibility <= 0f)
+                return false;
+
+            if (_vision != null)
+            {
+                return CharacterVisionDefaults.IsWithinConeXZ(
+                    selfFeet,
+                    forward,
+                    targetFeet,
+                    _vision.EffectiveDetectRadius * visibility,
+                    _vision.EffectiveSpotAngleDegrees);
+            }
+
+            return CharacterVisionDefaults.IsWithinConeXZ(
+                selfFeet,
+                forward,
+                targetFeet,
+                CharacterVisionDefaults.DetectRadius * visibility,
+                CharacterVisionDefaults.SpotAngleDegrees);
+        }
+
+        bool EvaluateVisionKeep(Vector3 selfFeet, Vector3 forward, CharacterBodyHost targetHost)
+        {
+            if (targetHost == null)
+                return false;
+
+            Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(targetHost.transform);
+            float visibility = CharacterPresenceHost.ResolveVisibility01(targetHost);
+            if (visibility <= 0f)
+                return false;
+
+            if (_vision != null)
+            {
+                return CharacterVisionDefaults.IsWithinConeXZ(
+                    selfFeet,
+                    forward,
+                    targetFeet,
+                    _vision.EffectiveLoseRadius * visibility,
+                    _vision.EffectiveSpotAngleDegrees);
+            }
+
+            return CharacterVisionDefaults.IsWithinConeXZ(
+                selfFeet,
+                forward,
+                targetFeet,
+                CharacterVisionDefaults.LoseRadius * visibility,
+                CharacterVisionDefaults.SpotAngleDegrees);
+        }
+
+        bool EvaluateHearingDetect(
+            Vector3 selfFeet,
+            CharacterBodyHost targetHost,
+            CharacterMotor targetMotor)
+        {
+            if (_hearing == null || targetHost == null)
+                return false;
+
+            Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(targetHost.transform);
+            float noise = CharacterPresenceHost.ResolveNoise01(targetHost);
+            return _hearing.CanDetect(selfFeet, targetFeet, targetMotor, noise);
         }
 
         bool IsPreferredHostile(CharacterBodyHost host)

@@ -1,5 +1,5 @@
 // ============================================================
-// UICharacterController — Character 창 토글 (StatusToggle=C) + Layer_Window
+// UICharacterController — Character 창 토글 (StatusToggle=Tab) + Layer_Window
 // ============================================================
 
 using System;

@@ -23,7 +23,29 @@
 | 거리 | `sqrt(dx²+dz²)` | `Vector3.Distance` |
 | 방향 | forward + spotAngle | 없음 |
 | 이동 | 불필요 | `CurrentSpeed ≥ MovementSpeedThreshold` |
-| occlusion | SightFade 3D LOS (표현) | grid 벽 segment + \|ΔgridY\| 층 감쇠 |
+| occlusion | SightFade 3D LOS (표현) | grid 벽 segment + \|ΔgridY\| 층 감쇠 + **대상 `Noise01`** |
+
+## Presence (대상별 탐지 보정 — 가시성·소음 스탯)
+
+**SSOT:** `CharacterPresenceHost` (`ICharacterPresence`) → `CharacterPresenceResolved.Evaluate`  
+**튜닝:** `CharacterPresenceSettings` (본체 Inspector)
+
+Listener(시력/청력 능력)와 분리 — `CharacterVision` / `CharacterHearing` 은 **탐지자**, Presence는 **대상** 스탯.
+
+| 출력 | 범위 | NPC 소비 |
+|------|------|----------|
+| `Visibility01` | 0~1 | 시력 `EffectiveDetect/LoseRadius × Visibility01` (`NpcManager`) |
+| `Noise01` | 0~1 | 청력 `audibility × Noise01` (`CharacterHearingEvaluator`) |
+
+**v1 입력:** `IsStealthActive`, `CurrentSpeed`, `IsSprinting`.  
+**v2 stub:** `BodyScale01`, `Transparency01` (=1).
+
+`Noise01` 산식 (이동 중):  
+`speedNorm × sprintFactor × stealthNoiseMultiplier` — 정지 시 0 (기존 `MovementSpeedThreshold`와 병행).
+
+플레이어 토글: `PlayerStealthController` (C) → `CharacterState.IsStealth`.
+
+소비 API: `CharacterPresenceHost.TryResolve` / `ResolveVisibility01` / `ResolveNoise01`.
 
 ## CharacterSenseContactResolver
 

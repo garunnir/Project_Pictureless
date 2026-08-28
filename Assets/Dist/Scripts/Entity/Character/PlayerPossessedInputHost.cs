@@ -10,6 +10,7 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
     [SerializeField] PlayerMovement _movement;
     [SerializeField] PlayerAimController _aimController;
     [SerializeField] PlayerCombatController _combatController;
+    [SerializeField] PlayerStealthController _stealthController;
     [SerializeField] TileObjectPointerController _tileObjectPointer;
     [SerializeField] PlayerFloorVisibilityDriver _floorVisibility;
     [SerializeField] SightLineProximityBlendDriver _sightLineBlend;
@@ -38,6 +39,8 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
             TryGetComponent(out _aimController);
         if (_combatController == null)
             TryGetComponent(out _combatController);
+        if (_stealthController == null)
+            TryGetComponent(out _stealthController);
         if (_tileObjectPointer == null)
             TryGetComponent(out _tileObjectPointer);
         if (_sightFade == null)
@@ -63,6 +66,7 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
         _movement?.BindBody(motor, _bodyState, facing);
         _aimController?.BindBody(_bodyState, _bodyTransform);
         _combatController?.BindBody(attacker, _bodyState, actionHost);
+        _stealthController?.BindBody(_bodyState, _movement);
 
         _floorVisibility?.SetPlayerState(_bodyState);
         _sightLineBlend?.SetPlayerState(_bodyState);
@@ -97,6 +101,7 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
         _movement?.SetControllEnabled(enabled);
         _aimController?.SetEnabled(enabled);
         _combatController?.SetEnabled(enabled);
+        _stealthController?.SetEnabled(enabled);
         _tileObjectPointer?.SetEnabled(enabled);
     }
 
@@ -106,6 +111,7 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
         _movement?.SetMovementInputEnabled(allowPlayerInput);
         _aimController?.SetEnabled(allowPlayerInput);
         _combatController?.SetEnabled(allowPlayerInput);
+        _stealthController?.SetEnabled(allowPlayerInput);
         _tileObjectPointer?.SetEnabled(allowPlayerInput);
     }
 }

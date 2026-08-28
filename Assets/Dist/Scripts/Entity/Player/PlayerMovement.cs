@@ -47,6 +47,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
     float _liftStrainSpeedMultiplier = 1f;
     float _envSpeedMultiplier = 1f;
     float _imbalanceSpeedMultiplier = 1f;
+    float _stealthSpeedMultiplier = 1f;
     bool _encumbranceBlocksSprint;
     bool _encumbranceBlocksMovement;
 
@@ -109,6 +110,16 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
     /// <summary>불균형 이동 배율 (1 − Imbalance). CharacterImbalanceHost가 넣는다.</summary>
     public void SetImbalanceMovement(float speedMultiplier) =>
         _imbalanceSpeedMultiplier = Mathf.Max(0f, speedMultiplier);
+
+    /// <summary>은신 중 이동 상한 배율. PlayerStealthController가 토글한다.</summary>
+    public void SetStealthMovement(bool active, float speedMultiplier = 0.65f)
+    {
+        _stealthSpeedMultiplier = active ? Mathf.Clamp(speedMultiplier, 0.05f, 1f) : 1f;
+        if (active)
+            CancelSprintForStealth();
+    }
+
+    public void CancelSprintForStealth() => SetSprinting(false);
 
     public void BindBody(CharacterMotor motor, CharacterState state, CharacterFacingAnim facing)
     {
@@ -258,7 +269,8 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         if (!_controlEnabled || mover == null)
             return;
 
-        if (_encumbranceBlocksSprint || _encumbranceBlocksMovement)
+        if (_encumbranceBlocksSprint || _encumbranceBlocksMovement ||
+            (_characterState != null && _characterState.IsStealth))
         {
             SetSprinting(false);
             return;
@@ -296,8 +308,10 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
             * _encumbranceSpeedMultiplier
             * _liftStrainSpeedMultiplier
             * _envSpeedMultiplier
-            * _imbalanceSpeedMultiplier;
-        float sprintMultiplier = _encumbranceBlocksSprint ? 1f : _sprintMultiplier;
+            * _imbalanceSpeedMultiplier
+            * _stealthSpeedMultiplier;
+        bool stealthActive = _characterState != null && _characterState.IsStealth;
+        float sprintMultiplier = _encumbranceBlocksSprint || stealthActive ? 1f : _sprintMultiplier;
         return mover.CalcDesiredMove(
             moveSpeed,
             sprintMultiplier,

@@ -28,12 +28,20 @@ public sealed class CharacterHearing : MonoBehaviour
     }
 
     public bool CanDetect(Vector3 listenerFeet, Vector3 targetFeet, CharacterMotor targetMotor) =>
+        CanDetect(listenerFeet, targetFeet, targetMotor, 1f);
+
+    public bool CanDetect(
+        Vector3 listenerFeet,
+        Vector3 targetFeet,
+        CharacterMotor targetMotor,
+        float targetNoise01) =>
         CharacterHearingEvaluator.CanDetect(
             listenerFeet,
             targetFeet,
             targetMotor,
             EffectiveHearingRadius,
-            _topologyQuery);
+            _topologyQuery,
+            targetNoise01);
 
     public bool CanKeepTarget(Vector3 listenerFeet, Vector3 targetFeet, CharacterMotor targetMotor) =>
         CanDetect(listenerFeet, targetFeet, targetMotor);
@@ -43,11 +51,20 @@ public sealed class CharacterHearing : MonoBehaviour
         Vector3 targetFeet,
         CharacterMotor targetMotor,
         out float audibility01) =>
+        TryEvaluateAudibility(listenerFeet, targetFeet, targetMotor, 1f, out audibility01);
+
+    public bool TryEvaluateAudibility(
+        Vector3 listenerFeet,
+        Vector3 targetFeet,
+        CharacterMotor targetMotor,
+        float targetNoise01,
+        out float audibility01) =>
         CharacterHearingEvaluator.TryEvaluateAudibility(
             listenerFeet,
             targetFeet,
             targetMotor,
             EffectiveHearingRadius,
             _topologyQuery,
+            targetNoise01,
             out audibility01);
 }

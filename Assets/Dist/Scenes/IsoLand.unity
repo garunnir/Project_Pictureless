@@ -39168,6 +39168,7 @@ GameObject:
   - component: {fileID: 739639488}
   - component: {fileID: 739639494}
   - component: {fileID: 739639495}
+  - component: {fileID: 739639496}
   m_Layer: 0
   m_Name: PlayerPossessedInputHost
   m_TagString: Untagged
@@ -39190,6 +39191,7 @@ MonoBehaviour:
   _movement: {fileID: 739639492}
   _aimController: {fileID: 739639491}
   _combatController: {fileID: 739639490}
+  _stealthController: {fileID: 739639496}
   _tileObjectPointer: {fileID: 739639489}
   _floorVisibility: {fileID: 299715458}
   _sightLineBlend: {fileID: 299715464}
@@ -39320,6 +39322,18 @@ MonoBehaviour:
     LineOfSightEnabled: 1
     LosHeightOffsetMeters: 1
     DrawEditorGizmos: 1
+--- !u!114 &739639496
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 739639487}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0f1feec8372433b92b18353f325b6b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::PlayerStealthController
 --- !u!1 &741439658
 GameObject:
   m_ObjectHideFlags: 0

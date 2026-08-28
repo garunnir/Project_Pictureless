@@ -34,7 +34,9 @@ public class CharacterState : MonoBehaviour
             : TileHelper.ConvertWorldToGrid(worldPos, 1f);
 
     public bool IsAiming { get; private set; }
+    public bool IsStealth { get; private set; }
     public event Action<Vector3Int> GridPosChanged;
+    public event Action<bool> StealthChanged;
     /// <summary>매 <see cref="UpdateGridPos"/> 호출 때마다(셀 변경 없이 포함) 발생.</summary>
     public event Action<Vector3> WorldPoseChanged;
     public event Action<Vector3> AimWorldPointChanged;
@@ -76,6 +78,15 @@ public class CharacterState : MonoBehaviour
         IsAiming = false;
         AimWorldPoint = Vector3.zero;
         AimWorldPointChanged?.Invoke(Vector3.zero);
+    }
+
+    internal void SetStealth(bool value)
+    {
+        if (IsStealth == value)
+            return;
+
+        IsStealth = value;
+        StealthChanged?.Invoke(value);
     }
 
     internal void UpdateGridPos(Vector3 worldPos)

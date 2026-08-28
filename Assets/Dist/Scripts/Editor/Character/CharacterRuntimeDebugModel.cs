@@ -70,6 +70,7 @@ public sealed class CharacterRuntimeDebugModel
     CharacterMotor _motor;
     CharacterVision _vision;
     CharacterHearing _hearing;
+    CharacterPresenceHost _presenceHost;
     CharacterDefinitionBinder _definitionBinder;
     PlayerEncumbranceHost _encumbrance;
     readonly List<BodyPartEffect> _effectScratch = new(16);
@@ -97,6 +98,7 @@ public sealed class CharacterRuntimeDebugModel
     public bool HasSkills => CanWrite && _skillsHost != null;
     public bool HasCombat => CanWrite && (_imbalanceHost != null || _painHost != null);
     public bool HasSenses => CanWrite && (_vision != null || _hearing != null);
+    public bool HasPresence => CanWrite && _presenceHost != null;
     public bool IsPossessed => _motor != null && _motor.IsPossessed;
 
     [ShowInInspector, HideLabel, DisplayAsString(EnableRichText = true)]
@@ -123,6 +125,7 @@ public sealed class CharacterRuntimeDebugModel
         _motor = null;
         _vision = null;
         _hearing = null;
+        _presenceHost = null;
         _definitionBinder = null;
         _encumbrance = null;
 
@@ -144,6 +147,7 @@ public sealed class CharacterRuntimeDebugModel
         host.TryGetComponent(out _motor);
         host.TryGetComponent(out _vision);
         host.TryGetComponent(out _hearing);
+        host.TryGetComponent(out _presenceHost);
         host.TryGetComponent(out _definitionBinder);
         host.TryGetComponent(out _encumbrance);
         RebuildRowCaches();
@@ -821,6 +825,29 @@ public sealed class CharacterRuntimeDebugModel
     float SenseHearingEffective => _hearing != null
         ? _hearing.EffectiveHearingRadius
         : CharacterSenseBlock.Default.hearingRadiusMeters;
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
+    [ShowIf(nameof(HasPresence))]
+    [BoxGroup("Domain/Combat/Presence")]
+    [HorizontalGroup("Domain/Combat/Presence/Row")]
+    [ShowInInspector, ReadOnly, LabelText("Visibility")]
+    float PresenceVisibility01 => _presenceHost.Visibility01;
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
+    [ShowIf(nameof(HasPresence))]
+    [BoxGroup("Domain/Combat/Presence")]
+    [HorizontalGroup("Domain/Combat/Presence/Row")]
+    [ShowInInspector, ReadOnly, LabelText("Noise")]
+    float PresenceNoise01 => _presenceHost.Noise01;
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
+    [ShowIf(nameof(HasPresence))]
+    [BoxGroup("Domain/Combat/Presence")]
+    [ShowInInspector, ReadOnly, LabelText("Stealth")]
+    bool PresenceStealthActive =>
+        _bodyHost != null &&
+        _bodyHost.TryGetComponent(out CharacterState state) &&
+        state.IsStealth;
 
     [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat), SdfIconType.ShieldFill, TextColor = "orange")]
     [ShowIf(nameof(HasCombat))]

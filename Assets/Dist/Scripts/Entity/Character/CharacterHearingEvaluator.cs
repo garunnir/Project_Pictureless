@@ -12,13 +12,15 @@ public static class CharacterHearingEvaluator
         Vector3 targetFeet,
         CharacterMotor targetMotor,
         float hearingRadius,
-        IMapTopologyQuery query) =>
+        IMapTopologyQuery query,
+        float targetNoise01 = 1f) =>
         TryEvaluateAudibility(
             listenerFeet,
             targetFeet,
             targetMotor,
             hearingRadius,
             query,
+            targetNoise01,
             out _);
 
     public static bool TryEvaluateAudibility(
@@ -27,9 +29,30 @@ public static class CharacterHearingEvaluator
         CharacterMotor targetMotor,
         float hearingRadius,
         IMapTopologyQuery query,
+        out float audibility01) =>
+        TryEvaluateAudibility(
+            listenerFeet,
+            targetFeet,
+            targetMotor,
+            hearingRadius,
+            query,
+            1f,
+            out audibility01);
+
+    public static bool TryEvaluateAudibility(
+        Vector3 listenerFeet,
+        Vector3 targetFeet,
+        CharacterMotor targetMotor,
+        float hearingRadius,
+        IMapTopologyQuery query,
+        float targetNoise01,
         out float audibility01)
     {
         audibility01 = 0f;
+        float noise = Mathf.Clamp01(targetNoise01);
+        if (noise <= 0f)
+            return false;
+
         float radius = Mathf.Max(0f, hearingRadius);
         if (!CharacterHearingDefaults.IsWithinSphere(listenerFeet, targetFeet, radius))
             return false;
@@ -41,7 +64,7 @@ public static class CharacterHearingEvaluator
         float dist = Vector3.Distance(listenerFeet, targetFeet);
         float distanceFactor = radius > 0f ? 1f - dist / radius : 0f;
         float occlusion = ComputeOcclusionProduct(listenerFeet, targetFeet, query);
-        audibility01 = Mathf.Clamp01(distanceFactor * occlusion);
+        audibility01 = Mathf.Clamp01(distanceFactor * occlusion * noise);
         return audibility01 >= CharacterHearingDefaults.DetectAudibilityThreshold;
     }
 

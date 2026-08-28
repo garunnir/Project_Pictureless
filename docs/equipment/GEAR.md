@@ -12,7 +12,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 |------|---------|
 | Wear | Armor/clothes with `armor.covers` → worn list only |
 | Wield | L/R hand slots (weapons/tools). Two-hand = same stack on both slots; **no extra UI cell** |
-| Character window | Tabs: 상태 \| 장비 \| 방해 \| 체온. Key = existing `StatusToggle` (`C`) |
+| Character window | Tabs: 상태 \| 장비 \| 방해 \| 체온. Key = `StatusToggle` (`Tab`) |
 | Primary | Highest DPS hand → `CharacterAttacker.SetWieldedItem` |
 | SelectedAction | `ItemInstance.SelectedAction` — 손별 선택 **Leaf** (`WeaponAction`). 영속은 인스턴스 |
 | Action layers | **Family** = 에디터·UI 묶음(Melee, Trigger; 없으면 평면). **Leaf** = 선택·시전·**Catalog 폴백 행**(Swing/Thrust/Raise/Semi/Burst/Auto — 줄 필수). **동작 줄 클립** = 그 무기 그 Leaf Hold/Aim/Attack/**Recoil/Blocked** (비면 Catalog). 클립 옆 Speed=`WeaponAnimClipSpeeds`(슬롯 속도 아님, 없으면 1). 구 `Trigger`→Semi. [`BN_BAKE.md`](BN_BAKE.md) |

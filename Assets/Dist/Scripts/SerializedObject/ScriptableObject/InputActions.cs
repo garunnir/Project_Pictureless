@@ -156,6 +156,15 @@ namespace UnityEngine.InputSystem
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""StealthToggle"",
+                    ""type"": ""Button"",
+                    ""id"": ""e2f3a4b5-c6d7-4890-abcd-ef1234567890"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -272,11 +281,22 @@ namespace UnityEngine.InputSystem
                 {
                     ""name"": """",
                     ""id"": ""d4e5f6a7-b8c9-4012-def0-123456789abc"",
-                    ""path"": ""<Keyboard>/c"",
+                    ""path"": ""<Keyboard>/tab"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";Keyboard&Mouse"",
                     ""action"": ""StatusToggle"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f3a4b5c6-d7e8-4901-bcde-f23456789012"",
+                    ""path"": ""<Keyboard>/c"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""StealthToggle"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -941,6 +961,7 @@ namespace UnityEngine.InputSystem
             m_Player_Zoom = m_Player.FindAction("Zoom", throwIfNotFound: true);
             m_Player_InventoryToggle = m_Player.FindAction("InventoryToggle", throwIfNotFound: true);
             m_Player_StatusToggle = m_Player.FindAction("StatusToggle", throwIfNotFound: true);
+            m_Player_StealthToggle = m_Player.FindAction("StealthToggle", throwIfNotFound: true);
             // UI
             m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
             m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1046,6 +1067,7 @@ namespace UnityEngine.InputSystem
         private readonly InputAction m_Player_Zoom;
         private readonly InputAction m_Player_InventoryToggle;
         private readonly InputAction m_Player_StatusToggle;
+        private readonly InputAction m_Player_StealthToggle;
         /// <summary>
         /// Provides access to input actions defined in input action map "Player".
         /// </summary>
@@ -1085,6 +1107,10 @@ namespace UnityEngine.InputSystem
             /// Provides access to the underlying input action "Player/StatusToggle".
             /// </summary>
             public InputAction @StatusToggle => m_Wrapper.m_Player_StatusToggle;
+            /// <summary>
+            /// Provides access to the underlying input action "Player/StealthToggle".
+            /// </summary>
+            public InputAction @StealthToggle => m_Wrapper.m_Player_StealthToggle;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -1132,6 +1158,9 @@ namespace UnityEngine.InputSystem
                 @StatusToggle.started += instance.OnStatusToggle;
                 @StatusToggle.performed += instance.OnStatusToggle;
                 @StatusToggle.canceled += instance.OnStatusToggle;
+                @StealthToggle.started += instance.OnStealthToggle;
+                @StealthToggle.performed += instance.OnStealthToggle;
+                @StealthToggle.canceled += instance.OnStealthToggle;
             }
 
             /// <summary>
@@ -1164,6 +1193,9 @@ namespace UnityEngine.InputSystem
                 @StatusToggle.started -= instance.OnStatusToggle;
                 @StatusToggle.performed -= instance.OnStatusToggle;
                 @StatusToggle.canceled -= instance.OnStatusToggle;
+                @StealthToggle.started -= instance.OnStealthToggle;
+                @StealthToggle.performed -= instance.OnStealthToggle;
+                @StealthToggle.canceled -= instance.OnStealthToggle;
             }
 
             /// <summary>
@@ -1620,6 +1652,13 @@ namespace UnityEngine.InputSystem
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnStatusToggle(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "StealthToggle" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnStealthToggle(InputAction.CallbackContext context);
         }
         /// <summary>
         /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UI" which allows adding and removing callbacks.

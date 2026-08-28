@@ -50,6 +50,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     [SerializeField] string _paramMoveX = "MoveX";
     [SerializeField] string _paramMoveZ = "MoveZ";
     [SerializeField] string _paramAiming = "IsAiming";
+    [SerializeField] string _paramStealth = "IsStealth";
     [SerializeField] string _paramAttackR = "AttackR";
     [SerializeField] string _paramAttackL = "AttackL";
     [SerializeField] string _paramAttack2H = "Attack2H";
@@ -79,6 +80,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     int _hashMoveX;
     int _hashMoveZ;
     int _hashAiming;
+    int _hashStealth;
     int _hashAttackR;
     int _hashAttackL;
     int _hashAttack2H;
@@ -92,6 +94,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     bool _hasMoveX;
     bool _hasMoveZ;
     bool _hasAiming;
+    bool _hasStealth;
     bool _hasAttackR;
     bool _hasAttackL;
     bool _hasAttack2H;
@@ -271,6 +274,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
         bool isAiming = _characterState != null && _characterState.IsAiming;
         if (_hasAiming)
             _animator.SetBool(_hashAiming, isAiming);
+
+        bool isStealth = _characterState != null && _characterState.IsStealth;
+        if (_hasStealth)
+            _animator.SetBool(_hashStealth, isStealth);
 
         ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H);
         ResolveHandPresentations(
@@ -814,6 +821,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _hasMoveX = false;
         _hasMoveZ = false;
         _hasAiming = false;
+        _hasStealth = false;
         _hasAttackR = false;
         _hasAttackL = false;
         _hasAttack2H = false;
@@ -861,6 +869,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _hashMoveX = Hash(_paramMoveX);
         _hashMoveZ = Hash(_paramMoveZ);
         _hashAiming = Hash(_paramAiming);
+        _hashStealth = Hash(_paramStealth);
         _hashAttackR = Hash(_paramAttackR);
         _hashAttackL = Hash(_paramAttackL);
         _hashAttack2H = Hash(_paramAttack2H);
@@ -873,6 +882,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
             if (Match(_paramMoveX, _hashMoveX, nameHash)) _hasMoveX = true;
             if (Match(_paramMoveZ, _hashMoveZ, nameHash)) _hasMoveZ = true;
             if (Match(_paramAiming, _hashAiming, nameHash)) _hasAiming = true;
+            if (Match(_paramStealth, _hashStealth, nameHash)) _hasStealth = true;
             if (Match(_paramAttackR, _hashAttackR, nameHash)) _hasAttackR = true;
             if (Match(_paramAttackL, _hashAttackL, nameHash)) _hasAttackL = true;
             if (Match(_paramAttack2H, _hashAttack2H, nameHash)) _hasAttack2H = true;
