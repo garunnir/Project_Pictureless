@@ -47,6 +47,10 @@ namespace IsoTilemap
             if (!_overlay.TryGetCell(self, out MapLiquidCell selfCell) || selfCell.IsEmpty)
                 return;
 
+            // 고체는 흐르지 않는다. 해동 시 ThermalSolver가 상 교차에서 다시 dirty로 넣어 준다.
+            if (selfCell.IsSolid)
+                return;
+
             string typeId = selfCell.TypeId;
             int capMl = MapLiquidConsts.DefaultMaxVolumeMl;
 
@@ -144,9 +148,15 @@ namespace IsoTilemap
             return (totalMl + overCompressMl) / 2;
         }
 
-        /// <summary>맵에 정의된 셀만 액체 시뮬 대상 — 미정의 void로의 무한 확산 차단.</summary>
+        /// <summary>
+        /// 맵에 정의된 셀만 액체 시뮬 대상 — 미정의 void로의 무한 확산 차단.
+        /// 고체 셀도 제외한다: 얼음은 부피를 넘겨받지도, 빼앗기지도 않는다.
+        /// </summary>
         bool IsTargetEligible(Vector3Int cell) =>
-            _hub.CellHasOccupancy(cell.x, cell.z, cell.y);
+            _hub.CellHasOccupancy(cell.x, cell.z, cell.y) && !IsSolidAt(cell);
+
+        bool IsSolidAt(Vector3Int cell) =>
+            _overlay.TryGetCell(cell, out MapLiquidCell c) && !c.IsEmpty && c.IsSolid;
 
         bool IsHorizontalOpen(Vector3Int a, Vector3Int b)
         {

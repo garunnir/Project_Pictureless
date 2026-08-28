@@ -384,6 +384,7 @@ MonoBehaviour:
   _paramMoveX: MoveX
   _paramMoveZ: MoveZ
   _paramAiming: IsAiming
+  _paramStealth: IsStealth
   _paramAttackR: AttackR
   _paramAttackL: AttackL
   _paramAttack2H: Attack2H

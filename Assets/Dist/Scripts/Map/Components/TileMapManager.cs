@@ -544,7 +544,15 @@ public class TileMapManager : MonoBehaviour
 
         SetupMapCollisionServices();
 
-        Debug.Log("[TileMapManager] LoadEditor 완료.");
+        // 물은 타일 모델에 없으므로 뷰 빌더가 만들지 않는다 — 저작 마커를 JSON에서 직접 복원한다.
+        float editorCellSize = _worldGrid != null ? _worldGrid.CellSize : _gridCellSize;
+        int liquidMarkers = LiquidAuthoringSceneSpawner.SpawnInto(
+            tileContainer,
+            _loader.LastLoadedDto?.liquidAuthoringFaces,
+            _prefabDB,
+            editorCellSize);
+
+        Debug.Log($"[TileMapManager] LoadEditor 완료. (물 마커 {liquidMarkers}개 복원)");
     }
 #endif
 }

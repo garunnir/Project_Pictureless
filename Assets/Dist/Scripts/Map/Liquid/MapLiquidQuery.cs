@@ -33,6 +33,31 @@ namespace IsoTilemap
 
         public static bool HasAnyLiquid(Vector3Int cell) => GetEffectiveMl(cell) > 0;
 
+        /// <summary>이 셀의 액체가 어는점 이하로 내려가 고체인지.</summary>
+        public static bool IsSolid(Vector3Int cell) =>
+            TryGetLiquidCell(cell, out MapLiquidCell c) && c.IsSolid;
+
+        /// <summary>
+        /// 이 셀의 고체 액체가 **위 셀의 바닥**이 되는지.
+        /// 살얼음(부분 충전)은 제외 — <see cref="MapLiquidConsts.MinSolidSupportMl"/> 이상만 지지한다.
+        /// </summary>
+        public static bool ProvidesSolidSupport(Vector3Int cell) =>
+            TryGetLiquidCell(cell, out MapLiquidCell c)
+            && c.IsSolid
+            && c.EffectiveMl >= MapLiquidConsts.MinSolidSupportMl;
+
+        static bool TryGetLiquidCell(Vector3Int cell, out MapLiquidCell liquidCell)
+        {
+            liquidCell = null;
+            MapLiquidHost host = MapLiquidHost.Runtime;
+            if (host == null)
+                return false;
+
+            return host.Overlay.TryGetCell(cell, out liquidCell)
+                && liquidCell != null
+                && !liquidCell.IsEmpty;
+        }
+
         /// <summary>
         /// <paramref name="topCell"/>에서 아래로 물이 이어지는 동안의 누적 ml (수심).
         /// 물이 없는 셀을 만나면 즉시 멈추고, <see cref="MapLiquidConsts.MaxColumnScanCells"/>에서 끊는다.

@@ -69,19 +69,30 @@ namespace IsoTilemap
             if (target == null)
                 return;
 
+            // 물 저작 면은 씬 마커에서만 나온다. null = 호출부가 씬을 읽지 않았다는 뜻이므로 디스크를 계승한다
+            // (Play 저장 경로). 빈 리스트는 "씬에 물이 없다"는 확정이라 그대로 둔다.
+            CarryLiquidAuthoring(target, existing);
+
             // Unity fake-null 때문에 ?. 대신 != null — 파괴된 컴포넌트에 WriteToDto를 걸지 않는다.
-            // 액체 우선순위: Play 호스트 → 에디터 워터 floor bake → 디스크 계승.
+            // 액체 우선순위: Play 호스트 → 에디터 물 저작 면 bake → 디스크 계승.
             if (liquidHost != null)
                 liquidHost.WriteToDto(target);
-            else if (MapLiquidAuthoringBake.TryBakeFromFloorFaces(target, out int baked) && baked > 0)
+            else if (MapLiquidAuthoringBake.TryBakeFromAuthoringFaces(target, out int baked) && baked > 0)
             {
-                // ShallowWater/DeepWater floorFaces가 liquidCells로 변환됨. floorFaces는 다음
-                // 에디터 편집용으로 유지한다(워터 에셋 제거 전까지 메시·수면이 Play에서 겹칠 수 있음).
                 Debug.Log(
-                    $"[MapSaveLayerCarryOver] 워터 floor face → liquidCells 베이크 ({baked} cells).");
+                    $"[MapSaveLayerCarryOver] 물 저작 면 → liquidCells 베이크 ({baked} cells).");
             }
             else
+            {
                 CarryLiquid(target, existing);
+                if (existing?.hasLiquidSnapshot == true)
+                {
+                    Debug.Log(
+                        $"[MapSaveLayerCarryOver] 물 저작 면 없음 — 기존 liquidCells 계승 " +
+                        $"({target.liquidCells?.Count ?? 0} cells). 물 프리팹을 새로 깔았다면 " +
+                        "LiquidAuthoringView.prefabId / TilePrefabDB 등록을 확인하세요.");
+                }
+            }
 
             if (bloodHost != null)
                 bloodHost.WriteToDto(target);
@@ -98,6 +109,22 @@ namespace IsoTilemap
                 CarryClock(target, existing);
         }
 
+        static void CarryLiquidAuthoring(MapSaveJsonDto target, MapSaveJsonDto existing)
+        {
+            if (target.liquidAuthoringFaces != null)
+                return;
+
+            if (existing == null)
+            {
+                target.liquidAuthoringFaces = new List<FloorFaceSaveData>();
+                return;
+            }
+
+            // 여기서 읽은 existing은 TileMapSerializer를 거치지 않아 구 JSON 물이 floorFaces에 남아 있다.
+            MapLiquidAuthoringBake.PromoteLegacyFloorFaces(existing);
+            target.liquidAuthoringFaces = existing.liquidAuthoringFaces ?? new List<FloorFaceSaveData>();
+        }
+
         static void CarryLiquid(MapSaveJsonDto target, MapSaveJsonDto existing)
         {
             if (existing == null)
@@ -105,6 +132,7 @@ namespace IsoTilemap
 
             target.liquidCells = existing.liquidCells ?? new List<MapLiquidCellSaveData>();
             target.hasLiquidSnapshot = existing.hasLiquidSnapshot;
+            target.hasLiquidTemperature = existing.hasLiquidTemperature;
         }
 
         static void CarryBlood(MapSaveJsonDto target, MapSaveJsonDto existing)

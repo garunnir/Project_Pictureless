@@ -119,6 +119,24 @@ classDiagram
 
 SSOT 런타임: `MapBloodOverlay` (`MapBloodHost`). 그리기: `MapBloodStainRenderer` (`DrawMeshInstanced`, 스탬프당 GO 없음). 쓰기: 출혈 drip · 자상/절단 히트 콘 spray · (선택) 피 VFX 파티클 착지 샘플. 청소: `ClearCell` API (UI 없음).
 
+### 맵 액체 (`liquidAuthoringFaces[]` + `liquidCells[]`)
+
+`tiles` / `wallEdges` / `floorFaces`와 **별 레이어**. 물은 `TileData`가 **아니다** — 계약 SSOT는
+[`docs/map/LIQUID.md`](LIQUID.md).
+
+| 레이어 | 의미 |
+|--------|------|
+| `liquidAuthoringFaces[]` | 에디터 저작 마커. `FloorFaceSaveData`와 같은 형태이며 `x,y,z` = 바닥 +Y 면 앵커(`CellBelow`) |
+| `liquidCells[]` | 시뮬 상태. 셀 좌표는 앵커의 `CellAbove`(= walkable). `tempDeciC`는 0.1 °C 단위 |
+| `hasLiquidSnapshot` | true면 `liquidCells`를 그대로 신뢰(재시드 금지) |
+| `hasLiquidTemperature` | true면 `tempDeciC`가 유효. false면 기본 기온으로 초기화 — `0`이 물의 어는점과 겹쳐 그대로 읽으면 전부 얼어버린다 |
+
+물은 점유 인덱스·`FloorMapIndex`·building bake에 등록되지 않는다. 얼어붙은 액체의 바닥 지지는
+`MapTopologyQuery.CellHasFloor`에서만 합성된다(이동·지각 seam 한 곳).
+
+구 JSON은 물이 `floorFaces`에 Floor 타일로 들어 있고, `TileMapSerializer.Read`가 로드 경계에서
+`liquidAuthoringFaces`로 one-way 승격한다.
+
 ### 맵 식물 (OccupiedCell `tiles[]` + 시계 스냅샷)
 
 Plant는 **별 레이어가 아니라** OccupiedCell `tiles[]`다. `Furniture/Plant_*` prefabId + 아래 인스턴스 필드.

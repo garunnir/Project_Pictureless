@@ -10,7 +10,7 @@ using UnityEngine.Serialization;
 // 런타임 데이터 변경을 시각 상태(셰이더 컨트롤)까지 반영합니다.
 namespace IsoTilemap
 {
-    public class TileView : MonoBehaviour
+    public class TileView : MapPlacedView
     {
         public enum TileType
         {
@@ -37,16 +37,6 @@ namespace IsoTilemap
             RenderingLayer = 0,
             EmphasisBlend = 1,
         }
-        [Header("Grid Anchor Position (xyz)")]
-        [Tooltip("OccupiedCell=점유 셀. VerticalFace/HorizontalFace=앵커 셀(CellBelow).")]
-        public Vector3Int gridPos;
-
-        [Header("Tile Size in Grid Units")]
-        public Vector3Int size = Vector3Int.one; // 1x1x1, 2x1x1 등 (x,y,z 방향)
-
-        [Header("Prefab Identity")]
-        public string prefabId;             // 어떤 프리팹/타입인지 식별용
-
         [Header("Placement Slot")]
         public TilePlacementSlot placementSlot = TilePlacementSlot.None;
 
@@ -57,12 +47,6 @@ namespace IsoTilemap
         [FormerlySerializedAs("wallEdgeFace")]
         [Range(0, 1)] public byte wallFace;
 
-        [Header("Gizmo (Grid) Settings")]
-        [Tooltip("기즈모에서 사용할 셀 크기: 그리드 단위 1의 월드 길이입니다.")]
-        public float gizmoCellSize = 1f;
-        [Tooltip("기즈모 그리드 선을 그릴지 여부")]
-        public bool drawGizmoGrid = true;
-        public Color gizmoGridColor = new Color(0f, 0.7f, 0.9f, 0.6f);
         [Header("Render Controller")]
         [SerializeField] private ShadeObjectController _shadeController;
         [Tooltip("Selected 오버레이용 URP RenderingLayer 비트의 단일 진실원 SO")]
@@ -99,24 +83,13 @@ namespace IsoTilemap
             SetBlockedTraceVisible(false);
         }
 
-        private void Reset()
+        protected override void Reset()
         {
-            float cs = Mathf.Max(0.0001f, gizmoCellSize);
-            gridPos = TileHelper.ConvertWorldToGrid(transform.position, cs);
+            base.Reset();
             CacheControllers();
-            // 하이어라키의 인스턴스 → 원본 프리팹 오브젝트
-#if UNITY_EDITOR
-            var source = UnityEditor.PrefabUtility.GetCorrespondingObjectFromSource(gameObject);
-            if (source != null)
-            {
-                string tilePrefabName = UnityEditor.Tile.PrefabDBExtensions.GetTilePrefabName(source);
-                Debug.Log(tilePrefabName);
-                prefabId = tilePrefabName;
-            }
-#endif
         }
 
-        private void OnValidate()
+        protected override void OnValidate()
         {
             MigrateLegacyTileType();
             if (placementSlot == TilePlacementSlot.None &&
@@ -128,7 +101,12 @@ namespace IsoTilemap
             }
 
             CacheControllers();
-            float cs = Mathf.Max(0.0001f, gizmoCellSize);
+            base.OnValidate();
+        }
+
+        protected override void ApplyEditorPose()
+        {
+            float cs = SafeCellSize;
             if (placementSlot == TilePlacementSlot.VerticalFace)
             {
                 if (WallEdgePicker.TryPickNearest(transform.position, cs, out var nearest))
@@ -186,18 +164,6 @@ namespace IsoTilemap
                 _defaultShadowCastingMode = renderer.shadowCastingMode;
             }
         }
-        // 선택된 오브젝트에서 기즈모로 권장 그리드 라인을 표시합니다.
-        // - Anchor(그리드 좌표) 기준으로 X/Z 평면의 셀 경계선을 그리고,
-        // - 높이(size.y)에 맞춘 와이어 박스를 함께 표시합니다.
-        // 각 타일의 권장규격을 표현하는 기즈모입니다.
-        private void OnDrawGizmosSelected()
-        {
-            if (!drawGizmoGrid) return;
-
-            float cs = Mathf.Max(0.0001f, gizmoCellSize);
-            TileHelper.DrawOccupiedCellWire(gridPos, cs, gizmoGridColor, size);
-        }
-
         internal void UpdateTile(TileData tileData, float cellSize)
         {
             ApplyWorldPose(tileData, cellSize);

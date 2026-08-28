@@ -14,20 +14,37 @@ namespace IsoTilemap
         public byte Level;
         public ushort RemainderMl;
 
+        /// <summary>자체 온도(deci°C). 어는점 이하면 <see cref="IsSolid"/> — 흐르지 않고 바닥이 된다.</summary>
+        public short TempDeciC;
+
         public MapLiquidCell(string typeId, byte level, ushort remainderMl)
+            : this(typeId, level, remainderMl, MapLiquidConsts.DefaultAmbientDeciC)
+        {
+        }
+
+        public MapLiquidCell(string typeId, byte level, ushort remainderMl, short tempDeciC)
         {
             TypeId = typeId;
             Level = level;
             RemainderMl = remainderMl;
+            TempDeciC = tempDeciC;
         }
 
         public int EffectiveMl => Level * MapLiquidConsts.MlPerLevel + RemainderMl;
 
         public bool IsEmpty => Level == 0 && RemainderMl == 0;
 
-        public static MapLiquidCell FromEffectiveMl(string typeId, int effectiveMl)
+        /// <summary>고체 상태 — <see cref="MapLiquidTypeProps"/>의 타입별 어는점과 비교한다.</summary>
+        public bool IsSolid => MapLiquidTypeProps.IsSolidAt(TypeId, TempDeciC);
+
+        public float TempC => MapLiquidConsts.FromDeciC(TempDeciC);
+
+        public static MapLiquidCell FromEffectiveMl(string typeId, int effectiveMl) =>
+            FromEffectiveMl(typeId, effectiveMl, MapLiquidConsts.DefaultAmbientDeciC);
+
+        public static MapLiquidCell FromEffectiveMl(string typeId, int effectiveMl, short tempDeciC)
         {
-            var cell = new MapLiquidCell(typeId, 0, 0);
+            var cell = new MapLiquidCell(typeId, 0, 0, tempDeciC);
             cell.SetEffectiveMl(effectiveMl);
             return cell;
         }

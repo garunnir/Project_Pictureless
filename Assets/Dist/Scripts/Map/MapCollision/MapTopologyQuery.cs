@@ -37,8 +37,14 @@ namespace IsoTilemap
             return FloorMapIndex.CellHasSolidWall(list);
         }
 
+        /// <summary>
+        /// 타일 바닥 또는 **아래 셀의 얼어붙은 액체**. 얼음 지지는 여기서만 합성한다 —
+        /// <see cref="FloorMapIndex"/>에 넣으면 building·space bake와 가려짐 입력까지 오염되고,
+        /// 점유 인덱스는 셀 변경 시 전체 리빌드라 상변화마다 부를 수 없다.
+        /// </summary>
         public bool CellHasFloor(int x, int z, int gridY) =>
-            _hub.Topology.CellHasFloor(x, gridY, z);
+            _hub.Topology.CellHasFloor(x, gridY, z)
+            || MapLiquidQuery.ProvidesSolidSupport(new Vector3Int(x, gridY - 1, z));
 
         public bool TryGetEdgeBetween(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall) =>
             _hub.TryGetEdgeBetween(cellA, cellB, out edgeWall);

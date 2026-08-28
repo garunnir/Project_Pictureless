@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 namespace IsoTilemap
 {
     // id → prefab
@@ -102,6 +105,59 @@ namespace IsoTilemap
 
                 if (db.TryGetDefinition(id, out def))
                     return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 씬 인스턴스/변형 프리팹 에셋으로 TileDefinition.prefabId를 역조회한다.
+        /// Floor 변형(ShallowWater 등)처럼 TileView.prefabId가 비어 있을 때 Save Map To JSON용.
+        /// </summary>
+        public static bool TryResolvePrefabIdByPrefab(GameObject prefabOrInstance, out string prefabId)
+        {
+            prefabId = null;
+            if (prefabOrInstance == null)
+                return false;
+
+#if UNITY_EDITOR
+            GameObject asset = PrefabUtility.GetCorrespondingObjectFromSource(prefabOrInstance);
+            if (asset == null && AssetDatabase.Contains(prefabOrInstance))
+                asset = prefabOrInstance;
+#else
+            GameObject asset = prefabOrInstance;
+#endif
+            if (asset == null)
+                return false;
+
+            var dbs = Resources.FindObjectsOfTypeAll<TilePrefabDB>();
+            for (int i = 0; i < dbs.Length; i++)
+            {
+                TilePrefabDB db = dbs[i];
+                if (db?.entries == null)
+                    continue;
+
+                for (int e = 0; e < db.entries.Count; e++)
+                {
+                    TileDefinition def = db.entries[e];
+                    if (def == null || def.prefab == null || string.IsNullOrEmpty(def.prefabId))
+                        continue;
+
+                    if (def.prefab == asset || def.prefab == prefabOrInstance)
+                    {
+                        prefabId = def.prefabId;
+                        return true;
+                    }
+
+#if UNITY_EDITOR
+                    GameObject defAsset = PrefabUtility.GetCorrespondingObjectFromSource(def.prefab);
+                    if (defAsset != null && defAsset == asset)
+                    {
+                        prefabId = def.prefabId;
+                        return true;
+                    }
+#endif
+                }
             }
 
             return false;

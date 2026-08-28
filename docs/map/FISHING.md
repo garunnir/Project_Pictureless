@@ -29,7 +29,7 @@
 
 | Flag | 역할 |
 |------|------|
-| `SHALLOW_WATER` / `DEEP_WATER` | 에디터 floor 프리팹 태그 — **Save Map To JSON** 시 `MapLiquidAuthoringBake`가 `liquidCells`로 bake. `hasLiquidSnapshot: false` 로드 시에만 런타임 `SeedFromTileFlags` 폴백. Play 검증 후 SO·프리팹 제거 예정 |
+| `SHALLOW_WATER` / `DEEP_WATER` | 에디터 floor **마커 별칭** — 둘 다 같은 물. Save bake·시드 모두 **cap 가득**. 깊이 구분은 `ColumnMlDownward`/`Fill01`. Play 검증 후 SO 하나로 합치거나 삭제 예정 |
 | `FISHABLE` | 에셋 태깅·후속 확장용 (현재 판정 미사용) |
 
 에디터 절차: [`LIQUID.md` §에디터 저작](LIQUID.md#에디터-저작-워터-프리팹-타일).
