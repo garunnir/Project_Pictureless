@@ -32,6 +32,7 @@ public sealed class CharacterFootDustVfx : MonoBehaviour
     VfxChannelTicker _ticker;
     float _strideAccum;
     bool _loggedMissingPrefab;
+    bool _spawnPending;
 
     void Awake()
     {
@@ -41,13 +42,24 @@ public sealed class CharacterFootDustVfx : MonoBehaviour
 
     void OnEnable()
     {
-        SpawnDust();
+        if (_dust == null)
+            _spawnPending = true;
     }
 
     void OnDisable()
     {
         DespawnDust();
         _strideAccum = 0f;
+        _spawnPending = false;
+    }
+
+    void LateUpdate()
+    {
+        if (_spawnPending)
+        {
+            _spawnPending = false;
+            SpawnDust();
+        }
     }
 
     void FixedUpdate()
@@ -55,6 +67,8 @@ public sealed class CharacterFootDustVfx : MonoBehaviour
         // 할당 없음. Spawn/GetComponents는 OnEnable. Emission 모듈은 구조체 쓰기.
         if (_motor == null || _dust == null || _systems == null)
             return;
+
+        _dust.position = ResolveFeetWorld();
 
         TimeScaleChannel channel = _motor.IsPossessed
             ? TimeScaleChannel.Player
@@ -117,13 +131,11 @@ public sealed class CharacterFootDustVfx : MonoBehaviour
         }
 
         Vector3 feet = ResolveFeetWorld();
-        GameObject instance = LeanPool.Spawn(_dustPrefab, feet, Quaternion.identity, transform);
+        GameObject instance = LeanPool.Spawn(_dustPrefab, feet, Quaternion.identity, null);
         if (instance == null)
             return;
 
         _dust = instance.transform;
-        _dust.localPosition = ResolveFeetLocal();
-        _dust.localRotation = Quaternion.identity;
         _systems = instance.GetComponentsInChildren<ParticleSystem>(true);
         instance.TryGetComponent(out _ticker);
         SetRate(0f);

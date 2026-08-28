@@ -18,7 +18,7 @@ namespace IsoTilemap
 
         readonly MapLiquidOverlay _overlay = new();
         MapLiquidFlowSolver _solver;
-        TileMapCacheHub _hub;
+        MapLiquidThermalSolver _thermalSolver;
         float _cellSize = 1f;
         bool _clockSubscribed;
 
@@ -29,6 +29,7 @@ namespace IsoTilemap
         {
             Runtime = this;
             _solver = new MapLiquidFlowSolver(_overlay);
+            _thermalSolver = new MapLiquidThermalSolver(_overlay);
             ResolveSurfaceRenderer()?.Bind(_overlay);
         }
 
@@ -87,13 +88,19 @@ namespace IsoTilemap
             _clockSubscribed = false;
         }
 
-        void OnWorldMinuteChanged() => _solver.ProcessDirty(MapLiquidConsts.MaxUpdatesPerTick);
+        void OnWorldMinuteChanged()
+        {
+            // 기온 변화 감지 → 열 확산 → 흐름. 상 교차가 flow dirty를 넣으므로 열이 먼저다.
+            _thermalSolver.SyncAmbient();
+            _thermalSolver.ProcessDirty(MapLiquidConsts.MaxThermalUpdatesPerTick);
+            _solver.ProcessDirty(MapLiquidConsts.MaxUpdatesPerTick);
+        }
 
         public void BindMapContext(TileMapCacheHub hub, float cellSize)
         {
-            _hub = hub;
             _cellSize = Mathf.Max(1e-4f, cellSize);
             _solver.BindMapContext(hub);
+            _thermalSolver.BindMapContext(hub);
         }
 
         /// <summary>
@@ -108,18 +115,37 @@ namespace IsoTilemap
 
         /// <summary>
         /// dto.hasLiquidSnapshot이 true면 저장된 상태만 신뢰(플레이어가 비운 웅덩이 등)하고 재시드하지 않는다.
-        /// false(레거시/최초 로드)면 SHALLOW_WATER/DEEP_WATER 바닥 태그로 1회 시드한다.
+        /// false(레거시/최초 로드)면 물 저작 면으로 1회 시드한다.
         /// </summary>
         public void LoadFromDto(MapSaveJsonDto dto)
         {
             if (dto != null && dto.hasLiquidSnapshot)
             {
-                _overlay.LoadFromDto(dto.liquidCells);
-                return;
+                _overlay.LoadFromDto(dto.liquidCells, dto.hasLiquidTemperature);
+                // 에디터 bake(hasLiquidSnapshot) 경로도 simulateFlow 저작 의도를 반영한다.
+                _overlay.ApplySimulateFlowFromAuthoring(dto.liquidAuthoringFaces);
+            }
+            else
+            {
+                _overlay.Clear();
+                _overlay.SeedFromAuthoringFaces(dto?.liquidAuthoringFaces);
             }
 
-            _overlay.Clear();
-            _overlay.SeedFromTileFlags(_hub);
+            _thermalSolver.MarkAmbientBoundaryDirty();
+            KickFlowSimulationAfterLoad();
+        }
+
+        /// <summary>simulateFlow dirty — WorldClock 1분을 기다리지 않고 로드 직후 settle.</summary>
+        void KickFlowSimulationAfterLoad()
+        {
+            if (_overlay.DirtyCount == 0)
+                return;
+
+            for (int i = 0; i < MapLiquidConsts.MaxLoadFlowKickRounds && _overlay.DirtyCount > 0; i++)
+            {
+                _thermalSolver.ProcessDirty(MapLiquidConsts.MaxThermalUpdatesPerTick);
+                _solver.ProcessDirty(MapLiquidConsts.MaxUpdatesPerTick);
+            }
         }
 
         public void WriteToDto(MapSaveJsonDto dto)
@@ -130,6 +156,7 @@ namespace IsoTilemap
             dto.liquidCells ??= new List<MapLiquidCellSaveData>();
             _overlay.WriteToDto(dto.liquidCells);
             dto.hasLiquidSnapshot = true;
+            dto.hasLiquidTemperature = true;
         }
     }
 }

@@ -21,7 +21,8 @@ public enum CharacterRuntimeDebugDomain
     Skills = 5,
     Combat = 6,
     Mood = 7,
-    Chips = 8
+    Chips = 8,
+    Emote = 9
 }
 
 [Serializable]
@@ -71,6 +72,7 @@ public sealed class CharacterRuntimeDebugModel
     CharacterVision _vision;
     CharacterHearing _hearing;
     CharacterPresenceHost _presenceHost;
+    CharacterEmoteHost _emoteHost;
     CharacterDefinitionBinder _definitionBinder;
     PlayerEncumbranceHost _encumbrance;
     readonly List<BodyPartEffect> _effectScratch = new(16);
@@ -99,6 +101,7 @@ public sealed class CharacterRuntimeDebugModel
     public bool HasCombat => CanWrite && (_imbalanceHost != null || _painHost != null);
     public bool HasSenses => CanWrite && (_vision != null || _hearing != null);
     public bool HasPresence => CanWrite && _presenceHost != null;
+    public bool HasEmote => CanWrite && _emoteHost != null;
     public bool IsPossessed => _motor != null && _motor.IsPossessed;
 
     [ShowInInspector, HideLabel, DisplayAsString(EnableRichText = true)]
@@ -126,6 +129,7 @@ public sealed class CharacterRuntimeDebugModel
         _vision = null;
         _hearing = null;
         _presenceHost = null;
+        _emoteHost = null;
         _definitionBinder = null;
         _encumbrance = null;
 
@@ -148,6 +152,7 @@ public sealed class CharacterRuntimeDebugModel
         host.TryGetComponent(out _vision);
         host.TryGetComponent(out _hearing);
         host.TryGetComponent(out _presenceHost);
+        host.TryGetComponent(out _emoteHost);
         host.TryGetComponent(out _definitionBinder);
         host.TryGetComponent(out _encumbrance);
         RebuildRowCaches();
@@ -1026,6 +1031,34 @@ public sealed class CharacterRuntimeDebugModel
             default: return Color.white;
         }
     }
+
+    // ── Emote ────────────────────────────────────────────────
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Emote), SdfIconType.ChatSquareTextFill, TextColor = "cyan")]
+    [ShowIf(nameof(HasEmote))]
+    [ShowInInspector, ReadOnly, LabelText("Resolved")]
+    EmoteId EmoteResolvedId => _emoteHost != null ? _emoteHost.ResolvedId : EmoteId.None;
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Emote))]
+    [ShowIf(nameof(HasEmote))]
+    [ShowInInspector, ReadOnly]
+    EmoteSource EmoteResolvedSource => _emoteHost != null ? _emoteHost.ResolvedSource : EmoteSource.None;
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Emote))]
+    [ShowIf(nameof(HasEmote))]
+    [ShowInInspector, ReadOnly]
+    [GUIColor("@EmoteDisplayVisible ? \"lightgreen\" : \"gray\"")]
+    bool EmoteDisplayVisible => _emoteHost != null && _emoteHost.IsDisplayVisible;
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Emote))]
+    [ShowIf(nameof(HasEmote))]
+    [ShowInInspector, ReadOnly]
+    EmoteHideReason EmoteHideReason => _emoteHost != null ? _emoteHost.HideReason : EmoteHideReason.NoActiveEmote;
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Emote))]
+    [ShowIf(nameof(HasEmote))]
+    [ShowInInspector, ReadOnly]
+    bool EmoteCatalogBound => _emoteHost != null && _emoteHost.Catalog != null;
 
     // ── Mood ─────────────────────────────────────────────────
 

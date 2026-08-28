@@ -10,7 +10,7 @@ Material:
   m_Name: Sprite-Lit-UV4NE
   m_Shader: {fileID: 4800000, guid: 48c295f6856d7d044bc0ec11ea90c8f5, type: 3}
   m_Parent: {fileID: 2100000, guid: 25576a42bbe47144db07689b0a23ff5f, type: 2}
-  m_ModifiedSerializedProperties: 0
+  m_ModifiedSerializedProperties: 16
   m_ValidKeywords:
   - _ALPHATEST_ON
   m_InvalidKeywords: []

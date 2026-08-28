@@ -13,7 +13,7 @@ namespace IsoTilemap
     public static class MapLiquidMlBridge
     {
         /// <summary>
-        /// targetCell에 pourMl을 붓는다. 맵에 정의되지 않은 셀(HasOccupancy false)은 거부(0 반환).
+        /// targetCell에 pourMl을 붓는다. mapBounds 밖이면 거부(0 반환).
         /// 반환값 = 인벤에서 차감해야 할 ml(전액 차감 — 항상 pourMl과 동일하거나 0).
         /// </summary>
         public static int Pour(
@@ -23,6 +23,10 @@ namespace IsoTilemap
             int pourMl)
         {
             if (host?.Overlay == null || pourMl <= 0)
+                return 0;
+
+            if (TileMapCacheHub.Runtime != null
+                && !TileMapCacheHub.Runtime.IsInMapBounds(targetCell.x, targetCell.y, targetCell.z))
                 return 0;
 
             host.Overlay.AddEffectiveMl(targetCell, pourMl, typeId ?? MapLiquidConsts.WaterTypeId);

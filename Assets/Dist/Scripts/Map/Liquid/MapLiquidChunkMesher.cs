@@ -321,8 +321,15 @@ namespace IsoTilemap
             return _positions.Count - 1;
         }
 
-        float SurfaceLift(float heightFill) =>
-            Mathf.Max(heightFill, MapLiquidRenderConsts.SurfaceMinLift01) * _cellSize;
+        float SurfaceLift(float heightFill)
+        {
+            float lift01 = Mathf.Max(heightFill, MapLiquidRenderConsts.SurfaceMinLift01);
+            float ceiling = 1f - MapLiquidRenderConsts.SurfaceTopInset01;
+            if (lift01 > ceiling)
+                lift01 = ceiling;
+
+            return lift01 * _cellSize;
+        }
 
         /// <summary>
         /// 격자 코너 (lx, lz)를 공유하는 4개 셀의 집계. 청크 경계와 무관하게 오버레이를 직접 읽으므로

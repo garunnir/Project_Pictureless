@@ -2,7 +2,7 @@
 // MapLiquidOverlay — 맵 액체 스파스 저장소 (dirty 큐 + 시드 + save/load)
 // ============================================================
 // 계약(migration-parity/정적 셀 무연산 보증, docs/map/LIQUID.md 참조):
-// - Seed(SeedFromTileFlags/SeedEffectiveMl)는 절대 dirty를 등록하지 않는다.
+// - Seed(SeedEffectiveMl)는 dirty를 등록하지 않는다. SeedFromAuthoringFaces는 simulateFlow 저작면만 예외.
 // - dirty 진입점은 MarkDirty 호출자(FlowSolver 전파, MlBridge Pour/Draw)뿐 — 매 틱 전체 스캔 금지.
 // - EffectiveMl == 0인 셀은 사전에서 제거해 스파스 상태를 유지한다.
 // - 렌더 통지(CellChanged/BulkChanged)는 sim dirty 큐와 별개다. 시드는 셀 단위로 통지하지 않고
@@ -20,8 +20,13 @@ namespace IsoTilemap
         readonly Queue<Vector3Int> _dirtyQueue = new();
         readonly HashSet<Vector3Int> _dirtySet = new();
 
+        // 열 확산은 흐름과 파급 조건이 달라(온도 기울기 vs 부피 차) 큐를 공유하면 서로를 깨운다.
+        readonly Queue<Vector3Int> _thermalDirtyQueue = new();
+        readonly HashSet<Vector3Int> _thermalDirtySet = new();
+
         public IReadOnlyDictionary<Vector3Int, MapLiquidCell> Cells => _cells;
         public int DirtyCount => _dirtyQueue.Count;
+        public int ThermalDirtyCount => _thermalDirtyQueue.Count;
 
         /// <summary>단일 셀의 보유량이 바뀜 — 렌더러가 해당 셀이 속한 청크만 무효화한다.</summary>
         public event Action<Vector3Int> CellChanged;
@@ -34,6 +39,8 @@ namespace IsoTilemap
             _cells.Clear();
             _dirtyQueue.Clear();
             _dirtySet.Clear();
+            _thermalDirtyQueue.Clear();
+            _thermalDirtySet.Clear();
             BulkChanged?.Invoke();
         }
 
@@ -77,7 +84,10 @@ namespace IsoTilemap
             if (effectiveMl <= 0)
                 return;
 
-            _cells[cell] = MapLiquidCell.FromEffectiveMl(typeId, effectiveMl);
+            _cells[cell] = MapLiquidCell.FromEffectiveMl(
+                typeId,
+                effectiveMl,
+                MapLiquidAmbient.ResolveDeciC(cell));
         }
 
         public void MarkDirty(Vector3Int cell)
@@ -85,6 +95,29 @@ namespace IsoTilemap
             if (_dirtySet.Add(cell))
                 _dirtyQueue.Enqueue(cell);
         }
+
+        public void MarkThermalDirty(Vector3Int cell)
+        {
+            if (_thermalDirtySet.Add(cell))
+                _thermalDirtyQueue.Enqueue(cell);
+        }
+
+        /// <summary>ThermalSolver 전용 — 큐가 비면 false(=이번 틱 처리할 게 없음, 비용 0).</summary>
+        public bool TryPopThermalDirty(out Vector3Int cell)
+        {
+            if (_thermalDirtyQueue.Count == 0)
+            {
+                cell = default;
+                return false;
+            }
+
+            cell = _thermalDirtyQueue.Dequeue();
+            _thermalDirtySet.Remove(cell);
+            return true;
+        }
+
+        /// <summary>보유량 변화 없이 표현만 바뀐 경우(상변화 등) 렌더러에 알린다.</summary>
+        public void RaiseCellChanged(Vector3Int cell) => CellChanged?.Invoke(cell);
 
         /// <summary>FlowSolver 전용 — dirty 큐 pop. 큐가 비면 false(=이번 틱 처리할 게 없음, 비용 0).</summary>
         public bool TryPopDirty(out Vector3Int cell)
@@ -101,33 +134,59 @@ namespace IsoTilemap
         }
 
         /// <summary>
-        /// 맵 로드 시 SHALLOW_WATER/DEEP_WATER 바닥 태그로부터 1회 시드.
+        /// 맵 로드 시 물 저작 면(liquidAuthoringFaces)으로부터 1회 시드.
         /// 이미 저장된 liquidCells가 있으면(호출 전 LoadFromDto 완료) 호출부가 스킵을 책임진다.
+        /// 타일 모델을 순회하지 않는다 — 물은 TileData가 아니다.
         /// </summary>
-        public void SeedFromTileFlags(TileMapCacheHub hub)
+        public void SeedFromAuthoringFaces(IReadOnlyList<FloorFaceSaveData> authoringFaces)
         {
-            if (hub == null)
-                return;
+            foreach (var kv in MapLiquidAuthoringBake.ResolveAuthoringCells(authoringFaces))
+                SeedEffectiveMl(kv.Key, MapLiquidConsts.WaterTypeId, kv.Value);
 
-            foreach ((int x, int z, int y) in hub.EnumerateOccupiedCells())
-            {
-                if (!hub.TryGetFloorFaceForWalkableCell(x, y, z, out TileData face))
-                    continue;
-
-                if (!TilePrefabDB.TryResolveDefinition(face.identity.PrefabId, out TileDefinition def))
-                    continue;
-
-                if (!MapLiquidAuthoringBake.TryResolveSeedMl(def, out int seedMl))
-                    continue;
-
-                var cell = new Vector3Int(x, y, z);
-                SeedEffectiveMl(cell, MapLiquidConsts.WaterTypeId, seedMl);
-            }
-
+            ApplySimulateFlowFromAuthoring(authoringFaces);
             BulkChanged?.Invoke();
         }
 
-        public void LoadFromDto(IReadOnlyList<MapLiquidCellSaveData> dto)
+        /// <summary>
+        /// liquidAuthoringFaces의 simulateFlow → flow dirty. hasLiquidSnapshot 로드 후에도 호출한다.
+        /// 앵커 겹치면 마지막 항목이 BuildLiquidAuthoringFaces와 같다.
+        /// </summary>
+        public void ApplySimulateFlowFromAuthoring(IReadOnlyList<FloorFaceSaveData> authoringFaces)
+        {
+            if (authoringFaces == null || authoringFaces.Count == 0)
+                return;
+
+            var simulateByAnchor = new Dictionary<Vector3Int, bool>();
+            for (int i = 0; i < authoringFaces.Count; i++)
+            {
+                FloorFaceSaveData face = authoringFaces[i];
+                if (face == null || string.IsNullOrEmpty(face.prefabId))
+                    continue;
+
+                simulateByAnchor[new Vector3Int(face.x, face.y, face.z)] = face.simulateFlow;
+            }
+
+            foreach (var kv in simulateByAnchor)
+            {
+                if (!kv.Value)
+                    continue;
+
+                MarkSimulateFlowForAnchor(kv.Key);
+            }
+        }
+
+        void MarkSimulateFlowForAnchor(Vector3Int anchor)
+        {
+            Vector3Int cell = anchor + Vector3Int.up;
+            if (_cells.ContainsKey(cell))
+                MarkDirty(cell);
+        }
+
+        /// <summary>
+        /// <paramref name="hasTemperature"/>가 false면 저장된 tempDeciC를 신뢰하지 않고 기본 기온으로 초기화한다 —
+        /// 구 JSON의 0은 물의 어는점과 겹쳐 바다 전체가 얼어버린다.
+        /// </summary>
+        public void LoadFromDto(IReadOnlyList<MapLiquidCellSaveData> dto, bool hasTemperature)
         {
             Clear();
             if (dto == null)
@@ -141,8 +200,9 @@ namespace IsoTilemap
                 if (d.level == 0 && d.remainderMl == 0)
                     continue;
 
+                short tempDeciC = hasTemperature ? d.tempDeciC : MapLiquidConsts.DefaultAmbientDeciC;
                 var cell = new Vector3Int(d.x, d.y, d.z);
-                _cells[cell] = new MapLiquidCell(d.typeId, d.level, d.remainderMl);
+                _cells[cell] = new MapLiquidCell(d.typeId, d.level, d.remainderMl, tempDeciC);
             }
 
             BulkChanged?.Invoke();
@@ -168,6 +228,7 @@ namespace IsoTilemap
                     typeId = c.TypeId,
                     level = c.Level,
                     remainderMl = c.RemainderMl,
+                    tempDeciC = c.TempDeciC,
                 });
             }
         }

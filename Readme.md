@@ -13,7 +13,7 @@ Unity 6 기반 **아이소메트릭 타일맵** 개인 프로젝트.
 |------|------|
 | 엔진 | Unity **6000.3.10f1** (Unity 6) |
 | 렌더 파이프라인 | **URP** (Universal Render Pipeline) |
-| 주요 씬 | `Assets/Dist/Scenes/IsoLand.unity` |
+| 주요 씬 | `Assets/IsoLand.unity` |
 | 커스텀 코드 | `Assets/Dist/` (`DistScript` 어셈블리) |
 
 유니티·C# 학습, 포트폴리오, 개인 흥미를 겸한 프로젝트다.  
@@ -64,7 +64,7 @@ Unity 6 기반 **아이소메트릭 타일맵** 개인 프로젝트.
    ```
 2. Unity Hub에서 **Unity 6000.3.10f1**로 프로젝트를 연다.
 3. 첫 실행 시 패키지·Library 복원이 끝날 때까지 기다린다.
-4. 메인 씬을 연다: `Assets/Dist/Scenes/IsoLand.unity`
+4. 메인 씬을 연다: `Assets/IsoLand.unity`
 5. Play로 실행한다.
 
 > `Library/`, `Temp/`, `Logs/` 등은 `.gitignore` 대상이다. 클론 직후에는 Unity가 자동 생성한다.

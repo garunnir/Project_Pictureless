@@ -57,10 +57,18 @@ public class MapFileSaver : MonoBehaviour
             FindObjectsInactive.Include,
             FindObjectsSortMode.None);
 
+        var liquidMarkers = Object.FindObjectsByType<LiquidAuthoringView>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
         var snapshot = TileViewSceneGather.BuildTileDataSnapshot(tileViews);
         var dtoModel = new MapModelDTO(snapshot);
         MapSaveJsonDto jsonDto = mapper.FromPrepared(dtoModel);
         jsonDto.gridCellSize = _worldGrid != null ? _worldGrid.CellSize : 1f;
+
+        // liquidCells bake의 입력이므로 CarryOver보다 먼저 채워야 한다.
+        jsonDto.liquidAuthoringFaces = TileViewSceneGather.BuildLiquidAuthoringFaces(liquidMarkers);
+
         MapSaveLayerCarryOver.Apply(
             jsonDto,
             existing,
@@ -68,11 +76,13 @@ public class MapFileSaver : MonoBehaviour
             MapBloodHost.Runtime,
             MapPlantHost.Runtime);
 
+        MapBoundsBake.ApplyToDto(jsonDto);
+
         _model?.Initialize(dtoModel);
 
         File.WriteAllText(fullPath, JsonUtility.ToJson(jsonDto, true));
         Debug.Log(
-            $"TileMap saved to: {fullPath} (tiles: {jsonDto.tiles.Count}, wallEdges: {jsonDto.wallEdges?.Count ?? 0}, bloodStamps: {jsonDto.bloodStamps?.Count ?? 0}, liquidCells: {jsonDto.liquidCells?.Count ?? 0}, hasLiquidSnapshot: {jsonDto.hasLiquidSnapshot})");
+            $"TileMap saved to: {fullPath} (tiles: {jsonDto.tiles.Count}, wallEdges: {jsonDto.wallEdges?.Count ?? 0}, bloodStamps: {jsonDto.bloodStamps?.Count ?? 0}, liquidAuthoringFaces: {jsonDto.liquidAuthoringFaces?.Count ?? 0}, liquidCells: {jsonDto.liquidCells?.Count ?? 0}, hasLiquidSnapshot: {jsonDto.hasLiquidSnapshot})");
     }
 #endif
 }

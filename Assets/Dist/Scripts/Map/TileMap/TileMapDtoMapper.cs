@@ -79,6 +79,15 @@ namespace IsoTilemap
             {
                 foreach (var ff in tileMapData.floorFaces)
                 {
+                    // 물은 타일이 아니다. 정상 경로에서는 read 시 저작 면으로 승격되어 여기 오지 않는다.
+                    if (MapLiquidAuthoringBake.IsLiquidAuthoringPrefab(ff.prefabId))
+                    {
+                        Debug.LogWarning(
+                            $"[TileMapDtoMapper] 물 face '{ff.prefabId}'가 floorFaces에 남아 있어 무시합니다. " +
+                            "liquidAuthoringFaces로 승격되었는지 확인하세요.");
+                        continue;
+                    }
+
                     if (TryMakeHorizontalFaceIdentity(
                             ff.prefabId,
                             new Vector3Int(ff.x, ff.y, ff.z),
@@ -96,6 +105,10 @@ namespace IsoTilemap
         {
             IReadOnlyList<TileData> tiles = prepared.TilesData;
             var dto = new MapSaveJsonDto { schemaVersion = 1 };
+
+            // 물은 타일 모델에 없으므로 여기서 복원할 수 없다. null = "저작 레이어 미지정" —
+            // 씬 마커를 읽은 호출부(MapFileSaver)가 채우고, 아니면 MapSaveLayerCarryOver가 디스크를 계승한다.
+            dto.liquidAuthoringFaces = null;
 
             foreach (var ti in tiles)
             {

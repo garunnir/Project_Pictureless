@@ -22,7 +22,7 @@ MonoBehaviour:
   - SHALLOW_WATER
   - FISHABLE
   occupied:
-    providesLogicalFloor: 1
+    providesLogicalFloor: 0
     blocksPassageAndOcclusion: 0
     usePhysicsCollider: 0
     splitPassageAndOcclusion: 0

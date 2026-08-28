@@ -19,9 +19,19 @@ namespace IsoTilemap
         float _quadSize = 0.95f;
         float _yOffset = 0.02f;
         float _maxAlpha = 0.55f;
-        readonly MaterialPropertyBlock _propertyBlock = new();
+        Material _drawMaterial;
 
         static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        static readonly Color PingRgb = new(0.45f, 0.75f, 1f, 1f);
+
+        void Awake()
+        {
+            if (_layer == 0)
+                _layer = gameObject.layer;
+            ResolveDrawMaterial();
+        }
+
+        void OnDestroy() => DestroyDrawMaterial();
 
         public void Bind(MapHearingPingOverlay overlay, float cellSize)
         {
@@ -41,7 +51,7 @@ namespace IsoTilemap
             if (_overlay == null || _overlay.Count <= 0)
                 return;
 
-            Material mat = _pingMaterial != null ? _pingMaterial : EnsureFallbackMaterial();
+            Material mat = ResolveDrawMaterial();
             if (mat == null)
                 return;
 
@@ -58,7 +68,7 @@ namespace IsoTilemap
                 float scale = _quadSize;
                 var matrix = Matrix4x4.TRS(pos, Quaternion.Euler(90f, 0f, 0f), new Vector3(scale, scale, 1f));
                 float alpha = entry.Alpha * _maxAlpha;
-                _propertyBlock.SetColor(BaseColorId, new Color(0.45f, 0.75f, 1f, alpha));
+                mat.SetColor(BaseColorId, new Color(PingRgb.r, PingRgb.g, PingRgb.b, alpha));
                 Graphics.DrawMesh(
                     mesh,
                     matrix,
@@ -66,17 +76,23 @@ namespace IsoTilemap
                     _layer,
                     null,
                     0,
-                    _propertyBlock,
+                    null,
                     false,
                     false,
                     false);
             }
         }
 
-        Material EnsureFallbackMaterial()
+        Material ResolveDrawMaterial()
         {
+            if (_drawMaterial != null)
+                return _drawMaterial;
+
             if (_pingMaterial != null)
-                return _pingMaterial;
+            {
+                _drawMaterial = new Material(_pingMaterial) { name = $"{_pingMaterial.name} (PingDraw)" };
+                return _drawMaterial;
+            }
 
             Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
             if (shader == null)
@@ -84,16 +100,29 @@ namespace IsoTilemap
             if (shader == null)
                 return null;
 
-            _pingMaterial = new Material(shader) { name = "MapHearingPingFallback" };
-            if (_pingMaterial.HasProperty(BaseColorId))
-                _pingMaterial.SetColor(BaseColorId, new Color(0.45f, 0.75f, 1f, 0.55f));
+            _drawMaterial = new Material(shader) { name = "MapHearingPingFallback" };
+            if (_drawMaterial.HasProperty(BaseColorId))
+                _drawMaterial.SetColor(BaseColorId, new Color(PingRgb.r, PingRgb.g, PingRgb.b, 0.55f));
 
             Texture2D radial = EnsureRadialAlphaTexture();
-            if (radial != null && _pingMaterial.HasProperty("_BaseMap"))
-                _pingMaterial.SetTexture("_BaseMap", radial);
+            if (radial != null && _drawMaterial.HasProperty("_BaseMap"))
+                _drawMaterial.SetTexture("_BaseMap", radial);
 
-            ConfigureTransparent(_pingMaterial);
-            return _pingMaterial;
+            ConfigureTransparent(_drawMaterial);
+            return _drawMaterial;
+        }
+
+        void DestroyDrawMaterial()
+        {
+            if (_drawMaterial == null)
+                return;
+
+            if (Application.isPlaying)
+                Destroy(_drawMaterial);
+            else
+                DestroyImmediate(_drawMaterial);
+
+            _drawMaterial = null;
         }
 
         static void ConfigureTransparent(Material mat)

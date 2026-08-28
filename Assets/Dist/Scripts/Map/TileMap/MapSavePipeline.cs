@@ -30,6 +30,7 @@ namespace IsoTilemap
             MapSaveJsonDto mapDatas = _mapper.FromPrepared(mapData);
             mapDatas.gridCellSize = Mathf.Max(1e-4f, gridCellSize);
             MapSaveLayerCarryOver.Apply(mapDatas, existing, liquidHost, bloodHost, plantHost);
+            MapBoundsBake.ApplyToDto(mapDatas);
 
             string json = JsonUtility.ToJson(mapDatas, true);
 

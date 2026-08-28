@@ -27,6 +27,12 @@ namespace IsoTilemap
                 mapData.wallEdges = new System.Collections.Generic.List<WallEdgeSaveData>();
             if (mapData.floorFaces == null)
                 mapData.floorFaces = new System.Collections.Generic.List<FloorFaceSaveData>();
+            if (mapData.liquidAuthoringFaces == null)
+                mapData.liquidAuthoringFaces = new System.Collections.Generic.List<FloorFaceSaveData>();
+
+            // 구 JSON은 물이 floorFaces에 들어 있다. 여기서 한 번 저작 레이어로 옮겨 두면
+            // 이후 경로(DtoMapper·시드·bake·에디터 마커)는 liquidAuthoringFaces만 보면 된다.
+            MapLiquidAuthoringBake.PromoteLegacyFloorFaces(mapData);
             return mapData;
         }
      

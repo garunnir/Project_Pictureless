@@ -79,6 +79,8 @@ internal static class DistMcpMenus
         Root + "/Character/Patch Action Gauge On Player";
     public const string CharacterEnsureHitStop =
         Root + "/Character/Ensure Combat Hit Stop";
+    public const string CharacterEnsureEmote =
+        Root + "/Character/Ensure Character Emote";
 
     public const string LocalizationSelectOrCreateUiKo =
         Root + "/Localization/Select Or Create UI_ko Table";

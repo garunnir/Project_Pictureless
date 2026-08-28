@@ -24,6 +24,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 | Skills | Attribute + 카탈로그 Base/Potential/Practice |
 | Combat | Imbalance·**Pain**(Total/Effective/Factor·shock/wake 문턱·부위 Pain)·Capacity·과적 Stage·**Senses**(Definition/Effective sight·hearing 반경) |
 | Mood | `CharacterMoodHost` 수치·사고·기억·Wander 붕괴 ([`../mood/MOOD.md`](../mood/MOOD.md), possessed만). HUD 칩과 별개 |
+| Emote | `CharacterEmoteHost` resolved id/source·표시/숨김 사유 ([`EMOTES.md`](EMOTES.md)) |
 | Chips | `PlayerStatusMoodEntries` HUD 칩 읽기 전용 |
 
 **MUST:** 새 런타임 스테이터스(`ICharacterBody` 필드, `*Host` 시뮬 값, Vital 키, `BodyPartEffectIds`, `ThoughtId`/붕괴, 칩 입력, Defeat/Capacity 레이어)를 넣으면 **같은 변경에서** 위 인벤토리 행 + `CharacterRuntimeDebugDomain` + 창 탭을 갱신한다. BODY/NEEDS/MOOD 문서만 늘리고 창을 미루면 미완.

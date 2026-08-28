@@ -2,6 +2,7 @@
 // CharacterHearingPingDriver — possessed 청각 핑 (Vision 우선, 페이드 숨김 gate)
 // ============================================================
 
+using System.Collections.Generic;
 using IsoTilemap;
 using UnityEngine;
 
@@ -13,6 +14,7 @@ public sealed class CharacterHearingPingDriver : MonoBehaviour, IMapHearingPingD
     [SerializeField] Transform _playerBody;
     [SerializeField] TileMapManager _tileMapManager;
     [SerializeField] CharacterHearingPingSettings _settings = CharacterHearingPingSettings.DefaultUnity;
+    [SerializeField] bool _drawPlayGizmos = true;
 
     MapHearingPingHost _pingHost;
     CharacterVision _playerVision;
@@ -199,5 +201,26 @@ public sealed class CharacterHearingPingDriver : MonoBehaviour, IMapHearingPingD
         if (!host.TryGetComponent(out CharacterFactionHost otherFaction))
             return false;
         return CharacterHostility.IsHostile(_playerFaction, otherFaction);
+    }
+
+    void OnDrawGizmos()
+    {
+        if (!Application.isPlaying || !_drawPlayGizmos || _pingHost == null)
+            return;
+
+        IReadOnlyList<HearingPingEntry> entries = _pingHost.Overlay.Entries;
+        float cellSize = _pingHost.CellSize;
+        float half = cellSize * 0.45f;
+        for (int i = 0; i < entries.Count; i++)
+        {
+            HearingPingEntry entry = entries[i];
+            if (entry.Alpha <= 0f)
+                continue;
+
+            var center = entry.WorldPos;
+            center.y += _settings.YOffsetMeters;
+            Gizmos.color = new Color(0.45f, 0.75f, 1f, entry.Alpha * _settings.MaxAlpha);
+            Gizmos.DrawWireCube(center, new Vector3(half * 2f, 0.05f, half * 2f));
+        }
     }
 }

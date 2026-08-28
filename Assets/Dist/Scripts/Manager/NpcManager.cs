@@ -123,6 +123,7 @@ public sealed class NpcManager : MonoBehaviour
         CharacterFactionHost _selfFactionHost;
         CharacterVision _vision;
         CharacterHearing _hearing;
+        CharacterCombatEmoteBridge _combatEmote;
         ICharacterDefeat _defeat;
 
         NpcCombatState _state = NpcCombatState.Idle;
@@ -151,6 +152,7 @@ public sealed class NpcManager : MonoBehaviour
             _selfFactionHost = go.GetComponent<CharacterFactionHost>();
             _vision = go.GetComponent<CharacterVision>();
             _hearing = go.GetComponent<CharacterHearing>();
+            _combatEmote = go.GetComponent<CharacterCombatEmoteBridge>();
 
             if (_motor == null || _attacker == null || _selfHost == null)
             {
@@ -182,6 +184,7 @@ public sealed class NpcManager : MonoBehaviour
             _defeat = null;
             NpcSteer.Stop(_motor);
             ReleaseCombatAim();
+            _combatEmote?.ClearCombat();
         }
 
         public void Tick(float dt)
@@ -471,6 +474,7 @@ public sealed class NpcManager : MonoBehaviour
             BindTarget(null, float.MaxValue, SenseContactChannel.None);
             _heardCell = default;
             _heardWorld = default;
+            _combatEmote?.ClearCombat();
         }
 
         void UpdateHeardLocation(Vector3 targetFeet)
@@ -647,6 +651,7 @@ public sealed class NpcManager : MonoBehaviour
             _alertTimer = _entry.alertSeconds;
             NpcSteer.Stop(_motor);
             _motor.SetActiveMovementStyle(_entry.holdStyle);
+            _combatEmote?.SetAlertSpotted();
         }
 
         void EnterChase()
@@ -654,6 +659,10 @@ public sealed class NpcManager : MonoBehaviour
             _state = NpcCombatState.Chase;
             ReleaseCombatAim();
             _motor.SetActiveMovementStyle(_entry.chaseStyle);
+            if (_contact == SenseContactChannel.Hearing)
+                _combatEmote?.SetAlertSuspicious();
+            else
+                _combatEmote?.ClearCombat();
         }
 
         void EnterAttack()
@@ -683,6 +692,7 @@ public sealed class NpcManager : MonoBehaviour
             NpcSteer.Stop(_motor);
             _motor.SetActiveMovementStyle(_entry.holdStyle);
             _motor.SetDesiredWorldDir(Vector3.zero);
+            _combatEmote?.ClearCombat();
         }
 
         void OnDefeatChanged()

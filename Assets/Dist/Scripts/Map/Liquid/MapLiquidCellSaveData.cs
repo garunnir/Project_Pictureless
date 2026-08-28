@@ -15,5 +15,11 @@ namespace IsoTilemap
         public string typeId;
         public byte level;
         public ushort remainderMl;
+
+        /// <summary>
+        /// 자체 온도(deci°C). 0은 물의 어는점이므로 "누락"과 구별할 수 없다 —
+        /// 유효성은 <see cref="MapSaveJsonDto.hasLiquidTemperature"/>가 판정한다.
+        /// </summary>
+        public short tempDeciC;
     }
 }

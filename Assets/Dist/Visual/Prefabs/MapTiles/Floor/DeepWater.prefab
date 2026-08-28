@@ -80,6 +80,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
         type: 3}
+      propertyPath: prefabId
+      value: Floor/DeepWater
+      objectReference: {fileID: 0}
+    - target: {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
       propertyPath: gridPos.x
       value: 0
       objectReference: {fileID: 0}
@@ -145,8 +150,37 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 802317669556478647, guid: eddae80dd4bbae74c9bf5c732f45b710, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7440247196655613171}
   m_SourcePrefab: {fileID: 100100000, guid: eddae80dd4bbae74c9bf5c732f45b710, type: 3}
+--- !u!1 &3604406109386049671 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2780284411029826226, guid: eddae80dd4bbae74c9bf5c732f45b710,
+    type: 3}
+  m_PrefabInstance: {fileID: 1481932434269872693}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7440247196655613171
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3604406109386049671}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba34e111efd38f84ba993873a1373da0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Dist.Map::IsoTilemap.LiquidAuthoringView
+  gridPos: {x: 0, y: -2, z: 0}
+  size: {x: 1, y: 1, z: 1}
+  prefabId: Floor/DeepWater
+  gizmoCellSize: 1
+  drawGizmoGrid: 0
+  gizmoGridColor: {r: 0, g: 0.7, b: 0.9, a: 0.6}

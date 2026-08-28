@@ -285,6 +285,11 @@ namespace IsoTilemap
         public CellYGeometryLayer CellYGeometry { get; }
         public SpaceLayer Spaces { get; }
 
+        MapBounds _mapBounds = MapBounds.Unbounded;
+
+        /// <summary>저장 mapBounds 또는 로드 fallback. Unbounded면 InMapBounds가 전부 true.</summary>
+        public MapBounds MapBounds => _mapBounds;
+
         BuildingGroupBuilder _roomBakeBuilder;
         readonly List<TileData> _occupiedCellCollectScratch = new();
 
@@ -339,6 +344,12 @@ namespace IsoTilemap
         }
 
         public bool CellHasOccupancy(int x, int z, int y) => Topology.HasOccupancy(x, z, y);
+
+        public void BindMapBounds(MapBounds bounds) => _mapBounds = bounds;
+
+        public bool IsInMapBounds(int x, int y, int z) => _mapBounds.IsInMapBounds(x, y, z);
+
+        public bool IsInMapBoundsXZ(int x, int z) => _mapBounds.IsInMapBoundsXZ(x, z);
 
         public bool CellHasFloor(int x, int cellY, int z) =>
             Topology.CellHasFloor(x, cellY, z);

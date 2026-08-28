@@ -18,10 +18,19 @@ namespace IsoTilemap
         public const float MinVisibleFill01 = 0.002f;
 
         /// <summary>
-        /// 수면을 셀 바닥에서 최소 이만큼 띄운다(cellSize 배율) — 바닥 타일과의 z-fighting 가드.
-        /// 아주 얇은 막은 실제 두께보다 과장되지만, 직교 픽셀 카메라에서 1px 미만 두께는 바닥과 겹쳐 깜빡인다.
+        /// 수면을 셀 바닥에서 최소 이만큼 띄운다(cellSize 배율) — 같은 앵커 바닥 메시와의 투명 정렬 가드.
+        ///
+        /// 전역 transparency sort는 <b>Default</b>(직교 카메라 거리)여야 한다. Y축 Custom Axis로 바꾸면
+        /// 같은 층 타일(<c>gridPos.y</c> 동일)이 정렬 동점이 되고, 타일 셰이더는 ZWrite Off·sortingOrder 0이라
+        /// 앞뒤가 무작위가 된다. RenderQueue 승격도 위층 타일을 덮으므로 금지.
+        /// 수면은 이 lift와 <see cref="SurfaceTopInset01"/> 기하 오프셋만으로 바닥 메시와 분리한다.
         /// </summary>
-        public const float SurfaceMinLift01 = 0.03f;
+        public const float SurfaceMinLift01 = 0.05f;
+
+        /// <summary>
+        /// 가득 찬 수면을 셀 천장에서 이만큼 아래로(relative 0~1) — 위층 바닥면(y=천장)과 coplanar 정렬 방지.
+        /// </summary>
+        public const float SurfaceTopInset01 = 0.04f;
 
         /// <summary>이미 그려진 청크를 한 프레임에 다시 메시화할 수 있는 최대 개수 — 흐름 중 스파이크 분산.</summary>
         public const int MaxChunkRemeshPerFrame = 4;

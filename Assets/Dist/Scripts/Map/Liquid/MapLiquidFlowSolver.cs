@@ -47,12 +47,27 @@ namespace IsoTilemap
             if (!_overlay.TryGetCell(self, out MapLiquidCell selfCell) || selfCell.IsEmpty)
                 return;
 
+            // 고체는 흐르지 않는다. 해동 시 ThermalSolver가 상 교차에서 다시 dirty로 넣어 준다.
+            if (selfCell.IsSolid)
+                return;
+
             string typeId = selfCell.TypeId;
             int capMl = MapLiquidConsts.DefaultMaxVolumeMl;
 
-            // 1) 중력 — self가 열려 있고(바닥 없음) 아래가 유효하면 stable-state까지 채움
+            // OutOfMap — 저장 mapBounds 밖(XZ) 또는 y<minY.
+            if (!_hub.IsInMapBounds(self.x, self.y, self.z))
+            {
+                int outMl = _overlay.GetEffectiveMl(self);
+                if (outMl > 0)
+                    _overlay.AddEffectiveMl(self, -outMl, typeId);
+                return;
+            }
+
+            // 1) 중력 — AirGap(점유 없음) transit. below는 bounds 안이어야 한다.
             Vector3Int below = self + Vector3Int.down;
-            if (IsVerticalOpen(self) && IsTargetEligible(below))
+            if (IsVerticalOpen(self)
+                && _hub.IsInMapBounds(below.x, below.y, below.z)
+                && !IsSolidAt(below))
             {
                 int totalMl = _overlay.GetEffectiveMl(self) + _overlay.GetEffectiveMl(below);
                 int belowTarget = StableBelowMl(totalMl, capMl, MapLiquidConsts.OverCompressMl);
@@ -74,7 +89,7 @@ namespace IsoTilemap
             for (int i = 0; i < HorizontalDirs.Length; i++)
             {
                 Vector3Int neighbor = self + HorizontalDirs[i];
-                if (!IsHorizontalOpen(self, neighbor) || !IsTargetEligible(neighbor))
+                if (!IsHorizontalOpen(self, neighbor) || !IsHorizontalFlowTarget(neighbor))
                     continue;
 
                 int selfMl = _overlay.GetEffectiveMl(self);
@@ -106,7 +121,7 @@ namespace IsoTilemap
                 if (remainingMl > stableCapMl)
                 {
                     Vector3Int above = self + Vector3Int.up;
-                    if (IsVerticalOpen(above) && IsTargetEligible(above))
+                    if (IsVerticalOpen(above) && IsHorizontalFlowTarget(above))
                     {
                         int room = Mathf.Max(0, capMl - _overlay.GetEffectiveMl(above));
                         int overflow = remainingMl - stableCapMl;
@@ -144,9 +159,17 @@ namespace IsoTilemap
             return (totalMl + overCompressMl) / 2;
         }
 
-        /// <summary>맵에 정의된 셀만 액체 시뮬 대상 — 미정의 void로의 무한 확산 차단.</summary>
-        bool IsTargetEligible(Vector3Int cell) =>
-            _hub.CellHasOccupancy(cell.x, cell.z, cell.y);
+        /// <summary>
+        /// 수평·상향 equalize 대상 — mapBounds XZ 안 + topology 점유 + 비고체.
+        /// AirGap(점유 없음)으로는 옆/위 확산하지 않는다.
+        /// </summary>
+        bool IsHorizontalFlowTarget(Vector3Int cell) =>
+            _hub.IsInMapBoundsXZ(cell.x, cell.z)
+            && _hub.CellHasOccupancy(cell.x, cell.z, cell.y)
+            && !IsSolidAt(cell);
+
+        bool IsSolidAt(Vector3Int cell) =>
+            _overlay.TryGetCell(cell, out MapLiquidCell c) && !c.IsEmpty && c.IsSolid;
 
         bool IsHorizontalOpen(Vector3Int a, Vector3Int b)
         {
