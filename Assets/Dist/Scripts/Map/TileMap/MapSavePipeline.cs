@@ -19,13 +19,15 @@ namespace IsoTilemap
             string fullPath,
             float gridCellSize = 1f,
             MapBloodHost bloodHost = null,
-            MapPlantHost plantHost = null)
+            MapPlantHost plantHost = null,
+            MapLiquidHost liquidHost = null)
         {
             MapModelDTO mapData = new MapModelDTO(_runtime);
             MapSaveJsonDto mapDatas = _mapper.FromPrepared(mapData);
             mapDatas.gridCellSize = Mathf.Max(1e-4f, gridCellSize);
             bloodHost?.WriteToDto(mapDatas);
             plantHost?.WriteToDto(mapDatas);
+            liquidHost?.WriteToDto(mapDatas);
             MapClockSnapshot.WriteToDto(mapDatas);
 
             string json = JsonUtility.ToJson(mapDatas, true);

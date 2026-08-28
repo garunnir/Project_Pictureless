@@ -27,7 +27,8 @@ public class MapFileSaver : MonoBehaviour
             GetFullPath(),
             cellSize,
             MapBloodHost.Runtime,
-            MapPlantHost.Runtime);
+            MapPlantHost.Runtime,
+            MapLiquidHost.Runtime);
     }
 
     private string GetFullPath()
@@ -55,6 +56,7 @@ public class MapFileSaver : MonoBehaviour
         jsonDto.gridCellSize = _worldGrid != null ? _worldGrid.CellSize : 1f;
         MapBloodHost.Runtime?.WriteToDto(jsonDto);
         MapPlantHost.Runtime?.WriteToDto(jsonDto);
+        MapLiquidHost.Runtime?.WriteToDto(jsonDto);
         MapClockSnapshot.WriteToDto(jsonDto);
 
         _model?.Initialize(dtoModel);

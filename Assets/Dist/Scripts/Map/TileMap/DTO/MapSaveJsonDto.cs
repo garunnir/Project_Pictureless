@@ -19,6 +19,12 @@ namespace IsoTilemap
         /// <summary>맵 혈흔 스탬프 (월드 좌표). tiles와 별 레이어. 구 JSON 누락 시 empty.</summary>
         public List<BloodStampSaveData> bloodStamps = new List<BloodStampSaveData>();
 
+        /// <summary>맵 액체 셀 (grid 좌표). tiles와 별 레이어. 구 JSON 누락 시 empty.</summary>
+        public List<MapLiquidCellSaveData> liquidCells = new List<MapLiquidCellSaveData>();
+
+        /// <summary>true면 liquidCells를 그대로 신뢰(재시드 금지). 구 JSON은 false — 로드 시 SHALLOW/DEEP_WATER 태그로 1회 시드.</summary>
+        public bool hasLiquidSnapshot;
+
         /// <summary>Legacy only. Load migrates to OccupiedCell plant tiles then cleared. New saves write null.</summary>
         public List<PlantCellSaveData> plantCells = new List<PlantCellSaveData>();
 

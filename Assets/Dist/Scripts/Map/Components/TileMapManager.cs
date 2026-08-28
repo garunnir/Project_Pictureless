@@ -19,6 +19,9 @@ public class TileMapManager : MonoBehaviour
     [Header("Map plant overlay")]
     [SerializeField] private MapPlantHost _plantHost;
 
+    [Header("Map liquid overlay")]
+    [SerializeField] private MapLiquidHost _liquidHost;
+
     [Header("로드 → 컨트롤러/세이버 초기화 → 저장 흐름을 책임집니다.")]
     [SerializeField] private MapFileLoader _loader;
     [SerializeField] private MapFileSaver _saver;
@@ -243,6 +246,7 @@ public class TileMapManager : MonoBehaviour
         SetupMapCollisionServices();
         SetupMapBlood();
         SetupMapPlant();
+        SetupMapLiquid();
         SetupMapHearingPing();
 
         if (_characterSightFadeDriver == null)
@@ -309,6 +313,17 @@ public class TileMapManager : MonoBehaviour
         _plantHost.BindMapContext(_mapCacheHub, cellSize, _prefabDB, _controller, Model);
         MapClockSnapshot.RestoreFromDto(_loader != null ? _loader.LastLoadedDto : null);
         _plantHost.LoadFromDto(_loader != null ? _loader.LastLoadedDto : null);
+    }
+
+    void SetupMapLiquid()
+    {
+        _liquidHost ??= GetComponent<MapLiquidHost>();
+        if (_liquidHost == null)
+            _liquidHost = gameObject.AddComponent<MapLiquidHost>();
+
+        float cellSize = _worldGrid != null ? _worldGrid.CellSize : _gridCellSize;
+        _liquidHost.BindMapContext(_mapCacheHub, cellSize);
+        _liquidHost.LoadFromDto(_loader != null ? _loader.LastLoadedDto : null);
     }
 
     private void OnDestroy()
