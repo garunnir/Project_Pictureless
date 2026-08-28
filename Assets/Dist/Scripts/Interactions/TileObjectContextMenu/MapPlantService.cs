@@ -49,6 +49,21 @@ public static class MapPlantService
         {
             WorldClock.Instance?.SetTime(day, minute);
         };
+        MapClockSnapshot.TrySubscribeMinuteChanged = handler =>
+        {
+            WorldClock clock = WorldClock.Instance;
+            if (clock == null || handler == null)
+                return false;
+
+            clock.MinuteChanged += handler;
+            return true;
+        };
+        MapClockSnapshot.UnsubscribeMinuteChanged = handler =>
+        {
+            WorldClock clock = WorldClock.Instance;
+            if (clock != null && handler != null)
+                clock.MinuteChanged -= handler;
+        };
     }
 
     static void OnHostAssigned(MapPlantHost host) => _boundHost = host;

@@ -1,7 +1,7 @@
 # Fishing
 
-> Dist 낚시: **물 바닥재 플래그** + **인접 판정 SSOT** + 낚싯대 Cast + 통발 + 수중창 사거리 보정.
-> 맵 호스트: [`map/SYSTEM.md`](SYSTEM.md) · 농사 패턴: [`farming/FARMING.md`](../farming/FARMING.md)
+> Dist 낚시: **동적 액체 레이어 수심** + **인접 판정 SSOT** + 낚싯대 Cast + 통발 + 수중창 사거리 보정.
+> 액체 SSOT: [`map/LIQUID.md`](LIQUID.md) · 맵 호스트: [`map/SYSTEM.md`](SYSTEM.md) · 농사 패턴: [`farming/FARMING.md`](../farming/FARMING.md)
 
 | 영역 | 경로 |
 |------|------|
@@ -14,15 +14,23 @@
 
 ---
 
-## Tile flags
+## Water detection (MapLiquidQuery)
+
+낚시·통발·수중창은 **`TileFlags.SHALLOW_WATER`/`DEEP_WATER` 바닥재가 아니라** `MapLiquidHost` 오버레이 ml을 본다. 상세: [`LIQUID.md`](LIQUID.md).
+
+| API | 임계 | 용도 |
+|-----|------|------|
+| `MapLiquidQuery.ColumnMlDownward(cell)` | `≥ MapFishConsts.FishableColumnMl` (2,000,000 ml) | Cast · 통발 — **수직 2셀 이상** 수심 |
+| `MapLiquidQuery.Fill01(cell)` | `≥ MapFishConsts.UnderwaterShooterFill01` (= `MapLiquidConsts.ShallowSeedFraction`) | 수중창 — 발밑 **국소** 잠김 |
+
+`MapFishService.CellHasFishableWater` / `IsFishableAdjacent` · `IsShooterInWater` (구 `IsShooterOnWaterFloor`).
+
+### Legacy tile flags (이주 중)
 
 | Flag | 역할 |
 |------|------|
-| `SHALLOW_WATER` | 얕은 물 (`Floor/ShallowWater`) |
-| `DEEP_WATER` | 깊은 물 (`Floor/DeepWater`) |
-| `FISHABLE` | 낚시·트랩 설치 가능 표면 (물 타일에 동시 부여) |
-
-`MapFishService` 물 판정은 **`SHALLOW_WATER` / `DEEP_WATER`** 기준. `FISHABLE`은 에셋 태깅·후속 확장용.
+| `SHALLOW_WATER` / `DEEP_WATER` | **레거시** floor 바닥재 태그 — `hasLiquidSnapshot: false` 로드 시에만 `SeedFromTileFlags` 시드용. Play 검증 후 SO·프리팹 제거 예정 |
+| `FISHABLE` | 에셋 태깅·후속 확장용 (현재 판정 미사용) |
 
 인접 Cast: `IsFishableAdjacent` / `IsWithinCastActionRange` — XZ Chebyshev ≤ 1.
 
@@ -57,20 +65,20 @@
 
 ## Underwater gun (speargun)
 
-BN `UNDERWATER_GUN` 무기 — 발사자 walkable 셀 바닥재로 판정.
+BN `UNDERWATER_GUN` 무기 — 발사자 walkable 셀의 **액체 Fill01**로 판정.
 
 | 발사자 셀 | effective range |
 |-----------|-----------------|
-| `SHALLOW_WATER` / `DEEP_WATER` | 정상 (`gun.range` + 탄약) |
-| 육지 등 | × `MapFishConsts.UnderwaterGunLandRangeMultiplier` (0.1) |
+| `Fill01 ≥ UnderwaterShooterFill01` | 정상 (`gun.range` + 탄약) |
+| 육지·얕은 물 등 | × `MapFishConsts.UnderwaterGunLandRangeMultiplier` (0.1) |
 
-`CombatHitscan.EffectiveRange` · `MapFishService.IsShooterOnWaterFloor`
+`CombatHitscan.EffectiveRange` · `MapFishService.IsShooterInWater`
 
 ---
 
 ## Play test (IsoLand)
 
-씬 `Map/FishingTest` — 스폰 `(-2,1,-2)` 인접 물 바닥재. `map01.json` `floorFaces[]` 동기화 필요.
+씬 `Map/FishingTest` — 스폰 `(-2,1,-2)` 인접 물. `map01.json`은 `liquidCells` + `hasLiquidSnapshot: true` (물 floor face 제거됨). **현재 웅덩이는 1겹이라 `FishableColumnMl` 미달 — 낚시 불가.** 분지 저작 후 재검증.
 
 Ensure: `Dist/MCP/Ensure Sample ScriptableObjects` → Resources mirror 포함.
 

@@ -27,7 +27,7 @@ public static class CombatHitscan
     {
         float weapon = CombatMath.RangeMeters(item, action, ammo);
         Vector3 feet = shooterFeetWorld ?? shooterOrigin;
-        if (HasItemFlag(item, UnderwaterGunFlag) && !MapFishService.IsShooterOnWaterFloor(feet))
+        if (HasItemFlag(item, UnderwaterGunFlag) && !MapFishService.IsShooterInWater(feet))
             return weapon * MapFishConsts.UnderwaterGunLandRangeMultiplier;
 
         float view = ResolveCameraViewReach(shooterOrigin);

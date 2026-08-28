@@ -5598,34 +5598,41 @@
             "z": 0,
             "face": 1,
             "prefabId": "Floor/GrassFloor"
-        },
+        }
+    ],
+    "liquidCells": [
         {
             "x": -1,
             "y": 0,
             "z": -2,
-            "face": 1,
-            "prefabId": "Floor/ShallowWater"
+            "typeId": "water",
+            "level": 89,
+            "remainderMl": 1031
         },
         {
             "x": -2,
             "y": 0,
             "z": -1,
-            "face": 1,
-            "prefabId": "Floor/ShallowWater"
+            "typeId": "water",
+            "level": 89,
+            "remainderMl": 1031
         },
         {
             "x": -1,
             "y": 0,
             "z": -1,
-            "face": 1,
-            "prefabId": "Floor/DeepWater"
+            "typeId": "water",
+            "level": 255,
+            "remainderMl": 145
         },
         {
             "x": 0,
             "y": 0,
             "z": -2,
-            "face": 1,
-            "prefabId": "Floor/DeepWater"
+            "typeId": "water",
+            "level": 255,
+            "remainderMl": 145
         }
-    ]
+    ],
+    "hasLiquidSnapshot": true
 }

@@ -121,6 +121,10 @@ graph TD
 
 경로: `Assets/Dist/Scripts/Map/Plant/`. `TileMapManager`가 `MapPlantHost`를 바인딩·구 `plantCells` 마이그레이션. Plant는 OccupiedCell `tiles` (+ floor `Floor/Tilled`). 뷰는 청크 TileView (`Furniture/Plant_*`). 설치: `TilePlaceUtil` (건설과 공유). 계약: [`docs/farming/FARMING.md`](../farming/FARMING.md).
 
+### 맵 액체
+
+경로: `Assets/Dist/Scripts/Map/Liquid/`. `TileMapManager`가 `MapLiquidHost`를 바인딩·DTO `liquidCells` 로드. 모델(스파스 ml 오버레이)은 청크 unload와 무관하게 유지; 수면 뷰는 `MapLiquidSurfaceRenderer`가 **로드된 청크 + 변경 셀**만 메시화. Flow는 `WorldClock.MinuteChanged` + dirty 큐(정지 바다 비용 0). 계약: [`docs/map/LIQUID.md`](LIQUID.md).
+
 ---
 
 ## 데이터 흐름 요약

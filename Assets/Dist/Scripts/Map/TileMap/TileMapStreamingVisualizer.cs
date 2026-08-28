@@ -46,6 +46,14 @@ namespace IsoTilemap
 
         public IReadOnlyCollection<Vector2Int> LoadedChunks => _loadedChunks;
 
+        /// <summary>매 프레임 순회용 — 인터페이스 열거자 박싱 없이 호출부의 재사용 리스트로 받는다.</summary>
+        public void CollectLoadedChunks(List<Vector2Int> into)
+        {
+            into.Clear();
+            foreach (Vector2Int chunk in _loadedChunks)
+                into.Add(chunk);
+        }
+
         public void SetPresentationApplier(TileViewPresentationApplier applier) => _presentationApplier = applier;
 
         public bool TryGetView(Guid tileId, out TileView view) => _tileViews.TryGetValue(tileId, out view);

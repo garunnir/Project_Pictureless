@@ -5,7 +5,10 @@
 // - Seed(SeedFromTileFlags/SeedEffectiveMl)는 절대 dirty를 등록하지 않는다.
 // - dirty 진입점은 MarkDirty 호출자(FlowSolver 전파, MlBridge Pour/Draw)뿐 — 매 틱 전체 스캔 금지.
 // - EffectiveMl == 0인 셀은 사전에서 제거해 스파스 상태를 유지한다.
+// - 렌더 통지(CellChanged/BulkChanged)는 sim dirty 큐와 별개다. 시드는 셀 단위로 통지하지 않고
+//   BulkChanged 1회만 보낸다 — 바다맵 시드에서 수십만 건 통지가 나가지 않도록.
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -20,11 +23,18 @@ namespace IsoTilemap
         public IReadOnlyDictionary<Vector3Int, MapLiquidCell> Cells => _cells;
         public int DirtyCount => _dirtyQueue.Count;
 
+        /// <summary>단일 셀의 보유량이 바뀜 — 렌더러가 해당 셀이 속한 청크만 무효화한다.</summary>
+        public event Action<Vector3Int> CellChanged;
+
+        /// <summary>Clear/Load/Seed 등 대량 교체 — 렌더러가 전체를 무효화한다.</summary>
+        public event Action BulkChanged;
+
         public void Clear()
         {
             _cells.Clear();
             _dirtyQueue.Clear();
             _dirtySet.Clear();
+            BulkChanged?.Invoke();
         }
 
         public bool TryGetCell(Vector3Int cell, out MapLiquidCell liquidCell) =>
@@ -45,10 +55,12 @@ namespace IsoTilemap
                 if (next <= 0)
                 {
                     _cells.Remove(cell);
+                    CellChanged?.Invoke(cell);
                     return;
                 }
 
                 c.SetEffectiveMl(next);
+                CellChanged?.Invoke(cell);
                 return;
             }
 
@@ -56,6 +68,7 @@ namespace IsoTilemap
                 return;
 
             _cells[cell] = MapLiquidCell.FromEffectiveMl(typeId ?? MapLiquidConsts.WaterTypeId, deltaMl);
+            CellChanged?.Invoke(cell);
         }
 
         /// <summary>맵 로드 1회 시드 전용 — dirty 큐를 절대 건드리지 않는다(정적 셀 무연산 보증 §1).</summary>
@@ -116,6 +129,8 @@ namespace IsoTilemap
                 var cell = new Vector3Int(x, y, z);
                 SeedEffectiveMl(cell, MapLiquidConsts.WaterTypeId, seedMl);
             }
+
+            BulkChanged?.Invoke();
         }
 
         public void LoadFromDto(IReadOnlyList<MapLiquidCellSaveData> dto)
@@ -135,6 +150,8 @@ namespace IsoTilemap
                 var cell = new Vector3Int(d.x, d.y, d.z);
                 _cells[cell] = new MapLiquidCell(d.typeId, d.level, d.remainderMl);
             }
+
+            BulkChanged?.Invoke();
         }
 
         public void WriteToDto(List<MapLiquidCellSaveData> dto)

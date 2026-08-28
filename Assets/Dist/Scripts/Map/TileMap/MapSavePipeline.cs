@@ -22,13 +22,14 @@ namespace IsoTilemap
             MapPlantHost plantHost = null,
             MapLiquidHost liquidHost = null)
         {
+            // 호스트가 null이면(컴포넌트 누락 등) 디스크의 기존 레이어를 계승해야 한다 — 빈 값으로 덮으면 유실.
+            if (!MapSaveLayerCarryOver.TryReadExisting(fullPath, out MapSaveJsonDto existing))
+                return;
+
             MapModelDTO mapData = new MapModelDTO(_runtime);
             MapSaveJsonDto mapDatas = _mapper.FromPrepared(mapData);
             mapDatas.gridCellSize = Mathf.Max(1e-4f, gridCellSize);
-            bloodHost?.WriteToDto(mapDatas);
-            plantHost?.WriteToDto(mapDatas);
-            liquidHost?.WriteToDto(mapDatas);
-            MapClockSnapshot.WriteToDto(mapDatas);
+            MapSaveLayerCarryOver.Apply(mapDatas, existing, liquidHost, bloodHost, plantHost);
 
             string json = JsonUtility.ToJson(mapDatas, true);
 

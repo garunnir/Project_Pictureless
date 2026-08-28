@@ -93,17 +93,23 @@ namespace IsoTilemap
                 _overlay.MarkDirty(neighbor);
             }
 
-            // 3) 옆이 전부 막힘/포화인데 여전히 cap 초과 → 위 칸을 실제로 채움(재귀는 MarkDirty(above)가 담당)
+            // 3) 옆이 전부 막힘/포화인데 여전히 압축 상한 초과 → 위 칸을 실제로 채움(재귀는 MarkDirty(above)가 담당)
+            //
+            // 임계가 capMl이 아니라 stableCapMl(= capMl + OverCompressMl)인 이유: 1)의 중력 목표가 아래 칸에
+            // 최대 capMl + OverCompressMl까지 허용하므로, 여기서 capMl을 임계로 쓰면 1)이 올린 압축분을 3)이
+            // 즉시 내리고 1)이 다시 올리는 무한 왕복이 된다. 두 단계의 상한을 같은 값으로 맞춰야 고정점이
+            // 존재한다 — MinFlowMl 게이트에 의존하지 않는 구조적 정지 보증(docs/map/LIQUID.md 확산의 유한성).
             if (!anyRoomSideways)
             {
+                int stableCapMl = capMl + MapLiquidConsts.OverCompressMl;
                 int remainingMl = _overlay.GetEffectiveMl(self);
-                if (remainingMl > capMl)
+                if (remainingMl > stableCapMl)
                 {
                     Vector3Int above = self + Vector3Int.up;
                     if (IsVerticalOpen(above) && IsTargetEligible(above))
                     {
                         int room = Mathf.Max(0, capMl - _overlay.GetEffectiveMl(above));
-                        int overflow = remainingMl - capMl;
+                        int overflow = remainingMl - stableCapMl;
                         int moveUp = Mathf.Min(overflow, room);
                         if (moveUp > 0)
                         {
@@ -117,12 +123,24 @@ namespace IsoTilemap
             }
         }
 
+        /// <summary>
+        /// 2-셀 stable state에서 아래 칸이 담아야 할 ml. 상한은 <c>capMl + overCompressMl</c>다.
+        /// </summary>
+        /// <remarks>
+        /// 원전(W-Shadow "Simple Fluid Simulation With Cellular Automata")은 cap을 1.0으로 정규화한 float이라
+        /// 중간 분기를 <c>(cap*cap + total*comp) / (cap + comp)</c>로 쓴다. cap이 ml 단위면 <c>cap*cap</c>가
+        /// 10^12로 int를 넘기므로, 대수적으로 동등한 <c>cap + comp*(total-cap) / (cap+comp)</c>를 쓴다.
+        /// 이 분기에서 <c>total > cap</c>이 보장되어 더하는 항이 음수가 아니고 cap이 정확한 정수이므로
+        /// 정수 나눗셈 결과까지 원식과 일치한다. 교과서 형태로 "되돌리지" 말 것.
+        /// 중간 곱의 상한은 <c>comp * (cap + comp)</c> ≈ 1.96e8 — terrain별 capMl을 도입해 cap이
+        /// 약 3.3e6 ml을 넘기면 그때는 long 승격이 필요하다.
+        /// </remarks>
         static int StableBelowMl(int totalMl, int capMl, int overCompressMl)
         {
             if (totalMl <= capMl)
                 return totalMl;
             if (totalMl < 2 * capMl + overCompressMl)
-                return (capMl * capMl + totalMl * overCompressMl) / (capMl + overCompressMl);
+                return capMl + overCompressMl * (totalMl - capMl) / (capMl + overCompressMl);
             return (totalMl + overCompressMl) / 2;
         }
 

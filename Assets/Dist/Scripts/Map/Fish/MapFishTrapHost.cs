@@ -104,7 +104,7 @@ namespace IsoTilemap
             int baitRemaining,
             int deployedWorldMinute)
         {
-            if (!MapFishService.CellHasFishableWaterFloor(walkableCell) || HasTrap(walkableCell))
+            if (!MapFishService.CellHasFishableWater(walkableCell) || HasTrap(walkableCell))
                 return false;
 
             var trap = new FishTrapCell(

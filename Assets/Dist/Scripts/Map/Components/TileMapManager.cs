@@ -323,6 +323,9 @@ public class TileMapManager : MonoBehaviour
 
         float cellSize = _worldGrid != null ? _worldGrid.CellSize : _gridCellSize;
         _liquidHost.BindMapContext(_mapCacheHub, cellSize);
+        _liquidHost.BindRenderContext(
+            _chunkStreamer != null ? _chunkStreamer.ChunkSize : 0,
+            _streamingVisualizer);
         _liquidHost.LoadFromDto(_loader != null ? _loader.LastLoadedDto : null);
     }
 

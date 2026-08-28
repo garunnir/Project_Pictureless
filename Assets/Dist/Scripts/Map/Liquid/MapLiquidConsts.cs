@@ -2,6 +2,8 @@
 // MapLiquidConsts — 맵 액체 시뮬레이션 상수 SSOT (BN 1000L/셀 + CA 임계)
 // ============================================================
 
+using UnityEngine;
+
 namespace IsoTilemap
 {
     public static class MapLiquidConsts
@@ -27,5 +29,20 @@ namespace IsoTilemap
 
         /// <summary>한 번의 FlowSolver 처리(WorldClock.MinuteChanged 1회)당 처리할 dirty 셀 수 상한.</summary>
         public const int MaxUpdatesPerTick = 512;
+
+        /// <summary>
+        /// <see cref="MapLiquidQuery.ColumnMlDownward"/>가 아래로 훑는 최대 셀 수.
+        /// 물이 끊기면 그 전에 멈추므로 실제 비용은 보통 1~2셀이며, 이 값은 비정상 깊이 상한 가드다.
+        /// </summary>
+        public const int MaxColumnScanCells = 8;
+
+        /// <summary>ml → 0..1 충만도. 쿼리와 렌더 메셔가 공유하는 단일 변환(terrain별 capMl 도입 시 여기만 고친다).</summary>
+        public static float ToFill01(int effectiveMl)
+        {
+            if (effectiveMl <= 0)
+                return 0f;
+
+            return Mathf.Clamp01((float)effectiveMl / DefaultMaxVolumeMl);
+        }
     }
 }

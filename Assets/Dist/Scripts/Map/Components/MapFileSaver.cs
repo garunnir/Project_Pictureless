@@ -44,6 +44,13 @@ public class MapFileSaver : MonoBehaviour
     [ContextMenu("Save Map To JSON")]
     private void SaveInEditor()
     {
+        string fullPath = GetFullPath();
+
+        // 편집 모드에는 Awake가 안 돌아 호스트가 전부 null이다. 기존 파일을 먼저 읽어야
+        // 액체·혈흔·시계를 계승할 수 있고, 못 읽으면 덮어쓰는 대신 중단한다.
+        if (!MapSaveLayerCarryOver.TryReadExisting(fullPath, out MapSaveJsonDto existing))
+            return;
+
         var mapper = _mapper ?? new TileMapDtoMapper();
 
         var tileViews = Object.FindObjectsByType<TileView>(
@@ -54,16 +61,18 @@ public class MapFileSaver : MonoBehaviour
         var dtoModel = new MapModelDTO(snapshot);
         MapSaveJsonDto jsonDto = mapper.FromPrepared(dtoModel);
         jsonDto.gridCellSize = _worldGrid != null ? _worldGrid.CellSize : 1f;
-        MapBloodHost.Runtime?.WriteToDto(jsonDto);
-        MapPlantHost.Runtime?.WriteToDto(jsonDto);
-        MapLiquidHost.Runtime?.WriteToDto(jsonDto);
-        MapClockSnapshot.WriteToDto(jsonDto);
+        MapSaveLayerCarryOver.Apply(
+            jsonDto,
+            existing,
+            MapLiquidHost.Runtime,
+            MapBloodHost.Runtime,
+            MapPlantHost.Runtime);
 
         _model?.Initialize(dtoModel);
 
-        File.WriteAllText(GetFullPath(), JsonUtility.ToJson(jsonDto, true));
+        File.WriteAllText(fullPath, JsonUtility.ToJson(jsonDto, true));
         Debug.Log(
-            $"TileMap saved to: {GetFullPath()} (tiles: {jsonDto.tiles.Count}, wallEdges: {jsonDto.wallEdges?.Count ?? 0}, bloodStamps: {jsonDto.bloodStamps?.Count ?? 0}, plantCells: {jsonDto.plantCells?.Count ?? 0})");
+            $"TileMap saved to: {fullPath} (tiles: {jsonDto.tiles.Count}, wallEdges: {jsonDto.wallEdges?.Count ?? 0}, bloodStamps: {jsonDto.bloodStamps?.Count ?? 0}, liquidCells: {jsonDto.liquidCells?.Count ?? 0})");
     }
 #endif
 }

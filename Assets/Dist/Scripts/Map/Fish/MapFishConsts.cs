@@ -34,6 +34,18 @@ namespace IsoTilemap
         public const float FishGoodLootMultiplier = 2f;
         public const float FishingQualityLevelCatchBonus = 0.15f;
 
+        /// <summary>
+        /// 낚시·통발 가능 최소 컬럼 누적 ml (<see cref="MapLiquidQuery.ColumnMlDownward"/>).
+        /// 셀 하나는 약 1,065,390 ml에서 클램프되므로 이 값은 수직 2셀 이상(분지)을 요구한다.
+        /// </summary>
+        public const int FishableColumnMl = 2_000_000;
+
+        /// <summary>
+        /// 수중창(S3) 발밑 셀 최소 충만도. 컬럼 수심이 아니라 국소 Fill01을 본다 —
+        /// 얕은 물에서도 되던 구 SHALLOW_WATER 동작과 패리티를 맞추기 위해 시드 비율과 같은 값을 쓴다.
+        /// </summary>
+        public const float UnderwaterShooterFill01 = MapLiquidConsts.ShallowSeedFraction;
+
         /// <summary>수중창(S3) 육상 사거리 배율 — CombatHitscan 소비처용 SSOT.</summary>
         public const float UnderwaterGunLandRangeMultiplier = 0.1f;
 

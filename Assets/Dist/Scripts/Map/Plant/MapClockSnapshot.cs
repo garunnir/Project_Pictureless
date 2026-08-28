@@ -13,6 +13,10 @@ namespace IsoTilemap
         public static Func<int> GetMinutesPerDay;
         public static Action<int, int> SetTime;
 
+        /// <summary>WorldClock.MinuteChanged 브리지. WorldClock 미존재 시 false — 호출부가 지연 재시도.</summary>
+        public static Func<Action, bool> TrySubscribeMinuteChanged;
+        public static Action<Action> UnsubscribeMinuteChanged;
+
         public static int CurrentWorldMinute()
         {
             int day = GetDayIndex != null ? GetDayIndex() : 0;

@@ -1,5 +1,5 @@
 // ============================================================
-// MapFishService — 물 타일 인접·낚시 Cast·루트 SSOT
+// MapFishService — 물 수심 인접·낚시 Cast·루트 SSOT
 // ============================================================
 
 using System;
@@ -17,14 +17,10 @@ namespace IsoTilemap
 
         /// <summary>
         /// 액터 점유셀에서 XZ Chebyshev ≤ 1(자기 셀 제외), 동일 Y 인접 셀에
-        /// ShallowWater/DeepWater 바닥재가 있으면 true.
+        /// 낚시 가능 수심의 물이 있으면 true.
         /// </summary>
         public static bool IsFishableAdjacent(Vector3Int actorCell)
         {
-            TileMapCacheHub hub = TileMapCacheHub.Runtime;
-            if (hub == null)
-                return false;
-
             for (int dx = -MapFishConsts.FishingAdjacentRangeCells;
                  dx <= MapFishConsts.FishingAdjacentRangeCells;
                  dx++)
@@ -37,7 +33,7 @@ namespace IsoTilemap
                         continue;
 
                     var neighbor = new Vector3Int(actorCell.x + dx, actorCell.y, actorCell.z + dz);
-                    if (CellHasFishableWaterFloor(neighbor))
+                    if (CellHasFishableWater(neighbor))
                         return true;
                 }
             }
@@ -45,34 +41,29 @@ namespace IsoTilemap
             return false;
         }
 
-        public static bool CellHasFishableWaterFloor(Vector3Int walkableCell)
-        {
-            TileMapCacheHub hub = TileMapCacheHub.Runtime;
-            if (hub == null)
-                return false;
+        /// <summary>
+        /// 낚시·통발 대상 셀인지 — <paramref name="waterCell"/>부터 아래로 누적한 수심이
+        /// <see cref="MapFishConsts.FishableColumnMl"/> 이상이어야 한다.
+        /// </summary>
+        /// <remarks>
+        /// 국소 Fill01이 아니라 컬럼 누적을 보는 이유: 셀 하나는 cap에서 클램프되므로
+        /// 얕은 물 한 겹과 깊은 분지를 Fill01만으로는 구분할 수 없다.
+        /// </remarks>
+        public static bool CellHasFishableWater(Vector3Int waterCell) =>
+            MapLiquidQuery.ColumnMlDownward(waterCell) >= MapFishConsts.FishableColumnMl;
 
-            if (!hub.TryGetFloorFaceForWalkableCell(
-                    walkableCell.x,
-                    walkableCell.y,
-                    walkableCell.z,
-                    out TileData face))
-                return false;
-
-            if (!TilePrefabDB.TryResolveDefinition(face.identity.PrefabId, out TileDefinition def))
-                return false;
-
-            return IsFishableWaterDefinition(def);
-        }
-
-        /// <summary>수중창(S3) — 발 위치 walkable 셀 바닥이 물인지 (CombatHitscan).</summary>
-        public static bool IsShooterOnWaterFloor(Vector3 feetWorld)
+        /// <summary>
+        /// 수중창(S3) — 발 위치 셀이 물에 잠겼는지 (CombatHitscan).
+        /// 낚시와 달리 수심이 아니라 국소 <see cref="MapLiquidQuery.Fill01"/>만 본다.
+        /// </summary>
+        public static bool IsShooterInWater(Vector3 feetWorld)
         {
             MapPlantHost host = MapPlantHost.Runtime;
             if (host == null)
                 return false;
 
             Vector3Int cell = host.ResolveCellFromWorld(feetWorld);
-            return CellHasFishableWaterFloor(cell);
+            return MapLiquidQuery.Fill01(cell) >= MapFishConsts.UnderwaterShooterFill01;
         }
 
         public static bool HasFishingQuality(ItemData item) =>
@@ -147,7 +138,7 @@ namespace IsoTilemap
             if (session != null)
                 return session;
 
-            if (!CellHasFishableWaterFloor(waterCell))
+            if (!CellHasFishableWater(waterCell))
                 return BlockedLabel();
 
             if (!TryResolveActorCell(out Vector3Int actorCell) ||
@@ -242,7 +233,7 @@ namespace IsoTilemap
                         continue;
 
                     var neighbor = new Vector3Int(actorCell.x + dx, actorCell.y, actorCell.z + dz);
-                    if (!CellHasFishableWaterFloor(neighbor))
+                    if (!CellHasFishableWater(neighbor))
                         continue;
 
                     cell = neighbor;
@@ -264,10 +255,6 @@ namespace IsoTilemap
 
         static string BlockedLabel() =>
             _hooks.FishBlockedLabel != null ? _hooks.FishBlockedLabel() : "낚시할 수 없음";
-
-        static bool IsFishableWaterDefinition(TileDefinition def) =>
-            TileFlags.HasFlag(def, TileFlags.ShallowWater)
-            || TileFlags.HasFlag(def, TileFlags.DeepWater);
 
         public static bool IsFishTrapItem(ItemData item) =>
             item != null &&
@@ -314,7 +301,7 @@ namespace IsoTilemap
             if (host == null || host.HasTrap(waterCell))
                 return BlockedLabel();
 
-            if (!CellHasFishableWaterFloor(waterCell))
+            if (!CellHasFishableWater(waterCell))
                 return BlockedLabel();
 
             if (!TryResolveActorCell(out Vector3Int actorCell) ||
