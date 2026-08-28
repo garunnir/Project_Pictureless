@@ -34,8 +34,6 @@ namespace Garunnir.Runtime.Gameplay.Data
 
         public void AddPractice(string skillId, int xp) => _skills.AddPractice(skillId, xp);
 
-        public int GetStat(string statKey) => _skills.Level(statKey);
-
         public IReadOnlyCollection<string> GetKnownSkillIds() => _skills.GetKnownSkillIds();
 
         public int GetPotential(string skillId) => _skills.Potential(skillId);

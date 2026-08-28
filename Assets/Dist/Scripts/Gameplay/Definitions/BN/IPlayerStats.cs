@@ -15,7 +15,6 @@ namespace Garunnir.Runtime.Gameplay.Data
         /// <summary>레벨을 0 이상으로 설정하며 누적 연습 XP는 유지합니다.</summary>
         void SetSkillLevel(string skillId, int level);
         void AddPractice(string skillId, int xp);
-        int GetStat(string statKey);
         IReadOnlyCollection<string> GetKnownSkillIds();
 
         /// <summary>스킬의 잠재력(%)을 반환합니다. 미설정 시 100.</summary>

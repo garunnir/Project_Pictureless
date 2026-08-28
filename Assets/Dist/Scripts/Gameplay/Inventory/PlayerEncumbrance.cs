@@ -101,21 +101,7 @@ public static class PlayerEncumbrance
                 break;
         }
 
-        AddDelta(into, AttributeIds.Str, strDelta);
-        AddDelta(into, AttributeIds.Dex, dexDelta);
-    }
-
-    static void AddDelta(
-        System.Collections.Generic.Dictionary<string, int> into,
-        string skillId,
-        int delta)
-    {
-        if (delta == 0)
-            return;
-
-        if (into.TryGetValue(skillId, out int existing))
-            into[skillId] = existing + delta;
-        else
-            into[skillId] = delta;
+        SkillModifierCollect.AddDelta(into, AttributeIds.Str, strDelta);
+        SkillModifierCollect.AddDelta(into, AttributeIds.Dex, dexDelta);
     }
 }

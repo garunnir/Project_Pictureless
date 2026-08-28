@@ -54,7 +54,7 @@ namespace Garunnir.Runtime.Gameplay.Data
                     }
                     else
                     {
-                        AddDelta(into, entry.SkillId, stacked);
+                        SkillModifierCollect.AddDelta(into, entry.SkillId, stacked);
                     }
                 }
             }
@@ -66,19 +66,8 @@ namespace Garunnir.Runtime.Gameplay.Data
             {
                 int baseLevel = _skills.BaseLevel(pair.Key);
                 int delta = (int)Math.Round(baseLevel * (pair.Value / 100.0), MidpointRounding.AwayFromZero);
-                AddDelta(into, pair.Key, delta);
+                SkillModifierCollect.AddDelta(into, pair.Key, delta);
             }
-        }
-
-        static void AddDelta(Dictionary<string, int> into, string skillId, int delta)
-        {
-            if (delta == 0)
-                return;
-
-            if (into.TryGetValue(skillId, out int existing))
-                into[skillId] = existing + delta;
-            else
-                into[skillId] = delta;
         }
     }
 }

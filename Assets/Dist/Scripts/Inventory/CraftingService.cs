@@ -157,7 +157,7 @@ public static class CraftingService
         if (recipe == null || pool == null || string.IsNullOrEmpty(recipe.result))
             return false;
 
-        if (!MeetsSkillRequirements(recipe))
+        if (!RecipeKnowledge.MeetsCraftSkillRequirements(recipe))
             return false;
 
         if (!MeetsProficiencies(recipe))
@@ -494,7 +494,7 @@ public static class CraftingService
         int skillLevel = string.IsNullOrEmpty(recipe.skill_used)
             ? 0
             : GameplayData.Stats.GetSkillLevel(recipe.skill_used);
-        int intCur = GameplayData.Stats.GetStat(AttributeIds.Int);
+        int intCur = GameplayData.Stats.GetSkillLevel(AttributeIds.Int);
 
         int skillDice = SkillDiceBase + skillLevel * SkillDicePerLevel; // 2 + 3*level + level
         int skillSides = SkillDiceSidesBase + intCur;
@@ -542,31 +542,6 @@ public static class CraftingService
         RecipeKnowledge.TryLearnFromDisassembly(recipe, GameplayData.RecipeMemory);
 
         session?.NotifyExternalStacksChanged(container);
-        return true;
-    }
-
-    static bool MeetsSkillRequirements(RecipeData recipe)
-    {
-        if (!string.IsNullOrEmpty(recipe.skill_used))
-        {
-            int lv = GameplayData.Stats.GetSkillLevel(recipe.skill_used);
-            if (lv < recipe.difficulty)
-                return false;
-        }
-
-        if (recipe.skills_required == null || recipe.skills_required.Count == 0)
-            return true;
-
-        for (int i = 0; i < recipe.skills_required.Count; i++)
-        {
-            SkillReq req = recipe.skills_required[i];
-            if (req == null || string.IsNullOrEmpty(req.skill))
-                continue;
-
-            if (GameplayData.Stats.GetSkillLevel(req.skill) < req.level)
-                return false;
-        }
-
         return true;
     }
 

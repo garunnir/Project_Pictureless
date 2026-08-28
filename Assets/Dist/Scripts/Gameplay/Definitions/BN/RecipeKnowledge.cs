@@ -9,29 +9,39 @@ namespace Garunnir.Runtime.Gameplay.Data
 {
     public static class RecipeKnowledge
     {
-        /// <summary>
-        /// null이면 해금됨. memory 생략 시 GameplayData.RecipeMemory.
-        /// </summary>
+        /// <summary>null이면 해금됨. memory 생략 시 GameplayPlayerRuntime.RecipeMemory.</summary>
         public static string GetFailureReason(RecipeData recipe, IItemContainer container)
-            => GetFailureReason(recipe, container, GameplayData.RecipeMemory);
+            => GetFailureReason(recipe, container, GameplayPlayerRuntime.RecipeMemory);
 
         public static string GetFailureReason(
             RecipeData recipe,
             IItemContainer container,
             ICharacterRecipeMemory memory)
+            => GetFailureReason(
+                recipe,
+                container,
+                memory,
+                GameplayPlayerRuntime.Stats,
+                GameplayPlayerRuntime.Traits);
+
+        public static string GetFailureReason(
+            RecipeData recipe,
+            IItemContainer container,
+            ICharacterRecipeMemory memory,
+            IPlayerStats stats,
+            ICharacterTraits traits)
         {
             if (recipe == null || string.IsNullOrEmpty(recipe.result))
                 return Loc.Get("RecipeKnowledge.Invalid");
 
-            // 전지: 모든 레시피 Known (재료·CanCraft와 무관)
-            if (GameplayData.Traits != null && GameplayData.Traits.Has(TraitIds.Omniscience))
+            if (traits != null && traits.Has(TraitIds.Omniscience))
                 return null;
 
             if (memory != null && !string.IsNullOrEmpty(recipe.id) && memory.IsKnown(recipe.id))
                 return null;
 
             int playerSkillLv = !string.IsNullOrEmpty(recipe.skill_used)
-                ? GameplayData.Stats.GetSkillLevel(recipe.skill_used)
+                ? SkillReqEvaluator.SkillLevel(stats, recipe.skill_used)
                 : 0;
 
             bool hasAutoSkills = HasSkillReqs(recipe.autolearn_skills);
@@ -39,10 +49,9 @@ namespace Garunnir.Runtime.Gameplay.Data
             bool hasBooks = recipe.book_learn != null && recipe.book_learn.Count > 0;
             bool hasDecomp = HasSkillReqs(recipe.decomp_learn);
 
-            if (hasAutoSkills && MeetsAllSkillReqs(recipe.autolearn_skills))
+            if (hasAutoSkills && SkillReqEvaluator.MeetsAll(recipe.autolearn_skills, stats))
                 return null;
 
-            // autolearn_skills가 있으면 difficulty 단독 경로는 쓰지 않음 (BN array autolearn)
             if (hasAuto && !hasAutoSkills && playerSkillLv >= recipe.difficulty)
                 return null;
 
@@ -55,7 +64,6 @@ namespace Garunnir.Runtime.Gameplay.Data
                     return bookReason;
             }
 
-            // GameData 커스텀 등: 습득 플래그가 없으면 이미 아는 레시피
             if (!hasAuto && !hasBooks && !hasDecomp && !hasAutoSkills)
                 return null;
 
@@ -63,11 +71,7 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return Loc.Get("RecipeKnowledge.DecompRequired");
 
             if (hasAutoSkills)
-            {
-                string unmet = FirstUnmetSkillReason(recipe.autolearn_skills);
-                if (unmet != null)
-                    return unmet;
-            }
+                return SkillReqEvaluator.FirstUnmetReason(recipe.autolearn_skills, stats);
 
             if (hasAuto && !hasAutoSkills)
                 return Loc.Format("RecipeKnowledge.SkillRequired", recipe.difficulty);
@@ -84,18 +88,18 @@ namespace Garunnir.Runtime.Gameplay.Data
         /// <summary>decomp_learn 스킬 충족 시 영구 습득. forward recipe id 기준.</summary>
         public static void TryLearnFromDisassembly(
             RecipeData recipe,
-            ICharacterRecipeMemory memory)
+            ICharacterRecipeMemory memory,
+            IPlayerStats stats)
         {
             if (recipe == null || memory == null || string.IsNullOrEmpty(recipe.id))
                 return;
 
-            if (HasSkillReqs(recipe.decomp_learn) && MeetsAllSkillReqs(recipe.decomp_learn))
+            if (HasSkillReqs(recipe.decomp_learn) && SkillReqEvaluator.MeetsAll(recipe.decomp_learn, stats))
                 memory.Learn(recipe.id);
 
-            // uncraft-only 행이면 같은 result의 forward 레시피 decomp_learn도 검사
             if (recipe.is_uncraft || !HasSkillReqs(recipe.decomp_learn))
             {
-                List<RecipeData> forwards = GameplayData.GetRecipesForResult(recipe.result);
+                List<RecipeData> forwards = GameDataQueries.GetRecipesForResult(recipe.result);
                 if (forwards == null)
                     return;
 
@@ -106,52 +110,32 @@ namespace Garunnir.Runtime.Gameplay.Data
                         continue;
                     if (!HasSkillReqs(forward.decomp_learn))
                         continue;
-                    if (!MeetsAllSkillReqs(forward.decomp_learn))
+                    if (!SkillReqEvaluator.MeetsAll(forward.decomp_learn, stats))
                         continue;
                     memory.Learn(forward.id);
                 }
             }
         }
 
-        public static bool MeetsAllSkillReqs(IReadOnlyList<SkillReq> reqs)
-        {
-            if (reqs == null || reqs.Count == 0)
-                return false;
+        public static void TryLearnFromDisassembly(
+            RecipeData recipe,
+            ICharacterRecipeMemory memory)
+            => TryLearnFromDisassembly(recipe, memory, GameplayPlayerRuntime.Stats);
 
-            bool sawValid = false;
-            for (int i = 0; i < reqs.Count; i++)
-            {
-                SkillReq req = reqs[i];
-                if (req == null || string.IsNullOrEmpty(req.skill))
-                    continue;
+        public static bool MeetsCraftSkillRequirements(RecipeData recipe, IPlayerStats stats) =>
+            SkillReqEvaluator.MeetsCraftGate(recipe, stats);
 
-                sawValid = true;
-                if (GameplayData.Stats.GetSkillLevel(req.skill) < req.level)
-                    return false;
-            }
+        public static bool MeetsCraftSkillRequirements(RecipeData recipe) =>
+            MeetsCraftSkillRequirements(recipe, GameplayPlayerRuntime.Stats);
 
-            return sawValid;
-        }
+        public static bool MeetsAllSkillReqs(IReadOnlyList<SkillReq> reqs, IPlayerStats stats) =>
+            SkillReqEvaluator.MeetsAll(reqs, stats);
+
+        public static bool MeetsAllSkillReqs(IReadOnlyList<SkillReq> reqs) =>
+            SkillReqEvaluator.MeetsAll(reqs, GameplayPlayerRuntime.Stats);
 
         static bool HasSkillReqs(IReadOnlyList<SkillReq> reqs)
             => reqs != null && reqs.Count > 0;
-
-        static string FirstUnmetSkillReason(IReadOnlyList<SkillReq> reqs)
-        {
-            if (reqs == null)
-                return Loc.Get("RecipeKnowledge.Locked");
-
-            for (int i = 0; i < reqs.Count; i++)
-            {
-                SkillReq req = reqs[i];
-                if (req == null || string.IsNullOrEmpty(req.skill))
-                    continue;
-                if (GameplayData.Stats.GetSkillLevel(req.skill) < req.level)
-                    return Loc.Format("RecipeKnowledge.SkillRequired", req.level);
-            }
-
-            return Loc.Get("RecipeKnowledge.Locked");
-        }
 
         static string TryResolveBookReason(RecipeData recipe, IItemContainer container, int playerSkillLv)
         {
@@ -171,7 +155,7 @@ namespace Garunnir.Runtime.Gameplay.Data
                 if (container.CountItem(bl.book) <= 0)
                     continue;
 
-                ItemData bookItem = GameplayData.GetItem(bl.book);
+                ItemData bookItem = GameDataQueries.GetItem(bl.book);
                 int requiredByRecipe = bl.level;
                 int requiredByBook = bookItem != null ? bookItem.book_required_level : 0;
                 int requiredSkillLevel = Math.Max(requiredByRecipe, requiredByBook);

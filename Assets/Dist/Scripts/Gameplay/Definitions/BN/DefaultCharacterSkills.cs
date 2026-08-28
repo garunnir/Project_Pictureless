@@ -18,17 +18,6 @@ namespace Garunnir.Runtime.Gameplay.Data
 
         public bool IsCollapsed { get; private set; }
 
-        public static DefaultCharacterSkills CreateWithDefaultAttributes(
-            int attributeLevel = SkillGrowth.DefaultAttributeLevel)
-        {
-            var skills = new DefaultCharacterSkills();
-            for (int i = 0; i < AttributeIds.All.Length; i++)
-                skills.SeedEntry(AttributeIds.All[i], attributeLevel);
-
-            skills.Refresh();
-            return skills;
-        }
-
         /// <summary>Refresh·이벤트 없이 행을 시드한다. 시드 완료 후 Refresh 1회는 호출측 책임.</summary>
         public void SeedEntry(
             string skillId, int baseLevel, int potential = SkillGrowth.DefaultPotential)
