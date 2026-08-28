@@ -70,8 +70,16 @@ namespace IsoTilemap
                 return;
 
             // Unity fake-null 때문에 ?. 대신 != null — 파괴된 컴포넌트에 WriteToDto를 걸지 않는다.
+            // 액체 우선순위: Play 호스트 → 에디터 워터 floor bake → 디스크 계승.
             if (liquidHost != null)
                 liquidHost.WriteToDto(target);
+            else if (MapLiquidAuthoringBake.TryBakeFromFloorFaces(target, out int baked) && baked > 0)
+            {
+                // ShallowWater/DeepWater floorFaces가 liquidCells로 변환됨. floorFaces는 다음
+                // 에디터 편집용으로 유지한다(워터 에셋 제거 전까지 메시·수면이 Play에서 겹칠 수 있음).
+                Debug.Log(
+                    $"[MapSaveLayerCarryOver] 워터 floor face → liquidCells 베이크 ({baked} cells).");
+            }
             else
                 CarryLiquid(target, existing);
 

@@ -25,12 +25,14 @@
 
 `MapFishService.CellHasFishableWater` / `IsFishableAdjacent` · `IsShooterInWater` (구 `IsShooterOnWaterFloor`).
 
-### Legacy tile flags (이주 중)
+### Legacy tile flags (에디터 저작 + 이주 중)
 
 | Flag | 역할 |
 |------|------|
-| `SHALLOW_WATER` / `DEEP_WATER` | **레거시** floor 바닥재 태그 — `hasLiquidSnapshot: false` 로드 시에만 `SeedFromTileFlags` 시드용. Play 검증 후 SO·프리팹 제거 예정 |
+| `SHALLOW_WATER` / `DEEP_WATER` | 에디터 floor 프리팹 태그 — **Save Map To JSON** 시 `MapLiquidAuthoringBake`가 `liquidCells`로 bake. `hasLiquidSnapshot: false` 로드 시에만 런타임 `SeedFromTileFlags` 폴백. Play 검증 후 SO·프리팹 제거 예정 |
 | `FISHABLE` | 에셋 태깅·후속 확장용 (현재 판정 미사용) |
+
+에디터 절차: [`LIQUID.md` §에디터 저작](LIQUID.md#에디터-저작-워터-프리팹-타일).
 
 인접 Cast: `IsFishableAdjacent` / `IsWithinCastActionRange` — XZ Chebyshev ≤ 1.
 

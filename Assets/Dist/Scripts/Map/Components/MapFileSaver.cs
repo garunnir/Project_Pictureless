@@ -72,7 +72,7 @@ public class MapFileSaver : MonoBehaviour
 
         File.WriteAllText(fullPath, JsonUtility.ToJson(jsonDto, true));
         Debug.Log(
-            $"TileMap saved to: {fullPath} (tiles: {jsonDto.tiles.Count}, wallEdges: {jsonDto.wallEdges?.Count ?? 0}, bloodStamps: {jsonDto.bloodStamps?.Count ?? 0}, liquidCells: {jsonDto.liquidCells?.Count ?? 0})");
+            $"TileMap saved to: {fullPath} (tiles: {jsonDto.tiles.Count}, wallEdges: {jsonDto.wallEdges?.Count ?? 0}, bloodStamps: {jsonDto.bloodStamps?.Count ?? 0}, liquidCells: {jsonDto.liquidCells?.Count ?? 0}, hasLiquidSnapshot: {jsonDto.hasLiquidSnapshot})");
     }
 #endif
 }

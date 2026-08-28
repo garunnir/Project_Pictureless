@@ -117,13 +117,7 @@ namespace IsoTilemap
                 if (!TilePrefabDB.TryResolveDefinition(face.identity.PrefabId, out TileDefinition def))
                     continue;
 
-                int capMl = MapLiquidConsts.DefaultMaxVolumeMl;
-                int seedMl;
-                if (TileFlags.HasFlag(def, TileFlags.DeepWater))
-                    seedMl = capMl;
-                else if (TileFlags.HasFlag(def, TileFlags.ShallowWater))
-                    seedMl = Mathf.RoundToInt(capMl * MapLiquidConsts.ShallowSeedFraction);
-                else
+                if (!MapLiquidAuthoringBake.TryResolveSeedMl(def, out int seedMl))
                     continue;
 
                 var cell = new Vector3Int(x, y, z);

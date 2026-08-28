@@ -125,6 +125,24 @@ compressible-water CA. `SHALLOW_WATER`/`DEEP_WATER` 정적 바닥 태그를 동�
 
 `TileMapManager.SetupMapLiquid()`가 `BindMapContext` → `BindRenderContext` → `LoadFromDto` 순으로 호출한다. **`BindRenderContext`가 `LoadFromDto`보다 먼저**여야 로드 시 발생하는 `BulkChanged`를 렌더러가 받는다. 머티리얼은 `MapLiquidSurfaceRenderer`의 Inspector에 지정한다(비우면 `Shader.Find` 폴백 — 에디터 전용이므로 빌드에서는 반드시 지정).
 
+## 에디터 저작 (워터 프리팹 타일)
+
+에디터에는 `MapLiquidHost`가 없으므로 **워터 floor 프리팹을 깔고 Save**하는 것이 liquid 저작 경로다.
+
+| 단계 | 동작 |
+|------|------|
+| 1 | `TileMapManager` → Load Editor (또는 기존 TileContainer) |
+| 2 | `Floor/ShallowWater` 또는 `Floor/DeepWater` 프리팹을 floor face로 배치 (`TileView.gridPos` = CellBelow 앵커) |
+| 3 | `MapFileSaver` → **Save Map To JSON** |
+| 4 | `MapLiquidAuthoringBake`가 `SHALLOW_WATER`/`DEEP_WATER` floorFaces → walkable 셀(`CellAbove` = 앵커 y+1) `liquidCells`로 bake, `hasLiquidSnapshot: true` |
+
+시드량: Deep = `DefaultMaxVolumeMl`, Shallow = `× ShallowSeedFraction` (`MapLiquidAuthoringBake.TryResolveSeedMl` — 런타임 `SeedFromTileFlags`와 동일).
+
+**우선순위 (저장):** Play `MapLiquidHost` → 에디터 워터 floor bake → 디스크 liquidCells 계승.  
+워터 face가 **하나도 없으면** bake하지 않고 기존 `liquidCells`를 계승한다(타일만 지운다고 liquid가 비워지지 않음 — 비우려면 JSON의 `liquidCells`를 비우거나 Play에서 Draw).
+
+**Play 겹침:** bake 후에도 floorFaces에 워터 프리팹이 남아 있으면 타일 메시와 수면 렌더러가 겹칠 수 있다. 수면만 보려면 floorFaces에서 워터를 제거한 뒤 다시 저장(이때는 liquidCells가 계승됨). 워터 SO·프리팹 자체 삭제는 Play 검증 후(§남은 작업).
+
 ## 저장 (`MapLiquidCellSaveData` / `MapSaveJsonDto.liquidCells`)
 
 ```json
@@ -171,7 +189,7 @@ compressible-water CA. `SHALLOW_WATER`/`DEEP_WATER` 정적 바닥 태그를 동�
 ## 남은 작업 (이 패스에서 미구현)
 
 - **층 가시성**: 수면 렌더러는 `IFloorVisibilitySync`에 물려 있지 않다. `PlayerFloorVisibilityDriver`가 sink 1개만 받는 구조라, 위층 물이 아래층을 가릴 수 있다. 실내 다층 물이 생기면 composite sink로 연결할 것.
-- **워터타일 에셋 제거(이주 3단계)**: `map01.json`은 이미 물 floor face를 지우고 `liquidCells` + `hasLiquidSnapshot: true`로 저작됐고, `MapFishService`도 수심 판정으로 전환됐다. 남은 것은 `Floor/ShallowWater`·`Floor/DeepWater` SO·프리팹 삭제와 씬 타일 레지스트리 정리, 그리고 그 뒤 `SeedFromTileFlags`·`TileFlags.ShallowWater/DeepWater` 제거다. **Play 검증 전에는 지우지 않는다** — 구경로가 유일한 폴백이다.
+- **워터타일 에셋 제거(이주 3단계)**: 에디터 저작은 아직 `Floor/ShallowWater`·`Floor/DeepWater` + Save bake(`MapLiquidAuthoringBake`). Play 검증 후 SO·프리팹·씬 레지스트리 삭제 → 그다음 `SeedFromTileFlags`·`TileFlags.ShallowWater/DeepWater`·bake 경로 제거. **Play 검증 전에는 지우지 않는다.**
 - **낚시 가능 지형 없음**: `map01`의 웅덩이는 한 겹(최대 약 1,065,390 ml)이라 `FishableColumnMl` 미달 — 현재 맵에서 낚시는 의도적으로 불가다. 분지를 저작해야 낚시가 다시 열린다(§분지가 성립하는 조건).
 - **Fields/emits**: BN `phase: liquid` 아이템 필드 증발/침전.
 - **Consumers**: 비(rain), 젖음(wetness), 소화기(extinguisher) 등 다른 시스템과의 통합.
