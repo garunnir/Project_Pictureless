@@ -1,5 +1,5 @@
 // ============================================================
-// MessageLogPlayerCombatSink — 플레이어 피격·패배만 메시지 로그에 남김
+// MessageLogPlayerCombatSink — 플레이어 피격·기습·패배만 메시지 로그에 남김
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
@@ -9,6 +9,10 @@ using UnityEngine;
 public sealed class MessageLogPlayerCombatSink : MonoBehaviour
 {
     const string LocPlayerHit = "msg.combat.player_hit";
+    const string LocSurpriseDealt = "msg.combat.surprise_dealt";
+    const string LocSurpriseTaken = "msg.combat.surprise_taken";
+    const string LocSurpriseNeck = "msg.combat.surprise_neck";
+    const string LocSurpriseStun = "msg.combat.surprise_stun";
     const string LocDefeatBody = "msg.status.defeat_body";
     const string LocDefeatCollapse = "msg.status.defeat_collapse";
     const string PartLocKeyPrefix = "PlayerStatus.Part.";
@@ -63,15 +67,65 @@ public sealed class MessageLogPlayerCombatSink : MonoBehaviour
             return;
 
         ICharacterBody body = target.Body;
-        if (body == null || !ReferenceEquals(body, GameplayData.Body))
-            return;
+        bool playerIsTarget = body != null && ReferenceEquals(body, GameplayData.Body);
+        bool playerIsAttacker = IsPossessedBody(outcome.Attacker);
 
-        string partLabel = ResolvePartLabel(outcome.AimedPartId);
-        string text = Loc.Format(LocPlayerHit, partLabel, outcome.Damage);
-        GameplayMessageLog.Append(
-            MessageLogCategory.Combat,
-            MessageLogImportance.Normal,
-            text);
+        if (playerIsTarget)
+        {
+            string partLabel = ResolvePartLabel(outcome.AimedPartId);
+            string text = Loc.Format(LocPlayerHit, partLabel, outcome.Damage);
+            GameplayMessageLog.Append(
+                MessageLogCategory.Combat,
+                MessageLogImportance.Normal,
+                text);
+
+            if (outcome.IsSurprise)
+            {
+                GameplayMessageLog.Append(
+                    MessageLogCategory.Combat,
+                    MessageLogImportance.Critical,
+                    Loc.Get(LocSurpriseTaken));
+                AppendSurpriseMeleeLine(outcome);
+            }
+
+            return;
+        }
+
+        if (playerIsAttacker && outcome.IsSurprise)
+        {
+            GameplayMessageLog.Append(
+                MessageLogCategory.Combat,
+                MessageLogImportance.Critical,
+                Loc.Get(LocSurpriseDealt));
+            AppendSurpriseMeleeLine(outcome);
+        }
+    }
+
+    static void AppendSurpriseMeleeLine(in AttackOutcome outcome)
+    {
+        if (outcome.SurpriseMelee == SurpriseMeleeKind.Neck)
+        {
+            GameplayMessageLog.Append(
+                MessageLogCategory.Combat,
+                MessageLogImportance.Critical,
+                Loc.Get(LocSurpriseNeck));
+        }
+        else if (outcome.SurpriseMelee == SurpriseMeleeKind.Stun)
+        {
+            GameplayMessageLog.Append(
+                MessageLogCategory.Combat,
+                MessageLogImportance.Normal,
+                Loc.Get(LocSurpriseStun));
+        }
+    }
+
+    static bool IsPossessedBody(CharacterBodyHost host)
+    {
+        if (host == null || host.Body == null)
+            return false;
+        if (!ReferenceEquals(host.Body, GameplayData.Body))
+            return false;
+        return host.TryGetComponent(out CharacterMotor motor) && motor.IsPossessed;
     }
 
     void OnDefeatChanged()

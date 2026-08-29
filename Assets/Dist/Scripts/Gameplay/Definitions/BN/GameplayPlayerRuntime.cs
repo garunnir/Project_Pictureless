@@ -110,7 +110,7 @@ public static class GameplayPlayerRuntime
         set => _recipeMemory = value;
     }
 
-    /// <summary>Character traits (omniscience, survival, …). Runtime-only; not saved.</summary>
+    /// <summary>Character traits (omniscience, omnivision, survival, …). Runtime-only; not saved.</summary>
     public static ICharacterTraits Traits
     {
         get

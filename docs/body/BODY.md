@@ -46,7 +46,7 @@ PC와 NPC를 이 문서에서 나누지 않는다. `CharacterKind` 없음. 조�
 
 `ThermalParts` (10, 체온 틱·표시): `head`, `chest`, `upper_arm_l/r`, `hand_l/r`, `thigh_l/r`, `foot_l/r`.
 
-`SeverableParts`: 팔/다리 체인 + 손가락(`finger_thumb_*` / `finger_index_*`). `head`/`neck`/`chest`/`belly`/`pelvis`·장기 제외. 손가락은 자체 HP(`FingerCondition` 8). 손 조준은 `OrganHitResolver`가 엄지/검지로 분배(`HandToFingerEach`).
+`SeverableParts`: 팔/다리 체인 + 손가락 — **복원·사지 UI**용. 파괴 가능 여부와 무관. HP 0 ≠ 파괴. 파괴는 모든 메인 부위에서 오버킬 성공 시 `RemovePart`. 손가락은 자체 HP(`FingerCondition` 8). 손 조준은 `OrganHitResolver`가 엄지/검지로 분배(`HandToFingerEach`).
 
 `FrostbiteParts`: `head`, `hand_l/r`, `foot_l/r`.
 
@@ -66,7 +66,7 @@ PC와 NPC를 이 문서에서 나누지 않는다. `CharacterKind` 없음. 조�
 
 ## Death / capacity
 
-**사망 (`IsDeadState` / `BodyCapacity.IsFatal`)** = **의식 ≤ 0** 만. 바닐라 림월드의 심장·간 즉사는 Dist에 없음.
+**사망 (`IsDeadState` / `BodyCapacity.IsFatal`)** = **의식 ≤ 0** 또는 **목 없음**. 바닐라 림월드의 심장·간 즉사는 Dist에 없음. 부위 HP 0만으로는 즉사 아님(뇌 제외).
 
 `ICharacterDefeat.StatCollapse`는 기본 능력치 **최종값(Buffed) ≤ 0** (`IsCollapsed`). 래치 시 콘솔 `[StatCollapse]` 덤프. `BodySkillModifierAggregator`는 **`CharacterSkillsHost`만** 붙인다. HUD / `GameplayData` / `DefaultPlayerStats`는 수식기를 붙이거나 Refresh하지 않는다.
 
@@ -74,12 +74,13 @@ PC와 NPC를 이 문서에서 나누지 않는다. `CharacterKind` 없음. 조�
 
 | 원인 | 설명 |
 |------|------|
-| 뇌 없음/HP0 또는 머리 부모 HP0 | 유일한 장기 즉사 |
+| 뇌 없음/HP0 또는 머리 부모 HP0 | 장기 즉사 |
+| 목 없음 (`RemovePart`) | 뇌가 남아도 `IsFatal` |
 | `Blood01` ≤ 0 | 과다출혈 |
 | `InfectionProgress01` ≥ 1 | 감염이 면역을 이김 |
 | `Toxin01` ≥ 1 | 독소 |
 
-펌프·호흡·여과·소화·이동·조작 0은 사망이 아님. 심장·폐·간·신장·위·목·가슴·배 HP0 → **강한 Bleed** (`BodyIllness.OrganDestroyedBleed*`), 즉사 아님. 가슴/배 0이면 무효 자식 장기마다 Bleed. Bleed는 디버프가 아니라 상처에서 Blood01이 빠지는 중인 상태다. 유기 부위에 `cut`이 남아 있으면 그 부위는 파생 Bleed를 유지한다(`BodyIllness.BleedIntensityForCut`, 영구). tend로 베임이 0이 되면 그 기여분만 제거한다. 소켓·장기 파괴 Bleed는 베임과 별개. 완화 후 태그가 여전히 cut일 때만 베임이 생긴다 (`WearCombatDefense` 튕김·Sharp→bash면 없음).
+펌프·호흡·여과·소화·이동·조작 0은 사망이 아님. 심장·폐·간·신장·위·목·가슴·배 **HP0**(노드 유지) → **강한 Bleed** (`BodyIllness.OrganDestroyedBleed*`), 즉사 아님. 가슴/배 0이면 무효 자식 장기마다 Bleed. Bleed는 디버프가 아니라 상처에서 Blood01이 빠지는 중인 상태다. 유기 부위에 `cut`이 남아 있으면 그 부위는 파생 Bleed를 유지한다(`BodyIllness.BleedIntensityForCut`, 영구). tend로 베임이 0이 되면 그 기여분만 제거한다. 소켓·장기 파괴 Bleed는 베임과 별개. 완화 후 태그가 여전히 cut일 때만 베임이 생긴다 (`WearCombatDefense` 튕김·Sharp→bash면 없음).
 
 `bash`/무태그 타격은 유기 부위에 `bruise`. cut→`cut`, bullet→`gunshot`. Blood01은 안 깎는다(Bleed만). intensity = 입은 HP 점수, 합이 부위 max를 넘지 않음. `BodyInjuryTend`가 종류별 초당 1 HP만큼 intensity를 줄이고 `ConditionCur`를 다시 맞춘다(타박 1×, 베임·총상 2×, 골절 4× `InjuryHealSecondsPerHp`). 의체는 부상 없이 HP를 직접 깎음. 절단 성공 부위는 노드가 없어 부상 없음(소켓 Bleed만). 피 히트 VFX는 이번 히트가 `cut`을 남기면 `Vfx_HitBleed`, 절단이면 `Vfx_HitBleedSever` (`WeaponImpactVfxDefaults` 오버레이).
 
@@ -204,21 +205,21 @@ HUD: `PlayerStatusMoodEffectCatalog` — Frostbite→`Hypothermia`, Heat→`Over
 |-----|------|
 | `ICharacterBody.RemovePart` | 부모 컬렉션에서 노드 제거. 소켓(부모) 유지 |
 | `ICharacterBody.TryAttach(parentId, node)` | 런타임 복원 전용. `parentId` 비면 루트. 같은 partId 있으면 false |
-| `BodyDamageService.ApplyHit` | 메인 컨디션 HP. severable이 0이 될 타격은 `BodySeverOverkill` 주사위. 실패=1 HP. 성공=`RemovePart` + 소켓 Bleed (`ApplySeverStumpBleed`) |
+| `BodyDamageService.ApplyHit` | 메인 컨디션 HP. HP가 0이 될 타격은 `BodySeverOverkill` 주사위. 성공=`RemovePart` + 소켓 Bleed. 사지 실패=1 HP. 코어 실패=HP 0 + `ApplyDestroyedBleed`(노드 유지) |
 | `BodyPartRestoreService.TryRegenerate` | `TryCreateLimbFrom` + `TryAttach` + `Regenerating` 효과 |
 | `BodyPartRestoreService.TryAttachProsthetic` | 같은 부착, `BodyPartKind.Prosthetic`, Regenerating 없음 |
 
 이미 있는 부위·비-severable·부모 없음 → restore false. Prosthetic는 `BodyEffectTicker` 출혈 스킵.
 
-절단 오버킬 (`BodySeverOverkill`, 림월드식). 초과분/최대HP. inverse lerp가 파괴 확률. 머리/가슴 즉사 없음.
+절단 오버킬 (`BodySeverOverkill`, 림월드식). 초과분/최대HP. inverse lerp가 파괴 확률. **HP 0 ≠ 파괴·즉사**(뇌 제외). 코어(머리/목/몸통/장기)는 사지보다 낮은 파괴 구간.
 
-잘린 부위의 Bleed는 노드와 함께 사라지므로, 남는 소켓에 `ApplySeverStumpBleed` (`GetSocketParentId`, 상완/대퇴는 `chest`). intensity: 손가락 2 / 손·발 3 / 전완·종아리 4 / 상완·대퇴 5. 상태창 디버그 `RemovePart`만 호출하면 출혈 없음.
+잘린 부위의 Bleed는 노드와 함께 사라지므로, 남는 소켓에 `ApplySeverStumpBleed` (`GetSocketParentId`: 목→머리, 장기→OrganParent, 상완/대퇴→chest). 머리/가슴 루트 파괴는 stump skip. 상태창 디버그 `RemovePart`만 호출하면 출혈 없음.
 
-| HitTag | 구간 |
-|--------|------|
-| `cut` | 0–10% |
-| `bullet` | 0–70% |
-| `bash`·그 외 | 40–100% |
+| HitTag | 사지 구간 | 코어 구간 |
+|--------|-----------|-----------|
+| `cut` | 0–10% | 0–8% |
+| `bullet` | 0–70% | 0–35% |
+| `bash`·그 외 | 40–100% | 15–55% |
 
 질량: `CharacterAppearanceHost.RemainingMassKg` = `bodyMassKg` − 없는 `partMasses` kg. **과적(encumbrance) 미연동** — [`DEFINITION.md`](../character/DEFINITION.md).
 

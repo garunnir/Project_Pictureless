@@ -12,6 +12,7 @@ public static class InventoryContextMenuCatalog
         new PlantContextContributor(),
         new FishRodContextContributor(),
         new FishTrapContextContributor(),
+        new DiveTankContextContributor(),
         new TillContextContributor(),
         new FertilizeContextContributor(),
         new GearContextContributor(),

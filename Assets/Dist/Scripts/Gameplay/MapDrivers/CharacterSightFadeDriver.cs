@@ -2,6 +2,7 @@
 // CharacterSightFadeDriver — possessed Spot 부채꼴 시야 → NPC 메시 페이드
 // ============================================================
 
+using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 using UnityEngine;
 
@@ -109,16 +110,24 @@ public sealed class CharacterSightFadeDriver : MonoBehaviour, IMapSightFadeDrive
 
             fadeHost.SetPossessedSkip(false);
 
-            Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(bodyHost.transform);
-            float target = CharacterSightFadeEvaluator.EvaluateTarget(
-                playerFeet,
-                targetFeet,
-                forward,
-                radius,
-                spotAngle,
-                innerSpotAngle,
-                in _settings,
-                lineCast);
+            float target;
+            if (GameplayData.Traits != null && GameplayData.Traits.Has(TraitIds.Omnivision))
+            {
+                target = 1f;
+            }
+            else
+            {
+                Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(bodyHost.transform);
+                target = CharacterSightFadeEvaluator.EvaluateTarget(
+                    playerFeet,
+                    targetFeet,
+                    forward,
+                    radius,
+                    spotAngle,
+                    innerSpotAngle,
+                    in _settings,
+                    lineCast);
+            }
 
             fadeHost.SetTargetVisibility(target);
             fadeHost.TickDisplay(dt);

@@ -141,6 +141,7 @@ public sealed class CharacterClimateHost : MonoBehaviour
         _weather.Resolve(ResolveWorldWeatherKind(), ResolveDayPeriod(), ResolveOutdoor());
         float ambientTempC = _weather.AmbientTempC;
         float ambientWet = _weather.AmbientWetnessGainPerSecond;
+        ambientWet = Mathf.Max(ambientWet, ResolveLiquidWetnessGain());
 
         _envExposure.Tick(dt, envProt, ambientWet);
 
@@ -238,6 +239,20 @@ public sealed class CharacterClimateHost : MonoBehaviour
         IWorldGrid grid = _tileMapManager != null ? _tileMapManager.WorldGrid : null;
         if (grid != null)
             _mapCellSize = grid.CellSize;
+    }
+
+    float ResolveLiquidWetnessGain()
+    {
+        if (!TryGetComponent(out CharacterState state))
+            return 0f;
+
+        if (state.IsDiving)
+            return MapSwimConsts.LiquidWetnessGainDive;
+        if (state.IsSwimming)
+            return MapSwimConsts.LiquidWetnessGainSwim;
+        if (state.IsWading)
+            return MapSwimConsts.LiquidWetnessGainWade;
+        return 0f;
     }
 
     void TickFrostbiteAndHeat(ICharacterBody body, float dt)

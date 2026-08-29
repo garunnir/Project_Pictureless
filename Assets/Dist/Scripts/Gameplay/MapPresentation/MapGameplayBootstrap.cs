@@ -63,6 +63,8 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         CharacterMotor motor = instance.GetComponent<CharacterMotor>();
         motor?.BindMapCollision(services);
 
+        EnsureSwimHosts(instance);
+
         CharacterAttacker attacker = instance.GetComponent<CharacterAttacker>();
         attacker?.BindMapCollision(services.LineCast);
 
@@ -95,6 +97,7 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
 
         BindCharacterLocomotions<CharacterMotor>(services);
         BindCharacterHearing(services.LineCast);
+        EnsureSwimHostsOnSceneCharacters();
 
         var attackers = FindObjectsByType<CharacterAttacker>(
             FindObjectsInactive.Include,
@@ -169,5 +172,28 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
 
         for (int i = 0; i < items.Length; i++)
             items[i].BindWorldGrid(worldGrid);
+    }
+
+    static void EnsureSwimHostsOnSceneCharacters()
+    {
+        var states = FindObjectsByType<CharacterState>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+        for (int i = 0; i < states.Length; i++)
+            EnsureSwimHosts(states[i].gameObject);
+    }
+
+    static void EnsureSwimHosts(GameObject instance)
+    {
+        if (instance == null || instance.GetComponent<CharacterState>() == null)
+            return;
+
+        if (instance.GetComponent<CharacterBodyHost>() == null)
+            return;
+
+        if (instance.GetComponent<CharacterSwimHost>() == null)
+            instance.AddComponent<CharacterSwimHost>();
+        if (instance.GetComponent<CharacterBreathHost>() == null)
+            instance.AddComponent<CharacterBreathHost>();
     }
 }

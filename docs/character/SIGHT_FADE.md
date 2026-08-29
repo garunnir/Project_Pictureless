@@ -14,6 +14,8 @@
    - 벽: 시선 높이 + 발 층만 (전 층 밴드 아님)  
    - **Floor: gridY 교차 시** (위층이 수직으로 막음)
 
+trait `omnivision` (만시): `CharacterSightFadeDriver`가 `EvaluateTarget` 없이 `SetTargetVisibility(1)` — 캐릭터 메시 사라짐 무효. 시야 cone/LOS 판정 자체는 그대로.
+
 ## 튜닝
 
 | 위치 | 무엇을 |

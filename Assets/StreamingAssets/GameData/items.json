@@ -265,6 +265,27 @@
       "Weight": 2.0,
       "Volume": 3.0,
       "MaxStack": 1
+    },
+    {
+      "id": "dive_tank",
+      "name": "잠수 탱크",
+      "type": "TOOL",
+      "category": "tools",
+      "weight_g": 12000,
+      "volume_ml": 10000,
+      "max_stack": 1,
+      "description": "잠수 중 산소를 공급한다. 인벤에서 켠 뒤 Dive(Left Ctrl)로 사용.",
+      "use_action": {
+        "type": "DIVE_TANK"
+      },
+      "tool": {
+        "max_charges": 60,
+        "initial_charges": 60,
+        "charges_per_use": 1
+      },
+      "Weight": 12.0,
+      "Volume": 10.0,
+      "MaxStack": 1
     }
   ],
   "containers": [

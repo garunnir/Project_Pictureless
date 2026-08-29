@@ -51,6 +51,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     [SerializeField] string _paramMoveZ = "MoveZ";
     [SerializeField] string _paramAiming = "IsAiming";
     [SerializeField] string _paramStealth = "IsStealth";
+    [SerializeField] string _paramSwimming = "IsSwimming";
     [SerializeField] string _paramAttackR = "AttackR";
     [SerializeField] string _paramAttackL = "AttackL";
     [SerializeField] string _paramAttack2H = "Attack2H";
@@ -81,6 +82,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     int _hashMoveZ;
     int _hashAiming;
     int _hashStealth;
+    int _hashSwimming;
     int _hashAttackR;
     int _hashAttackL;
     int _hashAttack2H;
@@ -95,6 +97,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     bool _hasMoveZ;
     bool _hasAiming;
     bool _hasStealth;
+    bool _hasSwimming;
     bool _hasAttackR;
     bool _hasAttackL;
     bool _hasAttack2H;
@@ -154,6 +157,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     readonly WeaponAction[] _attackActionQueue = new WeaponAction[2];
     readonly WieldHand[] _attackHandQueue = new WieldHand[2];
+    readonly bool[] _attackSurpriseQueue = new bool[2];
+    bool _mappedSurpriseL;
+    bool _mappedSurpriseR;
+    bool _mappedSurprise2H;
     int _attackQueueHead;
     int _attackQueueCount;
 
@@ -279,25 +286,47 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (_hasStealth)
             _animator.SetBool(_hashStealth, isStealth);
 
+        bool isSwimming = _characterState != null
+            && (_characterState.IsSwimming || _characterState.IsDiving);
+        if (_hasSwimming)
+            _animator.SetBool(_hashSwimming, isSwimming);
+
         ResolveHandActions(out WeaponAction actionL, out WeaponAction actionR, out WeaponAction action2H);
         ResolveHandPresentations(
             out WeaponPresentation presentationL,
             out WeaponPresentation presentationR,
             out WeaponPresentation presentation2H);
         SyncThinActionRemap(
-            presentationL, presentationR, presentation2H, actionL, actionR, action2H);
+            presentationL,
+            presentationR,
+            presentation2H,
+            actionL,
+            actionR,
+            action2H,
+            surpriseL: _mappedSurpriseL && HasAttackOverlayLatch(WieldHand.Left),
+            surpriseR: _mappedSurpriseR && HasAttackOverlayLatch(WieldHand.Right),
+            surprise2H: _mappedSurprise2H && HasAttackOverlayLatch(WieldHand.TwoHand));
 
         if (_attackQueueCount > 0)
         {
             WeaponAction attackAction = _attackActionQueue[_attackQueueHead];
             WieldHand attackHand = _attackHandQueue[_attackQueueHead];
+            bool surpriseAttack = _attackSurpriseQueue[_attackQueueHead];
             _attackQueueHead = (_attackQueueHead + 1) % _attackActionQueue.Length;
             _attackQueueCount--;
 
             if (attackHand == WieldHand.TwoHand)
             {
                 SyncThinActionRemap(
-                    presentationL, presentationR, presentation2H, actionL, actionR, attackAction);
+                    presentationL,
+                    presentationR,
+                    presentation2H,
+                    actionL,
+                    actionR,
+                    attackAction,
+                    surpriseL: false,
+                    surpriseR: false,
+                    surprise2H: surpriseAttack);
                 ArmAttackOverlay(attackHand);
                 if (_hasAttack2H)
                     _animator.SetTrigger(_hashAttack2H);
@@ -305,7 +334,15 @@ public class CharacterLocomotionAnim : MonoBehaviour
             else if (attackHand == WieldHand.Left)
             {
                 SyncThinActionRemap(
-                    presentationL, presentationR, presentation2H, attackAction, actionR, action2H);
+                    presentationL,
+                    presentationR,
+                    presentation2H,
+                    attackAction,
+                    actionR,
+                    action2H,
+                    surpriseL: surpriseAttack,
+                    surpriseR: false,
+                    surprise2H: false);
                 ArmAttackOverlay(attackHand);
                 if (_hasAttackL)
                     _animator.SetTrigger(_hashAttackL);
@@ -313,7 +350,15 @@ public class CharacterLocomotionAnim : MonoBehaviour
             else
             {
                 SyncThinActionRemap(
-                    presentationL, presentationR, presentation2H, actionL, attackAction, action2H);
+                    presentationL,
+                    presentationR,
+                    presentation2H,
+                    actionL,
+                    attackAction,
+                    action2H,
+                    surpriseL: false,
+                    surpriseR: surpriseAttack,
+                    surprise2H: false);
                 ArmAttackOverlay(attackHand);
                 if (_hasAttackR)
                     _animator.SetTrigger(_hashAttackR);
@@ -340,7 +385,10 @@ public class CharacterLocomotionAnim : MonoBehaviour
         WeaponPresentation presentation2H,
         WeaponAction actionL,
         WeaponAction actionR,
-        WeaponAction action2H)
+        WeaponAction action2H,
+        bool surpriseL = false,
+        bool surpriseR = false,
+        bool surprise2H = false)
     {
         if (_resolvedOverride == null || _armSlotCatalog == null)
             return;
@@ -348,6 +396,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (actionL == _mappedActionL &&
             actionR == _mappedActionR &&
             action2H == _mappedAction2H &&
+            surpriseL == _mappedSurpriseL &&
+            surpriseR == _mappedSurpriseR &&
+            surprise2H == _mappedSurprise2H &&
             ReferenceEquals(presentationL, _mappedPresentationL) &&
             ReferenceEquals(presentationR, _mappedPresentationR) &&
             ReferenceEquals(presentation2H, _mappedPresentation2H))
@@ -361,10 +412,16 @@ public class CharacterLocomotionAnim : MonoBehaviour
             presentation2H,
             actionL,
             actionR,
-            action2H);
+            action2H,
+            surpriseL,
+            surpriseR,
+            surprise2H);
         _mappedActionL = actionL;
         _mappedActionR = actionR;
         _mappedAction2H = action2H;
+        _mappedSurpriseL = surpriseL;
+        _mappedSurpriseR = surpriseR;
+        _mappedSurprise2H = surprise2H;
         _mappedPresentationL = presentationL;
         _mappedPresentationR = presentationR;
         _mappedPresentation2H = presentation2H;
@@ -383,6 +440,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         int index = (_attackQueueHead + _attackQueueCount) % _attackActionQueue.Length;
         _attackActionQueue[index] = outcome.Action;
         _attackHandQueue[index] = outcome.Hand;
+        _attackSurpriseQueue[index] = outcome.UseSurpriseAttackClip;
         _attackQueueCount++;
     }
 
@@ -532,6 +590,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _mappedActionL = (WeaponAction)(-1);
         _mappedActionR = (WeaponAction)(-1);
         _mappedAction2H = (WeaponAction)(-1);
+        _mappedSurpriseL = false;
+        _mappedSurpriseR = false;
+        _mappedSurprise2H = false;
         _mappedPresentationL = null;
         _mappedPresentationR = null;
         _mappedPresentation2H = null;
@@ -568,6 +629,9 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _mappedActionL = (WeaponAction)(-1);
         _mappedActionR = (WeaponAction)(-1);
         _mappedAction2H = (WeaponAction)(-1);
+        _mappedSurpriseL = false;
+        _mappedSurpriseR = false;
+        _mappedSurprise2H = false;
         _mappedPresentationL = null;
         _mappedPresentationR = null;
         _mappedPresentation2H = null;
@@ -822,6 +886,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _hasMoveZ = false;
         _hasAiming = false;
         _hasStealth = false;
+        _hasSwimming = false;
         _hasAttackR = false;
         _hasAttackL = false;
         _hasAttack2H = false;
@@ -870,6 +935,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _hashMoveZ = Hash(_paramMoveZ);
         _hashAiming = Hash(_paramAiming);
         _hashStealth = Hash(_paramStealth);
+        _hashSwimming = Hash(_paramSwimming);
         _hashAttackR = Hash(_paramAttackR);
         _hashAttackL = Hash(_paramAttackL);
         _hashAttack2H = Hash(_paramAttack2H);
@@ -883,6 +949,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
             if (Match(_paramMoveZ, _hashMoveZ, nameHash)) _hasMoveZ = true;
             if (Match(_paramAiming, _hashAiming, nameHash)) _hasAiming = true;
             if (Match(_paramStealth, _hashStealth, nameHash)) _hasStealth = true;
+            if (Match(_paramSwimming, _hashSwimming, nameHash)) _hasSwimming = true;
             if (Match(_paramAttackR, _hashAttackR, nameHash)) _hasAttackR = true;
             if (Match(_paramAttackL, _hashAttackL, nameHash)) _hasAttackL = true;
             if (Match(_paramAttack2H, _hashAttack2H, nameHash)) _hasAttack2H = true;

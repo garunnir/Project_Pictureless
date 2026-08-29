@@ -13,6 +13,8 @@ public readonly struct AttackOutcome
     public readonly WeaponResolveMode ResolveMode;
     public readonly AttackPerformResult Result;
     public readonly CharacterBodyHost Target;
+    /// <summary>시전한 몸. 연출·메시지 로그용.</summary>
+    public readonly CharacterBodyHost Attacker;
     public readonly string AimedPartId;
     /// <summary>완화 후 HP. 0이어도 히트일 수 있음.</summary>
     public readonly int Damage;
@@ -38,13 +40,22 @@ public readonly struct AttackOutcome
     /// <summary>이번 히트가 유기 부위에 남긴 조직 부상 ID (bruise/cut/gunshot). 절단·의체·피해 0이면 빈 문자열.</summary>
     public readonly string AppliedTissueId;
 
-    /// <summary>이번 히트에서 severable 부위를 제거했다.</summary>
+    /// <summary>이번 히트에서 부위 파괴(RemovePart)에 성공했다.</summary>
     public readonly bool DidSeverPart;
 
     public readonly WeaponAttack Attack;
 
     /// <summary>무기 축 접촉 0=손/자루 ~ 1=끝. 근접 히트박스만. 치명타 Pending.</summary>
     public readonly float WeaponReach01;
+
+    /// <summary>피격자가 공격자를 시력으로 인지하지 못한 채 맞음.</summary>
+    public readonly bool IsSurprise;
+
+    /// <summary>근접 기습 특수 (목 조준 시도 / 기절). 피해 배율과 별개.</summary>
+    public readonly SurpriseMeleeKind SurpriseMelee;
+
+    /// <summary>시전 시작 시 Attack thin에 기습 클립 사용 (히트 판정과 분리).</summary>
+    public readonly bool UseSurpriseAttackClip;
 
     public bool DidHit => Result == AttackPerformResult.Performed;
 
@@ -70,13 +81,18 @@ public readonly struct AttackOutcome
         int rawDamage = 0,
         float impulseJin = 0f,
         string appliedTissueId = null,
-        bool didSeverPart = false)
+        bool didSeverPart = false,
+        bool isSurprise = false,
+        SurpriseMeleeKind surpriseMelee = SurpriseMeleeKind.None,
+        bool useSurpriseAttackClip = false,
+        CharacterBodyHost attacker = null)
     {
         Action = action;
         Hand = hand;
         ResolveMode = resolveMode;
         Result = result;
         Target = target;
+        Attacker = attacker;
         AimedPartId = aimedPartId;
         Damage = damage;
         RawDamage = rawDamage;
@@ -88,6 +104,9 @@ public readonly struct AttackOutcome
         DidSeverPart = didSeverPart;
         Attack = attack;
         WeaponReach01 = Mathf.Clamp01(weaponReach01);
+        IsSurprise = isSurprise;
+        SurpriseMelee = surpriseMelee;
+        UseSurpriseAttackClip = useSurpriseAttackClip;
 
         Vector3 offset = impactPoint - originPoint;
         Direction = offset.sqrMagnitude > 1e-6f ? offset.normalized : Vector3.forward;

@@ -68,6 +68,13 @@ public sealed class WeaponPresentation : ScriptableObject
 
         [FoldoutGroup("애니")]
         [HideLabel]
+        [LabelText("기습 Attack")]
+        [ShowIf(nameof(ShowsSurpriseAttackClips))]
+        [Tooltip("기습 시전 시 Attack thin. 비면 위 Attack → Catalog. Melee(Swing/Thrust)만.")]
+        public ArmAnimSlotCatalog.HandClips surpriseAttackClips = new ArmAnimSlotCatalog.HandClips();
+
+        [FoldoutGroup("애니")]
+        [HideLabel]
         [LabelText("Recoil")]
         [Tooltip("비면 Catalog Impact Recoil.")]
         public ArmAnimSlotCatalog.HandClips recoilClips = new ArmAnimSlotCatalog.HandClips();
@@ -82,6 +89,12 @@ public sealed class WeaponPresentation : ScriptableObject
         public WeaponActionVfx vfx = new();
 
         public float ActionCooldownSeconds => Mathf.Max(0f, actionCooldownSeconds);
+
+        bool ShowsSurpriseAttackClips()
+        {
+            WeaponAction leaf = WeaponActionUtil.Normalize(action);
+            return leaf == WeaponAction.Swing || leaf == WeaponAction.Thrust;
+        }
 
         static IEnumerable<ValueDropdownItem<WeaponAction>> LeafDropdown()
         {

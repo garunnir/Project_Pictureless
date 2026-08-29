@@ -22,7 +22,7 @@ Elona / Cataclysm DDA식 **상시·비차단** 텍스트 피드. 플레이어에
 
 | 남김 | 예 |
 |------|-----|
-| 예 | 플레이어 피해, 치명/패배, (향후) 의사결정에 영향 있는 상태·퀘스트·획득 등 |
+| 예 | 플레이어 피해, 기습, 치명/패배, (향후) 의사결정에 영향 있는 상태·퀘스트·획득 등 |
 | 아니오 | 매 프레임/틱, 빗나감 스팸, 적끼리 전투, “정상 소모”급 바이탈, 디버그 |
 
 - **1차 게이트**: `GameplayMessageLog.Append`를 호출할지 말지 (호출부가 판단).
@@ -88,6 +88,10 @@ IReadOnlyList<MessageLogEntry> lines = GameplayMessageLog.GetSnapshot(); // 오�
 | Key | 문구 |
 |-----|------|
 | `msg.combat.player_hit` | `{0}에 {1}의 피해를 입었다.` |
+| `msg.combat.surprise_dealt` | `기습이 적중했다.` |
+| `msg.combat.surprise_taken` | `기습을 당했다.` |
+| `msg.combat.surprise_neck` | `목이 노려졌다.` |
+| `msg.combat.surprise_stun` | `기습에 정신을 잃었다.` |
 | `msg.status.defeat_body` | `치명상을 입고 쓰러졌다.` |
 | `msg.status.defeat_collapse` | `정신이 무너져 쓰러졌다.` |
 | `msg.status.encumbrance_immobile` | `너무 무거워서 움직일 수 없다.` |

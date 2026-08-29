@@ -78,6 +78,7 @@ public sealed class CharacterLocomotion
     MapCollisionServices _mapCollision;
     MapTopologyDepenetration.Tracker _gridStuckTracker;
     float _verticalVelocity;
+    CharacterSwimHost _swimHost;
 
     public int LastHitCount { get; private set; }
     public Vector3 LastCapsulePoint { get; private set; }
@@ -116,6 +117,8 @@ public sealed class CharacterLocomotion
         _logicalGravity = logicalGravity;
         _topologyPushSpeed = topologyPushSpeed;
         _topologyPushMaxIterations = topologyPushMaxIterations;
+        if (_transform != null)
+            _transform.TryGetComponent(out _swimHost);
     }
 
     public void BindMapCollision(MapCollisionServices services) => _mapCollision = services;
@@ -236,6 +239,13 @@ public sealed class CharacterLocomotion
         if (_mapCollision == null)
             return;
 
+        if (_characterState != null &&
+            (_characterState.IsDiving || _characterState.IsSwimming))
+        {
+            ApplySwimVertical(ref worldPosition, feetOffset, deltaTime, ref feetCell);
+            return;
+        }
+
         _mapCollision.FloorSupport.ApplyVertical(
             ref worldPosition,
             ref _verticalVelocity,
@@ -244,5 +254,42 @@ public sealed class CharacterLocomotion
             ref feetCell,
             ref _gridStuckTracker,
             _logicalGravity);
+    }
+
+    void ApplySwimVertical(
+        ref Vector3 worldPosition,
+        float feetOffset,
+        float deltaTime,
+        ref MapCollisionGrid.FeetCell feetCell)
+    {
+        float cellSize = _mapCollision.Query.CellSize;
+        MapSwimImmersion immersion = _swimHost != null
+            ? _swimHost.LastImmersion
+            : MapSwimQuery.Resolve(
+                feetCell.FeetWorld,
+                cellSize,
+                _characterState != null && _characterState.IsDiving);
+
+        float surfaceY = immersion.SurfaceFeetY;
+        float bottomY = immersion.ColumnBottomFeetY;
+        if (surfaceY < bottomY)
+            surfaceY = bottomY;
+
+        if (_characterState != null && _characterState.IsDiving)
+        {
+            float vertical = _characterState.SwimVerticalInput;
+            float nextFeetY = feetCell.FeetY
+                + vertical * MapSwimConsts.DiveVerticalSpeed * deltaTime;
+            nextFeetY = Mathf.Clamp(nextFeetY, bottomY, surfaceY);
+            _verticalVelocity = 0f;
+            worldPosition.y = nextFeetY + feetOffset;
+            feetCell = MapCollisionGrid.WithFeetY(feetCell, nextFeetY, cellSize);
+            return;
+        }
+
+        // Swim: float at surface.
+        _verticalVelocity = 0f;
+        worldPosition.y = surfaceY + feetOffset;
+        feetCell = MapCollisionGrid.WithFeetY(feetCell, surfaceY, cellSize);
     }
 }

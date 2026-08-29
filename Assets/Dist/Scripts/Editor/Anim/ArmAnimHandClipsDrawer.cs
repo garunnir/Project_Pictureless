@@ -66,6 +66,8 @@ public sealed class ArmAnimHandClipsDrawer : PropertyDrawer
             case "attack":
             case "_attackThin":
                 return "Attack";
+            case "surpriseAttackClips":
+                return "기습 Attack";
             case "recoilClips":
                 return "Recoil";
             case "blockedClips":

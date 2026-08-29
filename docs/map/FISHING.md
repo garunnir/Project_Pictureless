@@ -88,7 +88,6 @@ Ensure: `Dist/MCP/Ensure Sample ScriptableObjects` → Resources mirror 포함.
 
 ## Known debt
 
-- 수영·잠수 (`DIVE_TANK`) — locomotion 별도
 - BN 전체 fish species·계절·날씨 — `FishingLootCatalog` 점진 확장
 - 타일 CM Cast/Deploy (인벤 경로만 구현)
 - `place_trap` 일반화 — 통발 전용

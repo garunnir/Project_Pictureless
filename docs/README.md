@@ -25,6 +25,7 @@
 | Cooking (BN parity) | [`cooking/COOKING.md`](cooking/COOKING.md) | (PSEUDO fire · Hot/Cooked · cooks_like · multicooker · light) |
 | Farming / plants | [`farming/FARMING.md`](farming/FARMING.md) | (Dist overlay view · TileFlags · world minutes) |
 | Locomotion | [`locomotion/LOCOMOTION.md`](locomotion/LOCOMOTION.md) | `locomotion.mdc` |
+| Swim / Dive / DIVE_TANK | [`locomotion/SWIM.md`](locomotion/SWIM.md) | — |
 | Character definition / spawn | [`character/DEFINITION.md`](character/DEFINITION.md) | — |
 | Character sight fade (NPC mesh) | [`character/SIGHT_FADE.md`](character/SIGHT_FADE.md) | — |
 | Character senses (sight + hearing) | [`character/SENSES.md`](character/SENSES.md) | — |

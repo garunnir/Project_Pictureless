@@ -22,7 +22,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 | Needs | 위장·Vitals·대사·Fatigue/SleepDebt·TrySleep/Wake ([`../needs/NEEDS.md`](../needs/NEEDS.md), possessed만) |
 | Climate | Thermal °C·Wetness ([`../body/BODY.md`](../body/BODY.md)) |
 | Skills | Attribute + 카탈로그 Base/Potential/Practice |
-| Combat | Imbalance·**Pain**(Total/Effective/Factor·shock/wake 문턱·부위 Pain)·Capacity·과적 Stage·**Senses**(Definition/Effective sight·hearing 반경) |
+| Combat | Imbalance·**Pain**(Total/Effective/Factor·shock/wake 문턱·부위 Pain)·**Surprise**(시력 인지·기습 스턴 잔여)·Capacity·과적 Stage·**Senses**(Definition/Effective sight·hearing 반경) |
 | Mood | `CharacterMoodHost` 수치·사고·기억·Wander 붕괴 ([`../mood/MOOD.md`](../mood/MOOD.md), possessed만). HUD 칩과 별개 |
 | Emote | `CharacterEmoteHost` resolved id/source·표시/숨김 사유 ([`EMOTES.md`](EMOTES.md)) |
 | Chips | `PlayerStatusMoodEntries` HUD 칩 읽기 전용 |
@@ -74,7 +74,7 @@ Play 전용 `Tools/Character Runtime Debug` (Odin). 대상 루트는 `CharacterB
 | `alignment` | Status.Alignment | Vector2, 전용 에디터, 소비처 없음 |
 | `attributes` | Status.Str..Cha | 기본 8 (`SkillGrowth.DefaultAttributeLevel`) |
 | `skillOverrides` | Skill.Active* | BN `skillId` — 레거시 인덱스 아님 |
-| `traits` | (신규) | 상시 패시브 id (`TraitIds`: survival, omniscience). Apply → `GameplayData.Traits` / `CharacterSkillsHost` |
+| `traits` | (신규) | 상시 패시브 id (`TraitIds`: survival, omniscience, omnivision). Apply → `GameplayData.Traits` / `CharacterSkillsHost` |
 | `bodyMassKg`, 쓰리사이즈 | Body.Personalized | 저장만; 과적 미연동 |
 | `partMasses` | (없음) | `BodyPartIds` 트리 노드 키. 절단 시 `CharacterAppearanceHost.RemainingMassKg`가 없는 부위 kg을 차감. **과적(encumbrance)은 미연동** — [`docs/body/BODY.md`](../body/BODY.md) |
 | `prototypeSeed` | — | `CharacterBody.CreateHumanDefault` |

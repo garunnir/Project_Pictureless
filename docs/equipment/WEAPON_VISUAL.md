@@ -1,7 +1,7 @@
 # Weapon Visual (Anim / VFX / Combat SOData map)
 
 > 무기·팔 연출 에셋의 **폴더 = 의존 방향** SSOT. 런타임 계약은 [`GEAR.md`](GEAR.md) · [`LOCOMOTION.md`](../locomotion/LOCOMOTION.md).  
-> Family / Leaf / AnimVerb / 동작 줄 클립(Hold/Aim/Attack/Recoil/Blocked). 컨트롤러는 동작 모름: GEAR Terms · LOCOMOTION · `.cursor/rules/arm-anim-layers.mdc`. 총기 Leaf·`burst`: [`BN_BAKE.md`](BN_BAKE.md).
+> Family / Leaf / AnimVerb / 동작 줄 클립(Hold/Aim/Attack/기습 Attack/Recoil/Blocked). 컨트롤러는 동작 모름: GEAR Terms · LOCOMOTION · `.cursor/rules/arm-anim-layers.mdc`. 총기 Leaf·`burst`: [`BN_BAKE.md`](BN_BAKE.md).
 
 ## 의존 (위 → 아래)
 
@@ -9,7 +9,7 @@
 Catalog/WeaponPresentationCatalog
   ├─ Presentations/Weapon_*          무기별 동작 목록
   │    └─ Attacks/Attack_*           핸들러 레시피
-  │    └─ 동작 줄 Hold/Aim/Attack/Recoil/Blocked  그 무기 그 Leaf 클립 (비면 Catalog)
+  │    └─ 동작 줄 Hold/Aim/Attack/기습 Attack/Recoil/Blocked  그 무기 그 Leaf 클립 (비면 Catalog; 기습=Melee)
   │    └─ Overrides (Animator)       클립 배속 테이블 Visual/Anim/CharacterAnimator/Overrides/
   └─ Fallbacks/WeaponCombatFallbacks
        ├─ ArmAnimSlotCatalog         기본 동사 폴백 (Leaf마다 행: Swing/Thrust/Semi/Burst/Auto/Raise)

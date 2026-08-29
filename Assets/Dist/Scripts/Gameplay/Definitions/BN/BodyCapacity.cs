@@ -6,7 +6,7 @@
 namespace Garunnir.Runtime.Gameplay.Data
 {
     /// <summary>
-    /// IsFatal = 의식 ≤ 0 만. 펌프/호흡/여과/소화/이동/조작 0은 사망 아님.
+    /// IsFatal = 의식 ≤ 0 또는 목 없음. 펌프/호흡/여과/소화/이동/조작 0·부위 HP0은 사망 아님.
     /// </summary>
     public static class BodyCapacity
     {
@@ -23,8 +23,15 @@ namespace Garunnir.Runtime.Gameplay.Data
         public const float MissingHandAsManip = 0.35f;
         public const float ManipTickMin = 0.15f;
 
-        public static bool IsFatal(ICharacterBody body) =>
-            Consciousness(body) <= 0f;
+        public static bool IsFatal(ICharacterBody body)
+        {
+            if (body == null)
+                return true;
+            // 목은 머리 자식 — RemovePart(neck)만으로는 뇌가 남으므로 별도 즉사.
+            if (!body.Has(BodyPartIds.Neck))
+                return true;
+            return Consciousness(body) <= 0f;
+        }
 
         public static bool IsCapacityDowned(ICharacterBody body)
         {

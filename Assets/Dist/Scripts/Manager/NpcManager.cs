@@ -47,10 +47,20 @@ public sealed class NpcManager : MonoBehaviour
 
     readonly List<NpcAgentRuntime> _runtimes = new(8);
 
-    void OnEnable() => BindRuntimes();
+    /// <summary>씬 활성 인스턴스 (기습 Vision lock).</summary>
+    public static NpcManager Active { get; private set; }
+
+    void OnEnable()
+    {
+        Active = this;
+        BindRuntimes();
+    }
 
     void OnDisable()
     {
+        if (Active == this)
+            Active = null;
+
         for (int i = 0; i < _runtimes.Count; i++)
             _runtimes[i].Release();
         _runtimes.Clear();
@@ -84,6 +94,37 @@ public sealed class NpcManager : MonoBehaviour
             return;
 
         _runtimes.Add(runtime);
+    }
+
+    /// <summary>observer NPC가 subject를 Vision 채널로 유지 중이면 true (기습 LoseRadius).</summary>
+    public bool TryGetVisionLock(CharacterBodyHost observer, CharacterBodyHost subject)
+    {
+        if (observer == null || subject == null)
+            return false;
+
+        for (int i = 0; i < _runtimes.Count; i++)
+        {
+            if (_runtimes[i].TryGetVisionLock(observer, subject))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>NPC가 잡은 전투 타깃 (애니 1차 기습 대상).</summary>
+    public bool TryGetCombatTarget(CharacterBodyHost observer, out CharacterBodyHost target)
+    {
+        target = null;
+        if (observer == null)
+            return false;
+
+        for (int i = 0; i < _runtimes.Count; i++)
+        {
+            if (_runtimes[i].TryGetCombatTarget(observer, out target))
+                return target != null;
+        }
+
+        return false;
     }
 
     void BindRuntimes()
@@ -185,6 +226,24 @@ public sealed class NpcManager : MonoBehaviour
             NpcSteer.Stop(_motor);
             ReleaseCombatAim();
             _combatEmote?.ClearCombat();
+        }
+
+        public bool TryGetVisionLock(CharacterBodyHost observer, CharacterBodyHost subject)
+        {
+            if (_selfHost == null || observer == null || subject == null)
+                return false;
+            if (_selfHost != observer)
+                return false;
+            return _target == subject && _contact == SenseContactChannel.Vision;
+        }
+
+        public bool TryGetCombatTarget(CharacterBodyHost observer, out CharacterBodyHost target)
+        {
+            target = null;
+            if (_selfHost == null || observer == null || _selfHost != observer)
+                return false;
+            target = _target;
+            return target != null;
         }
 
         public void Tick(float dt)

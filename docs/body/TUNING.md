@@ -23,6 +23,7 @@
 | 고통·쇼크 | `BodyPain` | `CharacterPainHost`, `PlayerStatusMoodEntries` |
 | 의식·여과·HUD 임계 | `BodyCapacity` | `BodyCapacity.Consciousness`, Status HUD |
 | heal·붕대·지혈 적용 | `BodyHealApply` | `ConsumeService`, `BodyEffectTicker` (dirty read) |
+| 수영·잠수·산소·탱크 | `MapSwimConsts` (`Assets/Dist/Scripts/Map/Liquid/`) | `CharacterSwimHost`, `CharacterBreathHost` — 계약 [`../locomotion/SWIM.md`](../locomotion/SWIM.md) |
 
 ---
 
@@ -143,11 +144,12 @@ Onset은 **주사위 없음**. `bleed > 0`인 동안 age가 `InfectedOnsetSecond
 
 | 심볼 | 소비 |
 |------|------|
-| `CutMin` / `CutMax` | severable HP0 시 파괴 확률 구간 (`cut`) |
-| `BulletMin` / `BulletMax` | `bullet` |
-| `BashMin` / `BashMax` | `bash`·기타 |
+| `CutMin` / `CutMax` | 사지 HP0 시 파괴 확률 구간 (`cut`) |
+| `BulletMin` / `BulletMax` | 사지 `bullet` |
+| `BashMin` / `BashMax` | 사지 `bash`·기타 |
+| `CoreCut*` / `CoreBullet*` / `CoreBash*` | 머리/목/몸통/장기 — 사지보다 낮은 구간 |
 
-감염 확률과 **무관** (절단 성공 여부만).
+감염 확률과 **무관** (파괴 성공 여부만). HP 0 ≠ 파괴.
 
 ---
 
@@ -160,6 +162,19 @@ Onset은 **주사위 없음**. `bleed > 0`인 동안 age가 `InfectedOnsetSecond
 | eligibility | `CanApplyTo`, `TryCollectEligibleParts` |
 
 붕대·감염 **수치**는 `BodyIllness`; heal power는 BN `UseActionData` (`GameItemDetailTypes`).
+
+---
+
+## `MapSwimConsts` (수영·산소)
+
+경로: `Assets/Dist/Scripts/Map/Liquid/MapSwimConsts.cs` · 계약: [`../locomotion/SWIM.md`](../locomotion/SWIM.md)
+
+| 심볼 그룹 | 소비 |
+|-----------|------|
+| `WadeFill01` / `SwimColumnMl` | `MapSwimQuery` |
+| `WadeSpeedFactor` / `SwimSpeedFactor` / `DiveSpeedFactor` / `DiveVerticalSpeed` | `CharacterSwimHost`, `CharacterLocomotion` |
+| `Oxygen*` / `BreathHoldDrainPerSecond` / `DiveTank*` | `CharacterBreathHost` |
+| `LiquidWetnessGain*` | `CharacterClimateHost` |
 
 ---
 

@@ -3,6 +3,7 @@
 // ============================================================
 
 using System.Collections.Generic;
+using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 using UnityEngine;
 
@@ -78,6 +79,9 @@ public sealed class CharacterHearingPingDriver : MonoBehaviour, IMapHearingPingD
         MapHearingPingOverlay overlay = _pingHost.Overlay;
         overlay.Clear();
         _scratchCells.Clear();
+
+        if (GameplayData.Traits != null && GameplayData.Traits.Has(TraitIds.Omnivision))
+            return;
 
         float dt = TimeScaleService.Delta(TimeScaleChannel.World);
         float cellSize = _pingHost.CellSize;

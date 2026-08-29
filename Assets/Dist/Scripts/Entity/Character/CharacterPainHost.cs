@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterPainHost — PainTotal·고통 쇼크 플래그 (Defeat/Dead 아님)
+// CharacterPainHost — PainTotal·고통 쇼크·기습 스턴 래치 (Defeat/Dead 아님)
 // ============================================================
 
 using System;
@@ -17,15 +17,18 @@ public sealed class CharacterPainHost : MonoBehaviour
     CharacterMotor _motor;
     CharacterActionHost _actionHost;
     CharacterAttacker _attacker;
+    CharacterBreathHost _breath;
     ICharacterBody _subscribed;
     bool _painShocked;
     bool _painLatched;
     float _lastEffective;
+    float _surpriseStunRemain;
 
     public event Action Changed;
 
     public bool IsPainShocked => _painShocked;
     public float EffectivePain01 => _lastEffective;
+    public float SurpriseStunRemain => _surpriseStunRemain;
 
     void Awake()
     {
@@ -33,6 +36,7 @@ public sealed class CharacterPainHost : MonoBehaviour
         TryGetComponent(out _motor);
         TryGetComponent(out _actionHost);
         TryGetComponent(out _attacker);
+        TryGetComponent(out _breath);
     }
 
     void OnEnable()
@@ -45,6 +49,31 @@ public sealed class CharacterPainHost : MonoBehaviour
     {
         UnbindBody();
         ReleasePossessedInputPolicy();
+    }
+
+    void Update()
+    {
+        if (_surpriseStunRemain <= 0f)
+            return;
+
+        float dt = TimeScaleService.Delta(TimeScaleChannel.World);
+        if (dt <= 0f)
+            return;
+
+        _surpriseStunRemain = Mathf.Max(0f, _surpriseStunRemain - dt);
+        if (_surpriseStunRemain <= 0f)
+            Refresh();
+    }
+
+    /// <summary>기습 기절 래치. 고통/용량 다운과 OR. Defeat 아님.</summary>
+    public void ApplySurpriseStun(float seconds)
+    {
+        float duration = Mathf.Max(0f, seconds);
+        if (duration <= 0f)
+            return;
+
+        _surpriseStunRemain = Mathf.Max(_surpriseStunRemain, duration);
+        Refresh();
     }
 
     /// <summary>
@@ -94,6 +123,7 @@ public sealed class CharacterPainHost : MonoBehaviour
         if (body == null || body.IsDeadState)
         {
             _painLatched = false;
+            _surpriseStunRemain = 0f;
             SetShocked(false);
             _lastEffective = 0f;
             return;
@@ -102,7 +132,10 @@ public sealed class CharacterPainHost : MonoBehaviour
         _lastEffective = CombatPain.EffectivePain01(body, _effectScratch);
         bool painDown = CombatPain.IsPainDown(_lastEffective, _painLatched);
         _painLatched = painDown;
-        bool shocked = painDown || BodyCapacity.IsCapacityDowned(body);
+        bool shocked = painDown ||
+                       BodyCapacity.IsCapacityDowned(body) ||
+                       _surpriseStunRemain > 0f ||
+                       (_breath != null && _breath.IsAsphyxiaDowned);
         SetShocked(shocked);
     }
 

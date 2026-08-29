@@ -15,10 +15,14 @@ namespace Garunnir.Runtime.Gameplay.Data
         /// <summary>전지 — 모든 레시피 습득.</summary>
         public const string Omniscience = "omniscience";
 
+        /// <summary>만시 — 캐릭터 시야 페이드 사라짐·청각 핑 무효.</summary>
+        public const string Omnivision = "omnivision";
+
         public static readonly string[] All =
         {
             Survival,
-            Omniscience
+            Omniscience,
+            Omnivision
         };
 
         public static bool IsTrait(string id)

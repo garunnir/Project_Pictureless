@@ -48,6 +48,9 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
     float _envSpeedMultiplier = 1f;
     float _imbalanceSpeedMultiplier = 1f;
     float _stealthSpeedMultiplier = 1f;
+    float _swimSpeedMultiplier = 1f;
+    float _swimSprintMultiplier = 1f;
+    bool _swimBlocksSprint;
     bool _encumbranceBlocksSprint;
     bool _encumbranceBlocksMovement;
 
@@ -117,6 +120,28 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         _stealthSpeedMultiplier = active ? Mathf.Clamp(speedMultiplier, 0.05f, 1f) : 1f;
         if (active)
             CancelSprintForStealth();
+    }
+
+    /// <summary>Wade/Swim/Dive 이동 배율. CharacterSwimHost가 매 틱 넣는다.</summary>
+    public void SetSwimMovement(
+        bool active,
+        float speedFactor,
+        bool blockSprint,
+        float sprintFactor = 1f)
+    {
+        if (!active)
+        {
+            _swimSpeedMultiplier = 1f;
+            _swimSprintMultiplier = 1f;
+            _swimBlocksSprint = false;
+            return;
+        }
+
+        _swimSpeedMultiplier = Mathf.Clamp(speedFactor, 0.05f, 1f);
+        _swimSprintMultiplier = Mathf.Clamp(sprintFactor, 0.05f, 1f);
+        _swimBlocksSprint = blockSprint;
+        if (blockSprint)
+            SetSprinting(false);
     }
 
     public void CancelSprintForStealth() => SetSprinting(false);
@@ -269,8 +294,9 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         if (!_controlEnabled || mover == null)
             return;
 
-        if (_encumbranceBlocksSprint || _encumbranceBlocksMovement ||
-            (_characterState != null && _characterState.IsStealth))
+        if (_encumbranceBlocksSprint || _encumbranceBlocksMovement || _swimBlocksSprint ||
+            (_characterState != null && _characterState.IsStealth) ||
+            (_characterState != null && (_characterState.IsSwimming || _characterState.IsDiving)))
         {
             SetSprinting(false);
             return;
@@ -309,9 +335,13 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
             * _liftStrainSpeedMultiplier
             * _envSpeedMultiplier
             * _imbalanceSpeedMultiplier
-            * _stealthSpeedMultiplier;
+            * _stealthSpeedMultiplier
+            * _swimSpeedMultiplier;
         bool stealthActive = _characterState != null && _characterState.IsStealth;
-        float sprintMultiplier = _encumbranceBlocksSprint || stealthActive ? 1f : _sprintMultiplier;
+        bool blockSprint = _encumbranceBlocksSprint || _swimBlocksSprint || stealthActive;
+        float sprintMultiplier = blockSprint
+            ? 1f
+            : _sprintMultiplier * _swimSprintMultiplier;
         return mover.CalcDesiredMove(
             moveSpeed,
             sprintMultiplier,

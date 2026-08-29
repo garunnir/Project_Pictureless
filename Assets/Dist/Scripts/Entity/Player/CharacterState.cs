@@ -35,8 +35,14 @@ public class CharacterState : MonoBehaviour
 
     public bool IsAiming { get; private set; }
     public bool IsStealth { get; private set; }
+    public bool IsWading { get; private set; }
+    public bool IsSwimming { get; private set; }
+    public bool IsDiving { get; private set; }
+    /// <summary>Dive 수직 입력 (-1..1). CharacterSwimHost가 넣는다.</summary>
+    public float SwimVerticalInput { get; private set; }
     public event Action<Vector3Int> GridPosChanged;
     public event Action<bool> StealthChanged;
+    public event Action SwimModeChanged;
     /// <summary>매 <see cref="UpdateGridPos"/> 호출 때마다(셀 변경 없이 포함) 발생.</summary>
     public event Action<Vector3> WorldPoseChanged;
     public event Action<Vector3> AimWorldPointChanged;
@@ -88,6 +94,20 @@ public class CharacterState : MonoBehaviour
         IsStealth = value;
         StealthChanged?.Invoke(value);
     }
+
+    internal void SetSwimMode(bool wading, bool swimming, bool diving)
+    {
+        if (IsWading == wading && IsSwimming == swimming && IsDiving == diving)
+            return;
+
+        IsWading = wading;
+        IsSwimming = swimming;
+        IsDiving = diving;
+        SwimModeChanged?.Invoke();
+    }
+
+    internal void SetSwimVerticalInput(float vertical01) =>
+        SwimVerticalInput = Mathf.Clamp(vertical01, -1f, 1f);
 
     internal void UpdateGridPos(Vector3 worldPos)
     {

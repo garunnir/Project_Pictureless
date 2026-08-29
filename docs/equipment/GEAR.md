@@ -15,7 +15,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | Character window | Tabs: 상태 \| 장비 \| 방해 \| 체온. Key = `StatusToggle` (`Tab`) |
 | Primary | Highest DPS hand → `CharacterAttacker.SetWieldedItem` |
 | SelectedAction | `ItemInstance.SelectedAction` — 손별 선택 **Leaf** (`WeaponAction`). 영속은 인스턴스 |
-| Action layers | **Family** = 에디터·UI 묶음(Melee, Trigger; 없으면 평면). **Leaf** = 선택·시전·**Catalog 폴백 행**(Swing/Thrust/Raise/Semi/Burst/Auto — 줄 필수). **동작 줄 클립** = 그 무기 그 Leaf Hold/Aim/Attack/**Recoil/Blocked** (비면 Catalog). 클립 옆 Speed=`WeaponAnimClipSpeeds`(슬롯 속도 아님, 없으면 1). 구 `Trigger`→Semi. [`BN_BAKE.md`](BN_BAKE.md) |
+| Action layers | **Family** = 에디터·UI 묶음(Melee, Trigger; 없으면 평면). **Leaf** = 선택·시전·**Catalog 폴백 행**(Swing/Thrust/Raise/Semi/Burst/Auto — 줄 필수). **동작 줄 클립** = 그 무기 그 Leaf Hold/Aim/Attack/**기습 Attack**/Recoil/Blocked (비면 Catalog; 기습 Attack은 Melee만). 클립 옆 Speed=`WeaponAnimClipSpeeds`(슬롯 속도 아님, 없으면 1). 구 `Trigger`→Semi. [`BN_BAKE.md`](BN_BAKE.md) |
 | Action rows | `WeaponPresentation` Entry = **Leaf** 라우팅 행 (가용 마스크 + Attack + **Hold/Aim/Attack 클립** + 연출 + `useHold` + **동작 쿨**). 클립·VFX 비면 Catalog 같은 Leaf. 가용 SSOT = Entry 존재 → `WeaponActionRows.Available` |
 | Action VFX coalesce | Action: Entry.vfx → Catalog **같은 Leaf** 행. Hit: Entry → Attack VFX → Defaults[bash/cut/bullet] → fallback |
 | Action clip coalesce | Action: Entry Hold/Aim/Attack 손 클립 → Catalog **같은 Leaf** 손 클립. Recoil/Blocked: Entry → Catalog Impact 행. Override 클립 맵 없음 |
@@ -92,6 +92,7 @@ Anatomy / climate / sever: [`docs/body/BODY.md`](../body/BODY.md) (PC/NPC 분기
 | 확정 | 겹친 `CharacterBodyHost`마다 `HitChance` 없이 피해. 방어는 `WearCombatDefense.MitigateDamage` 유지 |
 | 히트스톱 | 근접 `Performed`/`Obstructed`만. 공격자+피격자 `CharacterHitStop` (지속=`CombatHitStopSettings`, Realtime, 겹치면 max). 원거리·미스 없음. `Time.timeScale` / 채널 Push 금지 |
 | 허공 | 쿨·연습치만. `AttackJudged` Miss 없음 |
+| 기습 | 피격자가 공격자를 **시력**으로 인지하지 못하면 피해 ×`CombatSurprise.DamageMultiplier`. 청력만으로는 인지 아님. 근접은 STR 비교로 기절(`CharacterPainHost` 래치) 또는 목 조준(오버킬 판정, 확정 파괴 아님). Attack thin은 Entry `surpriseAttackClips` |
 | 치명타 | `AttackOutcome.WeaponReach01` (0=손/자루 … 1=끝)만 기록. **로직 Pending** |
 | 디버그 | `DebugLogController` Player → Melee Hitbox (`Config.DebugMode.MeleeHitbox`). GL 와이어. 노랑=현재 자세, 주황=cue 허공, 초록=cue 히트 + 접촉점 |
 

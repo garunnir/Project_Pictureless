@@ -274,7 +274,7 @@ JSON에서는 `liquidAuthoringFaces` 별 레이어로만 왕복한다. 이 한 �
 - **advection**: 흐름이 온도를 운반하지 않는다(§상변화).
 - **낚시 가능 지형 없음**: `map01`의 웅덩이는 한 겹(최대 약 1,065,390 ml)이라 `FishableColumnMl` 미달 — 현재 맵에서 낚시는 의도적으로 불가다. 분지를 저작해야 낚시가 다시 열린다(§분지가 성립하는 조건).
 - **Fields/emits**: BN `phase: liquid` 아이템 필드 증발/침전.
-- **Consumers**: 비(rain), 젖음(wetness), 소화기(extinguisher) 등 다른 시스템과의 통합.
+- **Consumers**: 소화기(extinguisher) 등. **젖음(wetness)**: Wade/Swim/Dive immersion → `CharacterClimateHost`가 `MapSwimConsts.LiquidWetnessGain*`를 날씨 gain과 max ([`../locomotion/SWIM.md`](../locomotion/SWIM.md)). 비(rain)→맵 액체 Pour는 미연결.
 - **terrain별 capMl bake**: 현재 전 셀 `DefaultMaxVolumeMl` 공통.
 
 ## See also

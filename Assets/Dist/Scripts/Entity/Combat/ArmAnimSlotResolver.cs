@@ -56,7 +56,10 @@ public static class ArmAnimSlotResolver
         WeaponPresentation presentation2H,
         WeaponAction actionL,
         WeaponAction actionR,
-        WeaponAction action2H)
+        WeaponAction action2H,
+        bool surpriseAttackL = false,
+        bool surpriseAttackR = false,
+        bool surpriseAttack2H = false)
     {
         if (resolved == null || catalog == null)
             return;
@@ -69,7 +72,10 @@ public static class ArmAnimSlotResolver
             presentation2H,
             actionL,
             actionR,
-            action2H);
+            action2H,
+            surpriseAttackL,
+            surpriseAttackR,
+            surpriseAttack2H);
     }
 
     static void ProjectThinKeys(
@@ -80,7 +86,10 @@ public static class ArmAnimSlotResolver
         WeaponPresentation presentation2H,
         WeaponAction actionL,
         WeaponAction actionR,
-        WeaponAction action2H)
+        WeaponAction action2H,
+        bool surpriseAttackL = false,
+        bool surpriseAttackR = false,
+        bool surpriseAttack2H = false)
     {
         ProjectPose(
             resolved,
@@ -93,7 +102,10 @@ public static class ArmAnimSlotResolver
             actionR,
             action2H,
             PoseKind.Hold,
-            null);
+            null,
+            false,
+            false,
+            false);
         ProjectPose(
             resolved,
             catalog,
@@ -105,7 +117,10 @@ public static class ArmAnimSlotResolver
             actionR,
             action2H,
             PoseKind.Aim,
-            catalog.HoldThin);
+            catalog.HoldThin,
+            false,
+            false,
+            false);
         ProjectPose(
             resolved,
             catalog,
@@ -117,7 +132,10 @@ public static class ArmAnimSlotResolver
             actionR,
             action2H,
             PoseKind.Attack,
-            catalog.HoldThin);
+            catalog.HoldThin,
+            surpriseAttackL,
+            surpriseAttackR,
+            surpriseAttack2H);
     }
 
     static void ProjectPose(
@@ -131,17 +149,34 @@ public static class ArmAnimSlotResolver
         WeaponAction actionR,
         WeaponAction action2H,
         PoseKind pose,
-        ArmAnimSlotCatalog.HandClips poseFallback)
+        ArmAnimSlotCatalog.HandClips poseFallback,
+        bool surpriseAttackL,
+        bool surpriseAttackR,
+        bool surpriseAttack2H)
     {
         if (thin == null)
             return;
 
         if (thin.leftBase != null)
             resolved[thin.leftBase] = PoseClip(
-                presentationL, actionL, catalog, pose, WieldHand.Left, poseFallback, thin.leftBase);
+                presentationL,
+                actionL,
+                catalog,
+                pose,
+                WieldHand.Left,
+                poseFallback,
+                thin.leftBase,
+                surpriseAttackL);
         if (thin.rightBase != null)
             resolved[thin.rightBase] = PoseClip(
-                presentationR, actionR, catalog, pose, WieldHand.Right, poseFallback, thin.rightBase);
+                presentationR,
+                actionR,
+                catalog,
+                pose,
+                WieldHand.Right,
+                poseFallback,
+                thin.rightBase,
+                surpriseAttackR);
         if (thin.twoHandBase != null)
             resolved[thin.twoHandBase] = PoseClip(
                 presentation2H,
@@ -150,7 +185,8 @@ public static class ArmAnimSlotResolver
                 pose,
                 WieldHand.TwoHand,
                 poseFallback,
-                thin.twoHandBase);
+                thin.twoHandBase,
+                surpriseAttack2H);
     }
 
     static AnimationClip PoseClip(
@@ -160,9 +196,12 @@ public static class ArmAnimSlotResolver
         PoseKind pose,
         WieldHand hand,
         ArmAnimSlotCatalog.HandClips poseFallback,
-        AnimationClip thinClip)
+        AnimationClip thinClip,
+        bool useSurpriseAttack)
     {
-        AnimationClip fromEntry = LibHand(EntryPose(presentation, action, pose), hand);
+        AnimationClip fromEntry = LibHand(
+            EntryPose(presentation, action, pose, useSurpriseAttack),
+            hand);
         if (fromEntry != null)
             return fromEntry;
 
@@ -179,7 +218,8 @@ public static class ArmAnimSlotResolver
     static ArmAnimSlotCatalog.HandClips EntryPose(
         WeaponPresentation presentation,
         WeaponAction action,
-        PoseKind pose)
+        PoseKind pose,
+        bool useSurpriseAttack)
     {
         if (presentation == null ||
             !presentation.TryGetEntry(action, out WeaponPresentation.Entry entry) ||
@@ -189,8 +229,14 @@ public static class ArmAnimSlotResolver
             return entry.holdClips;
         if (pose == PoseKind.Aim)
             return entry.aimClips;
+        if (useSurpriseAttack && HasAnyClip(entry.surpriseAttackClips))
+            return entry.surpriseAttackClips;
         return entry.attackClips;
     }
+
+    static bool HasAnyClip(ArmAnimSlotCatalog.HandClips clips) =>
+        clips != null &&
+        (clips.leftBase != null || clips.rightBase != null || clips.twoHandBase != null);
 
     static ArmAnimSlotCatalog.HandClips CatalogPose(
         ArmAnimSlotCatalog.ActionLibraryEntry lib,

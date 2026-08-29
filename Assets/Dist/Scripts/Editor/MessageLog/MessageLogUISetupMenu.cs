@@ -174,6 +174,10 @@ static class MessageLogUISetupMenu
         }
 
         Put("msg.combat.player_hit", "{0}에 {1}의 피해를 입었다.");
+        Put("msg.combat.surprise_dealt", "기습이 적중했다.");
+        Put("msg.combat.surprise_taken", "기습을 당했다.");
+        Put("msg.combat.surprise_neck", "목이 노려졌다.");
+        Put("msg.combat.surprise_stun", "기습에 정신을 잃었다.");
         Put("msg.status.defeat_body", "치명상을 입고 쓰러졌다.");
         Put("msg.status.defeat_collapse", "정신이 무너져 쓰러졌다.");
         Put("msg.status.encumbrance_immobile", "너무 무거워서 움직일 수 없다.");

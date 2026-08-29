@@ -64,18 +64,20 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (next < 0)
                 next = 0;
 
-            if (next == 0 &&
-                BodyPartIds.IsSeverable(main) &&
-                !BodySeverOverkill.RollDestroy(cur, max, amount, hitTag))
+            // HP 0 ≠ 파괴. 파괴는 오버킬 성공 시 RemovePart (모든 메인 부위).
+            bool limb = BodyPartIds.IsSeverable(main);
+            if (next == 0)
             {
-                next = 1;
-            }
+                if (BodySeverOverkill.RollDestroy(cur, max, amount, hitTag, corePart: !limb))
+                {
+                    body.RemovePart(main);
+                    ApplySeverStumpBleed(body, main);
+                    return BodyHitApplyResult.Sever(cur);
+                }
 
-            if (next == 0 && BodyPartIds.IsSeverable(main))
-            {
-                body.RemovePart(main);
-                ApplySeverStumpBleed(body, main);
-                return BodyHitApplyResult.Sever(cur);
+                // 사지: 실패=1 HP. 코어: 실패=HP 0 + 장기파괴 출혈(노드 유지).
+                if (limb)
+                    next = 1;
             }
 
             int hpLost = cur - next;
@@ -94,7 +96,7 @@ namespace Garunnir.Runtime.Gameplay.Data
                 ApplySeeds(body, main, effectSeeds);
             }
 
-            if (body.GetConditionCur(main) == 0)
+            if (body.Has(main) && body.GetConditionCur(main) == 0)
                 ApplyDestroyedBleed(body, main);
 
             return BodyHitApplyResult.Hit(tissueId, hpLost);
@@ -107,7 +109,17 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return;
 
             string id = BodyPartIds.ResolveNodeId(severedPartId);
-            string stump = BodyPartIds.GetSocketParentId(id) ?? BodyPartIds.Chest;
+            string stump = BodyPartIds.GetSocketParentId(id);
+            if (string.IsNullOrEmpty(stump))
+            {
+                if (!BodyPartIds.IsLimbRoot(id))
+                    return;
+                stump = BodyPartIds.Chest;
+            }
+
+            if (stump == id || !body.Has(stump))
+                return;
+
             EnsureBleed(body, stump, SeverStumpBleedIntensity(id));
         }
 
@@ -205,7 +217,7 @@ namespace Garunnir.Runtime.Gameplay.Data
 
     /// <summary>
     /// 초과분/최대HP = 오버킬%. 타입 구간에 inverse lerp → 파괴 확률.
-    /// 실패 시 1 HP. 머리/가슴 즉사 없음.
+    /// 사지 실패=1 HP. 코어 실패=HP 0(노드 유지). HP 0 자체는 즉사 아님.
     /// </summary>
     public static class BodySeverOverkill
     {
@@ -216,13 +228,24 @@ namespace Garunnir.Runtime.Gameplay.Data
         public const float BashMin = 0.4f;
         public const float BashMax = 1f;
 
-        public static bool RollDestroy(int cur, int max, int amount, string hitTag)
+        /// <summary>머리/목/가슴/배/골반/장기 — 사지보다 낮은 파괴 구간.</summary>
+        public const float CoreCutMin = 0f;
+        public const float CoreCutMax = 0.08f;
+        public const float CoreBulletMin = 0f;
+        public const float CoreBulletMax = 0.35f;
+        public const float CoreBashMin = 0.15f;
+        public const float CoreBashMax = 0.55f;
+
+        public static bool RollDestroy(int cur, int max, int amount, string hitTag) =>
+            RollDestroy(cur, max, amount, hitTag, corePart: false);
+
+        public static bool RollDestroy(int cur, int max, int amount, string hitTag, bool corePart)
         {
             if (cur <= 0 || max <= 0 || amount < cur)
                 return false;
 
             float overkillPct = (amount - cur) / (float)max;
-            ResolveRange(hitTag, out float lo, out float hi);
+            ResolveRange(hitTag, corePart, out float lo, out float hi);
             float span = hi - lo;
             float t = span <= 0f ? (overkillPct >= lo ? 1f : 0f) : (overkillPct - lo) / span;
             if (t <= 0f)
@@ -237,8 +260,29 @@ namespace Garunnir.Runtime.Gameplay.Data
         public const string TagCut = "cut";
         public const string TagBullet = "bullet";
 
-        static void ResolveRange(string hitTag, out float lo, out float hi)
+        static void ResolveRange(string hitTag, bool corePart, out float lo, out float hi)
         {
+            if (corePart)
+            {
+                if (string.Equals(hitTag, TagCut, System.StringComparison.Ordinal))
+                {
+                    lo = CoreCutMin;
+                    hi = CoreCutMax;
+                    return;
+                }
+
+                if (string.Equals(hitTag, TagBullet, System.StringComparison.Ordinal))
+                {
+                    lo = CoreBulletMin;
+                    hi = CoreBulletMax;
+                    return;
+                }
+
+                lo = CoreBashMin;
+                hi = CoreBashMax;
+                return;
+            }
+
             if (string.Equals(hitTag, TagCut, System.StringComparison.Ordinal))
             {
                 lo = CutMin;

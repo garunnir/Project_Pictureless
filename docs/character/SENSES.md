@@ -62,7 +62,14 @@ Resolve(visionActive, hearingActive) → Vision 우선
 | None | — | — | ClearTarget | 없음 |
 
 NPC: `NpcManager.RefreshTarget` + 단일 `Chase` + `ResolveSteerGoal`.  
-플레이어: `CharacterHearingPingDriver` — `ShowsHearingPing` + `DisplayVisibility ≤ HiddenThreshold`.
+플레이어: `CharacterHearingPingDriver` — `ShowsHearingPing` + `DisplayVisibility ≤ HiddenThreshold`.  
+trait `omnivision` (만시): 핑 Driver가 overlay Clear 후 return — 청각 핑 무효.
+
+## 기습 (Surprise)
+
+**인지 SSOT:** `CombatSurprise.HasVisionOf` — **시력만**. 청력 Chase 중이어도 기습 가능.  
+NPC가 이미 Vision 타깃이면 LoseRadius, 아니면 DetectRadius (`NpcManager.TryGetVisionLock`).  
+피해: `ResolveCommittedHit`에서 배율. 근접 특수·애니: [`GEAR.md`](../equipment/GEAR.md) Melee connect.
 
 ## 청각 핑 (플레이어)
 
@@ -71,6 +78,7 @@ NPC: `NpcManager.RefreshTarget` + 단일 `Chase` + `ResolveSteerGoal`.
 - **튜닝:** `CharacterHearingPingSettings` (HiddenThreshold, MaxAlpha, Y offset, fade)
 - 적 **메시는 SightFade** — 핑은 **바닥 quad** (셀 중심, audibility × MaxAlpha)
 - 같은 셀 다수 적 → **max(audibility)** 1 quad
+- trait `omnivision` → 핑 없음 (`GameplayData.Traits.Has(TraitIds.Omnivision)`)
 
 ## 맵 바인딩
 

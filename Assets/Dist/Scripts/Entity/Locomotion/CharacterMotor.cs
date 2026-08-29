@@ -42,6 +42,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     float _remainingTravelDistance;
     float _envSpeedMultiplier = 1f;
     float _imbalanceSpeedMultiplier = 1f;
+    float _swimSpeedMultiplier = 1f;
     Vector3 _knockbackVelocity;
     float _staggerRemaining;
     bool _moveLocked;
@@ -150,7 +151,10 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
         else
         {
             desiredMove = _mover.CalcConstantSpeedMove(
-                EffectiveMoveSpeed * _envSpeedMultiplier * _imbalanceSpeedMultiplier,
+                EffectiveMoveSpeed
+                    * _envSpeedMultiplier
+                    * _imbalanceSpeedMultiplier
+                    * _swimSpeedMultiplier,
                 deltaTime)
                 + _knockbackVelocity * deltaTime;
             if (_hasTravelLimit &&
@@ -192,6 +196,8 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
         _possessed = possessed;
         if (possessed && !IsScriptedLocomotion)
             ClearTravelLimit();
+        if (TryGetComponent(out CharacterSwimHost swim))
+            swim.NotifyPossessedChanged(possessed);
     }
 
     /// <summary>NpcSteer 등 스크립트 조향. possessed여도 NPC와 동일 등속·travel limit.</summary>
@@ -234,6 +240,10 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     /// <summary>Env 이동 배율 (GearEnv × limp). Possessed는 PlayerMovement.SetEnvMovement가 같은 값을 쓴다.</summary>
     public void SetEnvMovement(float speedMultiplier) =>
         _envSpeedMultiplier = Mathf.Max(0f, speedMultiplier);
+
+    /// <summary>Wade/Swim/Dive 배율. CharacterSwimHost. Possessed는 PlayerMovement.SetSwimMovement.</summary>
+    public void SetSwimMovement(float speedMultiplier) =>
+        _swimSpeedMultiplier = Mathf.Max(0f, speedMultiplier);
 
     /// <summary>불균형 이동 배율 (1 − Imbalance). Possessed는 PlayerMovement.SetImbalanceMovement.</summary>
     public void SetImbalanceMovement(float speedMultiplier) =>

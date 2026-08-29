@@ -854,6 +854,40 @@ public sealed class CharacterRuntimeDebugModel
         _bodyHost.TryGetComponent(out CharacterState state) &&
         state.IsStealth;
 
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
+    [ShowIf(nameof(HasCombat))]
+    [BoxGroup("Domain/Combat/Surprise")]
+    [ShowInInspector, ReadOnly, LabelText("Sees possessed (vision)")]
+    bool SurpriseSeesPossessed =>
+        CanWrite &&
+        TryResolvePossessedBody(out CharacterBodyHost possessed) &&
+        CombatSurprise.HasVisionOf(_bodyHost, possessed);
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
+    [ShowIf(nameof(HasCombat))]
+    [BoxGroup("Domain/Combat/Surprise")]
+    [ShowInInspector, ReadOnly, LabelText("Surprise stun remain")]
+    float SurpriseStunRemain =>
+        _painHost != null ? _painHost.SurpriseStunRemain : 0f;
+
+    static bool TryResolvePossessedBody(out CharacterBodyHost host)
+    {
+        host = null;
+        int count = CharacterBodyHost.ActiveCount;
+        for (int i = 0; i < count; i++)
+        {
+            CharacterBodyHost candidate = CharacterBodyHost.GetActive(i);
+            if (candidate == null)
+                continue;
+            if (!candidate.TryGetComponent(out CharacterMotor motor) || !motor.IsPossessed)
+                continue;
+            host = candidate;
+            return true;
+        }
+
+        return false;
+    }
+
     [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat), SdfIconType.ShieldFill, TextColor = "orange")]
     [ShowIf(nameof(HasCombat))]
     [BoxGroup("Domain/Combat/Imbalance")]

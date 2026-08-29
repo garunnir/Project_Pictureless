@@ -3,6 +3,7 @@
 > LLM/에이전트용 Dist 이동 SSOT.
 > 인덱스: `docs/README.md` · 룰: `.cursor/rules/locomotion.mdc`
 > **Locomotion 스크립트를 쓰거나 고치기 전에 이 문서를 읽는다.**
+> 수영·잠수·산소: [`SWIM.md`](SWIM.md)
 
 경로(코드): `Assets/Dist/Scripts/Entity/Locomotion/`
 
@@ -153,7 +154,7 @@ SSOT: `CombatImpulse` · `CombatImbalance` · `CombatPain`. STR 기준은 `Comba
 
 **몸 애니만** Hold/Aim/Attack thin 슬롯과 Impact thin을 쓴다. 무기 메시·외형은 애니 슬롯에 붙이지 않는다 (별 경로).
 
-**불변 (에이전트·Rebuild):** 컨트롤러에 동작 이름·`LibraryKeys` 금지. Catalog는 **Leaf마다 폴백 행**. 동작 줄=무기×Leaf 클립(Hold/Aim/Attack/Recoil/Blocked, 비면 Catalog). 룰: `.cursor/rules/arm-anim-layers.mdc`.
+**불변 (에이전트·Rebuild):** 컨트롤러에 동작 이름·`LibraryKeys` 금지. Catalog는 **Leaf마다 폴백 행**. 동작 줄=무기×Leaf 클립(Hold/Aim/Attack/기습 Attack/Recoil/Blocked, 비면 Catalog; 기습은 Melee Entry만). 룰: `.cursor/rules/arm-anim-layers.mdc`.
 
 | Layer | Mask | Weight |
 |-------|------|--------|

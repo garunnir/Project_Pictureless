@@ -50,6 +50,7 @@ public sealed class CharacterAttacker : MonoBehaviour
     CharacterLocomotionAnim _locAnim;
     CharacterHitStop _hitStop;
     MapTopologyLineCast _mapLineCast;
+    CharacterBodyHost _bodyHost;
     Collider _selfCollider;
     readonly Collider[] _meleeColliders = new Collider[MeleeHitbox.BufferSize];
     readonly Vector3[] _debugContacts = new Vector3[MeleeHitbox.BufferSize];
@@ -200,6 +201,7 @@ public sealed class CharacterAttacker : MonoBehaviour
         TryGetComponent(out _locAnim);
         if (_locAnim == null)
             _locAnim = GetComponentInChildren<CharacterLocomotionAnim>();
+        TryGetComponent(out _bodyHost);
         _hitStop = CharacterHitStop.Find(this);
         _selfCollider = GetComponentInChildren<Collider>();
         if (_presentation != null)
@@ -536,6 +538,18 @@ public sealed class CharacterAttacker : MonoBehaviour
         Vector3 origin,
         Vector3 impact)
     {
+        bool useSurpriseClip = false;
+        if (result == AttackPerformResult.Performed &&
+            !WeaponActionUtil.IsRanged(action) &&
+            !WeaponActionUtil.SuppressesAttackTrigger(action))
+        {
+            CharacterBodyHost primary = target;
+            if (primary == null)
+                primary = CombatSurprise.ResolvePrimaryAnimTarget(_bodyHost);
+            useSurpriseClip = primary != null &&
+                              CombatSurprise.IsSurpriseHit(_bodyHost, primary);
+        }
+
         var outcome = new AttackOutcome(
             action,
             _activeWieldHand,
@@ -545,7 +559,9 @@ public sealed class CharacterAttacker : MonoBehaviour
             aimedPartId,
             damage,
             origin,
-            impact);
+            impact,
+            useSurpriseAttackClip: useSurpriseClip,
+            attacker: _bodyHost);
         AttackResolved?.Invoke(outcome);
         AnyAttackResolved?.Invoke(outcome);
         return result;
@@ -1213,10 +1229,25 @@ public sealed class CharacterAttacker : MonoBehaviour
                 aimedPart = AimPartResolver.ScatterToNeighbor(targetHost.Body, aimedPart);
         }
 
+        bool isSurprise = CombatSurprise.IsSurpriseHit(_bodyHost, targetHost);
+        SurpriseMeleeKind surpriseMelee = SurpriseMeleeKind.None;
+        if (isSurprise && !WeaponActionUtil.IsRanged(context.Action))
+        {
+            int defStr = CombatSurprise.ResolveStrength(targetHost);
+            surpriseMelee = CombatSurprise.RollMeleeSpecial(strength, defStr);
+            if (surpriseMelee == SurpriseMeleeKind.Neck &&
+                targetHost.Body.Has(BodyPartIds.Neck))
+                aimedPart = BodyPartIds.Neck;
+        }
+
         EquipmentWearState wear = ResolveTargetWear(targetHost);
         int damage = 0;
         int rawDamage = 0;
         string hitPart = OrganHitResolver.Resolve(targetHost.Body, aimedPart);
+        if (surpriseMelee == SurpriseMeleeKind.Neck &&
+            targetHost.Body.Has(BodyPartIds.Neck))
+            hitPart = BodyPartIds.Neck;
+
         string appliedTissueId = string.Empty;
         bool didSeverPart = false;
         int tissueRank = 0;
@@ -1229,6 +1260,8 @@ public sealed class CharacterAttacker : MonoBehaviour
                     CombatMath.DamageForTag(item, damageTag, strength, skillLevel, ammo)
                     * factor
                     * CombatImpulse.HpFactor(item)));
+            if (isSurprise)
+                channelRaw = CombatSurprise.ApplyDamageMultiplier(channelRaw);
             rawDamage += channelRaw;
             WearCombatDefense.ArmorMitigateResult mitigated = WearCombatDefense.MitigateDamage(
                 wear,
@@ -1261,6 +1294,10 @@ public sealed class CharacterAttacker : MonoBehaviour
         if (CombatImpulse.IsBeanbag(ammo))
             damage = 0;
 
+        if (surpriseMelee == SurpriseMeleeKind.Stun &&
+            targetHost.TryGetComponent(out CharacterPainHost targetPain))
+            targetPain.ApplySurpriseStun(CombatSurprise.StunSeconds);
+
         float jinIn = impulseJinOverride >= 0f
             ? impulseJinOverride
             : ResolveImpulseJin(item, context.Action, ammo);
@@ -1280,7 +1317,9 @@ public sealed class CharacterAttacker : MonoBehaviour
             rawDamage,
             CombatImpulse.HitJin(jinIn, impulseContinues, p),
             appliedTissueId,
-            didSeverPart);
+            didSeverPart,
+            isSurprise,
+            surpriseMelee);
         return p;
     }
 
@@ -1322,7 +1361,9 @@ public sealed class CharacterAttacker : MonoBehaviour
         int rawDamage = 0,
         float impulseJinOverride = -1f,
         string appliedTissueId = null,
-        bool didSeverPart = false)
+        bool didSeverPart = false,
+        bool isSurprise = false,
+        SurpriseMeleeKind surpriseMelee = SurpriseMeleeKind.None)
     {
         if (item == null)
             item = ItemFor(context.ItemId);
@@ -1352,7 +1393,10 @@ public sealed class CharacterAttacker : MonoBehaviour
             rawDamage,
             impulseJin,
             appliedTissueId,
-            didSeverPart);
+            didSeverPart,
+            isSurprise,
+            surpriseMelee,
+            attacker: _bodyHost);
         AttackJudged?.Invoke(outcome);
         AnyAttackJudged?.Invoke(outcome);
     }

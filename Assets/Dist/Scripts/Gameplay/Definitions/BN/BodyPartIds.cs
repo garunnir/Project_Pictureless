@@ -102,7 +102,9 @@ namespace Garunnir.Runtime.Gameplay.Data
             Head, HandL, HandR, FootL, FootR
         };
 
-        /// <summary>HP 0일 때 RemovePart 대상. 팔/다리 체인 + 손가락 (head/neck/chest/belly/pelvis·장기 제외).</summary>
+        /// <summary>
+        /// 복원·사지 UI용. 파괴 가능 여부와 무관 — 모든 메인 부위는 오버킬로 RemovePart 가능.
+        /// </summary>
         public static readonly string[] SeverableParts =
         {
             UpperArmL, LowerArmL, HandL, FingerThumbL, FingerIndexL,
@@ -416,7 +418,8 @@ namespace Garunnir.Runtime.Gameplay.Data
         }
 
         /// <summary>
-        /// 절단 후 남는 소켓 부모. 상완/대퇴는 루트(null) — TryAttach(null)이 루트로 채운다.
+        /// 절단 후 남는 소켓 부모. 상완/대퇴·머리/가슴 루트는 null — stump는 호출측.
+        /// 목→머리, 장기→OrganParent.
         /// </summary>
         public static string GetSocketParentId(string partId)
         {
@@ -431,7 +434,18 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (id == FootR) return CalfR;
             if (id == FingerThumbL || id == FingerIndexL) return HandL;
             if (id == FingerThumbR || id == FingerIndexR) return HandR;
+            if (id == Neck) return Head;
+            string organParent = GetOrganParentId(id);
+            if (!string.IsNullOrEmpty(organParent))
+                return organParent;
             return null;
+        }
+
+        /// <summary>사지 루트(상완/대퇴) — stump Bleed를 chest에 둔다.</summary>
+        public static bool IsLimbRoot(string partId)
+        {
+            string id = ResolveNodeId(partId);
+            return id == UpperArmL || id == UpperArmR || id == ThighL || id == ThighR;
         }
     }
 }
