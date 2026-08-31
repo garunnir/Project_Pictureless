@@ -19,6 +19,14 @@ python Tools/bn_converter/convert.py --bn-path <Cataclysm-BN> --output Assets/St
 
 `--locale-only` keeps existing `items.json` / `recipes.json` and rewrites `item_names.json` (`names` / `descriptions` / `recipe_categories` / `qualities`).
 
+`--mapgen` (off by default) also writes house MapSaveJsonDto under `BNData/mapgen/`. Standalone:
+
+```text
+python Tools/bn_converter/export_mapgen.py --bn-path <Cataclysm-BN> --output Assets/StreamingAssets/BNData/mapgen
+```
+
+`--om-terrain house_modern_1` bakes one stitched house (ground + roof + basement). Does **not** change the default world path (`map01.json`). Load a baked file with `MapFileLoader.fileName`.
+
 Does **not** overwrite `GameData/items.json` demo seeds.
 
 Item **icons** are not `ItemData` fields. MSX++ tileset bake (separate from this converter):
@@ -57,6 +65,7 @@ Item common: `id`, `name`(singular), `type`, `category`, `subcategory`, `descrip
 | proficiency | id (+ locale in `item_names.json` / `proficiencies` section). Output: `proficiencies.json` |
 | seed | fruit, plant_name, grow_minutes, seeds, fruit_div, byproducts, required_terrain_flag (when `seed_data` present). Int `grow` = season-days × minutes-per-day — not recipe moves/100 |
 | terrain / furniture | id, name, farming flags (`PLANTABLE`, `PLOWABLE`, `PLANT`, `GROWTH_SEED`, `GROWTH_SEEDLING`, `GROWTH_MATURE`, `GROWTH_HARVEST`), **crafting_flags** whitelist (`FIRE`, `LIT`, `COOK`, `SMOKE`, `SMOKER`, `LIGHT_*`), **provides_qualities** (`COOK` 등). Furniture `plant_data`: transform, base, growth_multiplier, harvest_multiplier. Tree: `data/json/furniture_and_terrain` (copy-from resolved). Output: `terrain_furniture.json` |
+| house mapgen | `data/json/mapgen/house` + palettes. Dist `MapSaveJsonDto`: wall/door/window/stairs → `tiles[]` OccupiedCell; walkable → `floorFaces[]` (anchor = CellBelow); water → `liquidAuthoringFaces[]`. Layers stitch by suffix (`_roof` / `_first` / `_second` / `_floor_1` / `_basement`; `_1`/`_2` only if `{base}_roof` or `{base}_basement` exists). Roof y=1, or y=2 if second exists. Furniture Dist-owned만 remap (`Furniture/Bed`·`Wardrobe`·`Create`). 나머지는 BN id를 `prefabId`로 유지. Stub SO: `SOData/Tile/Furniture/BN/` (메시 폴백=Crate) + PrefabDB. `furniture_ids.json`. Weighted symbols pick max weight (tie → name). **No BN dump**, no facing, no nested/loot/monsters/vehicles/`wallEdges`. Multitile `om_terrain` arrays emit each 24×24 piece. Output: `BNData/mapgen/index.json` + `houses/*.json` |
 
 **Silent-zero rule:** if a BN value is an object (`damage`, `ranged_damage`, `shot_damage`, heal `limb_power` / consume_drug `effects`), unwrap the number onto **that same BN key** — never `_int_or_zero` on the object, never rename the key. Same trap for future `damage_modifier` (gunmod). Dist combat reads `ammo.damage` + `gun.ranged_damage` and `ammo.damage_type` when a round is chambered (`ItemInstance.ChamberAmmoId`). `GameData/items.json` must not reuse BN item ids (`9mm`, …) or it overlays RefData.
 
@@ -188,11 +197,23 @@ Per-part coverage/encumbrance objects; `environmental_protection_with_filter`; v
 
 `BIONIC_ITEM`, `ENGINE`, `WHEEL`, `PET_ARMOR`, `TOOLMOD`, `BATTERY`, `MIGRATION`.
 
+### House mapgen (beyond OccupiedCell bake)
+
+| BN | Notes |
+|----|--------|
+| `place_nested` / `nested` chunks | Room variants. Dist does not instantiate nested mapgen |
+| `place_loot` / `place_item` / `items` / `liquids` | Item piles — no Dist loot consumer on map load |
+| `place_monsters` / NPCs | Not a Dist spawn path |
+| furniture / terrain facing | BN mapgen has none. Dist OccupiedCell identity yaw stays unset |
+| `update_mapgen` / overmap / city_building links | Overmap placement Parked |
+| mapgen outside `mapgen/house` | Stores, labs, extras — not this whitelist |
+
 ### Trees `convert.py` does not load
 
-Monsters, mutations, vehicle parts, traps, mapgen/overmap, weather JSON (Dist: `WeatherKind` stand-in), NPC/missions, spells, harvest.
+Monsters, mutations, vehicle parts, traps, overmap, weather JSON (Dist: `WeatherKind` stand-in), NPC/missions, spells, harvest.
 
-`furniture_and_terrain` is **opened** (farming whitelist only — see Baked).
+`furniture_and_terrain` is **opened** (farming whitelist only — see Baked).  
+House **mapgen** is a **separate** bake (`export_mapgen.py` / `convert.py --mapgen`) — OccupiedCell whitelist above, not a BN JSON dump.
 
 ## Rebake log
 
@@ -209,3 +230,4 @@ Monsters, mutations, vehicle parts, traps, mapgen/overmap, weather JSON (Dist: `
 | 2026-08-24 heal key names | `limb_power` / `bandages_power` / `head_power` / `torso_power` / `amount` | convert.py가 `heal_amount`로 접지 않음. Dist `UseActionData` 동명 필드. 2026-08-24 full rebake: `heal_amount` 0건. `bandages_power` 6 (`bandages*` 4 + cotton_ball + medical_gauze), `limb_power` 1 (`rag`=0) |
 | 2026-08-26 cooking parity | comestible cooks_like/smoking_result; recipe flags DARK/BLIND_*; furniture crafting_flags + crafting_pseudo_item; multicooker use_action; empty proficiencies.json | Dist: PSEUDO env, Hot/Cooked, light gate, cook/smoke context, multicooker filter |
 | 2026-08-26 recipe knowledge | `decomp_learn` bake; Dist `RecipeKnowledge` + `RecipeMemory` | 158 recipes with decomp_learn; autolearn_skills (23) runtime OR path |
+| 2026-08-29 house mapgen | `export_mapgen.py` — house rows+palettes → Dist `MapSaveJsonDto` | Opt-in (`--mapgen`). Nested/loot/monsters/facing Parked. Default world path unchanged |

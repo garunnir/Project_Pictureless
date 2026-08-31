@@ -94,6 +94,18 @@ internal static class DistMcpMenus
     public const string CraftingPatchIngredientGrid =
         Root + "/Crafting/Patch Ingredient Grid";
 
+    public const string ConstructionCreatePrefabIfMissing =
+        Root + "/Construction/Create Construction Window Prefab If Missing";
+    public const string ConstructionSetupCanvas =
+        Root + "/Construction/Setup Canvas In Open Scene";
+    public const string ConstructionFixRuntimeEditor =
+        Root + "/Construction/Fix Runtime Editor TileMap Refs In Open Scene";
+    public const string ConstructionToggleRuntimeEditor =
+        Root + "/Construction/Toggle Runtime Tile Editor In Play Mode";
+
+    public const string BnEnsureHouseFurnitureTiles =
+        Root + "/BN/Ensure House Furniture Tile Definitions";
+
     public const string WindowChromePatchFoldCloseButtons =
         Root + "/WindowChrome/Patch Fold Close Buttons";
 

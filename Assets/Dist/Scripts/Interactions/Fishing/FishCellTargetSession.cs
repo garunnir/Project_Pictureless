@@ -24,7 +24,7 @@ public sealed class FishCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
         ItemStack stack,
         InventoryContainer container)
     {
-        if (IsActive || UIConstruction.IsOpen)
+        if (IsActive || UIConstruction.IsOpen || ConstructionCellTargetSession.IsActive)
             return false;
 
         FishCellTargetSession session = EnsureInstance();

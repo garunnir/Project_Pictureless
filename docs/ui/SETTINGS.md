@@ -55,6 +55,8 @@ Editor: `Assets/Dist/Scripts/Editor/Settings/SettingsUISetupMenu.cs`
 | 80 | `UiCancelPriority.ModalPopup` | (예약) |
 
 | 75 | `UiCancelPriority.FarmCellTarget` | `FarmCellTargetSession` |
+| 76 | `UiCancelPriority.ConstructionCellTarget` | `ConstructionCellTargetSession` |
+| 74 | `UiCancelPriority.FishCellTarget` | `FishCellTargetSession` |
 
 | 60 | `UiCancelPriority.CharacterAction` | `CharacterActionCancelConsumer` (possessed `CancelAll`) |
 

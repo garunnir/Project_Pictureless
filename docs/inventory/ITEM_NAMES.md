@@ -58,6 +58,13 @@ Default active language: **`ko`**.
 
 ## Related
 
-- Hub window: `Assets/Dist/Scripts/Editor/BN/GameDataEditorWindow.cs` (Items / Recipes / Characters / Tiles). Characters are Dist SO under `SOData/Gameplay/Character/`; Tiles are Dist `TileDefinition` SO (farming flags on the Tiles tab). Not BN JSON.
+- Hub window: `Assets/Dist/Scripts/Editor/BN/DataDefinitionsWindow.cs` (`OdinMenuEditorWindow`). Menu tree:
+  - **Catalog/** — Items Reference·Custom, Recipes Reference·Custom, Item Names (locale). Save Changes / Loc Bundle toolbar는 Catalog 선택 시에만.
+  - **Characters/** — Definitions · Factions · Faction/Emote Catalog
+  - **World/** — Clock · Weather · Needs · Mood
+  - **Combat/** — Catalog · Presentations · Attacks · Fallbacks
+  - **Locomotion/** — MovementStyle
+  - **Map/** — Tiles · Prefab DB · Farming · Fishing
+- Characters are Dist SO under `SOData/Gameplay/Character/`; Tiles are Dist `TileDefinition` under `SOData/Tile/`. Not BN JSON.
 - Runtime: `UITextPresenter`, `ItemNameTable`, `LocalizationBundle`, `DistUiFont`
 - UI chrome keys remain `UI_ko` / `Loc` (separate from catalog locale)

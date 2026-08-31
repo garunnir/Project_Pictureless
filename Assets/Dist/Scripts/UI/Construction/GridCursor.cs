@@ -36,12 +36,21 @@ public class GridCursor : MonoBehaviour
     void Start()
     {
         if (_camera == null) _camera = Camera.main;
+        ResolveTileMapRefs();
         CacheCursorRenderer();
 
         InputManager input = InputManager.Instance;
         input.UiNavigateStarted += OnNavigateStarted;
         input.UiNavigateCanceled += OnNavigateCanceled;
         input.UiSubmitPerformed += OnSubmit;
+    }
+
+    void ResolveTileMapRefs()
+    {
+        if (_controller == null)
+            _controller = FindFirstObjectByType<TileMapController>();
+        if (_tileMapManager == null)
+            _tileMapManager = FindFirstObjectByType<TileMapManager>();
     }
 
     void Update()
@@ -188,7 +197,15 @@ public class GridCursor : MonoBehaviour
 
     void TryPlace()
     {
-        if (_targetingActive || _placementState.Selected == null) return;
+        if (_targetingActive || _placementState == null || _placementState.Selected == null)
+            return;
+
+        ResolveTileMapRefs();
+        if (_controller == null)
+        {
+            Debug.LogError("[GridCursor] TileMapController missing — cannot place.");
+            return;
+        }
 
         var def = _placementState.Selected;
         if (!TilePlaceUtil.TryBuildTileData(def, _cursorGridPos, out TileData tileData))

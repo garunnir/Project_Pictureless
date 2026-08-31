@@ -5,7 +5,6 @@
 using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSession, IUiCancelConsumer
 {
@@ -17,12 +16,7 @@ public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
     ItemStack _stack;
     InventoryContainer _container;
     bool _showPlantPreview;
-
-    GameObject _plantPreviewRoot;
-    MeshFilter _plantPreviewFilter;
-    MeshRenderer _plantPreviewMeshRenderer;
-    SpriteRenderer _plantPreviewSpriteRenderer;
-    Material _plantPreviewMaterial;
+    CellTargetPreview3D _preview;
 
     public static bool IsActive => _active != null;
 
@@ -33,7 +27,7 @@ public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
         ItemStack stack,
         InventoryContainer container)
     {
-        if (IsActive || UIConstruction.IsOpen)
+        if (IsActive || UIConstruction.IsOpen || ConstructionCellTargetSession.IsActive)
             return false;
 
         FarmCellTargetSession session = EnsureInstance();
@@ -105,7 +99,10 @@ public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
         }
 
         if (_showPlantPreview)
-            EnsurePlantPreview();
+        {
+            _preview = new CellTargetPreview3D();
+            _preview.BeginPlantMode();
+        }
 
         _active = this;
         _gridCursor.BeginTargeting(this);
@@ -136,24 +133,18 @@ public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
             : MapPlantConsts.TargetPreviewInvalid;
         _gridCursor?.SetTargetTint(tint);
 
-        if (!_showPlantPreview)
+        if (!_showPlantPreview || _preview == null)
             return;
 
-        EnsurePlantPreview();
         MapPlantHost host = MapPlantHost.Runtime;
         float cellSize = host != null ? host.CellSize : 1f;
         string seedItemId = _stack != null ? _stack.ItemId : null;
-        MapPlantOverlayVisual.Apply(
-            _plantPreviewRoot.transform,
-            _plantPreviewFilter,
-            _plantPreviewMeshRenderer,
-            _plantPreviewSpriteRenderer,
+        _preview.ShowPlant(
             cell,
             cellSize,
             PlantGrowthStage.Harvestable,
-            seedItemId);
-        ApplyPreviewTint(tint);
-        _plantPreviewRoot.SetActive(true);
+            seedItemId,
+            canApply);
     }
 
     public bool TryConfirm(Vector3Int cell)
@@ -195,7 +186,8 @@ public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
     void EndTargeting()
     {
         _gridCursor?.EndTargeting();
-        HidePlantPreview();
+        _preview?.Dispose();
+        _preview = null;
         if (ReferenceEquals(_active, this))
             _active = null;
     }
@@ -203,90 +195,5 @@ public sealed class FarmCellTargetSession : MonoBehaviour, IFarmCellTargetSessio
     void OnDestroy()
     {
         EndTargeting();
-        if (_plantPreviewMaterial != null)
-            Destroy(_plantPreviewMaterial);
-    }
-
-    void EnsurePlantPreview()
-    {
-        if (_plantPreviewRoot != null)
-            return;
-
-        GameObject prefab = Resources.Load<GameObject>(MapPlantConsts.TargetPreviewResourcesName);
-        if (prefab != null)
-        {
-            _plantPreviewRoot = Object.Instantiate(prefab);
-            _plantPreviewRoot.name = "FarmPlantTargetPreview";
-        }
-        else
-        {
-            Debug.LogWarning(
-                "[FarmCellTargetSession] Prefab missing at Resources/" +
-                MapPlantConsts.TargetPreviewResourcesName +
-                " — building Mesh/Sprite children at runtime.");
-            _plantPreviewRoot = new GameObject("FarmPlantTargetPreview");
-            MapPlantVisualHierarchy.EnsureChildren(
-                _plantPreviewRoot.transform,
-                out _,
-                out _,
-                out _);
-        }
-
-        MapPlantVisualHierarchy.CacheFromRoot(
-            _plantPreviewRoot.transform,
-            out _plantPreviewFilter,
-            out _plantPreviewMeshRenderer,
-            out _plantPreviewSpriteRenderer);
-        if (_plantPreviewMeshRenderer != null)
-        {
-            _plantPreviewMeshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            _plantPreviewMeshRenderer.receiveShadows = false;
-        }
-
-        if (_plantPreviewSpriteRenderer != null)
-        {
-            _plantPreviewSpriteRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            _plantPreviewSpriteRenderer.receiveShadows = false;
-            _plantPreviewSpriteRenderer.enabled = false;
-        }
-
-        _plantPreviewRoot.SetActive(false);
-    }
-
-    void HidePlantPreview()
-    {
-        if (_plantPreviewRoot != null)
-            _plantPreviewRoot.SetActive(false);
-    }
-
-    void ApplyPreviewTint(Color tint)
-    {
-        if (_plantPreviewSpriteRenderer != null &&
-            _plantPreviewSpriteRenderer.enabled &&
-            _plantPreviewSpriteRenderer.sprite != null)
-        {
-            _plantPreviewSpriteRenderer.color = tint;
-            return;
-        }
-
-        if (_plantPreviewMeshRenderer == null)
-            return;
-
-        if (_plantPreviewMaterial == null)
-        {
-            Shader shader = Shader.Find(MapPlantConsts.OverlayShaderUrpUnlit);
-            if (shader == null)
-                shader = Shader.Find(MapPlantConsts.OverlayShaderUnlitColor);
-            if (shader == null)
-                return;
-
-            _plantPreviewMaterial = new Material(shader) { name = "FarmPlantTargetPreview" };
-            _plantPreviewMeshRenderer.sharedMaterial = _plantPreviewMaterial;
-        }
-
-        if (_plantPreviewMaterial.HasProperty("_BaseColor"))
-            _plantPreviewMaterial.SetColor("_BaseColor", tint);
-        else if (_plantPreviewMaterial.HasProperty("_Color"))
-            _plantPreviewMaterial.SetColor("_Color", tint);
     }
 }

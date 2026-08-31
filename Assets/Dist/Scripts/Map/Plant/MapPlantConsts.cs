@@ -50,13 +50,14 @@ namespace IsoTilemap
 
         public const float OverlayColliderHeight = 0.5f;
 
-        public const float TargetPreviewAlpha = 0.55f;
-        public static readonly Color TargetPreviewValid = new Color(0.28f, 0.82f, 0.32f, TargetPreviewAlpha);
-        public static readonly Color TargetPreviewInvalid = new Color(0.88f, 0.22f, 0.18f, TargetPreviewAlpha);
+        /// <summary>SSOT: <see cref="ConstructionConsts"/> (Farm·건설 셀 타겟 프리뷰 공유).</summary>
+        public const float TargetPreviewAlpha = ConstructionConsts.TargetPreviewAlpha;
+        public static readonly Color TargetPreviewValid = ConstructionConsts.TargetPreviewValid;
+        public static readonly Color TargetPreviewInvalid = ConstructionConsts.TargetPreviewInvalid;
 
-        public const string MeshVisualChildName = "MeshVisual";
-        public const string SpriteVisualChildName = "SpriteVisual";
-        public const string TargetPreviewResourcesName = "Farming/FarmPlantTargetPreview";
+        public const string MeshVisualChildName = ConstructionConsts.MeshVisualChildName;
+        public const string SpriteVisualChildName = ConstructionConsts.SpriteVisualChildName;
+        public const string TargetPreviewResourcesName = ConstructionConsts.TargetPreviewResourcesName;
 
         /// <summary>심기 Work/적용 가능 XZ Chebyshev 셀 반경 (목표 셀 포함).</summary>
         public const int PlantActionRangeCells = 1;

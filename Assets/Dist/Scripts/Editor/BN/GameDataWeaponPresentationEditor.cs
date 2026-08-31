@@ -12,60 +12,19 @@ static class GameDataWeaponPresentationEditor
     public const string PresentationsFolder =
         "Assets/Dist/SOData/Combat/Presentations";
 
-    static bool _foldVisualHub;
     static bool _foldWeaponPresentation;
 
     /// <summary>
-    /// Combat Presentation 카테고리 안 내용. 부모 foldout은 GameDataEditorWindow가 담당.
+    /// 아이템 전용 Presentation 바인딩만. Fallbacks·Attack 전체는 Data Definitions → Combat.
     /// </summary>
-    public static void DrawSection(ItemData item, bool editable)
+    public static void DrawItemBindingSection(ItemData item, bool editable)
     {
         if (item == null || string.IsNullOrEmpty(item.id))
             return;
 
         WeaponPresentationCatalog catalog =
             AssetDatabase.LoadAssetAtPath<WeaponPresentationCatalog>(CatalogPath);
-
-        DrawVisualHubSection(catalog);
         DrawWeaponPresentationBody(item, editable, catalog);
-    }
-
-    /// <summary>허브 SO만 연다. 잎 편집은 Catalog Odin 탭에서.</summary>
-    public static void DrawVisualHubSection(WeaponPresentationCatalog catalog)
-    {
-        _foldVisualHub = EditorGUILayout.Foldout(
-            _foldVisualHub,
-            "Visual Hub",
-            true,
-            EditorStyles.foldoutHeader);
-        if (!_foldVisualHub)
-            return;
-
-        EditorGUI.indentLevel++;
-        EditorGUILayout.HelpBox(
-            "Catalog = 진입점(무기→Presentation). 폴백(팔 애니·타격 VFX·발사체)은 " +
-            "Catalog 하단 Fallbacks에 격리되어 있습니다.",
-            MessageType.None);
-
-        if (catalog == null)
-        {
-            EditorGUILayout.HelpBox($"Catalog missing: {CatalogPath}", MessageType.Warning);
-            EditorGUI.indentLevel--;
-            return;
-        }
-
-        EditorGUI.BeginDisabledGroup(true);
-        EditorGUILayout.ObjectField(
-            "Catalog",
-            catalog,
-            typeof(WeaponPresentationCatalog),
-            false);
-        EditorGUI.EndDisabledGroup();
-
-        if (GUILayout.Button("Open Visual Hub", GUILayout.Width(140)))
-            Selection.activeObject = catalog;
-
-        EditorGUI.indentLevel--;
     }
 
     static void DrawWeaponPresentationBody(

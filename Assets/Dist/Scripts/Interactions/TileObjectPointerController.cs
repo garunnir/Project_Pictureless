@@ -114,6 +114,9 @@ public sealed class TileObjectPointerController : MonoBehaviour
         if (FishCellTargetSession.TryConsumeRightClick())
             return;
 
+        if (ConstructionCellTargetSession.TryConsumeRightClick())
+            return;
+
         if (FarmCellTargetSession.TryConsumeRightClick())
             return;
 

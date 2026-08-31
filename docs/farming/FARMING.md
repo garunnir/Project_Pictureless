@@ -6,7 +6,8 @@
 경로(호스트·모델·뷰): `Assets/Dist/Scripts/Map/Plant/`  
 경로(규칙): `PlantGrowth` (`Gameplay/Definitions/BN/PlantGrowth.cs`) · `TileFlags`  
 경로(행위): `MapPlantService` · 인벤/타일 컨텍스트 메뉴 (plant / harvest / till / fertilize / chop)  
-경로(설치 SSOT): `TilePlaceUtil` (건설 `GridCursor.TryPlace`와 공유)
+경로(설치 SSOT): `TilePlaceUtil` (건설 `GridCursor.TryPlace`·본편 `ConstructionService`와 공유)  
+경로(셀 타겟 3D 프리뷰 SSOT): `CellTargetPreview3D` (`docs/construction/CONSTRUCTION.md`)
 
 ---
 

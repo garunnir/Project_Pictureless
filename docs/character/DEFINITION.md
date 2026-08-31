@@ -6,7 +6,7 @@
 
 ## 편집 허브
 
-Data Definitions (`Tools/Data Definitions`) **Characters** 탭이 편집 진입점이다. BN Reference/Custom JSON과 섞이지 않는다. 리스트는 `Assets/Dist/SOData/Gameplay/Character/`. 상세는 SO 인라인(+ Alignment 위젯). `+` 가 같은 폴더에 에셋을 만든다. 저장은 Unity 에셋(Ctrl+S). 창의 Save Changes는 아이템/레시피 전용.
+Data Definitions (`Tools/Data Definitions`) **Characters/** 트리(Definitions · Factions · Emote)가 편집 진입점이다. BN Reference/Custom JSON과 섞이지 않는다. 리스트는 `Assets/Dist/SOData/Gameplay/Character/`. 상세는 SO Odin/Inspector(+ Alignment 위젯). `Characters/+ Create Definition`이 같은 폴더에 에셋을 만든다. 저장은 Unity 에셋(Ctrl+S). 창의 Save Changes는 Catalog(아이템/레시피) 전용.
 
 Inspector CustomEditor는 같은 Alignment 위젯을 쓴다 (`CharacterAlignmentDrawer`).
 
@@ -123,7 +123,7 @@ PC와 NPC는 **같은 본체 프리팹** (`NpcSample`: 모터·몸·Binder·공�
 ## 검증
 
 - Unity 컴파일 에러 없음
-- Data Definitions → Characters: NpcParity / PlayerParity 목록, 상세 인라인, Alignment 위젯
+- Data Definitions → Characters/Definitions: NpcParity / PlayerParity, Alignment 위젯 (Inspector)
 - NpcSample + NpcParity SO: Play 시 STR 8·기존 전투 시드 유지. 프리팹에 AI MB 없음
 - IsoLand `CharacterSpawner`: Possessed 1 + Npc 2, 셀 서로 다름. 씬에 박힌 `>PlayerCharacter` / `NpcSample` 인스턴스는 비활성
 - `NpcManager`: 스폰된 NPC만 틱. possessed는 건너뜀

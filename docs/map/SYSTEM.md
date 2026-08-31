@@ -172,3 +172,13 @@ sequenceDiagram
 | Model | `TileMap/` | 런타임 상태, BFS 오클루전 |
 | View | `TileMap/` | GameObject 생성·갱신 |
 | Pipeline | `TileMap/` | 단계 조합 (교체 가능) |
+
+---
+
+## BN house mapgen bake
+
+`Tools/bn_converter/export_mapgen.py` → `StreamingAssets/BNData/mapgen/houses/*.json` (`MapSaveJsonDto`).  
+기본 월드 경로(`map01.json`)를 바꾸지 않는다. `MapFileLoader.fileName`으로 로드.  
+가구 facing은 BN에 없음 — 날조하지 않음. nested / loot / monster는 스킵.  
+Dist에 없는 가구는 BN id를 유지하고 `SOData/Tile/Furniture/BN/` TileDefinition 자리(Crate 메시 폴백)를 둔다. `Dist/MCP/BN/Ensure House Furniture Tile Definitions`.  
+필드 화이트리스트: [`equipment/BN_BAKE.md`](../equipment/BN_BAKE.md).

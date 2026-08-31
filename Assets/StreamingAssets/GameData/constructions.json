@@ -1,0 +1,64 @@
+{
+  "constructions": [
+    {
+      "id": "construct_wood_floor",
+      "category": "CC_FLOOR",
+      "display_name": "나무 바닥",
+      "skill_used": "",
+      "difficulty": 0,
+      "time_minutes": 0.5,
+      "post_prefab_id": "Floor/Floor",
+      "post_slot": "HorizontalFace",
+      "components": [
+        {
+          "alternatives": [
+            {
+              "item": "consumable_egg",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "construct_bed",
+      "category": "CC_FURNITURE",
+      "display_name": "침대",
+      "skill_used": "",
+      "difficulty": 0,
+      "time_minutes": 1.0,
+      "post_prefab_id": "Furniture/Bed",
+      "post_slot": "OccupiedCell",
+      "components": [
+        {
+          "alternatives": [
+            {
+              "item": "consumable_egg",
+              "count": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "construct_slim_wall",
+      "category": "CC_WALL",
+      "display_name": "얇은 벽",
+      "skill_used": "",
+      "difficulty": 0,
+      "time_minutes": 1.0,
+      "post_prefab_id": "SlimWall/Wall_NE",
+      "post_slot": "VerticalFace",
+      "components": [
+        {
+          "alternatives": [
+            {
+              "item": "consumable_egg",
+              "count": 2
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

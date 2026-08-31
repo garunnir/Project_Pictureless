@@ -4,6 +4,8 @@ Cataclysm-BN JSON → Project_Pictureless 정제 JSON 변환기
 사용법:
     python convert.py --bn-path "Z:/Work/Project/Cataclysm-BN" --output "../../Assets/StreamingAssets/BNData"
     python convert.py --bn-path "Z:/Work/Project/Cataclysm-BN" --output "../../Assets/StreamingAssets/BNData" --locale-only
+    python convert.py --bn-path "Z:/Work/Project/Cataclysm-BN" --output "../../Assets/StreamingAssets/BNData" --mapgen
+    python export_mapgen.py --bn-path "Z:/Work/Project/Cataclysm-BN" --output "../../Assets/StreamingAssets/BNData/mapgen"
 
 CC BY-SA 3.0 라이선스 준수:
     출력 JSON은 Cataclysm: Bright Nights 의 파생 저작물이며,
@@ -2159,6 +2161,11 @@ def main():
         action="store_true",
         help="Keep items/recipes; rewrite item_names.json names+descriptions+recipe_categories+qualities",
     )
+    parser.add_argument(
+        "--mapgen",
+        action="store_true",
+        help="Also bake house mapgen → output/mapgen (MapSaveJsonDto). Off by default.",
+    )
     args = parser.parse_args()
 
     bn_path = Path(args.bn_path)
@@ -2276,6 +2283,10 @@ def main():
     print(f"  RecipeCats: {len(recipe_categories)}")
     print(f"  Categories: {sorted(categories)}")
     print(f"  Skills:     {sorted(skills)}")
+
+    if args.mapgen:
+        from export_mapgen import export_house_mapgen
+        export_house_mapgen(bn_path, out_dir / "mapgen")
 
 
 if __name__ == "__main__":

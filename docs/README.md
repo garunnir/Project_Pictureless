@@ -16,12 +16,13 @@
 | Item catalog locale (name / desc / recipe cat / quality) | [`inventory/ITEM_NAMES.md`](inventory/ITEM_NAMES.md) | (Data Definitions hub · LocalizationBundle) |
 | Equipment / Wear·Wield | [`equipment/GEAR.md`](equipment/GEAR.md) | (Character window · transfer duration) |
 | Weapon anim / VFX folders | [`equipment/WEAPON_VISUAL.md`](equipment/WEAPON_VISUAL.md) | (hub → Pipeline → clips/prefabs) |
-| BN converter whitelist | [`equipment/BN_BAKE.md`](equipment/BN_BAKE.md) | (`convert.py` → BNData; promote when Dist has a consumer) |
+| BN converter whitelist | [`equipment/BN_BAKE.md`](equipment/BN_BAKE.md) | (`convert.py` → BNData; house mapgen: `export_mapgen.py`) |
 | UI MVC / font | [`ui/UI_Scripts.md`](ui/UI_Scripts.md) | `ui-prefab-layout.mdc` · `ui-font.mdc` |
 | Settings / HUD layout | [`ui/SETTINGS.md`](ui/SETTINGS.md) | (ESC Cancel · HudLayoutEdit) |
 | UI hover placement | [`ui/HOVER.md`](ui/HOVER.md) | (ContextMenu asm · keep-in-bounds) |
 | Message log HUD | [`ui/MESSAGE_LOG.md`](ui/MESSAGE_LOG.md) | (UI 레이아웃·폰트 룰 공유) |
 | Crafting window | [`crafting/CRAFTING.md`](crafting/CRAFTING.md) | (창 vs 아이템 메뉴 · 재료 풀 · 대체재 드롭) |
+| Construction (build mode) | [`construction/CONSTRUCTION.md`](construction/CONSTRUCTION.md) | (본편 건설 · 런타임 편집기 · CellTargetPreview3D) |
 | Cooking (BN parity) | [`cooking/COOKING.md`](cooking/COOKING.md) | (PSEUDO fire · Hot/Cooked · cooks_like · multicooker · light) |
 | Farming / plants | [`farming/FARMING.md`](farming/FARMING.md) | (Dist overlay view · TileFlags · world minutes) |
 | Locomotion | [`locomotion/LOCOMOTION.md`](locomotion/LOCOMOTION.md) | `locomotion.mdc` |

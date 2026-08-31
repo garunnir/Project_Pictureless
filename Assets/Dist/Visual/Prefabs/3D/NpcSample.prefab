@@ -388,6 +388,7 @@ MonoBehaviour:
   _paramMoveZ: MoveZ
   _paramAiming: IsAiming
   _paramStealth: IsStealth
+  _paramSwimming: IsSwimming
   _paramAttackR: AttackR
   _paramAttackL: AttackL
   _paramAttack2H: Attack2H

@@ -15,9 +15,11 @@ namespace Garunnir.Runtime.Gameplay.Data
         const string RECIPES_FILE = "recipes.json";
         const string TERRAIN_FURNITURE_FILE = "terrain_furniture.json";
         const string PROFICIENCIES_FILE = "proficiencies.json";
+        const string CONSTRUCTIONS_FILE = "constructions.json";
 
         static GameDatabase _refDatabase;
         static GameDatabase _gameDatabase;
+        static ConstructionCatalog _constructionCatalog;
 
         /// <summary>참조 데이터 (CC BY-SA 3.0, 읽기 전용)</summary>
         public static GameDatabase RefData
@@ -41,10 +43,22 @@ namespace Garunnir.Runtime.Gameplay.Data
 
         public static bool IsLoaded => _refDatabase != null;
 
+        /// <summary>GameData constructions.json (본편 건설). BN 폴더에는 없음.</summary>
+        public static ConstructionCatalog Constructions
+        {
+            get
+            {
+                if (_constructionCatalog == null)
+                    Load();
+                return _constructionCatalog ?? ConstructionCatalog.Empty;
+            }
+        }
+
         public static void Load()
         {
             _refDatabase = LoadFromFolder(REF_FOLDER, "Ref");
             _gameDatabase = LoadFromFolder(GAME_FOLDER, "Game");
+            _constructionCatalog = LoadConstructions(GAME_FOLDER, "Game");
         }
 
         static GameDatabase LoadFromFolder(string folder, string tag)
@@ -94,16 +108,34 @@ namespace Garunnir.Runtime.Gameplay.Data
             return new GameDatabase(itemsRoot, recipesRoot, terrainFurnitureRoot, proficienciesRoot);
         }
 
+        static ConstructionCatalog LoadConstructions(string folder, string tag)
+        {
+            string path = Path.Combine(Application.streamingAssetsPath, folder, CONSTRUCTIONS_FILE);
+            if (!File.Exists(path))
+            {
+                Debug.Log($"[GameDataLoader:{tag}] constructions: (missing)");
+                return ConstructionCatalog.Empty;
+            }
+
+            string json = File.ReadAllText(path);
+            ConstructionsFileRoot root = GameDataJson.Deserialize<ConstructionsFileRoot>(json);
+            var catalog = new ConstructionCatalog(root);
+            Debug.Log($"[GameDataLoader:{tag}] constructions: {catalog.All.Count}");
+            return catalog;
+        }
+
         public static void Unload()
         {
             _refDatabase = null;
             _gameDatabase = null;
+            _constructionCatalog = null;
             ItemNameTable.Unload();
         }
 
         public static void ReloadGameData()
         {
             _gameDatabase = LoadFromFolder(GAME_FOLDER, "Game");
+            _constructionCatalog = LoadConstructions(GAME_FOLDER, "Game");
         }
 
 #if UNITY_EDITOR

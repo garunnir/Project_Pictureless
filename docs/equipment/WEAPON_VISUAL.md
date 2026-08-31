@@ -46,14 +46,14 @@ MovementStyle (NPC)                  SOData/Locomotion/       ← Combat 아님
 
 | 하려는 일 | 연다 |
 |-----------|------|
-| 아이템 / `gun.skill` / category → Leaf Presentation | `SOData/Combat/Catalog/WeaponPresentationCatalog` |
-| 공용 AnimVerb 팔 애니·동작 VFX | `SOData/Combat/Fallbacks/ArmAnimSlotCatalog` |
-| bash/cut/bullet Hit VFX | `SOData/Combat/Fallbacks/WeaponImpactVfxDefaults` |
+| 아이템 / `gun.skill` / category → Leaf Presentation | Data Definitions → **Combat/Catalog** (`WeaponPresentationCatalog`) · Catalog/Items에서도 아이템 바인딩 Ensure |
+| 공용 AnimVerb 팔 애니·동작 VFX | Data Definitions → **Combat/Fallbacks** · `ArmAnimSlotCatalog` |
+| bash/cut/bullet Hit VFX | Data Definitions → **Combat/Fallbacks** · `WeaponImpactVfxDefaults` |
 | 자상/절단 피 오버레이 | 같은 Defaults의 `CutBleedVfx` / `SeverBleedVfx` (`Vfx_HitBleed`, `Vfx_HitBleedSever`) |
-| 근접 히트스톱 지속 | `SOData/Combat/Fallbacks/CombatHitStopSettings` |
-| Attack 레시피 | `SOData/Combat/Attacks/` |
+| 근접 히트스톱 지속 | Data Definitions → **Combat/Fallbacks** · `CombatHitStopSettings` |
+| Attack 레시피 | Data Definitions → **Combat/Attacks/** |
 | `spawn_projectile` | Attack.`ProjectilePrefab` 있으면 비행(pierce 0). 없으면 cue 히트스캔. `tracerVfx`는 히트스캔 연출 |
-| NPC 이동 프로파일 | `SOData/Locomotion/` · 메뉴 `Dist/Locomotion/Movement Style` |
+| NPC 이동 프로파일 | Data Definitions → **Locomotion/** · `SOData/Locomotion/` |
 | thin/라이브러리 클립 시드 | `Dist/MCP/Ensure Arm Anim Pipeline` |
 | Animator 레이어 재구성 | `Dist/MCP/Rebuild Arm Overlay Animator` |
 

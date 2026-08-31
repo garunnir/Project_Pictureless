@@ -14,6 +14,7 @@ static class SystemHierarchySetup
     public const string Combat = "Combat";
     public const string Msg = "Msg";
     public const string Crafting = "Crafting";
+    public const string Construction = "Construction";
 
     public const string Settings = "Settings";
 

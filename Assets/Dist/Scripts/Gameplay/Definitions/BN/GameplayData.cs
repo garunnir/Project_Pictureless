@@ -81,5 +81,16 @@ public static class GameplayData
     public static List<RecipeData> GetRecipesByCategory(string category) =>
         GameDataQueries.GetRecipesByCategory(category);
 
+    public static ConstructionCatalog Constructions => GameDataLoader.Constructions;
+
+    public static ConstructionData GetConstruction(string id) => Constructions.Get(id);
+
+    public static IReadOnlyList<ConstructionData> GetAllConstructions() => Constructions.All;
+
+    public static List<string> GetConstructionCategories() => Constructions.GetCategories();
+
+    public static List<ConstructionData> GetConstructionsByCategory(string category) =>
+        Constructions.GetByCategory(category);
+
     public static void ClearCache() => GameDataLoader.Unload();
 }

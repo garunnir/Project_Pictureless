@@ -18,7 +18,8 @@ namespace IsoTilemap
             TileDefinition def,
             Vector3Int occupiedOrCursorCell,
             out TileData tileData,
-            in PlantTileInstance plant = default)
+            in PlantTileInstance plant = default,
+            byte wallFace = 0)
         {
             tileData = default;
             if (def == null || string.IsNullOrEmpty(def.prefabId))
@@ -39,7 +40,9 @@ namespace IsoTilemap
                 GridPos = gridPos,
                 sizeUnit = sizeUnit,
                 placementSlot = (byte)slot,
-                wallFace = 0,
+                wallFace = slot == TilePlacementSlot.VerticalFace
+                    ? (byte)(wallFace & 1)
+                    : (byte)0,
                 floorFace = slot == TilePlacementSlot.HorizontalFace
                     ? (byte)FloorFace.PosY
                     : (byte)0,
