@@ -21,5 +21,37 @@ public enum ThoughtId
     AteRotten,
     Catharsis,
     Crafted,
-    AteHotMeal
+    AteHotMeal,
+  // ── Tier A body / emergency (collector Pending) ──
+    LowOxygen,
+    PainShock,
+    CapacityDown,
+  // ── Hygiene / comfort (Pending) ──
+    Dirty,
+    VeryDirty,
+    Lonely,
+    Bored,
+    Uncomfortable,
+    Cramped,
+    Dark,
+    Stressed,
+    SeverelyStressed,
+    SeverelySick,
+  // ── Memory (Pending sources) ──
+    Recovering,
+    NeedShower,
+    FreshlyBathed,
+    Attractive,
+    PleasantConversation,
+    RestArea,
+    SuitableEnvironment,
+    NatureFriendly,
+    Inspired,
+    Motivated,
+    SkillUp,
+    RelationshipImproved,
+    Loved,
+    MarriedEngaged,
+    Trust,
+    Respect
 }

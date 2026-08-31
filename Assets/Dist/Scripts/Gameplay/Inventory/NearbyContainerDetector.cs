@@ -15,6 +15,7 @@ public sealed class NearbyContainerDetector : MonoBehaviour
 
     [Required, SerializeField] CharacterState _characterState;
     [SerializeField] string _floorLootDefId = FloorLootHost.DefaultContainerDefId;
+    [SerializeField] string _lootAggregateDefId = LootAggregateHost.DefaultContainerDefId;
     [Required, SerializeField] SmallItemObject _smallItemPrefab;
     [SerializeField, Min(0)] int _radiusCells = 2;
     [SerializeField] bool _sameFloorOnly = true;
@@ -30,6 +31,7 @@ public sealed class NearbyContainerDetector : MonoBehaviour
     InventorySession _session;
     LootProximityCoordinator _lootProximity;
     FloorLootHost _floorLootHost;
+    LootAggregateHost _lootAggregateHost;
     IWorldGrid _cachedWorldGrid;
     bool _isActive;
     bool _isRefreshing;
@@ -47,6 +49,11 @@ public sealed class NearbyContainerDetector : MonoBehaviour
                 _smallItemPrefab,
                 ResolveDropWorldPosition,
                 ResolveWorldGrid)
+            : null;
+
+        _lootAggregateHost?.Dispose();
+        _lootAggregateHost = !string.IsNullOrEmpty(_lootAggregateDefId)
+            ? new LootAggregateHost(_lootAggregateDefId, _session)
             : null;
     }
 
@@ -71,6 +78,7 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         _isActive = true;
         EnsureCookingHosts();
         _floorLootHost?.BeginContext();
+        _lootAggregateHost?.BeginContext();
         Subscribe();
         RefreshImmediate();
     }
@@ -99,7 +107,16 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         Unsubscribe();
         RemoveManagedContainers();
         _floorLootHost?.EndContext();
+        _lootAggregateHost?.EndContext();
     }
+
+    public InventoryContainer LootAggregateContainer =>
+        _lootAggregateHost is { IsActive: true } ? _lootAggregateHost.Container : null;
+
+    public LootAggregateHost ActiveLootAggregateHost =>
+        _lootAggregateHost is { IsActive: true } ? _lootAggregateHost : null;
+
+    public void SyncLootAggregateSources() => SyncLootAggregate();
 
     public bool IsLootContainer(string instanceId)
     {
@@ -126,6 +143,8 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         Deactivate();
         _floorLootHost?.Dispose();
         _floorLootHost = null;
+        _lootAggregateHost?.Dispose();
+        _lootAggregateHost = null;
     }
 
     void OnValidate() => EnsureReferences();
@@ -261,6 +280,7 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         }
 
         SyncFloorLoot(center);
+        SyncLootAggregate();
         PromoteFloorNestedContainers(desiredIds);
 
         var staleIds = new List<string>();
@@ -297,6 +317,14 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         EnumerateCellsInRange(center, _cellsInRangeScratch);
         SmallItemRegistry.CollectInCells(_cellsInRangeScratch, _nearbySmallItemsScratch);
         _floorLootHost.SyncFromNearbyItems(_nearbySmallItemsScratch);
+    }
+
+    void SyncLootAggregate()
+    {
+        if (_lootAggregateHost == null || !_lootAggregateHost.IsActive || _session == null)
+            return;
+
+        _lootAggregateHost.SyncFromSources(_session.GetSidebarContainers());
     }
 
     /// <summary>

@@ -38,7 +38,6 @@ static class GameDataEditorDetailDrawers
         if (_foldEditGeneral)
         {
             EditorGUI.indentLevel++;
-            EditInt(markDirty, "Max stack", ref item.max_stack);
             EditField(markDirty, "Subcategory", ref item.subcategory);
             EditBool(markDirty, "Has durability", ref item.has_durability);
             EditField(markDirty, "Repairs like", ref item.repairs_like);
@@ -174,8 +173,6 @@ static class GameDataEditorDetailDrawers
     {
         if (!string.IsNullOrEmpty(item.subcategory))
             ReadField("Subcategory", item.subcategory);
-        if (item.max_stack > 1)
-            ReadField("Max stack", item.max_stack.ToString());
 
         ReadField("Has durability", item.has_durability ? "yes" : "no");
 

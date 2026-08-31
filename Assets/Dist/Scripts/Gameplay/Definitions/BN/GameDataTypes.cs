@@ -139,6 +139,8 @@ namespace Garunnir.Runtime.Gameplay.Data
 
         public float Weight => weight_g / 1000f;
         public float Volume => volume_ml / 1000f;
+
+        [Obsolete("Max stack is no longer enforced at runtime.")]
         public int MaxStack => max_stack > 0 ? max_stack : 1;
     }
 

@@ -8,7 +8,19 @@
 
 Data Definitions (`Tools/Data Definitions`) **Characters/** 트리(Definitions · Factions · Emote)가 편집 진입점이다. BN Reference/Custom JSON과 섞이지 않는다. 리스트는 `Assets/Dist/SOData/Gameplay/Character/`. 상세는 SO Odin/Inspector(+ Alignment 위젯). `Characters/+ Create Definition`이 같은 폴더에 에셋을 만든다. 저장은 Unity 에셋(Ctrl+S). 창의 Save Changes는 Catalog(아이템/레시피) 전용.
 
-Inspector CustomEditor는 같은 Alignment 위젯을 쓴다 (`CharacterAlignmentDrawer`).
+### Editor (CustomEditor · Odin)
+
+**MUST — Odin을 최대한 활용한다.**
+
+| 계층 | 규칙 |
+|------|------|
+| SO (`CharacterDefinition` 등) | 섹션·라벨·툴팁은 `[FoldoutGroup]`, `[LabelText]`, `[Tooltip]` 등 **Odin 속성**으로 SSOT. Data Definitions 창과 Unity Inspector가 같은 트리를 본다. |
+| `[CustomEditor]` | `OdinEditor` 상속 + `base.OnInspectorGUI()` 호출. Odin이 그린 필드 목록을 **다시 그리지 않는다** (`EditorGUILayout` foldout·`PropertyField` 전체 재구현 금지). |
+| 예외만 수동 | Odin만으로 불가한 위젯만 `OnInspectorGUI`에 최소 추가 (예: `CharacterAlignmentDrawer` — `_alignment`는 `[HideInInspector]`). |
+
+**MUST NOT:** Odin 속성 없이 CustomEditor만으로 인스펙터 레이아웃을 새로 짜기 — Data Definitions / Inspector 불일치·중복 유지보수.
+
+**참조:** `CharacterDefinition.cs` (Odin attrs) · `CharacterDefinitionEditor.cs` (`OdinEditor` + Alignment drawer).
 
 ## Runtime debug
 

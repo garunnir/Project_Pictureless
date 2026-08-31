@@ -81,7 +81,13 @@ namespace Garunnir.Runtime.Gameplay.Data
         Overencumbered,
         OffBalance,
         Fading,
-        StatCollapse
+        StatCollapse,
+    // ── Reserved HUD chips (PlayerStatusMoodChipSlots Pending) ──
+        Suffocating,
+        PainShocked,
+        CapacityDown,
+        Dying,
+        Defeated
     }
 
     public enum MoodPolarity

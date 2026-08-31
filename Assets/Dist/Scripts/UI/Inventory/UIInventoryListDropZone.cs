@@ -16,6 +16,10 @@ public sealed class UIInventoryListDropZone : MonoBehaviour, IDropHandler
         if (_window == null)
             return;
 
-        InventoryDragDrop.TryApplyTo(_window.Session, _window.SelectedContainer);
+        InventoryContainer target = _window.SelectedContainer;
+        if (LootAggregateHost.IsAggregateContainer(target))
+            return;
+
+        InventoryDragDrop.TryApplyTo(_window.Session, target);
     }
 }

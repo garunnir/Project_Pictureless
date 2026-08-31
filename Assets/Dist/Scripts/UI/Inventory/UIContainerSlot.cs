@@ -189,6 +189,9 @@ public sealed class UIContainerSlot : MonoBehaviour,
         if (contents == null || contents.Count == 0)
             return;
 
+        if (LootAggregateHost.IsAggregateContainer(_container))
+            return;
+
         InventoryDragState.BeginContainerContents(_container);
         if (!InventoryDragState.IsDragging)
             return;

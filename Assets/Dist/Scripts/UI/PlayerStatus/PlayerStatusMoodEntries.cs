@@ -54,6 +54,12 @@ namespace Garunnir.Runtime.Gameplay.Data
             CollectDefeat(into);
             CollectImbalance(into);
             CollectCoreFeeling(PlayerGearHost.Active?.BodyTemperature, into);
+            PlayerStatusMoodChipSlots.CollectReserved(
+                body,
+                vitals,
+                needs,
+                encumbranceStage,
+                into);
         }
 
         static void CollectMoodNeed(List<MoodEntry> into)

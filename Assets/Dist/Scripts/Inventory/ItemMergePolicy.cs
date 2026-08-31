@@ -19,8 +19,6 @@ public static class ItemMergePolicy
     {
         if (existing?.Instance == null || incoming?.Instance == null)
             return false;
-        if (!HasStackSpace(existing))
-            return false;
         return CanMerge(existing.Item, ItemMergeKey.From(existing), ItemMergeKey.From(incoming));
     }
 
@@ -32,8 +30,6 @@ public static class ItemMergePolicy
         bool incomingHot)
     {
         if (existing?.Instance == null || incomingItem == null)
-            return false;
-        if (!HasStackSpace(existing))
             return false;
         return CanMerge(
             existing.Item,
@@ -98,14 +94,6 @@ public static class ItemMergePolicy
     static bool SameKind(ItemMergeKey a, ItemMergeKey b) =>
         !string.IsNullOrEmpty(a.KindId)
         && string.Equals(a.KindId, b.KindId, StringComparison.Ordinal);
-
-    static bool HasStackSpace(ItemStack existing)
-    {
-        ItemData item = existing.Item;
-        if (item == null)
-            return false;
-        return existing.Count < item.MaxStack;
-    }
 
     static bool AlwaysMerges(ItemData item)
     {

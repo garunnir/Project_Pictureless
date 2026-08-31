@@ -33,6 +33,12 @@ MonoBehaviour:
   _hipCm: 0
   _partMasses: []
   _prototypeSeed: 0
+  _spotAngleDegrees: 179
+  _senses:
+    sightDetectMeters: 10
+    sightLoseMeters: 14
+    hearingRadiusMeters: 8
+  _walkSpeedMeters: 1
   _prefab: {fileID: 2816094712680714504, guid: d37475c6e3368db4c9e212b9bcee3831, type: 3}
   _wearItemIds:
   - clothing_plain
@@ -56,8 +62,3 @@ MonoBehaviour:
     count: 1
   - itemId: fertilizer_commercial
     count: 1
-  _spotAngleDegrees: 179
-  _senses:
-    sightDetectMeters: 10
-    sightLoseMeters: 14
-    hearingRadiusMeters: 8

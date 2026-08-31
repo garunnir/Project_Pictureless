@@ -12,10 +12,19 @@ public static class InventoryDragDrop
         if (session == null || target == null)
             return false;
 
+        if (LootAggregateHost.IsAggregateContainer(target))
+            return false;
+
         if (!InventoryDragState.TryGetActive(out InventoryDragPayload payload))
             return false;
 
+        if (payload.Kind == InventoryDragKind.AggregateDisplayGroup)
+            return TryApplyAggregateGroup(session, target, payload);
+
         if (payload.SourceContainer == null || payload.Stacks == null || payload.Stacks.Count == 0)
+            return false;
+
+        if (LootAggregateHost.IsAggregateContainer(payload.SourceContainer))
             return false;
 
         // ContainerTab SourceContainer is the parent holding the bag stack — same as the open
@@ -59,6 +68,93 @@ public static class InventoryDragDrop
             target,
             payload.Stacks,
             null);
+    }
+
+    public static bool TryApplyAggregateGroup(
+        InventorySession session,
+        InventoryContainer target,
+        InventoryDragPayload payload)
+    {
+        if (session == null || target == null || payload == null)
+            return false;
+
+        if (LootAggregateHost.IsAggregateContainer(target))
+            return false;
+
+        IReadOnlyList<(InventoryContainer owner, ItemStack stack)> sources = payload.Sources;
+        if (sources == null || sources.Count == 0)
+            return false;
+
+        var moves = new List<(InventoryContainer from, ItemStack stack)>(sources.Count);
+        for (int i = 0; i < sources.Count; i++)
+        {
+            (InventoryContainer owner, ItemStack stack) = sources[i];
+            if (owner == null || stack == null)
+                continue;
+
+            if (LootAggregateHost.IsAggregateContainer(owner) || owner == target)
+                continue;
+
+            moves.Add((owner, stack));
+        }
+
+        if (moves.Count == 0)
+            return false;
+
+        Action clearSelection = payload.ClearSelection;
+        InventoryTimedMoveHost timed = InventoryTimedMoveHost.Active;
+        if (timed != null)
+        {
+            if (timed.IsBusy)
+                return false;
+
+            return timed.TryBeginMultiSourceSequentialUntilFull(
+                session,
+                target,
+                moves,
+                () => clearSelection?.Invoke());
+        }
+
+        int moved = MoveStacksSequentiallyUntilFull(session, moves, target);
+        if (moved > 0)
+            clearSelection?.Invoke();
+
+        return moved > 0;
+    }
+
+    static int MoveStacksSequentiallyUntilFull(
+        InventorySession session,
+        IReadOnlyList<(InventoryContainer from, ItemStack stack)> moves,
+        InventoryContainer target)
+    {
+        if (session == null || target == null || moves == null || moves.Count == 0)
+            return 0;
+
+        int moved = 0;
+        for (int i = 0; i < moves.Count; i++)
+        {
+            (InventoryContainer from, ItemStack stack) = moves[i];
+            if (from == null || stack == null || from == target)
+                continue;
+
+            if (InventorySession.MustTransferStackWhole(stack))
+            {
+                if (session.MoveStackCount(from, target, stack, stack.Count))
+                    moved++;
+                continue;
+            }
+
+            int units = stack.Count;
+            for (int unit = 0; unit < units; unit++)
+            {
+                if (!session.MoveStackCount(from, target, stack, 1))
+                    break;
+
+                moved++;
+            }
+        }
+
+        return moved;
     }
 
     public static bool TryMoveItemStacks(
@@ -106,6 +202,9 @@ public static class InventoryDragDrop
         if (session == null || stack == null || sourceContainer == null || sourceListView == null)
             return false;
 
+        if (LootAggregateHost.IsAggregateContainer(sourceContainer))
+            return false;
+
         if (primaryWindow == null || lootWindow == null)
             return false;
 
@@ -122,6 +221,9 @@ public static class InventoryDragDrop
 
         InventoryContainer target = peerWindow.SelectedContainer;
         if (target == null || sourceContainer == target)
+            return false;
+
+        if (LootAggregateHost.IsAggregateContainer(target))
             return false;
 
         InventoryListSelection selection = sourceListView.Selection;

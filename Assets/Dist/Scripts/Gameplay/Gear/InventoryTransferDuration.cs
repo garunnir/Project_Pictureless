@@ -71,6 +71,27 @@ public static class InventoryTransferDuration
             ResolveSourceDrawMoves(source));
     }
 
+    public static float SecondsForStackUnits(InventoryContainer source, ItemStack stack, int unitCount)
+    {
+        if (stack?.Item == null || unitCount <= 0)
+            return 0f;
+
+        if (stack.Nested != null || stack.LoadedMagazine != null)
+            return SecondsForStackFrom(source, stack);
+
+        int count = unitCount < stack.Count ? unitCount : stack.Count;
+        float accessSeconds = ResolveSourceDrawMoves(source) > 0
+            ? ResolveSourceDrawMoves(source) / CombatMath.MovesPerSecond
+            : 0f;
+
+        float handlingSeconds = BaseSeconds
+            + stack.Item.Weight * count * WeightSecondsPerKg
+            + stack.Item.Volume * count * VolumeSecondsPerLiter
+            + Mathf.Max(0, EstimateNestDepth(source)) * NestDepthSeconds;
+
+        return Mathf.Max(0f, accessSeconds + handlingSeconds);
+    }
+
     /// <summary>소스 컨테이너가 player-body가 아니면 중첩/사이드 인출로 본다.</summary>
     public static int EstimateNestDepth(InventoryContainer source)
     {

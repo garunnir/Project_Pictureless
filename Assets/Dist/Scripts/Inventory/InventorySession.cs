@@ -139,6 +139,123 @@ public sealed class InventorySession
     }
 
     /// <summary>
+    /// 스택에서 count개만 옮긴다. Nested·탄창 부착 스택은 분할 불가(전체 이동만).
+    /// </summary>
+    public bool MoveStackCount(
+        InventoryContainer from,
+        InventoryContainer to,
+        ItemStack stack,
+        int count)
+    {
+        if (from == null || to == null || stack == null || count <= 0 || from == to)
+            return false;
+
+        if (!from.MutableStacks.Contains(stack))
+            return false;
+
+        if (MustTransferStackWhole(stack))
+            return count >= stack.Count && MoveStacks(from, to, new[] { stack });
+
+        int moveCount = count < stack.Count ? count : stack.Count;
+        if (moveCount <= 0)
+            return false;
+
+        if (!CanPlaceStackInContainer(stack, to))
+            return false;
+
+        float maxWeight = to.CapacityPolicy.GetMaxWeight(to);
+        float maxVolume = to.CapacityPolicy.GetMaxVolume(to);
+        bool hardWeight = to.CapacityPolicy.EnforcesHardWeightLimit;
+        bool hardVolume = to.CapacityPolicy.EnforcesHardVolumeLimit;
+        float addWeight = stack.Item.Weight * moveCount;
+        float addVolume = stack.Item.Volume * moveCount;
+
+        for (int i = 0; i < to.MutableStacks.Count; i++)
+        {
+            ItemStack existing = to.MutableStacks[i];
+            if (!ItemMergePolicy.CanMerge(existing, stack))
+                continue;
+
+            float nextWeight = to.GetTotalWeight() + addWeight;
+            float nextVolume = to.GetTotalVolume() + addVolume;
+            if (ExceedsHardCapacity(
+                    hardWeight,
+                    hardVolume,
+                    nextWeight,
+                    nextVolume,
+                    maxWeight,
+                    maxVolume))
+                return false;
+
+            if (from.TryTakeFromStack(stack, moveCount) < moveCount)
+                return false;
+
+            existing.SetCount(existing.Count + moveCount);
+            FinalizeMove(from, to);
+            return true;
+        }
+
+        var incoming = new ItemStack(stack.Item, moveCount, stack.DamageLevel);
+        CopyMergeInstanceState(stack.Instance, incoming.Instance);
+
+        if (!to.CapacityPolicy.CanAccept(to, incoming))
+            return false;
+
+        float nextWeightNew = to.GetTotalWeight() + incoming.TotalWeight;
+        float nextVolumeNew = to.GetTotalVolume() + incoming.TotalVolume;
+        if (ExceedsHardCapacity(
+                hardWeight,
+                hardVolume,
+                nextWeightNew,
+                nextVolumeNew,
+                maxWeight,
+                maxVolume))
+            return false;
+
+        if (from.TryTakeFromStack(stack, moveCount) < moveCount)
+            return false;
+
+        to.MutableStacks.Add(incoming);
+        FinalizeMove(from, to);
+        return true;
+    }
+
+    public static bool MustTransferStackWhole(ItemStack stack) =>
+        stack == null ||
+        stack.Count <= 1 ||
+        stack.Nested != null ||
+        stack.LoadedMagazine != null;
+
+    void FinalizeMove(InventoryContainer from, InventoryContainer to)
+    {
+        from.NotifyContentsChanged();
+        to.NotifyContentsChanged();
+        MarkContainerChanged(from);
+        MarkContainerChanged(to);
+        RefreshNestedContainers();
+        MarkSidebarAffected();
+        NotifyStacksChanged();
+    }
+
+    static void CopyMergeInstanceState(ItemInstance source, ItemInstance destination)
+    {
+        if (source == null || destination == null)
+            return;
+
+        if (source.IsCooked)
+            destination.StampCooked(true);
+
+        if (source.IsHot)
+            destination.StampHot(source.HotUntilWorldMinute);
+
+        if (source.IsRotten)
+            destination.SetRotten(true);
+
+        if (source.CreatedWorldMinute != ItemInstance.UnsetCreatedWorldMinute)
+            destination.SetCreatedWorldMinute(source.CreatedWorldMinute);
+    }
+
+    /// <summary>
     /// 스택을 앞에서부터 하나씩 옮긴다. 다음 스택을 넣을 수 없으면 중단하고 이미 옮긴 분은 유지한다.
     /// </summary>
     public int MoveStacksSequentiallyUntilFull(
@@ -153,47 +270,32 @@ public sealed class InventorySession
             return 0;
 
         int moved = 0;
-        float maxWeight = to.CapacityPolicy.GetMaxWeight(to);
-        float maxVolume = to.CapacityPolicy.GetMaxVolume(to);
-        bool hardWeight = to.CapacityPolicy.EnforcesHardWeightLimit;
-        bool hardVolume = to.CapacityPolicy.EnforcesHardVolumeLimit;
-
         for (int i = 0; i < stacks.Count; i++)
         {
             ItemStack stack = stacks[i];
             if (stack == null || !from.MutableStacks.Contains(stack))
                 break;
 
-            if (!CanPlaceStackInContainer(stack, to))
-                break;
+            if (MustTransferStackWhole(stack))
+            {
+                if (!MoveStackCount(from, to, stack, stack.Count))
+                    break;
 
-            if (!to.CapacityPolicy.CanAccept(to, stack))
-                break;
+                moved++;
+                continue;
+            }
 
-            float nextWeight = to.GetTotalWeight() + stack.TotalWeight;
-            float nextVolume = to.GetTotalVolume() + stack.TotalVolume;
-            if (ExceedsHardCapacity(
-                    hardWeight,
-                    hardVolume,
-                    nextWeight,
-                    nextVolume,
-                    maxWeight,
-                    maxVolume))
-                break;
+            int units = stack.Count;
+            for (int unit = 0; unit < units; unit++)
+            {
+                if (!from.MutableStacks.Contains(stack) || stack.Count <= 0)
+                    break;
 
-            TransferStack(from, to, stack);
-            moved++;
-        }
+                if (!MoveStackCount(from, to, stack, 1))
+                    break;
 
-        if (moved > 0)
-        {
-            from.NotifyContentsChanged();
-            to.NotifyContentsChanged();
-            MarkContainerChanged(from);
-            MarkContainerChanged(to);
-            RefreshNestedContainers();
-            MarkSidebarAffected();
-            NotifyStacksChanged();
+                moved++;
+            }
         }
 
         return moved;
@@ -347,12 +449,8 @@ public sealed class InventorySession
             if (!ItemMergePolicy.CanMerge(existing, stack))
                 continue;
 
-            int merged = existing.Count + stack.Count;
-            if (merged <= stack.Item.MaxStack)
-            {
-                existing.SetCount(merged);
-                return;
-            }
+            existing.SetCount(existing.Count + stack.Count);
+            return;
         }
 
         to.MutableStacks.Add(stack);

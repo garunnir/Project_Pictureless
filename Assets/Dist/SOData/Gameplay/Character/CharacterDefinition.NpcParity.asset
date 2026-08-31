@@ -25,12 +25,19 @@ MonoBehaviour:
     wis: 8
     cha: 8
   _skillOverrides: []
+  _traits: []
   _bodyMassKg: 0
   _bustCm: 0
   _waistCm: 0
   _hipCm: 0
   _partMasses: []
   _prototypeSeed: 0
+  _spotAngleDegrees: 160
+  _senses:
+    sightDetectMeters: 10
+    sightLoseMeters: 14
+    hearingRadiusMeters: 8
+  _walkSpeedMeters: 1
   _prefab: {fileID: 2816094712680714504, guid: d37475c6e3368db4c9e212b9bcee3831, type: 3}
   _wearItemIds:
   - clothing_undershirt
@@ -40,4 +47,3 @@ MonoBehaviour:
   - itemId: weapon_knife
     hand: 0
   _bodyItemSeeds: []
-  _spotAngleDegrees: 160

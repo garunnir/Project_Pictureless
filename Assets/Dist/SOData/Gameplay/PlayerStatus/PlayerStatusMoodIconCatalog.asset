@@ -12,155 +12,157 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ce10e90fa18db642b389150a6432168, type: 3}
   m_Name: PlayerStatusMoodIconCatalog
   m_EditorClassIdentifier: DistScript::PlayerStatusMoodIconCatalog
-  _backPlate: {fileID: 21300000, guid: d35a4baee9025f14da35b80cf42c9418, type: 3}
+  _backPlate: {fileID: 21300000, guid: 6b18939415143394aadf1a8a876f5cc2, type: 3}
   _entries:
   - IconId: 0
-    FrontSprite: {fileID: 21300000, guid: 27b48e49aaf1d214d9c66ce6af5c2cd2, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 86b6082d17ef07c459ba95cd207393e3, type: 3}
   - IconId: 1
-    FrontSprite: {fileID: 21300000, guid: de4fcbe9be16ca54fa5420723af78901, type: 3}
+    FrontSprite: {fileID: 21300000, guid: f3577774088c2c547bbc343bab455ac9, type: 3}
   - IconId: 2
-    FrontSprite: {fileID: 21300000, guid: d2f74cf0f0b3f844da0d709c319d5311, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 16b48c884fe0c41439e606df79d866bd, type: 3}
   - IconId: 3
-    FrontSprite: {fileID: 21300000, guid: 8e69a071e4002ed4b86fd9f7b38ca82d, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 772eeaec56132934fbfd5a6f9595b7da, type: 3}
   - IconId: 4
-    FrontSprite: {fileID: 21300000, guid: 1fb6cf02c8b30ed4ca9be8e8111b0e1b, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 2eb8c618bd9eb494da8276e6df1f075a, type: 3}
   - IconId: 5
-    FrontSprite: {fileID: 21300000, guid: ed0ae7eedfdebe04d8a9019ad7c165d0, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 7457182fbc02f6e4980d0a2280c928a8, type: 3}
   - IconId: 6
-    FrontSprite: {fileID: 21300000, guid: 0e7e877f908906f4b8cdd0a9d02c4b35, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 78fc80e9559ef0d448a055f63da94320, type: 3}
   - IconId: 7
-    FrontSprite: {fileID: 21300000, guid: ed4c7fc988648cc438cdcd95e56ae074, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 72c4b17c35425994c83d51903db715d0, type: 3}
   - IconId: 8
-    FrontSprite: {fileID: 21300000, guid: a2973ade68d20ec4c9db9ddf853f374a, type: 3}
+    FrontSprite: {fileID: 21300000, guid: c2b6f579a91724941a979613e97d62e0, type: 3}
   - IconId: 9
-    FrontSprite: {fileID: 21300000, guid: bc0061b2b06c9694bb70ad8d5d5f0572, type: 3}
+    FrontSprite: {fileID: 21300000, guid: fcd57c2c487728647bd053203eefbc81, type: 3}
   - IconId: 10
-    FrontSprite: {fileID: 21300000, guid: 480fbfab54fa6d0409ca87362a5f9b13, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 4325b02891c75cd46bd8b5e82b3a8e1b, type: 3}
   - IconId: 11
-    FrontSprite: {fileID: 21300000, guid: 13517879477a29140aa9c77a217a10b2, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 6fb3827c4121cf8498181738b36a7555, type: 3}
   - IconId: 12
-    FrontSprite: {fileID: 21300000, guid: 6137c0c82270fb741ae267edb3e7be4c, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 309d8832fdeb87f4d8ebbb10930d2a59, type: 3}
   - IconId: 13
-    FrontSprite: {fileID: 21300000, guid: 8528e5ec3acb6644c99957f8c821b556, type: 3}
+    FrontSprite: {fileID: 21300000, guid: c81fdef6d3cb5b64fad149074848a80a, type: 3}
   - IconId: 14
-    FrontSprite: {fileID: 21300000, guid: 05b9b9d7422dfcf47a56d8708731fdb4, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 677dc45e5cbc3ed48b8aa81a068ce573, type: 3}
   - IconId: 15
-    FrontSprite: {fileID: 21300000, guid: e4454c54e8ba69946888a4ce0d8844dc, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 45b242bbc8a7bc0408bb72875ed3adb9, type: 3}
   - IconId: 16
-    FrontSprite: {fileID: 21300000, guid: b012f2983a7379e4f9b1c3fa7f89b40b, type: 3}
+    FrontSprite: {fileID: 21300000, guid: e4daa4f414938934aa284bf6cf5797ba, type: 3}
   - IconId: 17
-    FrontSprite: {fileID: 21300000, guid: 69b2c5636e89dfd428e745a1a437dacb, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 58bc4dfe3bcdfbe4cabf0d734caf558b, type: 3}
   - IconId: 18
-    FrontSprite: {fileID: 21300000, guid: f116297a41172f54580c1c593e14ad07, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 3ec949d81d286fc4688fc745ea3ca6cf, type: 3}
   - IconId: 19
-    FrontSprite: {fileID: 21300000, guid: e41e20d961a648f4486b374edd5385e8, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 2187c4b7c577f6c4fae8d68b3d1dcf6e, type: 3}
   - IconId: 20
-    FrontSprite: {fileID: 21300000, guid: 17d8876a476f3bc4eb50b308a4fe314d, type: 3}
+    FrontSprite: {fileID: 21300000, guid: d14e77e2ceac9004e8d41dff703079fc, type: 3}
   - IconId: 21
-    FrontSprite: {fileID: 21300000, guid: e20653e7bb06a434da3d47a5aa997d8d, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 49ac02ed67d085247b28d402503308c8, type: 3}
   - IconId: 22
-    FrontSprite: {fileID: 21300000, guid: 5e9f7666550d14e46a86ca01e0b36520, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 9a29de846c18ad64aabe591abe704124, type: 3}
   - IconId: 23
-    FrontSprite: {fileID: 21300000, guid: 33ab2b4891c92e24683fb162b87a6ca0, type: 3}
+    FrontSprite: {fileID: 21300000, guid: c328aca110441d8489c83267e0b18f63, type: 3}
   - IconId: 24
-    FrontSprite: {fileID: 21300000, guid: bfe98158ac01cc34ca01efdd6fbd6f71, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 2a6dd8cc600a174428add37420e51e1f, type: 3}
   - IconId: 25
-    FrontSprite: {fileID: 21300000, guid: 6c3b4efc25603864e9c549170f8c2950, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 7660d6c9773756d4c80c62c43a7830d1, type: 3}
   - IconId: 26
-    FrontSprite: {fileID: 21300000, guid: 816c2a6d0bc5d594d8c7397e59f8fa87, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 73cb09beb52b36a42801a7d8cd2f43f2, type: 3}
   - IconId: 27
-    FrontSprite: {fileID: 21300000, guid: 5aa6531febca4b54f8d936697a3d458d, type: 3}
+    FrontSprite: {fileID: 21300000, guid: ff56c319b033c63409c996b6192607b6, type: 3}
   - IconId: 28
-    FrontSprite: {fileID: 21300000, guid: b79e5b426b22ad148a560cf6cd4b238e, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 5839c8b978454874a86e504ff08a0a5a, type: 3}
   - IconId: 29
-    FrontSprite: {fileID: 21300000, guid: c6b4e05c467d3d8459453ab2b1961882, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 63bcd15accd2b16468931e11c0db424c, type: 3}
   - IconId: 30
-    FrontSprite: {fileID: 21300000, guid: 466f4252bf526a148bab18060d02a0fd, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 52d8a3f298b617247ad92d10f44264aa, type: 3}
   - IconId: 31
-    FrontSprite: {fileID: 21300000, guid: 4bdde4bdd9bc12648ada11dc5616624f, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 6a5c7b285f7cad24b9b09036d0be583a, type: 3}
   - IconId: 32
-    FrontSprite: {fileID: 21300000, guid: 20980a363c47ab441b8d911c6af86a8c, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 72b767d8a5d510b4abbee9f779339a90, type: 3}
   - IconId: 33
-    FrontSprite: {fileID: 21300000, guid: 7893db8965a771248a9bbd449b3047b3, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 016841f485c7f4b4baa12cc990fa153d, type: 3}
   - IconId: 34
-    FrontSprite: {fileID: 21300000, guid: 8b4e83ac6a60fb3439a205328d8af086, type: 3}
+    FrontSprite: {fileID: 21300000, guid: e60def83b75d1284ca74f3c42d376d16, type: 3}
   - IconId: 35
-    FrontSprite: {fileID: 21300000, guid: 64b4a4b0b36b5d54e851b74bac3b77ba, type: 3}
+    FrontSprite: {fileID: 21300000, guid: eb36a04ac4745ff48a5101e2df5918e6, type: 3}
   - IconId: 36
-    FrontSprite: {fileID: 21300000, guid: c648be36f4e6b5d4eaa26fb92bea6376, type: 3}
+    FrontSprite: {fileID: 21300000, guid: bc097a53accec4b4ba31bb5205a48f7c, type: 3}
   - IconId: 37
-    FrontSprite: {fileID: 21300000, guid: 9e742fdb55a516d4c832f86674f1de61, type: 3}
+    FrontSprite: {fileID: 21300000, guid: da131f797464f2b47b7d045b84a3dd20, type: 3}
   - IconId: 38
-    FrontSprite: {fileID: 21300000, guid: 2e80372819455864ca435744bfbcbe53, type: 3}
+    FrontSprite: {fileID: 21300000, guid: a85c3357a951eb147b39ca45d9f8d4c6, type: 3}
   - IconId: 39
-    FrontSprite: {fileID: 21300000, guid: 34aa4ba6bc2abae4c92d45354a995666, type: 3}
+    FrontSprite: {fileID: 21300000, guid: b9c157b60f5eb8a4e91d4aa332beebc5, type: 3}
   - IconId: 40
-    FrontSprite: {fileID: 21300000, guid: 6095aedcbdfbf6840aad018bdf382b87, type: 3}
+    FrontSprite: {fileID: 21300000, guid: f4bacd33a4bcdc34bbde903606db8e10, type: 3}
   - IconId: 41
-    FrontSprite: {fileID: 21300000, guid: 56b6e5b1c2c7a5d47a54d2c5cbd3699f, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 3b9a5e01699581840b55f2c639138b62, type: 3}
   - IconId: 42
-    FrontSprite: {fileID: 21300000, guid: dfab523b76dbbc047a2154352cf4389b, type: 3}
+    FrontSprite: {fileID: 21300000, guid: d9fe54a6095cb694ea96cb32ec02a21d, type: 3}
   - IconId: 43
-    FrontSprite: {fileID: 21300000, guid: 5d23cda2fef9eca4a9e16f4dbec91dc4, type: 3}
+    FrontSprite: {fileID: 21300000, guid: b726242399e905745ac66fc588dfefa4, type: 3}
   - IconId: 44
-    FrontSprite: {fileID: 21300000, guid: 8c872d71b1185744daa0204d0662fe20, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 90b43cc3e88a1654ca05e696e900ce9d, type: 3}
   - IconId: 45
-    FrontSprite: {fileID: 21300000, guid: 8ce38377dd318f248be7579ece352b36, type: 3}
+    FrontSprite: {fileID: 21300000, guid: d7b51b50984ab6c4ca1f6f9498e5178d, type: 3}
   - IconId: 46
-    FrontSprite: {fileID: 21300000, guid: 9fed5e60eb50c9e4581714146970f991, type: 3}
+    FrontSprite: {fileID: 21300000, guid: fc191bdd05a479e4e99a0694acb45146, type: 3}
   - IconId: 47
-    FrontSprite: {fileID: 21300000, guid: 510012c5443aa2749b604a8fc03ee6c8, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 0fe7abec3b9d98d4fa372ddd1b526be4, type: 3}
   - IconId: 48
-    FrontSprite: {fileID: 21300000, guid: 8c5dd91e280cbc540bc30feeb014649e, type: 3}
+    FrontSprite: {fileID: 21300000, guid: f80db9b48de08bc4093bfbe862fed688, type: 3}
   - IconId: 49
-    FrontSprite: {fileID: 21300000, guid: 3b1888ab3c1ae1d46867e93583a26f3b, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 34fd2f05964078345b384263a60a05db, type: 3}
   - IconId: 50
-    FrontSprite: {fileID: 21300000, guid: 2a88c5af2d12db24d8fdc5ad4afdb00f, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 4ef4f4ac5346ef7459189d31d43d65e3, type: 3}
   - IconId: 51
-    FrontSprite: {fileID: 21300000, guid: 61590bf22f9b9044db6d09de12d0e0ba, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 642400122c87edc4da0ab47fe31d8030, type: 3}
   - IconId: 52
-    FrontSprite: {fileID: 21300000, guid: 9bc0ee3de255cd340a7ed49808801f48, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 030cc03877d761741a1a09a0c3fe8c2b, type: 3}
   - IconId: 53
-    FrontSprite: {fileID: 21300000, guid: 900234334f5f155428cf805966324bdc, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 4f5c9b6e5e261664cae9d875a5e94d6e, type: 3}
   - IconId: 54
-    FrontSprite: {fileID: 21300000, guid: 64587a6664cab414db9c87d6ee7d2a3d, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 86c7e9477f744af4c850454fad8a5ece, type: 3}
   - IconId: 55
-    FrontSprite: {fileID: 21300000, guid: 0b803ce9d5527204ca4a124784437200, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 530bfb07d39ac7b4ba3bea8eee2d4b95, type: 3}
   - IconId: 56
-    FrontSprite: {fileID: 21300000, guid: 51af064e290514a4e987f4324056f68c, type: 3}
+    FrontSprite: {fileID: 21300000, guid: e9862531d9569504d9a79bc78fa3f32d, type: 3}
   - IconId: 57
-    FrontSprite: {fileID: 21300000, guid: 5fa3eebe250bec947a4c63c9761e1d24, type: 3}
+    FrontSprite: {fileID: 21300000, guid: e0237bd3cdbe84e41ae2527979097322, type: 3}
   - IconId: 58
-    FrontSprite: {fileID: 21300000, guid: 73fcaf02f575def42a0c430d48a02a82, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 738ef04d4e4c36841973e29065589782, type: 3}
   - IconId: 59
-    FrontSprite: {fileID: 21300000, guid: 2c6a644bf4f95c84ebff1f85a50c14c2, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 9781b32ed102e7948bc2f18ff70fb61c, type: 3}
   - IconId: 60
-    FrontSprite: {fileID: 21300000, guid: 04608a9513ada4c4d97ede4bfd461ede, type: 3}
+    FrontSprite: {fileID: 21300000, guid: dea85c432bdf5e54c9559fecfe9daf93, type: 3}
   - IconId: 61
-    FrontSprite: {fileID: 21300000, guid: bc074719f4fba1e4695f523b76715c72, type: 3}
+    FrontSprite: {fileID: 21300000, guid: ed1621457287a0e46bc268714e746ac0, type: 3}
   - IconId: 62
-    FrontSprite: {fileID: 21300000, guid: 67fc7a6804eda0e4baec53183d3e3f9a, type: 3}
+    FrontSprite: {fileID: 21300000, guid: cc8f1f10d27d9a341bbbcea2fba88b67, type: 3}
   - IconId: 63
-    FrontSprite: {fileID: 21300000, guid: a40704159fadfa84faa8869876836ea4, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 5bd04b2ae1f9e8941807c465a47b84dc, type: 3}
   - IconId: 64
-    FrontSprite: {fileID: 21300000, guid: 583d8aa8dda7ce441be8b1a44b35789e, type: 3}
+    FrontSprite: {fileID: 21300000, guid: a9155c10105e9124b9e450017f885602, type: 3}
   - IconId: 65
-    FrontSprite: {fileID: 21300000, guid: f3d5bae7cb546a04c8cad5e515f450f8, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 39f1d929ac2216441a17be63aac6f2a6, type: 3}
   - IconId: 66
-    FrontSprite: {fileID: 21300000, guid: d6525d04e5cba174d9e14e3e0ea832ba, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 4d1da41af9de76c438ba61484dbf58ff, type: 3}
   - IconId: 67
-    FrontSprite: {fileID: 21300000, guid: a030637094eabea41a2324ab3c71db81, type: 3}
+    FrontSprite: {fileID: 21300000, guid: fb9ea6afac8f89d47af433958492901f, type: 3}
   - IconId: 68
-    FrontSprite: {fileID: 21300000, guid: 25da3ff785f8b6d479dbdf251bad29e5, type: 3}
+    FrontSprite: {fileID: 21300000, guid: f51f8fdab8df77d43806aa5b841b6d76, type: 3}
   - IconId: 69
-    FrontSprite: {fileID: 21300000, guid: 1cac284c3b7d2cd429ea639c52e2aae6, type: 3}
+    FrontSprite: {fileID: 21300000, guid: d8239d17980d48d4d96f282ffe839fe9, type: 3}
   - IconId: 70
-    FrontSprite: {fileID: 21300000, guid: e39ea6e17499c7e4aa33e05f88d7b8ec, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 6a869a78c0c658f49b78f860d263aafe, type: 3}
   - IconId: 71
-    FrontSprite: {fileID: 21300000, guid: 2312d0ed1d6defc48a5ad63fa598f9a8, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 6219eb46e0cb3ea43900c8b187ed4f21, type: 3}
   - IconId: 72
-    FrontSprite: {fileID: 21300000, guid: 5aeb57ec5eab070408c39c07933df8a2, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 5102386ea7463f448996f0894cae835b, type: 3}
   - IconId: 73
-    FrontSprite: {fileID: 21300000, guid: 9cf62407f5794618b2cd28637e5454a0, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 7dfb5ff52974363468bcf3cb56052567, type: 3}
   - IconId: 74
-    FrontSprite: {fileID: 21300000, guid: 816c2a6d0bc5d594d8c7397e59f8fa87, type: 3}
+    FrontSprite: {fileID: 21300000, guid: 3d3469fde7044be45a6d5e3e5f9bee37, type: 3}
+  - IconId: 75
+    FrontSprite: {fileID: 21300000, guid: a2737b91bed589141bb406013170fb0d, type: 3}

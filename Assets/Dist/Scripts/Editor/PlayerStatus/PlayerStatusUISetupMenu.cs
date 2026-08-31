@@ -1791,6 +1791,11 @@ static class PlayerStatusUISetupMenu
         MoodIconId.OffBalance,
         MoodIconId.Fading,
         MoodIconId.StatCollapse,
+        MoodIconId.Suffocating,
+        MoodIconId.PainShocked,
+        MoodIconId.CapacityDown,
+        MoodIconId.Dying,
+        MoodIconId.Defeated,
     };
 
     static void EnsureMoodAssets()
@@ -2136,6 +2141,28 @@ static class PlayerStatusUISetupMenu
         Put("PlayerStatus.Mood.Fading.Fatal", "의식이 끊겼다");
         Put("PlayerStatus.Mood.StatCollapse", "정신이 무너졌다");
 
+        foreach (Garunnir.Runtime.Gameplay.Data.MoodIconId iconId in
+                 System.Enum.GetValues(typeof(Garunnir.Runtime.Gameplay.Data.MoodIconId)))
+            PutMoodIconDefault(map, iconId);
+
+        foreach (ThoughtId thoughtId in System.Enum.GetValues(typeof(ThoughtId)))
+        {
+            if (thoughtId == ThoughtId.None)
+                continue;
+            PutThoughtDefault(map, thoughtId);
+        }
+
+        foreach (MoodBreakKind breakKind in System.Enum.GetValues(typeof(MoodBreakKind)))
+        {
+            if (breakKind == MoodBreakKind.None)
+                continue;
+            PutBreakDefault(map, breakKind);
+        }
+
+        Put("msg.status.mood_break_flee", "공포에 질려 도망치기 시작했다.");
+        Put("msg.status.mood_break_berserk", "분노가 폭발했다.");
+        Put("msg.status.mood_break_catatonic", "멍하니 굳어 버렸다.");
+
         Put("ItemContextMenu.Eat", "먹기");
         Put("ItemContextMenu.Drink", "마시기");
         Put("ItemContextMenu.Use", "사용");
@@ -2158,5 +2185,161 @@ static class PlayerStatusUISetupMenu
         AssetDatabase.SaveAssets();
         Debug.Log($"[PlayerStatusUISetupMenu] Localization merged ({map.Count} keys).");
     }
+
+    static void PutMoodIconDefault(
+        System.Collections.Generic.Dictionary<string, string> map,
+        Garunnir.Runtime.Gameplay.Data.MoodIconId iconId)
+    {
+        string key = "PlayerStatus.Mood." + iconId;
+        if (map.ContainsKey(key))
+            return;
+        if (MoodIconDefaultKo.TryGetValue(iconId, out string text))
+            map[key] = text;
+        else
+            map[key] = iconId.ToString();
+    }
+
+    static void PutThoughtDefault(
+        System.Collections.Generic.Dictionary<string, string> map,
+        ThoughtId thoughtId)
+    {
+        string key = "PlayerStatus.Thought." + thoughtId;
+        if (map.ContainsKey(key))
+            return;
+        if (ThoughtDefaultKo.TryGetValue(thoughtId, out string text))
+            map[key] = text;
+        else
+            map[key] = thoughtId.ToString();
+    }
+
+    static void PutBreakDefault(
+        System.Collections.Generic.Dictionary<string, string> map,
+        MoodBreakKind breakKind)
+    {
+        string key = "PlayerStatus.Thought.Breaking" + breakKind;
+        if (map.ContainsKey(key))
+            return;
+        if (BreakDefaultKo.TryGetValue(breakKind, out string text))
+            map[key] = text;
+        else
+            map[key] = breakKind.ToString();
+    }
+
+    static readonly System.Collections.Generic.Dictionary<
+        Garunnir.Runtime.Gameplay.Data.MoodIconId,
+        string> MoodIconDefaultKo =
+        new()
+        {
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Hunger] = "배고프다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Thirst] = "목마르다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Stamina] = "지쳤다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Bleed] = "피가 난다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Fracture] = "골절",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Infected] = "감염",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Regenerating] = "재생 중",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.GoodMood] = "기분이 좋다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Happy] = "행복하다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.VeryHappy] = "매우 행복하다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Stable] = "마음이 안정되었다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.SlightlyHappy] = "조금 기분이 좋다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Neutral] = "평온하다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.SlightlySad] = "조금 우울하다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Sad] = "우울하다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.VerySad] = "매우 우울하다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Depressed] = "절망했다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Stressed] = "스트레스가 쌓였다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.SeverelyStressed] = "스트레스에 짓눌린다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Fear] = "두렵다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.ExtremeFear] = "극도로 두렵다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Angry] = "화가 난다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Furious] = "분노가 치민다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Discomfort] = "불편하다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Pain] = "아프다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.SeverePain] = "심하게 아프다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Injured] = "다쳤다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.SeverelyInjured] = "심하게 다쳤다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Sick] = "몸이 아프다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.SeverelySick] = "몹시 아프다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.LowImmunity] = "면역이 약하다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Recovering] = "회복 중이다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Pale] = "핏기가 없다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Overheated] = "과열되었다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Hypothermia] = "저체온",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Comfortable] = "쾌적하다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Dirty] = "더럽다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.VeryDirty] = "매우 더럽다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.NeedShower] = "씻고 싶다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Attractive] = "기분이 좋아 보인다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Warm] = "따뜻하다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.TooHot] = "덥다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.TooCold] = "춥다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Dark] = "어둡다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Lonely] = "외롭다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Bored] = "지루하다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Idle] = "한가하다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.PleasantConversation] = "즐거운 대화",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.GoodMeal] = "맛있는 식사",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.RestArea] = "쉬기 좋은 곳",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.SuitableEnvironment] = "환경이 좋다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.NatureFriendly] = "자연 친화적",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Inspired] = "영감이 샘솟다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Motivated] = "의욕이 생긴다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.SkillUp] = "실력이 늘었다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.RelationshipImproved] = "관계가 좋아졌다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Loved] = "사랑받는다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.MarriedEngaged] = "결혼·약혼",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Trust] = "신뢰한다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Respect] = "존경한다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Suffocating] = "숨이 막힌다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.PainShocked] = "고통에 쓰러졌다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.CapacityDown] = "몸이 버티지 못한다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Dying] = "죽을 것 같다",
+            [Garunnir.Runtime.Gameplay.Data.MoodIconId.Defeated] = "쓰러졌다",
+        };
+
+    static readonly System.Collections.Generic.Dictionary<ThoughtId, string> ThoughtDefaultKo =
+        new()
+        {
+            [ThoughtId.Crafted] = "무언가를 만들었다",
+            [ThoughtId.AteHotMeal] = "따뜻한 식사를 했다",
+            [ThoughtId.LowOxygen] = "숨이 막힌다",
+            [ThoughtId.PainShock] = "고통에 쓰러졌다",
+            [ThoughtId.CapacityDown] = "몸이 버티지 못한다",
+            [ThoughtId.Dirty] = "더럽다",
+            [ThoughtId.VeryDirty] = "매우 더럽다",
+            [ThoughtId.Lonely] = "외롭다",
+            [ThoughtId.Bored] = "지루하다",
+            [ThoughtId.Uncomfortable] = "불편하다",
+            [ThoughtId.Cramped] = "답답하다",
+            [ThoughtId.Dark] = "어둡다",
+            [ThoughtId.Stressed] = "스트레스가 쌓였다",
+            [ThoughtId.SeverelyStressed] = "스트레스에 짓눌린다",
+            [ThoughtId.SeverelySick] = "몹시 아프다",
+            [ThoughtId.Recovering] = "회복 중이다",
+            [ThoughtId.NeedShower] = "씻고 싶다",
+            [ThoughtId.FreshlyBathed] = "깨끗하게 씻었다",
+            [ThoughtId.Attractive] = "기분이 좋아 보인다",
+            [ThoughtId.PleasantConversation] = "즐거운 대화를 나눴다",
+            [ThoughtId.RestArea] = "쉬기 좋은 곳이다",
+            [ThoughtId.SuitableEnvironment] = "환경이 좋다",
+            [ThoughtId.NatureFriendly] = "자연 친화적이다",
+            [ThoughtId.Inspired] = "영감이 샘솟다",
+            [ThoughtId.Motivated] = "의욕이 생긴다",
+            [ThoughtId.SkillUp] = "실력이 늘었다",
+            [ThoughtId.RelationshipImproved] = "관계가 좋아졌다",
+            [ThoughtId.Loved] = "사랑받는다",
+            [ThoughtId.MarriedEngaged] = "결혼·약혼했다",
+            [ThoughtId.Trust] = "신뢰한다",
+            [ThoughtId.Respect] = "존경한다",
+        };
+
+    static readonly System.Collections.Generic.Dictionary<MoodBreakKind, string> BreakDefaultKo =
+        new()
+        {
+            [MoodBreakKind.Wander] = "정신붕괴: 배회 중",
+            [MoodBreakKind.Flee] = "정신붕괴: 도주 중",
+            [MoodBreakKind.Berserk] = "정신붕괴: 광폭화",
+            [MoodBreakKind.Catatonic] = "정신붕괴: 긴장성 실신",
+        };
 }
 #endif

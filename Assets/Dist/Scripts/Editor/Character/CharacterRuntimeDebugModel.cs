@@ -55,7 +55,25 @@ public sealed class CharacterRuntimeDebugModel
         ThoughtId.AteMeal,
         ThoughtId.Vomited,
         ThoughtId.AteRotten,
-        ThoughtId.Catharsis
+        ThoughtId.Catharsis,
+        ThoughtId.Crafted,
+        ThoughtId.AteHotMeal,
+        ThoughtId.Recovering,
+        ThoughtId.NeedShower,
+        ThoughtId.FreshlyBathed,
+        ThoughtId.Attractive,
+        ThoughtId.PleasantConversation,
+        ThoughtId.RestArea,
+        ThoughtId.SuitableEnvironment,
+        ThoughtId.NatureFriendly,
+        ThoughtId.Inspired,
+        ThoughtId.Motivated,
+        ThoughtId.SkillUp,
+        ThoughtId.RelationshipImproved,
+        ThoughtId.Loved,
+        ThoughtId.MarriedEngaged,
+        ThoughtId.Trust,
+        ThoughtId.Respect
     };
 
     CharacterBodyHost _bodyHost;

@@ -20,6 +20,12 @@ static class DistSoSampleEnsureMenu
         EnsureAsset<CombatHitStopSettings>(CombatHitStopSettings.DefaultAssetPath, created, existing);
         EnsureAsset<WorldClockSettings>(WorldClockSettings.DefaultAssetPath, created, existing);
         EnsureAsset<MoodSettings>(MoodSettings.DefaultAssetPath, created, existing);
+        var moodSettings = AssetDatabase.LoadAssetAtPath<MoodSettings>(MoodSettings.DefaultAssetPath);
+        if (moodSettings != null)
+        {
+            moodSettings.EnsureCatalogRows();
+            EditorUtility.SetDirty(moodSettings);
+        }
         EnsureAsset<PlayerNeedsSettings>(PlayerNeedsSettings.DefaultAssetPath, created, existing);
         EnsureAsset<PlayerStatusMoodIconCatalog>(
             PlayerStatusMoodIconCatalog.DefaultAssetPath,

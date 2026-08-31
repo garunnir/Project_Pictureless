@@ -306,6 +306,14 @@
       "MaxVolume": 9999.0
     },
     {
+      "id": "loot_aggregate",
+      "name": "루트",
+      "max_weight": 9999.0,
+      "max_volume": 9999.0,
+      "MaxWeight": 9999.0,
+      "MaxVolume": 9999.0
+    },
+    {
       "id": "crate",
       "name": "상자",
       "max_weight": 100.0,

@@ -98,3 +98,158 @@ MonoBehaviour:
     offset: 15
     durationMinutes: 240
     stackLimit: 1
+  - id: 16
+    kind: 1
+    offset: 0
+    durationMinutes: 30
+    stackLimit: 1
+  - id: 17
+    kind: 1
+    offset: 3
+    durationMinutes: 60
+    stackLimit: 1
+  - id: 18
+    kind: 0
+    offset: -12
+    durationMinutes: 0
+    stackLimit: 1
+  - id: 19
+    kind: 0
+    offset: -20
+    durationMinutes: 0
+    stackLimit: 1
+  - id: 20
+    kind: 0
+    offset: -14
+    durationMinutes: 0
+    stackLimit: 1
+  - id: 21
+    kind: 0
+    offset: -4
+    durationMinutes: 0
+    stackLimit: 1
+  - id: 22
+    kind: 0
+    offset: -10
+    durationMinutes: 0
+    stackLimit: 1
+  - id: 23
+    kind: 0
+    offset: -8
+    durationMinutes: 0
+    stackLimit: 1
+  - id: 24
+    kind: 0
+    offset: -6
+    durationMinutes: 0
+    stackLimit: 1
+  - id: 25
+    kind: 0
+    offset: -6
+    durationMinutes: 0
+    stackLimit: 1
+  - id: 26
+    kind: 0
+    offset: -8
+    durationMinutes: 0
+    stackLimit: 1
+  - id: 27
+    kind: 0
+    offset: -4
+    durationMinutes: 0
+    stackLimit: 1
+  - id: 28
+    kind: 0
+    offset: -8
+    durationMinutes: 0
+    stackLimit: 1
+  - id: 29
+    kind: 0
+    offset: -16
+    durationMinutes: 0
+    stackLimit: 1
+  - id: 30
+    kind: 0
+    offset: -12
+    durationMinutes: 0
+    stackLimit: 1
+  - id: 31
+    kind: 1
+    offset: 4
+    durationMinutes: 240
+    stackLimit: 1
+  - id: 32
+    kind: 1
+    offset: -6
+    durationMinutes: 180
+    stackLimit: 1
+  - id: 33
+    kind: 1
+    offset: 4
+    durationMinutes: 180
+    stackLimit: 1
+  - id: 34
+    kind: 1
+    offset: 3
+    durationMinutes: 120
+    stackLimit: 1
+  - id: 35
+    kind: 1
+    offset: 5
+    durationMinutes: 120
+    stackLimit: 1
+  - id: 36
+    kind: 1
+    offset: 4
+    durationMinutes: 180
+    stackLimit: 1
+  - id: 37
+    kind: 1
+    offset: 4
+    durationMinutes: 180
+    stackLimit: 1
+  - id: 38
+    kind: 1
+    offset: 3
+    durationMinutes: 120
+    stackLimit: 1
+  - id: 39
+    kind: 1
+    offset: 8
+    durationMinutes: 240
+    stackLimit: 1
+  - id: 40
+    kind: 1
+    offset: 5
+    durationMinutes: 180
+    stackLimit: 1
+  - id: 41
+    kind: 1
+    offset: 4
+    durationMinutes: 60
+    stackLimit: 1
+  - id: 42
+    kind: 1
+    offset: 6
+    durationMinutes: 240
+    stackLimit: 1
+  - id: 43
+    kind: 1
+    offset: 10
+    durationMinutes: 360
+    stackLimit: 1
+  - id: 44
+    kind: 1
+    offset: 8
+    durationMinutes: 360
+    stackLimit: 1
+  - id: 45
+    kind: 1
+    offset: 4
+    durationMinutes: 240
+    stackLimit: 1
+  - id: 46
+    kind: 1
+    offset: 4
+    durationMinutes: 240
+    stackLimit: 1

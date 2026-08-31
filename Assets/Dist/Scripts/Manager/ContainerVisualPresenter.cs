@@ -1,5 +1,5 @@
 // ============================================================
-// ContainerVisualPresenter — 사이드바 컨테이너 표시 아이콘 SSOT
+// ContainerVisualPresenter — 사이드바 컨테이너 표시 아이콘·라벨 SSOT
 // ============================================================
 // 우선순위: 월드 타일 thumbnail → provider SpriteRenderer → 중첩(아이템 아이콘) → null
 
@@ -16,8 +16,11 @@ public static class ContainerVisualPresenter
         if (container == null)
             return null;
 
-        // 가상 바닥 컨테이너는 월드 오브젝트가 없다 — 아이콘 숨김.
+        // 가상 바닥·합산 컨테이너는 월드 오브젝트가 없다 — 아이콘 숨김(라벨은 Definition/Loc).
         if (container.InstanceId == FloorLootHost.DefaultInstanceId)
+            return null;
+
+        if (LootAggregateHost.IsAggregateContainer(container))
             return null;
 
         if (ContainerTileViewRegistry.Instance.TryGetViewByContainerInstanceId(
@@ -57,6 +60,17 @@ public static class ContainerVisualPresenter
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// 사이드바 탭 라벨. 가상 컨테이너(floor-loot·loot-aggregate) 포함 Definition/Loc SSOT.
+    /// </summary>
+    public static string GetDisplayLabel(InventoryContainer container)
+    {
+        if (container?.Definition == null)
+            return string.Empty;
+
+        return UITextPresenter.GetContainerName(container.Definition);
     }
 
     static Sprite ResolveTileViewSprite(TileView tileView)

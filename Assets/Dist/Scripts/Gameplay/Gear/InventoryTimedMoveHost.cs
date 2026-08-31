@@ -14,11 +14,17 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
 {
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
 
+    struct QueuedStackMove
+    {
+        public InventoryContainer From;
+        public ItemStack Stack;
+        public int UnitCount;
+    }
+
     CharacterActionHost _actionHost;
     readonly GearTimedAction _timed = new();
-    readonly List<ItemStack> _queue = new(8);
+    readonly List<QueuedStackMove> _queue = new(8);
     readonly List<ItemStack> _activeStacks = new(1);
-    readonly List<ItemStack> _single = new(1);
 
     InventorySession _session;
     InventoryContainer _from;
@@ -27,6 +33,7 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
     bool _transferActive;
     bool _advancing;
     ItemStack _current;
+    int _currentUnitCount = 1;
 
     public static InventoryTimedMoveHost Active { get; private set; }
 
@@ -106,6 +113,18 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
         return RunOrEnqueue(() => TryBeginQueue(session, from, to, stacks, onApplied));
     }
 
+    /// <summary>
+    /// 소스 컨테이너가 다른 스택들을 대상으로 1스택씩 순차 이동. 용량 부족 시 중단.
+    /// </summary>
+    public bool TryBeginMultiSourceSequentialUntilFull(
+        InventorySession session,
+        InventoryContainer to,
+        IReadOnlyList<(InventoryContainer from, ItemStack stack)> moves,
+        Action onApplied = null)
+    {
+        return RunOrEnqueue(() => TryBeginMultiSourceQueue(session, to, moves, onApplied));
+    }
+
     public bool TryBegin(float durationSeconds, Action apply)
     {
         return TryBegin(durationSeconds, apply, activeStack: null);
@@ -183,19 +202,70 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
 
         _queue.Clear();
         for (int i = 0; i < stacks.Count; i++)
+            EnqueueStackMoves(_queue, from, stacks[i]);
+
+        return TryStartQueue(session, to, onApplied);
+    }
+
+    bool TryBeginMultiSourceQueue(
+        InventorySession session,
+        InventoryContainer to,
+        IReadOnlyList<(InventoryContainer from, ItemStack stack)> moves,
+        Action onApplied)
+    {
+        if (IsBusy || session == null || to == null || moves == null || moves.Count == 0)
+            return false;
+
+        _queue.Clear();
+        for (int i = 0; i < moves.Count; i++)
         {
-            if (stacks[i] != null)
-                _queue.Add(stacks[i]);
+            (InventoryContainer from, ItemStack stack) = moves[i];
+            if (from == null || stack == null || from == to)
+                continue;
+
+            EnqueueStackMoves(_queue, from, stack);
         }
 
+        return TryStartQueue(session, to, onApplied);
+    }
+
+    static void EnqueueStackMoves(List<QueuedStackMove> queue, InventoryContainer from, ItemStack stack)
+    {
+        if (queue == null || from == null || stack == null)
+            return;
+
+        if (InventorySession.MustTransferStackWhole(stack))
+        {
+            queue.Add(new QueuedStackMove
+            {
+                From = from,
+                Stack = stack,
+                UnitCount = stack.Count,
+            });
+            return;
+        }
+
+        for (int unit = 0; unit < stack.Count; unit++)
+        {
+            queue.Add(new QueuedStackMove
+            {
+                From = from,
+                Stack = stack,
+                UnitCount = 1,
+            });
+        }
+    }
+
+    bool TryStartQueue(InventorySession session, InventoryContainer to, Action onApplied)
+    {
         if (_queue.Count == 0)
             return false;
 
         _session = session;
-        _from = from;
         _to = to;
         _onApplied = onApplied;
         _transferActive = true;
+        _from = null;
         _current = null;
 
         AdvanceQueue();
@@ -212,15 +282,20 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
         {
             while (_queue.Count > 0)
             {
-                ItemStack stack = _queue[0];
+                QueuedStackMove move = _queue[0];
                 _queue.RemoveAt(0);
-                if (stack == null)
+                if (move.Stack == null || move.From == null)
                     continue;
 
-                _current = stack;
-                SetActiveStack(stack);
+                _from = move.From;
+                _current = move.Stack;
+                _currentUnitCount = move.UnitCount > 0 ? move.UnitCount : 1;
+                SetActiveStack(move.Stack);
 
-                float duration = InventoryTransferDuration.SecondsForStackFrom(_from, stack);
+                float duration = InventoryTransferDuration.SecondsForStackUnits(
+                    _from,
+                    move.Stack,
+                    _currentUnitCount);
                 if (duration <= 0f)
                 {
                     if (!ApplyCurrentStack())
@@ -254,13 +329,13 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
     bool ApplyCurrentStack()
     {
         ItemStack stack = _current;
+        int unitCount = _currentUnitCount > 0 ? _currentUnitCount : 1;
         _current = null;
+        _currentUnitCount = 1;
         if (stack == null || _session == null || _from == null || _to == null)
             return false;
 
-        _single.Clear();
-        _single.Add(stack);
-        if (!_session.MoveStacks(_from, _to, _single))
+        if (!_session.MoveStackCount(_from, _to, stack, unitCount))
         {
             _queue.Clear();
             return false;

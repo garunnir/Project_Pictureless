@@ -49,9 +49,6 @@ public sealed class ItemStack
         if (count < 1)
             throw new ArgumentOutOfRangeException(nameof(count), "Count must be >= 1.");
 
-        if (count > Item.MaxStack)
-            count = Item.MaxStack;
-
         Count = count;
     }
 

@@ -12,6 +12,7 @@ Detail: `docs/tech-stack.md`
 - Unity **6000.3.10f1 LTS** · **URP** · **C# 9** (no C# 10+)
 - 신규 async = **UniTask** (새 Coroutine 금지 — 예외는 `collaboration-rules.mdc`)
 - **Input System** · Odin **Inspector attrs only** (no OdinSerializer)
+- **CustomEditor** = `OdinEditor` + `base.OnInspectorGUI()`; layout on SO via Odin attrs — no full `EditorGUILayout` re-draw (`docs/tech-stack.md`, `docs/character/DEFINITION.md` § Editor)
 - Namespace = asmdef 이름 또는 `ProjectName.FeatureName`. 불확실하면 확인. 새 asmdef/NS = 승인
 - 게임 시간·배속·하루 시계 → `game-time.mdc` · `docs/time/TIME.md` (Dist에서 `Time.timeScale` SSOT 금지)
 

@@ -40,6 +40,7 @@ public sealed class UIItemListRow : MonoBehaviour,
     [SerializeField] Image _nameStatusFill;
 
     ItemStack _stack;
+    InventoryListDisplayGroup _displayGroup;
     InventoryContainer _ownerContainer;
     InventoryListSelection _selection;
     IInventoryItemDragHost _dragHost;
@@ -53,6 +54,7 @@ public sealed class UIItemListRow : MonoBehaviour,
     bool _subscribedGear;
 
     public ItemStack Stack => _stack;
+    public InventoryListDisplayGroup DisplayGroup => _displayGroup;
     public RectTransform RectTransform => transform as RectTransform;
 
     void OnEnable() => SubscribeProgressSources();
@@ -74,6 +76,7 @@ public sealed class UIItemListRow : MonoBehaviour,
         ClearHoverIfNeeded();
         EnsureNameBar();
 
+        _displayGroup = null;
         _stack = stack;
         _ownerContainer = ownerContainer;
         _selection = selection;
@@ -115,6 +118,77 @@ public sealed class UIItemListRow : MonoBehaviour,
 
         if (_volumeValueText != null)
             _volumeValueText.text = InventoryWindowLabels.FormatStackVolumeValue(stack.TotalVolume);
+
+        if (_volumeUnitText != null)
+            _volumeUnitText.text = InventoryWindowLabels.StackVolumeUnit;
+
+        if (_iconImage != null)
+        {
+            Sprite icon = ItemVisualPresenter.GetDisplayIcon(item.id);
+            _iconImage.sprite = icon;
+            _iconImage.enabled = icon != null;
+            if (icon != null)
+                _iconImage.color = Color.white;
+        }
+
+        RefreshSelectionVisual();
+        RefreshNameBar();
+        SubscribeProgressSources();
+    }
+
+    public void BindDisplayGroup(
+        InventoryListDisplayGroup group,
+        InventoryContainer ownerContainer,
+        InventoryListSelection selection,
+        IInventoryItemDragHost dragHost,
+        UIItemDragGhostService dragGhost,
+        UIItemListView listView)
+    {
+        ClearHoverIfNeeded();
+        EnsureNameBar();
+
+        _displayGroup = group;
+        _stack = group?.RepresentativeStack;
+        _ownerContainer = ownerContainer;
+        _selection = selection;
+        _dragHost = dragHost;
+        _dragGhost = dragGhost;
+        _listView = listView;
+
+        if (_backgroundImage == null)
+            TryGetComponent(out _backgroundImage);
+
+        if (_stack?.Item == null)
+        {
+            _nameBar?.Clear();
+            return;
+        }
+
+        ItemData item = _stack.Item;
+
+        if (_categoryText != null)
+            _categoryText.text = InventoryWindowLabels.GetItemCategory(item.category);
+
+        if (_nameText != null)
+        {
+            _nameText.text = ItemAmmoLabels.AppendState(
+                ItemDamageLabels.FormatName(
+                    UITextPresenter.GetItemName(item),
+                    _stack.DamageLevel),
+                _stack);
+        }
+
+        if (_countText != null)
+            _countText.text = InventoryWindowLabels.FormatStackCount(group.DisplayCount);
+
+        if (_weightValueText != null)
+            _weightValueText.text = InventoryWindowLabels.FormatStackWeightValue(group.DisplayWeight);
+
+        if (_weightUnitText != null)
+            _weightUnitText.text = InventoryWindowLabels.StackWeightUnit;
+
+        if (_volumeValueText != null)
+            _volumeValueText.text = InventoryWindowLabels.FormatStackVolumeValue(group.DisplayVolume);
 
         if (_volumeUnitText != null)
             _volumeUnitText.text = InventoryWindowLabels.StackVolumeUnit;
@@ -197,14 +271,32 @@ public sealed class UIItemListRow : MonoBehaviour,
         if (_stack == null || _ownerContainer == null || _selection == null || _dragHost == null)
             return;
 
-        if (!_selection.IsSelected(_stack))
-            _selection.SetSingle(_stack);
+        if (_displayGroup != null)
+        {
+            BeginAggregateDisplayGroupDrag();
+        }
+        else if (!LootAggregateHost.IsAggregateContainer(_ownerContainer))
+        {
+            if (!_selection.IsSelected(_stack))
+                _selection.SetSingle(_stack);
 
-        IReadOnlyList<ItemStack> stacks = _selection.GetSelectedStacks();
-        InventoryDragState.Begin(_ownerContainer, stacks, () => _selection?.Clear());
+            IReadOnlyList<ItemStack> stacks = _selection.GetSelectedStacks();
+            InventoryDragState.Begin(_ownerContainer, stacks, () => _selection?.Clear());
+        }
+        else
+        {
+            return;
+        }
+
+        if (!InventoryDragState.IsDragging)
+            return;
+
+        IReadOnlyList<ItemStack> ghostStacks = InventoryDragState.TryGetActive(out InventoryDragPayload payload)
+            ? payload.Stacks
+            : null;
 
         _dragHost.OnItemDragStarted();
-        _dragGhost?.Show(ResolveDragIcon(stacks), stacks.Count, eventData.position);
+        _dragGhost?.Show(ResolveDragIcon(ghostStacks), ghostStacks?.Count ?? 1, eventData.position);
 
         eventData.Use();
     }
@@ -227,6 +319,9 @@ public sealed class UIItemListRow : MonoBehaviour,
 
     public void OnDrop(PointerEventData eventData)
     {
+        if (LootAggregateHost.IsAggregateContainer(_ownerContainer))
+            return;
+
         InventorySession session = _listView != null
             ? _listView.Session
             : PlayerInventoryRuntime.Active?.Session;
@@ -237,6 +332,52 @@ public sealed class UIItemListRow : MonoBehaviour,
         if (session != null && _ownerContainer != null)
             InventoryDragDrop.TryApplyTo(session, _ownerContainer);
     }
+
+    void BeginAggregateDisplayGroupDrag()
+    {
+        if (_displayGroup == null || _ownerContainer == null || _selection == null)
+            return;
+
+        if (!_selection.IsSelected(_stack))
+            _selection.SetSingle(_stack);
+
+        IReadOnlyList<ItemStack> selected = _selection.GetSelectedStacks();
+        var sources = new List<(InventoryContainer owner, ItemStack stack)>();
+        var selectedKeys = new HashSet<ItemMergeKey>();
+        ItemMergeKeyDisplayEquivalence equivalence = ItemMergeKeyDisplayEquivalence.Instance;
+
+        for (int i = 0; i < selected.Count; i++)
+        {
+            ItemStack representative = selected[i];
+            if (representative != null)
+                selectedKeys.Add(equivalence.GetDisplayKey(representative));
+        }
+
+        if (selectedKeys.Count == 0)
+            return;
+
+        IReadOnlyList<ItemStack> containerStacks = _ownerContainer.Stacks;
+        for (int i = 0; i < containerStacks.Count; i++)
+        {
+            ItemStack stack = containerStacks[i];
+            if (stack == null || !selectedKeys.Contains(equivalence.GetDisplayKey(stack)))
+                continue;
+
+            InventoryContainer owner = ResolveAggregateStackOwner(stack);
+            if (owner == null || LootAggregateHost.IsAggregateContainer(owner))
+                continue;
+
+            sources.Add((owner, stack));
+        }
+
+        InventoryDragState.BeginAggregateDisplayGroup(
+            _ownerContainer,
+            sources,
+            () => _selection?.Clear());
+    }
+
+    InventoryContainer ResolveAggregateStackOwner(ItemStack stack) =>
+        _listView != null ? _listView.ResolveAggregateStackOwner(stack) : _ownerContainer;
 
     static Sprite ResolveDragIcon(IReadOnlyList<ItemStack> stacks)
     {

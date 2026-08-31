@@ -37,6 +37,8 @@ public sealed class UIInventoryListWindow : MonoBehaviour
     Action _onChromeClose;
 
     readonly List<InventoryContainer> _filteredSidebar = new();
+    readonly List<InventoryContainer> _nearbyWorldLootScratch = new();
+    readonly List<InventoryContainer> _floorLootGroupScratch = new();
     readonly FixedContainerCapacityPolicy _nestedContainerPolicy = new();
 
     public bool IsVisible => gameObject.activeSelf;
@@ -208,14 +210,34 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         if (_mode == InventoryWindowMode.PlayerOnly && initialFocus != null)
             SetActiveContainer(initialFocus, refreshList: false);
         else if (_mode == InventoryWindowMode.NearbyOnly)
-            SyncNearbySelectionFromCoordinator(initialFocus, refreshList: false);
+        {
+            InventoryContainer preferred = initialFocus;
+            if (preferred == null)
+            {
+                InventoryContainer aggregate = ResolveLootAggregateContainer();
+                if (aggregate != null && HasNearbyLootSources())
+                    preferred = aggregate;
+            }
+
+            SyncNearbySelectionFromCoordinator(preferred, refreshList: false);
+        }
         else
             SelectContainer(initialFocus, refreshList: false);
 
         if (_dragHost != null)
             _listView?.Configure(_session, _dragHost, _dragGhost);
 
+        WireLootAggregateHostForMode();
         RefreshAll();
+    }
+
+    void WireLootAggregateHostForMode()
+    {
+        if (_listView == null)
+            return;
+
+        _listView.SetLootAggregateHost(
+            _mode == InventoryWindowMode.NearbyOnly ? ResolveLootAggregateHost() : null);
     }
 
     public void OnSidebarChanged()
@@ -259,6 +281,14 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             if (resolved != null &&
                 (changeSet.FullRefresh || changeSet.Contains(resolved)))
                 SetActiveContainer(resolved, refreshList: false);
+        }
+
+        if (_mode == InventoryWindowMode.NearbyOnly && ShouldSyncLootAggregate(changeSet))
+        {
+            SyncLootAggregateSources();
+            if (_selectedContainer != null &&
+                LootAggregateHost.IsAggregateContainer(_selectedContainer))
+                SetActiveContainer(_selectedContainer);
         }
 
         bool refreshSidebar = changeSet.FullRefresh ||
@@ -331,6 +361,9 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             if (container.InstanceId == FloorLootHost.DefaultInstanceId)
                 return true;
 
+            if (container.InstanceId == LootAggregateHost.DefaultInstanceId)
+                return true;
+
             PlayerInventoryRuntime runtime = PlayerInventoryRuntime.Active;
             if (runtime != null && runtime.IsWorldLootContainer(container.InstanceId))
                 return true;
@@ -368,7 +401,10 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             if (!ContainsSidebarContainer(GetSidebarContainersForMode(), container.InstanceId))
                 return;
 
-            PlayerInventoryRuntime.Active?.LootProximity?.RequestActiveContainer(container);
+            if (!LootAggregateHost.IsAggregateContainer(container))
+                PlayerInventoryRuntime.Active?.LootProximity?.RequestActiveContainer(container);
+
+            SetActiveContainer(container, refreshList);
             return;
         }
 
@@ -493,13 +529,19 @@ public sealed class UIInventoryListWindow : MonoBehaviour
 
     void SyncNearbySelectionFromCoordinator(InventoryContainer preferred, bool refreshList)
     {
+        if (preferred != null &&
+            ContainsSidebarContainer(GetSidebarContainersForMode(), preferred.InstanceId))
+        {
+            if (!LootAggregateHost.IsAggregateContainer(preferred))
+                PlayerInventoryRuntime.Active?.LootProximity?.RequestActiveContainer(preferred);
+
+            SetActiveContainer(preferred, refreshList);
+            return;
+        }
+
         LootProximityCoordinator coordinator = PlayerInventoryRuntime.Active?.LootProximity;
         if (coordinator == null)
             return;
-
-        if (preferred != null &&
-            ContainsSidebarContainer(GetSidebarContainersForMode(), preferred.InstanceId))
-            coordinator.RequestActiveContainer(preferred);
 
         SetActiveContainer(coordinator.ActiveContainer, refreshList);
     }
@@ -517,13 +559,19 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             fallback = GetPlayerBodyContainer() ?? ResolvePlayerContainer();
         else
         {
-            LootProximityCoordinator coordinator = PlayerInventoryRuntime.Active?.LootProximity;
-            InventoryContainer active = coordinator?.ActiveContainer;
+            InventoryContainer aggregate = ResolveLootAggregateContainer();
+            if (aggregate != null && HasNearbyLootSources())
+                fallback = aggregate;
+            else
+            {
+                LootProximityCoordinator coordinator = PlayerInventoryRuntime.Active?.LootProximity;
+                InventoryContainer active = coordinator?.ActiveContainer;
 
-            if (active != null && ContainsSidebarContainer(sidebar, active.InstanceId))
-                fallback = active;
-            else if (sidebar.Count > 0)
-                fallback = sidebar[0];
+                if (active != null && ContainsSidebarContainer(sidebar, active.InstanceId))
+                    fallback = active;
+                else if (sidebar.Count > 0)
+                    fallback = sidebar[0];
+            }
         }
 
         if (fallback != null)
@@ -647,6 +695,9 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         IReadOnlyList<InventoryContainer> all = _session.GetSidebarContainers();
         PlayerInventoryRuntime runtime = PlayerInventoryRuntime.Active;
         InventoryContainer floorLoot = null;
+        _nearbyWorldLootScratch.Clear();
+        _floorLootGroupScratch.Clear();
+
         for (int i = 0; i < all.Count; i++)
         {
             InventoryContainer container = all[i];
@@ -656,18 +707,91 @@ public sealed class UIInventoryListWindow : MonoBehaviour
             if (container.InstanceId == PlayerInventoryHost.DefaultInstanceId)
                 continue;
 
+            if (LootAggregateHost.IsAggregateContainer(container))
+                continue;
+
             if (runtime != null && !runtime.IsWorldLootContainer(container.InstanceId))
                 continue;
 
-            _filteredSidebar.Add(container);
             if (container.InstanceId == FloorLootHost.DefaultInstanceId)
+            {
                 floorLoot = container;
+                continue;
+            }
+
+            _nearbyWorldLootScratch.Add(container);
         }
 
+        InventoryContainer aggregate = ResolveLootAggregateContainer();
+        if (aggregate != null && HasNearbyLootSources())
+            _filteredSidebar.Add(aggregate);
+
+        for (int i = 0; i < _nearbyWorldLootScratch.Count; i++)
+            _filteredSidebar.Add(_nearbyWorldLootScratch[i]);
+
         if (floorLoot != null)
-            AppendFloorNestedLootTabs(floorLoot, runtime);
+        {
+            _floorLootGroupScratch.Add(floorLoot);
+            AppendFloorNestedLootTabs(floorLoot, runtime, _floorLootGroupScratch);
+            for (int i = 0; i < _floorLootGroupScratch.Count; i++)
+                _filteredSidebar.Add(_floorLootGroupScratch[i]);
+        }
 
         return _filteredSidebar;
+    }
+
+    bool HasNearbyLootSources()
+    {
+        if (_session == null)
+            return false;
+
+        PlayerInventoryRuntime runtime = PlayerInventoryRuntime.Active;
+        IReadOnlyList<InventoryContainer> all = _session.GetSidebarContainers();
+        for (int i = 0; i < all.Count; i++)
+        {
+            InventoryContainer container = all[i];
+            if (container == null)
+                continue;
+
+            if (container.InstanceId == PlayerInventoryHost.DefaultInstanceId)
+                continue;
+
+            if (LootAggregateHost.IsAggregateContainer(container))
+                continue;
+
+            if (runtime != null && runtime.IsWorldLootContainer(container.InstanceId))
+                return true;
+        }
+
+        return false;
+    }
+
+    InventoryContainer ResolveLootAggregateContainer()
+    {
+        NearbyContainerDetector detector = CharacterSessionHub.Player?.Detector;
+        return detector?.LootAggregateContainer;
+    }
+
+    LootAggregateHost ResolveLootAggregateHost()
+    {
+        NearbyContainerDetector detector = CharacterSessionHub.Player?.Detector;
+        return detector?.ActiveLootAggregateHost;
+    }
+
+    bool ShouldSyncLootAggregate(InventoryStacksChangeSet changeSet)
+    {
+        if (changeSet.FullRefresh || changeSet.SidebarAffected)
+            return true;
+
+        if (changeSet.ContainsInstanceId(LootAggregateHost.DefaultInstanceId))
+            return true;
+
+        return SidebarSourcesChanged(changeSet);
+    }
+
+    void SyncLootAggregateSources()
+    {
+        CharacterSessionHub.Player?.Detector?.SyncLootAggregateSources();
     }
 
     void AppendNestedContainerTabs(InventoryContainer parent)
@@ -714,9 +838,12 @@ public sealed class UIInventoryListWindow : MonoBehaviour
         }
     }
 
-    void AppendFloorNestedLootTabs(InventoryContainer floorLoot, PlayerInventoryRuntime runtime)
+    void AppendFloorNestedLootTabs(
+        InventoryContainer floorLoot,
+        PlayerInventoryRuntime runtime,
+        List<InventoryContainer> destination)
     {
-        if (floorLoot == null)
+        if (floorLoot == null || destination == null)
             return;
 
         for (int i = 0; i < floorLoot.Stacks.Count; i++)
@@ -729,13 +856,13 @@ public sealed class UIInventoryListWindow : MonoBehaviour
                 continue;
 
             string nestedId = stack.Nested.InstanceId;
-            if (string.IsNullOrEmpty(nestedId) || ContainsSidebarContainer(_filteredSidebar, nestedId))
+            if (string.IsNullOrEmpty(nestedId) || ContainsSidebarContainer(destination, nestedId))
                 continue;
 
             if (runtime != null && !runtime.IsWorldLootContainer(nestedId))
                 continue;
 
-            _filteredSidebar.Add(stack.Nested);
+            destination.Add(stack.Nested);
         }
     }
 

@@ -12,6 +12,7 @@ public static class MoodThoughtLabels
     public const string KeyMoodFormat = "PlayerStatus.MoodNeed.Format";
     public const string KeyThoughtLine = "PlayerStatus.Thought.Line";
     public const string KeyThoughtPrefix = "PlayerStatus.Thought.";
+    public const string KeyBreakPrefix = "PlayerStatus.Thought.Breaking";
     public const string KeyBreakWander = "PlayerStatus.Thought.BreakingWander";
 
     static readonly StringBuilder Builder = new(256);
@@ -40,13 +41,10 @@ public static class MoodThoughtLabels
     {
         Builder.Length = 0;
         Builder.Append(FormatMoodValue(mood));
-        if (breakKind == MoodBreakKind.Wander)
+        if (breakKind != MoodBreakKind.None)
         {
             Builder.Append('\n');
-            if (Loc.TryGet(KeyBreakWander, out string breaking))
-                Builder.Append(breaking);
-            else
-                Builder.Append(MoodBreakKind.Wander);
+            Builder.Append(FormatBreakLabel(breakKind));
         }
 
         if (thoughts != null)
@@ -72,17 +70,25 @@ public static class MoodThoughtLabels
 
         lines.Add(ThoughtsSection);
         lines.Add(FormatMoodValue(mood));
-        if (breakKind == MoodBreakKind.Wander)
-        {
-            if (Loc.TryGet(KeyBreakWander, out string breaking))
-                lines.Add(breaking);
-        }
+        if (breakKind != MoodBreakKind.None)
+            lines.Add(FormatBreakLabel(breakKind));
 
         if (thoughts == null)
             return;
 
         for (int i = 0; i < thoughts.Count; i++)
             lines.Add(FormatThoughtLine(thoughts[i]));
+    }
+
+    public static string FormatBreakLabel(MoodBreakKind breakKind)
+    {
+        if (breakKind == MoodBreakKind.None)
+            return string.Empty;
+
+        string key = KeyBreakPrefix + breakKind;
+        if (Loc.TryGet(key, out string breaking))
+            return breaking;
+        return breakKind.ToString();
     }
 
     public static MoodIconId ResolveMoodIcon(float mood)

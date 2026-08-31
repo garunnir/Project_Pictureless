@@ -11,6 +11,8 @@ public enum InventoryDragKind
     ContainerTab,
     /// <summary>고정 컨테이너 탭: 컨테이너 제외 내용물 전체 (순차 이동).</summary>
     ContainerContents,
+    /// <summary>합산 탭 표시 그룹: 물리 스택별 실제 owner에서 꺼내기.</summary>
+    AggregateDisplayGroup,
 }
 
 public sealed class InventoryDragPayload
@@ -19,6 +21,7 @@ public sealed class InventoryDragPayload
     public InventoryContainer SourceContainer { get; internal set; }
     public Action ClearSelection { get; internal set; }
     public IReadOnlyList<ItemStack> Stacks { get; internal set; }
+    public IReadOnlyList<(InventoryContainer owner, ItemStack stack)> Sources { get; internal set; }
 }
 
 public static class InventoryDragState
@@ -75,6 +78,40 @@ public static class InventoryDragState
             SourceContainer = parentContainer,
             ClearSelection = null,
             Stacks = new[] { containerStack },
+        };
+    }
+
+    public static void BeginAggregateDisplayGroup(
+        InventoryContainer displayContainer,
+        IReadOnlyList<(InventoryContainer owner, ItemStack stack)> sources,
+        Action clearSelection = null)
+    {
+        if (displayContainer == null || sources == null || sources.Count == 0)
+            return;
+
+        var snapshot = new List<(InventoryContainer owner, ItemStack stack)>(sources.Count);
+        var ghostStacks = new List<ItemStack>();
+        for (int i = 0; i < sources.Count; i++)
+        {
+            (InventoryContainer owner, ItemStack stack) = sources[i];
+            if (owner == null || stack == null || LootAggregateHost.IsAggregateContainer(owner))
+                continue;
+
+            snapshot.Add((owner, stack));
+            ghostStacks.Add(stack);
+        }
+
+        if (snapshot.Count == 0)
+            return;
+
+        _consumed = false;
+        _active = new InventoryDragPayload
+        {
+            Kind = InventoryDragKind.AggregateDisplayGroup,
+            SourceContainer = displayContainer,
+            ClearSelection = clearSelection,
+            Stacks = ghostStacks,
+            Sources = snapshot,
         };
     }
 

@@ -28,11 +28,24 @@ public sealed class MoodBreakRuntime
 
     public void BeginWander(int durationMinutes)
     {
-        _kind = MoodBreakKind.Wander;
+        BeginKind(MoodBreakKind.Wander, durationMinutes);
+    }
+
+    /// <summary>붕괴 종류 예약. Wander 외 동작은 Pending.</summary>
+    public void BeginKind(MoodBreakKind kind, int durationMinutes)
+    {
+        if (kind == MoodBreakKind.None)
+            return;
+
+        _kind = kind;
         _remainingMinutes = durationMinutes < 1 ? 1 : durationMinutes;
         _hasDestination = false;
-        _motor?.BeginScriptedLocomotion();
-        PickDestination();
+
+        if (kind == MoodBreakKind.Wander)
+        {
+            _motor?.BeginScriptedLocomotion();
+            PickDestination();
+        }
     }
 
     public bool TickMinute()
@@ -50,7 +63,13 @@ public sealed class MoodBreakRuntime
 
     public void Tick(float dt)
     {
-        if (!IsActive || _motor == null || dt <= 0f)
+        if (!IsActive || dt <= 0f)
+            return;
+
+        if (_kind != MoodBreakKind.Wander)
+            return;
+
+        if (_motor == null)
             return;
 
         if (_pain != null && _pain.IsPainShocked)

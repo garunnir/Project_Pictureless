@@ -90,6 +90,9 @@ PC/NPC 스펙 분리는 없다. 조종은 `IsPossessed`. 붕괴는 **possess를 
 
 | 항목 | 상태 |
 |------|------|
-| Flee / Berserk / Catatonic | 없음 |
-| 미·안락·공간·소셜·영감 | 없음 |
+| HUD 칩 수집 (`PlayerStatusMoodChipSlots`) | enum·로컬·카탈로그 자리만 — Tier A body emergency, hygiene, social, inspiration 등 Collect Pending |
+| Situational 사고 수집 | `LowOxygen`·`PainShock`·`CapacityDown`·청결·소셜 등 `ThoughtId`·`MoodSettings` 행만 — `MoodSituationalCollector` Pending |
+| Flee / Berserk / Catatonic | `MoodBreakKind`·HUD 라벨·`BeginKind` 자리 — 런타임 동작 Pending |
 | 기분 DTO / 세이브 | 없음 |
+
+카탈로그 SSOT: `MoodThoughtDefaults.Catalog` · 에디터 `Dist/MCP/Mood/Ensure Thought Catalog Rows`.

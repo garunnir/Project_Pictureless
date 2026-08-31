@@ -23,6 +23,7 @@ public sealed class UIItemListView : MonoBehaviour
     readonly InventoryListSelection _selection = new();
     readonly List<UIItemListRow> _activeRows = new();
     readonly List<ItemStack> _orderedStacks = new();
+    readonly List<InventoryListDisplayGroup> _orderedGroups = new();
     readonly Dictionary<int, UIItemListRow> _rowByIndex = new();
     readonly List<int> _indexScratch = new();
     readonly List<ItemStack> _selectionScratch = new();
@@ -34,7 +35,9 @@ public sealed class UIItemListView : MonoBehaviour
     UIItemDragGhostService _dragGhost;
     ScrollRect _scrollRect;
     InventoryContainer _boundContainer;
+    LootAggregateHost _lootAggregateHost;
     int _appliedContentVersion = -1;
+    bool _aggregateDisplayMode;
     bool _viewportConfigured;
     bool _selectionEventsWired;
     bool _scrollEventsWired;
@@ -48,7 +51,7 @@ public sealed class UIItemListView : MonoBehaviour
     public UIItemListRow RowPrefab => _rowPrefab;
     public InventoryListSelection Selection => _selection;
     public int ActiveRowCount => _activeRows.Count;
-    public int BoundStackCount => _orderedStacks.Count;
+    public int BoundStackCount => GetBoundRowCount();
     public ItemListSortKey SortKey => _sortKey;
     public bool SortAscending => _sortAscending;
 
@@ -74,6 +77,33 @@ public sealed class UIItemListView : MonoBehaviour
 
         _selection.SelectionChanged += OnSelectionChanged;
         _selectionEventsWired = true;
+    }
+
+    public void SetLootAggregateHost(LootAggregateHost host) => _lootAggregateHost = host;
+
+    public InventoryContainer ResolveAggregateStackOwner(ItemStack stack)
+    {
+        if (stack == null)
+            return _boundContainer;
+
+        if (_lootAggregateHost != null && _lootAggregateHost.TryGetOwner(stack, out InventoryContainer hostOwner))
+            return hostOwner;
+
+        if (_session == null)
+            return _boundContainer;
+
+        IReadOnlyList<InventoryContainer> sidebar = _session.GetSidebarContainers();
+        for (int i = 0; i < sidebar.Count; i++)
+        {
+            InventoryContainer candidate = sidebar[i];
+            if (candidate == null || LootAggregateHost.IsAggregateContainer(candidate))
+                continue;
+
+            if (candidate.ContainsStackReference(stack))
+                return candidate;
+        }
+
+        return _boundContainer;
     }
 
     /// <summary>
@@ -163,7 +193,7 @@ public sealed class UIItemListView : MonoBehaviour
         _boundContainer = container;
         bool resetScrollPosition = resetScroll || containerChanged;
 
-        BuildOrderedStacks(container);
+        BuildOrderedItems(container);
         PruneSelectionToBoundStacks();
         ApplyContentHeight();
         RefreshVisibleRows(forceRebind: true);
@@ -175,15 +205,35 @@ public sealed class UIItemListView : MonoBehaviour
             ResetScrollTop();
     }
 
-    void BuildOrderedStacks(InventoryContainer container)
+    void BuildOrderedItems(InventoryContainer container)
     {
         _orderedStacks.Clear();
+        _orderedGroups.Clear();
+        _aggregateDisplayMode = LootAggregateHost.IsAggregateContainer(container);
+
         IReadOnlyList<ItemStack> stacks = container.Stacks;
+        if (!_aggregateDisplayMode)
+        {
+            for (int i = 0; i < stacks.Count; i++)
+                _orderedStacks.Add(stacks[i]);
+
+            if (_sortKey != ItemListSortKey.None)
+                _orderedStacks.Sort(new ItemListStackComparer(_sortKey, _sortAscending));
+
+            return;
+        }
+
+        var stackScratch = new List<ItemStack>(stacks.Count);
         for (int i = 0; i < stacks.Count; i++)
-            _orderedStacks.Add(stacks[i]);
+            stackScratch.Add(stacks[i]);
+
+        _orderedGroups.AddRange(InventoryListDisplayGrouper.Group(
+            stackScratch,
+            ItemMergeKeyDisplayEquivalence.Instance,
+            ResolveAggregateStackOwner));
 
         if (_sortKey != ItemListSortKey.None)
-            _orderedStacks.Sort(new ItemListStackComparer(_sortKey, _sortAscending));
+            _orderedGroups.Sort(new InventoryListDisplayGroupComparer(_sortKey, _sortAscending));
     }
 
     void PruneSelectionToBoundStacks()
@@ -193,10 +243,22 @@ public sealed class UIItemListView : MonoBehaviour
             return;
 
         _orderedSetScratch.Clear();
-        for (int i = 0; i < _orderedStacks.Count; i++)
+        if (_aggregateDisplayMode)
         {
-            if (_orderedStacks[i] != null)
-                _orderedSetScratch.Add(_orderedStacks[i]);
+            for (int i = 0; i < _orderedGroups.Count; i++)
+            {
+                InventoryListDisplayGroup group = _orderedGroups[i];
+                if (group?.RepresentativeStack != null)
+                    _orderedSetScratch.Add(group.RepresentativeStack);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < _orderedStacks.Count; i++)
+            {
+                if (_orderedStacks[i] != null)
+                    _orderedSetScratch.Add(_orderedStacks[i]);
+            }
         }
 
         _selectionScratch.Clear();
@@ -219,7 +281,7 @@ public sealed class UIItemListView : MonoBehaviour
         if (_contentRoot == null)
             return;
 
-        int n = _orderedStacks.Count;
+        int n = GetBoundRowCount();
         float topPad = InventoryListColumnLayout.ContentPaddingTopWithStickyHeader;
         float bottomPad = InventoryListColumnLayout.ContentPadding;
         float height = topPad + bottomPad;
@@ -251,40 +313,76 @@ public sealed class UIItemListView : MonoBehaviour
         for (int i = 0; i < _indexScratch.Count; i++)
             RecycleRowAt(_indexScratch[i]);
 
-        if (_orderedStacks.Count == 0 || first > last)
+        if (GetBoundRowCount() == 0 || first > last)
             return;
 
         for (int index = first; index <= last; index++)
         {
-            ItemStack stack = _orderedStacks[index];
-            if (stack == null)
-            {
-                RecycleRowAt(index);
-                continue;
-            }
-
-            if (_rowByIndex.TryGetValue(index, out UIItemListRow row) && row != null)
-            {
-                if (forceRebind || row.Stack != stack)
-                    BindRow(row, stack);
-                LayoutRow(row, index);
-                continue;
-            }
-
-            row = SpawnRow();
-            if (row == null)
-                continue;
-
-            BindRow(row, stack);
-            LayoutRow(row, index);
-            _rowByIndex[index] = row;
-            _activeRows.Add(row);
+            if (_aggregateDisplayMode)
+                RefreshVisibleAggregateRow(index, forceRebind);
+            else
+                RefreshVisibleStackRow(index, forceRebind);
         }
+    }
+
+    void RefreshVisibleStackRow(int index, bool forceRebind)
+    {
+        ItemStack stack = _orderedStacks[index];
+        if (stack == null)
+        {
+            RecycleRowAt(index);
+            return;
+        }
+
+        if (_rowByIndex.TryGetValue(index, out UIItemListRow row) && row != null)
+        {
+            if (forceRebind || row.Stack != stack)
+                BindRow(row, stack);
+            LayoutRow(row, index);
+            return;
+        }
+
+        row = SpawnRow();
+        if (row == null)
+            return;
+
+        BindRow(row, stack);
+        LayoutRow(row, index);
+        _rowByIndex[index] = row;
+        _activeRows.Add(row);
+    }
+
+    void RefreshVisibleAggregateRow(int index, bool forceRebind)
+    {
+        InventoryListDisplayGroup group = _orderedGroups[index];
+        ItemStack representative = group?.RepresentativeStack;
+        if (representative == null)
+        {
+            RecycleRowAt(index);
+            return;
+        }
+
+        if (_rowByIndex.TryGetValue(index, out UIItemListRow row) && row != null)
+        {
+            if (forceRebind || row.Stack != representative || row.DisplayGroup != group)
+                BindRowGroup(row, group);
+            LayoutRow(row, index);
+            return;
+        }
+
+        row = SpawnRow();
+        if (row == null)
+            return;
+
+        BindRowGroup(row, group);
+        LayoutRow(row, index);
+        _rowByIndex[index] = row;
+        _activeRows.Add(row);
     }
 
     void GetVisibleRange(out int first, out int last)
     {
-        int n = _orderedStacks.Count;
+        int n = GetBoundRowCount();
         if (n <= 0)
         {
             first = 0;
@@ -335,6 +433,17 @@ public sealed class UIItemListView : MonoBehaviour
         if (stack?.Item != null)
             row.gameObject.SetActive(true);
     }
+
+    void BindRowGroup(UIItemListRow row, InventoryListDisplayGroup group)
+    {
+        row.gameObject.SetActive(false);
+        row.BindDisplayGroup(group, _boundContainer, _selection, _dragHost, _dragGhost, this);
+        if (group?.RepresentativeStack?.Item != null)
+            row.gameObject.SetActive(true);
+    }
+
+    int GetBoundRowCount() =>
+        _aggregateDisplayMode ? _orderedGroups.Count : _orderedStacks.Count;
 
     void LayoutRow(UIItemListRow row, int index)
     {
@@ -446,7 +555,7 @@ public sealed class UIItemListView : MonoBehaviour
     public void SelectRowsInRect(Rect screenRect, Camera uiCamera = null)
     {
         _selectionScratch.Clear();
-        if (_contentRoot == null || _orderedStacks.Count == 0)
+        if (_contentRoot == null || GetBoundRowCount() == 0)
         {
             _selection.SetMany(_selectionScratch);
             return;
@@ -461,7 +570,7 @@ public sealed class UIItemListView : MonoBehaviour
         float topPad = InventoryListColumnLayout.ContentPaddingTopWithStickyHeader;
         float rowHeight = InventoryListColumnLayout.RowHeight;
         float stride = GetRowStride();
-        int n = _orderedStacks.Count;
+        int n = GetBoundRowCount();
 
         int first = Mathf.FloorToInt((yMin - topPad) / stride);
         int last = Mathf.FloorToInt((yMax - topPad) / stride);
@@ -476,7 +585,7 @@ public sealed class UIItemListView : MonoBehaviour
 
         for (int i = first; i <= last; i++)
         {
-            ItemStack stack = _orderedStacks[i];
+            ItemStack stack = TryGetSelectableStackAt(i);
             if (stack == null)
                 continue;
 
@@ -584,6 +693,8 @@ public sealed class UIItemListView : MonoBehaviour
         _activeRows.Clear();
         _rowByIndex.Clear();
         _orderedStacks.Clear();
+        _orderedGroups.Clear();
+        _aggregateDisplayMode = false;
         _boundContainer = null;
         _appliedContentVersion = -1;
 
@@ -594,5 +705,15 @@ public sealed class UIItemListView : MonoBehaviour
                 + InventoryListColumnLayout.ContentPadding;
             _contentRoot.sizeDelta = size;
         }
+    }
+
+    ItemStack TryGetSelectableStackAt(int index)
+    {
+        if (_aggregateDisplayMode)
+            return index >= 0 && index < _orderedGroups.Count
+                ? _orderedGroups[index]?.RepresentativeStack
+                : null;
+
+        return index >= 0 && index < _orderedStacks.Count ? _orderedStacks[index] : null;
     }
 }

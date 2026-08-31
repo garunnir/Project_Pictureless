@@ -59,15 +59,15 @@
 
   - `PlayerOnly`: 플레이어 컨테이너(`player-body`) 단일 리스트. 중첩 가방 탭 **또는 착용 storage 포켓**이 있으면 사이드바 표시, 없으면 숨김. 착용 포켓 SSOT: `WornPocketRules` + `EquipmentWearState` (`docs/equipment/GEAR.md` Phase B).
 
-  - `NearbyOnly`: `NearbyContainerDetector`가 등록한 주변 컨테이너 전체를 사이드탭으로 표시 (플레이어 제외). `TrackLootContainer` 없음 — 반경 스캔만 사용. 바닥 `floor-loot` 안 휴대 컨테이너(Nested)는 Detector가 managed 월드 루트로 promote하고, 사이드바 탭은 PlayerOnly body 유도와 같이 floor 스택에서 유도한다.
+  - `NearbyOnly`: `NearbyContainerDetector`가 등록한 주변 컨테이너 전체를 사이드탭으로 표시 (플레이어 제외). `TrackLootContainer` 없음 — 반경 스캔만 사용. **합산 탭** (`loot-aggregate`, `LootAggregateHost`): 사이드바 **맨 위(index 0)** — 포착된 모든 루팅 소스의 물리 스택 참조를 한 리스트로 표시(UI는 `IItemStackDisplayEquivalence`로 동일 키 행 묶기). Session `TryAddSidebarContainer`에 등록하지 않음 — `GetSidebarContainersForMode`가 index 0에 주입. 선택 시 `LootProximityCoordinator` 생략 → `SetActiveContainer`만. **집어넣기(drop in) 불가** — 가상 보기·꺼내기 전용(S5 DnD 가드). `floor-loot` 및 그 중첩 탭은 사이드바 **맨 아래** 그룹. 바닥 안 휴대 컨테이너(Nested)는 Detector가 managed 월드 루트로 promote하고, 사이드바 탭은 PlayerOnly body 유도와 같이 floor 스택에서 유도한다.
   - 살아 있는 캐릭터 몸 인벤(`player-body` / `character-body-*`)은 Nearby에 넣지 않는다. possessed는 id 스킵, 그 외는 `PlayerInventoryHost.IsAvailableToPlayer`가 자기 몸만 true. **쓰러진·고통 쇼크 NPC 루팅**은 `IsDefeated || IsPainShocked`일 때 그 게이트를 열어 몸 컨테이너를 Nearby 탭으로 쓴다.
   - 감지 SSOT: 컨테이너 후보 판정은 `InventoryContainerRegistry` provider 목록 + `CharacterState.ResolveGridCell`(WorldGrid 기준) 단일 경로를 사용한다. `ContainerGridRegistry`는 Nearby 판단 경로에서 사용하지 않는다.
 
 - 월드 컨테이너 표현은 **TilePresentationSystem** 단일 진입점 → `TileViewPresentationApplier`. UI는 Applier를 직접 호출하지 않는다.
 - 루팅 파이프라인: `NearbyContainerDetector` → `LootProximityCoordinator` 이벤트 → `{ TilePresentationSystem, UIInventoryController }` 각각 구독. 컨테이너 TileView는 `EmphasisBlend`(살짝 밝게).
 - `NearbyOnly`: 사이드탭이 없으면 아이템 리스트도 비움. 활성 탭 1개만 월드 하이라이트.
-- 사이드탭 표현: `Normal` / `Selected` / `Dragging`. 중첩 가방 탭은 드래그 소스(컨테이너째), 고정 컨테이너 탭(`player-body` / `floor-loot` / 월드)은 내용물 전체 드래그(스택 순차 이동, 중량·부피 초과 시 중단). 모든 탭은 드롭 타겟.
-- Transfer duration: `InventoryTransferDuration` SSOT — MoveStacks / 퀵이동 / 창밖 투하 / 가방→Gear 인출에 적용 (`InventoryTimedMoveHost`). 소스 `draw_moves`→초(`CombatMath.MovesPerSecond`) **+** weight/volume/nest handling (storage-ml 가산 없음). **다중 스택은 합산 없이 순차**(스택마다 개별 딜레이→이동). 가방 중량 SSOT=`ItemStack.TotalWeight`(Nested 내용물 포함; `TotalVolume`은 외형만). **진행 UI**: `ItemTimedNameProgress` → 리스트 행·중첩가방 탭 Name stretch fill(idle=내구도, busy=로딩; Gear Wear/Wield·HandWork act도 동일). `Dist/MCP/Inventory/Patch Row Name Status Bar`. 상세: [`docs/equipment/GEAR.md`](../equipment/GEAR.md).
+- 사이드탭 표현: `Normal` / `Selected` / `Dragging`. 중첩 가방 탭은 드래그 소스(컨테이너째), 고정 컨테이너 탭(`player-body` / `floor-loot` / 월드)은 내용물 전체 드래그(스택 순차 이동, 중량·부피 초과 시 중단). **`loot-aggregate` 합산 탭은 드롭 타겟·내용물 드래그 모두 불가** — 행 DnD OUT은 `(owner, stack)` fan-out 후 `InventoryTimedMoveHost.TryBeginMultiSourceSequentialUntilFull`로 **물리 스택 1개씩** 순차 이동(소스 컨테이너가 달라도 동일 큐). 나머지 탭은 드롭 타겟.
+- Transfer duration: `InventoryTransferDuration` SSOT — MoveStacks / 퀵이동 / 창밖 투하 / 가방→Gear 인출에 적용 (`InventoryTimedMoveHost`). 소스 `draw_moves`→초(`CombatMath.MovesPerSecond`) **+** weight/volume/nest handling (storage-ml 가산 없음). **분할 가능 스택은 개수 1단위·물리 스택 단위로 큐에 넣어 순차**(각각 개별 딜레이→`MoveStackCount`). Nested·탄창 부착은 통째 이동. 가방 중량 SSOT=`ItemStack.TotalWeight`(Nested 내용물 포함; `TotalVolume`은 외형만). **진행 UI**: `ItemTimedNameProgress` → 리스트 행·중첩가방 탭 Name stretch fill(idle=내구도, busy=로딩; Gear Wear/Wield·HandWork act도 동일). `Dist/MCP/Inventory/Patch Row Name Status Bar`. 상세: [`docs/equipment/GEAR.md`](../equipment/GEAR.md).
 - 섭취 손 파이프: `CharacterHandWork` — Unwield(든 것→body) → Wield(대상) → `ConsumeDuration` mealtime. ESC는 현재 단계까지(롤백 없음).
 - 착용 포켓 탭: Wear 변경 시 `InventorySession.NotifySidebarLayoutChanged`로 사이드바 Sync. 착용 포켓은 고정 탭(컨테이너째 드래그 아님); 아이콘은 착용 아이템.
 - `Area_List`·`Area_Sidebar`(`SlotRoot`)는 세로 스크롤바(`Scrollbar_Vertical`, AutoHideAndExpandViewport)를 프리팹에 내장한다. 창 전체 rebake 금지 — `Dist/MCP/Inventory/Patch Window Scrollbars`로만 패치 (`Area_InvInfo` 보존). 사이드바는 `InventorySidebarScrollRect`(탭 DnD 중 스크롤 드래그 무시); 사이드바 Viewport에는 `InventoryScrollDragHandler` 없음.
@@ -83,7 +83,8 @@
 
 - 사이드탭 클릭 시 해당 컨테이너 아이템 리스트로 즉시 전환.
 - **창 선택 SSOT:** `UIInventoryListWindow.SelectedContainer` — 활성 탭 하이라이트와 리스트 `Bind`는 `SetActiveContainer` 단일 경로로만 갱신한다. 사이드바/리스트 단독 갱신 금지.
-- **루팅 월드 SSOT:** `LootProximityCoordinator` — `NearbyOnly` 탭 클릭은 coordinator 경유 후 `ApplyActiveLootContainer` → `SetActiveContainer`로 창에 반영한다.
+- **루팅 월드 SSOT:** `LootProximityCoordinator` — 월드 컨테이너 하이라이트·감지 목록 SSOT. `NearbyOnly` 사이드탭 클릭은 **`SetActiveContainer` 직행**(창 선택 SSOT); 비합산 탭은 부가로 `RequestActiveContainer`로 월드 하이라이트만 동기화(coordinator가 이미 동일 id면 이벤트 없어도 창은 전환됨). **`loot-aggregate` 합산 탭**은 coordinator 미사용. 루팅창 기본 선택은 루팅 소스가 있으면 합산 탭 우선.
+- **스택 수량:** 런타임 `MaxStack` 상한 없음 — 동일 `ItemMergeKey`는 컨테이너당 스택 1개·Count 무제한(용량은 weight/volume policy만). UI 표시 묶기도 MaxStack 미사용(`IItemStackDisplayEquivalence`).
 
 
 
@@ -107,7 +108,7 @@
 
 | `Grp_ItemListRow` | 아이템 행 (LeanPool). 컬럼: Icon | Category | Name(flex) | Count | WeightValue | WeightUnit(kg) | VolumeValue | VolumeUnit(L). 폭 SSOT: `InventoryListColumnLayout`. |
 
-| `Grp_ContainerSlot` | 사이드바 컨테이너 슬롯 — 아이콘 SSOT는 `ContainerVisualPresenter` (월드 타일 thumbnail → provider SpriteRenderer → 중첩 가방은 item icon, `floor-loot`는 숨김) |
+| `Grp_ContainerSlot` | 사이드바 컨테이너 슬롯 — 아이콘 SSOT는 `ContainerVisualPresenter` (월드 타일 thumbnail → provider SpriteRenderer → 중첩 가방은 item icon; `floor-loot`·`loot-aggregate` 가상 탭은 아이콘 숨김·라벨은 Definition/Loc) |
 
 | `Grp_InventoryDragGhost` | 드래그 고스트 비주얼 (`UIInventoryDragGhost`). 소유: Canvas `UIItemDragGhostService` → 런타임 TopMost. `Setup Canvas Overlays In Open Scene` |
 

@@ -107,19 +107,13 @@ public sealed class InventoryContainer : IItemContainer
             if (!ItemMergePolicy.CanMerge(existing, item, incomingDamage, cooked, hot))
                 continue;
 
-            int space = item.MaxStack - existing.Count;
-            if (space <= 0)
-                continue;
-
-            int merged = Math.Min(space, remaining);
-            existing.SetCount(existing.Count + merged);
-            remaining -= merged;
+            existing.SetCount(existing.Count + remaining);
+            remaining = 0;
         }
 
-        while (remaining > 0)
+        if (remaining > 0)
         {
-            int chunk = Math.Min(item.MaxStack, remaining);
-            var stack = new ItemStack(item, chunk, incomingDamage);
+            var stack = new ItemStack(item, remaining, incomingDamage);
             if (cooked)
                 stack.Instance.StampCooked(true);
             if (hot)
@@ -129,7 +123,6 @@ public sealed class InventoryContainer : IItemContainer
             }
 
             _stacks.Add(stack);
-            remaining -= chunk;
         }
 
         NotifyContentsChanged();

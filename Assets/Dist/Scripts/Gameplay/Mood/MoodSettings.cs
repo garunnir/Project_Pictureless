@@ -51,6 +51,10 @@ public sealed class MoodSettings : ScriptableObject
     public const int DefaultAteHotMealMinutes = 60;
     public const int DefaultMemoryStackLimit = 1;
 
+    /// <summary>에디터 Ensure·Reset용. 런타임 병합은 EnsureCatalogRows.</summary>
+    public static MoodSettings.ThoughtRow[] CreateDefaultThoughtRows() =>
+        MoodThoughtDefaults.CreateDefaultThoughtRows();
+
     [Serializable]
     public sealed class ThoughtRow
     {
@@ -110,61 +114,45 @@ public sealed class MoodSettings : ScriptableObject
 
     void OnEnable() => EnsureThoughts();
 
-    void Reset() => _thoughts = CreateDefaultThoughts();
+    void Reset() => _thoughts = CreateDefaultThoughtRows();
+
+    /// <summary>카탈로그에 있지만 _thoughts에 없는 ThoughtId 행을 추가한다.</summary>
+    public void EnsureCatalogRows()
+    {
+        if (_thoughts == null || _thoughts.Length == 0)
+        {
+            _thoughts = CreateDefaultThoughtRows();
+            return;
+        }
+
+        var existing = new System.Collections.Generic.HashSet<ThoughtId>();
+        for (int i = 0; i < _thoughts.Length; i++)
+        {
+            ThoughtRow row = _thoughts[i];
+            if (row == null)
+                continue;
+            existing.Add(row.id);
+        }
+
+        var list = new System.Collections.Generic.List<ThoughtRow>(_thoughts);
+        MoodThoughtDefaults.Row[] catalog = MoodThoughtDefaults.Catalog;
+        for (int i = 0; i < catalog.Length; i++)
+        {
+            MoodThoughtDefaults.Row def = catalog[i];
+            if (existing.Contains(def.Id))
+                continue;
+            list.Add(def.ToThoughtRow());
+        }
+
+        if (list.Count != _thoughts.Length)
+            _thoughts = list.ToArray();
+    }
 
     void EnsureThoughts()
     {
         if (_thoughts != null && _thoughts.Length > 0)
             return;
 
-        _thoughts = CreateDefaultThoughts();
-    }
-
-    static ThoughtRow[] CreateDefaultThoughts()
-    {
-        return new[]
-        {
-            Situational(ThoughtId.Pain, DefaultPainOffset),
-            Situational(ThoughtId.SeverePain, DefaultSeverePainOffset),
-            Situational(ThoughtId.Hungry, DefaultHungryOffset),
-            Situational(ThoughtId.VeryHungry, DefaultVeryHungryOffset),
-            Situational(ThoughtId.Thirsty, DefaultThirstyOffset),
-            Situational(ThoughtId.VeryThirsty, DefaultVeryThirstyOffset),
-            Situational(ThoughtId.TooCold, DefaultTooColdOffset),
-            Situational(ThoughtId.TooHot, DefaultTooHotOffset),
-            Situational(ThoughtId.Hypothermia, DefaultHypothermiaOffset),
-            Situational(ThoughtId.Bleed, DefaultBleedOffset),
-            Situational(ThoughtId.Overencumbered, DefaultOverencumberedOffset),
-            Memory(ThoughtId.AteMeal, DefaultAteMealOffset, DefaultAteMealMinutes),
-            Memory(ThoughtId.Vomited, DefaultVomitedOffset, DefaultVomitedMinutes),
-            Memory(ThoughtId.AteRotten, DefaultAteRottenOffset, DefaultAteRottenMinutes),
-            Memory(ThoughtId.Catharsis, DefaultCatharsisOffset, DefaultCatharsisMinutes),
-            Memory(ThoughtId.Crafted, DefaultCraftedOffset, DefaultCraftedMinutes),
-            Memory(ThoughtId.AteHotMeal, DefaultAteHotMealOffset, DefaultAteHotMealMinutes)
-        };
-    }
-
-    static ThoughtRow Situational(ThoughtId id, int offset)
-    {
-        return new ThoughtRow
-        {
-            id = id,
-            kind = MoodThoughtKind.Situational,
-            offset = offset,
-            durationMinutes = 0,
-            stackLimit = 1
-        };
-    }
-
-    static ThoughtRow Memory(ThoughtId id, int offset, int minutes)
-    {
-        return new ThoughtRow
-        {
-            id = id,
-            kind = MoodThoughtKind.Memory,
-            offset = offset,
-            durationMinutes = minutes,
-            stackLimit = DefaultMemoryStackLimit
-        };
+        _thoughts = CreateDefaultThoughtRows();
     }
 }

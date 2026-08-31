@@ -24,6 +24,9 @@ public sealed class UIContainerSlotDropZone : MonoBehaviour,
         if (_window == null || _slot == null)
             return;
 
+        if (LootAggregateHost.IsAggregateContainer(_slot.Container))
+            return;
+
         if (!InventoryDragDrop.TryApplyTo(_window.Session, _slot.Container))
             return;
 
@@ -33,6 +36,9 @@ public sealed class UIContainerSlotDropZone : MonoBehaviour,
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (!InventoryDragState.IsDragging || _slot == null)
+            return;
+
+        if (LootAggregateHost.IsAggregateContainer(_slot.Container))
             return;
 
         _slot.SetDropHover(true);

@@ -15,6 +15,7 @@
 
 * **UniTask** — mandatory for new async logic
 * **Odin Inspector** — UI/Inspector attributes only; no `OdinSerializer`
+* **CustomEditor** — inherit `OdinEditor`, call `base.OnInspectorGUI()`. Field layout/labels/foldouts live on the SO via Odin attrs (`FoldoutGroup`, `LabelText`, …). Do **not** re-draw the full inspector with raw `EditorGUILayout`/`PropertyField`; add only what Odin cannot do (e.g. `CharacterAlignmentDrawer`). See [`character/DEFINITION.md`](character/DEFINITION.md) § Editor.
 * **Input System** (`com.unity.inputsystem`)
 
 ## Assembly & Namespace
