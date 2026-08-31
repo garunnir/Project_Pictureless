@@ -314,6 +314,22 @@
       "MaxVolume": 9999.0
     },
     {
+      "id": "unconscious_body",
+      "name": "기절",
+      "max_weight": 50.0,
+      "max_volume": 30.0,
+      "MaxWeight": 50.0,
+      "MaxVolume": 30.0
+    },
+    {
+      "id": "dead_body",
+      "name": "사체",
+      "max_weight": 50.0,
+      "max_volume": 30.0,
+      "MaxWeight": 50.0,
+      "MaxVolume": 30.0
+    },
+    {
       "id": "crate",
       "name": "상자",
       "max_weight": 100.0,

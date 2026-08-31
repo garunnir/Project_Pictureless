@@ -15,6 +15,10 @@ MonoBehaviour:
   _defaultIcon: {fileID: 21300000, guid: 4665108ec7af85c45aeb94f905a7b746, type: 3}
   _entries:
   - ContainerId: floor_loot
-    Icon: {fileID: 0}
+    Icon: {fileID: 21300000, guid: ecb5e0a162da168499d65c3f9587b5b3, type: 3}
   - ContainerId: loot_aggregate
-    Icon: {fileID: 0}
+    Icon: {fileID: 21300000, guid: acadfaf8960559f4d858a4fe1abcd15a, type: 3}
+  - ContainerId: unconscious_body
+    Icon: {fileID: 21300000, guid: a048a8d91f353e94ea3ae541a8847d3f, type: 3}
+  - ContainerId: dead_body
+    Icon: {fileID: 21300000, guid: c8a6767203181ab44abbf9170be1da11, type: 3}

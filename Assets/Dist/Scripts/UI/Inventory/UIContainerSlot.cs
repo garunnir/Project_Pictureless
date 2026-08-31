@@ -120,11 +120,10 @@ public sealed class UIContainerSlot : MonoBehaviour,
         }
 
         gameObject.SetActive(true);
-        ContainerData def = container.Definition;
 
         EnsureNameBar();
         if (_label != null)
-            _label.text = UITextPresenter.GetContainerName(def);
+            _label.text = ContainerVisualPresenter.GetDisplayLabel(container);
 
         if (_iconImage != null)
         {

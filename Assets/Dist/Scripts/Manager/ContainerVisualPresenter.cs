@@ -22,6 +22,9 @@ public static class ContainerVisualPresenter
         if (LootAggregateHost.IsAggregateContainer(container))
             return ResolveCatalogIcon(LootAggregateHost.DefaultContainerDefId);
 
+        if (TryResolveBodyLootIcon(container, out Sprite bodyLootIcon))
+            return bodyLootIcon;
+
         if (ContainerTileViewRegistry.Instance.TryGetViewByContainerInstanceId(
                 container.InstanceId,
                 out TileView tileView))
@@ -78,7 +81,67 @@ public static class ContainerVisualPresenter
         if (container?.Definition == null)
             return string.Empty;
 
+        if (TryResolveBodyLootLabel(container, out string bodyLootLabel))
+            return bodyLootLabel;
+
         return UITextPresenter.GetContainerName(container.Definition);
+    }
+
+    static bool TryResolveBodyLootIcon(InventoryContainer container, out Sprite icon)
+    {
+        icon = null;
+        if (!TryGetBodyLootHost(container, out PlayerInventoryHost host))
+            return false;
+
+        BodyLootDisplayKind kind = host.GetBodyLootDisplayKind();
+        if (kind == BodyLootDisplayKind.None)
+            return false;
+
+        icon = ResolveCatalogIcon(host.ResolveBodyLootContainerDefId());
+        if (icon != null)
+            return true;
+
+        if (host.TryGetComponent(out CharacterAppearanceHost appearance) &&
+            appearance.PortraitSprite != null)
+        {
+            icon = appearance.PortraitSprite;
+            return true;
+        }
+
+        return false;
+    }
+
+    static bool TryResolveBodyLootLabel(InventoryContainer container, out string label)
+    {
+        label = null;
+        if (!TryGetBodyLootHost(container, out PlayerInventoryHost host))
+            return false;
+
+        if (host.GetBodyLootDisplayKind() == BodyLootDisplayKind.None)
+            return false;
+
+        label = host.ResolveBodyLootDisplayName();
+        return !string.IsNullOrEmpty(label);
+    }
+
+    static bool TryGetBodyLootHost(InventoryContainer container, out PlayerInventoryHost host)
+    {
+        host = null;
+        if (container == null ||
+            !PlayerInventoryHost.IsNpcBodyInstanceId(container.InstanceId))
+        {
+            return false;
+        }
+
+        if (!InventoryContainerRegistry.TryGetProviderByInstanceId(
+                container.InstanceId,
+                out IInventoryContainerProvider provider))
+        {
+            return false;
+        }
+
+        host = provider as PlayerInventoryHost;
+        return host != null;
     }
 
     static Sprite ResolveTileViewSprite(TileView tileView)
