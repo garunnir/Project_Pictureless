@@ -9,9 +9,10 @@ public static class CharacterFactory
     public static GameObject Instantiate(
         CharacterDefinition definition,
         Vector3 position,
-        Transform parent = null)
+        Transform parent = null,
+        bool useGameplayDataOwner = false)
     {
-        GameObject instance = InstantiateInactive(definition, position, parent);
+        GameObject instance = InstantiateInactive(definition, position, parent, useGameplayDataOwner);
         if (instance == null)
             return null;
 
@@ -22,7 +23,8 @@ public static class CharacterFactory
     public static GameObject InstantiateInactive(
         CharacterDefinition definition,
         Vector3 position,
-        Transform parent = null)
+        Transform parent = null,
+        bool useGameplayDataOwner = false)
     {
         if (definition == null)
         {
@@ -48,6 +50,9 @@ public static class CharacterFactory
 
         if (instance == null)
             return null;
+
+        if (useGameplayDataOwner)
+            CharacterGameplayDataConfigurator.ConfigureAsGameplayDataOwner(instance);
 
         CharacterDefinitionBinder binder = instance.GetComponent<CharacterDefinitionBinder>();
         if (binder == null)

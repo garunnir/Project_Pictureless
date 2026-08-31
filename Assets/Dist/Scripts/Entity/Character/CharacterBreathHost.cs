@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterBreathHost — Oxygen01·DIVE_TANK 차지·익사 다운
+// CharacterBreathHost — BloodOxygen01·합산 O2·DIVE_TANK
 // ============================================================
 
 using System;
@@ -15,12 +15,9 @@ public sealed class CharacterBreathHost : MonoBehaviour
     CharacterBodyHost _bodyHost;
     CharacterPainHost _pain;
     ItemStack _activeTank;
-    float _oxygen01 = 1f;
+    float _o2SecondsRemaining = -1f;
     float _tankChargeAccum;
-    bool _asphyxiaDowned;
 
-    public float Oxygen01 => _oxygen01;
-    public bool IsAsphyxiaDowned => _asphyxiaDowned;
     public bool IsDiveTankActive => _activeTank?.Instance != null
         && _activeTank.Instance.ToolCharges > 0
         && DiveTankService.IsDiveTankItem(_activeTank.Item);
@@ -41,31 +38,34 @@ public sealed class CharacterBreathHost : MonoBehaviour
         ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
         if (body == null || body.IsDeadState)
         {
-            _oxygen01 = 1f;
-            SetAsphyxia(false);
+            ResetO2Runtime(body);
             return;
         }
 
-        bool diving = immersion.Mode == MapSwimMode.Dive;
-        if (diving && IsDiveTankActive)
+        float maxSeconds = ComputeMaxO2Seconds(body);
+        if (maxSeconds <= 0f)
+            maxSeconds = MapSwimConsts.BaseBreathHoldSeconds;
+
+        if (_o2SecondsRemaining < 0f)
+            _o2SecondsRemaining = maxSeconds;
+        else if (_o2SecondsRemaining > maxSeconds)
+            _o2SecondsRemaining = maxSeconds;
+
+        float lungEff = BodyCapacity.LungEff(body);
+        if (immersion.HeadSubmerged)
         {
-            _oxygen01 = 1f;
-            TickTankCharges(dt);
-        }
-        else if (diving)
-        {
-            _oxygen01 = Mathf.Max(0f, _oxygen01 - MapSwimConsts.BreathHoldDrainPerSecond * dt);
+            _o2SecondsRemaining = Mathf.Max(0f, _o2SecondsRemaining - dt);
+            if (IsDiveTankActive)
+                TickTankCharges(dt);
         }
         else
         {
-            _oxygen01 = Mathf.Min(1f, _oxygen01 + MapSwimConsts.OxygenRecoverPerSecond * dt);
+            _o2SecondsRemaining = Mathf.Min(
+                maxSeconds,
+                _o2SecondsRemaining + MapSwimConsts.BloodOxygenRecoverPerSecond * lungEff * dt);
         }
 
-        if (_oxygen01 <= MapSwimConsts.OxygenAsphyxiaThreshold && diving)
-            SetAsphyxia(true);
-        else if (_oxygen01 >= MapSwimConsts.OxygenRecoverWakeThreshold)
-            SetAsphyxia(false);
-
+        body.SetBloodOxygen01(_o2SecondsRemaining / maxSeconds);
         Changed?.Invoke();
         _pain?.Refresh();
     }
@@ -75,9 +75,12 @@ public sealed class CharacterBreathHost : MonoBehaviour
         if (!DiveTankService.IsDiveTankItem(stack?.Item))
             return false;
 
+        ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
+
         if (_activeTank == stack)
         {
             _activeTank = null;
+            SyncO2ToMax(body);
             Changed?.Invoke();
             return true;
         }
@@ -85,7 +88,18 @@ public sealed class CharacterBreathHost : MonoBehaviour
         if (stack.Instance == null || stack.Instance.ToolCharges <= 0)
             return false;
 
+        float oldMax = body != null ? ComputeMaxO2Seconds(body) : 0f;
         _activeTank = stack;
+        if (body != null)
+        {
+            float newMax = ComputeMaxO2Seconds(body);
+            if (_o2SecondsRemaining < 0f)
+                _o2SecondsRemaining = newMax;
+            else
+                _o2SecondsRemaining = Mathf.Min(newMax, _o2SecondsRemaining + Mathf.Max(0f, newMax - oldMax));
+            body.SetBloodOxygen01(_o2SecondsRemaining / newMax);
+        }
+
         Changed?.Invoke();
         return true;
     }
@@ -94,12 +108,52 @@ public sealed class CharacterBreathHost : MonoBehaviour
     {
         if (_activeTank == null)
             return;
+
+        ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
         _activeTank = null;
+        SyncO2ToMax(body);
         Changed?.Invoke();
     }
 
     public bool IsActiveTank(ItemStack stack) =>
         stack != null && _activeTank == stack;
+
+    float ComputeMaxO2Seconds(ICharacterBody body)
+    {
+        if (body == null)
+            return MapSwimConsts.BaseBreathHoldSeconds;
+
+        float internalMax = MapSwimConsts.BaseBreathHoldSeconds * BodyCapacity.LungEff(body);
+        float tankMax = 0f;
+        if (IsDiveTankActive && _activeTank.Instance != null)
+            tankMax = _activeTank.Instance.ToolCharges * MapSwimConsts.DiveTankSecondsPerCharge;
+
+        return internalMax + tankMax;
+    }
+
+    void SyncO2ToMax(ICharacterBody body)
+    {
+        if (body == null)
+        {
+            _o2SecondsRemaining = -1f;
+            return;
+        }
+
+        float maxSeconds = ComputeMaxO2Seconds(body);
+        if (maxSeconds <= 0f)
+            maxSeconds = MapSwimConsts.BaseBreathHoldSeconds;
+
+        if (_o2SecondsRemaining < 0f || _o2SecondsRemaining > maxSeconds)
+            _o2SecondsRemaining = maxSeconds;
+
+        body.SetBloodOxygen01(_o2SecondsRemaining / maxSeconds);
+    }
+
+    void ResetO2Runtime(ICharacterBody body)
+    {
+        _o2SecondsRemaining = -1f;
+        body?.SetBloodOxygen01(1f);
+    }
 
     void TickTankCharges(float dt)
     {
@@ -107,21 +161,23 @@ public sealed class CharacterBreathHost : MonoBehaviour
             return;
 
         _tankChargeAccum += dt;
+        ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
         while (_tankChargeAccum >= MapSwimConsts.DiveTankChargeIntervalSeconds)
         {
             _tankChargeAccum -= MapSwimConsts.DiveTankChargeIntervalSeconds;
             if (!_activeTank.Instance.TryConsumeToolCharges(MapSwimConsts.DiveTankChargePerInterval))
             {
                 _activeTank = null;
+                SyncO2ToMax(body);
                 break;
             }
-        }
-    }
 
-    void SetAsphyxia(bool downed)
-    {
-        if (_asphyxiaDowned == downed)
-            return;
-        _asphyxiaDowned = downed;
+            if (body != null && _o2SecondsRemaining > 0f)
+            {
+                float maxSeconds = ComputeMaxO2Seconds(body);
+                if (maxSeconds > 0f)
+                    body.SetBloodOxygen01(_o2SecondsRemaining / maxSeconds);
+            }
+        }
     }
 }

@@ -18,7 +18,7 @@ namespace IsoTilemap
         public const float SwimSpeedFactor = 0.55f;
         public const float DiveSpeedFactor = 0.45f;
 
-        /// <summary>잠수 수직 속도 (m/s).</summary>
+        /// <summary>수직 상승·하강·응급 상승 공용 (m/s).</summary>
         public const float DiveVerticalSpeed = 2.2f;
 
         /// <summary>머리 셀 Fill01 이상이면 자동 Dive(머리 잠김).</summary>
@@ -27,15 +27,19 @@ namespace IsoTilemap
         /// <summary>발→머리 오프셋 (월드 m). 셀 크기와 무관한 대략치.</summary>
         public const float HeadHeightWorld = 1.6f;
 
-        public const float OxygenRecoverPerSecond = 0.35f;
-        public const float BreathHoldDrainPerSecond = 1f / 30f;
-        public const float OxygenAsphyxiaThreshold = 0f;
-        public const float OxygenRecoverWakeThreshold = 0.15f;
+        /// <summary>체내 O2 버퍼 (World 초, LungEff 곱).</summary>
+        public const float BaseBreathHoldSeconds = 30f;
 
-        /// <summary>활성 탱크가 Dive 중 차지를 소모하는 간격 (World 초).</summary>
+        /// <summary>머리 공기권 회복 rate (× LungEff).</summary>
+        public const float BloodOxygenRecoverPerSecond = 0.35f;
+
+        /// <summary>활성 탱크가 수중에서 차지를 소모하는 간격 (World 초).</summary>
         public const float DiveTankChargeIntervalSeconds = 60f;
 
         public const int DiveTankChargePerInterval = 1;
+
+        /// <summary>탱크 charge 1개당 합산 O2 풀 초.</summary>
+        public const float DiveTankSecondsPerCharge = DiveTankChargeIntervalSeconds;
 
         public const string DiveTankItemId = "dive_tank";
         public const string DiveTankUseActionType = "DIVE_TANK";

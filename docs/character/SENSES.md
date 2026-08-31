@@ -78,7 +78,7 @@ NPC가 이미 Vision 타깃이면 LoseRadius, 아니면 DetectRadius (`NpcManage
 - **튜닝:** `CharacterHearingPingSettings` (HiddenThreshold, MaxAlpha, Y offset, fade)
 - 적 **메시는 SightFade** — 핑은 **바닥 quad** (셀 중심, audibility × MaxAlpha)
 - 같은 셀 다수 적 → **max(audibility)** 1 quad
-- trait `omnivision` → 핑 없음 (`GameplayData.Traits.Has(TraitIds.Omnivision)`)
+- trait `omnivision` → 핑 없음 (`GameplayData.Traits.Has(TraitIds.Omnivision)` — possessed resolver 경유)
 
 ## 맵 바인딩
 
@@ -88,6 +88,12 @@ NPC가 이미 Vision 타깃이면 LoseRadius, 아니면 DetectRadius (`NpcManage
 ## 디버그
 
 `Tools/Character Runtime Debug` → Combat 탭 → **Senses** (Definition base / effective radii). 스킬 목록에 넣지 않음.
+
+Scene/Play 기즈모: `CharacterSenseGizmo` (NpcSample 등 본체 프리팹)
+- **시야 detect** — 하늘색 채움 부채꼴 (`CharacterSightFadeGizmoColors`)
+- **시야 lose** — 보라 외곽선 부채꼴 (detect보다 클 때만)
+- **청각** — 청록 반투명 구 (`CharacterSenseGizmoColors`)
+- Inspector: `Only When Selected`로 선택 시에만 표시 가능
 
 ## See also
 

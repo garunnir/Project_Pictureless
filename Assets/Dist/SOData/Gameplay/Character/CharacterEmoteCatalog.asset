@@ -45,11 +45,11 @@ MonoBehaviour:
     Sprite: {fileID: 21300000, guid: 480fbfab54fa6d0409ca87362a5f9b13, type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     ObserverOnly: 0
-  - Id: 0
+  - Id: 100
     Sprite: {fileID: 21300000, guid: dbf83740c894f0742a653063ba6d9b47, type: 3}
     Tint: {r: 1, g: 0.86, b: 0.15, a: 1}
     ObserverOnly: 1
-  - Id: 0
+  - Id: 101
     Sprite: {fileID: 21300000, guid: b182b009592141f4ea3ddffd7d406701, type: 3}
     Tint: {r: 0.95, g: 0.22, b: 0.18, a: 1}
     ObserverOnly: 1

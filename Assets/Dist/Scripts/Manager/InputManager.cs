@@ -19,6 +19,7 @@ public class InputManager : SceneSingleton<InputManager>
     InputAction _statusToggle;
     InputAction _stealthToggle;
     InputAction _diveHold;
+    InputAction _swimRiseHold;
     InputAction _combatCycle;
     InputAction _combatAttack;
 
@@ -49,6 +50,8 @@ public class InputManager : SceneSingleton<InputManager>
     public event Action<InputAction.CallbackContext> PlayerStealthTogglePerformed;
     public event Action<InputAction.CallbackContext> PlayerDivePerformed;
     public event Action<InputAction.CallbackContext> PlayerDiveCanceled;
+    public event Action<InputAction.CallbackContext> PlayerSwimRisePerformed;
+    public event Action<InputAction.CallbackContext> PlayerSwimRiseCanceled;
     public event Action<InputAction.CallbackContext> PlayerCombatCyclePerformed;
     public event Action<InputAction.CallbackContext> PlayerCombatAttackPerformed;
 
@@ -71,6 +74,9 @@ public class InputManager : SceneSingleton<InputManager>
         _diveHold = new InputAction("Dive", InputActionType.Button, "<Keyboard>/leftCtrl");
         _diveHold.performed += ForwardPlayerDivePerformed;
         _diveHold.canceled += ForwardPlayerDiveCanceled;
+        _swimRiseHold = new InputAction("SwimRise", InputActionType.Button, "<Keyboard>/space");
+        _swimRiseHold.performed += ForwardPlayerSwimRisePerformed;
+        _swimRiseHold.canceled += ForwardPlayerSwimRiseCanceled;
         _combatCycle = new InputAction("CombatCycle", InputActionType.Button, "<Keyboard>/q");
         _combatCycle.performed += ForwardPlayerCombatCyclePerformed;
         // 조준(RMB Hold) 중 LMB 시전. Interact는 E라 충돌 없음.
@@ -353,6 +359,19 @@ public class InputManager : SceneSingleton<InputManager>
         PlayerDiveCanceled?.Invoke(ctx);
     }
 
+    void ForwardPlayerSwimRisePerformed(InputAction.CallbackContext ctx)
+    {
+        if (!IsPlayerActionEnabled(PlayerAction.Move))
+            return;
+
+        PlayerSwimRisePerformed?.Invoke(ctx);
+    }
+
+    void ForwardPlayerSwimRiseCanceled(InputAction.CallbackContext ctx)
+    {
+        PlayerSwimRiseCanceled?.Invoke(ctx);
+    }
+
     void ForwardPlayerCombatCyclePerformed(InputAction.CallbackContext ctx)
     {
         if (IsGameplayBlocked)
@@ -455,6 +474,7 @@ public class InputManager : SceneSingleton<InputManager>
         _statusToggle?.Enable();
         _stealthToggle?.Enable();
         _diveHold?.Enable();
+        _swimRiseHold?.Enable();
         _combatCycle?.Enable();
         _combatAttack?.Enable();
     }
@@ -464,6 +484,7 @@ public class InputManager : SceneSingleton<InputManager>
         _statusToggle?.Disable();
         _stealthToggle?.Disable();
         _diveHold?.Disable();
+        _swimRiseHold?.Disable();
         _combatCycle?.Disable();
         _combatAttack?.Disable();
     }
@@ -480,6 +501,14 @@ public class InputManager : SceneSingleton<InputManager>
             _diveHold.Disable();
             _diveHold.Dispose();
             _diveHold = null;
+        }
+        if (_swimRiseHold != null)
+        {
+            _swimRiseHold.performed -= ForwardPlayerSwimRisePerformed;
+            _swimRiseHold.canceled -= ForwardPlayerSwimRiseCanceled;
+            _swimRiseHold.Disable();
+            _swimRiseHold.Dispose();
+            _swimRiseHold = null;
         }
         DisposeRuntimeAction(ref _combatCycle, ForwardPlayerCombatCyclePerformed);
         DisposeRuntimeAction(ref _combatAttack, ForwardPlayerCombatAttackPerformed);

@@ -34,6 +34,7 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
     CatalogRecipeBrowser _recipesReference;
     CatalogRecipeBrowser _recipesCustom;
     CatalogLocaleHub _localeHub;
+    CatalogTraitBrowser _traitBrowser;
 
     [MenuItem("Tools/Data Definitions")]
     static void Open()
@@ -59,6 +60,7 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
         _recipesReference ??= new CatalogRecipeBrowser(CatalogSource.Reference);
         _recipesCustom ??= new CatalogRecipeBrowser(CatalogSource.Custom);
         _localeHub ??= new CatalogLocaleHub();
+        _traitBrowser ??= new CatalogTraitBrowser();
     }
 
     protected override OdinMenuTree BuildMenuTree()
@@ -89,6 +91,7 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
         AddTypedAssets(tree, "Characters/Factions", CharacterFolder, typeof(CharacterFaction), false, EditorIcons.Flag);
         AddAssetLeaf(tree, "Characters/Faction Catalog", CharacterFactionCatalog.DefaultAssetPath, EditorIcons.Tag);
         AddAssetLeaf(tree, "Characters/Emote Catalog", CharacterEmoteCatalog.DefaultAssetPath, EditorIcons.SpeechBubbleSquare);
+        AddLeaf(tree, "Characters/Trait Icons", _traitBrowser, EditorIcons.StarPointer, new Color(0.85f, 0.55f, 1f));
         StyleSubtree(characters, CharactersTint);
 
         OdinMenuItem world = AddRoot(
@@ -342,6 +345,8 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
             return "하위 leaf를 선택하세요";
         if (selected is CatalogLocaleHub)
             return "Item Names · Locale";
+        if (selected is CatalogTraitBrowser)
+            return "Trait Icons";
         if (selected is CharacterDefinitionCreateAction)
             return "Create Definition";
         return selected != null ? selected.GetType().Name : "—";
@@ -366,7 +371,8 @@ public sealed class DataDefinitionsWindow : OdinMenuEditorWindow
         if (selected is CatalogItemBrowser || selected is CatalogRecipeBrowser || selected is CatalogLocaleHub)
             return "Catalog";
         if (selected is CharacterDefinition || selected is CharacterFaction || selected is CharacterFactionCatalog
-            || selected is CharacterEmoteCatalog || selected is CharacterDefinitionCreateAction)
+            || selected is CharacterEmoteCatalog || selected is CharacterDefinitionCreateAction
+            || selected is CatalogTraitBrowser || selected is TraitIconCatalog)
             return "Characters";
         if (selected is WorldClockSettings || selected is WorldWeatherSettings
             || selected is PlayerNeedsSettings || selected is MoodSettings)

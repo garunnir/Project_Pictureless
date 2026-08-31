@@ -59,7 +59,11 @@ public sealed class CharacterSpawner : MonoBehaviour
                 ? worldGrid.CellToWorld(cell)
                 : TileHelper.ConvertGridToWorldPos(cell, _editorGizmoCellSize);
 
-            GameObject instance = CharacterFactory.InstantiateInactive(entry.definition, world, parent);
+            GameObject instance = CharacterFactory.InstantiateInactive(
+                entry.definition,
+                world,
+                parent,
+                useGameplayDataOwner: entry.role == CharacterSpawnRole.Possessed);
             if (instance == null)
                 continue;
 

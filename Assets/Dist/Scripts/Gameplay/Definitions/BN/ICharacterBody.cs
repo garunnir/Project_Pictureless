@@ -54,11 +54,13 @@ namespace Garunnir.Runtime.Gameplay.Data
         bool IsDeadState { get; }
 
         float Blood01 { get; }
+        float BloodOxygen01 { get; }
         float Toxin01 { get; }
         float InfectionProgress01 { get; }
         float InfectionImmunity01 { get; }
 
         void SetBlood01(float value);
+        void SetBloodOxygen01(float value);
         void SetToxin01(float value);
         void SetInfectionProgress01(float value);
         void SetInfectionImmunity01(float value);

@@ -14,7 +14,7 @@ class TextureImportRules : AssetPostprocessor {
     ti.isReadable = false;
 
     // 픽셀아트 감지: 경로/이름에 "Pixel" 포함 시
-    bool isPixel = assetPath.Contains("/Pixel/") || assetPath.ToLower().Contains("_px_");
+    bool isPixel = assetPath.Contains("/Pixel/") || assetPath.ToLower().Contains("_px_") || assetPath.ToLower().Contains("Sprites");
     bool isSingle= assetPath.Contains("/Single/");
     ti.spriteImportMode = isSingle? SpriteImportMode.Single : SpriteImportMode.Multiple; // 시트 기준
     ti.filterMode = isPixel ? FilterMode.Point : FilterMode.Bilinear;

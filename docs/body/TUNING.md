@@ -173,7 +173,7 @@ Onset은 **주사위 없음**. `bleed > 0`인 동안 age가 `InfectedOnsetSecond
 |-----------|------|
 | `WadeFill01` / `SwimColumnMl` | `MapSwimQuery` |
 | `WadeSpeedFactor` / `SwimSpeedFactor` / `DiveSpeedFactor` / `DiveVerticalSpeed` | `CharacterSwimHost`, `CharacterLocomotion` |
-| `Oxygen*` / `BreathHoldDrainPerSecond` / `DiveTank*` | `CharacterBreathHost` |
+| `BaseBreathHoldSeconds` / `BloodOxygenRecoverPerSecond` / `DiveTankSecondsPerCharge` / `DiveTank*` | `CharacterBreathHost` |
 | `LiquidWetnessGain*` | `CharacterClimateHost` |
 
 ---

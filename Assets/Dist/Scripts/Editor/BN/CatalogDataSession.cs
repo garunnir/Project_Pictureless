@@ -25,6 +25,7 @@ public sealed class CatalogDataSession
     ItemsFileRoot _customItemsRoot;
     RecipesFileRoot _customRecipesRoot;
     ItemIconCatalog _iconCatalog;
+    TraitIconCatalog _traitIconCatalog;
     LocalizationBundle _bundle;
     bool _dirty;
 
@@ -60,6 +61,7 @@ public sealed class CatalogDataSession
         LoadCustomData();
         SeedCustomItemNames();
         EnsureIconCatalog();
+        EnsureTraitIconCatalog();
     }
 
     public void SaveAll()
@@ -102,6 +104,30 @@ public sealed class CatalogDataSession
         ItemVisualPresenter.BindCatalog(_iconCatalog);
         Debug.Log($"[DataDefinitions] Created {ItemIconCatalog.DefaultAssetPath}");
         return _iconCatalog;
+    }
+
+    public TraitIconCatalog EnsureTraitIconCatalog()
+    {
+        if (_traitIconCatalog != null)
+            return _traitIconCatalog;
+
+        _traitIconCatalog = AssetDatabase.LoadAssetAtPath<TraitIconCatalog>(TraitIconCatalog.DefaultAssetPath);
+        if (_traitIconCatalog != null)
+        {
+            TraitVisualPresenter.BindCatalog(_traitIconCatalog);
+            return _traitIconCatalog;
+        }
+
+        _traitIconCatalog = DistScriptableObjectEnsure.LoadOrCreate<TraitIconCatalog>(
+            TraitIconCatalog.DefaultAssetPath);
+        Sprite fallback = LoadEmptyIconSprite();
+        if (fallback != null)
+            _traitIconCatalog.SetDefaultIcon(fallback);
+        EditorUtility.SetDirty(_traitIconCatalog);
+        AssetDatabase.SaveAssets();
+        TraitVisualPresenter.BindCatalog(_traitIconCatalog);
+        Debug.Log($"[DataDefinitions] Created {TraitIconCatalog.DefaultAssetPath}");
+        return _traitIconCatalog;
     }
 
     public void PingLocalizationBundle()

@@ -53,6 +53,11 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
     bool _swimBlocksSprint;
     bool _encumbranceBlocksSprint;
     bool _encumbranceBlocksMovement;
+    float _serializedWalkSpeed;
+    float _serializedCustomBaseSpeed;
+    float _serializedInertiaEnableThreshold;
+    float _serializedRunMaxSpeed;
+    float _serializedRunEnterBoost;
 
     public static event System.Action AnyImmobileMoveAttempted;
 
@@ -72,6 +77,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
     /// <summary>애니 Speed 정규화 분모 (달리기 상한). Inspector <c>_runMaxSpeed</c> SSOT.</summary>
     public float RunMaxSpeed => _runMaxSpeed;
     public float AnimSpeedReference => _runMaxSpeed;
+    public float BaseWalkSpeed => _moveSpeed;
     public bool IsStuck => _motor != null && _motor.IsStuck;
     public float InitialVelocity
     {
@@ -146,6 +152,12 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
 
     public void CancelSprintForStealth() => SetSprinting(false);
 
+    public void ApplyWalkSpeedFromDefinition(CharacterDefinition definition)
+    {
+        ApplyLocomotionWalkSpeed(
+            CharacterDefinition.ResolveWalkSpeedMeters(definition, _serializedWalkSpeed));
+    }
+
     public void BindBody(CharacterMotor motor, CharacterState state, CharacterFacingAnim facing)
     {
         if (_motor != null && _motor != motor)
@@ -203,7 +215,8 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
 
     void Awake()
     {
-        NormalizeSpeedThresholds();
+        CacheSerializedLocomotionProfile();
+        ApplyLocomotionWalkSpeed(_serializedWalkSpeed);
 
         _motor = GetComponent<CharacterMotor>();
         _characterState = GetComponent<CharacterState>();
@@ -391,5 +404,31 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         _customBaseSpeed = Mathf.Max(_customBaseSpeed, minBase);
         _inertiaEnableThreshold = Mathf.Max(_inertiaEnableThreshold, _customBaseSpeed + 0.01f);
         _runMaxSpeed = Mathf.Max(_runMaxSpeed, _inertiaEnableThreshold);
+    }
+
+    void CacheSerializedLocomotionProfile()
+    {
+        _serializedWalkSpeed = Mathf.Max(0f, _moveSpeed);
+        _serializedCustomBaseSpeed = _customBaseSpeed;
+        _serializedInertiaEnableThreshold = _inertiaEnableThreshold;
+        _serializedRunMaxSpeed = _runMaxSpeed;
+        _serializedRunEnterBoost = _runEnterBoost;
+    }
+
+    void ApplyLocomotionWalkSpeed(float walkSpeedMeters)
+    {
+        _moveSpeed = Mathf.Max(0f, walkSpeedMeters);
+        if (_serializedWalkSpeed <= Mathf.Epsilon)
+        {
+            NormalizeSpeedThresholds();
+            return;
+        }
+
+        float ratio = _moveSpeed / _serializedWalkSpeed;
+        _customBaseSpeed = _serializedCustomBaseSpeed * ratio;
+        _inertiaEnableThreshold = _serializedInertiaEnableThreshold * ratio;
+        _runMaxSpeed = _serializedRunMaxSpeed * ratio;
+        _runEnterBoost = _serializedRunEnterBoost * ratio;
+        NormalizeSpeedThresholds();
     }
 }

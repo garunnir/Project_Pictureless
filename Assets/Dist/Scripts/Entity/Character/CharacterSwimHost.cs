@@ -1,7 +1,8 @@
 // ============================================================
-// CharacterSwimHost — 발밑 immersion → Swim 모드·이동 배율·Dive 입력
+// CharacterSwimHost — 발밑 immersion → Swim 모드·이동 배율·수직 입력
 // ============================================================
 
+using Garunnir.Runtime.Gameplay.Data;
 using IsoTilemap;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -14,10 +15,12 @@ public sealed class CharacterSwimHost : MonoBehaviour
     CharacterState _state;
     CharacterMotor _motor;
     PlayerMovement _movement;
+    CharacterBodyHost _bodyHost;
     CharacterBreathHost _breath;
     TileMapManager _tileMapManager;
     float _cellSize = 1f;
     bool _diveHeld;
+    bool _riseHeld;
     bool _inputConnected;
     MapSwimImmersion _last;
 
@@ -29,6 +32,7 @@ public sealed class CharacterSwimHost : MonoBehaviour
         _state = GetComponent<CharacterState>();
         TryGetComponent(out _motor);
         TryGetComponent(out _movement);
+        TryGetComponent(out _bodyHost);
         TryGetComponent(out _breath);
         if (_breath == null)
             _breath = gameObject.AddComponent<CharacterBreathHost>();
@@ -37,10 +41,10 @@ public sealed class CharacterSwimHost : MonoBehaviour
     void OnEnable()
     {
         if (_motor != null && _motor.IsPossessed)
-            ConnectDiveInput();
+            ConnectSwimInput();
     }
 
-    void OnDisable() => DisconnectDiveInput();
+    void OnDisable() => DisconnectSwimInput();
 
     void Update()
     {
@@ -61,11 +65,12 @@ public sealed class CharacterSwimHost : MonoBehaviour
     public void NotifyPossessedChanged(bool possessed)
     {
         if (possessed)
-            ConnectDiveInput();
+            ConnectSwimInput();
         else
         {
-            DisconnectDiveInput();
+            DisconnectSwimInput();
             _diveHeld = false;
+            _riseHeld = false;
         }
     }
 
@@ -73,11 +78,12 @@ public sealed class CharacterSwimHost : MonoBehaviour
     {
         bool possessed = _motor != null && _motor.IsPossessed;
         if (possessed && !_inputConnected)
-            ConnectDiveInput();
+            ConnectSwimInput();
         else if (!possessed && _inputConnected)
         {
-            DisconnectDiveInput();
+            DisconnectSwimInput();
             _diveHeld = false;
+            _riseHeld = false;
         }
     }
 
@@ -86,27 +92,8 @@ public sealed class CharacterSwimHost : MonoBehaviour
         Vector3 feet = CharacterFeetPose.GetFeetWorld(transform.position, CharacterFeetPose.GetFeetOffset(transform));
         ResolveCellSize();
         bool diveWanted = _diveHeld && (_motor == null || _motor.IsPossessed);
-        if (_breath != null && _breath.IsAsphyxiaDowned)
-            diveWanted = false;
 
         _last = MapSwimQuery.Resolve(feet, _cellSize, diveWanted);
-
-        // 익사 다운 중에는 머리 잠김으로 Dive에 머물지 않고 수면으로 올린다.
-        if (_breath != null
-            && _breath.IsAsphyxiaDowned
-            && _last.CanSwim
-            && _last.Mode == MapSwimMode.Dive)
-        {
-            _last = new MapSwimImmersion(
-                MapSwimMode.Swim,
-                _last.FeetCell,
-                _last.Fill01,
-                _last.ColumnMl,
-                _last.SurfaceFeetY,
-                _last.ColumnBottomFeetY,
-                _last.CanSwim,
-                _last.HeadSubmerged);
-        }
 
         bool wading = _last.Mode == MapSwimMode.Wade;
         bool swimming = _last.Mode == MapSwimMode.Swim;
@@ -146,17 +133,33 @@ public sealed class CharacterSwimHost : MonoBehaviour
 
     void ApplyVerticalInput()
     {
-        if (_last.Mode != MapSwimMode.Dive)
+        if (!_last.CanSwim
+            || _last.Mode == MapSwimMode.Dry
+            || _last.Mode == MapSwimMode.Wade)
         {
             _state.SetSwimVerticalInput(0f);
             return;
         }
 
-        // Dive 홀드 = 하강. 릴리즈 후 Swim으로 부상. 상향은 헤드 잠김이 풀릴 때까지 자동.
-        float vertical = _diveHeld ? -1f : 0f;
-        if (_last.HeadSubmerged && !_diveHeld)
+        float vertical = 0f;
+        if (_diveHeld)
+            vertical = -1f;
+        else if (_riseHeld)
             vertical = 1f;
+
+        if (NeedsEmergencyAscend())
+            vertical = 1f;
+
         _state.SetSwimVerticalInput(vertical);
+    }
+
+    bool NeedsEmergencyAscend()
+    {
+        ICharacterBody body = _bodyHost != null ? _bodyHost.Body : null;
+        if (body == null || body.IsDeadState)
+            return false;
+
+        return _last.HeadSubmerged && BodyCapacity.IsCapacityDowned(body);
     }
 
     void ResolveCellSize()
@@ -169,7 +172,7 @@ public sealed class CharacterSwimHost : MonoBehaviour
             _cellSize = grid.CellSize;
     }
 
-    void ConnectDiveInput()
+    void ConnectSwimInput()
     {
         InputManager input = InputManager.Instance;
         if (input == null || _inputConnected)
@@ -177,10 +180,12 @@ public sealed class CharacterSwimHost : MonoBehaviour
 
         input.PlayerDivePerformed += OnDive;
         input.PlayerDiveCanceled += OnDive;
+        input.PlayerSwimRisePerformed += OnSwimRise;
+        input.PlayerSwimRiseCanceled += OnSwimRise;
         _inputConnected = true;
     }
 
-    void DisconnectDiveInput()
+    void DisconnectSwimInput()
     {
         InputManager input = InputManager.Instance;
         if (input == null || !_inputConnected)
@@ -188,8 +193,11 @@ public sealed class CharacterSwimHost : MonoBehaviour
 
         input.PlayerDivePerformed -= OnDive;
         input.PlayerDiveCanceled -= OnDive;
+        input.PlayerSwimRisePerformed -= OnSwimRise;
+        input.PlayerSwimRiseCanceled -= OnSwimRise;
         _inputConnected = false;
         _diveHeld = false;
+        _riseHeld = false;
     }
 
     void OnDive(InputAction.CallbackContext context)
@@ -202,5 +210,17 @@ public sealed class CharacterSwimHost : MonoBehaviour
 
         if (context.performed || context.started)
             _diveHeld = true;
+    }
+
+    void OnSwimRise(InputAction.CallbackContext context)
+    {
+        if (context.canceled)
+        {
+            _riseHeld = false;
+            return;
+        }
+
+        if (context.performed || context.started)
+            _riseHeld = true;
     }
 }

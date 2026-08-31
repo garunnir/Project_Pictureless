@@ -100,6 +100,7 @@ public sealed class CharacterRuntimeDebugModel
     public bool HasSkills => CanWrite && _skillsHost != null;
     public bool HasCombat => CanWrite && (_imbalanceHost != null || _painHost != null);
     public bool HasSenses => CanWrite && (_vision != null || _hearing != null);
+    public bool HasLocomotion => CanWrite && _motor != null;
     public bool HasPresence => CanWrite && _presenceHost != null;
     public bool HasEmote => CanWrite && _emoteHost != null;
     public bool IsPossessed => _motor != null && _motor.IsPossessed;
@@ -373,6 +374,21 @@ public sealed class CharacterRuntimeDebugModel
 
     [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Illness), SdfIconType.DropletFill, TextColor = "purple")]
     [ShowInInspector]
+    [ProgressBar(0, 1, Height = DebugUi.MeterHeight, ColorGetter = nameof(GetBloodOxygenBarColor))]
+    [EnableIf(nameof(CanWrite))]
+    [LabelText("Blood O2", SdfIconType.Wind)]
+    float BloodOxygen01
+    {
+        get => Body != null ? Body.BloodOxygen01 : 0f;
+        set
+        {
+            if (CanWrite && Body != null)
+                Body.SetBloodOxygen01(value);
+        }
+    }
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Illness), SdfIconType.DropletFill, TextColor = "purple")]
+    [ShowInInspector]
     [ProgressBar(0, 1, Height = DebugUi.MeterHeight, ColorGetter = nameof(GetBloodBarColor))]
     [EnableIf(nameof(CanWrite))]
     [LabelText("Blood", SdfIconType.DropletFill)]
@@ -432,6 +448,7 @@ public sealed class CharacterRuntimeDebugModel
     }
 
     Color GetBloodBarColor() => DebugUi.BloodColor(Blood01);
+    Color GetBloodOxygenBarColor() => DebugUi.BloodColor(BloodOxygen01);
 
     Color GetToxinBarColor() => DebugUi.Toxin;
 
@@ -830,6 +847,33 @@ public sealed class CharacterRuntimeDebugModel
     float SenseHearingEffective => _hearing != null
         ? _hearing.EffectiveHearingRadius
         : CharacterSenseBlock.Default.hearingRadiusMeters;
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
+    [ShowIf(nameof(HasLocomotion))]
+    [BoxGroup("Domain/Combat/Locomotion")]
+    [HorizontalGroup("Domain/Combat/Locomotion/Walk")]
+    [ShowInInspector, ReadOnly, LabelText("Walk (definition)")]
+    string LocomotionWalkDefinition =>
+        _definitionBinder != null && _definitionBinder.Definition != null &&
+        _definitionBinder.Definition.WalkSpeedMeters > 0f
+            ? $"{_definitionBinder.Definition.WalkSpeedMeters:0.##} m/s"
+            : "(prefab default)";
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
+    [ShowIf(nameof(HasLocomotion))]
+    [BoxGroup("Domain/Combat/Locomotion")]
+    [HorizontalGroup("Domain/Combat/Locomotion/Walk")]
+    [ShowInInspector, ReadOnly, LabelText("motor base")]
+    float LocomotionMotorWalkBase => _motor != null
+        ? _motor.BaseWalkSpeed
+        : CharacterLocomotionDefaults.DefaultWalkSpeedMeters;
+
+    [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
+    [ShowIf(nameof(HasLocomotion))]
+    [BoxGroup("Domain/Combat/Locomotion")]
+    [HorizontalGroup("Domain/Combat/Locomotion/Walk")]
+    [ShowInInspector, ReadOnly, LabelText("current")]
+    float LocomotionCurrentSpeed => _motor != null ? _motor.CurrentSpeed : 0f;
 
     [TabGroup(DomainTabs, nameof(CharacterRuntimeDebugDomain.Combat))]
     [ShowIf(nameof(HasPresence))]

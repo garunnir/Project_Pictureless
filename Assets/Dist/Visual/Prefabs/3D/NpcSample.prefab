@@ -169,6 +169,8 @@ GameObject:
   - component: {fileID: 6625928811570874355}
   - component: {fileID: 4798488329182854674}
   - component: {fileID: 4934753299222732377}
+  - component: {fileID: 8508800026277087233}
+  - component: {fileID: 8508800026277087234}
   m_Layer: 6
   m_Name: NpcSample
   m_TagString: Untagged
@@ -547,6 +549,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DistScript::CharacterSessionHub
   _bodyHost: {fileID: 2934366836420799707}
   _skillsHost: {fileID: 8123332443564162229}
+  _traitsHost: {fileID: 8508800026277087233}
   _gear: {fileID: 3317479433915794997}
   _encumbrance: {fileID: 6449163034092800762}
   _timedMove: {fileID: 1039246282068088166}
@@ -767,6 +770,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c787fe6d2f146645a3b35894b1ba5b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterCombatEmoteBridge
+--- !u!114 &8508800026277087233
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 643b537ea7b71d14aa683312fed9e022, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterTraitsHost
+  _useGameplayDataTraits: 0
+--- !u!114 &8508800026277087234
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2816094712680714504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 060592ea6c8db4842ab392fab3dfff70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterSenseGizmo
+  _drawGizmos: 1
+  _onlyWhenSelected: 0
+  _drawVisionDetect: 1
+  _drawVisionLose: 1
+  _drawHearing: 1
 --- !u!1 &6522531766620283056
 GameObject:
   m_ObjectHideFlags: 0

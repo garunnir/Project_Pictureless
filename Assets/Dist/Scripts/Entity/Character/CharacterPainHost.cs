@@ -17,7 +17,6 @@ public sealed class CharacterPainHost : MonoBehaviour
     CharacterMotor _motor;
     CharacterActionHost _actionHost;
     CharacterAttacker _attacker;
-    CharacterBreathHost _breath;
     ICharacterBody _subscribed;
     bool _painShocked;
     bool _painLatched;
@@ -36,7 +35,6 @@ public sealed class CharacterPainHost : MonoBehaviour
         TryGetComponent(out _motor);
         TryGetComponent(out _actionHost);
         TryGetComponent(out _attacker);
-        TryGetComponent(out _breath);
     }
 
     void OnEnable()
@@ -134,8 +132,7 @@ public sealed class CharacterPainHost : MonoBehaviour
         _painLatched = painDown;
         bool shocked = painDown ||
                        BodyCapacity.IsCapacityDowned(body) ||
-                       _surpriseStunRemain > 0f ||
-                       (_breath != null && _breath.IsAsphyxiaDowned);
+                       _surpriseStunRemain > 0f;
         SetShocked(shocked);
     }
 

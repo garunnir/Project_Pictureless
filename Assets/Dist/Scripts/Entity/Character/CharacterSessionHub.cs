@@ -8,12 +8,14 @@ using UnityEngine;
 [DisallowMultipleComponent]
 [RequireComponent(typeof(CharacterBodyHost))]
 [RequireComponent(typeof(CharacterSkillsHost))]
+[RequireComponent(typeof(CharacterTraitsHost))]
 [RequireComponent(typeof(PlayerGearHost))]
 [RequireComponent(typeof(PlayerEncumbranceHost))]
 public sealed class CharacterSessionHub : MonoBehaviour
 {
     [SerializeField] CharacterBodyHost _bodyHost;
     [SerializeField] CharacterSkillsHost _skillsHost;
+    [SerializeField] CharacterTraitsHost _traitsHost;
     [SerializeField] PlayerGearHost _gear;
     [SerializeField] PlayerEncumbranceHost _encumbrance;
     [SerializeField] InventoryTimedMoveHost _timedMove;
@@ -24,6 +26,7 @@ public sealed class CharacterSessionHub : MonoBehaviour
     public static CharacterSessionHub Player { get; private set; }
 
     public CharacterBodyHost BodyHost => _bodyHost;
+    public CharacterTraitsHost TraitsHost => _traitsHost;
     public CharacterActionHost Action => _action;
     public PlayerInventoryHost Inventory => _inventory;
     public NearbyContainerDetector Detector => _detector;
@@ -36,8 +39,11 @@ public sealed class CharacterSessionHub : MonoBehaviour
 
     void OnDisable()
     {
-        if (Player == this)
-            Player = null;
+        if (Player != this)
+            return;
+
+        Player = null;
+        GameplayPlayerRuntime.RegisterPossessedTraitsResolver(null);
     }
 
     public void BecomePlayer(PlayerMovement movement, PlayerInventoryRuntime inventoryRuntime)
@@ -72,6 +78,12 @@ public sealed class CharacterSessionHub : MonoBehaviour
         if (_skillsHost != null && _skillsHost.Skills is DefaultCharacterSkills seeded)
             GameplayData.Stats = new DefaultPlayerStats(seeded);
 
+        if (_traitsHost != null)
+            GameplayPlayerRuntime.RegisterPossessedTraitsResolver(() => _traitsHost.Traits);
+
+        if (movement != null && TryGetComponent(out CharacterDefinitionBinder binder))
+            movement.ApplyWalkSpeedFromDefinition(binder.Definition);
+
         PlayerStatusUIBridge.RebindFromGameplayData();
     }
 
@@ -81,6 +93,8 @@ public sealed class CharacterSessionHub : MonoBehaviour
             TryGetComponent(out _bodyHost);
         if (_skillsHost == null)
             TryGetComponent(out _skillsHost);
+        if (_traitsHost == null)
+            TryGetComponent(out _traitsHost);
         if (_gear == null)
             TryGetComponent(out _gear);
         if (_encumbrance == null)

@@ -18,7 +18,7 @@ public interface ICharacterMotorDrive
 public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
 {
     [Header("Movement")]
-    [SerializeField, Min(0f)] float _moveSpeed = 3f;
+    [SerializeField, Min(0f)] float _moveSpeed = CharacterLocomotionDefaults.DefaultWalkSpeedMeters;
     [SerializeField] MovementStyle _activeStyle;
 
     [Header("Collision")]
@@ -43,6 +43,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     float _envSpeedMultiplier = 1f;
     float _imbalanceSpeedMultiplier = 1f;
     float _swimSpeedMultiplier = 1f;
+    float _serializedWalkSpeed;
     Vector3 _knockbackVelocity;
     float _staggerRemaining;
     bool _moveLocked;
@@ -68,6 +69,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
         }
     }
     public MovementStyle ActiveStyle => _activeStyle;
+    public float SerializedWalkSpeed => _serializedWalkSpeed;
     public KinematicMover Mover => _mover;
     public CapsuleCollider Capsule => _capsule;
     public RaycastHit[] Hits => _hits;
@@ -91,8 +93,11 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     float EffectiveMoveSpeed =>
         _activeStyle != null ? _activeStyle.MoveSpeed : _moveSpeed;
 
+    public float BaseWalkSpeed => EffectiveMoveSpeed;
+
     void Awake()
     {
+        _serializedWalkSpeed = Mathf.Max(0f, _moveSpeed);
         _rigidbody = GetComponent<Rigidbody>();
         _capsule = GetComponent<CapsuleCollider>();
         _characterState = GetComponent<CharacterState>();
@@ -236,6 +241,14 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
 
     public void SetSpeed(float metersPerSecond) =>
         _moveSpeed = Mathf.Max(0f, metersPerSecond);
+
+    public void ApplyWalkSpeedFromDefinition(CharacterDefinition definition)
+    {
+        if (definition == null || definition.WalkSpeedMeters <= 0f)
+            return;
+
+        SetSpeed(CharacterDefinition.ResolveWalkSpeedMeters(definition, _serializedWalkSpeed));
+    }
 
     /// <summary>Env 이동 배율 (GearEnv × limp). Possessed는 PlayerMovement.SetEnvMovement가 같은 값을 쓴다.</summary>
     public void SetEnvMovement(float speedMultiplier) =>

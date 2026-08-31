@@ -9,7 +9,7 @@ using UnityEngine;
     menuName = "Dist/Locomotion/Movement Style")]
 public sealed class MovementStyle : ScriptableObject
 {
-    [SerializeField, Min(0f)] float _moveSpeed = 3f;
+    [SerializeField, Min(0f)] float _moveSpeed = CharacterLocomotionDefaults.DefaultWalkSpeedMeters;
     [SerializeField, Min(0f)] float _stoppingDistance = 0.1f;
 
     public float MoveSpeed => _moveSpeed;

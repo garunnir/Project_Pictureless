@@ -25,6 +25,8 @@ MonoBehaviour:
     wis: 8
     cha: 8
   _skillOverrides: []
+  _traits:
+  - omnivision
   _bodyMassKg: 0
   _bustCm: 0
   _waistCm: 0
@@ -55,3 +57,7 @@ MonoBehaviour:
   - itemId: fertilizer_commercial
     count: 1
   _spotAngleDegrees: 179
+  _senses:
+    sightDetectMeters: 10
+    sightLoseMeters: 14
+    hearingRadiusMeters: 8

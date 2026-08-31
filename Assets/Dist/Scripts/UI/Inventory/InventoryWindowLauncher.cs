@@ -18,8 +18,8 @@ public sealed class InventoryWindowLauncher : MonoBehaviour
     [Required, SerializeField] UIInventoryController _controller;
     [SerializeField] Button _button;
     [SerializeField] Image _iconImage;
-    [SerializeField] Color _closedColor = new(1f, 1f, 1f, 0.55f);
-    [SerializeField] Color _openColor = new(1f, 1f, 1f, 1f);
+    [SerializeField] Color _closedColor = new(1f, 1f, 1f, 1f);
+    [SerializeField] Color _openColor = new(1f, 1f, 1f, 0.55f);
 
     bool _isOpen;
 

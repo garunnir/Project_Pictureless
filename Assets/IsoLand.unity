@@ -4191,7 +4191,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 128}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 1, y: 0}
 --- !u!1001 &61807142
@@ -7219,8 +7219,8 @@ MonoBehaviour:
   _controller: {fileID: 1829126910}
   _button: {fileID: 101902433}
   _iconImage: {fileID: 101902434}
-  _closedColor: {r: 1, g: 1, b: 1, a: 0.55}
-  _openColor: {r: 1, g: 1, b: 1, a: 1}
+  _closedColor: {r: 1, g: 1, b: 1, a: 1}
+  _openColor: {r: 1, g: 1, b: 1, a: 0.55}
 --- !u!114 &101902433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7278,14 +7278,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.35, g: 0.55, b: 0.4, a: 0.9}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 155c9ce4d3b57c04aa88933a6f8b8957, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -30495,7 +30495,7 @@ MonoBehaviour:
       alertSeconds: 0
       suppressMode: 0
   - definition: {fileID: 11400000, guid: a7c3e8910245d6e4f8b2a1c9d3e5f7a8, type: 2}
-    cell: {x: 0, y: 1, z: -2}
+    cell: {x: 14, y: 1, z: 6}
     marker: {fileID: 1062386080}
     role: 0
     npc:
@@ -32226,8 +32226,8 @@ MonoBehaviour:
   _controller: {fileID: 525082052}
   _button: {fileID: 595498793}
   _iconImage: {fileID: 595498794}
-  _closedColor: {r: 1, g: 1, b: 1, a: 0.55}
-  _openColor: {r: 1, g: 1, b: 1, a: 1}
+  _closedColor: {r: 1, g: 1, b: 1, a: 1}
+  _openColor: {r: 1, g: 1, b: 1, a: 0.55}
 --- !u!114 &595498793
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -32285,14 +32285,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.35, g: 0.35, b: 0.35, a: 0.85}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.85}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 83fb5e422af763a43a6418d6190c2b25, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -52022,7 +52022,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5675936a19396b469aad752b1e6d714, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterSpawnPoint
-  _cell: {x: 0, y: 1, z: -2}
+  _cell: {x: 14, y: 1, z: 6}
   _gizmoRole: 0
   _gizmoCellSize: 1
 --- !u!4 &1062386081
@@ -52034,7 +52034,7 @@ Transform:
   m_GameObject: {fileID: 1062386079}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.5, y: 1, z: -1.5}
+  m_LocalPosition: {x: 14.33, y: 1, z: 6.88}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -52152,8 +52152,8 @@ MonoBehaviour:
   _controller: {fileID: 770642585}
   _button: {fileID: 1065368813}
   _iconImage: {fileID: 1065368812}
-  _closedColor: {r: 1, g: 1, b: 1, a: 0.55}
-  _openColor: {r: 1, g: 1, b: 1, a: 1}
+  _closedColor: {r: 1, g: 1, b: 1, a: 1}
+  _openColor: {r: 1, g: 1, b: 1, a: 0.55}
 --- !u!114 &1065368812
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -52167,14 +52167,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.85, g: 0.85, b: 0.9, a: 0.85}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: ab4ea5c425844b14d9afb703a44f7771, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -60838,8 +60838,8 @@ MonoBehaviour:
   _controller: {fileID: 1488965586}
   _button: {fileID: 1218728552}
   _iconImage: {fileID: 1218728551}
-  _closedColor: {r: 1, g: 1, b: 1, a: 0.55}
-  _openColor: {r: 1, g: 1, b: 1, a: 1}
+  _closedColor: {r: 1, g: 1, b: 1, a: 1}
+  _openColor: {r: 1, g: 1, b: 1, a: 0.55}
 --- !u!114 &1218728551
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60856,7 +60856,7 @@ MonoBehaviour:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
+  m_Maskable: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -102557,8 +102557,8 @@ MonoBehaviour:
   _controller: {fileID: 525082052}
   _button: {fileID: 2023539888}
   _iconImage: {fileID: 2023539889}
-  _closedColor: {r: 1, g: 1, b: 1, a: 0.55}
-  _openColor: {r: 1, g: 1, b: 1, a: 1}
+  _closedColor: {r: 1, g: 1, b: 1, a: 1}
+  _openColor: {r: 1, g: 1, b: 1, a: 0.55}
 --- !u!114 &2023539888
 MonoBehaviour:
   m_ObjectHideFlags: 0

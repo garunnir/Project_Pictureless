@@ -2,6 +2,7 @@
 // GameplayPlayerRuntime — possessed 플레이어 런타임 SSOT
 // ============================================================
 
+using System;
 using Garunnir.Runtime.Gameplay.Data;
 using UnityEngine;
 
@@ -14,6 +15,7 @@ public static class GameplayPlayerRuntime
     static ICharacterProficiencies _proficiencies;
     static ICharacterRecipeMemory _recipeMemory;
     static ICharacterTraits _traits;
+    static Func<ICharacterTraits> _possessedTraitsResolver;
 
     /// <summary>Player-facing stats / vitals host (possessed path; NPC uses ICharacterSkills).</summary>
     public static IPlayerStats Stats
@@ -111,10 +113,19 @@ public static class GameplayPlayerRuntime
     }
 
     /// <summary>Character traits (omniscience, omnivision, survival, …). Runtime-only; not saved.</summary>
+    public static void RegisterPossessedTraitsResolver(Func<ICharacterTraits> resolver)
+    {
+        _possessedTraitsResolver = resolver;
+    }
+
     public static ICharacterTraits Traits
     {
         get
         {
+            ICharacterTraits resolved = _possessedTraitsResolver?.Invoke();
+            if (resolved != null)
+                return resolved;
+
             if (_traits == null)
                 _traits = new DefaultCharacterTraits();
             return _traits;

@@ -100,6 +100,20 @@ static class CatalogBrowserFields
         EditorGUILayout.EndHorizontal();
     }
 
+    public static void ReadFieldWithCopy(string label, string value)
+    {
+        string text = value ?? string.Empty;
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField(label, GUILayout.Width(120));
+        EditorGUILayout.SelectableLabel(
+            string.IsNullOrEmpty(text) ? "—" : text,
+            EditorStyles.textField,
+            GUILayout.Height(EditorGUIUtility.singleLineHeight));
+        if (GUILayout.Button("Copy", GUILayout.Width(48)))
+            EditorGUIUtility.systemCopyBuffer = text;
+        EditorGUILayout.EndHorizontal();
+    }
+
     public static void DrawSpritePreview(Rect rect, Sprite sprite)
     {
         if (sprite == null || sprite.texture == null)

@@ -29,6 +29,11 @@ public sealed class CharacterBodyHost : MonoBehaviour
 
     public bool UseGameplayDataBody => _useGameplayDataBody;
 
+    public void ConfigureUseGameplayDataBody(bool useGameplayDataBody)
+    {
+        _useGameplayDataBody = useGameplayDataBody;
+    }
+
     public static int ActiveCount => s_active.Count;
 
     public static CharacterBodyHost GetActive(int index) => s_active[index];

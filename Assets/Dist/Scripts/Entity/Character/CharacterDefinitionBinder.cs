@@ -13,10 +13,12 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
 
     CharacterBodyHost _bodyHost;
     CharacterSkillsHost _skillsHost;
+    CharacterTraitsHost _traitsHost;
     CharacterAppearanceHost _appearanceHost;
     CharacterFactionHost _factionHost;
     CharacterVision _vision;
     CharacterHearing _hearing;
+    CharacterMotor _motor;
 
     public CharacterDefinition Definition => _definition;
 
@@ -57,6 +59,15 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
                 this);
         }
 
+        if (_motor != null)
+            _motor.ApplyWalkSpeedFromDefinition(definition);
+        else
+        {
+            Debug.LogError(
+                $"[CharacterDefinitionBinder] '{name}' needs CharacterMotor on the prefab.",
+                this);
+        }
+
         DefaultCharacterSkills skills = definition.CreateSkills();
         CharacterBody body = definition.CreateBody();
         DefaultCharacterTraits traits = definition.CreateTraits();
@@ -70,17 +81,17 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
             return;
         }
 
-        if (_bodyHost == null || _skillsHost == null)
+        if (_bodyHost == null || _skillsHost == null || _traitsHost == null)
         {
             Debug.LogError(
-                $"[CharacterDefinitionBinder] '{name}' needs CharacterBodyHost and CharacterSkillsHost, or UseGameplayData on those hosts.",
+                $"[CharacterDefinitionBinder] '{name}' needs CharacterBodyHost, CharacterSkillsHost, and CharacterTraitsHost, or UseGameplayData on those hosts.",
                 this);
             return;
         }
 
         _bodyHost.BindBody(body);
         _skillsHost.BindSkills(skills);
-        _skillsHost.BindTraits(traits);
+        _traitsHost.BindTraits(traits);
     }
 
     bool UsesGameplayData()
@@ -89,17 +100,21 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
             return true;
         if (_skillsHost != null && _skillsHost.UseGameplayDataSkills)
             return true;
-        return _bodyHost == null && _skillsHost == null;
+        if (_traitsHost != null && _traitsHost.UseGameplayDataTraits)
+            return true;
+        return _bodyHost == null && _skillsHost == null && _traitsHost == null;
     }
 
     void EnsureHosts()
     {
         _bodyHost = GetComponent<CharacterBodyHost>();
         _skillsHost = GetComponent<CharacterSkillsHost>();
+        _traitsHost = GetComponent<CharacterTraitsHost>();
         _appearanceHost ??= GetComponent<CharacterAppearanceHost>();
         _factionHost ??= GetComponent<CharacterFactionHost>();
         _vision ??= GetComponent<CharacterVision>();
         _hearing ??= GetComponent<CharacterHearing>();
+        _motor ??= GetComponent<CharacterMotor>();
         if (_appearanceHost == null)
         {
             Debug.LogError(

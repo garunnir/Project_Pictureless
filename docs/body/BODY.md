@@ -88,7 +88,9 @@ PC와 NPC를 이 문서에서 나누지 않는다. `CharacterKind` 없음. 조�
 
 이속: `BodyLocomotionPenalties` 절뚝 유지. Moving을 이속에 곱하지 않음.
 
-런타임만 (DTO 없음, FromDto 후 리셋): `Blood01`(기본 1), `Toxin01`, `InfectionProgress01`, `InfectionImmunity01`.
+런타임만 (DTO 없음, FromDto 후 리셋): `Blood01`(기본 1), `BloodOxygen01`(기본 1), `Toxin01`, `InfectionProgress01`, `InfectionImmunity01`.
+
+호흡·의식: `Breathing = LungEff × BloodOxygen01` · `Consciousness`에 SpO2(`BloodOxygen01`) 곱. 잠수 SpO2 틱은 `CharacterBreathHost` — [`../locomotion/SWIM.md`](../locomotion/SWIM.md). **익사 = 의식 0** (`IsFatal`).
 
 출혈 틱: Bleed intensity 합 → Blood01 감소 (부위 ApplyHit 없음). **`bandaged` 부위는 drain만 스킵**하고 Bleed 판정은 남긴다. 스킵한 흡수량(`BleedIntensity × BleedBloodPerIntensityPerSecond × dt`)이 `bandage_dirty`로 쌓인다. 베임이 남은 부위는 틱마다 파생 Bleed를 영구로 맞춘다(`hemostatic`이면 재부착 금지). 약의 `MedBleedIntensityReduce`는 베임이 남은 부위에선 다음 틱에 되돌아간다(소켓·장기 Bleed만 지속 감소). drain 누적 ≥ 문턱 시 발 월드에 맵 혈흔 스탬프 (`MapBloodHost`, [`docs/map/DATA.md`](../map/DATA.md)). 출혈 age ≥ `InfectedOnsetSeconds` → Infected. 깨끗한 붕대는 onset 적립을 늦추고(`BandageCleanInfectedOnsetMul`), dirty가 오를수록 가속한다(`BandageDirtyInfectedOnsetMul`). 부상·Bleed 없이 더러운 붕대만으로는 Infected 없음. 면역 × 여과 vs 진행. 독소는 여과로 감쇠. 항생제 `use_action` (`antibiotic` / `weak_antibiotic` / `strong_antibiotic`)은 감염 진행을 절대 깎지 않고 가슴 `antibiotic` 효과로 면역 획득만 배율한다(BN 12시간 = 기본 시계 World 720초). 소독제 계열은 이 경로가 아님 (`heal`).
 

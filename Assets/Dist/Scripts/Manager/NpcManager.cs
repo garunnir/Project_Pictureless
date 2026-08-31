@@ -523,9 +523,23 @@ public sealed class NpcManager : MonoBehaviour
 
         void BindTarget(CharacterBodyHost host, float distance, SenseContactChannel contact)
         {
+            bool acquired = host != null && _target != host;
             _target = host;
             _distanceToTarget = distance;
             _contact = contact;
+            if (acquired)
+                SyncCombatEmoteForContact();
+        }
+
+        void SyncCombatEmoteForContact()
+        {
+            if (_combatEmote == null || _target == null || _contact == SenseContactChannel.None)
+                return;
+
+            if (_contact == SenseContactChannel.Vision)
+                _combatEmote.SetAlertSpotted();
+            else if (_contact == SenseContactChannel.Hearing)
+                _combatEmote.SetAlertSuspicious();
         }
 
         void ClearTarget()

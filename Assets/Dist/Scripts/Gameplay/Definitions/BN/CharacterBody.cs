@@ -25,6 +25,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         readonly List<BodyPartNode> _roots = new();
 
         float _blood01 = 1f;
+        float _bloodOxygen01 = 1f;
         float _toxin01;
         float _infectionProgress01;
         float _infectionImmunity01;
@@ -34,6 +35,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         public IReadOnlyList<BodyPartNode> Roots => _roots;
 
         public float Blood01 => _blood01;
+        public float BloodOxygen01 => _bloodOxygen01;
         public float Toxin01 => _toxin01;
         public float InfectionProgress01 => _infectionProgress01;
         public float InfectionImmunity01 => _infectionImmunity01;
@@ -46,6 +48,15 @@ namespace Garunnir.Runtime.Gameplay.Data
             if (AlmostEqual(_blood01, next))
                 return;
             _blood01 = next;
+            Changed?.Invoke();
+        }
+
+        public void SetBloodOxygen01(float value)
+        {
+            float next = Clamp01(value);
+            if (AlmostEqual(_bloodOxygen01, next))
+                return;
+            _bloodOxygen01 = next;
             Changed?.Invoke();
         }
 
@@ -79,6 +90,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         public void ResetIllnessRuntime()
         {
             _blood01 = 1f;
+            _bloodOxygen01 = 1f;
             _toxin01 = 0f;
             _infectionProgress01 = 0f;
             _infectionImmunity01 = 0f;

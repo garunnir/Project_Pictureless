@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterSkillsHost — skills + Defeat + traits host (pairs with BodyHost)
+// CharacterSkillsHost — skills + Defeat host (pairs with BodyHost)
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
@@ -19,8 +19,6 @@ public sealed class CharacterSkillsHost : MonoBehaviour
     ICharacterDefeat _defeat;
     DefaultCharacterRecipeMemory _ownedRecipeMemory;
     ICharacterRecipeMemory _recipeMemory;
-    DefaultCharacterTraits _ownedTraits;
-    ICharacterTraits _traits;
 
     public ICharacterSkills Skills
     {
@@ -49,16 +47,12 @@ public sealed class CharacterSkillsHost : MonoBehaviour
         }
     }
 
-    public ICharacterTraits Traits
-    {
-        get
-        {
-            EnsureTraits();
-            return _traits;
-        }
-    }
-
     public bool UseGameplayDataSkills => _useGameplayDataSkills;
+
+    public void ConfigureUseGameplayDataSkills(bool useGameplayDataSkills)
+    {
+        _useGameplayDataSkills = useGameplayDataSkills;
+    }
 
     void Awake()
     {
@@ -67,7 +61,6 @@ public sealed class CharacterSkillsHost : MonoBehaviour
         BindBodyToSkills();
         EnsureDefeat();
         EnsureRecipeMemory();
-        EnsureTraits();
     }
 
     void OnEnable()
@@ -121,21 +114,6 @@ public sealed class CharacterSkillsHost : MonoBehaviour
         _recipeMemory = _ownedRecipeMemory;
     }
 
-    void EnsureTraits()
-    {
-        if (_traits != null)
-            return;
-
-        if (_useGameplayDataSkills)
-        {
-            _traits = GameplayData.Traits;
-            return;
-        }
-
-        _ownedTraits = new DefaultCharacterTraits();
-        _traits = _ownedTraits;
-    }
-
     /// <summary>Definition Apply — replace owned skills instance.</summary>
     public void BindSkills(DefaultCharacterSkills skills)
     {
@@ -156,22 +134,6 @@ public sealed class CharacterSkillsHost : MonoBehaviour
 
         BindBodyToSkills();
         EnsureDefeat();
-    }
-
-    public void BindTraits(DefaultCharacterTraits traits)
-    {
-        if (traits == null)
-            return;
-
-        if (_useGameplayDataSkills)
-        {
-            GameplayData.Traits = traits;
-            _traits = GameplayData.Traits;
-            return;
-        }
-
-        _ownedTraits = traits;
-        _traits = traits;
     }
 
     void BindBodyToSkills()

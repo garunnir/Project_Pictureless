@@ -59,9 +59,10 @@ namespace Garunnir.Runtime.Gameplay.Data
             float blood = BloodFactor(body.Blood01);
             float infection = 1f - BodyIllness.InfectionConsciousnessK * body.InfectionProgress01;
             float toxin = 1f - BodyIllness.ToxinConsciousnessK * body.Toxin01;
+            float oxygen = BloodFactor(body.BloodOxygen01);
 
             // 고통은 의식에 곱하지 않음. 쇼크는 CharacterPainHost (쓰러짐, 사망 아님).
-            float value = brain * blood * Clamp01NonNeg(infection) * Clamp01NonNeg(toxin);
+            float value = brain * blood * Clamp01NonNeg(infection) * Clamp01NonNeg(toxin) * oxygen;
             return Clamp01NonNeg(value);
         }
 
@@ -76,7 +77,7 @@ namespace Garunnir.Runtime.Gameplay.Data
         {
             if (body == null)
                 return 0f;
-            return Clamp01NonNeg(LungEff(body));
+            return Clamp01NonNeg(LungEff(body) * body.BloodOxygen01);
         }
 
         public static float BloodFiltration(ICharacterBody body)

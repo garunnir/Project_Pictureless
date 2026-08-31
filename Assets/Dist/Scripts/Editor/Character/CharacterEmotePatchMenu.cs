@@ -76,7 +76,8 @@ public static class CharacterEmotePatchMenu
         {
             (EmoteId id, MoodIconId moodIcon, bool observerOnly) = MoodEntries[i];
             SerializedProperty entry = entries.GetArrayElementAtIndex(i);
-            entry.FindPropertyRelative("Id").enumValueIndex = (int)id;
+            SerializedProperty idProp = entry.FindPropertyRelative("Id");
+            idProp.intValue = (int)id;
             entry.FindPropertyRelative("ObserverOnly").boolValue = observerOnly;
 
             Sprite sprite = ResolveSprite(id, moodIcon, moodCatalog);

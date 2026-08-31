@@ -59,6 +59,12 @@ static class DistSoSampleEnsureMenu
             CharacterFactionCatalog.DefaultAssetPath,
             created,
             existing);
+        EnsureAsset<TraitIconCatalog>(TraitIconCatalog.DefaultAssetPath, created, existing);
+        MirrorToResources<TraitIconCatalog>(
+            TraitIconCatalog.DefaultAssetPath,
+            TraitIconCatalog.ResourcesAssetPath,
+            created,
+            existing);
         EnsureAsset<ItemIconCatalog>(ItemIconCatalog.DefaultAssetPath, created, existing);
         EnsureAsset<LocalizationTable>(LocalizationTable.DefaultAssetPath, created, existing);
         EnsureAsset<LocalizationBundle>(LocalizationBundle.DefaultAssetPath, created, existing);

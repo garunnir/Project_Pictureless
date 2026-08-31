@@ -9,6 +9,8 @@ namespace Garunnir.Runtime.Gameplay.Data
     /// </summary>
     public static class TraitIds
     {
+        public const string DisplayLocKeyPrefix = "PlayerStatus.Trait.";
+
         /// <summary>생존술 — 바이탈 수치 표시 등.</summary>
         public const string Survival = "survival";
 
@@ -38,5 +40,8 @@ namespace Garunnir.Runtime.Gameplay.Data
 
             return false;
         }
+
+        public static string DisplayLocKey(string traitId) =>
+            string.IsNullOrEmpty(traitId) ? string.Empty : DisplayLocKeyPrefix + traitId;
     }
 }

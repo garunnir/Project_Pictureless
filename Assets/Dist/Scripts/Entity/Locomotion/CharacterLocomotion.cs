@@ -19,6 +19,7 @@ public interface ICharacterLocomotion
 
 public static class CharacterLocomotionDefaults
 {
+    public const float DefaultWalkSpeedMeters = 3f;
     public const int HitBufferSize = 8;
     public const float ClimbAllowance = 0.3f;
     public const float BaseSkin = 0.02f;
@@ -275,21 +276,11 @@ public sealed class CharacterLocomotion
         if (surfaceY < bottomY)
             surfaceY = bottomY;
 
-        if (_characterState != null && _characterState.IsDiving)
-        {
-            float vertical = _characterState.SwimVerticalInput;
-            float nextFeetY = feetCell.FeetY
-                + vertical * MapSwimConsts.DiveVerticalSpeed * deltaTime;
-            nextFeetY = Mathf.Clamp(nextFeetY, bottomY, surfaceY);
-            _verticalVelocity = 0f;
-            worldPosition.y = nextFeetY + feetOffset;
-            feetCell = MapCollisionGrid.WithFeetY(feetCell, nextFeetY, cellSize);
-            return;
-        }
-
-        // Swim: float at surface.
+        float vertical = _characterState != null ? _characterState.SwimVerticalInput : 0f;
+        float nextFeetY = feetCell.FeetY + vertical * MapSwimConsts.DiveVerticalSpeed * deltaTime;
+        nextFeetY = Mathf.Clamp(nextFeetY, bottomY, surfaceY);
         _verticalVelocity = 0f;
-        worldPosition.y = surfaceY + feetOffset;
-        feetCell = MapCollisionGrid.WithFeetY(feetCell, surfaceY, cellSize);
+        worldPosition.y = nextFeetY + feetOffset;
+        feetCell = MapCollisionGrid.WithFeetY(feetCell, nextFeetY, cellSize);
     }
 }
