@@ -108,7 +108,7 @@
 
 | `Grp_ItemListRow` | 아이템 행 (LeanPool). 컬럼: Icon | Category | Name(flex) | Count | WeightValue | WeightUnit(kg) | VolumeValue | VolumeUnit(L). 폭 SSOT: `InventoryListColumnLayout`. |
 
-| `Grp_ContainerSlot` | 사이드바 컨테이너 슬롯 — 아이콘 SSOT는 `ContainerVisualPresenter` (월드 타일 thumbnail → provider SpriteRenderer → 중첩 가방은 item icon; `floor-loot`·`loot-aggregate` 가상 탭은 아이콘 숨김·라벨은 Definition/Loc) |
+| `Grp_ContainerSlot` | 사이드바 컨테이너 슬롯 — 아이콘 SSOT는 `ContainerVisualPresenter` (월드 타일 thumbnail → provider SpriteRenderer → 중첩 가방은 item icon; `floor-loot`·`loot-aggregate` 가상 탭은 `ContainerIconCatalog` — 키 `floor_loot`·`loot_aggregate`, 미할당 시 DefaultIcon·라벨은 Definition/Loc) |
 
 | `Grp_InventoryDragGhost` | 드래그 고스트 비주얼 (`UIInventoryDragGhost`). 소유: Canvas `UIItemDragGhostService` → 런타임 TopMost. `Setup Canvas Overlays In Open Scene` |
 

@@ -9,19 +9,18 @@ using UnityEngine;
 public static class ContainerVisualPresenter
 {
     /// <summary>
-    /// 컨테이너의 표시 스프라이트. floor-loot 가상 컨테이너는 null(아이콘 숨김).
+    /// 컨테이너의 표시 스프라이트. 가상 바닥·합산은 <see cref="ContainerIconCatalog"/> SSOT.
     /// </summary>
     public static Sprite GetDisplayIcon(InventoryContainer container, InventorySession session = null)
     {
         if (container == null)
             return null;
 
-        // 가상 바닥·합산 컨테이너는 월드 오브젝트가 없다 — 아이콘 숨김(라벨은 Definition/Loc).
         if (container.InstanceId == FloorLootHost.DefaultInstanceId)
-            return null;
+            return ResolveCatalogIcon(FloorLootHost.DefaultContainerDefId);
 
         if (LootAggregateHost.IsAggregateContainer(container))
-            return null;
+            return ResolveCatalogIcon(LootAggregateHost.DefaultContainerDefId);
 
         if (ContainerTileViewRegistry.Instance.TryGetViewByContainerInstanceId(
                 container.InstanceId,
@@ -60,6 +59,15 @@ public static class ContainerVisualPresenter
         }
 
         return null;
+    }
+
+    static Sprite ResolveCatalogIcon(string containerDefId)
+    {
+        ContainerIconCatalog catalog = ContainerIconCatalog.Active;
+        if (catalog == null)
+            return null;
+
+        return catalog.Resolve(containerDefId);
     }
 
     /// <summary>
