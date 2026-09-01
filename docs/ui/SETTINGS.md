@@ -34,6 +34,10 @@ Editor: `Assets/Dist/Scripts/Editor/Settings/SettingsUISetupMenu.cs`
 
 - **Graphics** → HUD 조정 아래 **개별 HUD 표시** 토글 4개 → `HudPopupVisibility` (`PlayerPrefs`).
 
+- **Game** 카테고리 → **저장** / **불러오기** → `UIGameSaveSlotPopupController` (10슬롯 모달, Cancel priority 80).
+
+- 슬롯 I/O API: `GameSaveSlotService` (`Assets/Dist/Scripts/Gameplay/Save/`). v1 로드는 씬 재로드; UI는 API 뒤에 고정.
+
 - 세팅 열림 동안 `pause_menu` (World+Player `0`). HUD `gameplay_speed`와 **별개**.
 
 
@@ -52,7 +56,7 @@ Editor: `Assets/Dist/Scripts/Editor/Settings/SettingsUISetupMenu.cs`
 
 | 100 | `UiCancelPriority.ContextMenu` | `UiContextMenuCancelConsumer` |
 
-| 80 | `UiCancelPriority.ModalPopup` | (예약) |
+| 80 | `UiCancelPriority.ModalPopup` | `UIGameSaveSlotPopupController` |
 
 | 75 | `UiCancelPriority.FarmCellTarget` | `FarmCellTargetSession` |
 | 76 | `UiCancelPriority.ConstructionCellTarget` | `ConstructionCellTargetSession` |
@@ -154,6 +158,10 @@ Editor: `Assets/Dist/Scripts/Editor/Settings/SettingsUISetupMenu.cs`
 
 | `Dist/MCP/Settings/Patch HUD Popup Toggles` | Graphics 페이지 HUD 4토글 Patch |
 
+| `Dist/MCP/Settings/Patch Game Save Buttons` | Game 카테고리·저장/불러오기 버튼 Patch |
+
+| `Dist/MCP/Settings/Create Game Save Slot Popup Prefab If Missing` | 슬롯 모달 프리팹 1회 생성 |
+
 | `Dist/MCP/Settings/Setup Settings In Open Scene` | Controller + Canvas 서비스 (Router, ContextMenu consumer) |
 
 | `Dist/MCP/Settings/Merge Localization Keys Into UI_ko` | Loc 키 |
@@ -204,7 +212,11 @@ Setup은 프리팹 **로드만**. 없으면 LogError — full bake 금지 (`ui-p
 
 | `Settings.Hud.Summary` | 상태 요약 |
 
+| `Settings.Category.Game` | Game 카테고리 |
+
+| `Settings.Game.*` | 슬롯 저장/불러오기 (문구 SSOT: `GameSaveLabels`) |
 
 
-문구 SSOT: `SettingsLabels`.
+
+문구 SSOT: `SettingsLabels` · `GameSaveLabels`.
 

@@ -53,10 +53,15 @@ public sealed class ItemInstance
     public int HotUntilWorldMinute { get; private set; }
 
     public ItemInstance(ItemData item, int damageLevel = 0)
+        : this(item, damageLevel, Guid.NewGuid())
+    {
+    }
+
+    public ItemInstance(ItemData item, int damageLevel, Guid uid)
     {
         Item = item ?? throw new ArgumentNullException(nameof(item));
         DamageLevel = Math.Max(0, damageLevel);
-        Uid = Guid.NewGuid();
+        Uid = uid == Guid.Empty ? Guid.NewGuid() : uid;
         SelectedAction = null;
         ChamberRounds = 0;
         ChamberAmmoId = null;
@@ -68,6 +73,43 @@ public sealed class ItemInstance
         IsCooked = false;
         IsHot = false;
         HotUntilWorldMinute = UnsetCreatedWorldMinute;
+    }
+
+    public static ItemInstance FromSave(ItemData item, int damageLevel, Guid uid, ItemInstanceSaveDto dto)
+    {
+        var instance = new ItemInstance(item, damageLevel, uid);
+        instance.RestoreFromSave(dto);
+        return instance;
+    }
+
+    public void RestoreFromSave(ItemInstanceSaveDto dto)
+    {
+        if (dto == null)
+            return;
+
+        SelectedAction = dto.hasSelectedAction ? (WeaponAction)dto.selectedAction : null;
+        RestoreChamber(dto.chamberRounds, dto.chamberAmmoId);
+        RestoreSupply(dto.supplyRounds, dto.supplyAmmoId);
+        SetToolCharges(dto.toolCharges);
+        CreatedWorldMinute = dto.createdWorldMinute;
+        SetRotten(dto.isRotten);
+        StampCooked(dto.isCooked);
+        if (dto.isHot)
+            StampHot(dto.hotUntilWorldMinute);
+        else
+            ClearHot();
+    }
+
+    void RestoreChamber(int rounds, string ammoId)
+    {
+        ChamberRounds = Math.Max(0, rounds);
+        ChamberAmmoId = ChamberRounds > 0 ? ammoId : null;
+    }
+
+    void RestoreSupply(int rounds, string ammoId)
+    {
+        SupplyRounds = Math.Max(0, rounds);
+        SupplyAmmoId = SupplyRounds > 0 ? ammoId : null;
     }
 
     public void SetCreatedWorldMinute(int worldMinute)

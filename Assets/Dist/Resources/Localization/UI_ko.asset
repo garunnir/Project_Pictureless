@@ -561,3 +561,32 @@ MonoBehaviour:
     text: "\uC911\uC2EC\uC744 \uC783\uACE0 \uC4F0\uB7EC\uC84C\uB2E4"
   - key: ItemContextMenu.Unwrap
     text: "\uBD95\uB300 \uBC97\uAE30"
+  - key: Settings.Category.Game
+    text: "\uAC8C\uC784"
+  - key: Settings.Game.Save
+    text: "\uC800\uC7A5"
+  - key: Settings.Game.Load
+    text: "\uBD88\uB7EC\uC624\uAE30"
+  - key: Settings.Game.Popup.SaveTitle
+    text: "\uC800\uC7A5\uD560 \uC2AC\uB86F \uC120\uD0DD"
+  - key: Settings.Game.Popup.LoadTitle
+    text: "\uBD88\uB7EC\uC62C \uC2AC\uB86F \uC120\uD0DD"
+  - key: Settings.Game.Slot.TitleFormat
+    text: "\uC2AC\uB86F {0}"
+  - key: Settings.Game.Slot.Empty
+    text: "\uBE44\uC5B4 \uC788\uC74C"
+  - key: Settings.Game.Slot.DayTimeFormat
+    text: Day {0} {1:D2}:{2:D2}
+  - key: Settings.Game.Slot.SavedAtFormat
+    text: "\uC800\uC7A5 {0}"
+  - key: Settings.Game.Confirm.Overwrite
+    text: "\uC774 \uC2AC\uB86F\uC758 \uC800\uC7A5 \uB370\uC774\uD130\uB97C \uB36E\uC5B4\uC4F8\uAE4C\uC694?"
+  - key: Settings.Game.Confirm.Load
+    text: "\uC800\uC7A5\uD558\uC9C0 \uC54A\uC740 \uC9C4\uD589\uC774 \uC0AC\uB77C\uC9C8
+      \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uBD88\uB7EC\uC62C\uAE4C\uC694?"
+  - key: Settings.Game.Confirm.Yes
+    text: "\uD655\uC778"
+  - key: Settings.Game.Confirm.No
+    text: "\uCDE8\uC18C"
+  - key: Settings.Game.Close
+    text: "\uB2EB\uAE30"

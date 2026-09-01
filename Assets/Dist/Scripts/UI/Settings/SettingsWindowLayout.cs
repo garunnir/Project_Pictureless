@@ -14,6 +14,10 @@ public static class SettingsWindowLayout
     public const float ToggleRowHeight = 28f;
     public const float HudPopupToggleInset = 20f;
     public const float ToggleStackSpacing = 4f;
+    public const float CategoryButtonHeight = 28f;
+    public const float CategoryButtonSpacing = 4f;
+    public const float GameActionButtonHeight = 28f;
+    public const float GameActionButtonSpacing = 8f;
     public const int FontSizeBody = 14;
     public const int FontSizeHudPopup = 12;
     public const int FontSizeHeader = 16;

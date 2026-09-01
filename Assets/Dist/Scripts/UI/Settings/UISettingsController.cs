@@ -10,8 +10,11 @@ public sealed class UISettingsController : MonoBehaviour, IUiCancelConsumer
 {
     [SerializeField, Required] UISettingsWindow _windowPrefab;
     [SerializeField] UISettingsWindow _window;
+    [SerializeField, Required] UIGameSaveSlotPopup _saveSlotPopupPrefab;
     [SerializeField] Canvas _uiCanvas;
     [SerializeField] UICanvasLayerHost _layerHost;
+
+    UIGameSaveSlotPopupController _saveSlotPopupController;
 
     bool _isOpen;
     bool _pauseApplied;
@@ -24,6 +27,7 @@ public sealed class UISettingsController : MonoBehaviour, IUiCancelConsumer
     void Awake()
     {
         EnsureReferences();
+        EnsureSaveSlotPopupController();
         EnsureWindow();
         if (_window != null)
             _window.gameObject.SetActive(false);
@@ -77,6 +81,10 @@ public sealed class UISettingsController : MonoBehaviour, IUiCancelConsumer
         _window.RefreshLabels();
         _window.ConfigureChrome(_uiCanvas);
         _window.BindClose(Close);
+        _window.SaveClicked -= OnSaveClicked;
+        _window.SaveClicked += OnSaveClicked;
+        _window.LoadClicked -= OnLoadClicked;
+        _window.LoadClicked += OnLoadClicked;
         _window.SetHudLayoutToggle(HudLayoutEdit.IsActive, notify: false);
         _window.SyncHudPopupToggles(notify: false);
 
@@ -99,6 +107,8 @@ public sealed class UISettingsController : MonoBehaviour, IUiCancelConsumer
 
         if (_window != null)
         {
+            _window.SaveClicked -= OnSaveClicked;
+            _window.LoadClicked -= OnLoadClicked;
             _window.SetHudLayoutToggle(false, notify: false);
             _window.gameObject.SetActive(false);
         }
@@ -161,4 +171,24 @@ public sealed class UISettingsController : MonoBehaviour, IUiCancelConsumer
         _window.name = "Grp_SettingsWindow";
         _window.gameObject.SetActive(false);
     }
+
+    void EnsureSaveSlotPopupController()
+    {
+        EnsureReferences();
+        if (_saveSlotPopupController != null)
+            return;
+
+        _saveSlotPopupController = GetComponent<UIGameSaveSlotPopupController>();
+        if (_saveSlotPopupController == null)
+            _saveSlotPopupController = gameObject.AddComponent<UIGameSaveSlotPopupController>();
+
+        if (_saveSlotPopupPrefab != null)
+            _saveSlotPopupController.Configure(this, _uiCanvas, _layerHost, _saveSlotPopupPrefab);
+        else
+            _saveSlotPopupController.Configure(this, _uiCanvas, _layerHost);
+    }
+
+    void OnSaveClicked() => _saveSlotPopupController?.OpenSave();
+
+    void OnLoadClicked() => _saveSlotPopupController?.OpenLoad();
 }

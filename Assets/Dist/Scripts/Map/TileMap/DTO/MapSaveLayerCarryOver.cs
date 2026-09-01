@@ -2,6 +2,7 @@
 // MapSaveLayerCarryOver — 저장 시 비-타일 레이어(액체·혈흔·시계)를 잃지 않게 채우는 SSOT
 // ============================================================
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -19,6 +20,8 @@ namespace IsoTilemap
     /// </remarks>
     public static class MapSaveLayerCarryOver
     {
+        /// <summary>DistScript <see cref="PlayerProgressSaveBridge"/>가 등록. possessed 없을 때 디스크 계승.</summary>
+        public static Action<MapSaveJsonDto, MapSaveJsonDto> MergePlayerProgress;
         /// <summary>
         /// 덮어쓸 대상 파일을 미리 읽는다. 파일이 없거나 비어 있으면 계승할 것이 없으므로
         /// <paramref name="existing"/> null + true(최초 저장은 정상).
@@ -107,6 +110,11 @@ namespace IsoTilemap
             MapClockSnapshot.WriteToDto(target);
             if (!target.hasClockSnapshot)
                 CarryClock(target, existing);
+
+            if (MergePlayerProgress != null)
+                MergePlayerProgress.Invoke(target, existing);
+            else
+                CarryPlayerProgress(target, existing);
         }
 
         static void CarryLiquidAuthoring(MapSaveJsonDto target, MapSaveJsonDto existing)
@@ -151,6 +159,19 @@ namespace IsoTilemap
             target.hasClockSnapshot = true;
             target.dayIndex = existing.dayIndex;
             target.minuteOfDay = existing.minuteOfDay;
+        }
+
+        static void CarryPlayerProgress(MapSaveJsonDto target, MapSaveJsonDto existing)
+        {
+            if (existing == null || !existing.hasPlayerProgressSnapshot)
+            {
+                target.hasPlayerProgressSnapshot = false;
+                target.playerProgressJson = null;
+                return;
+            }
+
+            target.hasPlayerProgressSnapshot = true;
+            target.playerProgressJson = existing.playerProgressJson;
         }
     }
 }

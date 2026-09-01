@@ -22,9 +22,21 @@ public class MapFileSaver : MonoBehaviour
 
     public void Save()
     {
+        SaveTo(GetFullPath());
+    }
+
+    public void SaveTo(string fullPath)
+    {
+        if (string.IsNullOrEmpty(fullPath))
+            return;
+
+        string directory = Path.GetDirectoryName(fullPath);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            Directory.CreateDirectory(directory);
+
         float cellSize = _worldGrid != null ? _worldGrid.CellSize : 1f;
         new MapSavePipeline(_model, _mapper).Save(
-            GetFullPath(),
+            fullPath,
             cellSize,
             MapBloodHost.Runtime,
             MapPlantHost.Runtime,

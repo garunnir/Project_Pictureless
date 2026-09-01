@@ -14,14 +14,14 @@
 
 ## 세이브 / 로드
 
-런타임 메모리만. Body는 `CharacterBodyDto` / `BodyTempDto` 왕복만 있고 **세이브 UI 없음**. WorldClock·숙련도 미직렬화.
+맵 JSON(`MapSaveJsonDto`)에 타일·월드 시계·플레이어 진행 스냅샷(`hasPlayerProgressSnapshot` / `playerProgressJson`)을 병합 저장. 인벤·장비는 후속.
 
 **지침**
-- 교차 도메인(시계·몸·숙련·인벤·맵)이라 **설계 승인 없이** 저장 스택을 신설하지 않는다.
-- 있는 DTO(`ToDto`/`FromDto`)를 버리고 새 포맷을 만들지 않는다. 없는 도메인은 같은 왕복 패턴을 맞춘다.
+- 교차 도메인 저장은 기존 `MapSavePipeline` + `ToDto`/`FromDto` 패턴을 따른다.
 - Pixel Crushers / Legacy 세이브를 Dist SSOT로 쓰지 않는다.
+- 로드 시 정의 시드 후 `PlayerProgressSaveBridge.TryRestorePossessed`가 성장 데이터를 덮어쓴다.
 
-**도메인:** [`time/TIME.md`](time/TIME.md) · [`body/BODY.md`](body/BODY.md)
+**도메인:** [`time/TIME.md`](time/TIME.md) · [`body/BODY.md`](body/BODY.md) · [`map/SYSTEM.md`](map/SYSTEM.md)
 
 ---
 

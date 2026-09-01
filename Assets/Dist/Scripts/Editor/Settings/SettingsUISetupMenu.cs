@@ -80,6 +80,15 @@ static class SettingsUISetupMenu
             return;
         }
 
+        UIGameSaveSlotPopup popupPrefab =
+            AssetDatabase.LoadAssetAtPath<UIGameSaveSlotPopup>(GameSaveSlotPopupFactory.DefaultPrefabPath);
+        if (popupPrefab == null)
+        {
+            Debug.LogWarning(
+                $"[SettingsUISetupMenu] Save slot popup prefab missing: {GameSaveSlotPopupFactory.DefaultPrefabPath}. " +
+                "Run " + DistMcpMenus.SettingsCreateGameSaveSlotPopupPrefabIfMissing + " first.");
+        }
+
         UISettingsController controller = Object.FindAnyObjectByType<UISettingsController>();
         if (controller == null)
         {
@@ -102,6 +111,7 @@ static class SettingsUISetupMenu
         so.FindProperty("_uiCanvas").objectReferenceValue = canvas;
         so.FindProperty("_layerHost").objectReferenceValue = layerHost;
         so.FindProperty("_windowPrefab").objectReferenceValue = prefab;
+        so.FindProperty("_saveSlotPopupPrefab").objectReferenceValue = popupPrefab;
         so.FindProperty("_window").objectReferenceValue = null;
         so.ApplyModifiedPropertiesWithoutUndo();
 
@@ -154,6 +164,20 @@ static class SettingsUISetupMenu
         Put("Settings.Hud.TimeScale", "배속");
         Put("Settings.Hud.MessageLog", "메시지 로그");
         Put("Settings.Hud.Summary", "상태 요약");
+        Put("Settings.Category.Game", "게임");
+        Put("Settings.Game.Save", "저장");
+        Put("Settings.Game.Load", "불러오기");
+        Put("Settings.Game.Popup.SaveTitle", "저장할 슬롯 선택");
+        Put("Settings.Game.Popup.LoadTitle", "불러올 슬롯 선택");
+        Put("Settings.Game.Slot.TitleFormat", "슬롯 {0}");
+        Put("Settings.Game.Slot.Empty", "비어 있음");
+        Put("Settings.Game.Slot.DayTimeFormat", "Day {0} {1:D2}:{2:D2}");
+        Put("Settings.Game.Slot.SavedAtFormat", "저장 {0}");
+        Put("Settings.Game.Confirm.Overwrite", "이 슬롯의 저장 데이터를 덮어쓸까요?");
+        Put("Settings.Game.Confirm.Load", "저장하지 않은 진행이 사라질 수 있습니다. 불러올까요?");
+        Put("Settings.Game.Confirm.Yes", "확인");
+        Put("Settings.Game.Confirm.No", "취소");
+        Put("Settings.Game.Close", "닫기");
         Put("TimeScale.Pause", "||");
         Put("TimeScale.Normal", "1x");
         Put("TimeScale.Double", "2x");
@@ -168,6 +192,8 @@ static class SettingsUISetupMenu
         AssetDatabase.SaveAssets();
         Debug.Log($"[SettingsUISetupMenu] Localization merged ({map.Count} keys).");
     }
+
+    internal static void EnsureSettingsFolder() => EnsureFolder();
 
     static void EnsureFolder()
     {

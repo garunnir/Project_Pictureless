@@ -1,3 +1,4 @@
+using System.IO;
 using IsoTilemap;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -312,6 +313,7 @@ public class TileMapManager : MonoBehaviour
         float cellSize = _worldGrid != null ? _worldGrid.CellSize : _gridCellSize;
         _plantHost.BindMapContext(_mapCacheHub, cellSize, _prefabDB, _controller, Model);
         MapClockSnapshot.RestoreFromDto(_loader != null ? _loader.LastLoadedDto : null);
+        PlayerProgressSnapshotPending.SetFromMapDto(_loader != null ? _loader.LastLoadedDto : null);
         _plantHost.LoadFromDto(_loader != null ? _loader.LastLoadedDto : null);
     }
 
@@ -521,6 +523,26 @@ public class TileMapManager : MonoBehaviour
 
     public void Load() => _loader.Load();
     public void Save() => _saver.Save();
+
+    public MapSaveJsonDto LoaderLastDto =>
+        _loader != null ? _loader.LastLoadedDto : null;
+
+    public bool SaveTo(string fullPath)
+    {
+        if (_saver == null || string.IsNullOrEmpty(fullPath))
+            return false;
+
+        _saver.SaveTo(fullPath);
+        return File.Exists(fullPath);
+    }
+
+    public bool SaveToSlot(int slotIndex)
+    {
+        if (!GameSaveSlotPaths.IsValidIndex(slotIndex))
+            return false;
+
+        return SaveTo(GameSaveSlotPaths.MapPath(slotIndex));
+    }
 
 #if UNITY_EDITOR
     [ContextMenu("Load Editor")]

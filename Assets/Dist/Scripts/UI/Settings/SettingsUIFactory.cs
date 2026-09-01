@@ -52,7 +52,16 @@ public static class SettingsUIFactory
         categoriesRect.anchoredPosition = Vector2.zero;
         categoriesRect.sizeDelta = new Vector2(SettingsWindowLayout.CategoryColumnWidth, 0f);
 
-        Button graphicsButton = CreateCategoryButton(categoriesGo.transform, "Btn_Graphics");
+        Button graphicsButton = CreateCategoryButton(
+            categoriesGo.transform,
+            "Btn_Graphics",
+            SettingsWindowLayout.ChromePadding);
+        Button gameButton = CreateCategoryButton(
+            categoriesGo.transform,
+            "Btn_Game",
+            SettingsWindowLayout.ChromePadding +
+            SettingsWindowLayout.CategoryButtonHeight +
+            SettingsWindowLayout.CategoryButtonSpacing);
 
         GameObject contentGo = CreateRect("Area_Content", bodyGo.transform, SettingsWindowLayout.ContentColor);
         RectTransform contentRect = contentGo.GetComponent<RectTransform>();
@@ -79,6 +88,22 @@ public static class SettingsUIFactory
         Toggle hudMessageLogToggle = CreateToggle(graphicsPage.transform, "Toggle_HudMessageLog", SettingsWindowLayout.HudPopupToggleInset, SettingsWindowLayout.FontSizeHudPopup);
         Toggle hudSummaryToggle = CreateToggle(graphicsPage.transform, "Toggle_HudSummary", SettingsWindowLayout.HudPopupToggleInset, SettingsWindowLayout.FontSizeHudPopup);
 
+        GameObject gamePage = CreateRect("Page_Game", contentGo.transform, Color.clear);
+        Stretch(gamePage.GetComponent<RectTransform>(), SettingsWindowLayout.ChromePadding);
+        gamePage.GetComponent<Image>().raycastTarget = false;
+
+        VerticalLayoutGroup gameStack = gamePage.AddComponent<VerticalLayoutGroup>();
+        gameStack.childAlignment = TextAnchor.UpperLeft;
+        gameStack.spacing = SettingsWindowLayout.GameActionButtonSpacing;
+        gameStack.childControlWidth = true;
+        gameStack.childControlHeight = true;
+        gameStack.childForceExpandWidth = true;
+        gameStack.childForceExpandHeight = false;
+
+        Button saveButton = CreateGameActionButton(gamePage.transform, "Btn_Save");
+        Button loadButton = CreateGameActionButton(gamePage.transform, "Btn_Load");
+        gamePage.SetActive(false);
+
         root.AddComponent<UIOverlayWindow>();
         UISettingsWindow window = root.AddComponent<UISettingsWindow>();
         window.Wire(
@@ -87,6 +112,10 @@ public static class SettingsUIFactory
             title,
             graphicsButton,
             graphicsPage,
+            gameButton,
+            gamePage,
+            saveButton,
+            loadButton,
             hudToggle,
             hudTimeToggle,
             hudTimeScaleToggle,
@@ -95,15 +124,31 @@ public static class SettingsUIFactory
         return window;
     }
 
-    static Button CreateCategoryButton(Transform parent, string name)
+    static Button CreateCategoryButton(Transform parent, string name, float topOffset)
     {
         GameObject go = CreateRect(name, parent, SettingsWindowLayout.CategoryColor);
         RectTransform rect = go.GetComponent<RectTransform>();
         rect.anchorMin = new Vector2(0f, 1f);
         rect.anchorMax = new Vector2(1f, 1f);
         rect.pivot = new Vector2(0.5f, 1f);
-        rect.anchoredPosition = new Vector2(0f, -SettingsWindowLayout.ChromePadding);
-        rect.sizeDelta = new Vector2(-SettingsWindowLayout.ChromePadding * 2f, 28f);
+        rect.anchoredPosition = new Vector2(0f, -topOffset);
+        rect.sizeDelta = new Vector2(
+            -SettingsWindowLayout.ChromePadding * 2f,
+            SettingsWindowLayout.CategoryButtonHeight);
+        go.GetComponent<Image>().raycastTarget = true;
+
+        Button button = go.AddComponent<Button>();
+        TMP_Text label = CreateTmp("Label", go.transform, SettingsWindowLayout.FontSizeBody, TextAlignmentOptions.Center);
+        Stretch(label.rectTransform, 4f, 4f, 0f, 0f);
+        return button;
+    }
+
+    static Button CreateGameActionButton(Transform parent, string name)
+    {
+        GameObject go = CreateRect(name, parent, SettingsWindowLayout.CategoryColor);
+        LayoutElement layout = go.AddComponent<LayoutElement>();
+        layout.preferredHeight = SettingsWindowLayout.GameActionButtonHeight;
+        layout.minHeight = SettingsWindowLayout.GameActionButtonHeight;
         go.GetComponent<Image>().raycastTarget = true;
 
         Button button = go.AddComponent<Button>();

@@ -35,7 +35,7 @@
 ### 의도적 축소
 
 - recipe `flags`는 화이트리스트만 (`DARK` 등). `batch_time_factors` / `contained` 미이식
-- `RecipeMemory`(decomp 습득)는 **런타임만** — 세이브 미직렬화
+- `RecipeMemory`(decomp 습득) — `PlayerProgressSaveDto` / map `playerProgressJson`에 저장
 - 가구 연료·점화 시뮬 없음 — **점화 플래그 가구 = 열원** 이분법
 - `parasites`, `freeze_point`, `monotony_penalty` Parked
 

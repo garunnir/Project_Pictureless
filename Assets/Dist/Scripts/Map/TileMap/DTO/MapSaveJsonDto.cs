@@ -54,5 +54,11 @@ namespace IsoTilemap
         public bool hasClockSnapshot;
         public int dayIndex;
         public int minuteOfDay;
+
+        /// <summary>true면 <see cref="playerProgressJson"/>에 possessed 플레이어 진행 스냅샷이 유효.</summary>
+        public bool hasPlayerProgressSnapshot;
+
+        /// <summary><see cref="PlayerProgressSaveDto"/> JsonUtility JSON.</summary>
+        public string playerProgressJson;
     }
 }

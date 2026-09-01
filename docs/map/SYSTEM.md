@@ -168,10 +168,36 @@ sequenceDiagram
 | Entry | `Components/` | `MapFileLoader`, `MapFileSaver`, `TileMapController` |
 | Data | `Internal/` | 순수 구조체 (Unity 비의존) |
 | Interface | `TileMap/Interface/` | 레이어 간 계약, 결합도 최소화 |
-| DTO | `TileMap/DTO/` | JSON 직렬화 전용 포맷 |
+| DTO | `TileMap/DTO/` | JSON 직렬화 전용 포맷 (`hasPlayerProgressSnapshot` / `playerProgressJson`) |
 | Model | `TileMap/` | 런타임 상태, BFS 오클루전 |
 | View | `TileMap/` | GameObject 생성·갱신 |
 | Pipeline | `TileMap/` | 단계 조합 (교체 가능) |
+
+### 플레이어 진행 (`playerProgressJson`)
+
+Possessed 플레이어 스냅샷. `CharacterDefinition` 시드 후 `PlayerProgressSaveBridge.TryRestorePossessed`가 덮어씀.
+
+| 포함 | DTO |
+|------|-----|
+| 위치·방향 | `PlayerProgressSaveDto` |
+| 몸·체온 | `CharacterBodyDto`, `BodyTempSaveDto` |
+| 스킬·바이탈·숙련·레시피·trait | `CharacterProgressSaveDto` 계열 |
+| 인벤·장비 | `inventoryJson` → `InventoryGearSaveDto` (몸통·착용·들기) |
+
+저장: `MapSaveLayerCarryOver.MergePlayerProgress` · 로드: `PlayerProgressSnapshotPending` → possess 후 복원.
+
+### 게임 슬롯 저장 (10)
+
+| 항목 | SSOT |
+|------|------|
+| API | `GameSaveSlotService` (`Assets/Dist/Scripts/Gameplay/Save/`) |
+| 경로 SSOT | `GameSaveSlotPaths` (`Assets/Dist/Scripts/Map/TileMap/DTO/`) |
+| 맵 파일 | `{persistentDataPath}/saves/slot_{00..09}.json` |
+| 메타 | `{persistentDataPath}/saves/slot_{00..09}.meta.json` (`GameSaveSlotPaths`) |
+| 로드 v1 | `GameSaveSlotSession` pending → active scene reload → `MapFileLoader`가 슬롯 경로 우선 |
+| 에디터 기본 맵 | `map01.json` (슬롯과 분리) |
+
+UI: [`../ui/SETTINGS.md`](../ui/SETTINGS.md) Game 카테고리 · `UIGameSaveSlotPopup`.
 
 ---
 

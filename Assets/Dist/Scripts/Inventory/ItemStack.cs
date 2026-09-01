@@ -27,6 +27,12 @@ public sealed class ItemStack
         SetCount(count);
     }
 
+    public ItemStack(ItemInstance instance, int count)
+    {
+        Instance = instance ?? throw new ArgumentNullException(nameof(instance));
+        SetCount(count);
+    }
+
     /// <summary>껍데기 + Nested 내용물(재귀). 가방도 아이템 중량 SSOT.</summary>
     public float TotalWeight
     {

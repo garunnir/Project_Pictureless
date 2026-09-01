@@ -30,6 +30,12 @@ public class MapFileLoader : MonoBehaviour
         _modelBuilder ??= new TileMapModelBuilder();
         _mapper ??= new TileMapDtoMapper();
 
+        if (GameSaveSlotSession.TryConsumePendingLoad(out int slotIndex))
+        {
+            Load(GameSaveSlotPaths.MapPath(slotIndex));
+            return;
+        }
+
         Load(GetFullPath());
     }
 

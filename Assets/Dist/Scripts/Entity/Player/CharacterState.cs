@@ -109,6 +109,9 @@ public class CharacterState : MonoBehaviour
     internal void SetSwimVerticalInput(float vertical01) =>
         SwimVerticalInput = Mathf.Clamp(vertical01, -1f, 1f);
 
+    /// <summary>저장 스냅샷 등 — 월드 좌표를 즉시 반영하고 그리드 셀을 갱신합니다.</summary>
+    public void SnapWorldPosition(Vector3 worldPos) => UpdateGridPos(worldPos);
+
     internal void UpdateGridPos(Vector3 worldPos)
     {
         BodyWorldPoint = worldPos;
