@@ -1,10 +1,18 @@
+// ============================================================
+// CameraFollowTargetDriver — 스무딩 proxy + Cinemachine Brain ManualUpdate
+// ============================================================
+// Cinemachine Brain manual: Follow/LookAt을 코드로 움직이면 Update Method = Manual Update,
+// proxy 이동이 끝난 뒤 brain.ManualUpdate()를 렌더 프레임당 정확히 1회 호출한다.
+// https://docs.unity3d.com/Packages/com.unity.cinemachine@3.1/manual/CinemachineBrain.html
 using Unity.Cinemachine;
 using UnityEngine;
 
 /// <summary>
-/// Drives a proxy transform for Cinemachine follow/look-at.
-/// Keeps aim data as Vector3 while exposing a stable transform target.
+/// 타겟을 <see cref="SmoothDamp"/>한 proxy를 Follow/LookAt으로 쓴다.
+/// Main Camera는 proxy 갱신 직후 <see cref="CinemachineBrain.ManualUpdate"/>로만 위치가 정해진다
+/// (Position Composer damping 포함).
 /// </summary>
+[DefaultExecutionOrder(-100)]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(CinemachineCamera))]
 public class CameraFollowTargetDriver : MonoBehaviour
@@ -23,6 +31,7 @@ public class CameraFollowTargetDriver : MonoBehaviour
     [SerializeField] private float _maxSpeed = 100f;
 
     private CinemachineCamera _cinemachineCamera;
+    private CinemachineBrain _cinemachineBrain;
     private Vector3 _smoothedVelocity;
     private Vector3 _latestAimPoint;
     private bool _hasAimPoint;
@@ -40,6 +49,8 @@ public class CameraFollowTargetDriver : MonoBehaviour
         BindCharacterState(_characterState);
         if (_followTarget != null && _proxyTarget != null)
             _proxyTarget.position = GetDesiredPosition();
+
+        SyncBrainAfterFollowMoved();
     }
 
     private void OnDisable()
@@ -49,6 +60,9 @@ public class CameraFollowTargetDriver : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (_cinemachineBrain == null)
+            EnsureMainCameraBrain();
+
         if (_followTarget == null || _proxyTarget == null)
             return;
 
@@ -60,6 +74,8 @@ public class CameraFollowTargetDriver : MonoBehaviour
             _positionSmoothTime,
             _maxSpeed,
             TimeScaleService.Delta(TimeScaleChannel.Player));
+
+        SyncBrainAfterFollowMoved();
     }
 
     public void SetTarget(Transform target, CharacterState state)
@@ -68,6 +84,8 @@ public class CameraFollowTargetDriver : MonoBehaviour
         BindCharacterState(state);
         if (_proxyTarget != null && _followTarget != null)
             _proxyTarget.position = GetDesiredPosition();
+
+        SyncBrainAfterFollowMoved();
     }
 
     public void SetAimLeadWeight(float weight)
@@ -132,13 +150,26 @@ public class CameraFollowTargetDriver : MonoBehaviour
         _proxyTarget = found;
     }
 
-    private static void EnsureMainCameraBrain()
+    private void EnsureMainCameraBrain()
     {
         Camera cam = Camera.main;
         if (cam == null)
             return;
 
-        if (!cam.TryGetComponent(out CinemachineBrain _))
-            cam.gameObject.AddComponent<CinemachineBrain>();
+        if (!cam.TryGetComponent(out _cinemachineBrain))
+            _cinemachineBrain = cam.gameObject.AddComponent<CinemachineBrain>();
+
+        _cinemachineBrain.UpdateMethod = CinemachineBrain.UpdateMethods.ManualUpdate;
+        _cinemachineBrain.BlendUpdateMethod = CinemachineBrain.BrainUpdateMethods.LateUpdate;
+    }
+
+    /// <summary>Follow/LookAt(proxy) 이동 직후, 렌더 프레임당 1회.</summary>
+    private void SyncBrainAfterFollowMoved()
+    {
+        if (_cinemachineBrain == null)
+            return;
+
+        float deltaTime = TimeScaleService.Delta(TimeScaleChannel.Player);
+        _cinemachineBrain.ManualUpdate(Time.frameCount, deltaTime);
     }
 }

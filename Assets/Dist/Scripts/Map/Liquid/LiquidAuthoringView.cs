@@ -46,10 +46,36 @@ namespace IsoTilemap
         {
             ApplyEditorPose();
 #if UNITY_EDITOR
-            if (!Application.isPlaying)
-                MapLiquidAuthoringPreviewRenderer.RequestRefresh();
+            OnEditorPoseSnapped();
 #endif
         }
+
+        void OnEnable()
+        {
+            if (Application.isPlaying)
+                SetMarkerRenderersEnabled(false);
+        }
+
+        void OnDisable()
+        {
+            if (!Application.isPlaying)
+                SetMarkerRenderersEnabled(true);
+        }
+
+        void SetMarkerRenderersEnabled(bool enabled)
+        {
+            MeshRenderer[] renderers = GetComponentsInChildren<MeshRenderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+                renderers[i].enabled = enabled;
+        }
+
+#if UNITY_EDITOR
+        protected override void OnEditorPoseSnapped()
+        {
+            if (!Application.isPlaying)
+                MapLiquidAuthoringPreviewRenderer.RequestRefresh();
+        }
+#endif
 
         /// <summary>
         /// gridPos는 저장용 CellBelow 앵커 — 기즈모는 액체가 담기는 <see cref="LiquidCell"/>에 맞춘다.

@@ -31,6 +31,17 @@ namespace IsoTilemap
         /// <summary>배치 규칙(점유 셀 / 면 슬롯)에 맞춰 gridPos와 transform을 정렬합니다.</summary>
         protected abstract void ApplyEditorPose();
 
+#if UNITY_EDITOR
+        /// <summary>씬 Transform 조작 종료 시 가장 가까운 그리드/면으로 스냅합니다.</summary>
+        public void SnapEditorPoseToGrid()
+        {
+            ApplyEditorPose();
+            OnEditorPoseSnapped();
+        }
+
+        protected virtual void OnEditorPoseSnapped() { }
+#endif
+
         protected virtual void OnValidate() => ApplyEditorPose();
 
         protected virtual void Reset()

@@ -12,7 +12,8 @@ Material:
   m_Parent: {fileID: 2100000, guid: cc2a8c385eaf6f842940ae219820c8a5, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _USESCENEDEPTH_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -39,6 +40,7 @@ Material:
     - _ShoreDepthFade: 0.727
     - _ShoreFoamStrength: 0.252
     - _SideTint: 0.972
+    - _UseSceneDepth: 1
     - _WaveStrength: 0
     m_Colors:
     - _DeepColor: {r: 0.059999965, g: 0.23999995, b: 0.47999996, a: 0.88}

@@ -35,9 +35,9 @@ Shader "Dist/MapLiquidSurface"
 
         [Header(Scene Depth Shore)]
         [Toggle] _UseSceneDepth ("Use Scene Depth", Float) = 1
-        _ShoreDepthFade ("Shore Depth Fade (eye)", Range(0.01, 2)) = 0.35
+        _ShoreDepthFade ("Shore Depth Fade (world Y)", Range(0.01, 2)) = 0.35
         _ShoreFoamStrength ("Shore Foam Strength", Range(0, 1)) = 0.7
-        _ShoreDepthBias ("Shore Depth Bias (eye)", Range(-0.5, 0.5)) = 0.02
+        _ShoreDepthBias ("Shore Depth Bias (world Y)", Range(-0.5, 0.5)) = 0.02
 
         [Header(Lighting)]
         _LightInfluence ("Light Influence", Range(0, 1)) = 0.6
@@ -69,8 +69,10 @@ Shader "Dist/MapLiquidSurface"
             #pragma fragment Frag
             #pragma multi_compile_fog
 
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderVariablesFunctions.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
@@ -154,17 +156,22 @@ Shader "Dist/MapLiquidSurface"
                 return floor(saturate(v) * steps) / steps;
             }
 
-            float SampleShoreDepthFoam(float4 positionCS, float isTop)
+            // eye-depth 차는 카메라 이동·직교에 따라 잔상이 밀린다. 같은 픽셀 깊이→월드 Y만 비교.
+            float SampleShoreDepthFoam(float4 positionCS, float3 positionWS, float isTop)
             {
                 if (_UseSceneDepth < 0.5 || isTop < 0.5)
                     return 0.0;
 
-                float2 screenUV = positionCS.xy * rcp(_ScaledScreenParams.xy);
-                float sceneRaw = SampleSceneDepth(screenUV);
-                float sceneEye = LinearEyeDepth(sceneRaw, _ZBufferParams);
-                float fragEye = LinearEyeDepth(positionCS.z, _ZBufferParams);
-                float delta = sceneEye - fragEye + _ShoreDepthBias;
-                return 1.0 - saturate(delta / max(_ShoreDepthFade, 1e-4));
+                uint2 pixelCoord = uint2(positionCS.xy);
+                float sceneRaw = LoadSceneDepth(pixelCoord);
+                float2 screenUV = GetNormalizedScreenSpaceUV(float4(pixelCoord + 0.5, positionCS.zw));
+                float3 sceneWS = ComputeWorldSpacePosition(screenUV, sceneRaw, UNITY_MATRIX_I_VP);
+
+                float deltaY = positionWS.y - sceneWS.y + _ShoreDepthBias;
+                if (deltaY <= 0.0)
+                    return 0.0;
+
+                return 1.0 - saturate(deltaY / max(_ShoreDepthFade, 1e-4));
             }
 
             Varyings Vert(Attributes input)
@@ -208,7 +215,7 @@ Shader "Dist/MapLiquidSurface"
                 float foamHigh = 1.0 - _FoamWidth + _FoamSoftness;
                 float meshFoam = smoothstep(foamLow, foamHigh, foamEdge);
 
-                float shoreFoam = SampleShoreDepthFoam(input.positionCS, isTop) * _ShoreFoamStrength;
+                float shoreFoam = SampleShoreDepthFoam(input.positionCS, input.positionWS, isTop) * _ShoreFoamStrength;
                 float foamMask = saturate(max(meshFoam, shoreFoam));
 
                 float3 rgb = lerp(baseRgb, _FoamColor.rgb, foamMask);

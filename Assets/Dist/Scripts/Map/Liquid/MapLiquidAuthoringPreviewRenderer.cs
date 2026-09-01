@@ -137,8 +137,13 @@ namespace IsoTilemap
 
         void DrawAllChunks(Material material)
         {
+            Camera drawCamera = ResolveDrawCamera();
+            if (drawCamera == null)
+                return;
+
             var renderParams = new RenderParams(material)
             {
+                camera = drawCamera,
                 layer = gameObject.layer,
                 shadowCastingMode = ShadowCastingMode.Off,
                 receiveShadows = false,
@@ -151,8 +156,22 @@ namespace IsoTilemap
                     continue;
 
                 renderParams.worldBounds = entry.WorldBounds;
-                Graphics.RenderMesh(in renderParams, entry.Mesh, 0, entry.LocalToWorld);
+                Matrix4x4 localToWorld = Matrix4x4.TRS(entry.Origin, Quaternion.identity, Vector3.one);
+                Graphics.RenderMesh(in renderParams, entry.Mesh, 0, localToWorld);
             }
+        }
+
+        Camera ResolveDrawCamera()
+        {
+            int cameraCount = Camera.allCamerasCount;
+            for (int i = 0; i < cameraCount; i++)
+            {
+                Camera cam = Camera.allCameras[i];
+                if (cam != null && cam.isActiveAndEnabled)
+                    return cam;
+            }
+
+            return Camera.main;
         }
 
         ChunkEntry CreateEntry(Vector2Int chunk)

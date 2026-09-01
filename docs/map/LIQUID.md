@@ -163,11 +163,11 @@ JSON에서는 `liquidAuthoringFaces` 별 레이어로만 왕복한다. 이 한 �
 
 ### 렌더 경로
 
-- **씬 깊이(`_CameraDepthTexture`)**: URP `Require Depth Texture` ON. 수면 윗면에서 바닥·타일과의 eye-depth 차로 **해안 폼**(`_ShoreDepthFade`, `_ShoreFoamStrength`). 시뮬 `Fill01`·메셔 `foam01`은 그대로 SSOT — 깊이는 교차부 보조만.
+- **씬 깊이(`_CameraDepthTexture`)**: URP `Require Depth Texture` ON. 수면 윗면에서 **바닥·타일이 수면보다 뒤**일 때만 해안 폼(`sceneEye > fragEye`). 수면 위 오브젝트(앞)는 폼 0.
 - Opaque 텍스처(refraction)는 쓰지 않는다.
-- 화면 픽셀화는 `DistPixelisationFeature`(스크린 포스트)가 일괄 적용한다 — 물 셰이더는 ProPixelizer 오브젝트 셰이더가 아니어도 된다(맵 타일도 동일).
 - 셰이더 시간은 `_MapLiquidTime` 전역 프로퍼티. 렌더러가 `TimeScaleService.TimeNow(TimeScaleChannel.World)`로 매 프레임 채워, 배속·정지가 파도에 반영된다(`Time.timeScale` 미사용).
-- 그리기는 `Graphics.RenderMesh` 청크 단위. 청크 분할 SSOT는 `TileMapChunkStreamer.ChunkSize`이며, 스트리밍이 없으면 `MapLiquidRenderConsts.FallbackChunkSize`.
+- 그리기는 청크마다 `MeshRenderer` 뷰(표준 URP 투명 큐). `Graphics.RenderMesh`·커스텀 Renderer Feature는 intermediate RT와 합성이 어긋날 수 있어 쓰지 않는다.
+- 청크 분할 SSOT는 `TileMapChunkStreamer.ChunkSize`이며, 스트리밍이 없으면 `MapLiquidRenderConsts.FallbackChunkSize`.
 - **투명 정렬은 전역 `Default`(직교 카메라 거리)에 맡긴다.** 수면과 같은 앵커 바닥 메시의 분리는 `SurfaceMinLift01`·`SurfaceTopInset01` **기하 오프셋만**으로 한다.
  - `RenderQueue` 승격 금지 — 위층 타일까지 덮는다.
  - `TransparencySortMode.CustomAxis` **금지** — Y축 단일 키는 같은 층 타일(`gridPos.y` 동일)을 정렬 동점으로 만들고, 타일 셰이더(`Custom/SpriteUV4Point`)는 `ZWrite Off` + `m_SortingOrder: 0`이라 같은 층 앞뒤가 무작위가 된다(2026-08 회귀).
