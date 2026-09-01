@@ -29,13 +29,18 @@ Material:
     - _DepthPower: 1.1
     - _FoamNoiseScale: 1.7
     - _FoamNoiseStrength: 0.22
+    - _FoamSoftness: 0.14
     - _FoamSpeed: 0.25
     - _FoamWidth: 0.42
     - _GlintStrength: 0.45
     - _GlintThreshold: 0.78
     - _LightInfluence: 0.6
     - _QuantizeSteps: 6
+    - _ShoreDepthBias: 0.02
+    - _ShoreDepthFade: 0.35
+    - _ShoreFoamStrength: 0.7
     - _SideTint: 0.78
+    - _UseSceneDepth: 1
     - _WaveScale: 0.55
     - _WaveSpeed: 0.12
     - _WaveStrength: 0.16

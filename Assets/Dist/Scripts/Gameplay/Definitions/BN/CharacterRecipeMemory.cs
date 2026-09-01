@@ -29,5 +29,21 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return;
             _known.Add(recipeId);
         }
+
+        public IReadOnlyCollection<string> GetKnownIds() => _known;
+
+        public void ImportFromSave(string[] knownRecipeIds)
+        {
+            _known.Clear();
+            if (knownRecipeIds == null)
+                return;
+
+            for (int i = 0; i < knownRecipeIds.Length; i++)
+            {
+                string id = knownRecipeIds[i];
+                if (!string.IsNullOrEmpty(id))
+                    _known.Add(id);
+            }
+        }
     }
 }

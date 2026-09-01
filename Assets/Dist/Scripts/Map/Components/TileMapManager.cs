@@ -586,6 +586,28 @@ public class TileMapManager : MonoBehaviour
             editorCellSize);
 
         Debug.Log($"[TileMapManager] LoadEditor 완료. (물 마커 {liquidMarkers}개 복원)");
+        EnsureEditorLiquidPreview();
+    }
+
+    void OnEnable()
+    {
+        if (Application.isPlaying)
+            return;
+
+        EnsureEditorLiquidPreview();
+    }
+
+    void EnsureEditorLiquidPreview()
+    {
+        var preview = GetComponent<MapLiquidAuthoringPreviewRenderer>();
+        if (preview == null)
+            preview = gameObject.AddComponent<MapLiquidAuthoringPreviewRenderer>();
+
+        float editorCellSize = _worldGrid != null ? _worldGrid.CellSize : _gridCellSize;
+        int chunkSize = _chunkStreamer != null && _chunkStreamer.ChunkSize > 0
+            ? _chunkStreamer.ChunkSize
+            : MapLiquidRenderConsts.FallbackChunkSize;
+        preview.Bind(editorCellSize, chunkSize);
     }
 #endif
 }

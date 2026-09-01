@@ -15,7 +15,7 @@ MonoBehaviour:
   thumbnail: {fileID: 21300000, guid: c08a95def94989249a06a5613232c01e, type: 3}
   prefabId: Floor/ShallowWater
   prefab: {fileID: 3604406109386049671, guid: f2d7351edc614c54c9836a1926188b24, type: 3}
-  category: 
+  category: Liquid
   size: {x: 1, y: 1, z: 1}
   placementSlot: 3
   flags:

@@ -97,6 +97,19 @@ namespace IsoTilemap
             edge: default);
 
         [FoldoutGroup("충돌·오클루전")]
+        [Button("Water"), HorizontalGroup("충돌·오클루전/Presets")]
+        void ApplyWaterPreset()
+        {
+            ApplyPreset(TilePlacementSlot.HorizontalFace, default, default);
+            category = TileDefinitionCategories.Liquid;
+            flags ??= new List<string>();
+            flags.Clear();
+            flags.Add(TileFlags.Water);
+            flags.Add(TileFlags.Fishable);
+            MarkDirty();
+        }
+
+        [FoldoutGroup("충돌·오클루전")]
         [Button("None"), HorizontalGroup("충돌·오클루전/Presets")]
         void ApplyNonePreset() => ApplyPreset(TilePlacementSlot.OccupiedCell, default, default);
 

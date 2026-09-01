@@ -337,5 +337,54 @@ namespace Garunnir.Runtime.Gameplay.Data
         }
 
         public IReadOnlyCollection<string> GetKnownIds() => _known;
+
+        public IReadOnlyList<ProficiencyPracticeSaveDto> ExportPracticeEntries()
+        {
+            if (_xp.Count == 0)
+                return System.Array.Empty<ProficiencyPracticeSaveDto>();
+
+            var list = new List<ProficiencyPracticeSaveDto>(_xp.Count);
+            foreach (KeyValuePair<string, int> pair in _xp)
+            {
+                list.Add(new ProficiencyPracticeSaveDto
+                {
+                    proficiencyId = pair.Key,
+                    xp = pair.Value
+                });
+            }
+
+            return list;
+        }
+
+        public void ImportFromSave(CharacterProficienciesSaveDto dto)
+        {
+            _known.Clear();
+            _xp.Clear();
+            if (dto == null)
+                return;
+
+            if (dto.knownIds != null)
+            {
+                for (int i = 0; i < dto.knownIds.Length; i++)
+                {
+                    string id = dto.knownIds[i];
+                    if (!string.IsNullOrEmpty(id))
+                        _known.Add(id);
+                }
+            }
+
+            if (dto.practice == null)
+                return;
+
+            for (int i = 0; i < dto.practice.Length; i++)
+            {
+                ProficiencyPracticeSaveDto row = dto.practice[i];
+                if (row == null || string.IsNullOrEmpty(row.proficiencyId) || row.xp <= 0)
+                    continue;
+                if (_known.Contains(row.proficiencyId))
+                    continue;
+                _xp[row.proficiencyId] = row.xp;
+            }
+        }
     }
 }

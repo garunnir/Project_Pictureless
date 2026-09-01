@@ -32,5 +32,19 @@ namespace Garunnir.Runtime.Gameplay.Data
         }
 
         public IReadOnlyCollection<string> GetKnownIds() => _known;
+
+        public void ImportFromSave(string[] traitIds)
+        {
+            _known.Clear();
+            if (traitIds == null)
+                return;
+
+            for (int i = 0; i < traitIds.Length; i++)
+            {
+                string id = traitIds[i];
+                if (!string.IsNullOrEmpty(id))
+                    _known.Add(id);
+            }
+        }
     }
 }

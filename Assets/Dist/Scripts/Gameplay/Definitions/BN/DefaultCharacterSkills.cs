@@ -255,5 +255,47 @@ namespace Garunnir.Runtime.Gameplay.Data
                 return false;
             return _entries.TryGetValue(skillId, out entry);
         }
+
+        public IReadOnlyList<CharacterSkillEntrySaveDto> ExportProgressEntries()
+        {
+            var list = new List<CharacterSkillEntrySaveDto>(_entries.Count);
+            foreach (KeyValuePair<string, SkillEntry> pair in _entries)
+            {
+                SkillEntry entry = pair.Value;
+                list.Add(new CharacterSkillEntrySaveDto
+                {
+                    skillId = pair.Key,
+                    baseLevel = entry.Level.Base,
+                    potential = entry.Potential,
+                    experience = entry.Experience
+                });
+            }
+
+            return list;
+        }
+
+        public void ImportProgressEntries(CharacterSkillEntrySaveDto[] entries)
+        {
+            _entries.Clear();
+            if (entries == null)
+            {
+                Refresh();
+                return;
+            }
+
+            for (int i = 0; i < entries.Length; i++)
+            {
+                CharacterSkillEntrySaveDto row = entries[i];
+                if (row == null || string.IsNullOrEmpty(row.skillId))
+                    continue;
+
+                _entries[row.skillId] = new SkillEntry(
+                    row.baseLevel,
+                    row.potential,
+                    row.experience);
+            }
+
+            Refresh();
+        }
     }
 }

@@ -100,7 +100,7 @@ public static class GameplayPlayerRuntime
         set => _proficiencies = value;
     }
 
-    /// <summary>Permanent recipe knowledge (decomp_learn etc). Runtime-only; not saved.</summary>
+    /// <summary>Permanent recipe knowledge (decomp_learn etc). Map JSON playerProgress로 저장.</summary>
     public static ICharacterRecipeMemory RecipeMemory
     {
         get
@@ -112,7 +112,7 @@ public static class GameplayPlayerRuntime
         set => _recipeMemory = value;
     }
 
-    /// <summary>Character traits (omniscience, omnivision, survival, …). Runtime-only; not saved.</summary>
+    /// <summary>Character traits (omniscience, omnivision, survival, …). Map JSON playerProgress로 저장.</summary>
     public static void RegisterPossessedTraitsResolver(Func<ICharacterTraits> resolver)
     {
         _possessedTraitsResolver = resolver;

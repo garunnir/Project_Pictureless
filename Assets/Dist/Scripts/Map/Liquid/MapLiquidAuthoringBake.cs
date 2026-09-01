@@ -26,8 +26,7 @@ namespace IsoTilemap
             if (def == null)
                 return false;
 
-            if (TileFlags.HasFlag(def, TileFlags.DeepWater)
-                || TileFlags.HasFlag(def, TileFlags.ShallowWater))
+            if (TileFlags.IsLiquidAuthoring(def))
             {
                 seedMl = MapLiquidConsts.DefaultMaxVolumeMl;
                 return true;
@@ -39,7 +38,7 @@ namespace IsoTilemap
         /// <summary>prefabId가 물 저작 대상인지 — 타일 모델 진입을 막는 게이트로도 쓴다.</summary>
         public static bool IsLiquidAuthoringPrefab(string prefabId) =>
             TilePrefabDB.TryResolveDefinition(prefabId, out TileDefinition def)
-            && TryResolveSeedMl(def, out _);
+            && TileFlags.IsLiquidAuthoring(def);
 
         /// <summary>
         /// 구 JSON의 워터 Floor face를 <see cref="MapSaveJsonDto.liquidAuthoringFaces"/>로 옮긴다(one-way).

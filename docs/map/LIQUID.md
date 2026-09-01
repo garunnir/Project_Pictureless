@@ -142,28 +142,29 @@ JSON에서는 `liquidAuthoringFaces` 별 레이어로만 왕복한다. 이 한 �
 
 ### 이음매 없는 연결
 
-수면 높이는 셀이 아니라 **격자 코너**에서 결정된다. 코너 값은 그 코너를 공유하는 4개 셀의 평균이고, 이웃 셀을 오버레이에서 직접 읽으므로 청크 경계 밖 셀도 같은 값이 나온다. 따라서 인접 셀·인접 청크가 같은 코너에서 **정확히 같은 높이**를 만든다.
+수면 높이는 셀이 아니라 **격자 코너**에서 결정된다. 코너 값은 그 코너를 공유하는 4개 셀의 평균이고, 이웃 셀을 오버레이에서 직접 읽으므로 청크 경계 밖 셀도 같은 값이 나온다.
 
 | 상황 | 처리 |
 |------|------|
 | 이웃 수위가 다름 | 코너 평균으로 경사 — 계단 없음 |
-| 물가(마른 이웃) | 마른 이웃을 0으로 쳐 수면이 내려앉음. 색은 젖은 이웃 평균만 써서 얕아 보이지 않게 분리 |
-| 위 칸에도 물(잠긴 셀) | Fill 1로 취급. 코너 4개 중 하나라도 잠겼으면 코너를 셀 천장(1.0)으로 올려 **층 사이 구멍**을 막는다 |
-| 물끼리 맞닿은 면 | 측면을 만들지 않음 — 내부 면 알파 겹침 없음 |
+| 물가(마른 이웃) | 마른 이웃을 0으로 쳐 수면이 내려앉음. 색은 젖은 이웃 평균만 |
+| 위 칸에도 물(잠긴 셀) | 코너 높이 1.0. **측면만** 천장까지(`SideSurfaceLift`) |
+| 물끼리 맞닿은 면 | 측면 생략. 이웃 `EffectiveFill01` ≥ 자신×`SideWallConnectMinRatio01`일 때만 연결 |
 
-파도·폼 노이즈 UV는 셀 로컬이 아니라 **월드 XZ**라 패턴도 경계에서 이어진다.
+파도·폼 노이즈 UV는 **월드 XZ**라 패턴도 경계에서 이어진다.
 
 ### 정점 색 계약 (`MapLiquidChunkMesher` → 셰이더)
 
 | 채널 | 의미 |
 |------|------|
-| `r` | `depth01` — 젖은 이웃 기준 Fill01 평균. 얕은색↔깊은색 lerp |
+| `r` | `depth01` — 젖은 이웃 기준 Fill01 평균 |
 | `g` | `foam01` — 마른 이웃 비율. 물가 폼 밴드 |
 | `b` | `isTop` — 1 = 수면(윗면), 0 = 측면 |
 
 ### 렌더 경로
 
-- 씬 **Depth/Opaque 텍스처를 쓰지 않는다.** 깊이는 시뮬 `Fill01`, 물가는 이웃 마스크가 대신하므로 URP 에셋의 `m_RequireDepthTexture`/`m_RequireOpaqueTexture`를 켤 필요가 없다.
+- **씬 깊이(`_CameraDepthTexture`)**: URP `Require Depth Texture` ON. 수면 윗면에서 바닥·타일과의 eye-depth 차로 **해안 폼**(`_ShoreDepthFade`, `_ShoreFoamStrength`). 시뮬 `Fill01`·메셔 `foam01`은 그대로 SSOT — 깊이는 교차부 보조만.
+- Opaque 텍스처(refraction)는 쓰지 않는다.
 - 화면 픽셀화는 `DistPixelisationFeature`(스크린 포스트)가 일괄 적용한다 — 물 셰이더는 ProPixelizer 오브젝트 셰이더가 아니어도 된다(맵 타일도 동일).
 - 셰이더 시간은 `_MapLiquidTime` 전역 프로퍼티. 렌더러가 `TimeScaleService.TimeNow(TimeScaleChannel.World)`로 매 프레임 채워, 배속·정지가 파도에 반영된다(`Time.timeScale` 미사용).
 - 그리기는 `Graphics.RenderMesh` 청크 단위. 청크 분할 SSOT는 `TileMapChunkStreamer.ChunkSize`이며, 스트리밍이 없으면 `MapLiquidRenderConsts.FallbackChunkSize`.
@@ -194,11 +195,17 @@ JSON에서는 `liquidAuthoringFaces` 별 레이어로만 왕복한다. 이 한 �
 | 단계 | 동작 |
 |------|------|
 | 1 | `TileMapManager` → Load Editor — 기존 `liquidAuthoringFaces`가 `LiquidAuthoringSceneSpawner`로 마커로 복원된다 |
-| 2 | `Floor/ShallowWater` **또는** `Floor/DeepWater` 프리팹을 바닥 +Y 면에 배치 (둘 다 **같은 물** — 시드 동일). 스냅은 `FloorFacePicker`이므로 `TileView` 시절과 동일 |
+| 2 | **`Liquid/Water`** 프리팹을 바닥 +Y 면에 배치 (권장). 스냅은 `FloorFacePicker`이므로 floor face와 동일 |
 | 3 | `MapFileSaver` → **Save Map To JSON** |
 | 4 | 마커 → `liquidAuthoringFaces`(앵커 = `CellBelow`), 이어서 `MapLiquidAuthoringBake`가 walkable 셀(앵커 y+1) `liquidCells`로 bake |
 
-시드량: Shallow/Deep **구분 없음** — 둘 다 `DefaultMaxVolumeMl`(가득). 얕음/깊음은 시뮬 ml·`ColumnMlDownward`로만 표현.
+**에디터 표시:** sim 없이 `MapLiquidAuthoringPreviewRenderer`가 씬 `LiquidAuthoringView`를 cap-full synthetic overlay로 시드한 뒤 **`MapLiquidChunkMesher`(Play와 동일)** 로 청크 단일 mesh를 굽는다. 인접 full 셀은 내부 면을 생략해 한 덩어리로 이어진다. 마커 큐브 mesh는 프리뷰 활성 시 숨긴다. Play에서는 마커가 스폰되지 않고 `MapLiquidSurfaceRenderer`만 본다.
+
+**SO:** `Assets/Dist/SOData/Tile/Liquid/Water.asset` — `category: Liquid`, flags `WATER`+`FISHABLE`, `placementSlot: HorizontalFace`, 충돌 전부 off, `providesLogicalFloor: 0`.
+
+**프리팹:** `Assets/Dist/Visual/Prefabs/MapTiles/Liquid/Water.prefab` — `LiquidAuthoringView` + 1×1 큐브 저작 마커(`Grp_TP Offset`/`Grp_Rotation`/`Renderer`). Tile Palette `Liquid/Water`만 사용한다. (구 `LiquidMarker/WaterMarker`는 제거됨.)
+
+**레거시 prefabId:** `Floor/ShallowWater` · `Floor/DeepWater`는 BN JSON·구 맵 호환을 위해 DB에 남긴다. bake·시드는 동일(`DefaultMaxVolumeMl`). 신규 저작은 `Liquid/Water`만 쓴다.
 시드 온도는 그 셀의 기온(`MapLiquidAmbient`)이라, 추운 맵은 로드 즉시 얼어 있다.
 
 **우선순위 (저장):** Play `MapLiquidHost` → 에디터 물 저작 면 bake → 디스크 liquidCells 계승.  
@@ -216,7 +223,7 @@ JSON에서는 `liquidAuthoringFaces` 별 레이어로만 왕복한다. 이 한 �
 ## 저장 (`MapLiquidCellSaveData` / `MapSaveJsonDto`)
 
 ```json
-"liquidAuthoringFaces": [{ "x":0,"y":0,"z":0, "face":0, "prefabId":"Floor/ShallowWater" }],
+"liquidAuthoringFaces": [{ "x":0,"y":0,"z":0, "face":0, "prefabId":"Liquid/Water" }],
 "liquidCells": [{ "x":0,"y":1,"z":0, "typeId":"water", "level":5, "remainderMl":250, "tempDeciC":200 }],
 "hasLiquidSnapshot": true,
 "hasLiquidTemperature": true

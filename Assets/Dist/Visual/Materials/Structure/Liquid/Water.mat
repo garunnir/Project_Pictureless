@@ -25,7 +25,21 @@ Material:
     serializedVersion: 3
     m_TexEnvs: []
     m_Ints: []
-    m_Floats: []
+    m_Floats:
+    - _AmbientFloor: 1
+    - _DepthPower: 0.2
+    - _FoamNoiseStrength: 0
+    - _FoamSoftness: 0
+    - _FoamWidth: 0
+    - _GlintStrength: 0
+    - _GlintThreshold: 0.5
+    - _LightInfluence: 1
+    - _QuantizeSteps: 2
+    - _ShoreDepthBias: 0.275
+    - _ShoreDepthFade: 0.727
+    - _ShoreFoamStrength: 0.252
+    - _SideTint: 0.972
+    - _WaveStrength: 0
     m_Colors:
     - _DeepColor: {r: 0.059999965, g: 0.23999995, b: 0.47999996, a: 0.88}
     - _FoamColor: {r: 0.93, g: 0.98999995, b: 1, a: 0.9}

@@ -1,12 +1,8 @@
 // ============================================================
-// MapLiquidSurface — 그리드 액체 수면 셰이더 (월드 XZ 노이즈 · 픽셀 톤 색 양자화)
+// MapLiquidSurface — 그리드 액체 수면 셰이더 (월드 XZ 노이즈 · 픽셀 톤 · URP 씬 깊이 해안)
 // ============================================================
-// 정점 색 계약 (MapLiquidChunkMesher가 기록):
-//   r = depth01  — 젖은 이웃 기준 Fill01 평균. 얕은색↔깊은색 lerp 입력
-//   g = foam01   — 마른 이웃 비율. 물가 폼 밴드 입력
-//   b = isTop    — 1 = 수면(윗면), 0 = 측면
-// 노이즈 UV는 셀 로컬이 아니라 월드 XZ라 인접 청크·셀 경계에서 패턴이 이어진다.
-// 씬 Depth/Opaque 텍스처를 쓰지 않는다 — 깊이는 시뮬 Fill01, 물가는 이웃 마스크가 대신한다.
+// 정점 색: r=depth01, g=foam01, b=isTop
+// Fill01·foam01은 메셔 SSOT. 씬 깊이(_CameraDepthTexture)는 바닥과의 교차(해안 폼) 보조.
 
 Shader "Dist/MapLiquidSurface"
 {
@@ -32,9 +28,16 @@ Shader "Dist/MapLiquidSurface"
         [Header(Foam)]
         _FoamColor ("Foam Color", Color) = (0.93, 0.99, 1, 0.9)
         _FoamWidth ("Foam Width", Range(0, 1)) = 0.42
+        _FoamSoftness ("Foam Edge Softness", Range(0, 0.5)) = 0.14
         _FoamNoiseScale ("Foam Noise Scale", Float) = 1.7
         _FoamNoiseStrength ("Foam Noise Strength", Range(0, 0.6)) = 0.22
         _FoamSpeed ("Foam Speed", Float) = 0.25
+
+        [Header(Scene Depth Shore)]
+        [Toggle] _UseSceneDepth ("Use Scene Depth", Float) = 1
+        _ShoreDepthFade ("Shore Depth Fade (eye)", Range(0.01, 2)) = 0.35
+        _ShoreFoamStrength ("Shore Foam Strength", Range(0, 1)) = 0.7
+        _ShoreDepthBias ("Shore Depth Bias (eye)", Range(-0.5, 0.5)) = 0.02
 
         [Header(Lighting)]
         _LightInfluence ("Light Influence", Range(0, 1)) = 0.6
@@ -68,6 +71,7 @@ Shader "Dist/MapLiquidSurface"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _ShallowColor;
@@ -83,14 +87,18 @@ Shader "Dist/MapLiquidSurface"
                 float _GlintStrength;
                 float4 _FoamColor;
                 float _FoamWidth;
+                float _FoamSoftness;
                 float _FoamNoiseScale;
                 float _FoamNoiseStrength;
                 float _FoamSpeed;
+                float _UseSceneDepth;
+                float _ShoreDepthFade;
+                float _ShoreFoamStrength;
+                float _ShoreDepthBias;
                 float _LightInfluence;
                 float _AmbientFloor;
             CBUFFER_END
 
-            // 월드 배속(TimeScaleChannel.World)을 반영한 초 단위 시간. MapLiquidSurfaceRenderer가 매 프레임 갱신.
             float _MapLiquidTime;
 
             struct Attributes
@@ -109,7 +117,6 @@ Shader "Dist/MapLiquidSurface"
                 float4 color : COLOR;
             };
 
-            // fmod는 음수 입력에서 음수를 돌려줘 원점 기준으로 해시가 비대칭이 된다 — floor 기반 mod로 감싼다.
             float2 Mod289(float2 p)
             {
                 return p - 289.0 * floor(p * (1.0 / 289.0));
@@ -147,6 +154,19 @@ Shader "Dist/MapLiquidSurface"
                 return floor(saturate(v) * steps) / steps;
             }
 
+            float SampleShoreDepthFoam(float4 positionCS, float isTop)
+            {
+                if (_UseSceneDepth < 0.5 || isTop < 0.5)
+                    return 0.0;
+
+                float2 screenUV = positionCS.xy * rcp(_ScaledScreenParams.xy);
+                float sceneRaw = SampleSceneDepth(screenUV);
+                float sceneEye = LinearEyeDepth(sceneRaw, _ZBufferParams);
+                float fragEye = LinearEyeDepth(positionCS.z, _ZBufferParams);
+                float delta = sceneEye - fragEye + _ShoreDepthBias;
+                return 1.0 - saturate(delta / max(_ShoreDepthFade, 1e-4));
+            }
+
             Varyings Vert(Attributes input)
             {
                 Varyings output;
@@ -165,7 +185,6 @@ Shader "Dist/MapLiquidSurface"
                 float foam01 = input.color.g;
                 float isTop = input.color.b;
 
-                // 셀 로컬이 아닌 월드 XZ 기준 — 인접 셀·청크에서 패턴이 끊기지 않는다.
                 float2 wp = input.positionWS.xz;
                 float t = _MapLiquidTime;
 
@@ -185,7 +204,12 @@ Shader "Dist/MapLiquidSurface"
 
                 float foamNoise = GradientNoise(wp * _FoamNoiseScale + float2(t * _FoamSpeed, -t * _FoamSpeed * 0.5));
                 float foamEdge = foam01 + (foamNoise - 0.5) * _FoamNoiseStrength;
-                float foamMask = step(1.0 - _FoamWidth, foamEdge);
+                float foamLow = 1.0 - _FoamWidth - _FoamSoftness;
+                float foamHigh = 1.0 - _FoamWidth + _FoamSoftness;
+                float meshFoam = smoothstep(foamLow, foamHigh, foamEdge);
+
+                float shoreFoam = SampleShoreDepthFoam(input.positionCS, isTop) * _ShoreFoamStrength;
+                float foamMask = saturate(max(meshFoam, shoreFoam));
 
                 float3 rgb = lerp(baseRgb, _FoamColor.rgb, foamMask);
                 float alpha = lerp(baseAlpha, _FoamColor.a, foamMask);

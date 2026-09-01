@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 64cd50c6e4be1a446b416db202e4c847, type: 3}
-  m_Name: DeepWater
+  m_Name: Water
   m_EditorClassIdentifier: DistScript::IsoTilemap.TileDefinition
   thumbnail: {fileID: 21300000, guid: c08a95def94989249a06a5613232c01e, type: 3}
-  prefabId: Floor/DeepWater
-  prefab: {fileID: 3604406109386049671, guid: 4d66bc18236080144b3e01eef334875b, type: 3}
+  prefabId: Liquid/Water
+  prefab: {fileID: 880001, guid: cf688fbf7ec546c3b706f38afb899544, type: 3}
   category: Liquid
   size: {x: 1, y: 1, z: 1}
   placementSlot: 3
   flags:
-  - DEEP_WATER
+  - WATER
   - FISHABLE
   occupied:
     providesLogicalFloor: 0

@@ -17,9 +17,16 @@ namespace IsoTilemap
         public const string GrowthMature = "GROWTH_MATURE";
         public const string GrowthHarvest = "GROWTH_HARVEST";
         public const string GrowthWithered = "GROWTH_WITHERED";
+        public const string Water = "WATER";
         public const string ShallowWater = "SHALLOW_WATER";
         public const string DeepWater = "DEEP_WATER";
         public const string Fishable = "FISHABLE";
+
+        /// <summary>저작·bake 대상 액체 타일 — <see cref="Water"/> 또는 레거시 shallow/deep.</summary>
+        public static bool IsLiquidAuthoring(TileDefinition definition) =>
+            HasFlag(definition, Water)
+            || HasFlag(definition, ShallowWater)
+            || HasFlag(definition, DeepWater);
 
         public static bool HasFlag(TileDefinition definition, string flag)
         {
