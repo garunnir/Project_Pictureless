@@ -65,10 +65,10 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
 
         EnsureSwimHosts(instance);
 
-        CharacterAttacker attacker = instance.GetComponent<CharacterAttacker>();
+        CharacterAttacker attacker = instance.GetBodyComponent<CharacterAttacker>();
         attacker?.BindMapCollision(services.LineCast);
 
-        CharacterHearing hearing = instance.GetComponent<CharacterHearing>();
+        CharacterHearing hearing = instance.GetBodyComponent<CharacterHearing>();
         hearing?.BindMapCollision(services.LineCast);
 
         DirectionalRaycaster raycaster = instance.GetComponent<DirectionalRaycaster>();
@@ -185,10 +185,10 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
 
     static void EnsureSwimHosts(GameObject instance)
     {
-        if (instance == null || instance.GetComponent<CharacterState>() == null)
+        if (instance == null || instance.GetBodyComponent<CharacterState>() == null)
             return;
 
-        if (instance.GetComponent<CharacterBodyHost>() == null)
+        if (instance.GetBodyComponent<CharacterBodyHost>() == null)
             return;
 
         if (instance.GetComponent<CharacterSwimHost>() == null)

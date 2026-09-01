@@ -102,6 +102,8 @@ public sealed class CharacterSpawner : MonoBehaviour
             _playerManager.Possess(possessedBody);
         else
             Debug.LogError("[CharacterSpawner] PlayerManager missing for Possessed spawn.", this);
+
+        PlayerProgressSaveBridge.TryRestorePossessed(possessedBody);
     }
 
     void OnDrawGizmos()
@@ -135,7 +137,7 @@ public sealed class CharacterSpawner : MonoBehaviour
 
     static void AssignBodyInventoryId(GameObject instance, CharacterSpawnRole role)
     {
-        if (!instance.TryGetComponent(out PlayerInventoryHost host))
+        if (!instance.TryGetBodyComponent(out PlayerInventoryHost host))
             return;
 
         if (role == CharacterSpawnRole.Possessed)

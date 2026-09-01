@@ -183,17 +183,17 @@ public sealed class NpcManager : MonoBehaviour
             _transform = entry.character;
             GameObject go = _transform.gameObject;
 
-            _motor = go.GetComponent<CharacterMotor>();
-            _attacker = go.GetComponent<CharacterAttacker>();
-            _aimIntent = go.GetComponent<CharacterAimIntent>();
-            _skillsHost = go.GetComponent<CharacterSkillsHost>();
-            _characterState = go.GetComponent<CharacterState>();
-            _selfHost = go.GetComponent<CharacterBodyHost>();
-            _painHost = go.GetComponent<CharacterPainHost>();
-            _selfFactionHost = go.GetComponent<CharacterFactionHost>();
-            _vision = go.GetComponent<CharacterVision>();
-            _hearing = go.GetComponent<CharacterHearing>();
-            _combatEmote = go.GetComponent<CharacterCombatEmoteBridge>();
+            _motor = go.GetBodyComponent<CharacterMotor>();
+            _attacker = go.GetBodyComponent<CharacterAttacker>();
+            _aimIntent = go.GetBodyComponent<CharacterAimIntent>();
+            _skillsHost = go.GetBodyComponent<CharacterSkillsHost>();
+            _characterState = go.GetBodyComponent<CharacterState>();
+            _selfHost = go.GetBodyComponent<CharacterBodyHost>();
+            _painHost = go.GetBodyComponent<CharacterPainHost>();
+            _selfFactionHost = go.GetBodyComponent<CharacterFactionHost>();
+            _vision = go.GetBodyComponent<CharacterVision>();
+            _hearing = go.GetBodyComponent<CharacterHearing>();
+            _combatEmote = go.GetBodyComponent<CharacterCombatEmoteBridge>();
 
             if (_motor == null || _attacker == null || _selfHost == null)
             {

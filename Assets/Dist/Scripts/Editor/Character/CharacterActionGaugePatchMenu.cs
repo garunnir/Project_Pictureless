@@ -27,8 +27,6 @@ public static class CharacterActionGaugePatchMenu
 
         if (player.GetComponent<CharacterActionHost>() == null)
             Undo.AddComponent<CharacterActionHost>(player);
-        if (player.GetComponent<CharacterActionCancelConsumer>() == null)
-            Undo.AddComponent<CharacterActionCancelConsumer>(player);
 
         GameObject prefab = EnsurePrefab();
         if (prefab == null)

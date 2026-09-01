@@ -14,7 +14,7 @@ public sealed class CharacterCombatEmoteBridge : MonoBehaviour
     void Awake()
     {
         TryGetComponent(out _host);
-        TryGetComponent(out _motor);
+        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
     }
 
     public void SetAlertSpotted()

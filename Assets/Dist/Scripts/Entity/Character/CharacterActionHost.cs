@@ -9,7 +9,7 @@ using UnityEngine;
 
 [DefaultExecutionOrder(-50)]
 [DisallowMultipleComponent]
-public sealed class CharacterActionHost : MonoBehaviour
+public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
 {
     struct Job
     {
@@ -30,8 +30,11 @@ public sealed class CharacterActionHost : MonoBehaviour
     FarmCellActionHost _farmActionHost;
     FishCellActionHost _fishActionHost;
     CharacterActionKind _currentKind;
+    CharacterMotor _motor;
     bool _dispatching;
     float _tickScale = 1f;
+
+    public int CancelPriority => UiCancelPriority.CharacterAction;
 
     public CharacterActionKind CurrentKind => _currentKind;
     public int QueueCount => _queue.Count;
@@ -86,9 +89,32 @@ public sealed class CharacterActionHost : MonoBehaviour
         TryGetComponent(out _arriveHost);
         TryGetComponent(out _farmActionHost);
         TryGetComponent(out _fishActionHost);
+        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
         if (_crafting == null)
             _crafting = FindAnyObjectByType<UICraftingController>();
         RefreshTickScale();
+    }
+
+    void OnEnable() => UiCancelRouter.Register(this);
+
+    void OnDisable()
+    {
+        UiCancelRouter.Unregister(this);
+        _queue.Clear();
+        if (_currentKind != CharacterActionKind.Combat)
+            CancelCurrentWork();
+        _currentKind = CharacterActionKind.None;
+    }
+
+    public bool TryHandleCancel()
+    {
+        if (_motor != null && !_motor.IsPossessed)
+            return false;
+        if (!HasCancellableWork)
+            return false;
+
+        CancelAll();
+        return true;
     }
 
     void Update()
@@ -252,11 +278,4 @@ public sealed class CharacterActionHost : MonoBehaviour
         }
     }
 
-    void OnDisable()
-    {
-        _queue.Clear();
-        if (_currentKind != CharacterActionKind.Combat)
-            CancelCurrentWork();
-        _currentKind = CharacterActionKind.None;
-    }
 }

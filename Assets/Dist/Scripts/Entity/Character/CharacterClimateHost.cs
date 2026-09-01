@@ -86,8 +86,8 @@ public sealed class CharacterClimateHost : MonoBehaviour
     {
         _bodyHost = GetComponent<CharacterBodyHost>();
         TryGetComponent(out _gearHost);
-        TryGetComponent(out _characterState);
-        TryGetComponent(out _motor);
+        _characterState = CharacterBodyResolve.GetInBody<CharacterState>(this);
+        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
         TryGetComponent(out _movement);
         _bodyTemp.Changed += OnBodyTempChanged;
     }

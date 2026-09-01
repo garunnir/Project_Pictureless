@@ -27,8 +27,8 @@ public sealed class CharacterSenseGizmo : MonoBehaviour
     {
         TryGetComponent(out _vision);
         TryGetComponent(out _hearing);
-        TryGetComponent(out _state);
-        TryGetComponent(out _definitionBinder);
+        _state = CharacterBodyResolve.GetInBody<CharacterState>(this);
+        _definitionBinder = CharacterBodyResolve.GetInBody<CharacterDefinitionBinder>(this);
     }
 
 #if UNITY_EDITOR

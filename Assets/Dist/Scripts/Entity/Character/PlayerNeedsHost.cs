@@ -98,7 +98,7 @@ public sealed class PlayerNeedsHost : MonoBehaviour, IUiCancelConsumer
 
     void Awake()
     {
-        TryGetComponent(out _motor);
+        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
         TryGetComponent(out _actionHost);
         TryGetComponent(out _inventoryHost);
     }

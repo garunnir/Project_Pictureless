@@ -82,6 +82,8 @@ internal static class DistMcpMenus
         Root + "/Character/Patch Action Gauge On Player";
     public const string CharacterEnsureHitStop =
         Root + "/Character/Ensure Combat Hit Stop";
+    public const string CharacterOrganizeNpcSampleBody =
+        Root + "/Character/Organize NpcSample Body Hierarchy";
     public const string CharacterEnsureEmote =
         Root + "/Character/Ensure Character Emote";
 
@@ -120,6 +122,10 @@ internal static class DistMcpMenus
         Root + "/Settings/Merge Localization Keys Into UI_ko";
     public const string SettingsPatchHudPopupToggles =
         Root + "/Settings/Patch HUD Popup Toggles";
+    public const string SettingsPatchGameSaveButtons =
+        Root + "/Settings/Patch Game Save Buttons";
+    public const string SettingsCreateGameSaveSlotPopupPrefabIfMissing =
+        Root + "/Settings/Create Game Save Slot Popup Prefab If Missing";
 
     public const string HudLayoutPatchParticipants =
         Root + "/HudLayout/Patch HUD Layout Participants";

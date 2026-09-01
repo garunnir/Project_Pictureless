@@ -8,7 +8,7 @@ using IsoTilemap;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
-[RequireComponent(typeof(CharacterState))]
+[DisallowMultipleComponent]
 public sealed class NearbyContainerDetector : MonoBehaviour
 {
     const string LogPrefix = "[NearbyContainerDetector]";
@@ -152,7 +152,8 @@ public sealed class NearbyContainerDetector : MonoBehaviour
 
     void EnsureReferences()
     {
-        if (!_characterState) TryGetComponent(out _characterState);
+        if (!_characterState)
+            _characterState = CharacterBodyResolve.GetInBody<CharacterState>(this);
     }
 
     void Subscribe()

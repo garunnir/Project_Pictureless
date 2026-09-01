@@ -175,26 +175,11 @@ public class CharacterLocomotionAnim : MonoBehaviour
 
     void Awake()
     {
-        _characterState = GetComponentInParent<CharacterState>();
-        if (_characterState == null)
-            _characterState = GetComponent<CharacterState>();
-
-        _attacker = GetComponentInParent<CharacterAttacker>();
-        if (_attacker == null)
-            _attacker = GetComponent<CharacterAttacker>();
-
-        _gearHost = GetComponentInParent<PlayerGearHost>();
-        if (_gearHost == null)
-            _gearHost = GetComponent<PlayerGearHost>();
-
-        _skillsHost = GetComponentInParent<CharacterSkillsHost>();
-        if (_skillsHost == null)
-            _skillsHost = GetComponent<CharacterSkillsHost>();
-
-        _locomotion = GetComponentInParent<ICharacterLocomotion>();
-        if (_locomotion == null)
-            _locomotion = GetComponent<ICharacterLocomotion>();
-
+        _characterState = CharacterBodyResolve.GetInBody<CharacterState>(this);
+        _attacker = CharacterBodyResolve.GetInBody<CharacterAttacker>(this);
+        _gearHost = CharacterBodyResolve.GetInBody<PlayerGearHost>(this);
+        _skillsHost = CharacterBodyResolve.GetInBody<CharacterSkillsHost>(this);
+        _locomotion = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
         _hitStop = CharacterHitStop.Find(this);
 
         if (_animator == null)

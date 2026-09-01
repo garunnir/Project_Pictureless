@@ -14,7 +14,7 @@ public enum BodyLootDisplayKind
     Dead = 2,
 }
 
-[RequireComponent(typeof(CharacterState))]
+[DisallowMultipleComponent]
 public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProvider
 {
     public const string DefaultInstanceId = "player-body";
@@ -103,7 +103,8 @@ public sealed class PlayerInventoryHost : MonoBehaviour, IInventoryContainerProv
 
     void EnsureReferences()
     {
-        if (!_characterState) TryGetComponent(out _characterState);
+        if (!_characterState)
+            _characterState = CharacterBodyResolve.GetInBody<CharacterState>(this);
         if (string.IsNullOrWhiteSpace(_containerId))
             _containerId = DefaultInstanceId;
     }

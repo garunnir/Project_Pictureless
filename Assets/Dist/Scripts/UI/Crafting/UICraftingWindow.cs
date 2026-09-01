@@ -1410,7 +1410,7 @@ public sealed class UICraftingWindow : MonoBehaviour
     CharacterActionHost ResolveActionHost()
     {
         PlayerInventoryRuntime runtime = _runtime != null ? _runtime : PlayerInventoryRuntime.Active;
-        return runtime != null ? runtime.GetComponent<CharacterActionHost>() : null;
+        return runtime != null ? runtime.gameObject.GetBodyComponent<CharacterActionHost>() : null;
     }
 
     int CraftQuantity => Mathf.Max(1, _quantity);

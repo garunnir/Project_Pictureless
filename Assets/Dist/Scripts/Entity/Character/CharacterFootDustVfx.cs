@@ -36,7 +36,7 @@ public sealed class CharacterFootDustVfx : MonoBehaviour
 
     void Awake()
     {
-        _motor = GetComponent<CharacterMotor>();
+        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
         _capsule = _motor != null ? _motor.Capsule : GetComponent<CapsuleCollider>();
     }
 

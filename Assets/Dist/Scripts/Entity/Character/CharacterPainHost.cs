@@ -33,6 +33,8 @@ public sealed class CharacterPainHost : MonoBehaviour
     {
         _bodyHost = GetComponent<CharacterBodyHost>();
         TryGetComponent(out _motor);
+        if (_motor == null)
+            _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
         TryGetComponent(out _actionHost);
         TryGetComponent(out _attacker);
     }

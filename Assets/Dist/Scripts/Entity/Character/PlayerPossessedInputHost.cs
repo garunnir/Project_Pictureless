@@ -56,12 +56,12 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
         EnsureRefs();
         _body = body;
         _bodyTransform = body != null ? body.transform : null;
-        _bodyState = body != null ? body.GetComponent<CharacterState>() : null;
+        _bodyState = body != null ? body.GetBodyComponent<CharacterState>() : null;
 
-        CharacterMotor motor = body != null ? body.GetComponent<CharacterMotor>() : null;
-        CharacterAttacker attacker = body != null ? body.GetComponent<CharacterAttacker>() : null;
-        CharacterActionHost actionHost = body != null ? body.GetComponent<CharacterActionHost>() : null;
-        CharacterFacingAnim facing = body != null ? body.GetComponent<CharacterFacingAnim>() : null;
+        CharacterMotor motor = body != null ? body.GetBodyComponent<CharacterMotor>() : null;
+        CharacterAttacker attacker = body != null ? body.GetBodyComponent<CharacterAttacker>() : null;
+        CharacterActionHost actionHost = body != null ? body.GetBodyComponent<CharacterActionHost>() : null;
+        CharacterFacingAnim facing = body != null ? body.GetBodyComponent<CharacterFacingAnim>() : null;
 
         _movement?.BindBody(motor, _bodyState, facing);
         _aimController?.BindBody(_bodyState, _bodyTransform);
@@ -90,7 +90,7 @@ public sealed class PlayerPossessedInputHost : MonoBehaviour, IPlayControllable
         else
             PlayerSightVisionBinder.Clear();
 
-        if (body != null && body.TryGetComponent(out CharacterSessionHub session))
+        if (body != null && body.TryGetBodyComponent(out CharacterSessionHub session))
             session.BecomePlayer(_movement, _inventoryRuntime);
         else if (body != null)
             Debug.LogError("[PlayerPossessedInputHost] CharacterSessionHub is required on the possessed body.", this);

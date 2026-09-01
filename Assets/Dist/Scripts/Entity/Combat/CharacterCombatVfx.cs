@@ -6,14 +6,13 @@ using Lean.Pool;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterAttacker))]
 public sealed class CharacterCombatVfx : MonoBehaviour
 {
     [SerializeField] TimeScaleChannel _timeChannel = TimeScaleChannel.World;
 
     CharacterAttacker _attacker;
 
-    void Awake() => _attacker = GetComponent<CharacterAttacker>();
+    void Awake() => _attacker = CharacterBodyResolve.GetInBody<CharacterAttacker>(this);
 
     void OnEnable()
     {
@@ -138,9 +137,7 @@ public sealed class CharacterCombatVfx : MonoBehaviour
     {
         if (_attacker?.Catalog != null && _attacker.Catalog.AnimPipeline != null)
             return _attacker.Catalog.AnimPipeline;
-        CharacterLocomotionAnim loc = GetComponent<CharacterLocomotionAnim>();
-        if (loc == null)
-            loc = GetComponentInParent<CharacterLocomotionAnim>();
+        CharacterLocomotionAnim loc = CharacterBodyResolve.GetInBody<CharacterLocomotionAnim>(this);
         return loc != null ? loc.ArmSlotCatalog : null;
     }
 

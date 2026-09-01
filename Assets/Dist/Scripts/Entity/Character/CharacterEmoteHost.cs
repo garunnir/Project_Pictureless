@@ -43,7 +43,7 @@ public sealed class CharacterEmoteHost : MonoBehaviour
 
     void Awake()
     {
-        TryGetComponent(out _motor);
+        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
         TryGetComponent(out _fadeHost);
         RebuildResolved();
     }

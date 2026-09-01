@@ -21,14 +21,8 @@ public sealed class CharacterHitStop : MonoBehaviour
     /// <summary>시뮬 배율. 경직 중 0, 아니면 1. Update 할당 없음.</summary>
     public float SimScale => _remaining > 0f ? 0f : 1f;
 
-    public static CharacterHitStop Find(Component origin)
-    {
-        if (origin == null)
-            return null;
-        if (origin.TryGetComponent(out CharacterHitStop hitStop))
-            return hitStop;
-        return origin.GetComponentInParent<CharacterHitStop>();
-    }
+    public static CharacterHitStop Find(Component origin) =>
+        CharacterBodyResolve.GetInBody<CharacterHitStop>(origin);
 
     void Awake()
     {

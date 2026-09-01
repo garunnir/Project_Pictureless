@@ -107,14 +107,14 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
 
     void EnsureHosts()
     {
-        _bodyHost = GetComponent<CharacterBodyHost>();
-        _skillsHost = GetComponent<CharacterSkillsHost>();
-        _traitsHost = GetComponent<CharacterTraitsHost>();
-        _appearanceHost ??= GetComponent<CharacterAppearanceHost>();
-        _factionHost ??= GetComponent<CharacterFactionHost>();
-        _vision ??= GetComponent<CharacterVision>();
-        _hearing ??= GetComponent<CharacterHearing>();
-        _motor ??= GetComponent<CharacterMotor>();
+        _bodyHost = CharacterBodyResolve.GetInBody<CharacterBodyHost>(this);
+        _skillsHost = CharacterBodyResolve.GetInBody<CharacterSkillsHost>(this);
+        _traitsHost = CharacterBodyResolve.GetInBody<CharacterTraitsHost>(this);
+        _appearanceHost ??= CharacterBodyResolve.GetInBody<CharacterAppearanceHost>(this);
+        _factionHost ??= CharacterBodyResolve.GetInBody<CharacterFactionHost>(this);
+        _vision ??= CharacterBodyResolve.GetInBody<CharacterVision>(this);
+        _hearing ??= CharacterBodyResolve.GetInBody<CharacterHearing>(this);
+        _motor ??= CharacterBodyResolve.GetInBody<CharacterMotor>(this);
         if (_appearanceHost == null)
         {
             Debug.LogError(

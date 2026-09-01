@@ -19,8 +19,8 @@ public sealed class CharacterPresenceHost : MonoBehaviour, ICharacterPresence
 
     void Awake()
     {
-        TryGetComponent(out _state);
-        TryGetComponent(out _motor);
+        _state = CharacterBodyResolve.GetInBody<CharacterState>(this);
+        _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
     }
 
     void OnEnable()
@@ -43,9 +43,9 @@ public sealed class CharacterPresenceHost : MonoBehaviour, ICharacterPresence
     void Refresh()
     {
         if (_state == null)
-            TryGetComponent(out _state);
+            _state = CharacterBodyResolve.GetInBody<CharacterState>(this);
         if (_motor == null)
-            TryGetComponent(out _motor);
+            _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
 
         var ctx = new CharacterPresenceContext
         {

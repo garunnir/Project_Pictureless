@@ -16,8 +16,8 @@ public static class CharacterSpawnGearApplier
         if (definition == null || body == null)
             return;
 
-        if (!body.TryGetComponent(out PlayerGearHost gearHost) ||
-            !body.TryGetComponent(out PlayerInventoryHost inventoryHost))
+        if (!body.TryGetBodyComponent(out PlayerGearHost gearHost) ||
+            !body.TryGetBodyComponent(out PlayerInventoryHost inventoryHost))
         {
             Debug.LogError($"{LogPrefix} '{body.name}' needs PlayerGearHost and PlayerInventoryHost.", body);
             return;
