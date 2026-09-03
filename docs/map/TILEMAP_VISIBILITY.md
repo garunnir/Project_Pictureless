@@ -8,6 +8,8 @@
 
 | 대상 | 월드 → 셀 |
 |------|-----------|
+| **가시성 evaluate 월드** | `PlayerVisibilityWorldResolve` — 조준 중 `AimWorldPoint`, 아니면 `BodyWorldPoint`(비조준 시 발높이 오프셋은 층 드라이버만). **근접·BFS·층 가시성 드라이버 동일.** |
+| **가시성 evaluate 셀** | `PlayerFloorVisibilityPolicy.ResolvePlayerOccupiedCell(visibilityWorld)` — 조준·비조준 **동일**. (`policy` 없을 때만 `GridPos` fallback) |
 | **플레이어 층** | `OccupiedCellCoord.ResolveFromWorld` (발밑 바닥, `y--` 하향) |
 | **시선 높이 슬라이스** (근접 블렌드·야외 blocking 후보) | `GridAtSightSampleHeight` (높이 그리드, 점유 무관) |
 | **타일 대표 셀** | `OccupiedCellCoord.PrimaryCellFromIdentity` |
@@ -16,7 +18,9 @@
 
 | 논리 용어 | 구현에서의 읽기 |
 |-----------|----------------|
-| player floor | `ResolvePlayerOccupiedCell` → 점유 cell Y (fallback·peek 기준) |
+| visibility evaluate world | `PlayerVisibilityWorldResolve` / `CharacterState.ResolveVisibilityWorldPoint` — 조준 시 조준점만 대상 |
+| visibility evaluate cell | `ResolvePlayerOccupiedCell(visibilityWorld)` — 조준·비조준 동일 (`PlayerVisibilityWorldResolve`) |
+| player floor | evaluate cell Y (fallback·peek 기준) |
 | player space band | `SpaceRegistry`의 player `SpaceId` floor cells `minY..maxY` |
 | tile structural band | `SpaceVisibilityUtil.TryGetStructuralBand` |
 | buildingId | 타일·플레이어 `identity.buildingId` (0 = terrain) |
@@ -52,6 +56,7 @@
 | 원칙 | 의미 |
 |------|------|
 | **판정 SSOT 1곳** | show/hide·space band·peek은 `PlayerFloorVisibilityPolicy` + `SpaceVisibilityUtil`만. 뷰·드라이버·모델에 같은 규칙을 다시 쓰지 않는다. |
+| **evaluate 기준점 SSOT** | 가시성·오클루전 **입력** 월드·셀은 `PlayerVisibilityWorldResolve` 한 곳. 조준 중에는 **조준점이 대상**일 뿐이며 경로·우선순위는 비조준과 동일하다. |
 | **표현 SSOT 1곳** | 화면 상태는 `TileViewPresentationApplier.Resolve` → `ApplyResolved` 한 경로. `TileView` 로컬 플래그는 캐시일 뿐 진실원이 아니다. |
 | **표현 진입점** | 게임플레이·UI 코드는 `TileViewPresentationApplier`를 직접 호출하지 않는다. 신규 월드 표현 요청은 `TilePresentationSystem`을 경유한다. |
 | **structural parity** | Floor·EdgeWall 등 `IsStructural`은 같은 indoor pipeline을 따른다. 단, Floor는 walkable cell, EdgeWall은 incident cell band로 읽는다. |
@@ -192,7 +197,7 @@ set에 들어간 building **전 tile**이 ① 대상 (min-floor footprint 제외
 |------|------|
 | range | camera↔player sight line, sample height에서 XZ radius |
 | cells | occupancy index만 (Y ±1 manual 금지) |
-| filter | quadrant · indoor structural · floor exempt 등 |
+| filter | quadrant · floor exempt 등 (실내 벽 포함 — BFS와 병렬, apply 시 BFS 우선) |
 | output | hit tile마다 occlusion strength |
 | building | 무관 — terrain·building 모두 blend 가능 |
 
@@ -286,6 +291,8 @@ flowchart TD
 
 **틱 순서**: `SightLineProximityBlendDriver` (`-100`) → `CharacterVisibilityBroadcaster` (`-99`) → `PlayerFloorVisibilityDriver` (`-98`) → `CharacterOcclusionDisplayDriver` (`50`) → 청크 스트리밍.
 
+세 evaluate 드라이버는 모두 `PlayerVisibilityWorldResolve`로 월드·evaluate 셀을 맞춘 뒤 각 채널(근접 blend · BFS occlusion · structural reconcile)만 담당한다. **조준 여부는 기준점 선택만 바꾼다** — apply·우선순위(`Resolve`)는 동일.
+
 > **2026-07**: occlusion evaluate가 floor structural reconcile **이전**에 돌아야 outdoor 전환 시 policy-invisible 타일이 BFS에 남지 않는다. `TileVisibilityTick` 단일 오케스트레이터는 미도입(§7.2).
 
 `PlayerFloorVisibilityDriver`는 `FloorVisibilityContext.Equals`가 바뀔 때만 `SyncFloorVisibility`를 호출한다.
@@ -324,7 +331,7 @@ flowchart TD
 
 **§5.1.1 (비대칭):** 논리로 닫힌 루프면 bake 그래프상 밀폐로 볼 수 있으나, **비트가 비었다고 비밀폐로 단정하지 않음.** `isOutdoor=false`도 밀폐 증명이 아님.
 
-플레이어 점유셀: `PlayerFloorVisibilityPolicy.ResolvePlayerOccupiedCell` → `OccupiedCellCoord.ResolveFromWorld`.
+플레이어 점유셀: `PlayerVisibilityWorldResolve` → `ResolvePlayerOccupiedCell(visibilityWorld)` ([좌표 규약](#좌표-규약)).
 
 ---
 
@@ -386,7 +393,7 @@ player space band는 `FloorVisibilityContext`, tile structural band·space 접�
 - 청크 스트리밍과 무관. 스폰된 `TileView`만 대상.
 - `_structuralHidden` 타일은 occlusion display tick 스킵.
 - hide 전환 시 proximity entry reset.
-- player space 안에서 structural show된 뒤 벽·시선상 벽은 이 반투명 채널이 담당한다.
+- player space 안에서 structural show된 뒤 벽·시선상 벽도 **proximity evaluate에 포함**. BFS(`BfsWallOcclusion` 100)가 engaged이면 그 scalar가 우선, 없을 때만 proximity(50)가 메운다.
 
 ### BFS 벽 오클루전
 
@@ -490,6 +497,7 @@ player space band는 `FloorVisibilityContext`, tile structural band·space 접�
 | 근접·에드온 | `ProximitySightLineBlendPipeline.cs`, `ProximityBuildingHideAddon.cs` |
 | presentation | `TileViewPresentationApplier.cs`, `TilePresentationResolved.cs`, `TileView.cs` |
 | 드라이버 | `SightLineProximityBlendDriver.cs`, `PlayerFloorVisibilityDriver.cs`, `CharacterVisibilityBroadcaster.cs` |
+| evaluate 기준점 | `PlayerVisibilityWorldResolve.cs`, `CharacterState.ResolveVisibilityWorldPoint` |
 | slice Y | `TileVisibilityCellUtil.cs` |
 | bake | `BuildingGroupBuilder.cs`, `BuildingGroupRegistry.cs` |
 

@@ -91,6 +91,7 @@ public class TileMapManager : MonoBehaviour
     public TilePrefabDB PrefabDB => _prefabDB;
     public IWorldGrid WorldGrid => _worldGrid;
     public TileMapCacheHub MapCacheHub => _mapCacheHub;
+    public PlayerFloorVisibilityPolicy FloorVisibilityPolicy => _floorPolicy;
 
     /// <summary>층 가시성과 동일한 playerFloorCellY (몸 위치 기준 점유셀).</summary>
     public int ResolvePlayerFloorCellY(Vector3 playerWorld)
@@ -181,8 +182,8 @@ public class TileMapManager : MonoBehaviour
     /// BFS wall occlusion 갱신. policy가 invisible인 타일은 evaluate 단계에서 제외됩니다.
     /// </summary>
     public void UpdateWallOcclusionFromPlayer(
-        Vector3 playerWorld,
-        Vector3Int feetCell,
+        Vector3 visibilityWorld,
+        Vector3Int evaluationCell,
         OcclusionProximitySettings settings,
         Vector3Int playerFootprint = default)
     {
@@ -196,13 +197,13 @@ public class TileMapManager : MonoBehaviour
                 ? playerFootprint
                 : CharacterGridFootprintDefaults.Default;
             FloorVisibilityContext ctx = _floorPolicy.ResolveContext(
-                playerWorld.y, playerWorld, feetCell, footprint);
+                visibilityWorld.y, visibilityWorld, evaluationCell, footprint);
             visible = tile => _floorPolicy.IsTileVisible(tile, in ctx);
         }
 
         model.UpdateOcclusionFromPlayerWorld(
-            playerWorld,
-            feetCell.y,
+            visibilityWorld,
+            evaluationCell,
             settings,
             visible,
             playerFootprint);

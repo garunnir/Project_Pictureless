@@ -13,7 +13,7 @@ using UnityEngine;
 public sealed class PlayerFloorVisibilityDriver : MonoBehaviour, IFloorVisibilityDriver
 {
     [SerializeField] private CharacterState _playerState;
-    [Tooltip("BodyWorldPoint.y에 더할 오프셋(발끝·캡슐 보정).")]
+    [Tooltip("비조준 시 BodyWorldPoint.y에 더할 오프셋(발끝·캡슐 보정). 조준 중에는 조준점 그대로.")]
     [SerializeField] private float _heightOffsetWorld;
 
     [Tooltip("Play 전 Inspector. 끄면 야외 시선상 가림 건물 presentation 숨김을 하지 않습니다.")]
@@ -62,13 +62,17 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour, IFloorVisibilit
 
         _policy.OutdoorSightLineBuildingHideEnabled = _outdoorSightLineBuildingHideEnabled;
 
-        Vector3 bodyWorld = _playerState.BodyWorldPoint;
-        bodyWorld.y += _heightOffsetWorld;
+        PlayerVisibilityWorldResolve.ResolveEvaluation(
+            _playerState,
+            _policy,
+            _heightOffsetWorld,
+            out Vector3 visibilityWorld,
+            out Vector3Int evaluationCell,
+            out Vector3Int footprint);
 
-        float playerHeight = bodyWorld.y;
-        Vector3Int feetCell = _playerState.GridPos;
-        Vector3Int footprint = _playerState.GridFootprint;
-        FloorVisibilityContext ctx = _policy.ResolveContext(playerHeight, bodyWorld, feetCell, footprint);
+        float playerHeight = visibilityWorld.y;
+        FloorVisibilityContext ctx = _policy.ResolveContext(
+            playerHeight, visibilityWorld, evaluationCell, footprint);
 
         if (!_hasLastCtx || !ctx.Equals(_lastCtx))
         {
@@ -79,7 +83,7 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour, IFloorVisibilit
 
 #if UNITY_EDITOR
         RefreshIndoorOutdoorOverlay(ctx);
-        RefreshSightLineBuildingOverlay(bodyWorld, ctx);
+        RefreshSightLineBuildingOverlay(visibilityWorld, ctx);
         RefreshBuildingIdLabelOverlay();
 #endif
     }

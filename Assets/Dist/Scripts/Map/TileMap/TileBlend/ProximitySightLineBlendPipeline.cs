@@ -1,5 +1,6 @@
 // ============================================================
 // ProximitySightLineBlendPipeline — 시선 XZ 반경 내 타일 가림 강도 산출
+// 실내 Wall·EdgeWall 포함. BFS와 병렬 evaluate — 합성 우선순위는 applier entry(BFS 100 > proximity 50).
 // ============================================================
 using System;
 using System.Collections.Generic;
@@ -65,7 +66,7 @@ namespace IsoTilemap
                 {
                     AccumulateOcclusion(
                         _cellTilesScratch[i], cell, cameraWorld, playerWorld,
-                        playerCell, playerFloorCellY, isPlayerOutdoor, cellSize, settings, eps);
+                        playerCell, playerFloorCellY, cellSize, settings, eps);
                 }
             }
 
@@ -108,15 +109,11 @@ namespace IsoTilemap
             Vector3 playerWorld,
             Vector3Int playerCell,
             int playerFloorCellY,
-            bool isPlayerOutdoor,
             float cellSize,
             in SightLineBlendSettings settings,
             float eps)
         {
             if (!SightLineOcclusionStrength.PassesPlayerDownXQuadrantForOccluder(tile, occupiedCell, playerCell))
-                return;
-
-            if (SightLineOcclusionStrength.ShouldSkipProximityForIndoorStructural(isPlayerOutdoor, tile))
                 return;
 
             if (SightLineOcclusionStrength.ShouldExemptFloor(tile, occupiedCell, playerCell, playerFloorCellY))

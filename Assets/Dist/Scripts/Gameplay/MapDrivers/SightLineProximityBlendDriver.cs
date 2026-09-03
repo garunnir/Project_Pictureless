@@ -83,9 +83,13 @@ public sealed class SightLineProximityBlendDriver : MonoBehaviour, IProximityBle
 
         SyncCellSizeFromGrid();
 
-        Vector3 playerWorld = _playerState.IsAiming
-            ? _playerState.AimWorldPoint
-            : _playerState.BodyWorldPoint;
+        PlayerVisibilityWorldResolve.ResolveEvaluation(
+            _playerState,
+            _policy,
+            bodyHeightOffsetWorld: 0f,
+            out Vector3 playerWorld,
+            out Vector3Int evaluationCell,
+            out Vector3Int footprint);
 
         Camera cam = _resolveCamera?.Invoke();
         if (cam == null)
@@ -95,10 +99,10 @@ public sealed class SightLineProximityBlendDriver : MonoBehaviour, IProximityBle
 
         float playerHeight = playerWorld.y;
         Vector3Int feetCell = _playerState.GridPos;
-        Vector3Int footprint = _playerState.GridFootprint;
 
-        FloorVisibilityContext ctx = _policy.ResolveContext(playerHeight, playerWorld, feetCell, footprint);
-        Vector3Int playerCell = feetCell;
+        FloorVisibilityContext ctx = _policy.ResolveContext(
+            playerHeight, playerWorld, evaluationCell, footprint);
+        Vector3Int playerCell = evaluationCell;
 
         TilePresentationEntryStore entries = _presentationApplier.Entries;
         entries.CopyScalarsForSource(

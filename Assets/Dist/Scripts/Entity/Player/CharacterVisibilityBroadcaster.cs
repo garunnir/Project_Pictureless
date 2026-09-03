@@ -154,92 +154,70 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
 
 
 
-        Vector3 occlusionWorld = _characterState.IsAiming
+        PlayerVisibilityWorldResolve.ResolveEvaluation(
+            _characterState,
+            _tileMapManager?.FloorVisibilityPolicy,
+            bodyHeightOffsetWorld: 0f,
+            out Vector3 visibilityWorld,
+            out Vector3Int evaluationCell,
+            out Vector3Int footprint);
 
-            ? _characterState.AimWorldPoint
-
-            : _characterState.BodyWorldPoint;
-
-
-
-        bool visibilityCtxChanged = HasVisibilityContextChanged(occlusionWorld);
+        bool visibilityCtxChanged = HasVisibilityContextChanged(
+            visibilityWorld, evaluationCell, footprint);
 
         bool positionUnchanged = _hasLastOcclusionWorld &&
-
-                                 (occlusionWorld - _lastOcclusionWorld).sqrMagnitude <= 1e-8f;
-
-
+                                 (visibilityWorld - _lastOcclusionWorld).sqrMagnitude <= 1e-8f;
 
         if (!visibilityCtxChanged && positionUnchanged)
-
             return;
 
-
-
-        _lastOcclusionWorld = occlusionWorld;
-
+        _lastOcclusionWorld = visibilityWorld;
         _hasLastOcclusionWorld = true;
-
-        BroadcastOcclusion();
+        BroadcastOcclusion(evaluationCell, footprint);
 
     }
 
 
 
-    private Vector3Int _lastFeetCell = new Vector3Int(int.MinValue, int.MinValue, int.MinValue);
+    private Vector3Int _lastEvaluationCell = new Vector3Int(int.MinValue, int.MinValue, int.MinValue);
     private Vector3Int _lastFootprint = CharacterGridFootprintDefaults.Default;
 
-    bool HasVisibilityContextChanged(Vector3 playerWorld)
-
+    bool HasVisibilityContextChanged(
+        Vector3 playerWorld,
+        Vector3Int evaluationCell,
+        Vector3Int footprint)
     {
-
         if (_tileMapManager == null ||
-
             !_tileMapManager.TryResolveFloorVisibilityContext(
                 playerWorld,
-                _characterState.GridPos,
-                _characterState.GridFootprint,
+                evaluationCell,
+                footprint,
                 out FloorVisibilityContext ctx))
-
         {
-
             return !_hasLastVisibilityCtx;
-
         }
-
-
-
-        Vector3Int feetCell = _characterState.GridPos;
-        Vector3Int footprint = _characterState.GridFootprint;
 
         bool changed = !_hasLastVisibilityCtx ||
                        ctx.IsPlayerOutdoor != _lastIsPlayerOutdoor ||
                        ctx.PlayerBuildingId != _lastPlayerBuildingId ||
                        ctx.PlayerFloorCellY != _lastPlayerFloorCellY ||
-                       feetCell != _lastFeetCell ||
+                       evaluationCell != _lastEvaluationCell ||
                        footprint != _lastFootprint;
 
-
-
         _hasLastVisibilityCtx = true;
-
         _lastIsPlayerOutdoor = ctx.IsPlayerOutdoor;
-
         _lastPlayerBuildingId = ctx.PlayerBuildingId;
-
         _lastPlayerFloorCellY = ctx.PlayerFloorCellY;
-        _lastFeetCell = feetCell;
+        _lastEvaluationCell = evaluationCell;
         _lastFootprint = footprint;
 
         return changed;
-
     }
 
-
-
-    /// <summary>조준 중에는 <see cref="CharacterState.AimWorldPoint"/>, 아니면 <see cref="CharacterState.BodyWorldPoint"/>로 BFS·거리 오클루전 갱신.</summary>
-
-    private void BroadcastOcclusion()
+    /// <summary>
+    /// <see cref="PlayerVisibilityWorldResolve"/> 기준점으로 BFS·거리 오클루전 갱신.
+    /// </summary>
+    private void BroadcastOcclusion(Vector3Int evaluationCell, Vector3Int footprint)
 
     {
 
@@ -271,9 +249,9 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
 
         _tileMapManager?.UpdateWallOcclusionFromPlayer(
             _lastOcclusionWorld,
-            _characterState.GridPos,
+            evaluationCell,
             settings,
-            _characterState.GridFootprint);
+            footprint);
 
     }
 

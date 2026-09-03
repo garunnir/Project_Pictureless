@@ -415,7 +415,7 @@ namespace IsoTilemap
 
         /// <summary>
         /// 월드 XZ 스냅 셀의 roomId로 bake된 <see cref="FloorBfsResult.Visited"/>를 읽습니다.
-        /// roomId가 없으면 BFS 탐색·부여 후 반환. 바닥·buildingId 없으면 null.
+        /// <b>타일 가시성·오클루전 경로에서는 사용하지 않습니다</b> — <see cref="GetVisitedForCell"/> + evaluate 셀 SSOT.
         /// </summary>
         public HashSet<(int x, int z)> GetVisitedForWorld(
             int floorCellY,

@@ -78,13 +78,6 @@ namespace IsoTilemap
             return PassesPlayerDownXQuadrant(occupiedCell, playerCell);
         }
 
-        public static bool IsStructuralOcclusionTile(in TileData tile) =>
-            TileIdentityUtil.IsWallLike(tile.identity);
-
-        /// <summary>실내에서는 Wall·수직 면 오클루전을 BFS(<see cref="WallOcclusionFinder"/>)만 담당.</summary>
-        public static bool ShouldSkipProximityForIndoorStructural(bool isPlayerOutdoor, in TileData tile) =>
-            !isPlayerOutdoor && IsStructuralOcclusionTile(tile);
-
         /// <summary>
         /// walkable 층(CellAbove)이 플레이어 층 이하인 Floor face는 §3 면제.
         /// 윗층 천장 face(walkable y &gt; playerFloor)만 근접 블렌드 대상.

@@ -15,8 +15,15 @@ public class CharacterState : MonoBehaviour
     public float InteractionReach { get; private set; }
     /// <summary>조준 레이의 끝(시야) 월드 위치.</summary>
     public Vector3 AimWorldPoint { get; private set; } = Vector3.zero;
-    /// <summary>플레이어 몸의 월드 위치. 조준이 아닐 때 오클루전 등의 기준점.</summary>
+    /// <summary>플레이어 몸의 월드 위치.</summary>
     public Vector3 BodyWorldPoint { get; private set; } = Vector3.zero;
+
+    /// <summary>
+    /// 타일 가시성·오클루전 evaluate 월드 기준점. 조준 중이면 <see cref="AimWorldPoint"/>, 아니면 <see cref="BodyWorldPoint"/>.
+    /// 발높이 보정은 <see cref="PlayerVisibilityWorldResolve"/>에서 비조준 시만 적용합니다.
+    /// </summary>
+    public Vector3 ResolveVisibilityWorldPoint() =>
+        IsAiming ? AimWorldPoint : BodyWorldPoint;
     public Vector3 MoveDir { get; private set; } = Vector3.zero;
     /// <summary>발밑 그리드 셀 (<see cref="CharacterFeetPose"/> + <see cref="MapCollisionGrid"/>).</summary>
     public Vector3Int GridPos { get; private set; } = Vector3Int.zero;

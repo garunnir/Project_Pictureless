@@ -124,6 +124,15 @@ namespace IsoTilemap
             OcclusionProximitySettings settings) =>
             _runtimeData.UpdateOcclusionFromPlayerWorld(playerWorld, playerFloorCellY, settings);
 
+        public void UpdateOcclusionFromPlayerWorld(
+            Vector3 visibilityWorld,
+            Vector3Int evaluationCell,
+            OcclusionProximitySettings settings,
+            System.Func<TileData, bool> occlusionTileVisible,
+            Vector3Int playerFootprint) =>
+            _runtimeData.UpdateOcclusionFromPlayerWorld(
+                visibilityWorld, evaluationCell, settings, occlusionTileVisible, playerFootprint);
+
         private void HandleTileAdded(TileData tileData) =>
             _chunkIndex.RegisterTile(tileData, _chunkSize);
 

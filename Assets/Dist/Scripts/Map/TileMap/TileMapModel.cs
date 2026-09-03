@@ -540,49 +540,67 @@ namespace IsoTilemap
             RaiseOcclusionPresentationDelta();
         }
 
-        /// <summary>플레이어 월드 위치만으로 셀 전이 시 BFS + 매 호출마다 숨김 집합에 대한 거리 occlusion 갱신.</summary>
-        public void UpdateOcclusionFromPlayerWorld(Vector3 playerWorld, OcclusionProximitySettings settings)
+        /// <summary>호환: visibility world만 있을 때 evaluate 셀을 hub에서 해석합니다.</summary>
+        public void UpdateOcclusionFromPlayerWorld(Vector3 visibilityWorld, OcclusionProximitySettings settings)
         {
             float cs = Mathf.Max(1e-4f, settings.CellSize);
-            int floorCellY = _mapCacheHub != null
-                ? OccupiedCellCoord.ResolveFromWorld(_mapCacheHub, playerWorld, cs).y
-                : TileHelper.ConvertWorldToGrid(playerWorld, cs).y;
-            UpdateOcclusionFromPlayerWorld(playerWorld, floorCellY, settings);
+            Vector3Int evaluationCell = _mapCacheHub != null
+                ? OccupiedCellCoord.ResolveFromWorld(_mapCacheHub, visibilityWorld, cs)
+                : TileHelper.ConvertWorldToGrid(visibilityWorld, cs);
+            UpdateOcclusionFromPlayerWorld(visibilityWorld, evaluationCell, settings);
         }
 
         /// <inheritdoc cref="UpdateOcclusionFromPlayerWorld(Vector3, OcclusionProximitySettings)"/>
         public void UpdateOcclusionFromPlayerWorld(
-            Vector3 playerWorld,
+            Vector3 visibilityWorld,
             int playerFloorCellY,
             OcclusionProximitySettings settings)
         {
-            UpdateOcclusionFromPlayerWorld(playerWorld, playerFloorCellY, settings, occlusionTileVisible: null);
+            UpdateOcclusionFromPlayerWorld(
+                visibilityWorld, playerFloorCellY, settings, occlusionTileVisible: null);
         }
 
-        /// <summary>
-        /// <paramref name="occlusionTileVisible"/>가 false인 타일은 BFS·거리 occlusion 대상에서 제외됩니다 (policy hide 등).
-        /// </summary>
+        /// <summary>호환: floor Y + policy filter. evaluate 셀은 hub에서 해석합니다.</summary>
         public void UpdateOcclusionFromPlayerWorld(
-            Vector3 playerWorld,
+            Vector3 visibilityWorld,
             int playerFloorCellY,
             OcclusionProximitySettings settings,
             Func<TileData, bool> occlusionTileVisible,
             Vector3Int playerFootprint = default)
         {
-            _occlusionTileVisible = occlusionTileVisible;
             float cs = Mathf.Max(1e-4f, settings.CellSize);
+            Vector3Int evaluationCell = _mapCacheHub != null
+                ? OccupiedCellCoord.ResolveFromWorld(
+                    _mapCacheHub, visibilityWorld, cs, playerFloorCellY, 0f)
+                : new Vector3Int(
+                    TileHelper.ConvertWorldToGrid(visibilityWorld, cs).x,
+                    playerFloorCellY,
+                    TileHelper.ConvertWorldToGrid(visibilityWorld, cs).z);
+            UpdateOcclusionFromPlayerWorld(
+                visibilityWorld, evaluationCell, settings, occlusionTileVisible, playerFootprint);
+        }
 
+        /// <summary>
+        /// <paramref name="evaluationCell"/>는 <see cref="PlayerVisibilityWorldResolve"/> SSOT.
+        /// room·야외·BFS는 이 셀만 사용합니다 (<c>GetVisitedForWorld</c> / 판정용 <c>ConvertWorldToGrid</c> 금지).
+        /// </summary>
+        public void UpdateOcclusionFromPlayerWorld(
+            Vector3 visibilityWorld,
+            Vector3Int evaluationCell,
+            OcclusionProximitySettings settings,
+            Func<TileData, bool> occlusionTileVisible = null,
+            Vector3Int playerFootprint = default)
+        {
+            _occlusionTileVisible = occlusionTileVisible;
             NormalizeProximity(ref settings);
 
-            Vector3Int snapCell = TileHelper.ConvertWorldToGrid(playerWorld, cs);
-            Vector3Int playerCell = _mapCacheHub != null
-                ? OccupiedCellCoord.ResolveFromWorld(
-                    _mapCacheHub, playerWorld, cs, playerFloorCellY, 0f)
-                : new Vector3Int(snapCell.x, playerFloorCellY, snapCell.z);
+            Vector3Int playerCell = evaluationCell;
+            int playerFloorCellY = evaluationCell.y;
 
             if (_mapCacheHub != null)
             {
-                if (_mapCacheHub.IsOutdoorEvaluation(playerFloorCellY, snapCell.x, snapCell.z))
+                if (_mapCacheHub.IsOutdoorEvaluation(
+                        evaluationCell.y, evaluationCell.x, evaluationCell.z))
                 {
                     if (_hiddenWallTileIds.Count > 0 || _lastAppliedOcclusion.Count > 0)
                         ClearWallCharacterOcclusion();
@@ -609,12 +627,12 @@ namespace IsoTilemap
 
             if (needRebuild)
             {
-                RebuildOcclusionMembership(playerCell, playerWorld, playerFloorCellY, settings, playerFootprint);
+                RebuildOcclusionMembership(playerCell, visibilityWorld, playerFloorCellY, settings, playerFootprint);
                 _hasLastOcclusionPlayerCell = true;
                 _lastOcclusionPlayerCell = playerCell;
             }
 
-            RefreshOcclusionProximity(playerWorld, settings);
+            RefreshOcclusionProximity(visibilityWorld, settings);
         }
 
         public bool TryGetTiles(Vector3Int pos, out IReadOnlyList<TileData> tileList)
@@ -767,8 +785,8 @@ namespace IsoTilemap
             HashSet<(int x, int z)> roomVisited = null;
             if (_mapCacheHub != null)
             {
-                roomVisited = _mapCacheHub.GetVisitedForWorld(
-                    playerFloorCellY, playerWorld, cs, FloorRoomBfsProfile.Occlusion);
+                roomVisited = _mapCacheHub.GetVisitedForCell(
+                    playerFloorCellY, playerCellPos.x, playerCellPos.z, FloorRoomBfsProfile.Occlusion);
             }
 
             _occlusionFinder ??= new WallOcclusionFinder(tiles, _faceBinder.WallFaceIndex, _mapCacheHub?.Topology, this);

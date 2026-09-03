@@ -83,17 +83,25 @@ namespace IsoTilemap
         void ApplyTileStates(IReadOnlyList<TileData> tiles);
         void HideOcclusionTileWall(Vector3Int playerCellPos);
 
-        /// <summary>플레이어 월드 위치로 오클루전(셀 변경 시 BFS + 거리 occlusion) 갱신.</summary>
-        void UpdateOcclusionFromPlayerWorld(Vector3 playerWorld, OcclusionProximitySettings settings);
+        /// <summary>플레이어 월드 위치로 오클루전(셀 변경 시 BFS + 거리 occlusion) 갱신. 호환용 — evaluate 셀 자동 해석.</summary>
+        void UpdateOcclusionFromPlayerWorld(Vector3 visibilityWorld, OcclusionProximitySettings settings);
 
-        /// <summary>
-        /// <paramref name="playerFloorCellY"/>는 층 가시성과 동일한 점유셀 해석(<see cref="OccupiedCellCoord.ResolveFromWorld"/>).
-        /// room 베이크 조회는 <paramref name="playerWorld"/> XZ 기준 점유셀을 사용합니다.
-        /// </summary>
+        /// <summary>호환: floor Y만 지정. evaluate 셀은 <see cref="OccupiedCellCoord.ResolveFromWorld"/>.</summary>
         void UpdateOcclusionFromPlayerWorld(
-            Vector3 playerWorld,
+            Vector3 visibilityWorld,
             int playerFloorCellY,
             OcclusionProximitySettings settings);
+
+        /// <summary>
+        /// SSOT: <paramref name="evaluationCell"/>는 <see cref="PlayerVisibilityWorldResolve"/>와 동일.
+        /// room·야외 BFS는 이 셀만 사용 (<c>GetVisitedForWorld</c> 금지).
+        /// </summary>
+        void UpdateOcclusionFromPlayerWorld(
+            Vector3 visibilityWorld,
+            Vector3Int evaluationCell,
+            OcclusionProximitySettings settings,
+            System.Func<TileData, bool> occlusionTileVisible,
+            Vector3Int playerFootprint);
         public void Initialize(MapModelDTO prepared);
     }
 /// <summary>
