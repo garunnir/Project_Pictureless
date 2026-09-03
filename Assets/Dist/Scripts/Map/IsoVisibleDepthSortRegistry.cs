@@ -8,7 +8,7 @@ using UnityEngine;
 namespace IsoTilemap
 {
     /// <summary>
-    /// Play 중 drawable 투명 <see cref="Renderer"/>만 모아 이소 키로 정렬한 뒤 연속 <c>sortingOrder</c>를 쓴다.
+    /// Play 중 drawable 투명 <see cref="Renderer"/>만 모아 <see cref="IsoDepthSortKey"/>로 정렬한다.
     /// </summary>
     public static class IsoVisibleDepthSortRegistry
     {

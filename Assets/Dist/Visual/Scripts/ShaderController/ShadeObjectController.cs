@@ -56,7 +56,7 @@ public class ShadeObjectController : ShaderController
         Mat.SetFloat(_sightLineBuildingHiddenId, hidden ? 1f : 0f);
     }
 
-    /// <summary>캐릭터에 가려질 때 알파 페이드(0 불투명 ~ 1 완전 투명).</summary>
+    /// <summary>캐릭터에 가려질 때 화면 디더 디졸브(0 없음 ~ 1 완전 제거).</summary>
     public void SetCharacterOcclusion(float occlusion01)
     {
         if (Mat == null)

@@ -8,8 +8,7 @@ using UnityEngine;
 namespace IsoTilemap
 {
     /// <summary>
-    /// 화면에 그려지는 투명 렌더러 집합을 정렬할 때 쓰는 비교 키.
-    /// <see cref="IsoVisibleDepthSortRegistry"/>가 최종 <c>sortingOrder</c> 0..N-1을 부여한다.
+    /// drawable 투명 렌더러 집합 정렬 키. <see cref="IsoVisibleDepthSortRegistry"/>가 연속 sortOrder를 부여한다.
     /// </summary>
     public readonly struct IsoDepthSortKey : IComparable<IsoDepthSortKey>
     {
@@ -31,6 +30,35 @@ namespace IsoTilemap
         {
             int size = Mathf.Max(1, chunkSize);
             return FromGridCell(new Vector3Int(chunk.x * size, minCellY, chunk.y * size));
+        }
+
+        /// <summary>타일 슬롯별 정렬 셀 — 바닥은 CellAbove, 벽은 남동 쪽 인접 셀.</summary>
+        public static IsoDepthSortKey FromTileView(TileView view)
+        {
+            if (view == null)
+                return default;
+
+            Vector3Int cell = view.gridPos;
+
+            switch (view.placementSlot)
+            {
+                case TilePlacementSlot.HorizontalFace:
+                    cell = new FloorFaceKey(view.gridPos, FloorFace.PosY).CellAbove;
+                    break;
+
+                case TilePlacementSlot.VerticalFace:
+                {
+                    var edge = new WallEdgeKey(view.gridPos, (WallFace)Mathf.Clamp(view.wallFace, 0, 1));
+                    Vector3Int neighbor = edge.NeighborCell();
+                    int sumAnchor = edge.Anchor.x + edge.Anchor.z;
+                    int sumNeighbor = neighbor.x + neighbor.z;
+                    cell = sumNeighbor >= sumAnchor ? neighbor : edge.Anchor;
+                    cell.y = edge.Anchor.y;
+                    break;
+                }
+            }
+
+            return FromGridCell(cell);
         }
 
         public int CompareTo(IsoDepthSortKey other)

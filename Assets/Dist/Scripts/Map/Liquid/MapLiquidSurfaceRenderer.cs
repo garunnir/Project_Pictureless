@@ -936,7 +936,6 @@ namespace IsoTilemap
             {
 
                 IsoVisibleDepthSortRegistry.UnregisterOwner(this);
-
                 DestroySafely(_viewGo);
 
                 DestroySafely(Mesh);

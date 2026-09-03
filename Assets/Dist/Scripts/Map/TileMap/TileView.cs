@@ -190,23 +190,13 @@ namespace IsoTilemap
             if (!ShouldParticipateInIsoDepthSort())
                 return;
 
-            IsoDepthSortKey key = IsoDepthSortKey.FromGridCell(gridPos);
+            IsoDepthSortKey key = IsoDepthSortKey.FromTileView(this);
             CollectSortRenderers(_sortRendererScratch);
             for (int i = 0; i < _sortRendererScratch.Count; i++)
                 IsoVisibleDepthSortRegistry.Register(_sortRendererScratch[i], key, this);
         }
 
-        bool ShouldParticipateInIsoDepthSort()
-        {
-            if (!gameObject.activeInHierarchy)
-                return false;
-
-            if (_structuralVisibilityHidden &&
-                _structuralHideMode == StructuralHidePresentationMode.DisableGameObject)
-                return false;
-
-            return true;
-        }
+        bool ShouldParticipateInIsoDepthSort() => false;
 
         void CollectSortRenderers(List<Renderer> into)
         {
@@ -227,6 +217,7 @@ namespace IsoTilemap
                 into.Add(renderer);
             }
         }
+
         internal void UpdateTile(TileData tileData, float cellSize)
         {
             ApplyWorldPose(tileData, cellSize);

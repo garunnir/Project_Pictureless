@@ -10,7 +10,7 @@ Shader "Custom/SpriteUV4Point"
         _GhostAmount ("고스트 블렌드", Range(0, 1)) = 0
         _EmphasisBlend ("선택 강조(밝기)", Range(0, 1)) = 0
         _SightLineBuildingHidden ("야외 시선 차단 building 바닥", Range(0, 1)) = 0
-        _CharacterOcclusion ("캐릭터 가림 투명도 (0불투명 ~ 1완전투명)", Range(0, 1)) = 0
+        _CharacterOcclusion ("캐릭터 가림 디졸브 (0없음 ~ 1완전)", Range(0, 1)) = 0
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
         [Toggle(_ALPHATEST_ON)] _AlphaClip ("Alpha Clipping", Float) = 0
         _Cutoff ("컷오프", Range(0,1)) = 0.5
@@ -25,22 +25,24 @@ Shader "Custom/SpriteUV4Point"
     {
         Tags
         {
-            "Queue"             = "Transparent"
-            "RenderType"        = "Transparent"
+            "Queue"             = "AlphaTest"
+            "RenderType"        = "TransparentCutout"
             "RenderPipeline"    = "UniversalPipeline"
             "IgnoreProjector"   = "True"
             "PreviewType"       = "Plane"
             "CanUseSpriteAtlas" = "True"
         }
 
-        Blend SrcAlpha OneMinusSrcAlpha
         Cull Off
-        ZWrite Off
+        ZWrite On
+        ZTest LEqual
 
         Pass
         {
             Name "ForwardLit"
             Tags { "LightMode" = "UniversalForward" }
+
+            Blend One Zero
 
             HLSLPROGRAM
             #pragma vertex vert
@@ -98,6 +100,19 @@ Shader "Custom/SpriteUV4Point"
                 float4 _UV11;
             CBUFFER_END
 
+            // 화면 픽셀 Bayer — 노이즈 텍스처 없이 occlusion 디졸브 미리보기.
+            float CharacterOcclusionBayer4x4(uint2 pix)
+            {
+                const float kBayer[16] =
+                {
+                    0.0 / 16.0,  8.0 / 16.0,  2.0 / 16.0, 10.0 / 16.0,
+                    12.0 / 16.0, 4.0 / 16.0, 14.0 / 16.0,  6.0 / 16.0,
+                    3.0 / 16.0, 11.0 / 16.0,  1.0 / 16.0,  9.0 / 16.0,
+                    15.0 / 16.0, 7.0 / 16.0, 13.0 / 16.0,  5.0 / 16.0
+                };
+                return kBayer[(pix.x & 3u) + (pix.y & 3u) * 4u];
+            }
+
             Varyings vert(Attributes IN)
             {
                 Varyings OUT;
@@ -133,6 +148,8 @@ Shader "Custom/SpriteUV4Point"
 
                 #ifdef _ALPHATEST_ON
                     clip(baseAlpha - _Cutoff);
+                #else
+                    clip(baseAlpha - 0.001h);
                 #endif
 
                 half lightStrength = 0.0h;
@@ -183,8 +200,14 @@ Shader "Custom/SpriteUV4Point"
                 half sightHidden = saturate((half)_SightLineBuildingHidden);
                 finalColor.rgb = lerp(finalColor.rgb, half3(0.02h, 0.02h, 0.02h), sightHidden);
 
-                half fade = saturate((half)_CharacterOcclusion);
-                finalColor.a = baseAlpha * (1.0h - fade);
+                finalColor.a = baseAlpha;
+
+                half occlusion = saturate((half)_CharacterOcclusion);
+                if (occlusion > 0.0h)
+                {
+                    float dither = CharacterOcclusionBayer4x4(uint2(floor(IN.positionCS.xy)));
+                    clip(dither - occlusion);
+                }
 
                 half emphasis = saturate((half)_EmphasisBlend);
                 finalColor.rgb *= 1.0h + emphasis;
