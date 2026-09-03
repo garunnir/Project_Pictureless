@@ -179,7 +179,7 @@ indoor ④~⑥은 **player space band·peek** 변경에 반응.
 
 **전제** (하나라도 아니면 empty): player outdoor · outdoor building hide on.
 
-proximity evaluate **filter 통과 tile** 기준 (occlusion 0이어도 포함).
+proximity evaluate **filter 통과 tile** 기준 (occlusion 0이어도 포함). 여기서 filter의 핵심은 [사분면 필터](#사분면-필터-quadrant--제거-금지) — 통과 범위를 넓히면 blocking set이 커져 건물 단위 hide가 폭발한다.
 
 | hit tile | set |
 |----------|-----|
@@ -202,6 +202,18 @@ set에 들어간 building **전 tile**이 ① 대상 (min-floor footprint 제외
 | building | 무관 — terrain·building 모두 blend 가능 |
 
 **blend ≠ floor hide.** draw off 안 함.
+
+#### 사분면 필터 (quadrant) — 제거 금지
+
+시선 반경으로 모은 occupancy 셀·occluder는 **플레이어 XZ 기준 +X·-Z 사분면**(`dx ≥ 0`, `dz ≤ 0`)만 evaluate에 통과한다. 구현: `SightLineOcclusionStrength.PassesPlayerDownXQuadrant` · `PassesPlayerDownXQuadrantForOccluder` (`ProximitySightLineBlendPipeline` **입력** 단계, apply 필터 아님).
+
+| 제거 시 | 결과 |
+|---------|------|
+| 사분면 필터 없음 | 반경 내 **모든 방향** 건물이 evaluate 스냅샷·`EvaluatedHits`에 들어감 |
+| 야외 + blocking on | `ProximityBuildingHideAddon`이 hit의 `buildingId`를 blocking set에 추가 → [floor hide ①](#floor-hide--판정-순서) **통째 hide** |
+| 맵 체감 | **+Z(북쪽) 등 카메라 반대편** 건물까지 blocking 대상이 되어 북쪽 맵이 통째로 사라질 수 있음 |
+
+**북쪽(+Z) 맵을 통째로 날리고 싶지 않다면 사분면 필터를 지우지 않는다.** 반경만 키우거나 apply 쪽에서 우회하는 패턴도 동일 계열 버그다 (§[구현 원칙](#구현-원칙) 땜빵 금지).
 
 ---
 
@@ -371,7 +383,7 @@ player space band는 `FloorVisibilityContext`, tile structural band·space 접�
 - **조건**: `IsPlayerOutdoor` + `OutdoorSightLineBuildingHideEnabled`
 - **실내**: blocking 비움
 
-스냅샷 타일 = quadrant·실내 구조·Floor 면제 필터 **통과 후** occlusion 평가에 들어간 타일 (occ 강도와 무관).
+스냅샷 타일 = quadrant·실내 구조·Floor 면제 필터 **통과 후** occlusion 평가에 들어간 타일 (occ 강도와 무관). quadrant = +X·-Z 사분면만 — 제거 시 blocking set·북쪽 통째 hide ([§사분면 필터](#사분면-필터-quadrant--제거-금지)).
 
 ### 2.3 sync 후보 universe (`FloorVisibilitySyncPlanner`)
 
@@ -483,6 +495,7 @@ player space band는 `FloorVisibilityContext`, tile structural band·space 접�
 
 - sync 밖 전환 훅 (`RecoverIndoor…`, building 전체 `ApplyResolved` 루프) **재도입 금지**.
 - slot별 hide 예외 **재도입 금지**.
+- **근접 evaluate 사분면 필터 제거** — 북쪽(+Z) 등 반대편 건물이 blocking set으로 들어가 통째 hide ([§사분면 필터](#사분면-필터-quadrant--제거-금지)).
 - `MaterialPropertyBlock` / 머티리얼 스왑으로 가림 우회 **금지** ([URP 규약](../../../.cursor/rules/urp-rendering.mdc)).
 
 ---
