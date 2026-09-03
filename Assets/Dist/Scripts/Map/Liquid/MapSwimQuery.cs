@@ -15,7 +15,8 @@ namespace IsoTilemap
         public static MapSwimImmersion Resolve(
             Vector3 feetWorld,
             float cellSize,
-            bool diveHeld)
+            bool diveHeld,
+            Vector3Int gridFootprint = default)
         {
             if (cellSize <= 0f)
                 cellSize = 1f;
@@ -36,7 +37,7 @@ namespace IsoTilemap
                 out float surfaceFeetY,
                 out float bottomFeetY);
 
-            Vector3 headWorld = feetWorld + Vector3.up * MapSwimConsts.HeadHeightWorld;
+            Vector3 headWorld = feetWorld + Vector3.up * ResolveHeadHeight(gridFootprint, cellSize);
             Vector3Int headCell = ResolveFeetCell(headWorld, cellSize);
             bool headSubmerged = MapLiquidQuery.Fill01(headCell) >= MapSwimConsts.HeadSubmergeFill01
                 && !MapLiquidQuery.IsSolid(headCell);
@@ -116,6 +117,19 @@ namespace IsoTilemap
             }
 
             bottomFeetY = bottom.y * cellSize;
+        }
+
+        static float ResolveHeadHeight(Vector3Int gridFootprint, float cellSize)
+        {
+            gridFootprint = CharacterGridFootprintDefaults.Clamp(
+                gridFootprint == Vector3Int.zero
+                    ? CharacterGridFootprintDefaults.Default
+                    : gridFootprint);
+
+            if (gridFootprint.y > 0 && cellSize > 0f)
+                return gridFootprint.y * cellSize;
+
+            return MapSwimConsts.HeadHeightWorld;
         }
 
         static Vector3Int ResolveFeetCell(Vector3 feetWorld, float cellSize)

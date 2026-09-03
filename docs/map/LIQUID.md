@@ -168,9 +168,9 @@ JSON에서는 `liquidAuthoringFaces` 별 레이어로만 왕복한다. 이 한 �
 - 셰이더 시간은 `_MapLiquidTime` 전역 프로퍼티. 렌더러가 `TimeScaleService.TimeNow(TimeScaleChannel.World)`로 매 프레임 채워, 배속·정지가 파도에 반영된다(`Time.timeScale` 미사용).
 - 그리기는 청크마다 `MeshRenderer` 뷰(표준 URP 투명 큐). `Graphics.RenderMesh`·커스텀 Renderer Feature는 intermediate RT와 합성이 어긋날 수 있어 쓰지 않는다.
 - 청크 분할 SSOT는 `TileMapChunkStreamer.ChunkSize`이며, 스트리밍이 없으면 `MapLiquidRenderConsts.FallbackChunkSize`.
-- **투명 정렬은 전역 `Default`(직교 카메라 거리)에 맡긴다.** 수면과 같은 앵커 바닥 메시의 분리는 `SurfaceMinLift01`·`SurfaceTopInset01` **기하 오프셋만**으로 한다.
+- **투명 정렬** — 가시(drawable) 타일·물 청크만 `IsoDepthSortKey`(y → x+z → x)로 정렬하고 `IsoVisibleDepthSortRegistry`가 연속 `sortingOrder` 0..N-1을 부여한다. clip-space depth bias·고정 y stride는 쓰지 않는다. 수면·바닥 분리는 `SurfaceMinLift01`·`SurfaceTopInset01` 기하 오프셋을 유지한다.
  - `RenderQueue` 승격 금지 — 위층 타일까지 덮는다.
- - `TransparencySortMode.CustomAxis` **금지** — Y축 단일 키는 같은 층 타일(`gridPos.y` 동일)을 정렬 동점으로 만들고, 타일 셰이더(`Custom/SpriteUV4Point`)는 `ZWrite Off` + `m_SortingOrder: 0`이라 같은 층 앞뒤가 무작위가 된다(2026-08 회귀).
+ - `TransparencySortMode.CustomAxis` **금지** — Y축 단일 키는 같은 층 타일(`gridPos.y` 동일)을 정렬 동점으로 만들어 2026-08 회귀가 났다. X+Z는 `IsoDepthSortKey`에 포함한다.
 
 ### 비용 계약
 

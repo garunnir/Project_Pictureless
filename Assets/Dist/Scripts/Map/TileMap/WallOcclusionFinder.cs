@@ -148,13 +148,20 @@ namespace IsoTilemap
         public List<TileData> Find(Vector3Int playerCellPos) =>
             FindOcclusion(playerCellPos, null).Occluding;
 
+        public List<TileData> Find(
+            Vector3Int playerCellPos,
+            IReadOnlyCollection<Vector3Int> playerOccupiedCellsForMask) =>
+            FindOcclusion(playerCellPos, null, playerOccupiedCellsForMask).Occluding;
+
         /// <summary>
         /// Flood-fill 진행 중 +X/-Z 방향에서 막힌 셀 벽과 엣지 벽을 숨김 후보로 반환합니다.
         /// </summary>
         /// <param name="precomputedVisited">공유 <see cref="TileMapCacheHub"/>의 방 집합(있으면 BFS 생략).</param>
+        /// <param name="playerOccupiedCellsForMask">플레이어 proximity 마스크 기준 점유셀. null이면 <paramref name="playerCellPos"/>만 사용.</param>
         public OcclusionSelection FindOcclusion(
             Vector3Int playerCellPos,
-            HashSet<(int x, int z)> precomputedVisited)
+            HashSet<(int x, int z)> precomputedVisited,
+            IReadOnlyCollection<Vector3Int> playerOccupiedCellsForMask = null)
         {
             Vector3Int start = playerCellPos;
             var belowCellSet = new HashSet<TileData>();
@@ -265,7 +272,8 @@ namespace IsoTilemap
             merged.AddRange(tileResult);
             merged.AddRange(belowEdges);
             var playerCandidates = CollectPenetratingPlayerCandidates();
-            var maskResult = CollectAdditionalPlayerOccluding(playerCandidates, playerCellPos, MaskOptions);
+            var maskResult = CollectAdditionalPlayerOccluding(
+                playerCandidates, playerCellPos, MaskOptions, playerOccupiedCellsForMask);
             var extraOccludingByPlayer = maskResult.ExtraOccludingByPlayer;
             var finalOccluding = UnionByTileId(merged, extraOccludingByPlayer);
 
@@ -330,7 +338,8 @@ namespace IsoTilemap
         private static MaskApplicationResult CollectAdditionalPlayerOccluding(
             List<TileData> source,
             Vector3Int playerCellPos,
-            OcclusionMaskOptions options)
+            OcclusionMaskOptions options,
+            IReadOnlyCollection<Vector3Int> playerOccupiedCellsForMask)
         {
             if (!options.Enabled || source.Count == 0)
                 return new MaskApplicationResult(new List<TileData>());
@@ -344,9 +353,9 @@ namespace IsoTilemap
             for (int i = 0; i < source.Count; i++)
             {
                 var tile = source[i];
-                if (!IsTileInBottomVisibilityMask(tile, playerCellPos, options, downScale))
+                if (!IsTileInBottomVisibilityMask(tile, playerCellPos, options, downScale, playerOccupiedCellsForMask))
                     continue;
-                if (IsTileInsideMask(tile, playerCellPos, options, downScale, rightScale))
+                if (IsTileInsideMask(tile, playerCellPos, options, downScale, rightScale, playerOccupiedCellsForMask))
                     extraOccluding.Add(tile);
             }
 
@@ -357,24 +366,78 @@ namespace IsoTilemap
             TileData tile,
             Vector3Int playerCellPos,
             OcclusionMaskOptions options,
-            int downScale)
+            int downScale,
+            IReadOnlyCollection<Vector3Int> playerOccupiedCellsForMask)
         {
-            int minDown = options.MinStartDepthTiles * downScale;
-            int maxDown = options.DownTiles * downScale;
-
             if (TileIdentityUtil.IsVerticalFace(tile.identity))
             {
                 WallEdgeKey key = WallEdgeKey.FromWallTileIdentity(tile.identity);
-                int downA = DotXZ(new Vector3Int(key.CellA.x - playerCellPos.x, 0, key.CellA.z - playerCellPos.z), options.DownAxis);
-                int downB = DotXZ(new Vector3Int(key.CellB.x - playerCellPos.x, 0, key.CellB.z - playerCellPos.z), options.DownAxis);
-                // EdgeWall은 상단 간섭 방지를 위해 양쪽 셀이 모두 하단 밴드 안에 있어야 후보로 인정.
-                return downA >= minDown && downA <= maxDown && downB >= minDown && downB <= maxDown;
+                return IsEdgeInBottomVisibilityMask(key, playerCellPos, options, downScale, playerOccupiedCellsForMask);
             }
 
-            int down = DotXZ(
-                new Vector3Int(tile.identity.GridPos.x - playerCellPos.x, 0, tile.identity.GridPos.z - playerCellPos.z),
+            Vector3Int tileCell = tile.identity.GridPos;
+            return IsCellInBottomVisibilityMask(
+                tileCell, playerCellPos, options, downScale, playerOccupiedCellsForMask);
+        }
+
+        static bool IsEdgeInBottomVisibilityMask(
+            WallEdgeKey key,
+            Vector3Int playerCellPos,
+            OcclusionMaskOptions options,
+            int downScale,
+            IReadOnlyCollection<Vector3Int> playerOccupiedCellsForMask)
+        {
+            if (playerOccupiedCellsForMask != null && playerOccupiedCellsForMask.Count > 0)
+            {
+                int minDown = options.MinStartDepthTiles * downScale;
+                int maxDown = options.DownTiles * downScale;
+                foreach (Vector3Int referenceCell in playerOccupiedCellsForMask)
+                {
+                    int edgeDownA = DotXZ(new Vector3Int(key.CellA.x - referenceCell.x, 0, key.CellA.z - referenceCell.z), options.DownAxis);
+                    int edgeDownB = DotXZ(new Vector3Int(key.CellB.x - referenceCell.x, 0, key.CellB.z - referenceCell.z), options.DownAxis);
+                    if (edgeDownA >= minDown && edgeDownA <= maxDown && edgeDownB >= minDown && edgeDownB <= maxDown)
+                        return true;
+                }
+
+                return false;
+            }
+
+            int downA = DotXZ(new Vector3Int(key.CellA.x - playerCellPos.x, 0, key.CellA.z - playerCellPos.z), options.DownAxis);
+            int downB = DotXZ(new Vector3Int(key.CellB.x - playerCellPos.x, 0, key.CellB.z - playerCellPos.z), options.DownAxis);
+            int minDownSingle = options.MinStartDepthTiles * downScale;
+            int maxDownSingle = options.DownTiles * downScale;
+            return downA >= minDownSingle && downA <= maxDownSingle && downB >= minDownSingle && downB <= maxDownSingle;
+        }
+
+        static bool IsCellInBottomVisibilityMask(
+            Vector3Int cellPos,
+            Vector3Int playerCellPos,
+            OcclusionMaskOptions options,
+            int downScale,
+            IReadOnlyCollection<Vector3Int> playerOccupiedCellsForMask)
+        {
+            if (playerOccupiedCellsForMask != null && playerOccupiedCellsForMask.Count > 0)
+            {
+                int minDown = options.MinStartDepthTiles * downScale;
+                int maxDown = options.DownTiles * downScale;
+                foreach (Vector3Int referenceCell in playerOccupiedCellsForMask)
+                {
+                    int down = DotXZ(
+                        new Vector3Int(cellPos.x - referenceCell.x, 0, cellPos.z - referenceCell.z),
+                        options.DownAxis);
+                    if (down >= minDown && down <= maxDown)
+                        return true;
+                }
+
+                return false;
+            }
+
+            int downSingle = DotXZ(
+                new Vector3Int(cellPos.x - playerCellPos.x, 0, cellPos.z - playerCellPos.z),
                 options.DownAxis);
-            return down >= minDown && down <= maxDown;
+            int minDownSingle = options.MinStartDepthTiles * downScale;
+            int maxDownSingle = options.DownTiles * downScale;
+            return downSingle >= minDownSingle && downSingle <= maxDownSingle;
         }
 
         private static List<TileData> UnionByTileId(List<TileData> baseOccluding, List<TileData> extraOccluding)
@@ -428,31 +491,51 @@ namespace IsoTilemap
             Vector3Int playerCellPos,
             OcclusionMaskOptions options,
             int downScale,
-            int rightScale)
+            int rightScale,
+            IReadOnlyCollection<Vector3Int> playerOccupiedCellsForMask)
         {
             if (TileIdentityUtil.IsVerticalFace(tile.identity))
             {
                 WallEdgeKey key = WallEdgeKey.FromWallTileIdentity(tile.identity);
-                if (!IsEdgeFaceInBottomHemisphere(key, playerCellPos, options.DownAxis))
+                if (!IsEdgeFaceInBottomHemisphere(key, playerCellPos, options.DownAxis, playerOccupiedCellsForMask))
                     return false;
-                // 상단 누수 방지를 위해 EdgeWall은 양 끝 셀이 모두 마스크 안일 때만 포함.
-                return IsCellInsideMask(key.CellA, playerCellPos, options, downScale, rightScale) &&
-                       IsCellInsideMask(key.CellB, playerCellPos, options, downScale, rightScale);
+                return IsCellInsideMask(key.CellA, playerCellPos, options, downScale, rightScale, playerOccupiedCellsForMask) &&
+                       IsCellInsideMask(key.CellB, playerCellPos, options, downScale, rightScale, playerOccupiedCellsForMask);
             }
 
-            return IsCellInsideMask(tile.identity.GridPos, playerCellPos, options, downScale, rightScale);
+            return IsCellInsideMask(tile.identity.GridPos, playerCellPos, options, downScale, rightScale, playerOccupiedCellsForMask);
         }
 
         private static bool IsEdgeFaceInBottomHemisphere(
             WallEdgeKey key,
             Vector3Int playerCellPos,
+            Vector3Int downAxis,
+            IReadOnlyCollection<Vector3Int> playerOccupiedCellsForMask)
+        {
+            if (playerOccupiedCellsForMask != null && playerOccupiedCellsForMask.Count > 0)
+            {
+                foreach (Vector3Int referenceCell in playerOccupiedCellsForMask)
+                {
+                    if (IsEdgeFaceInBottomHemisphereForReference(key, referenceCell, downAxis))
+                        return true;
+                }
+
+                return false;
+            }
+
+            return IsEdgeFaceInBottomHemisphereForReference(key, playerCellPos, downAxis);
+        }
+
+        static bool IsEdgeFaceInBottomHemisphereForReference(
+            WallEdgeKey key,
+            Vector3Int referenceCell,
             Vector3Int downAxis)
         {
             // 2배 스케일 중심 좌표(정수)로 비교해서 부동소수 오차를 피한다.
             int centerX2 = key.CellA.x + key.CellB.x;
             int centerZ2 = key.CellA.z + key.CellB.z;
-            int playerX2 = playerCellPos.x * 2;
-            int playerZ2 = playerCellPos.z * 2;
+            int playerX2 = referenceCell.x * 2;
+            int playerZ2 = referenceCell.z * 2;
 
             if (key.Face == WallFace.PosX)
             {
@@ -471,9 +554,31 @@ namespace IsoTilemap
             Vector3Int playerCellPos,
             OcclusionMaskOptions options,
             int downScale,
+            int rightScale,
+            IReadOnlyCollection<Vector3Int> playerOccupiedCellsForMask)
+        {
+            if (playerOccupiedCellsForMask != null && playerOccupiedCellsForMask.Count > 0)
+            {
+                foreach (Vector3Int referenceCell in playerOccupiedCellsForMask)
+                {
+                    if (IsCellInsideMaskForReference(cellPos, referenceCell, options, downScale, rightScale))
+                        return true;
+                }
+
+                return false;
+            }
+
+            return IsCellInsideMaskForReference(cellPos, playerCellPos, options, downScale, rightScale);
+        }
+
+        static bool IsCellInsideMaskForReference(
+            Vector3Int cellPos,
+            Vector3Int referenceCell,
+            OcclusionMaskOptions options,
+            int downScale,
             int rightScale)
-        { 
-            Vector3Int delta = new Vector3Int(cellPos.x - playerCellPos.x, 0, cellPos.z - playerCellPos.z);
+        {
+            Vector3Int delta = new Vector3Int(cellPos.x - referenceCell.x, 0, cellPos.z - referenceCell.z);
             int downProjection = DotXZ(delta, options.DownAxis);
             int rightProjection = DotXZ(delta, options.RightAxis);
 

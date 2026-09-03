@@ -25,6 +25,19 @@ Unity 비의존 순수 구조체. 시스템 전체에서 공유.
 | **막힘** | `BlocksOccupiedCells` / `BlocksEdge` 등 `collisionFlags` |
 | Floor `GridPos` | 저장 앵커 = `CellBelow`. 게임플레이·가시성 좌표는 점유 인덱스 셀 |
 
+### 캐릭터 grid footprint
+
+| 개념 | API / SSOT | 설명 |
+|------|------------|------|
+| Footprint | `CharacterDefinition.GridFootprint` → `CharacterFootprintHost` | X/Z = 바닥 점유, Y = 수직 높이. 기본 `(1,2,1)` |
+| 발밑 셀 | `CharacterState.GridPos` | `CharacterFeetPose` + `MapCollisionGrid` — 몸 pivot `BodyWorldPoint`와 분리 |
+| Anchor | `CharacterOccupiedCellUtil.TryGetAnchorFromFeet` | `feetCell − ((sx−1)/2, 0, (sz−1)/2)` |
+| 점유 볼륨 | `CharacterOccupiedCellUtil.AppendOccupiedCells` | 타일과 동일하게 `TileIdentityUtil.AppendOccupiedCellBox` |
+| 수직 band | `CharacterOccupiedCellUtil.GetVerticalBand` | anchor.y … anchor.y + sy − 1 |
+| 포함 검사 | `CharacterOccupiedCellUtil.Contains` | footprint AABB 내 셀 여부 |
+
+플레이어·NPC **층/근접** 쿼리는 발밑 셀(`GridPos`) 또는 `OccupiedCellCoord.ResolveFromWorld`를 쓴다. 시선 샘플·차단에는 발밑 해석(`ResolveFromWorld`)을 쓰지 않는다 (기존 표 유지).
+
 ### mapBounds (JSON · 액체 OutOfMap SSOT)
 
 저장 시 `MapBoundsBake`가 전 레이어 footprint union → `MapSaveJsonDto.hasMapBounds` + `mapBoundsMinX/MaxX/MinZ/MaxZ/MinY`.
@@ -41,6 +54,7 @@ Unity 비의존 순수 구조체. 시스템 전체에서 공유.
 | 용도 | API | 설명 |
 |------|-----|------|
 | **플레이어가 몇 층 바닥 위?** | `OccupiedCellCoord.ResolveFromWorld` | seed `(x,y0,z)`에서 **`y--` 하향**, `CellHasOccupancy` + `CellHasFloor` + 발 높이 이하 **첫 바닥** |
+| **캐릭터 점유 볼륨** | `CharacterState.AppendOccupiedCells` / `CharacterOccupiedCellUtil` | 발밑 `GridPos` + `GridFootprint` anchor box. 기본 `(1,2,1)`. pivot `BodyWorldPoint`로 점유 셀을 구하지 않음 |
 | **시선 샘플·건물 차단·근접 블렌드** | `OccupiedCellCoord.TryResolveSightOccupiedCell` / `GridAtSightSampleHeight` | 차단: `ConvertWorldToGrid` + `CellHasOccupancy`. 블렌드 슬라이스: 높이만 그리드화 |
 | **identity → 대표 점유셀** | `OccupiedCellCoord.PrimaryCellFromIdentity` | hub 불필요 |
 

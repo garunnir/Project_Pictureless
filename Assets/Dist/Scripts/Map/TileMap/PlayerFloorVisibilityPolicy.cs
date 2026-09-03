@@ -166,6 +166,8 @@ namespace IsoTilemap
         SightLineBuildingDebugSnapshot _lastProximityBlockingDebug = SightLineBuildingDebugSnapshot.Empty;
 
         Vector3Int _cachedPlayerOccupiedCell;
+        Vector3Int _cachedPlayerFeetCell;
+        Vector3Int _cachedPlayerFootprint = DefaultPlayerFootprint;
         bool _cachedHideEnabled;
         bool _hasStableIdentity;
         bool _cachedIsOutdoor;
@@ -244,15 +246,42 @@ namespace IsoTilemap
             OccupiedCellCoord.ResolveFromWorld(
                 _hub, playerWorld, _cellSize, playerHeightWorldY, _cellEpsilonWorld, _minCellY);
 
+        public void AppendPlayerOccupiedCells(
+            Vector3Int feetCell,
+            Vector3Int footprint,
+            ICollection<Vector3Int> cells) =>
+            AppendPlayerFootprintOccupiedCells(feetCell, footprint, cells);
+
+        public (int minY, int maxY) GetPlayerFootprintVerticalBand(Vector3Int feetCell, Vector3Int footprint) =>
+            GetPlayerFootprintVerticalBandInternal(feetCell, footprint);
+
+        public bool IsPlayerOccupiedCell(Vector3Int cell, Vector3Int feetCell, Vector3Int footprint) =>
+            PlayerFootprintContains(feetCell, footprint, cell);
+
         public FloorVisibilityContext ResolveContext(
             float playerHeightWorldY,
-            Vector3 playerWorld)
+            Vector3 playerWorld) =>
+            ResolveContext(
+                playerHeightWorldY,
+                playerWorld,
+                ResolvePlayerOccupiedCell(playerHeightWorldY, playerWorld),
+                DefaultPlayerFootprint);
+
+        public FloorVisibilityContext ResolveContext(
+            float playerHeightWorldY,
+            Vector3 playerWorld,
+            Vector3Int feetCell,
+            Vector3Int footprint)
         {
-            Vector3Int playerOccupiedCell = ResolvePlayerOccupiedCell(playerHeightWorldY, playerWorld);
-            int playerFloorCellY = playerOccupiedCell.y;
+            footprint = ClampPlayerFootprint(footprint);
+            Vector3Int playerOccupiedCell = feetCell;
+            int playerFloorCellY = feetCell.y;
+            GetPlayerFootprintVerticalBand(feetCell, footprint, out int footprintMinY, out int footprintMaxY);
 
             bool reuseIdentity = _hasStableIdentity &&
                 playerOccupiedCell == _cachedPlayerOccupiedCell &&
+                feetCell == _cachedPlayerFeetCell &&
+                footprint == _cachedPlayerFootprint &&
                 OutdoorSightLineBuildingHideEnabled == _cachedHideEnabled;
 
             bool isOutdoor;
@@ -283,6 +312,8 @@ namespace IsoTilemap
                 ResolvePlayerSpace(
                     playerOccupiedCell,
                     playerFloorCellY,
+                    footprintMinY,
+                    footprintMaxY,
                     out playerSpaceId,
                     out playerSpaceMinY,
                     out playerSpaceMaxY,
@@ -301,6 +332,8 @@ namespace IsoTilemap
                 _cachedPlayerSpaceFloorCells = playerSpaceFloorCells ?? EmptySpaceFloorCells;
                 CopyVisibleBelow(visibleBelow, _cachedVisibleBelow);
                 _cachedPlayerOccupiedCell = playerOccupiedCell;
+                _cachedPlayerFeetCell = feetCell;
+                _cachedPlayerFootprint = footprint;
                 _cachedHideEnabled = OutdoorSightLineBuildingHideEnabled;
                 _hasStableIdentity = true;
             }
@@ -323,6 +356,8 @@ namespace IsoTilemap
         void ResolvePlayerSpace(
             Vector3Int playerOccupiedCell,
             int playerFloorCellY,
+            int footprintMinY,
+            int footprintMaxY,
             out int playerSpaceId,
             out int playerSpaceMinY,
             out int playerSpaceMaxY,
@@ -337,15 +372,76 @@ namespace IsoTilemap
                 !_hub.Spaces.TryGetSpace(spaceId, out SpaceBakeResult space) ||
                 !space.HasFloorBounds)
             {
+                playerSpaceMinY = Mathf.Min(playerSpaceMinY, footprintMinY);
+                playerSpaceMaxY = Mathf.Max(playerSpaceMaxY, footprintMaxY);
                 return;
             }
 
             playerSpaceId = spaceId;
-            playerSpaceMinY = space.MinFloorY;
-            playerSpaceMaxY = space.MaxFloorY;
+            playerSpaceMinY = Mathf.Min(space.MinFloorY, footprintMinY);
+            playerSpaceMaxY = Mathf.Max(space.MaxFloorY, footprintMaxY);
 
             IReadOnlyCollection<Vector3Int> cells = _hub.Spaces.Registry.GetFloorCells(spaceId);
             playerSpaceFloorCells = cells as HashSet<Vector3Int> ?? new HashSet<Vector3Int>(cells);
+        }
+
+        static void GetPlayerFootprintVerticalBand(
+            Vector3Int feetCell,
+            Vector3Int footprint,
+            out int minY,
+            out int maxY) =>
+            (minY, maxY) = GetPlayerFootprintVerticalBandInternal(feetCell, footprint);
+
+        static readonly Vector3Int DefaultPlayerFootprint = new Vector3Int(1, 2, 1);
+
+        static Vector3Int ClampPlayerFootprint(Vector3Int footprint) =>
+            new Vector3Int(
+                Mathf.Max(1, footprint.x),
+                Mathf.Max(1, footprint.y),
+                Mathf.Max(1, footprint.z));
+
+        static bool TryGetPlayerFootprintAnchor(
+            Vector3Int feetCell,
+            Vector3Int footprint,
+            out Vector3Int anchor)
+        {
+            footprint = ClampPlayerFootprint(footprint);
+            anchor = new Vector3Int(
+                feetCell.x - (footprint.x - 1) / 2,
+                feetCell.y,
+                feetCell.z - (footprint.z - 1) / 2);
+            return true;
+        }
+
+        static void AppendPlayerFootprintOccupiedCells(
+            Vector3Int feetCell,
+            Vector3Int footprint,
+            ICollection<Vector3Int> cells)
+        {
+            if (cells == null || !TryGetPlayerFootprintAnchor(feetCell, footprint, out Vector3Int anchor))
+                return;
+
+            TileIdentityUtil.AppendOccupiedCellBox(anchor, ClampPlayerFootprint(footprint), cells);
+        }
+
+        static (int minY, int maxY) GetPlayerFootprintVerticalBandInternal(
+            Vector3Int feetCell,
+            Vector3Int footprint)
+        {
+            footprint = ClampPlayerFootprint(footprint);
+            TryGetPlayerFootprintAnchor(feetCell, footprint, out Vector3Int anchor);
+            return (anchor.y, anchor.y + footprint.y - 1);
+        }
+
+        static bool PlayerFootprintContains(Vector3Int feetCell, Vector3Int footprint, Vector3Int cell)
+        {
+            footprint = ClampPlayerFootprint(footprint);
+            if (!TryGetPlayerFootprintAnchor(feetCell, footprint, out Vector3Int anchor))
+                return false;
+
+            return cell.x >= anchor.x && cell.x < anchor.x + footprint.x
+                && cell.y >= anchor.y && cell.y < anchor.y + footprint.y
+                && cell.z >= anchor.z && cell.z < anchor.z + footprint.z;
         }
 
         static void CopyVisibleBelow(

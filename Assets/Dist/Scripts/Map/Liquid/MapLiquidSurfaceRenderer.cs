@@ -528,10 +528,15 @@ namespace IsoTilemap
 
                 bool visible = _renderChunks.Contains(kv.Key) && kv.Value.HasGeometry;
 
-                kv.Value.SyncView(material, visible);
+                IsoDepthSortKey sortKey = _waterChunks.TryGetValue(kv.Key, out ChunkYRange range)
+                    ? IsoDepthSortKey.FromLiquidChunkCorner(kv.Key, _chunkSize, range.MinY)
+                    : default;
+
+                kv.Value.SyncView(material, visible, sortKey);
 
             }
 
+            IsoVisibleDepthSortRegistry.MarkDirty();
         }
 
 
@@ -904,9 +909,11 @@ namespace IsoTilemap
 
 
 
-            public void SyncView(Material material, bool visible)
+            public void SyncView(Material material, bool visible, IsoDepthSortKey sortKey)
 
             {
+
+                IsoVisibleDepthSortRegistry.UnregisterOwner(this);
 
                 _filter.sharedMesh = Mesh;
 
@@ -916,6 +923,10 @@ namespace IsoTilemap
 
                 _viewGo.SetActive(visible);
 
+                if (visible)
+
+                    IsoVisibleDepthSortRegistry.Register(_renderer, sortKey, this);
+
             }
 
 
@@ -923,6 +934,8 @@ namespace IsoTilemap
             public void Dispose()
 
             {
+
+                IsoVisibleDepthSortRegistry.UnregisterOwner(this);
 
                 DestroySafely(_viewGo);
 

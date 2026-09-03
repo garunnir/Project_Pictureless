@@ -32,6 +32,7 @@ namespace IsoTilemap
         private readonly List<OcclusionWallEntry> _occlusionWallEntries = new List<OcclusionWallEntry>();
         private readonly HashSet<Vector3Int> _changedCellsBuffer = new HashSet<Vector3Int>();
         private readonly List<TileData> _forEachRuntimeScratch = new List<TileData>();
+        private readonly List<Vector3Int> _playerOccupiedCellsBuffer = new List<Vector3Int>();
 
         private bool _hasLastOcclusionPlayerCell;
         private Vector3Int _lastOcclusionPlayerCell;
@@ -565,7 +566,8 @@ namespace IsoTilemap
             Vector3 playerWorld,
             int playerFloorCellY,
             OcclusionProximitySettings settings,
-            Func<TileData, bool> occlusionTileVisible)
+            Func<TileData, bool> occlusionTileVisible,
+            Vector3Int playerFootprint = default)
         {
             _occlusionTileVisible = occlusionTileVisible;
             float cs = Mathf.Max(1e-4f, settings.CellSize);
@@ -607,7 +609,7 @@ namespace IsoTilemap
 
             if (needRebuild)
             {
-                RebuildOcclusionMembership(playerCell, playerWorld, playerFloorCellY, settings);
+                RebuildOcclusionMembership(playerCell, playerWorld, playerFloorCellY, settings, playerFootprint);
                 _hasLastOcclusionPlayerCell = true;
                 _lastOcclusionPlayerCell = playerCell;
             }
@@ -758,7 +760,8 @@ namespace IsoTilemap
             Vector3Int playerCellPos,
             Vector3 playerWorld,
             int playerFloorCellY,
-            OcclusionProximitySettings settings)
+            OcclusionProximitySettings settings,
+            Vector3Int playerFootprint)
         {
             float cs = Mathf.Max(1e-4f, settings.CellSize);
             HashSet<(int x, int z)> roomVisited = null;
@@ -770,7 +773,19 @@ namespace IsoTilemap
 
             _occlusionFinder ??= new WallOcclusionFinder(tiles, _faceBinder.WallFaceIndex, _mapCacheHub?.Topology, this);
             _occlusionFinder.MaskOptions = _occlusionFinder.MaskOptions.WithEnabled(settings.PlayerProximityMaskEnabled);
-            OcclusionSelection batch = _occlusionFinder.FindOcclusion(playerCellPos, roomVisited);
+
+            _playerOccupiedCellsBuffer.Clear();
+            CharacterOccupiedCellUtil.AppendOccupiedCells(
+                playerCellPos,
+                playerFootprint == Vector3Int.zero
+                    ? CharacterGridFootprintDefaults.Default
+                    : playerFootprint,
+                _playerOccupiedCellsBuffer);
+
+            OcclusionSelection batch = _occlusionFinder.FindOcclusion(
+                playerCellPos,
+                roomVisited,
+                _playerOccupiedCellsBuffer);
             var currentHiddenIds = new HashSet<Guid>();
             _occlusionDeltaApply.Clear();
             _occlusionDeltaClear.Clear();

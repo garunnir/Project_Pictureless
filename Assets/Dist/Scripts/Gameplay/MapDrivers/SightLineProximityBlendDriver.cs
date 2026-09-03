@@ -94,8 +94,11 @@ public sealed class SightLineProximityBlendDriver : MonoBehaviour, IProximityBle
         Vector3 cameraWorld = cam.transform.position;
 
         float playerHeight = playerWorld.y;
-        FloorVisibilityContext ctx = _policy.ResolveContext(playerHeight, playerWorld);
-        Vector3Int playerCell = _policy.ResolvePlayerOccupiedCell(playerHeight, playerWorld);
+        Vector3Int feetCell = _playerState.GridPos;
+        Vector3Int footprint = _playerState.GridFootprint;
+
+        FloorVisibilityContext ctx = _policy.ResolveContext(playerHeight, playerWorld, feetCell, footprint);
+        Vector3Int playerCell = feetCell;
 
         TilePresentationEntryStore entries = _presentationApplier.Entries;
         entries.CopyScalarsForSource(
@@ -122,6 +125,13 @@ public sealed class SightLineProximityBlendDriver : MonoBehaviour, IProximityBle
             _policy.OutdoorSightLineBuildingHideEnabled,
             _blockingScratch,
             _blockingCellsScratch);
+        ExcludeFootprintOccupiedBlocking(
+            _policy,
+            in snapshot,
+            feetCell,
+            footprint,
+            _blockingScratch,
+            _blockingCellsScratch);
 
         SightLineBuildingDebugSnapshot debug = ProximityBuildingHideAddon.BuildDebugSnapshot(
             in snapshot,
@@ -142,6 +152,45 @@ public sealed class SightLineProximityBlendDriver : MonoBehaviour, IProximityBle
         SightLineBlendSettings s = _blendSettings;
         s.CellSize = _tileMapManager.WorldGrid.CellSize;
         _blendSettings = s;
+    }
+
+    static void ExcludeFootprintOccupiedBlocking(
+        PlayerFloorVisibilityPolicy policy,
+        in ProximityBlendEvaluationSnapshot snapshot,
+        Vector3Int feetCell,
+        Vector3Int footprint,
+        HashSet<int> blockingBuildingIds,
+        HashSet<Vector3Int> blockingCellsScratch)
+    {
+        IReadOnlyList<ProximityEvaluatedHit> hits = snapshot.EvaluatedHits;
+        if (hits == null || hits.Count == 0)
+            return;
+
+        var footprintOnlyBuildingIds = new HashSet<int>();
+        var outsideFootprintBuildingIds = new HashSet<int>();
+        for (int i = 0; i < hits.Count; i++)
+        {
+            ProximityEvaluatedHit hit = hits[i];
+            int buildingId = hit.Tile.identity.buildingId;
+            if (buildingId <= 0)
+                continue;
+
+            if (policy.IsPlayerOccupiedCell(hit.OccupiedCell, feetCell, footprint))
+                footprintOnlyBuildingIds.Add(buildingId);
+            else
+                outsideFootprintBuildingIds.Add(buildingId);
+        }
+
+        foreach (int buildingId in footprintOnlyBuildingIds)
+        {
+            if (!outsideFootprintBuildingIds.Contains(buildingId))
+                blockingBuildingIds.Remove(buildingId);
+        }
+
+        if (blockingCellsScratch == null || blockingCellsScratch.Count == 0)
+            return;
+
+        blockingCellsScratch.RemoveWhere(cell => policy.IsPlayerOccupiedCell(cell, feetCell, footprint));
     }
 
     void LateUpdate()

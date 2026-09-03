@@ -186,13 +186,20 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
 
 
 
+    private Vector3Int _lastFeetCell = new Vector3Int(int.MinValue, int.MinValue, int.MinValue);
+    private Vector3Int _lastFootprint = CharacterGridFootprintDefaults.Default;
+
     bool HasVisibilityContextChanged(Vector3 playerWorld)
 
     {
 
         if (_tileMapManager == null ||
 
-            !_tileMapManager.TryResolveFloorVisibilityContext(playerWorld, out FloorVisibilityContext ctx))
+            !_tileMapManager.TryResolveFloorVisibilityContext(
+                playerWorld,
+                _characterState.GridPos,
+                _characterState.GridFootprint,
+                out FloorVisibilityContext ctx))
 
         {
 
@@ -202,13 +209,15 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
 
 
 
+        Vector3Int feetCell = _characterState.GridPos;
+        Vector3Int footprint = _characterState.GridFootprint;
+
         bool changed = !_hasLastVisibilityCtx ||
-
                        ctx.IsPlayerOutdoor != _lastIsPlayerOutdoor ||
-
                        ctx.PlayerBuildingId != _lastPlayerBuildingId ||
-
-                       ctx.PlayerFloorCellY != _lastPlayerFloorCellY;
+                       ctx.PlayerFloorCellY != _lastPlayerFloorCellY ||
+                       feetCell != _lastFeetCell ||
+                       footprint != _lastFootprint;
 
 
 
@@ -219,6 +228,8 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
         _lastPlayerBuildingId = ctx.PlayerBuildingId;
 
         _lastPlayerFloorCellY = ctx.PlayerFloorCellY;
+        _lastFeetCell = feetCell;
+        _lastFootprint = footprint;
 
         return changed;
 
@@ -258,17 +269,11 @@ public class CharacterVisibilityBroadcaster : MonoBehaviour
 
 
 
-        int playerFloorCellY = _tileMapManager != null
-
-            ? _tileMapManager.ResolvePlayerFloorCellY(_characterState.BodyWorldPoint)
-
-            : TileHelper.ConvertWorldToGrid(_characterState.BodyWorldPoint, settings.CellSize).y;
-
-
-
         _tileMapManager?.UpdateWallOcclusionFromPlayer(
-
-            _lastOcclusionWorld, playerFloorCellY, settings);
+            _lastOcclusionWorld,
+            _characterState.GridPos,
+            settings,
+            _characterState.GridFootprint);
 
     }
 

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Garunnir.Runtime.Gameplay.Data;
+using IsoTilemap;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -141,6 +142,11 @@ public sealed class CharacterDefinition : ScriptableObject
     [LabelText("Prototype Seed")]
     [SerializeField] bool _prototypeSeed;
 
+    [FoldoutGroup("Body")]
+    [LabelText("Grid Footprint (cells)")]
+    [Tooltip("X/Z = 바닥 점유 폭·깊이, Y = 수직 점유 높이. 기본 (1,2,1) = 휴머노이드 1×2×1.")]
+    [SerializeField] Vector3Int _gridFootprint = CharacterGridFootprintDefaults.Default;
+
     [FoldoutGroup("Senses & Locomotion", Order = 40)]
     [LabelText("Spot Angle (°)")]
     [SerializeField, Range(CharacterVisionDefaults.SpotAngleMinDegrees, CharacterVisionDefaults.SpotAngleMaxDegrees)]
@@ -193,6 +199,7 @@ public sealed class CharacterDefinition : ScriptableObject
     public float SpotAngleDegrees => _spotAngleDegrees;
     public CharacterSenseBlock Senses => _senses;
     public float WalkSpeedMeters => _walkSpeedMeters;
+    public Vector3Int GridFootprint => CharacterGridFootprintDefaults.Clamp(_gridFootprint);
 
     public static float ResolveWalkSpeedMeters(
         CharacterDefinition definition,

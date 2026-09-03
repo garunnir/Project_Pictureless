@@ -66,7 +66,9 @@ public sealed class PlayerFloorVisibilityDriver : MonoBehaviour, IFloorVisibilit
         bodyWorld.y += _heightOffsetWorld;
 
         float playerHeight = bodyWorld.y;
-        FloorVisibilityContext ctx = _policy.ResolveContext(playerHeight, bodyWorld);
+        Vector3Int feetCell = _playerState.GridPos;
+        Vector3Int footprint = _playerState.GridFootprint;
+        FloorVisibilityContext ctx = _policy.ResolveContext(playerHeight, bodyWorld, feetCell, footprint);
 
         if (!_hasLastCtx || !ctx.Equals(_lastCtx))
         {

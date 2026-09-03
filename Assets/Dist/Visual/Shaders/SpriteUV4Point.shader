@@ -105,15 +105,15 @@ Shader "Custom/SpriteUV4Point"
                 UNITY_TRANSFER_INSTANCE_ID(IN, OUT);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
 
-                OUT.positionCS = TransformObjectToHClip(IN.positionOS.xyz);
-                OUT.positionWS = TransformObjectToWorld(IN.positionOS.xyz);
+                VertexPositionInputs positions = GetVertexPositionInputs(IN.positionOS.xyz);
+                OUT.positionWS = positions.positionWS;
+                OUT.positionCS = positions.positionCS;
                 OUT.normalWS = TransformObjectToWorldNormal(IN.normalOS);
                 OUT.uv = IN.uv;
                 OUT.color = IN.color * _Color * _RendererColor;
 
                 // URP/Lit과 동일한 방식으로 main light shadow 좌표 생성
                 // (TransformWorldToShadowCoord보다 GetShadowCoord 쪽이 variant/캐스케이드 처리와 더 잘 맞는 편)
-                VertexPositionInputs positions = GetVertexPositionInputs(IN.positionOS.xyz);
                 OUT.shadowCoord = GetShadowCoord(positions);
                 return OUT;
             }

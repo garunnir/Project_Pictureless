@@ -93,7 +93,7 @@ public sealed class CharacterSwimHost : MonoBehaviour
         ResolveCellSize();
         bool diveWanted = _diveHeld && (_motor == null || _motor.IsPossessed);
 
-        _last = MapSwimQuery.Resolve(feet, _cellSize, diveWanted);
+        _last = MapSwimQuery.Resolve(feet, _cellSize, diveWanted, _state.GridFootprint);
 
         bool wading = _last.Mode == MapSwimMode.Wade;
         bool swimming = _last.Mode == MapSwimMode.Swim;

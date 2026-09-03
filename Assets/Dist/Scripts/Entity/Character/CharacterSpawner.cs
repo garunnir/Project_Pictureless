@@ -17,6 +17,9 @@ public sealed class CharacterSpawner : MonoBehaviour
     [SerializeField] NpcManager _npcManager;
     [SerializeField, Min(0.0001f)] float _editorGizmoCellSize = 1f;
 
+    readonly List<Vector3Int> _footprintCellsScratch = new();
+    readonly List<TileData> _tileScratch = new();
+
     void OnValidate()
     {
         if (_entries == null)
@@ -55,6 +58,9 @@ public sealed class CharacterSpawner : MonoBehaviour
             }
 
             Vector3Int cell = entry.ResolveCell();
+            Vector3Int footprint = entry.definition.GridFootprint;
+            ValidateSpawnFootprint(i, cell, footprint);
+
             Vector3 world = worldGrid != null
                 ? worldGrid.CellToWorld(cell)
                 : TileHelper.ConvertGridToWorldPos(cell, _editorGizmoCellSize);
@@ -128,10 +134,61 @@ public sealed class CharacterSpawner : MonoBehaviour
                 continue;
 
             Vector3Int cell = entry.ResolveCell();
-            TileHelper.DrawOccupiedCellWire(
-                cell,
-                cellSize,
-                CharacterSpawnGizmoColors.ForRole(entry.role));
+            Vector3Int footprint = entry.definition != null
+                ? entry.definition.GridFootprint
+                : CharacterGridFootprintDefaults.Default;
+            DrawFootprintGizmo(cell, footprint, cellSize, CharacterSpawnGizmoColors.ForRole(entry.role));
+        }
+    }
+
+    void DrawFootprintGizmo(Vector3Int feetCell, Vector3Int footprint, float cellSize, Color color)
+    {
+        if (!CharacterOccupiedCellUtil.TryGetAnchorFromFeet(feetCell, footprint, out Vector3Int anchor))
+            return;
+
+        TileHelper.DrawOccupiedCellWire(anchor, cellSize, color, footprint);
+    }
+
+    void ValidateSpawnFootprint(int entryIndex, Vector3Int feetCell, Vector3Int footprint)
+    {
+        TileMapCacheHub hub = _tileMapManager != null ? _tileMapManager.MapCacheHub : null;
+        if (hub == null)
+            return;
+
+        _footprintCellsScratch.Clear();
+        CharacterOccupiedCellUtil.AppendOccupiedCells(feetCell, footprint, _footprintCellsScratch);
+
+        for (int i = 0; i < _footprintCellsScratch.Count; i++)
+        {
+            Vector3Int occupiedCell = _footprintCellsScratch[i];
+            _tileScratch.Clear();
+            if (!hub.TryCollectTilesAtOccupiedCell(occupiedCell, _tileScratch))
+                continue;
+
+            if (TileCollisionFlagsUtil.CellBlocksOccupied(_tileScratch))
+            {
+                Debug.LogError(
+                    $"[CharacterSpawner] Entry {entryIndex}: solid wall blocks footprint at {occupiedCell}.",
+                    this);
+            }
+        }
+
+        if (!CharacterOccupiedCellUtil.TryGetAnchorFromFeet(feetCell, footprint, out Vector3Int anchor))
+            return;
+
+        int sx = footprint.x;
+        int sz = footprint.z;
+        for (int x = anchor.x; x < anchor.x + sx; x++)
+        {
+            for (int z = anchor.z; z < anchor.z + sz; z++)
+            {
+                if (hub.CellHasFloor(x, feetCell.y, z))
+                    continue;
+
+                Debug.LogError(
+                    $"[CharacterSpawner] Entry {entryIndex}: missing floor under footprint at ({x},{feetCell.y},{z}).",
+                    this);
+            }
         }
     }
 

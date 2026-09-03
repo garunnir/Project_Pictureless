@@ -16,6 +16,8 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
     CharacterTraitsHost _traitsHost;
     CharacterAppearanceHost _appearanceHost;
     CharacterFactionHost _factionHost;
+    CharacterFootprintHost _footprintHost;
+    CharacterState _characterState;
     CharacterVision _vision;
     CharacterHearing _hearing;
     CharacterMotor _motor;
@@ -68,6 +70,17 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
                 this);
         }
 
+        if (_footprintHost != null)
+            _footprintHost.ApplyFromDefinition(definition);
+        else
+        {
+            Debug.LogError(
+                $"[CharacterDefinitionBinder] '{name}' needs CharacterFootprintHost on the prefab.",
+                this);
+        }
+
+        _characterState?.BindFootprint(_footprintHost);
+
         DefaultCharacterSkills skills = definition.CreateSkills();
         CharacterBody body = definition.CreateBody();
         DefaultCharacterTraits traits = definition.CreateTraits();
@@ -112,6 +125,8 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
         _traitsHost = CharacterBodyResolve.GetInBody<CharacterTraitsHost>(this);
         _appearanceHost ??= CharacterBodyResolve.GetInBody<CharacterAppearanceHost>(this);
         _factionHost ??= CharacterBodyResolve.GetInBody<CharacterFactionHost>(this);
+        _footprintHost ??= CharacterBodyResolve.GetInBody<CharacterFootprintHost>(this);
+        _characterState ??= CharacterBodyResolve.GetInBody<CharacterState>(this);
         _vision ??= CharacterBodyResolve.GetInBody<CharacterVision>(this);
         _hearing ??= CharacterBodyResolve.GetInBody<CharacterHearing>(this);
         _motor ??= CharacterBodyResolve.GetInBody<CharacterMotor>(this);
@@ -125,6 +140,12 @@ public sealed class CharacterDefinitionBinder : MonoBehaviour
         {
             Debug.LogError(
                 $"[CharacterDefinitionBinder] '{name}' needs CharacterFactionHost on the prefab.",
+                this);
+        }
+        if (_footprintHost == null)
+        {
+            Debug.LogError(
+                $"[CharacterDefinitionBinder] '{name}' needs CharacterFootprintHost on the prefab.",
                 this);
         }
         if (_hearing == null)

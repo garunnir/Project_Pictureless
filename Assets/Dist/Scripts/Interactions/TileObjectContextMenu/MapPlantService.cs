@@ -704,6 +704,13 @@ public static class MapPlantService
     static bool TryResolvePlayerCell(out Vector3Int cell)
     {
         cell = default;
+        PlayerGearHost gear = PlayerGearHost.Active;
+        if (gear != null && gear.TryGetComponent(out CharacterState state))
+        {
+            cell = state.GridPos;
+            return true;
+        }
+
         MapPlantHost host = MapPlantHost.Runtime;
         if (host == null || !TryResolvePlayerWorld(out Vector3 world))
             return false;

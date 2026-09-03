@@ -100,7 +100,7 @@ public sealed class CraftingEnvironmentProvider : MonoBehaviour, ICraftingEnviro
     void EnsureScan()
     {
         Vector3Int cell = _characterState != null
-            ? _characterState.ResolveCurrentGridCell()
+            ? _characterState.GridPos
             : Vector3Int.zero;
 
         if (!_dirty && cell == _lastScanCell)

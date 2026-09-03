@@ -57,6 +57,7 @@ namespace IsoTilemap
         readonly HashSet<Vector3Int> _cellsOnSegment = new();
         readonly HashSet<Vector3Int> _blockingCellsScratch = new();
         readonly HashSet<Vector3Int> _blockingEvaluatedCells = new();
+        readonly HashSet<Vector3Int> _playerExcludedCellsScratch = new();
 
         public BuildingPlayerOcclusionResolver(
             TileMapCacheHub hub,
@@ -85,7 +86,7 @@ namespace IsoTilemap
 
         public void ResolveBlockingBuildingIds(
             Vector3 playerWorld,
-            Vector3Int playerOccupiedCell,
+            IReadOnlyCollection<Vector3Int> playerOccupiedCells,
             HashSet<int> output,
             int excludeBuildingId = 0)
         {
@@ -99,18 +100,24 @@ namespace IsoTilemap
             }
 
             CollectBlockingOnSightSegment(
-                cameraWorld, playerWorld, playerOccupiedCell, output, excludeBuildingId);
+                cameraWorld, playerWorld, playerOccupiedCells, output, excludeBuildingId);
         }
 
         void CollectBlockingOnSightSegment(
             Vector3 cameraWorld,
             Vector3 playerWorld,
-            Vector3Int playerOccupiedCell,
+            IReadOnlyCollection<Vector3Int> playerOccupiedCells,
             HashSet<int> output,
             int excludeBuildingId)
         {
             _cellsOnSegment.Clear();
             _blockingEvaluatedCells.Clear();
+            _playerExcludedCellsScratch.Clear();
+            if (playerOccupiedCells != null)
+            {
+                foreach (Vector3Int cell in playerOccupiedCells)
+                    _playerExcludedCellsScratch.Add(cell);
+            }
 
             float span = Vector3.Distance(cameraWorld, playerWorld);
             int steps = Mathf.Max(1, Mathf.CeilToInt(span / (_cellSize * 0.5f)));
@@ -126,7 +133,7 @@ namespace IsoTilemap
                 if (!_blockingEvaluatedCells.Add(sampleCell))
                     continue;
 
-                if (sampleCell == playerOccupiedCell)
+                if (_playerExcludedCellsScratch.Contains(sampleCell))
                     continue;
 
                 if (!TryAddBlockingAtOccupiedSampleCell(sampleCell, output, excludeBuildingId))

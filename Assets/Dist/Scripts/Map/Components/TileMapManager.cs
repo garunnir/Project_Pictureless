@@ -117,6 +117,23 @@ public class TileMapManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>발밑 셀·footprint가 있을 때 <see cref="CharacterState"/>와 동일 계약으로 해석합니다.</summary>
+    public bool TryResolveFloorVisibilityContext(
+        Vector3 playerWorld,
+        Vector3Int feetCell,
+        Vector3Int footprint,
+        out FloorVisibilityContext ctx)
+    {
+        if (_floorPolicy == null)
+        {
+            ctx = default;
+            return false;
+        }
+
+        ctx = _floorPolicy.ResolveContext(playerWorld.y, playerWorld, feetCell, footprint);
+        return true;
+    }
+
     /// <summary>
     /// 월드 발밑 점유셀의 Floor(없으면 임의 타일)가 structural show인지.
     /// 타일 없으면 false. 정책 미초기화면 true(페이드는 거리·LOS만).
@@ -165,8 +182,9 @@ public class TileMapManager : MonoBehaviour
     /// </summary>
     public void UpdateWallOcclusionFromPlayer(
         Vector3 playerWorld,
-        int playerFloorCellY,
-        OcclusionProximitySettings settings)
+        Vector3Int feetCell,
+        OcclusionProximitySettings settings,
+        Vector3Int playerFootprint = default)
     {
         if (Model is not TileMapModel model)
             return;
@@ -174,11 +192,20 @@ public class TileMapManager : MonoBehaviour
         System.Func<TileData, bool> visible = null;
         if (_floorPolicy != null)
         {
-            FloorVisibilityContext ctx = _floorPolicy.ResolveContext(playerWorld.y, playerWorld);
+            Vector3Int footprint = playerFootprint != default
+                ? playerFootprint
+                : CharacterGridFootprintDefaults.Default;
+            FloorVisibilityContext ctx = _floorPolicy.ResolveContext(
+                playerWorld.y, playerWorld, feetCell, footprint);
             visible = tile => _floorPolicy.IsTileVisible(tile, in ctx);
         }
 
-        model.UpdateOcclusionFromPlayerWorld(playerWorld, playerFloorCellY, settings, visible);
+        model.UpdateOcclusionFromPlayerWorld(
+            playerWorld,
+            feetCell.y,
+            settings,
+            visible,
+            playerFootprint);
     }
 
     private bool UseChunkStreaming => _chunkStreamer != null;

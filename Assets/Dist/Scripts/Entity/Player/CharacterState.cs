@@ -1,10 +1,12 @@
 using IsoTilemap;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class CharacterState : MonoBehaviour
 {
     private IWorldGrid _worldGrid;
+    private CharacterFootprintHost _footprintHost;
 
     public Vector3 SightDir { get; private set; } = Vector3.zero;
     /// <summary>조준으로 정해진 상호작용 방향. 조준 해제 후에도 유지.</summary>
@@ -16,16 +18,17 @@ public class CharacterState : MonoBehaviour
     /// <summary>플레이어 몸의 월드 위치. 조준이 아닐 때 오클루전 등의 기준점.</summary>
     public Vector3 BodyWorldPoint { get; private set; } = Vector3.zero;
     public Vector3 MoveDir { get; private set; } = Vector3.zero;
+    /// <summary>발밑 그리드 셀 (<see cref="CharacterFeetPose"/> + <see cref="MapCollisionGrid"/>).</summary>
     public Vector3Int GridPos { get; private set; } = Vector3Int.zero;
 
-    /// <summary>현재 몸 위치 기준 그리드 셀. <see cref="GridPos"/>보다 최신 월드 좌표를 우선합니다.</summary>
+    /// <summary>현재 발밑 그리드 셀. <see cref="GridPos"/>와 동일 계약.</summary>
     public Vector3Int ResolveCurrentGridCell()
     {
         Vector3 world = BodyWorldPoint.sqrMagnitude > 1e-6f
             ? BodyWorldPoint
             : transform.position;
 
-        return ResolveGridCell(world);
+        return ResolveFeetGridCell(world);
     }
 
     public Vector3Int ResolveGridCell(Vector3 worldPos) =>
@@ -49,6 +52,18 @@ public class CharacterState : MonoBehaviour
 
     /// <summary><see cref="TileMapManager"/>가 맵 로드 후 바인딩합니다.</summary>
     public void BindWorldGrid(IWorldGrid worldGrid) => _worldGrid = worldGrid;
+
+    /// <summary><see cref="CharacterDefinitionBinder"/>가 footprint를 적용한 뒤 바인딩합니다.</summary>
+    public void BindFootprint(CharacterFootprintHost footprintHost) =>
+        _footprintHost = footprintHost;
+
+    public Vector3Int GridFootprint =>
+        _footprintHost != null
+            ? _footprintHost.GridFootprint
+            : CharacterGridFootprintDefaults.Default;
+
+    public void AppendOccupiedCells(ICollection<Vector3Int> cells) =>
+        CharacterOccupiedCellUtil.AppendOccupiedCells(GridPos, GridFootprint, cells);
 
     internal void SetMoveDir(Vector3 desiredMove)
     {
@@ -109,16 +124,14 @@ public class CharacterState : MonoBehaviour
     internal void SetSwimVerticalInput(float vertical01) =>
         SwimVerticalInput = Mathf.Clamp(vertical01, -1f, 1f);
 
-    /// <summary>저장 스냅샷 등 — 월드 좌표를 즉시 반영하고 그리드 셀을 갱신합니다.</summary>
+    /// <summary>저장 스냅샷 등 — 월드 좌표를 즉시 반영하고 발밑 그리드 셀을 갱신합니다.</summary>
     public void SnapWorldPosition(Vector3 worldPos) => UpdateGridPos(worldPos);
 
     internal void UpdateGridPos(Vector3 worldPos)
     {
         BodyWorldPoint = worldPos;
 
-        Vector3Int gridPos = _worldGrid != null
-            ? _worldGrid.WorldToCell(worldPos)
-            : TileHelper.ConvertWorldToGrid(worldPos, 1f);
+        Vector3Int gridPos = ResolveFeetGridCell(worldPos);
 
         if (GridPos != gridPos)
         {
@@ -129,5 +142,14 @@ public class CharacterState : MonoBehaviour
         }
 
         WorldPoseChanged?.Invoke(worldPos);
+    }
+
+    Vector3Int ResolveFeetGridCell(Vector3 bodyWorld)
+    {
+        float cellSize = _worldGrid != null ? _worldGrid.CellSize : 1f;
+        float feetOffset = CharacterFeetPose.GetFeetOffset(transform);
+        MapCollisionGrid.FeetCell feetCell =
+            MapCollisionGrid.ResolveFeetCell(bodyWorld, feetOffset, cellSize);
+        return MapCollisionGrid.ToGrid(feetCell);
     }
 }

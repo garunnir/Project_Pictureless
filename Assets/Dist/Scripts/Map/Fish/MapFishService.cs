@@ -204,15 +204,16 @@ namespace IsoTilemap
             return Mathf.Max(dx, dz) <= MapFishConsts.CastActionRangeCells;
         }
 
+        /// <summary>발밑 점유셀. Dist.Map.Fish는 Assembly-CSharp 타입을 참조하지 않으며 <see cref="MapFishRuntimeHooks.TryResolveActorCell"/>에 위임합니다.</summary>
+        public static bool TryResolvePlayerCell(out Vector3Int cell) =>
+            TryResolveActorCell(out cell);
+
         public static bool TryResolveActorCell(out Vector3Int cell)
         {
-            if (_hooks.TryResolveActorCell == null)
-            {
-                cell = default;
-                return false;
-            }
+            if (_hooks.TryResolveActorCell != null && _hooks.TryResolveActorCell(out cell))
+                return true;
 
-            return _hooks.TryResolveActorCell(out cell);
+            return TryResolvePlayerCell(out cell);
         }
 
         static bool TryResolveAdjacentFishableCell(out Vector3Int cell)

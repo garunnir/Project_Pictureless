@@ -135,7 +135,7 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         if (_characterState == null)
             return;
 
-        Refresh(_characterState.ResolveCurrentGridCell());
+        Refresh(_characterState.GridPos);
     }
 
     void OnDestroy()
@@ -356,12 +356,22 @@ public sealed class NearbyContainerDetector : MonoBehaviour
         }
     }
 
+    int ResolveVerticalToleranceCells()
+    {
+        if (_characterState == null)
+            return Mathf.Max(0, _verticalToleranceCells);
+
+        int footprintBand = Mathf.Max(0, _characterState.GridFootprint.y - 1);
+        return Mathf.Max(_verticalToleranceCells, footprintBand);
+    }
+
     void EnumerateCellsInRange(Vector3Int center, List<Vector3Int> buffer)
     {
         buffer.Clear();
 
-        int yMin = _sameFloorOnly ? center.y : center.y - Mathf.Max(0, _verticalToleranceCells);
-        int yMax = _sameFloorOnly ? center.y : center.y + Mathf.Max(0, _verticalToleranceCells);
+        int verticalTolerance = ResolveVerticalToleranceCells();
+        int yMin = _sameFloorOnly ? center.y : center.y - verticalTolerance;
+        int yMax = _sameFloorOnly ? center.y : center.y + verticalTolerance;
 
         for (int y = yMin; y <= yMax; y++)
         {
@@ -388,7 +398,7 @@ public sealed class NearbyContainerDetector : MonoBehaviour
             return target.y == center.y;
 
         int yDiff = Mathf.Abs(target.y - center.y);
-        return yDiff <= Mathf.Max(0, _verticalToleranceCells);
+        return yDiff <= ResolveVerticalToleranceCells();
     }
 
     void LogScan(

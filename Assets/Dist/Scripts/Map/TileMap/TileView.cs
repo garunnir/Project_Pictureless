@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
@@ -73,6 +74,8 @@ namespace IsoTilemap
         private const float BlockedTraceOcclusionThreshold = 0.5f;
         private const float AdditionalLightFadeStart = 0.25f;
         private const float AdditionalLightFadeEnd = 0.7f;
+
+        readonly List<Renderer> _sortRendererScratch = new();
 
         private void Awake()
         {
@@ -160,8 +163,68 @@ namespace IsoTilemap
             _shadeController ??= GetComponentInChildren<ShadeObjectController>();
             Renderer renderer = _shadeController?.CachedRenderer;
             if (renderer != null)
-            {
                 _defaultShadowCastingMode = renderer.shadowCastingMode;
+
+            RefreshIsoDepthSortRegistration();
+        }
+
+        void OnEnable()
+        {
+            if (Application.isPlaying)
+                RefreshIsoDepthSortRegistration();
+        }
+
+        void OnDisable()
+        {
+            if (Application.isPlaying)
+                IsoVisibleDepthSortRegistry.UnregisterOwner(this);
+        }
+
+        void RefreshIsoDepthSortRegistration()
+        {
+            if (!Application.isPlaying)
+                return;
+
+            IsoVisibleDepthSortRegistry.UnregisterOwner(this);
+
+            if (!ShouldParticipateInIsoDepthSort())
+                return;
+
+            IsoDepthSortKey key = IsoDepthSortKey.FromGridCell(gridPos);
+            CollectSortRenderers(_sortRendererScratch);
+            for (int i = 0; i < _sortRendererScratch.Count; i++)
+                IsoVisibleDepthSortRegistry.Register(_sortRendererScratch[i], key, this);
+        }
+
+        bool ShouldParticipateInIsoDepthSort()
+        {
+            if (!gameObject.activeInHierarchy)
+                return false;
+
+            if (_structuralVisibilityHidden &&
+                _structuralHideMode == StructuralHidePresentationMode.DisableGameObject)
+                return false;
+
+            return true;
+        }
+
+        void CollectSortRenderers(List<Renderer> into)
+        {
+            into.Clear();
+            Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+            Transform blockedTraceRoot = _blockedTraceObject != null ? _blockedTraceObject.transform : null;
+
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer renderer = renderers[i];
+                if (renderer == null)
+                    continue;
+
+                if (blockedTraceRoot != null &&
+                    (renderer.transform == blockedTraceRoot || renderer.transform.IsChildOf(blockedTraceRoot)))
+                    continue;
+
+                into.Add(renderer);
             }
         }
         internal void UpdateTile(TileData tileData, float cellSize)
@@ -177,6 +240,7 @@ namespace IsoTilemap
                 wallFace = (byte)Mathf.Clamp(tileData.identity.wallFace, 0, 1);
 
             TileCollisionPolicy.Apply(this, tileData.identity.collisionFlags);
+            RefreshIsoDepthSortRegistration();
         }
 
         /// <summary>화면에 그릴 캐릭터 오클루전 display(0~1). target 보간은 Applier가 담당합니다.</summary>
@@ -217,6 +281,7 @@ namespace IsoTilemap
             SetGhosted(resolved.Ghosted);
             SetSelected(resolved.Selected);
             SetCharacterOcclusion(resolved.CharacterOcclusion);
+            RefreshIsoDepthSortRegistration();
         }
 
         /// <summary>야외 시선 차단 building MinCellY Floor 어둡게 표시.</summary>
@@ -242,6 +307,7 @@ namespace IsoTilemap
                 {
                     SetBlockedTraceVisible(false);
                     gameObject.SetActive(false);
+                    RefreshIsoDepthSortRegistration();
                     return;
                 }
 
@@ -249,6 +315,7 @@ namespace IsoTilemap
                 _characterOcclusion = 0f;
                 ForceApplyBaseState(TileBaseVisualState.Visible);
                 ApplySightLineBuildingOverlay();
+                RefreshIsoDepthSortRegistration();
                 return;
             }
 
@@ -258,12 +325,14 @@ namespace IsoTilemap
                 if (renderer != null)
                     renderer.enabled = false;
                 SetBlockedTraceVisible(false);
+                RefreshIsoDepthSortRegistration();
                 return;
             }
 
             _characterOcclusion = 0f;
             ForceApplyBaseState(TileBaseVisualState.Visible);
             ApplySightLineBuildingOverlay();
+            RefreshIsoDepthSortRegistration();
         }
 
         private void RefreshBaseVisualState()
@@ -362,6 +431,7 @@ namespace IsoTilemap
             _currentBaseState = next;
             _baseStateInitialized = true;
             ApplySightLineBuildingOverlay();
+            RefreshIsoDepthSortRegistration();
         }
 
         private void ApplySightLineBuildingOverlay() =>

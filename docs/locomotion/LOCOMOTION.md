@@ -34,6 +34,8 @@ flowchart LR
 - `KinematicMover`: 플레이어 속도/관성 또는 NPC 등속 desired delta 산출
 - `CharacterLocomotion`: CapsuleCast, slide, topology clamp, logical floor,
   depenetration, Rigidbody 이동, `CharacterState` 위치 갱신
+- `CharacterState.GridPos`: **발밑 셀** (`CharacterFeetPose` + `MapCollisionGrid`). `BodyWorldPoint`는 몸 pivot 월드 좌표 그대로. `GridPosChanged`는 발밑 셀이 바뀔 때만.
+- `CharacterFootprintHost` / `CharacterDefinition.GridFootprint`: 그리드 점유 볼륨 SSOT (기본 `(1,2,1)`). `CharacterOccupiedCellUtil`이 anchor·점유 셀·수직 band를 계산한다.
 - `MapGameplayBootstrap`: 활성/비활성 `CharacterMotor`에 맵 충돌 서비스를 바인딩
 
 `ICharacterLocomotion`은 `CharacterMotor` 파사드의
@@ -52,13 +54,26 @@ flowchart LR
 - 맵 topology 수평 clamp
 - logical floor와 낙하
 - blocked cell depenetration
-- `CharacterState` 그리드/월드 위치 갱신
+- `CharacterState` 그리드/월드 위치 갱신 (`GridPos` = 발밑 셀, `BodyWorldPoint` = 몸 pivot)
+- Grid footprint 점유 (`CharacterOccupiedCellUtil`, `CharacterFootprintHost`, 기본 `(1,2,1)` — pivot으로 점유 셀을 구하지 않음)
 - 기존 이동 디버그 콜백과 gizmo 조회값
 - `TimeScaleChannel.Player`
 
 패리티가 깨지면 `PlayerMovement` 내부 이동 경로로 되돌리고 공용 경로를
 기본 경로로 켜지 않는다. 공통 이주 절차는
 [`migration-parity.md`](../../../../../.claude/checklists/migration-parity.md)를 따른다.
+
+### Grid footprint · 발밑 셀
+
+| 개념 | SSOT | 계약 |
+|------|------|------|
+| Footprint `(sx,sy,sz)` | `CharacterDefinition.GridFootprint` → `CharacterFootprintHost` | 축 최소 1. 기본 `(1,2,1)` = 휴머노이드 1×2×1 |
+| 발밑 셀 | `CharacterState.GridPos` | `MapCollisionGrid.ResolveFeetCell(body, feetOffset, cellSize)` |
+| Anchor | `CharacterOccupiedCellUtil.TryGetAnchorFromFeet` | `feetCell − ((sx−1)/2, 0, (sz−1)/2)` |
+| 점유 셀 나열 | `CharacterOccupiedCellUtil.AppendOccupiedCells` | `TileIdentityUtil.AppendOccupiedCellBox(anchor, footprint, …)` |
+| 몸 월드 좌표 | `CharacterState.BodyWorldPoint` | pivot/transform — 발밑 셀과 혼용 금지 |
+
+`CharacterState.AppendOccupiedCells`는 현재 `GridPos`(발밑)와 바인딩된 footprint로 위 API를 호출한다. 시선·차단·플레이어 층 해석 규약은 [`DATA.md`](../map/DATA.md)를 따른다.
 
 ### Gear / body 이동 배율 (교차)
 

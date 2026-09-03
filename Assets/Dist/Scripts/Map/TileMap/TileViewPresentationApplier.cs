@@ -117,6 +117,7 @@ namespace IsoTilemap
 
             _lastSyncedCtx = ctx;
             _hasLastSyncedCtx = true;
+            IsoVisibleDepthSortRegistry.MarkDirty();
         }
 
         /// <summary>

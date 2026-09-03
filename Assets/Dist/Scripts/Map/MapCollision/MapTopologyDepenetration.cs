@@ -6,7 +6,7 @@ using UnityEngine;
 namespace IsoTilemap
 {
     /// <summary>
-    /// 발 그리드가 벽 셀(<see cref="IMapTopologyQuery.CellHasSolidWall"/>)일 때 이동과 무관하게 탈출 push를 적용합니다.
+    /// footprint 볼륨이 벽 셀(<see cref="IMapTopologyQuery.CellHasSolidWall"/>)에 침범하면 이동과 무관하게 탈출 push를 적용합니다.
     /// non-wall → wall 진입 순간의 그리드 델타 반대 방향을 캐시합니다.
     /// </summary>
     public sealed class MapTopologyDepenetration
@@ -62,11 +62,14 @@ namespace IsoTilemap
         public bool IsGridBlocked(Vector3Int cell) =>
             _query.CellHasSolidWall(cell.x, cell.z, cell.y);
 
-        public bool IsFeetBlocking(Vector3 feetWorld)
+        public bool IsFootprintBlocking(Vector3 feetWorld, Vector3Int footprint)
         {
-            var cell = TileHelper.ConvertWorldToGrid(feetWorld, _cellSize);
-            return IsGridBlocked(cell);
+            var feetCell = TileHelper.ConvertWorldToGrid(feetWorld, _cellSize);
+            return IsFootprintBlocking(feetCell, footprint);
         }
+
+        public bool IsFootprintBlocking(Vector3Int feetCell, Vector3Int footprint) =>
+            MapTopologyCollisionResolver.FootprintVolumeBlocks(_query, feetCell, footprint);
 
         /// <summary>
         /// 그리드 끼임을 감지·탈출합니다. <paramref name="tracker"/>는 호출자가 유닛별로 보관합니다.
@@ -76,22 +79,24 @@ namespace IsoTilemap
             float feetOffset,
             ref MapCollisionGrid.FeetCell feet,
             ref Tracker tracker,
+            Vector3Int footprint,
             float pushSpeed,
             int maxIterations,
             float deltaTime)
         {
-            Vector3Int currentGrid = MapCollisionGrid.ToGrid(feet);
-            bool wasBlocking = IsGridBlocked(currentGrid);
+            footprint = MapTopologyCollisionResolver.ClampFootprint(footprint);
+            Vector3Int currentFeetGrid = MapCollisionGrid.ToGrid(feet);
+            bool wasBlocking = IsFootprintBlocking(currentFeetGrid, footprint);
 
             if (!wasBlocking)
             {
                 tracker.HasEscapeDir = false;
-                tracker.LastFeetGrid = currentGrid;
+                tracker.LastFeetGrid = currentFeetGrid;
                 tracker.HasLastFeetGrid = true;
                 return PushOutResult.None;
             }
 
-            CaptureEscapeDirection(ref tracker, currentGrid);
+            CaptureEscapeDirection(ref tracker, currentFeetGrid, footprint);
 
             float minStep = _cellSize * 0.55f;
             float stepCap = Mathf.Max(pushSpeed * deltaTime, minStep);
@@ -100,29 +105,30 @@ namespace IsoTilemap
 
             for (int i = 0; i < iterations; i++)
             {
-                if (!IsGridBlocked(currentGrid))
+                if (!IsFootprintBlocking(currentFeetGrid, footprint))
                 {
                     tracker.HasEscapeDir = false;
-                    tracker.LastFeetGrid = currentGrid;
+                    tracker.LastFeetGrid = currentFeetGrid;
                     tracker.HasLastFeetGrid = true;
                     return new PushOutResult(true, false);
                 }
 
                 if (!TryComputePush(
                         feet.FeetWorld,
-                        currentGrid,
+                        currentFeetGrid,
                         tracker,
+                        footprint,
                         stepCap,
                         out Vector3 push))
                     break;
 
                 bodyWorld += push;
                 feet = MapCollisionGrid.ResolveFeetCell(bodyWorld, feetOffset, _cellSize);
-                currentGrid = MapCollisionGrid.ToGrid(feet);
-                stillBlocking = IsGridBlocked(currentGrid);
+                currentFeetGrid = MapCollisionGrid.ToGrid(feet);
+                stillBlocking = IsFootprintBlocking(currentFeetGrid, footprint);
             }
 
-            tracker.LastFeetGrid = currentGrid;
+            tracker.LastFeetGrid = currentFeetGrid;
             tracker.HasLastFeetGrid = true;
             if (!stillBlocking)
                 tracker.HasEscapeDir = false;
@@ -130,28 +136,34 @@ namespace IsoTilemap
             return new PushOutResult(true, stillBlocking);
         }
 
-        /// <summary>non-wall → wall 그리드 전환 시 탈출 방향을 캐시합니다.</summary>
-        public void CaptureGridTransition(ref Tracker tracker, Vector3Int fromGrid, Vector3Int toGrid)
+        /// <summary>non-wall → wall footprint 진입 시 탈출 방향을 캐시합니다.</summary>
+        public void CaptureGridTransition(
+            ref Tracker tracker,
+            Vector3Int fromFeetGrid,
+            Vector3Int toFeetGrid,
+            Vector3Int footprint)
         {
-            if (IsGridBlocked(fromGrid) || !IsGridBlocked(toGrid))
+            if (IsFootprintBlocking(fromFeetGrid, footprint) ||
+                !IsFootprintBlocking(toFeetGrid, footprint))
                 return;
 
-            tracker.EscapeGridDir = fromGrid - toGrid;
+            tracker.EscapeGridDir = fromFeetGrid - toFeetGrid;
             tracker.HasEscapeDir = tracker.EscapeGridDir != Vector3Int.zero;
         }
 
-        void CaptureEscapeDirection(ref Tracker tracker, Vector3Int currentGrid)
+        void CaptureEscapeDirection(ref Tracker tracker, Vector3Int currentFeetGrid, Vector3Int footprint)
         {
             if (!tracker.HasLastFeetGrid)
                 return;
 
-            CaptureGridTransition(ref tracker, tracker.LastFeetGrid, currentGrid);
+            CaptureGridTransition(ref tracker, tracker.LastFeetGrid, currentFeetGrid, footprint);
         }
 
         bool TryComputePush(
             Vector3 feetWorld,
-            Vector3Int currentGrid,
+            Vector3Int currentFeetGrid,
             Tracker tracker,
+            Vector3Int footprint,
             float stepCap,
             out Vector3 push)
         {
@@ -159,40 +171,45 @@ namespace IsoTilemap
 
             if (tracker.HasEscapeDir)
             {
-                push = PushTowardGridDir(feetWorld, currentGrid, tracker.EscapeGridDir, stepCap);
+                push = PushTowardGridDir(feetWorld, currentFeetGrid, tracker.EscapeGridDir, footprint, stepCap);
                 if (push.sqrMagnitude > Epsilon)
                     return true;
             }
 
-            push = ProbeTowardNearestWalkable(feetWorld, currentGrid, stepCap);
+            push = ProbeTowardNearestWalkable(feetWorld, currentFeetGrid, footprint, stepCap);
             return push.sqrMagnitude > Epsilon;
         }
 
         Vector3 PushTowardGridDir(
             Vector3 feetWorld,
-            Vector3Int currentGrid,
+            Vector3Int currentFeetGrid,
             Vector3Int escapeGridDir,
+            Vector3Int footprint,
             float stepCap)
         {
-            Vector3Int targetGrid = currentGrid + escapeGridDir;
-            if (IsGridBlocked(targetGrid))
+            Vector3Int targetFeetGrid = currentFeetGrid + escapeGridDir;
+            if (IsFootprintBlocking(targetFeetGrid, footprint))
                 return Vector3.zero;
 
-            return MoveTowardGridCenter(feetWorld, targetGrid, stepCap);
+            return MoveTowardGridCenter(feetWorld, targetFeetGrid, footprint, stepCap);
         }
 
-        Vector3 ProbeTowardNearestWalkable(Vector3 feetWorld, Vector3Int currentGrid, float stepCap)
+        Vector3 ProbeTowardNearestWalkable(
+            Vector3 feetWorld,
+            Vector3Int currentFeetGrid,
+            Vector3Int footprint,
+            float stepCap)
         {
             Vector3 best = Vector3.zero;
             float bestSqr = Epsilon;
 
             for (int i = 0; i < ProbeGridDirs.Length; i++)
             {
-                Vector3Int neighbor = currentGrid + ProbeGridDirs[i];
-                if (IsGridBlocked(neighbor))
+                Vector3Int neighborFeet = currentFeetGrid + ProbeGridDirs[i];
+                if (IsFootprintBlocking(neighborFeet, footprint))
                     continue;
 
-                Vector3 candidate = MoveTowardGridCenter(feetWorld, neighbor, stepCap);
+                Vector3 candidate = MoveTowardGridCenter(feetWorld, neighborFeet, footprint, stepCap);
                 if (candidate.sqrMagnitude > bestSqr)
                 {
                     bestSqr = candidate.sqrMagnitude;
@@ -203,16 +220,20 @@ namespace IsoTilemap
             return best;
         }
 
-        Vector3 MoveTowardGridCenter(Vector3 feetWorld, Vector3Int targetGrid, float stepCap)
+        Vector3 MoveTowardGridCenter(
+            Vector3 feetWorld,
+            Vector3Int targetFeetGrid,
+            Vector3Int footprint,
+            float stepCap)
         {
-            Vector3 targetFeet = TileHelper.ConvertGridToWorldPos(targetGrid, _cellSize);
+            Vector3 targetFeet = TileHelper.ConvertGridToWorldPos(targetFeetGrid, _cellSize);
             Vector3 flat = new Vector3(targetFeet.x - feetWorld.x, 0f, targetFeet.z - feetWorld.z);
             if (flat.sqrMagnitude > Epsilon)
             {
                 float dist = flat.magnitude;
                 float step = Mathf.Min(stepCap, dist);
                 Vector3 wish = flat / dist * step;
-                Vector3 clamped = _resolver.ClampHorizontal(feetWorld, wish);
+                Vector3 clamped = _resolver.ClampHorizontal(feetWorld, wish, footprint);
                 return new Vector3(clamped.x, 0f, clamped.z);
             }
 

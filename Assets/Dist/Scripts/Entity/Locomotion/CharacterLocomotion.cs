@@ -131,18 +131,21 @@ public sealed class CharacterLocomotion
         Vector3 oldPosition = _rigidbody.position;
         float feetOffset = CharacterFeetPose.GetFeetOffset(_transform);
 
+        Vector3Int footprint = ResolveGridFootprint();
+
         LastPhysicsStuck = ResolvePhysicsHorizontal(desiredMove, out Vector3 horizontalDelta);
-        Vector3 newPosition = ApplyTopologyHorizontal(oldPosition, feetOffset, horizontalDelta);
+        Vector3 newPosition = ApplyTopologyHorizontal(oldPosition, feetOffset, horizontalDelta, footprint);
 
         float cellSize = _mapCollision != null ? _mapCollision.Query.CellSize : 1f;
         MapCollisionGrid.FeetCell feetCell =
             MapCollisionGrid.ResolveFeetCell(newPosition, feetOffset, cellSize);
-        ApplyLogicalVertical(ref newPosition, feetOffset, deltaTime, ref feetCell);
+        ApplyLogicalVertical(ref newPosition, feetOffset, deltaTime, ref feetCell, footprint);
 
         LastTopologyPush = ResolveGridStuck(
             ref newPosition,
             feetOffset,
             ref feetCell,
+            footprint,
             deltaTime);
 
         _rigidbody.MovePosition(newPosition);
@@ -198,17 +201,23 @@ public sealed class CharacterLocomotion
         return horizontalDelta.sqrMagnitude <= Mathf.Epsilon;
     }
 
+    Vector3Int ResolveGridFootprint() =>
+        _characterState != null
+            ? _characterState.GridFootprint
+            : CharacterGridFootprintDefaults.Default;
+
     Vector3 ApplyTopologyHorizontal(
         Vector3 oldPosition,
         float feetOffset,
-        Vector3 horizontalDelta)
+        Vector3 horizontalDelta,
+        Vector3Int footprint)
     {
         if (_mapCollision == null || horizontalDelta.sqrMagnitude <= Mathf.Epsilon)
             return oldPosition + horizontalDelta;
 
         Vector3 feetWorld = CharacterFeetPose.GetFeetWorld(oldPosition, feetOffset);
         Vector3 topologyDelta =
-            _mapCollision.CollisionResolver.ClampHorizontal(feetWorld, horizontalDelta);
+            _mapCollision.CollisionResolver.ClampHorizontal(feetWorld, horizontalDelta, footprint);
         return oldPosition + topologyDelta;
     }
 
@@ -216,6 +225,7 @@ public sealed class CharacterLocomotion
         ref Vector3 bodyPosition,
         float feetOffset,
         ref MapCollisionGrid.FeetCell feetCell,
+        Vector3Int footprint,
         float deltaTime)
     {
         if (_mapCollision == null)
@@ -226,6 +236,7 @@ public sealed class CharacterLocomotion
             feetOffset,
             ref feetCell,
             ref _gridStuckTracker,
+            footprint,
             _topologyPushSpeed,
             _topologyPushMaxIterations,
             deltaTime);
@@ -235,7 +246,8 @@ public sealed class CharacterLocomotion
         ref Vector3 worldPosition,
         float feetOffset,
         float deltaTime,
-        ref MapCollisionGrid.FeetCell feetCell)
+        ref MapCollisionGrid.FeetCell feetCell,
+        Vector3Int footprint)
     {
         if (_mapCollision == null)
             return;
@@ -254,6 +266,7 @@ public sealed class CharacterLocomotion
             feetOffset,
             ref feetCell,
             ref _gridStuckTracker,
+            footprint,
             _logicalGravity);
     }
 
@@ -269,7 +282,8 @@ public sealed class CharacterLocomotion
             : MapSwimQuery.Resolve(
                 feetCell.FeetWorld,
                 cellSize,
-                _characterState != null && _characterState.IsDiving);
+                _characterState != null && _characterState.IsDiving,
+                _characterState != null ? _characterState.GridFootprint : default);
 
         float surfaceY = immersion.SurfaceFeetY;
         float bottomY = immersion.ColumnBottomFeetY;

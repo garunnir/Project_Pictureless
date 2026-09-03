@@ -109,6 +109,11 @@ PrefabInstance:
       propertyPath: m_Center.x
       value: -0.27
       objectReference: {fileID: 0}
+    - target: {fileID: 5007136400904318695, guid: d7eb638e6a1ce39489215ca1b0802308,
+        type: 3}
+      propertyPath: m_SortingOrder
+      value: -43
+      objectReference: {fileID: 0}
     - target: {fileID: 8634930250085810316, guid: d7eb638e6a1ce39489215ca1b0802308,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
