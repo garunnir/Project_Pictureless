@@ -32,7 +32,7 @@ namespace IsoTilemap
             return FromGridCell(new Vector3Int(chunk.x * size, minCellY, chunk.y * size));
         }
 
-        /// <summary>타일 슬롯별 정렬 셀 — 바닥은 CellAbove, 벽은 남동 쪽 인접 셀.</summary>
+        /// <summary>타일 슬롯별 정렬 셀 — 바닥은 walkable gridPos, 벽은 남동 쪽 인접 셀.</summary>
         public static IsoDepthSortKey FromTileView(TileView view)
         {
             if (view == null)
@@ -43,7 +43,6 @@ namespace IsoTilemap
             switch (view.placementSlot)
             {
                 case TilePlacementSlot.HorizontalFace:
-                    cell = new FloorFaceKey(view.gridPos, FloorFace.PosY).CellAbove;
                     break;
 
                 case TilePlacementSlot.VerticalFace:

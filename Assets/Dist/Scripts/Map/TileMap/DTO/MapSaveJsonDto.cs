@@ -6,7 +6,7 @@ namespace IsoTilemap
     [Serializable]
     public class MapSaveJsonDto
     {
-        /// <summary>1 = placementSlot 기반 v1. 0·누락 = 레거시 tiles[].tileType.</summary>
+        /// <summary>1 = placementSlot v1. 2 = floorFaces walkable coords. 0·누락 = 레거시 tiles[].tileType.</summary>
         public int schemaVersion;
 
         /// <summary>그리드 1칸 월드 길이. 0 이하·누락(구 JSON)이면 로더 fallback 사용.</summary>

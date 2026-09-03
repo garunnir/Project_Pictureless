@@ -23,7 +23,9 @@ public sealed class UIGameSaveSlotPopupController : MonoBehaviour, IUiCancelCons
     void Awake()
     {
         EnsureReferences();
-        EnsurePopup();
+        // AddComponent 직후 Configure 전에 Awake가 돌 수 있음 — prefab 없으면 스킵.
+        if (_popupPrefab != null)
+            EnsurePopup();
         if (_popup != null)
             _popup.gameObject.SetActive(false);
     }
@@ -80,7 +82,10 @@ public sealed class UIGameSaveSlotPopupController : MonoBehaviour, IUiCancelCons
     {
         EnsurePopup();
         if (_popup == null)
+        {
+            Debug.LogError("[UIGameSaveSlotPopupController] Popup prefab is not assigned.", this);
             return;
+        }
 
         _mode = mode;
         _popup.Open(mode, GameSaveSlotService.QuerySlotInfos());
@@ -151,7 +156,7 @@ public sealed class UIGameSaveSlotPopupController : MonoBehaviour, IUiCancelCons
 
         if (_popupPrefab == null)
         {
-            Debug.LogError("[UIGameSaveSlotPopupController] Popup prefab is not assigned.", this);
+            // Configure 전 조기 Awake / 미배선 — Open 시점에 다시 시도하며 그때만 에러.
             return;
         }
 

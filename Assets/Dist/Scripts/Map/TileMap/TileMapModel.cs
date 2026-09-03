@@ -383,7 +383,7 @@ namespace IsoTilemap
             if (!TileIdentityUtil.IsValidHorizontalFaceIdentity(tileData.identity))
             {
                 Debug.LogError(
-                    $"[TileMapModel] HorizontalFace tile '{tileData.identity.PrefabId}' requires floorFace=PosY and anchor GridPos. Skipped.");
+                    $"[TileMapModel] HorizontalFace tile '{tileData.identity.PrefabId}' requires floorFace=PosY and walkable GridPos. Skipped.");
                 return;
             }
 

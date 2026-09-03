@@ -59,7 +59,8 @@ public sealed class CharacterSpawner : MonoBehaviour
 
             Vector3Int cell = entry.ResolveCell();
             Vector3Int footprint = entry.definition.GridFootprint;
-            ValidateSpawnFootprint(i, cell, footprint);
+            // entry.cell / marker = 본체(body) 셀. floor·점유 검증은 발 셀 기준.
+            ValidateSpawnFootprint(i, BodyCellToFeetCell(cell, footprint), footprint);
 
             Vector3 world = worldGrid != null
                 ? worldGrid.CellToWorld(cell)
@@ -137,7 +138,11 @@ public sealed class CharacterSpawner : MonoBehaviour
             Vector3Int footprint = entry.definition != null
                 ? entry.definition.GridFootprint
                 : CharacterGridFootprintDefaults.Default;
-            DrawFootprintGizmo(cell, footprint, cellSize, CharacterSpawnGizmoColors.ForRole(entry.role));
+            DrawFootprintGizmo(
+                BodyCellToFeetCell(cell, footprint),
+                footprint,
+                cellSize,
+                CharacterSpawnGizmoColors.ForRole(entry.role));
         }
     }
 
@@ -147,6 +152,16 @@ public sealed class CharacterSpawner : MonoBehaviour
             return;
 
         TileHelper.DrawOccupiedCellWire(anchor, cellSize, color, footprint);
+    }
+
+    /// <summary>
+    /// 스폰 셀은 본체 중심(Capsule/transform). 발 Y = bodyY − footprint.y/2
+    /// (높이 2셀·중심 정렬 캡슐과 패리티).
+    /// </summary>
+    public static Vector3Int BodyCellToFeetCell(Vector3Int bodyCell, Vector3Int footprint)
+    {
+        footprint = CharacterGridFootprintDefaults.Clamp(footprint);
+        return new Vector3Int(bodyCell.x, bodyCell.y - footprint.y / 2, bodyCell.z);
     }
 
     void ValidateSpawnFootprint(int entryIndex, Vector3Int feetCell, Vector3Int footprint)

@@ -50,6 +50,20 @@ public class MapFileLoader : MonoBehaviour
         LastLoadedDto = result.Dto;
     }
 
+    public string FileName
+    {
+        get => fileName;
+        set => fileName = value;
+    }
+
+    public bool UsePersistentPath
+    {
+        get => usePersistentPath;
+        set => usePersistentPath = value;
+    }
+
+    public string ResolveFullPath() => GetFullPath();
+
     private string GetFullPath()
     {
         if (usePersistentPath)
@@ -57,4 +71,22 @@ public class MapFileLoader : MonoBehaviour
         else
             return Path.Combine(Application.dataPath, "..", fileName);
     }
+
+#if UNITY_EDITOR
+    [ContextMenu("Load Map In Scene")]
+    void LoadMapInSceneFromEditor()
+    {
+        TileMapManager manager = GetComponent<TileMapManager>();
+        if (manager == null)
+            manager = GetComponentInParent<TileMapManager>();
+
+        if (manager == null)
+        {
+            Debug.LogError("[MapFileLoader] Load Map In Scene: TileMapManager를 찾을 수 없습니다.", this);
+            return;
+        }
+
+        manager.LoadInEditor();
+    }
+#endif
 }

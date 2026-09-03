@@ -56,7 +56,10 @@ namespace IsoTilemap
                     out Vector3 pos,
                     out Quaternion rot);
 
-                GameObject go = Object.Instantiate(prefab, pos, rot, parent);
+                GameObject go = TilePrefabSpawnUtil.Instantiate(prefab, parent, pos, rot);
+                if (go == null)
+                    continue;
+
                 var view = go.GetComponent<LiquidAuthoringView>();
                 if (view == null)
                 {

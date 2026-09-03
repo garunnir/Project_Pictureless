@@ -102,16 +102,10 @@ namespace IsoTilemap
             return new Vector3Int(x, minCellY, z);
         }
 
-        /// <summary>타일 대표 점유셀 — OccupiedCell=<c>GridPos</c>, VerticalFace=anchor, HorizontalFace=<c>CellAbove</c>.</summary>
-        public static Vector3Int PrimaryCellFromIdentity(in TileIdentity id)
-        {
-            if (TileIdentityUtil.IsHorizontalFace(id))
-                return FloorFaceKey.FromFloorTileIdentity(id).CellAbove;
+        /// <summary>타일 대표 점유셀 — 모든 슬롯에서 <see cref="TileIdentity.GridPos"/>.</summary>
+        public static Vector3Int PrimaryCellFromIdentity(in TileIdentity id) => id.GridPos;
 
-            return id.GridPos;
-        }
-
-        /// <summary>Floor JSON 저장 앵커(CellBelow). 조회 진실원 아님.</summary>
+        /// <summary>walkable → FloorFaceKey 앵커(CellBelow). 내부 면 키 전용.</summary>
         public static Vector3Int FloorAnchorFromOccupiedCell(Vector3Int occupiedCell) =>
             occupiedCell + Vector3Int.down;
 

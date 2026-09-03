@@ -14,12 +14,6 @@ public sealed class FishingLootCatalog : ScriptableObject
     public const string DefaultAssetPath =
         "Assets/Dist/SOData/Gameplay/Fishing/FishingLootCatalog.asset";
 
-    public const string ResourcesAssetPath =
-        "Assets/Dist/Resources/Fishing/FishingLootCatalog.asset";
-
-    /// <summary>Player build Resources.Load SSOT (확장자 제외).</summary>
-    public const string ResourcesLoadName = "Fishing/FishingLootCatalog";
-
     [Serializable]
     public sealed class LootEntry
     {
@@ -34,6 +28,14 @@ public sealed class FishingLootCatalog : ScriptableObject
         new LootEntry { ItemId = "crayfish", Weight = 12f },
         new LootEntry { ItemId = "fish_smoked", Weight = 3f }
     };
+
+    /// <summary>MapGameplayBootstrap이 주입. Resources 폴백 없음.</summary>
+    public static FishingLootCatalog Runtime { get; private set; }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void DomainReset() => Runtime = null;
+
+    public static void BindRuntime(FishingLootCatalog catalog) => Runtime = catalog;
 
     public float BaseCatchChance => Mathf.Clamp01(_baseCatchChance);
 
@@ -134,18 +136,4 @@ public sealed class FishingLootCatalog : ScriptableObject
             multiplier *= MapFishConsts.FishGoodLootMultiplier;
         return Mathf.Max(0f, multiplier);
     }
-
-    static FishingLootCatalog _runtime;
-
-    public static FishingLootCatalog Runtime
-    {
-        get => _runtime;
-        set => _runtime = value;
-    }
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void DomainReset() => _runtime = null;
-
-    public static FishingLootCatalog ResolveRuntimeCatalog() =>
-        _runtime != null ? _runtime : _runtime = Resources.Load<FishingLootCatalog>(ResourcesLoadName);
 }

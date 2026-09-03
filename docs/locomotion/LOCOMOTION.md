@@ -4,6 +4,7 @@
 > 인덱스: `docs/README.md` · 룰: `.cursor/rules/locomotion.mdc`
 > **Locomotion 스크립트를 쓰거나 고치기 전에 이 문서를 읽는다.**
 > 수영·잠수·산소: [`SWIM.md`](SWIM.md)
+> 담넘기·벽넘기: [`VAULT.md`](VAULT.md) (ThickWall 위로 올리려면 상단 `ProvidesLogicalFloor` — 문서 「두꺼운 벽」절)
 
 경로(코드): `Assets/Dist/Scripts/Entity/Locomotion/`
 
@@ -266,6 +267,7 @@ Collision Inspector는 `CharacterLocomotionCollisionSettings`이며 기본값은
 
 - NPC는 직선 목표점 조향만 지원한다 (`NpcSteer`).
 - 길찾기, 장애물 우회, stuck 재탐색은 구현하지 않는다.
+- 담/벽 넘기(`VAULT.md`)는 **possessed 플레이어만** — NPC AI·길찾기 연동 없음.
 - 활성 NPC 시뮬레이션은 카메라 청크 로드 범위 안이라는 기존 전제를 따른다.
 - 청크 컬링·공간 해시는 후속. `NpcManager`는 씬 활성 유닛만 틱한다.
 - Hurt 실클립: Flinch=`Reaction`, Stagger=`Stunned`, PainDown=`Pistol Kneeling Idle`, Dead=`Dying1` (Slots 복사, 1회). `Dying2` 교체·렉돌은 후속.

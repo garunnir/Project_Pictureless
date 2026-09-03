@@ -118,10 +118,10 @@ classDiagram
 
 | 필드 | 의미 |
 |------|------|
-| `GridPos` | **anchor** = `CellBelow` (EdgeWall의 앵커와 동일한 역할) |
-| walkable 셀 | 저장하지 않음 — `OccupiedCellCoord.PrimaryCellFromIdentity` = `CellAbove` 파생 |
-| 월드 pose Y | `CellAbove.y * cellSize` (격자 경계, 정수) |
-| JSON | `floorFaces[]`의 `x,y,z` = anchor. `tiles[]` Floor 로드 없음 |
+| `GridPos` | **walkable** — 서는 층 (`TileView.gridPos`와 동일) |
+| 월드 pose Y | `GridPos.y * cellSize` (격자 경계, `FloorFaceKey.GetWorldPose`) |
+| JSON | `floorFaces[]`의 `x,y,z` = walkable (`schemaVersion` ≥ 2). 구 JSON(schema &lt; 2)은 로드 시 `y+1` 마이그레이션 |
+| `tiles[]` Floor | 로드 없음 |
 
 ### placementSlot vs collisionFlags
 

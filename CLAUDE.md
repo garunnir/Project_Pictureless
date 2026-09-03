@@ -117,6 +117,8 @@ Feature SSOT when touching that area — **read the Doc before editing related s
 | UI MVC / font | `docs/ui/UI_Scripts.md` | `.cursor/rules/ui-prefab-layout.mdc` · `ui-font.mdc` |
 | UI hover placement | `docs/ui/HOVER.md` | (ContextMenu asm · keep-in-bounds) |
 | Locomotion | `docs/locomotion/LOCOMOTION.md` | `.cursor/rules/locomotion.mdc` |
+| Swim / Dive | `docs/locomotion/SWIM.md` | — |
+| Vault / Fence vault | `docs/locomotion/VAULT.md` | — |
 | Body / anatomy / climate | `docs/body/BODY.md` · 밸런스 `docs/body/TUNING.md` | — |
 | Legacy (do not expand as SSOT) | `docs/legacy/LEGACY_README.md` | `.cursor/rules/legacy.mdc` |
 

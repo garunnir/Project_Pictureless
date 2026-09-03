@@ -11,6 +11,9 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
 {
     [SerializeField] TileMapManager _tileMapManager;
     [SerializeField] CharacterFactionCatalog _factionCatalog;
+    [SerializeField] VaultClipCatalog _vaultClipCatalog;
+    [SerializeField] FishingLootCatalog _fishingLootCatalog;
+    [SerializeField] FishWorkClipCatalog _fishWorkClipCatalog;
 
     void Start()
     {
@@ -28,6 +31,7 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         }
 
         CharacterHostility.BindCatalog(_factionCatalog);
+        MapFishRuntimeBridge.BindCatalogs(_fishingLootCatalog, _fishWorkClipCatalog);
 
         IWorldGrid worldGrid = _tileMapManager.WorldGrid;
         if (worldGrid != null)
@@ -64,6 +68,8 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         motor?.BindMapCollision(services);
 
         EnsureSwimHosts(instance);
+        EnsureVaultHost(instance, services, _vaultClipCatalog);
+        EnsureFishWorkHost(instance, _fishWorkClipCatalog);
 
         CharacterAttacker attacker = instance.GetBodyComponent<CharacterAttacker>();
         attacker?.BindMapCollision(services.LineCast);
@@ -86,7 +92,7 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
             states[i].BindWorldGrid(worldGrid);
     }
 
-    static void BindMapCollisionServices(TileMapManager manager)
+    void BindMapCollisionServices(TileMapManager manager)
     {
         if (manager.Model is not TileMapModel tileModel)
             return;
@@ -98,6 +104,8 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         BindCharacterLocomotions<CharacterMotor>(services);
         BindCharacterHearing(services.LineCast);
         EnsureSwimHostsOnSceneCharacters();
+        EnsureVaultHostsOnSceneCharacters(services, _vaultClipCatalog);
+        EnsureFishWorkHostsOnSceneCharacters(_fishWorkClipCatalog);
 
         var attackers = FindObjectsByType<CharacterAttacker>(
             FindObjectsInactive.Include,
@@ -195,5 +203,54 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
             instance.AddComponent<CharacterSwimHost>();
         if (instance.GetComponent<CharacterBreathHost>() == null)
             instance.AddComponent<CharacterBreathHost>();
+    }
+
+    static void EnsureVaultHostsOnSceneCharacters(
+        MapCollisionServices services,
+        VaultClipCatalog vaultClips)
+    {
+        var states = FindObjectsByType<CharacterState>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+        for (int i = 0; i < states.Length; i++)
+            EnsureVaultHost(states[i].gameObject, services, vaultClips);
+    }
+
+    static void EnsureVaultHost(
+        GameObject instance,
+        MapCollisionServices services,
+        VaultClipCatalog vaultClips)
+    {
+        if (instance == null || instance.GetComponent<CharacterMotor>() == null)
+            return;
+
+        CharacterVaultHost vault = instance.GetComponent<CharacterVaultHost>();
+        if (vault == null)
+            vault = instance.AddComponent<CharacterVaultHost>();
+        vault.BindMapCollision(services);
+        if (vaultClips != null)
+            vault.SetClipCatalog(vaultClips);
+    }
+
+    static void EnsureFishWorkHostsOnSceneCharacters(FishWorkClipCatalog fishClips)
+    {
+        var hosts = FindObjectsByType<CharacterFishWorkHost>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+        for (int i = 0; i < hosts.Length; i++)
+        {
+            if (fishClips != null)
+                hosts[i].SetClipCatalog(fishClips);
+        }
+    }
+
+    static void EnsureFishWorkHost(GameObject instance, FishWorkClipCatalog fishClips)
+    {
+        if (instance == null || fishClips == null)
+            return;
+
+        CharacterFishWorkHost host = instance.GetComponent<CharacterFishWorkHost>();
+        if (host != null)
+            host.SetClipCatalog(fishClips);
     }
 }

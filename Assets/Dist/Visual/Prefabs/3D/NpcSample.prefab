@@ -153,6 +153,7 @@ GameObject:
   - component: {fileID: 5966763808652903118}
   - component: {fileID: 2087899965993059679}
   - component: {fileID: 6078963510995588844}
+  - component: {fileID: 6853775483716162699}
   m_Layer: 6
   m_Name: GameplayCore
   m_TagString: Untagged
@@ -466,6 +467,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c4e2a91b0d84f6e9a3c5d8e1f2b4a60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterClimateHost
+--- !u!114 &6853775483716162699
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1795829373545432482}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7c3e1f94b2d4a6e9f0c8d5b3a1e7f42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DistScript::CharacterFootprintHost
+  _gridFootprint: {x: 1, y: 2, z: 1}
 --- !u!1 &2816094712680714504
 GameObject:
   m_ObjectHideFlags: 0

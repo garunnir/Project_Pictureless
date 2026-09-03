@@ -205,6 +205,11 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
             swim.NotifyPossessedChanged(possessed);
         else if (CharacterBodyResolve.TryGetInBody(this, out CharacterSwimHost bodySwim))
             bodySwim.NotifyPossessedChanged(possessed);
+
+        if (TryGetComponent(out CharacterVaultHost vault))
+            vault.NotifyPossessedChanged(possessed);
+        else if (CharacterBodyResolve.TryGetInBody(this, out CharacterVaultHost bodyVault))
+            bodyVault.NotifyPossessedChanged(possessed);
     }
 
     /// <summary>NpcSteer 등 스크립트 조향. possessed여도 NPC와 동일 등속·travel limit.</summary>

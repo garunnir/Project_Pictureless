@@ -11,8 +11,7 @@ namespace IsoTilemap
     public static class TilePlaceUtil
     {
         /// <summary>
-        /// Builds TileData for placement. OccupiedCell uses <paramref name="occupiedOrCursorCell"/>.
-        /// HorizontalFace anchors at CellBelow (cursor cell + down), matching GridCursor.TryPlace.
+        /// Builds TileData for placement. OccupiedCell·HorizontalFace use <paramref name="occupiedOrCursorCell"/> as walkable grid cell.
         /// </summary>
         public static bool TryBuildTileData(
             TileDefinition def,
@@ -30,9 +29,7 @@ namespace IsoTilemap
                 Mathf.Max(1, def.size.x),
                 Mathf.Max(1, def.size.y),
                 Mathf.Max(1, def.size.z));
-            Vector3Int gridPos = slot == TilePlacementSlot.HorizontalFace
-                ? occupiedOrCursorCell + Vector3Int.down
-                : occupiedOrCursorCell;
+            Vector3Int gridPos = occupiedOrCursorCell;
 
             var identity = new TileIdentity
             {

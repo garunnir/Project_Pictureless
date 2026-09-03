@@ -43,6 +43,20 @@ public class MapFileSaver : MonoBehaviour
             MapLiquidHost.Runtime);
     }
 
+    public string FileName
+    {
+        get => fileName;
+        set => fileName = value;
+    }
+
+    public bool UsePersistentPath
+    {
+        get => usePersistentPath;
+        set => usePersistentPath = value;
+    }
+
+    public string ResolveFullPath() => GetFullPath();
+
     private string GetFullPath()
     {
         if (usePersistentPath)
@@ -54,7 +68,7 @@ public class MapFileSaver : MonoBehaviour
 #if UNITY_EDITOR
     /// <summary>씬 TileView 스냅샷으로 모델을 갱신한 뒤 <see cref="TileMapDtoMapper"/>와 동일 규칙으로 JSON 저장합니다.</summary>
     [ContextMenu("Save Map To JSON")]
-    private void SaveInEditor()
+    public void SaveFromSceneInEditor()
     {
         string fullPath = GetFullPath();
 

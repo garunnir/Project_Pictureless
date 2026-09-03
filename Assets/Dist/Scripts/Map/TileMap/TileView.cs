@@ -125,9 +125,9 @@ namespace IsoTilemap
             else if (placementSlot == TilePlacementSlot.HorizontalFace)
             {
                 if (FloorFacePicker.TryPickNearest(transform.position, cs, out var nearest))
-                    gridPos = nearest.Anchor;
+                    gridPos = nearest.CellAbove;
 
-                FloorFaceKey key = new FloorFaceKey(gridPos, FloorFace.PosY);
+                FloorFaceKey key = FloorFaceKey.ForWalkableCell(gridPos);
                 FloorFaceKey.GetWorldPose(key, cs, out Vector3 floorPos, out Quaternion floorRot);
                 transform.SetPositionAndRotation(floorPos, floorRot);
             }

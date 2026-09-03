@@ -181,12 +181,14 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         {
             _pendingInitialVelocity = true;
             ConnectController();
+            SyncSprintFromHeldInput();
         }
         else
         {
             DisconnectController();
             ActiveMover?.SetInput(Vector2.zero, _refCam);
             _characterState?.ClearMoveDir();
+            SetSprinting(false);
         }
     }
 
@@ -198,6 +200,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         {
             _pendingInitialVelocity = true;
             ConnectController();
+            SyncSprintFromHeldInput();
             return;
         }
 
@@ -205,6 +208,8 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         KinematicMover mover = ActiveMover;
         mover?.SetInput(Vector2.zero, _refCam);
         _characterState?.ClearMoveDir();
+        // vault 등 중 Shift canceled가 유실되면 sprint가 남는 것 방지
+        SetSprinting(false);
     }
 
     void SyncBodyPainInputPolicy()
@@ -315,21 +320,50 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
             return;
         }
 
-        bool wasSprinting = mover.IsSprinting;
-        bool isRun = context.ReadValue<float>() > 0.5f;
-        SetSprinting(isRun);
-        if (isRun)
+        // canceled는 값 폴링보다 phase 우선 (릴리즈 유실 방지)
+        bool isRun = !context.canceled && context.ReadValue<float>() > 0.5f;
+        ApplySprintFromHeld(isRun);
+    }
+
+    /// <summary>입력 재개 시 현재 Shift 홀드와 sprint 플래그 재동기화.</summary>
+    void SyncSprintFromHeldInput()
+    {
+        if (!_controlEnabled)
+            return;
+
+        if (_encumbranceBlocksSprint || _encumbranceBlocksMovement || _swimBlocksSprint ||
+            (_characterState != null && _characterState.IsStealth) ||
+            (_characterState != null && (_characterState.IsSwimming || _characterState.IsDiving)))
         {
-            _pendingInitialVelocity = true;
-            if (mover.WorldMoveDir.sqrMagnitude > Mathf.Epsilon)
-            {
-                mover.SetInitialVelocity(GetEffectiveInitialVelocity());
-                if (!wasSprinting)
-                    mover.ApplySpeedBoost(_runEnterBoost, _runMaxSpeed);
-                _pendingInitialVelocity = false;
-            }
+            SetSprinting(false);
+            return;
         }
+
+        InputManager input = InputManager.Instance;
+        bool held = input != null && input.TryReadRunHeld(out bool isHeld) && isHeld;
+        ApplySprintFromHeld(held);
+    }
+
+    void ApplySprintFromHeld(bool isRun)
+    {
+        KinematicMover mover = ActiveMover;
+        if (mover == null)
+            return;
+
+        bool wasSprinting = mover.IsSprinting;
+        SetSprinting(isRun);
         _debugController?.LogPlayerRun(isRun);
+        if (!isRun)
+            return;
+
+        _pendingInitialVelocity = true;
+        if (mover.WorldMoveDir.sqrMagnitude > Mathf.Epsilon)
+        {
+            mover.SetInitialVelocity(GetEffectiveInitialVelocity());
+            if (!wasSprinting)
+                mover.ApplySpeedBoost(_runEnterBoost, _runMaxSpeed);
+            _pendingInitialVelocity = false;
+        }
     }
 
     void SetSprinting(bool isRun)

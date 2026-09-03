@@ -39,8 +39,8 @@ namespace IsoTilemap
             var cells = new HashSet<Vector3Int>();
             AccumulateTiles(dto.tiles, cells);
             AccumulateWallEdges(dto.wallEdges, cells);
-            AccumulateFloorFaces(dto.floorFaces, cells);
-            AccumulateFloorFaces(dto.liquidAuthoringFaces, cells);
+            AccumulateFloorFaces(dto.floorFaces, cells, dto.schemaVersion, forFloorTiles: true);
+            AccumulateFloorFaces(dto.liquidAuthoringFaces, cells, dto.schemaVersion, forFloorTiles: false);
             AccumulateLiquidCells(dto.liquidCells, cells);
 
             if (cells.Count == 0)
@@ -137,7 +137,11 @@ namespace IsoTilemap
             }
         }
 
-        static void AccumulateFloorFaces(List<FloorFaceSaveData> faces, HashSet<Vector3Int> cells)
+        static void AccumulateFloorFaces(
+            List<FloorFaceSaveData> faces,
+            HashSet<Vector3Int> cells,
+            int schemaVersion,
+            bool forFloorTiles)
         {
             if (faces == null)
                 return;
@@ -149,9 +153,9 @@ namespace IsoTilemap
                     continue;
 
                 int sizeY = ResolveSizeY(face.prefabId);
-                var key = new FloorFaceKey(
-                    new Vector3Int(face.x, face.y, face.z),
-                    FloorFace.PosY);
+                FloorFaceKey key = forFloorTiles
+                    ? face.ToFloorFaceKeyForFloorTileSave(schemaVersion)
+                    : face.ToFloorFaceKeyForLiquidAuthoring();
                 TileIdentityUtil.AppendFloorIncidentCells(key, sizeY, cells);
             }
         }

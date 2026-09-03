@@ -65,18 +65,18 @@ namespace IsoTilemap
                     ? (byte)FloorFace.PosY
                     : (byte)0;
 
-                Vector3Int gridPos = v.gridPos;
+                Vector3Int identityGridPos = v.gridPos;
                 if (slot == TilePlacementSlot.HorizontalFace)
                 {
                     float cellSize = Mathf.Max(1e-4f, v.gizmoCellSize);
                     if (FloorFacePicker.TryPickNearest(v.transform.position, cellSize, out var nearest))
-                        gridPos = nearest.Anchor;
+                        identityGridPos = nearest.CellAbove;
                 }
 
                 var identity = new TileIdentity
                 {
                     PrefabId = prefabId,
-                    GridPos = gridPos,
+                    GridPos = identityGridPos,
                     sizeUnit = size,
                     placementSlot = (byte)slot,
                     wallFace = wallFace,

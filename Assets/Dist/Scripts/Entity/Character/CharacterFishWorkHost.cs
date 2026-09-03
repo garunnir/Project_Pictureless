@@ -26,13 +26,12 @@ public sealed class CharacterFishWorkHost : MonoBehaviour
 
     void Awake()
     {
-        if (_clips == null)
-            _clips = FishWorkClipCatalog.Runtime ?? FishWorkClipCatalog.ResolveRuntimeCatalog();
-
         _animator = GetComponentInChildren<Animator>();
         if (_animator != null)
             _workLayerIndex = _animator.GetLayerIndex(WorkLayerName);
     }
+
+    public void SetClipCatalog(FishWorkClipCatalog clips) => _clips = clips;
 
     void Update()
     {
@@ -58,6 +57,9 @@ public sealed class CharacterFishWorkHost : MonoBehaviour
     {
         if (onComplete == null || _running)
             return false;
+
+        if (_clips == null)
+            _clips = FishWorkClipCatalog.Runtime;
 
         AnimationClip clip = _clips != null ? _clips.Resolve(kind) : null;
         float configured = ResolveConfiguredDuration(kind);

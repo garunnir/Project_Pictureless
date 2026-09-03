@@ -24,6 +24,7 @@ public sealed class CharacterSpawnPoint : MonoBehaviour
     {
         _gizmoCellSize = Mathf.Max(0.0001f, _gizmoCellSize);
         _gridFootprint = CharacterGridFootprintDefaults.Clamp(_gridFootprint);
+        // 마커 transform = 본체 위치. 셀 SSOT도 본체 셀.
         _cell = TileHelper.ConvertWorldToGrid(transform.position, _gizmoCellSize);
     }
 
@@ -31,8 +32,9 @@ public sealed class CharacterSpawnPoint : MonoBehaviour
     {
         Vector3Int footprint = GridFootprint;
         Color color = CharacterSpawnGizmoColors.ForRole(_gizmoRole);
+        Vector3Int feetCell = CharacterSpawner.BodyCellToFeetCell(_cell, footprint);
         FootprintCellsScratch.Clear();
-        CharacterOccupiedCellUtil.AppendOccupiedCells(_cell, footprint, FootprintCellsScratch);
+        CharacterOccupiedCellUtil.AppendOccupiedCells(feetCell, footprint, FootprintCellsScratch);
         for (int i = 0; i < FootprintCellsScratch.Count; i++)
             TileHelper.DrawOccupiedCellWire(FootprintCellsScratch[i], _gizmoCellSize, color);
 

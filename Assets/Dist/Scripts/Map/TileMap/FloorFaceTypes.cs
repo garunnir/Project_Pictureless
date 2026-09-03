@@ -22,8 +22,9 @@ namespace IsoTilemap
             Face = face;
         }
 
+        /// <summary>HorizontalFace <see cref="TileIdentity.GridPos"/> = walkable.</summary>
         public static FloorFaceKey FromFloorTileIdentity(in TileIdentity id) =>
-            new FloorFaceKey(id.GridPos, FloorFace.PosY);
+            ForWalkableCell(id.GridPos);
 
         public bool Equals(FloorFaceKey other) => Anchor.Equals(other.Anchor) && Face == other.Face;
 

@@ -1,5 +1,5 @@
 // ============================================================
-// MapFishRuntimeBridge — DistScript에서 MapFishService 훅 배선
+// MapFishRuntimeBridge — DistScript에서 MapFishService 훅·카탈로그 배선
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
@@ -9,10 +9,8 @@ using UnityEngine;
 static class MapFishRuntimeBridge
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    static void Wire()
+    static void WireHooks()
     {
-        FishingLootCatalog.Runtime = LoadLootCatalog();
-        FishWorkClipCatalog.Runtime = LoadFishWorkCatalog();
         MapFishService.Configure(new MapFishRuntimeHooks
         {
             IsMoodBlocked = () => MoodGameplayGate.IsBlocked,
@@ -28,6 +26,18 @@ static class MapFishRuntimeBridge
         MapPlantHost.AfterLoaded += OnMapLoaded;
     }
 
+    /// <summary>MapGameplayBootstrap SerializeField 주입. SOData 한곳 SSOT.</summary>
+    public static void BindCatalogs(FishingLootCatalog loot, FishWorkClipCatalog workClips)
+    {
+        FishingLootCatalog.BindRuntime(loot);
+        FishWorkClipCatalog.BindRuntime(workClips);
+
+        if (loot == null)
+            Debug.LogError("[MapFishRuntimeBridge] FishingLootCatalog is not assigned on MapGameplayBootstrap.");
+        if (workClips == null)
+            Debug.LogError("[MapFishRuntimeBridge] FishWorkClipCatalog is not assigned on MapGameplayBootstrap.");
+    }
+
     static void OnMapLoaded()
     {
         MapPlantHost plant = MapPlantHost.Runtime;
@@ -38,7 +48,7 @@ static class MapFishRuntimeBridge
 
     static string RollCatchItemId(ItemData rod)
     {
-        FishingLootCatalog catalog = FishingLootCatalog.Runtime ?? FishingLootCatalog.ResolveRuntimeCatalog();
+        FishingLootCatalog catalog = FishingLootCatalog.Runtime;
         if (catalog == null)
             return UnityEngine.Random.value <= 0.65f ? MapFishConsts.DefaultFishItemId : null;
 
@@ -97,18 +107,4 @@ static class MapFishRuntimeBridge
 
         return null;
     }
-
-#if UNITY_EDITOR
-    static FishingLootCatalog LoadLootCatalog() =>
-        UnityEditor.AssetDatabase.LoadAssetAtPath<FishingLootCatalog>(FishingLootCatalog.DefaultAssetPath);
-
-    static FishWorkClipCatalog LoadFishWorkCatalog() =>
-        UnityEditor.AssetDatabase.LoadAssetAtPath<FishWorkClipCatalog>(FishWorkClipCatalog.DefaultAssetPath);
-#else
-    static FishingLootCatalog LoadLootCatalog() =>
-        FishingLootCatalog.ResolveRuntimeCatalog();
-
-    static FishWorkClipCatalog LoadFishWorkCatalog() =>
-        FishWorkClipCatalog.ResolveRuntimeCatalog();
-#endif
 }

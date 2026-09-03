@@ -10,7 +10,7 @@ namespace IsoTilemap
         OccupiedCell = 1,
         /// <summary>SlimWall 등. <see cref="TileIdentity.GridPos"/> = 앵커, <see cref="TileIdentity.wallFace"/> = 방향.</summary>
         VerticalFace = 2,
-        /// <summary>바닥면. <see cref="TileIdentity.GridPos"/> = CellBelow, <see cref="TileIdentity.floorFace"/> = 방향.</summary>
+        /// <summary>바닥면. <see cref="TileIdentity.GridPos"/> = walkable, <see cref="TileIdentity.floorFace"/> = 방향.</summary>
         HorizontalFace = 3,
     }
 }

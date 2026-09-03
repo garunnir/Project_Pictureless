@@ -1,0 +1,324 @@
+// ============================================================
+// MapVaultQuery — 전방 vault 후보 (Mantle 착지 우선 → thin CrossOver)
+// ============================================================
+
+using UnityEngine;
+
+namespace IsoTilemap
+{
+    public enum VaultHeightClass : byte
+    {
+        Low = 0,
+        High = 1,
+    }
+
+    public enum VaultCrossStyle : byte
+    {
+        CrossOver = 0,
+        Mantle = 1,
+    }
+
+    public readonly struct VaultCandidate
+    {
+        public readonly VaultHeightClass Height;
+        public readonly VaultCrossStyle Style;
+        public readonly Vector3Int FeetCell;
+        public readonly Vector3Int LandingFeetCell;
+        public readonly Vector3 ApproachDirXZ;
+        public readonly int WallSpanCells;
+
+        public VaultCandidate(
+            VaultHeightClass height,
+            VaultCrossStyle style,
+            Vector3Int feetCell,
+            Vector3Int landingFeetCell,
+            Vector3 approachDirXZ,
+            int wallSpanCells)
+        {
+            Height = height;
+            Style = style;
+            FeetCell = feetCell;
+            LandingFeetCell = landingFeetCell;
+            ApproachDirXZ = approachDirXZ;
+            WallSpanCells = wallSpanCells;
+        }
+    }
+
+    /// <summary>
+    /// 발밑·이동 방향으로 Mantle(착지)을 먼저 보고, 실패 시 얇은 edge CrossOver만 본다.
+    /// 한 장애 = Low 또는 High 하나만 (상호 배타). 계약: docs/locomotion/VAULT.md
+    /// </summary>
+    public static class MapVaultQuery
+    {
+        const int MaxProbeY = 8;
+
+        public static bool TryFindCandidate(
+            IMapTopologyQuery query,
+            Vector3 feetWorld,
+            Vector3Int footprint,
+            Vector3 moveDirXZ,
+            out VaultCandidate candidate)
+        {
+            candidate = default;
+            if (query == null)
+                return false;
+
+            float cellSize = query.CellSize > 0f ? query.CellSize : 1f;
+            footprint = MapTopologyCollisionResolver.ClampFootprint(footprint);
+            Vector3Int feetCell = TileHelper.ConvertWorldToGrid(feetWorld, cellSize);
+            return TryFindCandidate(query, feetCell, footprint, moveDirXZ, out candidate);
+        }
+
+        /// <summary>
+        /// <paramref name="feetCell"/>는 locomotion·<see cref="CharacterState.GridPos"/>와 동일 계약(walkable 발밑).
+        /// </summary>
+        public static bool TryFindCandidate(
+            IMapTopologyQuery query,
+            Vector3Int feetCell,
+            Vector3Int footprint,
+            Vector3 moveDirXZ,
+            out VaultCandidate candidate)
+        {
+            candidate = default;
+            if (query == null)
+                return false;
+
+            footprint = MapTopologyCollisionResolver.ClampFootprint(footprint);
+
+            if (!TryCardinalStep(moveDirXZ, out Vector3Int step, out Vector3 approach))
+                return false;
+
+            Vector3Int ahead = feetCell + step;
+
+            if (TryMantle(query, feetCell, ahead, footprint, approach, out candidate))
+                return true;
+
+            if (TryCrossOver(query, feetCell, ahead, footprint, approach, out candidate))
+                return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Mantle 높이: deltaY ≤ footprint.y → Low, 초과 → High.
+        /// CrossOver는 sizeUnit.y 1/2로만 분류한다.
+        /// </summary>
+        public static VaultHeightClass ClassifyMantleHeight(int deltaY, int footprintY)
+        {
+            int sy = Mathf.Max(1, footprintY);
+            return deltaY > sy ? VaultHeightClass.High : VaultHeightClass.Low;
+        }
+
+        static bool TryMantle(
+            IMapTopologyQuery query,
+            Vector3Int feetCell,
+            Vector3Int ahead,
+            Vector3Int footprint,
+            Vector3 approach,
+            out VaultCandidate candidate)
+        {
+            candidate = default;
+            int sy = footprint.y;
+
+            if (!TryPickBestMantleLanding(
+                    query,
+                    feetCell.y,
+                    footprint,
+                    out int landingY,
+                    out int landX,
+                    out int landZ,
+                    ahead.x,
+                    ahead.z,
+                    feetCell.x,
+                    feetCell.z))
+                return false;
+
+            int deltaY = landingY - feetCell.y;
+            Vector3Int landing = new Vector3Int(landX, landingY, landZ);
+            candidate = new VaultCandidate(
+                ClassifyMantleHeight(deltaY, sy),
+                VaultCrossStyle.Mantle,
+                feetCell,
+                landing,
+                approach,
+                deltaY);
+            return true;
+        }
+
+        /// <summary>ahead(1칸) → feet(벽 밀착) 순. 전방 스캔 깊이: <see cref="VaultConsts.MantleProbeMaxAheadCells"/>.</summary>
+        static bool TryPickBestMantleLanding(
+            IMapTopologyQuery query,
+            int feetY,
+            Vector3Int footprint,
+            out int landingY,
+            out int landX,
+            out int landZ,
+            int aheadX,
+            int aheadZ,
+            int feetX,
+            int feetZ)
+        {
+            landingY = 0;
+            landX = 0;
+            landZ = 0;
+            int bestPriority = int.MaxValue;
+            bool found = false;
+
+            ConsiderMantleColumn(query, feetY, footprint, aheadX, aheadZ, 0, ref found, ref landingY, ref landX, ref landZ, ref bestPriority);
+            if (aheadX != feetX || aheadZ != feetZ)
+                ConsiderMantleColumn(query, feetY, footprint, feetX, feetZ, 1, ref found, ref landingY, ref landX, ref landZ, ref bestPriority);
+
+            return found;
+        }
+
+        static void ConsiderMantleColumn(
+            IMapTopologyQuery query,
+            int feetY,
+            Vector3Int footprint,
+            int x,
+            int z,
+            int priority,
+            ref bool found,
+            ref int landingY,
+            ref int landX,
+            ref int landZ,
+            ref int bestPriority)
+        {
+            if (!TryFindLowestMantleLanding(query, feetY, x, z, footprint, out int y, out int lx, out int lz))
+                return;
+            if (!found || y < landingY || (y == landingY && priority < bestPriority))
+            {
+                found = true;
+                landingY = y;
+                landX = lx;
+                landZ = lz;
+                bestPriority = priority;
+            }
+        }
+
+        static bool TryFindLowestMantleLanding(
+            IMapTopologyQuery query,
+            int feetY,
+            int x,
+            int z,
+            Vector3Int footprint,
+            out int landingY,
+            out int landX,
+            out int landZ)
+        {
+            landingY = 0;
+            landX = x;
+            landZ = z;
+            for (int dy = 1; dy <= MaxProbeY; dy++)
+            {
+                int y = feetY + dy;
+                if (!IsValidMantleLanding(query, x, z, y, feetY, footprint))
+                    continue;
+
+                landingY = y;
+                return true;
+            }
+
+            return false;
+        }
+
+        static bool IsValidMantleLanding(
+            IMapTopologyQuery query,
+            int x,
+            int z,
+            int landingY,
+            int feetY,
+            Vector3Int footprint)
+        {
+            int sy = footprint.y;
+            int deltaY = landingY - feetY;
+            // ThickWall(size.y=1)+상단 floor = deltaY 1. 양수 단차만 요구.
+            if (deltaY < 1)
+                return false;
+
+            if (!query.CellHasFloor(x, z, landingY))
+                return false;
+
+            // 몸 footprint 높이만큼만 헤드룸 (FootprintVolumeBlocks와 패리티)
+            if (CountClearSpanUp(query, x, z, landingY) < sy)
+                return false;
+
+            return !MapTopologyCollisionResolver.FootprintVolumeBlocks(
+                query,
+                new Vector3Int(x, landingY, z),
+                footprint);
+        }
+
+        static bool TryCrossOver(
+            IMapTopologyQuery query,
+            Vector3Int feetCell,
+            Vector3Int ahead,
+            Vector3Int footprint,
+            Vector3 approach,
+            out VaultCandidate candidate)
+        {
+            candidate = default;
+            if (!query.TryGetEdgeBetween(feetCell, ahead, out TileData edge) ||
+                !TileCollisionFlagsUtil.EdgeBlocksPassage(edge))
+                return false;
+
+            int span = edge.identity.sizeUnit.y;
+            if (span != 1 && span != 2)
+                return false;
+
+            Vector3Int landing = new Vector3Int(ahead.x, feetCell.y, ahead.z);
+            if (!query.CellHasFloor(landing.x, landing.z, landing.y))
+                return false;
+
+            if (MapTopologyCollisionResolver.FootprintVolumeBlocks(query, landing, footprint))
+                return false;
+
+            VaultHeightClass height = span == 1 ? VaultHeightClass.Low : VaultHeightClass.High;
+            candidate = new VaultCandidate(
+                height,
+                VaultCrossStyle.CrossOver,
+                feetCell,
+                landing,
+                approach,
+                span);
+            return true;
+        }
+
+        static int CountClearSpanUp(IMapTopologyQuery query, int x, int z, int startY)
+        {
+            int span = 0;
+            for (int i = 0; i < MaxProbeY; i++)
+            {
+                if (query.CellHasSolidWall(x, z, startY + i))
+                    break;
+                span++;
+            }
+
+            return span;
+        }
+
+        static bool TryCardinalStep(Vector3 moveDirXZ, out Vector3Int step, out Vector3 approach)
+        {
+            step = default;
+            approach = default;
+            moveDirXZ.y = 0f;
+            if (moveDirXZ.sqrMagnitude < 1e-6f)
+                return false;
+
+            if (Mathf.Abs(moveDirXZ.x) >= Mathf.Abs(moveDirXZ.z))
+            {
+                int sx = moveDirXZ.x >= 0f ? 1 : -1;
+                step = new Vector3Int(sx, 0, 0);
+                approach = new Vector3(sx, 0f, 0f);
+            }
+            else
+            {
+                int sz = moveDirXZ.z >= 0f ? 1 : -1;
+                step = new Vector3Int(0, 0, sz);
+                approach = new Vector3(0f, 0f, sz);
+            }
+
+            return true;
+        }
+    }
+}

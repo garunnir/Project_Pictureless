@@ -32,6 +32,8 @@ public sealed class FishCellActionHost : MonoBehaviour
             _arriveHost = gameObject.AddComponent<CharacterArriveHost>();
         if (_workHost == null)
             _workHost = gameObject.AddComponent<CharacterFishWorkHost>();
+        if (FishWorkClipCatalog.Runtime != null)
+            _workHost.SetClipCatalog(FishWorkClipCatalog.Runtime);
     }
 
     void OnDisable()

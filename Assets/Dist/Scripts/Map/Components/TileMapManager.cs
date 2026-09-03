@@ -573,20 +573,47 @@ public class TileMapManager : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    [ContextMenu("Load Editor")]
-    private void LoadEditor()
-    {
-        if (_tileContainer.childCount > 0)
-            DestroyImmediate(_tileContainer.GetChild(0).gameObject);
+    public MapFileLoader EditorLoader => _loader;
+    public MapFileSaver EditorSaver => _saver;
 
+    /// <summary>
+    /// 에디터에서 JSON 맵을 씬 타일 계층으로 빌드합니다.
+    /// <paramref name="absoluteJsonPath"/>가 비어 있으면 <see cref="MapFileLoader"/>의 fileName을 사용합니다.
+    /// </summary>
+    [ContextMenu("Load Editor")]
+    public void LoadInEditor(string absoluteJsonPath = null)
+    {
+        if (_loader == null)
+        {
+            Debug.LogError("[TileMapManager] LoadInEditor: MapFileLoader가 할당되지 않았습니다.", this);
+            return;
+        }
+
+        if (_tileContainer == null)
+        {
+            Debug.LogError("[TileMapManager] LoadInEditor: Tile Container가 할당되지 않았습니다.", this);
+            return;
+        }
+
+        if (_controller == null)
+        {
+            Debug.LogError("[TileMapManager] LoadInEditor: TileMapController가 할당되지 않았습니다.", this);
+            return;
+        }
+
+        ClearEditorTileContainer();
         _chunkStreamer?.Shutdown();
 
-        _loader.Load();
+        if (string.IsNullOrEmpty(absoluteJsonPath))
+            _loader.Load();
+        else
+            _loader.Load(absoluteJsonPath);
+
         Model = _loader.Model;
 
         if (Model == null)
         {
-            Debug.LogError("[TileMapManager] LoadEditor: 맵 로드 실패 — 파일 경로나 JSON을 확인하세요.");
+            Debug.LogError("[TileMapManager] LoadInEditor: 맵 로드 실패 — 파일 경로나 JSON을 확인하세요.", this);
             return;
         }
 
@@ -595,8 +622,10 @@ public class TileMapManager : MonoBehaviour
         if (Model is TileMapModel runtimeTileModel)
             SetupMapRuntimeCache(runtimeTileModel);
 
-        Transform tileContainer = new GameObject("TileContainer").transform;
-        tileContainer.SetParent(_tileContainer);
+        var tileContainerGo = new GameObject("TileContainer");
+        UnityEditor.Undo.RegisterCreatedObjectUndo(tileContainerGo, "Load Map In Editor");
+        Transform tileContainer = tileContainerGo.transform;
+        tileContainer.SetParent(_tileContainer, false);
 
         var factory = CreateTileFactory(tileContainer, chunkStreaming: false);
         IMapViewBuilder viewBuilder = CreateViewBuilder(factory, chunkStreaming: false);
@@ -613,8 +642,23 @@ public class TileMapManager : MonoBehaviour
             _prefabDB,
             editorCellSize);
 
-        Debug.Log($"[TileMapManager] LoadEditor 완료. (물 마커 {liquidMarkers}개 복원)");
         EnsureEditorLiquidPreview();
+        UnityEditor.EditorUtility.SetDirty(this);
+        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(gameObject.scene);
+
+        string source = string.IsNullOrEmpty(absoluteJsonPath)
+            ? _loader.ResolveFullPath()
+            : absoluteJsonPath;
+        Debug.Log($"[TileMapManager] LoadInEditor 완료. source={source}, liquidMarkers={liquidMarkers}");
+    }
+
+    void ClearEditorTileContainer()
+    {
+        for (int i = _tileContainer.childCount - 1; i >= 0; i--)
+        {
+            GameObject child = _tileContainer.GetChild(i).gameObject;
+            UnityEditor.Undo.DestroyObjectImmediate(child);
+        }
     }
 
     void OnEnable()

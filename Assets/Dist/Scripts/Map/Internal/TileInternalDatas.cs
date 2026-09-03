@@ -39,7 +39,8 @@ namespace IsoTilemap
 
         /// <summary>
         /// <see cref="TilePlacementSlot.OccupiedCell"/>이면 점유 셀.
-        /// 면 슬롯이면 정렬·저장용 앵커 (점유 아님). HorizontalFace 앵커는 CellBelow.
+        /// <see cref="TilePlacementSlot.HorizontalFace"/>이면 walkable(서는 층).
+        /// <see cref="TilePlacementSlot.VerticalFace"/>이면 면 앵커 셀.
         /// </summary>
         public Vector3Int GridPos{init; get;}
         public Vector3Int sizeUnit{init; get;}

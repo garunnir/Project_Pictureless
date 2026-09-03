@@ -10,7 +10,7 @@ namespace IsoTilemap
     public abstract class MapPlacedView : MonoBehaviour
     {
         [Header("Grid Anchor Position (xyz)")]
-        [Tooltip("OccupiedCell=점유 셀. VerticalFace/HorizontalFace=앵커 셀(CellBelow).")]
+        [Tooltip("OccupiedCell=점유 셀. HorizontalFace=walkable(서는 층, pivot과 동일).")]
         public Vector3Int gridPos;
 
         [Header("Size in Grid Units")]

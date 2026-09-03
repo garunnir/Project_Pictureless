@@ -27,6 +27,7 @@
 | Farming / plants | [`farming/FARMING.md`](farming/FARMING.md) | (Dist overlay view · TileFlags · world minutes) |
 | Locomotion | [`locomotion/LOCOMOTION.md`](locomotion/LOCOMOTION.md) | `locomotion.mdc` |
 | Swim / Dive / DIVE_TANK | [`locomotion/SWIM.md`](locomotion/SWIM.md) | — |
+| Vault / Fence vault | [`locomotion/VAULT.md`](locomotion/VAULT.md) | ThickWall Mantle = 상단 floor 필수 (문서 내 「두꺼운 벽」절) |
 | Character definition / spawn | [`character/DEFINITION.md`](character/DEFINITION.md) | — |
 | Character sight fade (NPC mesh) | [`character/SIGHT_FADE.md`](character/SIGHT_FADE.md) | — |
 | Character senses (sight + hearing) | [`character/SENSES.md`](character/SENSES.md) | — |

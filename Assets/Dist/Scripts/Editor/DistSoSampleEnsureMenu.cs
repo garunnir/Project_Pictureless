@@ -33,17 +33,8 @@ static class DistSoSampleEnsureMenu
             existing);
         EnsureAsset<FarmWorkClipCatalog>(FarmWorkClipCatalog.DefaultAssetPath, created, existing);
         EnsureAsset<FishWorkClipCatalog>(FishWorkClipCatalog.DefaultAssetPath, created, existing);
+        EnsureAsset<VaultClipCatalog>(VaultClipCatalog.DefaultAssetPath, created, existing);
         EnsureAsset<FishingLootCatalog>(FishingLootCatalog.DefaultAssetPath, created, existing);
-        MirrorToResources<FishingLootCatalog>(
-            FishingLootCatalog.DefaultAssetPath,
-            FishingLootCatalog.ResourcesAssetPath,
-            created,
-            existing);
-        MirrorToResources<FishWorkClipCatalog>(
-            FishWorkClipCatalog.DefaultAssetPath,
-            FishWorkClipCatalog.ResourcesAssetPath,
-            created,
-            existing);
         EnsureAsset<PlantOverlaySpriteCatalog>(
             PlantOverlaySpriteCatalog.DefaultAssetPath,
             created,

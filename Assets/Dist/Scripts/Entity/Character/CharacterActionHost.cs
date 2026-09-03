@@ -29,6 +29,7 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
     CharacterArriveHost _arriveHost;
     FarmCellActionHost _farmActionHost;
     FishCellActionHost _fishActionHost;
+    CharacterVaultHost _vaultHost;
     CharacterActionKind _currentKind;
     CharacterMotor _motor;
     bool _dispatching;
@@ -71,6 +72,8 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
                 case CharacterActionKind.Combat:
                     return _attacker != null ? _attacker.CooldownProgress01 : 0f;
                 case CharacterActionKind.Map:
+                    if (_vaultHost != null && _vaultHost.IsBusy)
+                        return _vaultHost.Progress01;
                     if (_fishActionHost != null && _fishActionHost.IsBusy)
                         return _fishActionHost.WorkProgress01;
                     return _farmActionHost != null ? _farmActionHost.WorkProgress01 : 0f;
@@ -89,6 +92,7 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
         TryGetComponent(out _arriveHost);
         TryGetComponent(out _farmActionHost);
         TryGetComponent(out _fishActionHost);
+        TryGetComponent(out _vaultHost);
         _motor = CharacterBodyResolve.GetInBody<CharacterMotor>(this);
         if (_crafting == null)
             _crafting = FindAnyObjectByType<UICraftingController>();
@@ -251,7 +255,8 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
             case CharacterActionKind.Map:
                 return (_farmActionHost != null && _farmActionHost.IsBusy) ||
                        (_fishActionHost != null && _fishActionHost.IsBusy) ||
-                       (_arriveHost != null && _arriveHost.IsBusy);
+                       (_arriveHost != null && _arriveHost.IsBusy) ||
+                       (_vaultHost != null && _vaultHost.IsBusy);
             default:
                 return false;
         }
@@ -274,6 +279,7 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
                 _farmActionHost?.Cancel();
                 _fishActionHost?.Cancel();
                 _arriveHost?.Cancel();
+                _vaultHost?.Cancel();
                 break;
         }
     }

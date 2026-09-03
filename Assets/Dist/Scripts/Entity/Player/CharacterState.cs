@@ -104,6 +104,8 @@ public class CharacterState : MonoBehaviour
     internal void ClearAim()
     {
         IsAiming = false;
+        InteractionDir = Vector3.zero;
+        InteractionReach = 0f;
         AimWorldPoint = Vector3.zero;
         AimWorldPointChanged?.Invoke(Vector3.zero);
     }

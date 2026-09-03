@@ -8,8 +8,8 @@
 | 판정·Cast/Trap | `Assets/Dist/Scripts/Map/Fish/MapFishService.cs`, `MapFishTrapHost.cs` |
 | 플래그 | `TileFlags` |
 | 품질 | `ItemQualityUtil` |
-| 루트 SO | `FishingLootCatalog` — SOData + `Resources/Fishing/FishingLootCatalog` |
-| Work 클립 SO | `FishWorkClipCatalog` — SOData + `Resources/Fishing/FishWorkClipCatalog` |
+| 루트 SO | `FishingLootCatalog` — `Assets/Dist/SOData/Gameplay/Fishing/` (bootstrap SerializeField) |
+| Work 클립 SO | `FishWorkClipCatalog` — 동일 SOData · bootstrap 주입 |
 | 인터랙션 | `Assets/Dist/Scripts/Interactions/Fishing/` |
 
 ---
@@ -82,7 +82,7 @@ BN `UNDERWATER_GUN` 무기 — 발사자 walkable 셀의 **액체 Fill01**로 �
 
 씬 `Map/FishingTest` — 스폰 `(-2,1,-2)` 인접 물. `map01.json`은 `liquidCells` + `hasLiquidSnapshot: true` (물 floor face 제거됨). **현재 웅덩이는 1겹이라 `FishableColumnMl` 미달 — 낚시 불가.** 분지 저작 후 재검증.
 
-Ensure: `Dist/MCP/Ensure Sample ScriptableObjects` → Resources mirror 포함.
+Ensure: `Dist/MCP/Ensure Sample ScriptableObjects` → SOData 카탈로그. `MapGameplayBootstrap`에 loot/work 클립 할당.
 
 ---
 

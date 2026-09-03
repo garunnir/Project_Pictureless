@@ -45,6 +45,8 @@ public class InputManager : SceneSingleton<InputManager>
     /// <summary>LookAt이 Hold 확정 없이 canceled — RMB 짧은 탭(컨텍스트 메뉴).</summary>
     public event Action<InputAction.CallbackContext> PlayerLookAtTapPerformed;
     public event Action<InputAction.CallbackContext> PlayerInteractPerformed;
+    public event Action<InputAction.CallbackContext> PlayerInteractStarted;
+    public event Action<InputAction.CallbackContext> PlayerInteractCanceled;
     public event Action<InputAction.CallbackContext> PlayerInventoryTogglePerformed;
     public event Action<InputAction.CallbackContext> PlayerStatusTogglePerformed;
     public event Action<InputAction.CallbackContext> PlayerStealthTogglePerformed;
@@ -230,7 +232,9 @@ public class InputManager : SceneSingleton<InputManager>
         _actions.Player.Run.canceled += ForwardPlayerRunCanceled;
         _actions.Player.LookAt.performed += ForwardPlayerLookAtPerformed;
         _actions.Player.LookAt.canceled += ForwardPlayerLookAtCanceled;
+        _actions.Player.Interaction.started += ForwardPlayerInteractStarted;
         _actions.Player.Interaction.performed += ForwardPlayerInteractPerformed;
+        _actions.Player.Interaction.canceled += ForwardPlayerInteractCanceled;
         _actions.Player.InventoryToggle.performed += ForwardPlayerInventoryTogglePerformed;
 
         _actions.UI.Navigate.started += ForwardUiNavigateStarted;
@@ -250,7 +254,9 @@ public class InputManager : SceneSingleton<InputManager>
         _actions.Player.Run.canceled -= ForwardPlayerRunCanceled;
         _actions.Player.LookAt.performed -= ForwardPlayerLookAtPerformed;
         _actions.Player.LookAt.canceled -= ForwardPlayerLookAtCanceled;
+        _actions.Player.Interaction.started -= ForwardPlayerInteractStarted;
         _actions.Player.Interaction.performed -= ForwardPlayerInteractPerformed;
+        _actions.Player.Interaction.canceled -= ForwardPlayerInteractCanceled;
         _actions.Player.InventoryToggle.performed -= ForwardPlayerInventoryTogglePerformed;
 
         _actions.UI.Navigate.started -= ForwardUiNavigateStarted;
@@ -314,12 +320,28 @@ public class InputManager : SceneSingleton<InputManager>
             PlayerLookAtTapPerformed?.Invoke(ctx);
     }
 
+    void ForwardPlayerInteractStarted(InputAction.CallbackContext ctx)
+    {
+        if (!IsPlayerActionEnabled(PlayerAction.Interact))
+            return;
+
+        PlayerInteractStarted?.Invoke(ctx);
+    }
+
     void ForwardPlayerInteractPerformed(InputAction.CallbackContext ctx)
     {
         if (!IsPlayerActionEnabled(PlayerAction.Interact))
             return;
 
         PlayerInteractPerformed?.Invoke(ctx);
+    }
+
+    void ForwardPlayerInteractCanceled(InputAction.CallbackContext ctx)
+    {
+        if (!IsPlayerActionEnabled(PlayerAction.Interact))
+            return;
+
+        PlayerInteractCanceled?.Invoke(ctx);
     }
 
     void ForwardPlayerInventoryTogglePerformed(InputAction.CallbackContext ctx)

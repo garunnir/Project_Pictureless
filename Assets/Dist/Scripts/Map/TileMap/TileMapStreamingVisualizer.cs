@@ -322,7 +322,7 @@ namespace IsoTilemap
 
             if (view.placementSlot == TilePlacementSlot.HorizontalFace)
             {
-                var key = new FloorFaceKey(view.gridPos, FloorFace.PosY);
+                var key = FloorFaceKey.ForWalkableCell(view.gridPos);
                 return key.CellBelow == cell || key.CellAbove == cell;
             }
 
@@ -369,7 +369,7 @@ namespace IsoTilemap
                 return WallEdgeKey.FromWallTileIdentity(tileData.identity).Anchor;
 
             if (TileIdentityUtil.IsHorizontalFace(tileData.identity))
-                return FloorFaceKey.FromFloorTileIdentity(tileData.identity).CellBelow;
+                return tileData.identity.GridPos;
 
             return tileData.identity.GridPos;
         }

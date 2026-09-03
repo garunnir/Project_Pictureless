@@ -16,7 +16,8 @@ namespace IsoTilemap
             }
 
             List<TileData> prepareData = new List<TileData>();
-            bool legacyTiles = tileMapData.schemaVersion < 1;
+            bool legacyTiles = tileMapData.schemaVersion < MapSaveSchema.PlacementSlotV1;
+            int schemaVersion = tileMapData.schemaVersion;
 
             foreach (var td in tileMapData.tiles)
             {
@@ -28,7 +29,7 @@ namespace IsoTilemap
                 if (slot == TilePlacementSlot.HorizontalFace)
                 {
                     Debug.LogWarning(
-                        $"[TileMapDtoMapper] Floor '{td.prefabId}' in tiles[] is no longer loaded. Use floorFaces[] with anchor GridPos.");
+                        $"[TileMapDtoMapper] Floor '{td.prefabId}' in tiles[] is no longer loaded. Use floorFaces[] with walkable GridPos.");
                     continue;
                 }
 
@@ -90,7 +91,7 @@ namespace IsoTilemap
 
                     if (TryMakeHorizontalFaceIdentity(
                             ff.prefabId,
-                            new Vector3Int(ff.x, ff.y, ff.z),
+                            ff.ResolveWalkableFromFloorFaceSave(schemaVersion),
                             out var identity))
                         prepareData.Add(MakeTile(identity));
                 }
@@ -104,7 +105,7 @@ namespace IsoTilemap
         public MapSaveJsonDto FromPrepared(MapModelDTO prepared)
         {
             IReadOnlyList<TileData> tiles = prepared.TilesData;
-            var dto = new MapSaveJsonDto { schemaVersion = 1 };
+            var dto = new MapSaveJsonDto { schemaVersion = MapSaveSchema.Current };
 
             // 물은 타일 모델에 없으므로 여기서 복원할 수 없다. null = "저작 레이어 미지정" —
             // 씬 마커를 읽은 호출부(MapFileSaver)가 채우고, 아니면 MapSaveLayerCarryOver가 디스크를 계승한다.
@@ -184,11 +185,11 @@ namespace IsoTilemap
                 plant = plant,
             };
 
-        static bool TryMakeHorizontalFaceIdentity(string prefabId, Vector3Int anchor, out TileIdentity identity) =>
+        static bool TryMakeHorizontalFaceIdentity(string prefabId, Vector3Int walkableGridPos, out TileIdentity identity) =>
             TryMakeIdentity(
                 prefabId,
                 TilePlacementSlot.HorizontalFace,
-                anchor,
+                walkableGridPos,
                 wallFace: 0,
                 floorFace: (byte)FloorFace.PosY,
                 out identity);
