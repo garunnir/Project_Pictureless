@@ -109,6 +109,17 @@ namespace IsoTilemap
             return deltaY > sy ? VaultHeightClass.High : VaultHeightClass.Low;
         }
 
+        /// <summary>
+        /// 달리기 자동 vault: 장애 높이 ≤ 플레이어 footprint.y 절반.
+        /// Mantle=<see cref="VaultCandidate.WallSpanCells"/> (deltaY), CrossOver=edge sizeUnit.y.
+        /// </summary>
+        public static bool IsAutoSprintEligible(in VaultCandidate candidate, Vector3Int footprint)
+        {
+            footprint = MapTopologyCollisionResolver.ClampFootprint(footprint);
+            int maxSpanCells = Mathf.Max(1, footprint.y / 2);
+            return candidate.WallSpanCells > 0 && candidate.WallSpanCells <= maxSpanCells;
+        }
+
         static bool TryMantle(
             IMapTopologyQuery query,
             Vector3Int feetCell,

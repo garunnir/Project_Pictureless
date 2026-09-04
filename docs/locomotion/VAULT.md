@@ -70,7 +70,7 @@ flowchart TD
 
 Mantle 분류 SSOT: `MapVaultQuery.ClassifyMantleHeight`. CrossOver는 edge `sizeUnit.y`만.
 
-기본 footprint `(1,2,1)` 예: Mantle `deltaY=1`~`2` → Low (달리기 자동 가능), `deltaY≥3` → High (E 홀드). CrossOver Low=1 / High=2.
+기본 footprint `(1,2,1)` 예: Mantle `deltaY=1`~`2` → Low, `deltaY≥3` → High. CrossOver Low=1 / High=2. **달리기 자동**은 `deltaY`(또는 edge span) ≤ `footprint.y/2`(기본 1칸)만.
 
 ---
 
@@ -94,7 +94,7 @@ Mantle 분류 SSOT: `MapVaultQuery.ClassifyMantleHeight`. CrossOver는 edge `siz
 
 | 등급 | 진입 |
 |------|------|
-| Low | **달려오던 속도**로 전방 막힘 → 자동 **또는** **E 홀드** (`VaultConsts.HoldSeconds`) |
+| Low | **달려오던 속도**로 전방 막힘 → 자동(**≤ footprint.y/2**만) **또는** **E 홀드** (`VaultConsts.HoldSeconds`) |
 | High | **E 홀드만** (동일 `HoldSeconds`) |
 
 - E = `InputActions.Player.Interaction` (`<Keyboard>/e`).
@@ -102,7 +102,7 @@ Mantle 분류 SSOT: `MapVaultQuery.ClassifyMantleHeight`. CrossOver는 edge `siz
 - 홀드 판정은 InputActions Hold가 아니라 `CharacterVaultHost` 타이머 (전역 Interaction 지연 방지).
 - E **짧은 탭**(홀드 미달): vault 후보가 있어도 시전하지 않고, 릴리즈 시 기존 `IInteractable` 상호작용(`TryInteractFocused`).
 - vault 홀드 확정 시 해당 press의 상호작용은 억제.
-- 달리기 자동 vault: Shift + MoveDir + **프로브 범위 안 Low 후보** + **이동 방향 전진 속도** ≥ `AutoSprintMinApproachSpeedMps`(2.5m/s). 벽에 멈춰 있으면 속도 0이라 안 됨. 조준 중 금지.
+- 달리기 자동 vault: Shift + MoveDir + 프로브 성공 + `IsAutoSprintEligible`(≤ footprint.y/2) + 전진 속도 ≥ `AutoSprintMinApproachSpeedMps`. 조준 중 금지.
 
 ---
 
@@ -127,7 +127,7 @@ flowchart LR
 |------|------|
 | Probe | 발밑 + **이동 입력(MoveDir)** 방향 (E·달리기 자동 공통) |
 | Busy | `CharacterActionKind.Map` 큐 · ESC `CancelAll` |
-| Motion | `BeginScriptedLocomotion` + `SetMoveLocked` · 키프레임 `Rigidbody.MovePosition` · `SnapWorldPosition` |
+| Motion | `BeginScriptedLocomotion` + `SetMoveLocked` · 키프레임 `Rigidbody.MovePosition` · `SnapWorldPosition` · duration = 기본×`ResolveDurationScale`(시전 순간 접근 속도) · Work Layer `Animator.speed` 동기화 |
 | Time | `TimeScaleChannel.Player` (possessed) · `ActionTickScale` |
 | Anim | `VaultClipCatalog` → Work Layer (`CharacterFarmWorkHost.WorkLayerName` 재사용). 클립 없으면 위치만 |
 
@@ -135,7 +135,7 @@ flowchart LR
 
 ## 상수
 
-`VaultConsts` — `HoldSeconds`, `AutoRetryCooldown`, `MantleProbeMaxAheadCells`, `AutoSprintMinApproachSpeedMps`, Low/High × Cross/Mantle duration, Cross peak 비율.
+`VaultConsts` — `HoldSeconds`, `AutoRetryCooldown`, `MantleProbeMaxAheadCells`, `AutoSprintMinApproachSpeedMps`, `DurationScaleWalkSpeedMps`/`DurationScaleSprintSpeedMps`/`DurationMinScale`, Low/High × Cross/Mantle duration, Cross peak 비율.
 
 클립 SO: `VaultClipCatalog` — SSOT 한곳 `Assets/Dist/SOData/Gameplay/Locomotion/VaultClipCatalog.asset` (`SerializeField` / Ensure 메뉴).
 

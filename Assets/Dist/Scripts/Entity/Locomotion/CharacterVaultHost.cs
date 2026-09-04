@@ -22,6 +22,7 @@ public sealed class CharacterVaultHost : MonoBehaviour
     Rigidbody _rigidbody;
     Animator _animator;
     int _workLayerIndex = -1;
+    float _animatorSpeedBeforeVault = 1f;
     MapCollisionServices _mapCollision;
     float _cellSize = 1f;
 
@@ -189,7 +190,7 @@ public sealed class CharacterVaultHost : MonoBehaviour
             return;
         if (!TryProbeCandidate(out VaultCandidate candidate))
             return;
-        if (candidate.Height != VaultHeightClass.Low)
+        if (!MapVaultQuery.IsAutoSprintEligible(candidate, _state.GridFootprint))
             return;
         if (GetApproachSpeedMps() < VaultConsts.AutoSprintMinApproachSpeedMps)
             return;
@@ -233,11 +234,14 @@ public sealed class CharacterVaultHost : MonoBehaviour
         if (!CanStartVault())
             return false;
 
-        float duration = _clips != null
+        float baseDuration = _clips != null
             ? _clips.ResolveDuration(candidate.Height, candidate.Style)
             : DefaultDuration(candidate.Height, candidate.Style);
-        if (duration <= 0f)
-            duration = DefaultDuration(candidate.Height, candidate.Style);
+        if (baseDuration <= 0f)
+            baseDuration = DefaultDuration(candidate.Height, candidate.Style);
+
+        float approachMps = ResolveApproachSpeedForVault();
+        float duration = baseDuration * VaultConsts.ResolveDurationScale(approachMps);
 
         _candidate = candidate;
         _startBody = _rigidbody.position;
@@ -261,8 +265,20 @@ public sealed class CharacterVaultHost : MonoBehaviour
             _suppressInput = true;
         }
 
-        PlayClip(candidate);
+        PlayClip(candidate, duration);
         return true;
+    }
+
+    /// <summary>시전 순간 접근 속도. 달리기 자동은 전진 delta, E 홀드는 mover 속도 폴백.</summary>
+    float ResolveApproachSpeedForVault()
+    {
+        float mps = GetApproachSpeedMps();
+        if (mps > 0.01f)
+            return mps;
+        if (_motor == null || _state == null || _state.MoveDir.sqrMagnitude < 1e-4f)
+            return 0f;
+
+        return Mathf.Max(0f, _motor.CurrentSpeed);
     }
 
     void TickMotion(float dt)
@@ -366,6 +382,9 @@ public sealed class CharacterVaultHost : MonoBehaviour
             SetScriptedInput(true);
             _suppressInput = false;
         }
+
+        if (_animator != null)
+            _animator.speed = _animatorSpeedBeforeVault;
     }
 
     void CancelHold()
@@ -473,7 +492,7 @@ public sealed class CharacterVaultHost : MonoBehaviour
         return move.sqrMagnitude > 1e-4f ? move.normalized : Vector3.zero;
     }
 
-    void PlayClip(in VaultCandidate candidate)
+    void PlayClip(in VaultCandidate candidate, float motionDurationSeconds)
     {
         if (_clips == null || _animator == null || _workLayerIndex < 0)
             return;
@@ -481,6 +500,10 @@ public sealed class CharacterVaultHost : MonoBehaviour
         AnimationClip clip = _clips.Resolve(candidate.Height, candidate.Style);
         if (clip == null)
             return;
+
+        _animatorSpeedBeforeVault = _animator.speed;
+        if (clip.length > 0f && motionDurationSeconds > 0f)
+            _animator.speed = clip.length / motionDurationSeconds;
 
         _animator.Play(clip.name, _workLayerIndex, 0f);
     }

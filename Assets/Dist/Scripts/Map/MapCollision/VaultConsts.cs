@@ -2,6 +2,8 @@
 // VaultConsts — 담넘기·벽넘기 상수 SSOT
 // ============================================================
 
+using UnityEngine;
+
 namespace IsoTilemap
 {
     /// <summary>숫자 진실원. 계약: docs/locomotion/VAULT.md</summary>
@@ -18,6 +20,28 @@ namespace IsoTilemap
 
         /// <summary>Mantle 프로브: 발밑에서 이동 방향으로 스캔하는 최대 앞 칸 수(1=바로 앞 열만).</summary>
         public const int MantleProbeMaxAheadCells = 1;
+
+        /// <summary>접근 속도 duration 스케일: 이 속도(m/s) 이하면 배율 1.</summary>
+        public const float DurationScaleWalkSpeedMps = 3f;
+
+        /// <summary>접근 속도 duration 스케일: 이 속도(m/s) 이상이면 <see cref="DurationMinScale"/>.</summary>
+        public const float DurationScaleSprintSpeedMps = 6f;
+
+        /// <summary>최대 가속 시 vault duration 배율 하한 (빠를수록 짧게).</summary>
+        public const float DurationMinScale = 0.65f;
+
+        /// <summary>시전 순간 MoveDir 전진 속도(m/s)로 duration 배율을 계산한다.</summary>
+        public static float ResolveDurationScale(float approachSpeedMps)
+        {
+            if (DurationScaleSprintSpeedMps <= DurationScaleWalkSpeedMps)
+                return 1f;
+
+            float t = Mathf.InverseLerp(
+                DurationScaleWalkSpeedMps,
+                DurationScaleSprintSpeedMps,
+                approachSpeedMps);
+            return Mathf.Lerp(1f, DurationMinScale, t);
+        }
 
         /// <summary>낮은담 CrossOver 기본 모션 초 (클립 없으면).</summary>
         public const float LowCrossDurationSeconds = 0.45f;
