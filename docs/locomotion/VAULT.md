@@ -112,7 +112,7 @@ Mantle 분류 SSOT: `MapVaultQuery.ClassifyMantleHeight`. CrossOver는 edge `siz
 flowchart LR
     probe[MapVaultQuery]
     host[CharacterVaultHost]
-    action[CharacterActionHost Map]
+    action[CharacterActionHost Cell]
     motor[CharacterMotor]
     state[CharacterState]
     anim[Work Layer clip]
@@ -126,7 +126,7 @@ flowchart LR
 | 단계 | 동작 |
 |------|------|
 | Probe | 발밑 + **이동 입력(MoveDir)** 방향 (E·달리기 자동 공통) |
-| Busy | `CharacterActionKind.Map` 큐 · ESC `CancelAll` |
+| Busy | `CharacterActionKind.Cell` (행동큐) · ESC `CancelAll` |
 | Motion | `BeginScriptedLocomotion` + `SetMoveLocked` · 키프레임 `Rigidbody.MovePosition` · `SnapWorldPosition` · duration = 기본×`ResolveDurationScale`(시전 순간 접근 속도) · Work Layer `Animator.speed` 동기화 |
 | Time | `TimeScaleChannel.Player` (possessed) · `ActionTickScale` |
 | Anim | `VaultClipCatalog` → Work Layer (`CharacterFarmWorkHost.WorkLayerName` 재사용). 클립 없으면 위치만 |

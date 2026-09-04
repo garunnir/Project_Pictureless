@@ -61,7 +61,7 @@ public sealed class FarmCellActionHost : MonoBehaviour
             return BeginPipeline(kind, cell, stack, container);
 
         return _actionHost.TryRunOrEnqueue(
-            CharacterActionKind.Map,
+            CharacterActionKind.Cell,
             () => BeginPipeline(kind, cell, stack, container));
     }
 

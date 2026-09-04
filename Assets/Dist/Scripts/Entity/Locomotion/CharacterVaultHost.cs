@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterVaultHost — 담넘기·벽넘기 입력·궤적·Map 액션 큐
+// CharacterVaultHost — 담넘기·벽넘기 입력·궤적·행동큐 Cell 종류
 // ============================================================
 
 using IsoTilemap;
@@ -223,7 +223,7 @@ public sealed class CharacterVaultHost : MonoBehaviour
             return TryBegin(candidate);
 
         return _actionHost.TryRunOrEnqueue(
-            CharacterActionKind.Map,
+            CharacterActionKind.Cell,
             () => TryBegin(candidate));
     }
 

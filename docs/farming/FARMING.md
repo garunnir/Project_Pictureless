@@ -124,7 +124,7 @@ inspect/harvest CatchUp는 이 Kind를 쓴다.
 
 `GetDisabledReason`(메뉴)은 아이템 소유·무드·DIG 품질 등 **세션 시작 가능**만. 특정 칸 가능 여부는 타겟팅 프리뷰가 담당.
 
-Arrive/Work 중 **ESC** 또는 **이동 입력**(WASD/스틱) → `CharacterActionHost.CancelAll` (`CharacterActionKind.Map`, apply 없음).
+Arrive/Work 중 **ESC** 또는 **이동 입력**(WASD/스틱) → `CharacterActionHost.CancelAll` (`CharacterActionKind.Cell`, apply 없음).
 
 ---
 

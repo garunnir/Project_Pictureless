@@ -45,7 +45,7 @@
 | 인벤 낚싯대 RMB | «낚시» → 물 셀 타겟 → Cast |
 | 인벤 `fish_trap` RMB | «삽탄»(미끼) / «통발 설치» → 물 셀 Deploy |
 | 타일 CM (물+트랩) | «수확» → CollectTrap |
-| `CharacterActionKind.Map` | Arrive → Work → Apply; 이동 입력 `CancelAll` |
+| `CharacterActionKind.Cell` | Arrive → Work → Apply; 이동 입력 `CancelAll` |
 
 ---
 

@@ -71,7 +71,7 @@ public sealed class CharacterArriveHost : MonoBehaviour
                 tryIsArrived);
 
         return _actionHost.TryRunOrEnqueue(
-            CharacterActionKind.Map,
+            CharacterActionKind.Cell,
             () => TryBegin(
                 destination,
                 stoppingDistance,

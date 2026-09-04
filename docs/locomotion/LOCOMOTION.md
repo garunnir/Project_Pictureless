@@ -28,7 +28,7 @@ flowchart LR
 - `CharacterMotor`: 공용 물리 파사드. 조종 중(`IsPossessed`)이면 `TimeScaleChannel.Player`, 아니면 `World`. 수동 조종은 `PlayerMovement` drive, **스크립트 조향**(`IsScriptedLocomotion`)은 NPC와 동일 등속 + `SetTravelLimit`을 `CharacterLocomotion.Move`에 넘긴다.
 - `PlayerMovement`: Input System, 달리기, 관성. `PlayerPossessedInputHost`가 possessed `CharacterMotor`에 바인드. 물리 소유 없음. `SetMovementInputEnabled`는 possessed 유지·입력만 끔.
 - `PlayerPossessedInputHost.SetScriptedLocomotionInput`: 스크립트 조향 중 aim/전투/타일·이동 입력 차단. `SetControlEnabled`와 별개(조종 타겟 교체용).
-- `CharacterArriveHost`: possessed·NPC 공용 목표 도착. `NpcSteer` 틱 + `BeginScriptedLocomotion`. `CharacterActionKind.Map` 큐 연동.
+- `CharacterArriveHost`: possessed·NPC 공용 목표 도착. `NpcSteer` 틱 + `BeginScriptedLocomotion`. `CharacterActionKind.Cell` 행동큐 연동.
 - `MapGameplayBootstrap`: 씬 캐릭터 Find + `BindSpawnedCharacter` 증분 바인드
 - `NpcSteer`: 목표점/Transform을 월드 XZ 방향으로 변환 (`NpcManager`가 호출, 인스턴스 MB 없음).
 - `NpcManager`: 비possessed 유닛 FSM (Patrol/Alert/Chase/Attack/Return/Dead). 상태·웨이포인트는 행 단위. `suppressMode`면 조준 다리. 타겟은 `CharacterVision` 반경 + `CharacterFactionCatalog` 적대(`Hostile`)만 추적. Attack 시전은 `TryPerformSelected` (busy 게이트는 그 메서드).

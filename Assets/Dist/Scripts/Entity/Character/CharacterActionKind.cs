@@ -9,5 +9,10 @@ public enum CharacterActionKind
     Inventory = 2,
     Combat = 3,
     Craft = 4,
-    Map = 5
+
+    /// <summary>
+    /// 그리드/월드 셀 스크립트 행동 슬롯 (도착·농사·낚시·건설·vault).
+    /// TileMap 시스템과 무관 — 행동큐 종류 태그만.
+    /// </summary>
+    Cell = 5
 }

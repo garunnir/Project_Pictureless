@@ -58,7 +58,7 @@ public sealed class ConstructionActionHost : MonoBehaviour
             return BeginPipeline(data, cell, facingQuarters);
 
         return _actionHost.TryRunOrEnqueue(
-            CharacterActionKind.Map,
+            CharacterActionKind.Cell,
             () => BeginPipeline(data, cell, facingQuarters));
     }
 

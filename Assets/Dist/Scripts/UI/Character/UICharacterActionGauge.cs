@@ -58,7 +58,7 @@ public sealed class UICharacterActionGauge : MonoBehaviour
             return;
         }
 
-        bool autoMove = _host.IsMapArriving;
+        bool autoMove = _host.IsCellArriving;
         SetAutoProgressIcon(autoMove);
 
         if (_fill != null)

@@ -49,9 +49,9 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
 
     public event Action Changed;
 
-    /// <summary>Map Arrive(자동이동) 중 — 게이지는 fill 대신 AutoProgressIcon.</summary>
-    public bool IsMapArriving =>
-        _currentKind == CharacterActionKind.Map &&
+    /// <summary>Cell Arrive(자동이동) 중 — 게이지는 fill 대신 AutoProgressIcon.</summary>
+    public bool IsCellArriving =>
+        _currentKind == CharacterActionKind.Cell &&
         _arriveHost != null &&
         _arriveHost.IsBusy;
 
@@ -71,7 +71,7 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
                     return _crafting != null ? _crafting.CraftProgress01 : 0f;
                 case CharacterActionKind.Combat:
                     return _attacker != null ? _attacker.CooldownProgress01 : 0f;
-                case CharacterActionKind.Map:
+                case CharacterActionKind.Cell:
                     if (_vaultHost != null && _vaultHost.IsBusy)
                         return _vaultHost.Progress01;
                     if (_fishActionHost != null && _fishActionHost.IsBusy)
@@ -252,7 +252,7 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
                 return _crafting != null && _crafting.IsCraftRunning;
             case CharacterActionKind.Combat:
                 return _attacker != null && _attacker.IsActionBusy;
-            case CharacterActionKind.Map:
+            case CharacterActionKind.Cell:
                 return (_farmActionHost != null && _farmActionHost.IsBusy) ||
                        (_fishActionHost != null && _fishActionHost.IsBusy) ||
                        (_arriveHost != null && _arriveHost.IsBusy) ||
@@ -275,7 +275,7 @@ public sealed class CharacterActionHost : MonoBehaviour, IUiCancelConsumer
             case CharacterActionKind.Craft:
                 _crafting?.CancelRunningCraft();
                 break;
-            case CharacterActionKind.Map:
+            case CharacterActionKind.Cell:
                 _farmActionHost?.Cancel();
                 _fishActionHost?.Cancel();
                 _arriveHost?.Cancel();
