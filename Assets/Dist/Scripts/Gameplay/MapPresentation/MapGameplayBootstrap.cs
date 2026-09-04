@@ -230,6 +230,12 @@ public sealed class MapGameplayBootstrap : MonoBehaviour
         vault.BindMapCollision(services);
         if (vaultClips != null)
             vault.SetClipCatalog(vaultClips);
+
+        Animator animator = instance.GetComponentInChildren<Animator>();
+        if (animator != null && animator.GetComponent<CharacterVaultIkHost>() == null)
+            animator.gameObject.AddComponent<CharacterVaultIkHost>();
+
+        CharacterWorkLayerAnim.ValidateOrLog(animator, instance);
     }
 
     static void EnsureFishWorkHostsOnSceneCharacters(FishWorkClipCatalog fishClips)

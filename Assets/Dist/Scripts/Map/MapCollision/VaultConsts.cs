@@ -60,5 +60,47 @@ namespace IsoTilemap
 
         /// <summary>Mantle 중간 키프레임 t (0..1).</summary>
         public const float MantleMidT = 0.45f;
+
+        /// <summary>Mantle IK: 손목 좌우 반폭 (셀 단위).</summary>
+        public const float MantleIkHandHalfSpanCells = 0.25f;
+
+        /// <summary>Mantle IK: 립 중심을 착지 셀 안쪽(접근 반대)으로 밀기 (셀 단위).</summary>
+        public const float MantleIkLedgeInsetCells = 0.5f;
+
+        /// <summary>Mantle IK: 립 높이 보정 (셀 단위).</summary>
+        public const float MantleIkLedgeHeightOffsetCells = 0.05f;
+
+        /// <summary>Mantle IK: 손바닥 회전 weight = position weight × 이 값.</summary>
+        public const float MantleIkRotationWeightScale = 0.65f;
+
+        /// <summary>Mantle IK weight ramp 시작 (Progress01).</summary>
+        public const float MantleIkGrabStartT = 0.08f;
+
+        /// <summary>Mantle IK weight peak (Progress01).</summary>
+        public const float MantleIkGrabPeakT = 0.32f;
+
+        /// <summary>Mantle IK weight ramp 종료 (Progress01).</summary>
+        public const float MantleIkGrabEndT = 0.78f;
+
+        /// <summary>Mantle Progress01 → 손 IK weight (0..1).</summary>
+        public static float ResolveMantleIkWeight(float progress01)
+        {
+            progress01 = Mathf.Clamp01(progress01);
+            if (progress01 < MantleIkGrabStartT || progress01 > MantleIkGrabEndT)
+                return 0f;
+
+            if (progress01 <= MantleIkGrabPeakT)
+            {
+                return Mathf.InverseLerp(
+                    MantleIkGrabStartT,
+                    MantleIkGrabPeakT,
+                    progress01);
+            }
+
+            return Mathf.InverseLerp(
+                MantleIkGrabEndT,
+                MantleIkGrabPeakT,
+                progress01);
+        }
     }
 }

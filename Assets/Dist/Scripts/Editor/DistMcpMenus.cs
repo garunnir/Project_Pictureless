@@ -3,6 +3,8 @@
 // ============================================================
 // Dist/MCP/* 는 디자이너 일상 UX가 아니라 MCP·에이전트 자동화용이다.
 // CreateAssetMenu(Dist/...) 와 혼동하지 말 것.
+// 에이전트: MCP로 execute_menu_item 우선. 연결 실패 시 사용자에게 MCP 복구 요청 — 수동 클릭·YAML 대체 금지
+//   (.cursor/rules/collaboration-unity.mdc §Unity MCP).
 
 #if UNITY_EDITOR
 internal static class DistMcpMenus

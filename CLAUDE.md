@@ -18,6 +18,7 @@
 - Make one logical change at a time
 - Run tests after each significant change if tests exist
 - Keep track of every file you touch
+- **Unity MCP:** Editor-only work (`Dist/MCP/*`, scene save, animator/controller wiring) → run via Unity MCP first. If MCP is off, times out, or errors → **ask the user to fix MCP connection**, then retry; do **not** punt manual menu clicks or YAML/`git checkout` asset fixes to the user unless they explicitly approve (see `.cursor/rules/collaboration-unity.mdc` §Unity MCP).
 
 ### After Completing Any Task
 - List all files created or modified

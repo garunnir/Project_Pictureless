@@ -19,6 +19,26 @@ public static class ArmOverlayAnimatorBuilder
 
     static readonly string[] Hands = { "Left", "Right", "TwoHand" };
 
+    [MenuItem("Dist/MCP/Ensure Work Layer (Vault/Farm/Fish)")]
+    public static void EnsureWorkLayerOnly() => EnsureDefaultControllerWorkLayer(log: true);
+
+    /// <summary>카탈로그·컨트롤러 Work Layer 동기화 SSOT. Postprocessor·Rebuild에서 호출.</summary>
+    public static void EnsureDefaultControllerWorkLayer(bool log = false)
+    {
+        var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+        if (controller == null)
+        {
+            Debug.LogError("[ArmOverlayAnimatorBuilder] Controller missing.");
+            return;
+        }
+
+        AddOrRefreshWorkLayer(controller);
+        EditorUtility.SetDirty(controller);
+        AssetDatabase.SaveAssets();
+        if (log)
+            Debug.Log("[ArmOverlayAnimatorBuilder] Work Layer ensured (IK Pass on, catalog clip states).");
+    }
+
     [MenuItem("Dist/MCP/Rebuild Arm Overlay Animator")]
     public static void Rebuild()
     {
@@ -46,7 +66,7 @@ public static class ArmOverlayAnimatorBuilder
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
         Debug.Log(
-            "[ArmOverlayAnimatorBuilder] Rebuilt arm + Impact + Flinch + Hurt (no AnimVerb on controller).");
+            "[ArmOverlayAnimatorBuilder] Rebuilt arm + Impact + Flinch + Hurt + Work Layer (no AnimVerb on controller).");
     }
 
     static void EnsureThinSlotClips()
@@ -190,6 +210,98 @@ public static class ArmOverlayAnimatorBuilder
         AddImpactLayer(controller);
         AddFlinchLayer(controller, headTorsoMask);
         AddHurtLayer(controller);
+        AddOrRefreshWorkLayer(controller);
+    }
+
+    static void AddOrRefreshWorkLayer(AnimatorController controller)
+    {
+        string layerName = CharacterWorkLayerAnim.LayerName;
+        int index = FindLayerIndex(controller, layerName);
+        if (index < 0)
+        {
+            controller.AddLayer(layerName);
+            index = controller.layers.Length - 1;
+        }
+
+        AnimatorControllerLayer[] layers = controller.layers;
+        AnimatorControllerLayer layer = layers[index];
+        layer.defaultWeight = 0f;
+        layer.blendingMode = AnimatorLayerBlendingMode.Override;
+        layer.avatarMask = null;
+        layer.iKPass = true;
+        layer.syncedLayerIndex = -1;
+        layer.syncedLayerAffectsTiming = false;
+        layers[index] = layer;
+        controller.layers = layers;
+
+        AnimatorStateMachine sm = controller.layers[index].stateMachine;
+        ClearStateMachine(sm);
+
+        AnimatorState empty = sm.AddState("Empty");
+        sm.defaultState = empty;
+
+        System.Collections.Generic.List<AnimationClip> clips = CollectWorkCatalogClips();
+        Vector3 pos = new Vector3(300f, 0f, 0f);
+        for (int i = 0; i < clips.Count; i++)
+        {
+            AnimationClip clip = clips[i];
+            if (clip == null)
+                continue;
+
+            AnimatorState state = AddState(sm, clip.name, clip, pos + new Vector3(i * 40f, 0f, 0f));
+            AnimatorStateTransition toEmpty = state.AddTransition(empty);
+            toEmpty.hasExitTime = true;
+            toEmpty.exitTime = 0.92f;
+            toEmpty.duration = 0.08f;
+        }
+    }
+
+    static int FindLayerIndex(AnimatorController controller, string layerName)
+    {
+        AnimatorControllerLayer[] layers = controller.layers;
+        for (int i = 0; i < layers.Length; i++)
+        {
+            if (layers[i].name == layerName)
+                return i;
+        }
+
+        return -1;
+    }
+
+    static System.Collections.Generic.List<AnimationClip> CollectWorkCatalogClips()
+    {
+        var unique = new System.Collections.Generic.Dictionary<string, AnimationClip>();
+        AppendCatalogClips(
+            AssetDatabase.LoadAssetAtPath<VaultClipCatalog>(VaultClipCatalog.DefaultAssetPath),
+            unique);
+        AppendCatalogClips(
+            AssetDatabase.LoadAssetAtPath<FarmWorkClipCatalog>(FarmWorkClipCatalog.DefaultAssetPath),
+            unique);
+        AppendCatalogClips(
+            AssetDatabase.LoadAssetAtPath<FishWorkClipCatalog>(FishWorkClipCatalog.DefaultAssetPath),
+            unique);
+
+        return new System.Collections.Generic.List<AnimationClip>(unique.Values);
+    }
+
+    static void AppendCatalogClips(
+        ScriptableObject catalog,
+        System.Collections.Generic.Dictionary<string, AnimationClip> unique)
+    {
+        if (catalog == null)
+            return;
+
+        SerializedObject so = new SerializedObject(catalog);
+        SerializedProperty prop = so.GetIterator();
+        while (prop.NextVisible(true))
+        {
+            if (prop.propertyType != SerializedPropertyType.ObjectReference)
+                continue;
+            if (prop.objectReferenceValue is not AnimationClip clip || clip == null)
+                continue;
+            if (!unique.ContainsKey(clip.name))
+                unique.Add(clip.name, clip);
+        }
     }
 
     static AvatarMask EnsureHeadTorsoMask()

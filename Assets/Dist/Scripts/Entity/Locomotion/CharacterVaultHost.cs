@@ -23,6 +23,7 @@ public sealed class CharacterVaultHost : MonoBehaviour
     Animator _animator;
     int _workLayerIndex = -1;
     float _animatorSpeedBeforeVault = 1f;
+    bool _applyRootMotionBeforeVault;
     MapCollisionServices _mapCollision;
     float _cellSize = 1f;
 
@@ -47,6 +48,14 @@ public sealed class CharacterVaultHost : MonoBehaviour
     public float Progress01 =>
         _duration <= 0f ? 1f : Mathf.Clamp01(_elapsed / _duration);
 
+    /// <summary>Mantle vault 진행 중 — <see cref="CharacterVaultIkHost"/> 손 IK.</summary>
+    public bool IsMantleIkActive =>
+        _active && _candidate.Style == VaultCrossStyle.Mantle;
+
+    public VaultCandidate ActiveCandidate => _candidate;
+
+    public float VaultCellSize => _cellSize;
+
     /// <summary>이번 E press에서 vault 홀드/시전 중인지 (디버그·확장용).</summary>
     public bool SuppressInteractForCurrentPress => _holdTracking || _vaultConsumedPress;
 
@@ -58,7 +67,10 @@ public sealed class CharacterVaultHost : MonoBehaviour
         TryGetComponent(out _rigidbody);
         _animator = GetComponentInChildren<Animator>();
         if (_animator != null)
+        {
             _workLayerIndex = _animator.GetLayerIndex(WorkLayerName);
+            CharacterWorkLayerAnim.ValidateOrLog(_animator, this);
+        }
     }
 
     public void SetClipCatalog(VaultClipCatalog clips) => _clips = clips;
@@ -265,6 +277,12 @@ public sealed class CharacterVaultHost : MonoBehaviour
             _suppressInput = true;
         }
 
+        if (_animator != null)
+        {
+            _applyRootMotionBeforeVault = _animator.applyRootMotion;
+            _animator.applyRootMotion = false;
+        }
+
         PlayClip(candidate, duration);
         return true;
     }
@@ -384,7 +402,12 @@ public sealed class CharacterVaultHost : MonoBehaviour
         }
 
         if (_animator != null)
+        {
             _animator.speed = _animatorSpeedBeforeVault;
+            _animator.applyRootMotion = _applyRootMotionBeforeVault;
+        }
+
+        CharacterWorkLayerAnim.Stop(_animator, _workLayerIndex);
     }
 
     void CancelHold()
@@ -494,7 +517,7 @@ public sealed class CharacterVaultHost : MonoBehaviour
 
     void PlayClip(in VaultCandidate candidate, float motionDurationSeconds)
     {
-        if (_clips == null || _animator == null || _workLayerIndex < 0)
+        if (_clips == null || _animator == null)
             return;
 
         AnimationClip clip = _clips.Resolve(candidate.Height, candidate.Style);
@@ -505,7 +528,13 @@ public sealed class CharacterVaultHost : MonoBehaviour
         if (clip.length > 0f && motionDurationSeconds > 0f)
             _animator.speed = clip.length / motionDurationSeconds;
 
-        _animator.Play(clip.name, _workLayerIndex, 0f);
+        if (!CharacterWorkLayerAnim.TryPlay(_animator, ref _workLayerIndex, clip) &&
+            Config.DebugMode.PlayerPosUpdate)
+        {
+            Debug.LogWarning(
+                $"[CharacterVaultHost] Work clip not played: {clip.name} (layer={_workLayerIndex}).",
+                this);
+        }
     }
 
     static float DefaultDuration(VaultHeightClass height, VaultCrossStyle style)

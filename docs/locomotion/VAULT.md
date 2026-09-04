@@ -129,13 +129,13 @@ flowchart LR
 | Busy | `CharacterActionKind.Cell` (행동큐) · ESC `CancelAll` |
 | Motion | `BeginScriptedLocomotion` + `SetMoveLocked` · 키프레임 `Rigidbody.MovePosition` · `SnapWorldPosition` · duration = 기본×`ResolveDurationScale`(시전 순간 접근 속도) · Work Layer `Animator.speed` 동기화 |
 | Time | `TimeScaleChannel.Player` (possessed) · `ActionTickScale` |
-| Anim | `VaultClipCatalog` → Work Layer (`CharacterFarmWorkHost.WorkLayerName` 재사용). 클립 없으면 위치만 |
+| Anim | `VaultClipCatalog` → `CharacterWorkLayerAnim` Work Layer (`ACTION.md` §Work Layer). Mantle 손 IK: `CharacterVaultIkHost`. CrossOver IK 없음 |
 
 ---
 
 ## 상수
 
-`VaultConsts` — `HoldSeconds`, `AutoRetryCooldown`, `MantleProbeMaxAheadCells`, `AutoSprintMinApproachSpeedMps`, `DurationScaleWalkSpeedMps`/`DurationScaleSprintSpeedMps`/`DurationMinScale`, Low/High × Cross/Mantle duration, Cross peak 비율.
+`VaultConsts` — `HoldSeconds`, `AutoRetryCooldown`, `MantleProbeMaxAheadCells`, `AutoSprintMinApproachSpeedMps`, `DurationScaleWalkSpeedMps`/`DurationScaleSprintSpeedMps`/`DurationMinScale`, Low/High × Cross/Mantle duration, Cross peak 비율, Mantle IK (`MantleIkGrab*`, `MantleIkHandHalfSpanCells`, …).
 
 클립 SO: `VaultClipCatalog` — SSOT 한곳 `Assets/Dist/SOData/Gameplay/Locomotion/VaultClipCatalog.asset` (`SerializeField` / Ensure 메뉴).
 

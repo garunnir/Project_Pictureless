@@ -45,6 +45,20 @@ CancelAll → 현재 작업 취소(적용 없음) + 큐 전부 폐기
 | `ConstructionActionHost` | 건설 |
 | `CharacterVaultHost` | vault |
 
+### Work Layer (Cell 소비자 공통)
+
+| 항목 | SSOT |
+|------|------|
+| 레이어 이름 | `CharacterWorkLayerAnim.LayerName` |
+| 재생 API | `CharacterWorkLayerAnim.TryPlay` / `Stop` |
+| 컨트롤러 배선 | `CharacterWorkLayerAnim.DefaultControllerPath` — `ArmOverlayAnimatorBuilder` Rebuild·Ensure Work Layer |
+| 에이전트 동기화 | Unity MCP `Dist/MCP/Ensure Work Layer (Vault/Farm/Fish)`. MCP 꺼짐·오류 시 → **사용자에게 MCP 복구 요청** (수동 메뉴·YAML 직수정으로 넘기지 않음 — `.cursor/rules/collaboration-unity.mdc` §Unity MCP) |
+| 카탈로그 → 상태 | Work 클립 카탈로그 저장 시 `WorkLayerCatalogPostprocessor`가 상태 자동 동기화 |
+| Play 진입 검사 | `WorkLayerPlayModeContractGuard` — 레이어·클립 상태 누락 시 LogError |
+| 런타임 검사 | `CharacterWorkLayerAnim.ValidateOrLog` — 맵 바인드·`CharacterVaultHost` Awake |
+
+클립 이름 = Animator 상태 이름 = `Animator.Play(clip.name, workLayer)` (동작명 파라미터 추가 금지).
+
 | Kind | busy일 때 | 이유 |
 |------|-----------|------|
 | Gear / Inventory / Craft / Cell | FIFO append | 클릭 1 = 작업 1. 착용 중 인벤 이동은 대기. **Cell** = 그리드/월드 셀 스크립트 행동 (`CharacterArriveHost` 도착 · `CharacterFarmWorkHost`/`FishCellActionHost` 작업 · vault · 건설). Arrive 중 게이지는 `Img_AutoProgressIcon`. TileMap 시스템과 무관 |

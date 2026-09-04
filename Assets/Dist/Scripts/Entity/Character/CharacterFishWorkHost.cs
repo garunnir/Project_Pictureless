@@ -66,8 +66,8 @@ public sealed class CharacterFishWorkHost : MonoBehaviour
         float clipLen = clip != null ? clip.length : 0f;
         float duration = Mathf.Max(clipLen, configured);
 
-        if (clip != null && _animator != null && _workLayerIndex >= 0)
-            _animator.Play(clip.name, _workLayerIndex, 0f);
+        if (clip != null && _animator != null)
+            CharacterWorkLayerAnim.TryPlay(_animator, ref _workLayerIndex, clip);
 
         _onComplete = onComplete;
         _elapsed = 0f;
@@ -85,6 +85,7 @@ public sealed class CharacterFishWorkHost : MonoBehaviour
         if (!_running)
             return;
 
+        CharacterWorkLayerAnim.Stop(_animator, _workLayerIndex);
         _running = false;
         _onComplete = null;
         _elapsed = 0f;
@@ -112,6 +113,7 @@ public sealed class CharacterFishWorkHost : MonoBehaviour
         _onComplete = null;
         _elapsed = 0f;
         _duration = 0f;
+        CharacterWorkLayerAnim.Stop(_animator, _workLayerIndex);
         complete?.Invoke();
     }
 }

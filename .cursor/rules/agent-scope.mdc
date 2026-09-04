@@ -18,6 +18,7 @@ alwaysApply: true
   - 새 타입/파이프라인
 - 작업 끝: **검증 가능 한 문장** (컴파일/씬/로드 등). 못하면 이유 한 줄
 - 열린 씬을 Setup/MCP/계층으로 dirty 만들면 **완료 전에 저장** (`manage_scene save` 또는 `EditorSceneManager.SaveOpenScenes`). `MarkSceneDirty`만 하고 끝내지 않음
+- **Unity MCP 우선** (`collaboration-unity.mdc` §Unity MCP): `Dist/MCP/*`·에디터 메뉴·씬 저장·컨트롤러/프리팹 배선 등 MCP로 가능한 작업은 MCP로 한다. 연결 실패·타임아웃·`loading`/`needsAuth`면 **사용자에게 MCP 복구를 요청**하고, 수동 메뉴·YAML 직수정·`git checkout`으로 에셋을 사용자에게 시키지 않는다 (명시 승인 없으면)
 - **Dist UI path gate:** 수정 경로가 `Assets/Dist/Scripts/UI/**` · `UIComponents/**` · Editor UI Patch면 → 편집 전 `ui-font`/`ui-prefab-layout` 읽고, `Task`에는 `.claude/checklists/dist-ui-gate.md` MUST 블록 포함 (`00-rules-index.mdc`)
 
 ## Token efficiency (MUST)
@@ -43,6 +44,8 @@ Cursor 컨텍스트 압축 전제 — **턴 수**보다 **한 턴 탐색량·주
   ```
 
 ## MUST NOT
+- MCP로 할 수 있는 Unity 에디터 작업을 **“당신이 Unity에서 메뉴 1회”**로 넘기기 (MCP 꺼짐·오류 시 → 사용자에게 **MCP 연결 복구** 요청)
+- `.controller`·프리팹 YAML 직수정으로 MCP 메뉴·`ArmOverlayAnimatorBuilder` 등 에디터 SSOT를 대체하기
 - 홈/`AppData`/프로젝트 밖 탐색
 - 경로 없는 워크스페이스 전체 `rg`/`glob`
 - 요청 밖 드라이브 리팩터·포맷만·이름만 변경

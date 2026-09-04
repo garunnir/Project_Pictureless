@@ -89,6 +89,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
     int _rightArmLayerIndex = -1;
     int _leftArmLayerIndex = -1;
     int _twoHandLayerIndex = -1;
+    int _moveLayerIndex = -1;
     int _impactLayerIndex = -1;
     int _flinchLayerIndex = -1;
     int _hurtLayerIndex = -1;
@@ -353,6 +354,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         float channelDelta = TimeScaleService.Delta(_timeChannel);
         UpdateFlinchWeightTarget();
         UpdateHurtWeightTarget();
+        SyncVaultLayerWeights(rebound ? 0f : channelDelta);
         SyncArmLayerWeights(rebound ? 0f : channelDelta);
         SyncImpactLayerWeight(rebound ? 0f : channelDelta);
         SyncFlinchLayerWeight(rebound ? 0f : channelDelta);
@@ -959,6 +961,7 @@ public class CharacterLocomotionAnim : MonoBehaviour
         _impactLayerIndex = _animator.GetLayerIndex(ImpactLayerName);
         _flinchLayerIndex = _animator.GetLayerIndex(CharacterHitReact.FlinchLayerName);
         _hurtLayerIndex = _animator.GetLayerIndex(CharacterHitReact.HurtLayerName);
+        _moveLayerIndex = _animator.GetLayerIndex("Move Layer");
     }
 
     static int Hash(string name) =>
@@ -967,8 +970,25 @@ public class CharacterLocomotionAnim : MonoBehaviour
     static bool Match(string name, int hash, int nameHash) =>
         !string.IsNullOrEmpty(name) && nameHash == hash;
 
+    void SyncVaultLayerWeights(float channelDelta)
+    {
+        CharacterVaultHost vault = CharacterBodyResolve.GetInBody<CharacterVaultHost>(this);
+        if (vault == null || !vault.IsBusy || _animator == null)
+            return;
+
+        SetLayerWeightToward(_moveLayerIndex, 0f, channelDelta);
+        SetLayerWeightToward(_rightArmLayerIndex, 0f, channelDelta);
+        SetLayerWeightToward(_leftArmLayerIndex, 0f, channelDelta);
+        SetLayerWeightToward(_twoHandLayerIndex, 0f, channelDelta);
+        SetLayerWeightToward(_impactLayerIndex, 0f, channelDelta);
+    }
+
     void SyncArmLayerWeights(float channelDelta)
     {
+        CharacterVaultHost vault = CharacterBodyResolve.GetInBody<CharacterVaultHost>(this);
+        if (vault != null && vault.IsBusy)
+            return;
+
         bool twoHand = false;
         bool leftArmed = false;
         bool rightArmed = false;
