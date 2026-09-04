@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23f30a6ba7d50f24ebb36c0cdfdebeea, type: 3}
   m_Name: VaultClipCatalog
   m_EditorClassIdentifier: DistScript::VaultClipCatalog
-  _lowCross: {fileID: 7400000, guid: 98507f770c0652a47aeab8b7c426513e, type: 2}
-  _lowMantle: {fileID: 7400000, guid: 98507f770c0652a47aeab8b7c426513e, type: 2}
-  _highCross: {fileID: 7400000, guid: 98507f770c0652a47aeab8b7c426513e, type: 2}
-  _highMantle: {fileID: 7400000, guid: 98507f770c0652a47aeab8b7c426513e, type: 2}
+  _lowCross: {fileID: 7400000, guid: 96d690be8fadba147826773d03125aa0, type: 2}
+  _lowMantle: {fileID: 7400000, guid: 4a5f1d7a745e390468264e03ece61099, type: 2}
+  _highCross: {fileID: 7400000, guid: 4a5f1d7a745e390468264e03ece61099, type: 2}
+  _highMantle: {fileID: 7400000, guid: 4a5f1d7a745e390468264e03ece61099, type: 2}
   _lowCrossDurationSeconds: 0.45
   _lowMantleDurationSeconds: 0.55
   _highCrossDurationSeconds: 0.7
