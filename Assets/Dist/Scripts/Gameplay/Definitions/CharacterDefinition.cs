@@ -144,7 +144,7 @@ public sealed class CharacterDefinition : ScriptableObject
 
     [FoldoutGroup("Body")]
     [LabelText("Grid Footprint (cells)")]
-    [Tooltip("X/Z = 바닥 점유 폭·깊이, Y = 수직 점유 높이. 기본 (1,2,1) = 휴머노이드 1×2×1.")]
+    [Tooltip("X/Z = 바닥 점유 폭·깊이, Y = 수직 점유 높이. 기본 (1,2,1) = 휴머노이드 1×2×1. 런타임은 CapsuleCollider 실측과 max.")]
     [SerializeField] Vector3Int _gridFootprint = CharacterGridFootprintDefaults.Default;
 
     [FoldoutGroup("Senses & Locomotion", Order = 40)]

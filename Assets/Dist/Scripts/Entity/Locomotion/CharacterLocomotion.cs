@@ -212,14 +212,38 @@ public sealed class CharacterLocomotion
         Vector3 horizontalDelta,
         Vector3Int footprint)
     {
-        if (_mapCollision == null || horizontalDelta.sqrMagnitude <= Mathf.Epsilon)
+        if (_mapCollision == null)
             return oldPosition + horizontalDelta;
 
         Vector3 feetWorld = CharacterFeetPose.GetFeetWorld(oldPosition, feetOffset);
-        Vector3 topologyDelta =
-            _mapCollision.CollisionResolver.ClampHorizontal(feetWorld, horizontalDelta, footprint);
-        return oldPosition + topologyDelta;
+        Vector3 topologyDelta = horizontalDelta;
+        if (horizontalDelta.sqrMagnitude > Mathf.Epsilon)
+        {
+            topologyDelta = _mapCollision.CollisionResolver.ClampHorizontal(
+                feetWorld,
+                horizontalDelta,
+                footprint);
+        }
+
+        float cellSize = _mapCollision.Query.CellSize;
+        int gridY = MapCollisionGrid.WorldToGridY(feetWorld, cellSize);
+        Vector3 targetFeet = feetWorld + new Vector3(topologyDelta.x, 0f, topologyDelta.z);
+        targetFeet = MapTopologyCapsuleMargin.ClampHorizontal(
+            _mapCollision.Query,
+            targetFeet,
+            gridY,
+            footprint,
+            ResolveHorizontalCapsuleRadius(),
+            _baseSkin);
+
+        return oldPosition + new Vector3(
+            targetFeet.x - feetWorld.x,
+            topologyDelta.y,
+            targetFeet.z - feetWorld.z);
     }
+
+    float ResolveHorizontalCapsuleRadius() =>
+        _capsule.radius * Mathf.Max(_transform.lossyScale.x, _transform.lossyScale.y);
 
     MapTopologyDepenetration.PushOutResult ResolveGridStuck(
         ref Vector3 bodyPosition,

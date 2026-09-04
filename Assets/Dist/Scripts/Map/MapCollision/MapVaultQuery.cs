@@ -100,13 +100,13 @@ namespace IsoTilemap
         }
 
         /// <summary>
-        /// Mantle 높이: deltaY ≤ footprint.y → Low, 초과 → High.
+        /// Mantle 높이: deltaY &lt; footprint.y → Low, deltaY ≥ footprint.y → High.
         /// CrossOver는 sizeUnit.y 1/2로만 분류한다.
         /// </summary>
         public static VaultHeightClass ClassifyMantleHeight(int deltaY, int footprintY)
         {
             int sy = Mathf.Max(1, footprintY);
-            return deltaY > sy ? VaultHeightClass.High : VaultHeightClass.Low;
+            return deltaY >= sy ? VaultHeightClass.High : VaultHeightClass.Low;
         }
 
         /// <summary>

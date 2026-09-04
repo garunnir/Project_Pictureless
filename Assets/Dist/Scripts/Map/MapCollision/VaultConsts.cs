@@ -61,6 +61,9 @@ namespace IsoTilemap
         /// <summary>Mantle 중간 키프레임 t (0..1).</summary>
         public const float MantleMidT = 0.45f;
 
+        /// <summary>High Mantle: XZ 이동 시작 normalizedTime (xz 커브 없을 때 선형 폴백).</summary>
+        public const float HighMantleXzStartT = 0.5f;
+
         /// <summary>Mantle IK: 손목 좌우 반폭 (셀 단위).</summary>
         public const float MantleIkHandHalfSpanCells = 0.25f;
 

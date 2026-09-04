@@ -33,8 +33,8 @@ flowchart LR
 - `NpcSteer`: 목표점/Transform을 월드 XZ 방향으로 변환 (`NpcManager`가 호출, 인스턴스 MB 없음).
 - `NpcManager`: 비possessed 유닛 FSM (Patrol/Alert/Chase/Attack/Return/Dead). 상태·웨이포인트는 행 단위. `suppressMode`면 조준 다리. 타겟은 `CharacterVision` 반경 + `CharacterFactionCatalog` 적대(`Hostile`)만 추적. Attack 시전은 `TryPerformSelected` (busy 게이트는 그 메서드).
 - `KinematicMover`: 플레이어 속도/관성 또는 NPC 등속 desired delta 산출
-- `CharacterLocomotion`: CapsuleCast, slide, topology clamp, logical floor,
-  depenetration, Rigidbody 이동, `CharacterState` 위치 갱신
+- `CharacterLocomotion`: CapsuleCast, slide, topology clamp, **캡슐 반경 topology 마진** (`MapTopologyCapsuleMargin`),
+  logical floor, depenetration, Rigidbody 이동, `CharacterState` 위치 갱신
 - `CharacterState.GridPos`: **발밑 셀** (`CharacterFeetPose` + `MapCollisionGrid`). `BodyWorldPoint`는 몸 pivot 월드 좌표 그대로. `GridPosChanged`는 발밑 셀이 바뀔 때만.
 - `CharacterFootprintHost` / `CharacterDefinition.GridFootprint`: 그리드 점유 볼륨 SSOT (기본 `(1,2,1)`). `CharacterOccupiedCellUtil`이 anchor·점유 셀·수직 band를 계산한다.
 - `MapGameplayBootstrap`: 활성/비활성 `CharacterMotor`에 맵 충돌 서비스를 바인딩
@@ -68,7 +68,8 @@ flowchart LR
 
 | 개념 | SSOT | 계약 |
 |------|------|------|
-| Footprint `(sx,sy,sz)` | `CharacterDefinition.GridFootprint` → `CharacterFootprintHost` | 축 최소 1. 기본 `(1,2,1)` = 휴머노이드 1×2×1 |
+| Footprint `(sx,sy,sz)` | `CharacterDefinition.GridFootprint` → `CharacterFootprintHost` | 축 최소 1. 기본 `(1,2,1)` = 휴머노이드 1×2×1. **런타임** = `max(SO, CapsuleCollider-derived)` (`CharacterGridFootprintResolver`) |
+| 벽 밀착 마진 | `MapTopologyCapsuleMargin` | topology clamp 직후 발 XZ를 `capsuleRadius + BaseSkin`만큼 벽 셀·막힌 edge 면에서 밀어냄 (Physics와 동일 scale) |
 | 발밑 셀 | `CharacterState.GridPos` | `MapCollisionGrid.ResolveFeetCell(body, feetOffset, cellSize)` |
 | Anchor | `CharacterOccupiedCellUtil.TryGetAnchorFromFeet` | `feetCell − ((sx−1)/2, 0, (sz−1)/2)` |
 | 점유 셀 나열 | `CharacterOccupiedCellUtil.AppendOccupiedCells` | `TileIdentityUtil.AppendOccupiedCellBox(anchor, footprint, …)` |

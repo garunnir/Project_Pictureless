@@ -976,6 +976,11 @@ public class CharacterLocomotionAnim : MonoBehaviour
         if (vault == null || !vault.IsBusy || _animator == null)
             return;
 
+        SuppressLocomotionLayers(channelDelta);
+    }
+
+    void SuppressLocomotionLayers(float channelDelta)
+    {
         SetLayerWeightToward(_moveLayerIndex, 0f, channelDelta);
         SetLayerWeightToward(_rightArmLayerIndex, 0f, channelDelta);
         SetLayerWeightToward(_leftArmLayerIndex, 0f, channelDelta);

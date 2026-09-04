@@ -65,12 +65,12 @@ flowchart TD
 
 | 스타일 | Low | High |
 |--------|-----|------|
-| **Mantle** | `deltaY ≤ footprint.y` | `deltaY > footprint.y` |
+| **Mantle** | `deltaY < footprint.y` | `deltaY ≥ footprint.y` |
 | **CrossOver** | `sizeUnit.y == 1` | `sizeUnit.y == 2` |
 
 Mantle 분류 SSOT: `MapVaultQuery.ClassifyMantleHeight`. CrossOver는 edge `sizeUnit.y`만.
 
-기본 footprint `(1,2,1)` 예: Mantle `deltaY=1`~`2` → Low, `deltaY≥3` → High. CrossOver Low=1 / High=2. **달리기 자동**은 `deltaY`(또는 edge span) ≤ `footprint.y/2`(기본 1칸)만.
+기본 footprint `(1,2,1)` 예: Mantle `deltaY=1` → Low, `deltaY≥2` → High. CrossOver Low=1 / High=2. **달리기 자동**은 `deltaY`(또는 edge span) ≤ `footprint.y/2`(기본 1칸)만.
 
 ---
 
@@ -133,6 +133,44 @@ flowchart LR
 
 ---
 
+## 하이브리드 궤적 (애니 progress × 코드 waypoint)
+
+위치 SSOT는 코드. 애니는 포즈 + **시간→진행률 형태**만 빌림 (`applyRootMotion = false`).
+
+| 역할 | SSOT |
+|------|------|
+| Waypoint | `CharacterVaultHost` — `_startBody` / `_peakBody` / `_endBody` (맵 프로브·착지 셀) |
+| 진행률 형태 | `VaultClipCatalog` — 클립별 `*Progress` `AnimationCurve` (0..1) |
+| 샘플 (일반) | `AnimationHybridTrajectory.SampleArc` — `progress = curve(t)`로 호 길이 매핑 |
+| 샘플 (High Mantle) | `AnimationHybridTrajectory.SampleMantleDecoupled` — Y·XZ 진행률 **분리** |
+| 시간 | `animator.speed = clip.length / duration` |
+
+`CharacterVaultHost.SampleTrajectory`: **High Mantle**(`Mantle` + `High`)만 `SampleMantleDecoupled`로 분기. 나머지(Low/High Cross, Low Mantle)는 `SampleArc`.
+
+### High Mantle 분리 hybrid (Y / XZ)
+
+높은 Mantle(`deltaY ≥ footprint.y`)은 먼저 수직으로 올라간 뒤 전방으로 이동하는 포즈가 많아, 단일 3D arc progress 대신 **Y·XZ 채널을 독립** 샘플한다.
+
+| 채널 | `VaultClipCatalog` 필드 | 샘플 |
+|------|-------------------------|------|
+| **Y** | `_highMantleProgress` (`ResolveHighMantleYProgress`) | `py = curve(t)` → `Lerp(start.y, end.y, py)` |
+| **XZ** | `_highMantleXzProgress` (`ResolveHighMantleXzProgress`) | `pxz = curve(t)` → `Lerp(start.xz, end.xz, pxz)` |
+
+- XZ 커브가 **비어 있으면** `_highMantleXzStartT`(`ResolveHighMantleXzStartT`, 기본 `VaultConsts.HighMantleXzStartT` = 0.5)부터 **선형** `InverseLerp(xzStartT, 1, t)`. `t < xzStartT`이면 `pxz = 0`(제자리 수직만).
+- Y 커브가 비어 있으면 다른 스타일과 동일하게 **선형 `t` 폴백**.
+- High Mantle은 `_peakBody`를 궤적 샘플에 쓰지 않는다 (`start`→`end` 직접).
+
+### Bake (`Dist/MCP/Bake Vault Hybrid Progress Curves`)
+
+| 클립 | Bake 경로 | 출력 |
+|------|-----------|------|
+| Low Cross · Low Mantle · High Cross | `BakePair` → `AnimationRootProgressBake.TryBakeProgressCurve` | 단일 3D 루트 누적 이동 거리 → `*Progress` 1개 |
+| **High Mantle** | `BakeHighMantleAxisPair` → `TryBakeAxisProgressCurves` | **Y / XZ 2채널** — Y = `|dy|` 누적, XZ = `sqrt(dx²+dz²)` 누적 → `_highMantleProgress` · `_highMantleXzProgress` |
+
+루트가 Bake Into Pose(이동 없음)면 해당 커브 비움 → 런타임 **선형 `t` 폴백**(High Mantle XZ는 위 `xzStartT` 선형 폴백).
+
+---
+
 ## 상수
 
 `VaultConsts` — `HoldSeconds`, `AutoRetryCooldown`, `MantleProbeMaxAheadCells`, `AutoSprintMinApproachSpeedMps`, `DurationScaleWalkSpeedMps`/`DurationScaleSprintSpeedMps`/`DurationMinScale`, Low/High × Cross/Mantle duration, Cross peak 비율, Mantle IK (`MantleIkGrab*`, `MantleIkHandHalfSpanCells`, …).
@@ -160,3 +198,4 @@ flowchart LR
 - **ThickWall + 상단 floor (deltaY=1) → Low Mantle** (달리기 자동 · E 홀드). **벽 바로 앞 1칸**에서만 프로브.
 - E 짧은 탭: vault 미시전 + 문/상자 상호작용 유지.
 - ESC: vault 취소, 현재 위치 고정.
+- **High Mantle** (`deltaY ≥ footprint.y`): 올라가는 동안 벽 솔리드에 **몸이 파고들지 않음** (분리 Y/XZ hybrid + footprint 볼륨).

@@ -35,6 +35,7 @@ public sealed class CharacterVaultHost : MonoBehaviour
     Vector3 _startBody;
     Vector3 _peakBody;
     Vector3 _endBody;
+    AnimationCurve _progressCurve;
     float _elapsed;
     float _duration;
     float _autoCooldown;
@@ -58,6 +59,18 @@ public sealed class CharacterVaultHost : MonoBehaviour
 
     /// <summary>이번 E press에서 vault 홀드/시전 중인지 (디버그·확장용).</summary>
     public bool SuppressInteractForCurrentPress => _holdTracking || _vaultConsumedPress;
+
+    /// <summary>벽타기 등과 E 홀드 우선순위 — vault 후보가 있으면 true.</summary>
+    public bool WouldAcceptInteractPress()
+    {
+        if (_active || _holdTracking || _motor == null || !_motor.IsPossessed)
+            return false;
+        if (_motor.IsMoveLocked && !_moveLockedByUs)
+            return false;
+        if (!CanStartVault())
+            return false;
+        return TryProbeCandidate(out _);
+    }
 
     void Awake()
     {
@@ -259,6 +272,9 @@ public sealed class CharacterVaultHost : MonoBehaviour
         _startBody = _rigidbody.position;
         _endBody = BodyFromFeetCell(candidate.LandingFeetCell);
         _peakBody = BuildPeakBody(_startBody, _endBody, candidate);
+        _progressCurve = _clips != null
+            ? _clips.ResolveProgressCurve(candidate.Height, candidate.Style)
+            : null;
         _elapsed = 0f;
         _duration = duration;
         _active = true;
@@ -316,17 +332,34 @@ public sealed class CharacterVaultHost : MonoBehaviour
 
     Vector3 SampleTrajectory(float t)
     {
-        if (_candidate.Style == VaultCrossStyle.CrossOver)
+        if (_candidate.Style == VaultCrossStyle.Mantle &&
+            _candidate.Height == VaultHeightClass.High)
         {
-            if (t < 0.5f)
-                return Vector3.Lerp(_startBody, _peakBody, t * 2f);
-            return Vector3.Lerp(_peakBody, _endBody, (t - 0.5f) * 2f);
+            AnimationCurve yProgress = _clips != null
+                ? _clips.ResolveHighMantleYProgress()
+                : null;
+            AnimationCurve xzProgress = _clips != null
+                ? _clips.ResolveHighMantleXzProgress()
+                : null;
+            float xzStartT = _clips != null
+                ? _clips.ResolveHighMantleXzStartT()
+                : VaultConsts.HighMantleXzStartT;
+
+            return AnimationHybridTrajectory.SampleMantleDecoupled(
+                _startBody,
+                _endBody,
+                t,
+                yProgress,
+                xzProgress,
+                xzStartT);
         }
 
-        float mid = VaultConsts.MantleMidT;
-        if (t < mid)
-            return Vector3.Lerp(_startBody, _peakBody, mid > 0f ? t / mid : 1f);
-        return Vector3.Lerp(_peakBody, _endBody, (1f - mid) > 0f ? (t - mid) / (1f - mid) : 1f);
+        return AnimationHybridTrajectory.SampleArc(
+            _startBody,
+            _peakBody,
+            _endBody,
+            t,
+            _progressCurve);
     }
 
     Vector3 BuildPeakBody(Vector3 start, Vector3 end, in VaultCandidate candidate)
@@ -382,6 +415,7 @@ public sealed class CharacterVaultHost : MonoBehaviour
         _active = false;
         _elapsed = 0f;
         _duration = 0f;
+        _progressCurve = null;
 
         if (_scriptedBegun && _motor != null)
         {
