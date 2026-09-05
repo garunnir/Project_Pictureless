@@ -133,15 +133,13 @@ namespace IsoTilemap
 
             if (!TryPickBestMantleLanding(
                     query,
-                    feetCell.y,
+                    feetCell,
                     footprint,
                     out int landingY,
                     out int landX,
                     out int landZ,
                     ahead.x,
-                    ahead.z,
-                    feetCell.x,
-                    feetCell.z))
+                    ahead.z))
                 return false;
 
             int deltaY = landingY - feetCell.y;
@@ -159,15 +157,13 @@ namespace IsoTilemap
         /// <summary>ahead(1칸) → feet(벽 밀착) 순. 전방 스캔 깊이: <see cref="VaultConsts.MantleProbeMaxAheadCells"/>.</summary>
         static bool TryPickBestMantleLanding(
             IMapTopologyQuery query,
-            int feetY,
+            Vector3Int feetCell,
             Vector3Int footprint,
             out int landingY,
             out int landX,
             out int landZ,
             int aheadX,
-            int aheadZ,
-            int feetX,
-            int feetZ)
+            int aheadZ)
         {
             landingY = 0;
             landX = 0;
@@ -175,16 +171,40 @@ namespace IsoTilemap
             int bestPriority = int.MaxValue;
             bool found = false;
 
-            ConsiderMantleColumn(query, feetY, footprint, aheadX, aheadZ, 0, ref found, ref landingY, ref landX, ref landZ, ref bestPriority);
-            if (aheadX != feetX || aheadZ != feetZ)
-                ConsiderMantleColumn(query, feetY, footprint, feetX, feetZ, 1, ref found, ref landingY, ref landX, ref landZ, ref bestPriority);
+            ConsiderMantleColumn(
+                query,
+                feetCell,
+                footprint,
+                aheadX,
+                aheadZ,
+                0,
+                ref found,
+                ref landingY,
+                ref landX,
+                ref landZ,
+                ref bestPriority);
+            if (aheadX != feetCell.x || aheadZ != feetCell.z)
+            {
+                ConsiderMantleColumn(
+                    query,
+                    feetCell,
+                    footprint,
+                    feetCell.x,
+                    feetCell.z,
+                    1,
+                    ref found,
+                    ref landingY,
+                    ref landX,
+                    ref landZ,
+                    ref bestPriority);
+            }
 
             return found;
         }
 
         static void ConsiderMantleColumn(
             IMapTopologyQuery query,
-            int feetY,
+            Vector3Int feetCell,
             Vector3Int footprint,
             int x,
             int z,
@@ -195,7 +215,7 @@ namespace IsoTilemap
             ref int landZ,
             ref int bestPriority)
         {
-            if (!TryFindLowestMantleLanding(query, feetY, x, z, footprint, out int y, out int lx, out int lz))
+            if (!TryFindLowestMantleLanding(query, feetCell, x, z, footprint, out int y, out int lx, out int lz))
                 return;
             if (!found || y < landingY || (y == landingY && priority < bestPriority))
             {
@@ -209,7 +229,7 @@ namespace IsoTilemap
 
         static bool TryFindLowestMantleLanding(
             IMapTopologyQuery query,
-            int feetY,
+            Vector3Int feetCell,
             int x,
             int z,
             Vector3Int footprint,
@@ -222,8 +242,8 @@ namespace IsoTilemap
             landZ = z;
             for (int dy = 1; dy <= MaxProbeY; dy++)
             {
-                int y = feetY + dy;
-                if (!IsValidMantleLanding(query, x, z, y, feetY, footprint))
+                int y = feetCell.y + dy;
+                if (!IsValidMantleLanding(query, feetCell, x, z, y, footprint))
                     continue;
 
                 landingY = y;
@@ -235,14 +255,14 @@ namespace IsoTilemap
 
         static bool IsValidMantleLanding(
             IMapTopologyQuery query,
+            Vector3Int feetCell,
             int x,
             int z,
             int landingY,
-            int feetY,
             Vector3Int footprint)
         {
             int sy = footprint.y;
-            int deltaY = landingY - feetY;
+            int deltaY = landingY - feetCell.y;
             // ThickWall(size.y=1)+상단 floor = deltaY 1. 양수 단차만 요구.
             if (deltaY < 1)
                 return false;
@@ -250,14 +270,31 @@ namespace IsoTilemap
             if (!query.CellHasFloor(x, z, landingY))
                 return false;
 
-            // 몸 footprint 높이만큼만 헤드룸 (FootprintVolumeBlocks와 패리티)
+            if (LandingSurfaceOccupied(query, x, z, landingY))
+                return false;
+
+            // 착지 높이에서 approach 열→착지 열 경로(SlimWall 등 blocking edge).
+            if (MapTopologyGridSegment.CrossesBlockingSegment(
+                    query,
+                    feetCell.x,
+                    feetCell.z,
+                    x,
+                    z,
+                    landingY))
+                return false;
+
+            // 몸 footprint 높이만큼만 헤드룸 (FootprintVolumeBlocks와 패리티 + 점유·edge incident).
             if (CountClearSpanUp(query, x, z, landingY) < sy)
                 return false;
 
-            return !MapTopologyCollisionResolver.FootprintVolumeBlocks(
-                query,
-                new Vector3Int(x, landingY, z),
-                footprint);
+            var landingFeet = new Vector3Int(x, landingY, z);
+            if (MapTopologyCollisionResolver.FootprintVolumeBlocks(query, landingFeet, footprint))
+                return false;
+
+            if (FootprintVaultHeadroomBlocks(query, landingFeet, footprint))
+                return false;
+
+            return true;
         }
 
         static bool TryCrossOver(
@@ -281,7 +318,7 @@ namespace IsoTilemap
             if (!query.CellHasFloor(landing.x, landing.z, landing.y))
                 return false;
 
-            if (MapTopologyCollisionResolver.FootprintVolumeBlocks(query, landing, footprint))
+            if (!IsValidCrossOverLanding(query, landing, footprint))
                 return false;
 
             VaultHeightClass height = span == 1 ? VaultHeightClass.Low : VaultHeightClass.High;
@@ -295,13 +332,75 @@ namespace IsoTilemap
             return true;
         }
 
+        static bool IsValidCrossOverLanding(
+            IMapTopologyQuery query,
+            Vector3Int landingFeet,
+            Vector3Int footprint)
+        {
+            int sy = footprint.y;
+
+            if (LandingSurfaceOccupied(query, landingFeet.x, landingFeet.z, landingFeet.y))
+                return false;
+
+            if (CountClearSpanUp(query, landingFeet.x, landingFeet.z, landingFeet.y) < sy)
+                return false;
+
+            if (MapTopologyCollisionResolver.FootprintVolumeBlocks(query, landingFeet, footprint))
+                return false;
+
+            return !FootprintVaultHeadroomBlocks(query, landingFeet, footprint);
+        }
+
+        /// <summary>walkable 셀 위 OccupiedCell(가구·상자 등). 바닥 HorizontalFace는 <see cref="TryGetCellTiles"/>에 없음.</summary>
+        static bool LandingSurfaceOccupied(IMapTopologyQuery query, int x, int z, int landingY) =>
+            query.TryGetCellTiles(x, z, landingY, out var list) && list != null && list.Count > 0;
+
+        /// <summary>발 높이 위(dy≥1) footprint XZ 밴드 — SlimWall incident·비차단 점유 포함.</summary>
+        static bool FootprintVaultHeadroomBlocks(
+            IMapTopologyQuery query,
+            Vector3Int feetCell,
+            Vector3Int footprint)
+        {
+            footprint = MapTopologyCollisionResolver.ClampFootprint(footprint);
+            int sx = footprint.x;
+            int sy = footprint.y;
+            int sz = footprint.z;
+            if (sy <= 1)
+                return false;
+
+            int ax = feetCell.x - (sx - 1) / 2;
+            int az = feetCell.z - (sz - 1) / 2;
+            for (int dy = 1; dy < sy; dy++)
+            {
+                int y = feetCell.y + dy;
+                for (int dx = 0; dx < sx; dx++)
+                {
+                    for (int dz = 0; dz < sz; dz++)
+                    {
+                        int x = ax + dx;
+                        int z = az + dz;
+                        if (query.CellHasSolidWall(x, z, y) || query.CellHasOccupancy(x, z, y))
+                            return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         static int CountClearSpanUp(IMapTopologyQuery query, int x, int z, int startY)
         {
             int span = 0;
             for (int i = 0; i < MaxProbeY; i++)
             {
-                if (query.CellHasSolidWall(x, z, startY + i))
+                int y = startY + i;
+                if (query.CellHasSolidWall(x, z, y))
                     break;
+
+                // 착지 바닥 셀(i==0)은 walkable face occupancy 허용. 그 위는 점유·edge incident 차단.
+                if (i > 0 && query.CellHasOccupancy(x, z, y))
+                    break;
+
                 span++;
             }
 

@@ -78,6 +78,9 @@ Mantle 분류 SSOT: `MapVaultQuery.ClassifyMantleHeight`. CrossOver는 edge `siz
 
 - 스캔: `ahead`(1칸) 우선 → 실패 시 **현재 `feet` 열**(벽 밀착). 깊이 SSOT `VaultConsts.MantleProbeMaxAheadCells`(1). 발 Y+1 … 상한, **가장 낮은** 유효 landing
 - `deltaY ≥ 1`, `clearSpan ≥ footprint.y`, `CellHasFloor`, `!FootprintVolumeBlocks`
+- 착지 높이 XZ 경로: `MapTopologyGridSegment.CrossesBlockingSegment` (SlimWall 등 blocking edge)
+- 헤드룸: `clearSpan`·footprint 상단 밴드에서 `CellHasOccupancy` (비차단 OccupiedCell·VerticalFace incident 포함). 착지 바닥 셀(`i==0`) face occupancy는 허용
+- 착지 walkable 셀에 OccupiedCell 타일(가구 등) 있으면 거부
 - **ThickWall** → 위 [두꺼운 벽 Mantle 맵 전제](#두꺼운-벽--thickwall-mantle-맵-전제--찾기용) 참고
 
 ---
@@ -196,6 +199,8 @@ flowchart LR
 - thin y=2 → CrossOver High (E 홀드만 · 달리기 자동 없음).
 - **ThickWall solid만(상단 floor 없음) → Mantle·CrossOver 모두 실패**.
 - **ThickWall + 상단 floor (deltaY=1) → Low Mantle** (달리기 자동 · E 홀드). **벽 바로 앞 1칸**에서만 프로브.
+- **ThickWall 상단 + SlimWall(또는 비차단 점유) → Mantle 거부** (edge 경로·헤드룸 occupancy).
+- **착지 셀에 Crate 등 OccupiedCell → Mantle·CrossOver 거부**.
 - E 짧은 탭: vault 미시전 + 문/상자 상호작용 유지.
 - ESC: vault 취소, 현재 위치 고정.
 - **High Mantle** (`deltaY ≥ footprint.y`): 올라가는 동안 벽 솔리드에 **몸이 파고들지 않음** (분리 Y/XZ hybrid + footprint 볼륨).

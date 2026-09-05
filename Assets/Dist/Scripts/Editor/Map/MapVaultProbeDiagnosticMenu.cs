@@ -84,9 +84,10 @@ namespace Dist.Editor.Map
         static void LogFloorCell(StringBuilder sb, FloorMapIndex index, int x, int y, int z, string label)
         {
             bool floor = index.CellHasFloor(x, y, z);
+            bool occ = index.HasAnyTile(x, z, y);
             bool face = index.TryGetFloorFaceForWalkableCell(x, y, z, out TileData tile);
             sb.AppendLine(
-                $"[VaultDiag] {label} ({x},{y},{z}) CellHasFloor={floor}" +
+                $"[VaultDiag] {label} ({x},{y},{z}) CellHasFloor={floor} HasAnyTile={occ}" +
                 (face ? $" face={tile.identity.PrefabId} gridPos={tile.identity.GridPos}" : " face=MISSING"));
         }
     }

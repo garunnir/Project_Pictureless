@@ -11,6 +11,9 @@ namespace IsoTilemap
 
         bool CellHasSolidWall(int x, int z, int gridY);
 
+        /// <summary>점유 인덱스 — OccupiedCell·VerticalFace·HorizontalFace incident 포함.</summary>
+        bool CellHasOccupancy(int x, int z, int gridY);
+
         bool CellHasFloor(int x, int z, int gridY);
 
         bool TryGetEdgeBetween(Vector3Int cellA, Vector3Int cellB, out TileData edgeWall);

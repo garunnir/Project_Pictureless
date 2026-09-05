@@ -37,6 +37,9 @@ namespace IsoTilemap
             return FloorMapIndex.CellHasSolidWall(list);
         }
 
+        public bool CellHasOccupancy(int x, int z, int gridY) =>
+            _hub.Topology.HasOccupancy(x, z, gridY);
+
         /// <summary>
         /// 타일 바닥 또는 **아래 셀의 얼어붙은 액체**. 얼음 지지는 여기서만 합성한다 —
         /// <see cref="FloorMapIndex"/>에 넣으면 building·space bake와 가려짐 입력까지 오염되고,
