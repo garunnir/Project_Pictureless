@@ -325,8 +325,7 @@ public static class MeleeHitbox
         host = null;
         if (collider == null || attacker.IsOwnCollider(collider))
             return false;
-        host = collider.GetComponentInParent<CharacterBodyHost>();
-        return host != null && host.Body != null && !host.Body.IsDeadState;
+        return CharacterBodyResolve.TryResolveBodyHost(collider, out host);
     }
 
     static bool Contains(CharacterBodyHost[] hosts, int count, CharacterBodyHost host)

@@ -16,16 +16,15 @@ public sealed class CharacterImbalanceHost : MonoBehaviour
     float _imbalance;
     float _lastEmittedBucket = -1f;
 
-    public static CharacterImbalanceHost Active { get; private set; }
+    public static CharacterImbalanceHost Active => CharacterSessionHub.ImbalanceHost;
 
+    public void ClaimActive() { }
     public event Action Changed;
 
     public float Imbalance01 => _imbalance;
     public bool IsFullyUnbalanced => _imbalance >= 1f - 1e-4f;
     public float MoveSpeedFactor => CombatImbalance.MoveSpeedFactor(_imbalance);
     public float HitAccuracyFactor => CombatImbalance.HitAccuracyFactor(_imbalance);
-
-    public void ClaimActive() => Active = this;
 
     /// <summary>디버그/치트용. 클램프 후 이속 배율 적용 + Changed.</summary>
     public void SetImbalance01(float value)
@@ -48,12 +47,7 @@ public sealed class CharacterImbalanceHost : MonoBehaviour
         TryGetComponent(out _attacker);
     }
 
-    void OnDisable()
-    {
-        if (Active == this)
-            Active = null;
-        ApplySpeedFactor(1f);
-    }
+    void OnDisable() => ApplySpeedFactor(1f);
 
     void Update()
     {

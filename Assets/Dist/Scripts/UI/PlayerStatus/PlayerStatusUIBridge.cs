@@ -58,7 +58,7 @@ public sealed class PlayerStatusUIBridge : MonoBehaviour
         if (_viewModel == null)
             _viewModel = new PlayerStatusViewModel();
 
-        _viewModel.Bind(GameplayData.Body, GameplayData.Vitals, GameplayData.Stats);
+        _viewModel.Bind(CharacterSessionHub.SessionBody, GameplayData.Vitals, GameplayData.Stats);
     }
 
     public static void RebindFromGameplayData()

@@ -1,5 +1,5 @@
 // ============================================================
-// CharacterSessionHub — 본체 인벤·기어·액션 그래프 입구. Possess 시 플레이어 세션 선언
+// CharacterSessionHub — possess 플레이어 세션 SSOT (인벤·기어·GameplayData 바인딩)
 // ============================================================
 
 using Garunnir.Runtime.Gameplay.Data;
@@ -22,8 +22,41 @@ public sealed class CharacterSessionHub : MonoBehaviour
     [SerializeField] PlayerInventoryHost _inventory;
     [SerializeField] NearbyContainerDetector _detector;
     [SerializeField] CharacterActionHost _action;
+    [SerializeField] CharacterImbalanceHost _imbalance;
+    [SerializeField] CharacterMoodHost _mood;
+    [SerializeField] PlayerNeedsHost _needs;
 
+    /// <summary>현재 possess된 플레이어 세션. 없으면 null.</summary>
     public static CharacterSessionHub Player { get; private set; }
+
+    public static bool HasPlayer => Player != null;
+
+    /// <summary>플레이어 세션 몸 데이터. possess 중이 아니면 null.</summary>
+    public static ICharacterBody SessionBody => Player?._bodyHost?.Body;
+
+    public static CharacterBodyHost SessionBodyHost => Player?._bodyHost;
+
+    public static PlayerGearHost GearHost => Player?._gear;
+
+    public static PlayerEncumbranceHost EncumbranceHost => Player?._encumbrance;
+
+    public static InventoryTimedMoveHost TimedMoveHost => Player?._timedMove;
+
+    public static CharacterImbalanceHost ImbalanceHost => Player?._imbalance;
+
+    public static CharacterMoodHost MoodHost => Player?._mood;
+
+    public static PlayerNeedsHost NeedsHost => Player?._needs;
+
+    public static CharacterSkillsHost SessionSkillsHost => Player?._skillsHost;
+
+    public static CharacterTraitsHost SessionTraitsHost => Player?._traitsHost;
+
+    public static CharacterActionHost SessionActionHost => Player?._action;
+
+    public static PlayerInventoryHost SessionInventory => Player?._inventory;
+
+    public static NearbyContainerDetector SessionDetector => Player?._detector;
 
     public CharacterBodyHost BodyHost => _bodyHost;
     public CharacterTraitsHost TraitsHost => _traitsHost;
@@ -42,8 +75,7 @@ public sealed class CharacterSessionHub : MonoBehaviour
         if (Player != this)
             return;
 
-        Player = null;
-        GameplayPlayerRuntime.RegisterPossessedTraitsResolver(null);
+        ClearPlayerSession();
     }
 
     public void BecomePlayer(PlayerMovement movement, PlayerInventoryRuntime inventoryRuntime)
@@ -66,11 +98,9 @@ public sealed class CharacterSessionHub : MonoBehaviour
             _gear.ClaimActive();
         }
 
-        if (TryGetComponent(out CharacterImbalanceHost imbalance))
-            imbalance.ClaimActive();
-
-        if (TryGetComponent(out CharacterMoodHost mood))
-            mood.ClaimActive();
+        _imbalance?.ClaimActive();
+        _mood?.ClaimActive();
+        _needs?.ClaimActive();
 
         if (_bodyHost != null && _bodyHost.Body != null)
             GameplayData.Body = _bodyHost.Body;
@@ -85,6 +115,13 @@ public sealed class CharacterSessionHub : MonoBehaviour
             movement.ApplyWalkSpeedFromDefinition(binder.Definition);
 
         PlayerStatusUIBridge.RebindFromGameplayData();
+    }
+
+    static void ClearPlayerSession()
+    {
+        Player = null;
+        GameplayPlayerRuntime.RegisterPossessedTraitsResolver(null);
+        PlayerEncumbranceHost.NotifySessionCleared();
     }
 
     void EnsureRefs()
@@ -107,5 +144,11 @@ public sealed class CharacterSessionHub : MonoBehaviour
             TryGetComponent(out _detector);
         if (_action == null)
             TryGetComponent(out _action);
+        if (_imbalance == null)
+            TryGetComponent(out _imbalance);
+        if (_mood == null)
+            TryGetComponent(out _mood);
+        if (_needs == null)
+            TryGetComponent(out _needs);
     }
 }

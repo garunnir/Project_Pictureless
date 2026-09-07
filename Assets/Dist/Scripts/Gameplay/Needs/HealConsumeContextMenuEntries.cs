@@ -22,7 +22,7 @@ public static class HealConsumeContextMenuEntries
         UseActionData action = stack.Item.use_action;
         if (!ConsumeService.IsHealAction(action))
             return;
-        if (!BodyHealApply.TryCollectEligibleParts(GameplayData.Body, action, EligiblePartsScratch))
+        if (!BodyHealApply.TryCollectEligibleParts(CharacterSessionHub.SessionBody, action, EligiblePartsScratch))
             return;
 
         for (int i = 0; i < EligiblePartsScratch.Count; i++)
@@ -41,7 +41,7 @@ public static class HealConsumeContextMenuEntries
         if (dest == null || string.IsNullOrEmpty(partId))
             return;
 
-        ICharacterBody body = GameplayData.Body;
+        ICharacterBody body = CharacterSessionHub.SessionBody;
         if (body == null)
             return;
 
@@ -53,7 +53,7 @@ public static class HealConsumeContextMenuEntries
     {
         if (dest == null || string.IsNullOrEmpty(partId))
             return;
-        if (!BodyHealApply.HasBandagedUnder(GameplayData.Body, partId, EffectScratch))
+        if (!BodyHealApply.HasBandagedUnder(CharacterSessionHub.SessionBody, partId, EffectScratch))
             return;
 
         dest.Add(ContextMenuEntry.Leaf(

@@ -240,14 +240,8 @@ public static class CombatHitscan
         return false;
     }
 
-    static bool TryResolveBody(Collider collider, out CharacterBodyHost host)
-    {
-        host = null;
-        if (collider == null)
-            return false;
-        host = collider.GetComponentInParent<CharacterBodyHost>();
-        return host != null && host.Body != null && !host.Body.IsDeadState;
-    }
+    static bool TryResolveBody(Collider collider, out CharacterBodyHost host) =>
+        CharacterBodyResolve.TryResolveBodyHost(collider, out host);
 
     static void RememberBody(
         CharacterBodyHost host,

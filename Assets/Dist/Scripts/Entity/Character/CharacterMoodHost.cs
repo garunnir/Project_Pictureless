@@ -43,7 +43,7 @@ public sealed class CharacterMoodHost : MonoBehaviour
 
     float _mood;
 
-    public static CharacterMoodHost Active { get; private set; }
+    public static CharacterMoodHost Active => CharacterSessionHub.MoodHost;
 
     public static event Action AnyControlYielded;
 
@@ -56,7 +56,7 @@ public sealed class CharacterMoodHost : MonoBehaviour
     public bool IsControlYielded => _break.IsActive;
     public MoodBreakKind BreakKind => _break.Kind;
 
-    public void ClaimActive() => Active = this;
+    public void ClaimActive() { }
 
     void Awake()
     {
@@ -96,8 +96,6 @@ public sealed class CharacterMoodHost : MonoBehaviour
         UnsubscribeClock();
         UnsubscribeVomit();
         UnsubscribeSources();
-        if (Active == this)
-            Active = null;
     }
 
     void Update()

@@ -201,17 +201,11 @@ public sealed class DistProjectile : MonoBehaviour
         host = null;
         if (collider == null || IsSelf(collider))
             return false;
-        host = collider.GetComponentInParent<CharacterBodyHost>();
-        return host != null && host.Body != null && !host.Body.IsDeadState;
+        return CharacterBodyResolve.TryResolveBodyHost(collider, out host);
     }
 
-    bool IsSelf(Collider collider)
-    {
-        if (_attacker == null || collider == null)
-            return false;
-        Transform root = _attacker.transform;
-        return collider.transform == root || collider.transform.IsChildOf(root);
-    }
+    bool IsSelf(Collider collider) =>
+        _attacker != null && CharacterBodyResolve.IsColliderOnBody(_attacker, collider);
 
     bool AlreadyHit(CharacterBodyHost host)
     {

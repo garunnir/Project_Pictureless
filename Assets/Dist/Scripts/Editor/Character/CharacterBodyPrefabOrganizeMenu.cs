@@ -104,6 +104,14 @@ public static class CharacterBodyPrefabOrganizeMenu
             RemoveLegacyMissingScripts(prefabRoot);
             RemoveMissingScripts(prefabRoot);
 
+            if (!ValidateColliderBodyHostResolution(prefabRoot, out string resolveError))
+            {
+                Debug.LogError(
+                    "[CharacterBodyPrefabOrganizeMenu] Collider → CharacterBodyHost validation failed: "
+                    + resolveError,
+                    prefabRoot);
+            }
+
             PrefabUtility.SaveAsPrefabAsset(prefabRoot, NpcSamplePrefabPath);
             Debug.Log(
                 "[CharacterBodyPrefabOrganizeMenu] NpcSample organized: root physics + GameplayCore / Senses / Presentation.",
@@ -364,6 +372,54 @@ public static class CharacterBodyPrefabOrganizeMenu
             if (behaviour.GetType().Name == "CharacterActionCancelConsumer")
                 Undo.DestroyObjectImmediate(behaviour);
         }
+    }
+
+    static bool ValidateColliderBodyHostResolution(GameObject prefabRoot, out string error)
+    {
+        error = null;
+        if (prefabRoot == null)
+        {
+            error = "prefab root is null";
+            return false;
+        }
+
+        if (prefabRoot.GetComponentInChildren<CharacterBodyHost>(true) == null)
+        {
+            error = "no CharacterBodyHost under prefab root";
+            return false;
+        }
+
+        Collider[] colliders = prefabRoot.GetComponentsInChildren<Collider>(true);
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider col = colliders[i];
+            if (col == null || col.isTrigger)
+                continue;
+
+            if (CharacterBodyResolve.TryResolveBodyHost(col, out _))
+                continue;
+
+            error = $"Collider on '{GetHierarchyPath(col.transform)}' does not resolve to CharacterBodyHost.";
+            return false;
+        }
+
+        return true;
+    }
+
+    static string GetHierarchyPath(Transform transform)
+    {
+        if (transform == null)
+            return string.Empty;
+
+        string path = transform.name;
+        Transform parent = transform.parent;
+        while (parent != null)
+        {
+            path = parent.name + "/" + path;
+            parent = parent.parent;
+        }
+
+        return path;
     }
 }
 #endif

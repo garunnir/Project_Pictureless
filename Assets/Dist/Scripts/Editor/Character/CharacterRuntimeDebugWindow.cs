@@ -224,7 +224,7 @@ public sealed class CharacterRuntimeDebugWindow : OdinEditorWindow
         if (go == null)
             return false;
 
-        CharacterBodyHost host = go.GetComponentInParent<CharacterBodyHost>();
+        CharacterBodyHost host = go.GetBodyComponent<CharacterBodyHost>();
         if (host == null)
             return false;
 

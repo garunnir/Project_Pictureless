@@ -20,7 +20,7 @@ public sealed class PlayerEncumbranceHost : MonoBehaviour, ISkillModifierSource
     ICharacterSkills _skills;
     bool _modifierRegistered;
 
-    public static PlayerEncumbranceHost Active { get; private set; }
+    public static PlayerEncumbranceHost Active => CharacterSessionHub.EncumbranceHost;
 
     public static event Action ActiveChanged;
     public static event Action StageChanged;
@@ -68,26 +68,14 @@ public sealed class PlayerEncumbranceHost : MonoBehaviour, ISkillModifierSource
     {
         UnsubscribeContainer();
         UnregisterModifierSource();
-
-        if (Active == this)
-        {
-            Active = null;
-            ActiveChanged?.Invoke();
-            StageChanged?.Invoke();
-        }
     }
 
     void OnValidate() => EnsureReferences();
     void Reset() => EnsureReferences();
 
-    public void ClaimActive()
-    {
-        if (Active == this)
-            return;
+    public void ClaimActive() => ActiveChanged?.Invoke();
 
-        Active = this;
-        ActiveChanged?.Invoke();
-    }
+    public static void NotifySessionCleared() => ActiveChanged?.Invoke();
 
     public void BindMovement(PlayerMovement movement)
     {

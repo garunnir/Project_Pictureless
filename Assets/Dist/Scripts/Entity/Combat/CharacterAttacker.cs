@@ -911,13 +911,8 @@ public sealed class CharacterAttacker : MonoBehaviour
         return dir.normalized;
     }
 
-    public bool IsOwnCollider(Collider collider)
-    {
-        if (collider == null)
-            return false;
-        Transform root = transform;
-        return collider.transform == root || collider.transform.IsChildOf(root);
-    }
+    public bool IsOwnCollider(Collider collider) =>
+        CharacterBodyResolve.IsColliderOnBody(this, collider);
 
     public int CollectMeleeHits(
         ItemData item,

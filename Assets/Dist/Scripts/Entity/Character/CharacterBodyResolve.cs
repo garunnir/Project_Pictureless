@@ -35,6 +35,43 @@ public static class CharacterBodyResolve
         result = GetInBody<T>(component);
         return result != null;
     }
+
+    /// <summary>전투·히트스캔 SSOT. Collider는 루트, Host는 자식일 수 있다.</summary>
+    public static bool TryResolveBodyHost(Collider collider, out CharacterBodyHost host)
+    {
+        host = GetInBody<CharacterBodyHost>(collider);
+        if (host == null || host.Body == null || host.Body.IsDeadState)
+        {
+            host = null;
+            return false;
+        }
+
+        return true;
+    }
+
+    public static bool IsSameBodyRoot(Component a, Component b)
+    {
+        if (a == null || b == null)
+            return false;
+
+        GameObject rootA = GetBodyRoot(a.gameObject);
+        GameObject rootB = GetBodyRoot(b.gameObject);
+        return rootA != null && rootA == rootB;
+    }
+
+    /// <summary>콜라이더가 본체 루트 트리(루트·자식)에 속하는지.</summary>
+    public static bool IsColliderOnBody(Component bodyMember, Collider collider)
+    {
+        if (bodyMember == null || collider == null)
+            return false;
+
+        GameObject root = GetBodyRoot(bodyMember.gameObject);
+        if (root == null)
+            return false;
+
+        Transform colliderTransform = collider.transform;
+        return colliderTransform == root.transform || colliderTransform.IsChildOf(root.transform);
+    }
 }
 
 public static class CharacterBodyGameObjectExtensions

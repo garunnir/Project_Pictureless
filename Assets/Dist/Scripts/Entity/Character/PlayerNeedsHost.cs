@@ -50,7 +50,7 @@ public sealed class PlayerNeedsHost : MonoBehaviour, IUiCancelConsumer
     float _sleepDebt01;
     bool _isSleeping;
 
-    public static PlayerNeedsHost Active { get; private set; }
+    public static PlayerNeedsHost Active => CharacterSessionHub.NeedsHost;
 
     public static event Action AnyNeedsVomit;
     public static event Action<NeedsFatalKind> AnyNeedsFatal;
@@ -94,7 +94,7 @@ public sealed class PlayerNeedsHost : MonoBehaviour, IUiCancelConsumer
         }
     }
 
-    public void ClaimActive() => Active = this;
+    public void ClaimActive() { }
 
     void Awake()
     {
@@ -128,8 +128,6 @@ public sealed class PlayerNeedsHost : MonoBehaviour, IUiCancelConsumer
         UnsubscribeClock();
         if (_isSleeping)
             _isSleeping = false;
-        if (Active == this)
-            Active = null;
     }
 
     void Update()
@@ -582,7 +580,7 @@ public sealed class PlayerNeedsHost : MonoBehaviour, IUiCancelConsumer
         _mlWater *= keep;
         _kcal *= keep;
 
-        ICharacterBody body = GameplayData.Body;
+        ICharacterBody body = CharacterSessionHub.SessionBody;
         int hit = _settings != null ? _settings.OvereatHit : PlayerNeedsSettings.DefaultOvereatHit;
         if (body != null && hit > 0)
             BodyDamageService.ApplyHit(body, BodyPartIds.Chest, hit);
@@ -594,7 +592,7 @@ public sealed class PlayerNeedsHost : MonoBehaviour, IUiCancelConsumer
 
     void TryApplyBloated()
     {
-        ICharacterBody body = GameplayData.Body;
+        ICharacterBody body = CharacterSessionHub.SessionBody;
         if (body == null || HasBloated(body))
             return;
 
@@ -620,7 +618,7 @@ public sealed class PlayerNeedsHost : MonoBehaviour, IUiCancelConsumer
         return minutes / rate;
     }
 
-    bool HasBloated() => HasBloated(GameplayData.Body);
+    bool HasBloated() => HasBloated(CharacterSessionHub.SessionBody);
 
     bool HasBloated(ICharacterBody body)
     {
@@ -690,7 +688,7 @@ public sealed class PlayerNeedsHost : MonoBehaviour, IUiCancelConsumer
         NeedsFatalKind kind = stored <= 0 ? NeedsFatalKind.Starve : NeedsFatalKind.Dehydrate;
         AnyNeedsFatal?.Invoke(kind);
 
-        ICharacterBody body = GameplayData.Body;
+        ICharacterBody body = CharacterSessionHub.SessionBody;
         if (body != null && body.Has(BodyPartIds.Chest))
         {
             int chest = body.GetConditionCur(BodyPartIds.Chest);

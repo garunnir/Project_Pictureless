@@ -35,9 +35,9 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
     ItemStack _current;
     int _currentUnitCount = 1;
 
-    public static InventoryTimedMoveHost Active { get; private set; }
+    public static InventoryTimedMoveHost Active => CharacterSessionHub.TimedMoveHost;
 
-    public void ClaimActive() => Active = this;
+    public void ClaimActive() { }
 
     public bool IsBusy => _transferActive;
     public float Progress01 => _timed.Progress01;
@@ -63,8 +63,6 @@ public sealed class InventoryTimedMoveHost : MonoBehaviour
         _timed.Changed -= OnTimedChanged;
         _timed.Completed -= OnTimedCompleted;
         _timed.Cancelled -= OnTimedCancelled;
-        if (Active == this)
-            Active = null;
         Cancel();
     }
 

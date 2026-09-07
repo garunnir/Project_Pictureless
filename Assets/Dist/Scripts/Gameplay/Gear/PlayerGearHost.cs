@@ -32,9 +32,9 @@ public sealed class PlayerGearHost : MonoBehaviour
     bool _hasLastWeatherKind;
     WeatherKind _lastWeatherKind;
 
-    public static PlayerGearHost Active { get; private set; }
+    public static PlayerGearHost Active => CharacterSessionHub.GearHost;
 
-    public void ClaimActive() => Active = this;
+    public void ClaimActive() { }
 
     public CharacterGearService Service => _service;
     public EquipmentWearState Wear => _service?.Wear;
@@ -97,9 +97,6 @@ public sealed class PlayerGearHost : MonoBehaviour
         CameraZoomController zoom = CameraZoomController.Active;
         if (zoom != null)
             zoom.SetVisionFactor(HelmetVision.FullVisionFactor);
-
-        if (Active == this)
-            Active = null;
     }
 
     void OnValidate() => EnsureReferences();
