@@ -46,10 +46,8 @@ public static class CombatSurprise
         Vector3 selfFeet = CharacterFeetPose.GetFeetWorld(observerTf);
         Vector3 targetFeet = CharacterFeetPose.GetFeetWorld(subject.transform);
 
-        Vector3 forward = observerTf.forward;
-        if (observer.TryGetComponent(out CharacterState state))
-            forward = state.GetFacingDir();
-        forward.y = 0f;
+        observer.TryGetComponent(out CharacterState state);
+        Vector3 forward = CharacterSightForward.ResolveXZ(state, observerTf);
 
         bool visionLock = false;
         NpcManager npcManager = NpcManager.Active;
@@ -57,21 +55,13 @@ public static class CombatSurprise
             visionLock = npcManager.TryGetVisionLock(observer, subject);
 
         observer.TryGetComponent(out CharacterVision vision);
-        float baseRadius = vision != null
-            ? (visionLock ? vision.EffectiveLoseRadius : vision.EffectiveDetectRadius)
-            : (visionLock
-                ? CharacterVisionDefaults.LoseRadius
-                : CharacterVisionDefaults.DetectRadius);
-        float spot = vision != null
-            ? vision.EffectiveSpotAngleDegrees
-            : CharacterVisionDefaults.SpotAngleDegrees;
-
-        return CharacterVisionDefaults.IsWithinConeXZ(
+        return CharacterSightForward.IsWithinCone(
+            vision,
             selfFeet,
             forward,
             targetFeet,
-            baseRadius * visibility,
-            spot);
+            visibility,
+            visionLock);
     }
 
     public static bool IsSurpriseHit(CharacterBodyHost attacker, CharacterBodyHost target) =>
@@ -124,7 +114,7 @@ public static class CombatSurprise
             npcTarget != null)
             return npcTarget;
 
-        if (!attacker.TryGetComponent(out CharacterFactionHost selfFaction))
+        if (!CharacterBodyResolve.TryGetInBody(attacker, out CharacterFactionHost selfFaction))
             return null;
 
         Transform tf = attacker.transform;
@@ -168,7 +158,7 @@ public static class CombatSurprise
                 continue;
             if (host.Body == null || host.Body.IsDeadState)
                 continue;
-            if (!host.TryGetComponent(out CharacterFactionHost otherFaction))
+            if (!CharacterBodyResolve.TryGetInBody(host, out CharacterFactionHost otherFaction))
                 continue;
             if (!CharacterHostility.IsHostile(selfFaction, otherFaction))
                 continue;

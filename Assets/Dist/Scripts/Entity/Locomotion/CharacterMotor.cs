@@ -19,6 +19,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
 {
     [Header("Movement")]
     [SerializeField, Min(0f)] float _moveSpeed = CharacterLocomotionDefaults.DefaultWalkSpeedMeters;
+    [SerializeField, Min(0f)] float _runMaxSpeedMeters = CharacterLocomotionDefaults.DefaultRunMaxSpeedMeters;
     [SerializeField] MovementStyle _activeStyle;
 
     [Header("Collision")]
@@ -44,6 +45,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     float _imbalanceSpeedMultiplier = 1f;
     float _swimSpeedMultiplier = 1f;
     float _serializedWalkSpeed;
+    float _serializedRunMaxSpeedMeters;
     Vector3 _knockbackVelocity;
     float _staggerRemaining;
     bool _moveLocked;
@@ -61,15 +63,15 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     {
         get
         {
-            if (_possessed && _drive != null && !IsScriptedLocomotion)
-                return _drive.AnimSpeedReference;
-            if (IsScriptedLocomotion && CurrentSpeed > 0.01f)
-                return CurrentSpeed;
-            return EffectiveMoveSpeed;
+            float runRef = _runMaxSpeedMeters > Mathf.Epsilon
+                ? _runMaxSpeedMeters
+                : CharacterLocomotionDefaults.DefaultRunMaxSpeedMeters;
+            return Mathf.Max(runRef, _moveSpeed + 0.01f);
         }
     }
     public MovementStyle ActiveStyle => _activeStyle;
     public float SerializedWalkSpeed => _serializedWalkSpeed;
+    public float RunMaxSpeedMeters => _runMaxSpeedMeters;
     public KinematicMover Mover => _mover;
     public CapsuleCollider Capsule => _capsule;
     public RaycastHit[] Hits => _hits;
@@ -91,13 +93,22 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
             : MapTopologyDepenetration.PushOutResult.None;
 
     float EffectiveMoveSpeed =>
-        _activeStyle != null ? _activeStyle.MoveSpeed : _moveSpeed;
+        _activeStyle != null && !_activeStyle.UsesCharacterWalkSpeed
+            ? _activeStyle.MoveSpeed
+            : _moveSpeed;
 
     public float BaseWalkSpeed => EffectiveMoveSpeed;
 
     void Awake()
     {
         _serializedWalkSpeed = Mathf.Max(0f, _moveSpeed);
+        _serializedRunMaxSpeedMeters = Mathf.Max(
+            0f,
+            _runMaxSpeedMeters > 0f
+                ? _runMaxSpeedMeters
+                : CharacterLocomotionDefaults.DefaultRunMaxSpeedMeters);
+        _runMaxSpeedMeters = _serializedRunMaxSpeedMeters;
+        NormalizeRunMaxSpeedMeters();
         _rigidbody = GetComponent<Rigidbody>();
         _capsule = GetComponent<CapsuleCollider>();
         _characterState = GetComponent<CharacterState>();
@@ -249,13 +260,38 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     public void SetSpeed(float metersPerSecond) =>
         _moveSpeed = Mathf.Max(0f, metersPerSecond);
 
+    /// <summary>애니 정규화 분모 SSOT. possessed <see cref="PlayerMovement"/>가 동일 비율로 동기화.</summary>
+    public void SetAnimRunSpeedReference(float runMaxSpeedMeters)
+    {
+        _runMaxSpeedMeters = Mathf.Max(0f, runMaxSpeedMeters);
+        NormalizeRunMaxSpeedMeters();
+    }
+
     public void ApplyWalkSpeedFromDefinition(CharacterDefinition definition)
     {
         if (definition == null || definition.WalkSpeedMeters <= 0f)
             return;
 
-        SetSpeed(CharacterDefinition.ResolveWalkSpeedMeters(definition, _serializedWalkSpeed));
+        ApplyLocomotionWalkProfile(
+            CharacterDefinition.ResolveWalkSpeedMeters(definition, _serializedWalkSpeed));
     }
+
+    void ApplyLocomotionWalkProfile(float walkSpeedMeters)
+    {
+        _moveSpeed = Mathf.Max(0f, walkSpeedMeters);
+        if (_serializedWalkSpeed <= Mathf.Epsilon)
+        {
+            NormalizeRunMaxSpeedMeters();
+            return;
+        }
+
+        float ratio = _moveSpeed / _serializedWalkSpeed;
+        _runMaxSpeedMeters = _serializedRunMaxSpeedMeters * ratio;
+        NormalizeRunMaxSpeedMeters();
+    }
+
+    void NormalizeRunMaxSpeedMeters() =>
+        _runMaxSpeedMeters = Mathf.Max(_runMaxSpeedMeters, _moveSpeed + 0.01f);
 
     /// <summary>Env 이동 배율 (GearEnv × limp). Possessed는 PlayerMovement.SetEnvMovement가 같은 값을 쓴다.</summary>
     public void SetEnvMovement(float speedMultiplier) =>
@@ -272,7 +308,7 @@ public sealed class CharacterMotor : MonoBehaviour, ICharacterLocomotion
     public void SetActiveMovementStyle(MovementStyle style)
     {
         _activeStyle = style;
-        if (style != null)
+        if (style != null && !style.UsesCharacterWalkSpeed)
             _moveSpeed = Mathf.Max(0f, style.MoveSpeed);
     }
 

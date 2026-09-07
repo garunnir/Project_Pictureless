@@ -86,12 +86,7 @@ public sealed class CharacterHearingPingDriver : MonoBehaviour, IMapHearingPingD
         float dt = TimeScaleService.Delta(TimeScaleChannel.World);
         float cellSize = _pingHost.CellSize;
         Vector3 listenerFeet = CharacterFeetPose.GetFeetWorld(_playerBody);
-        Vector3 forward = _playerState.GetFacingDir();
-        forward.y = 0f;
-        if (forward.sqrMagnitude < 1e-6f)
-            forward = Vector3.forward;
-        else
-            forward.Normalize();
+        Vector3 forward = CharacterSightForward.ResolveXZ(_playerState, _playerBody);
 
         GameObject possessedGo = _playerBody.gameObject;
         float hiddenThreshold = Mathf.Max(0f, _settings.HiddenThreshold);
@@ -195,14 +190,14 @@ public sealed class CharacterHearingPingDriver : MonoBehaviour, IMapHearingPingD
         if (_playerHearing == null && _playerState != null)
             _playerState.TryGetComponent(out _playerHearing);
         if (_playerFaction == null && _playerState != null)
-            _playerState.TryGetComponent(out _playerFaction);
+            _playerFaction = CharacterBodyResolve.GetInBody<CharacterFactionHost>(_playerState);
     }
 
     bool IsPreferredHostile(CharacterBodyHost host)
     {
         if (host == null || _playerFaction == null)
             return false;
-        if (!host.TryGetComponent(out CharacterFactionHost otherFaction))
+        if (!CharacterBodyResolve.TryGetInBody(host, out CharacterFactionHost otherFaction))
             return false;
         return CharacterHostility.IsHostile(_playerFaction, otherFaction);
     }

@@ -74,9 +74,10 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
     public bool IsSprinting => _motor != null && _motor.IsSprinting;
     public bool IsInertiaActive => _motor != null && _motor.IsInertiaActive;
     public float CurrentSpeed => _motor != null ? _motor.CurrentSpeed : 0f;
-    /// <summary>애니 Speed 정규화 분모 (달리기 상한). Inspector <c>_runMaxSpeed</c> SSOT.</summary>
+    /// <summary>애니 Speed 정규화 분모 — <see cref="CharacterMotor.RunMaxSpeedMeters"/> SSOT.</summary>
+    public float AnimSpeedReference =>
+        _motor != null ? _motor.AnimSpeedReference : _runMaxSpeed;
     public float RunMaxSpeed => _runMaxSpeed;
-    public float AnimSpeedReference => _runMaxSpeed;
     public float BaseWalkSpeed => _moveSpeed;
     public bool IsStuck => _motor != null && _motor.IsStuck;
     public float InitialVelocity
@@ -170,6 +171,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
             _motor.BindDrive(this);
         ApplyDriveMoverSettings();
         SyncBodyPainInputPolicy();
+        SyncAnimRunSpeedReference();
     }
 
     public void SetControllEnabled(bool enabled)
@@ -455,6 +457,7 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         if (_serializedWalkSpeed <= Mathf.Epsilon)
         {
             NormalizeSpeedThresholds();
+            SyncAnimRunSpeedReference();
             return;
         }
 
@@ -464,5 +467,8 @@ public class PlayerMovement : MonoBehaviour, IMovable, ICharacterMotorDrive
         _runMaxSpeed = _serializedRunMaxSpeed * ratio;
         _runEnterBoost = _serializedRunEnterBoost * ratio;
         NormalizeSpeedThresholds();
+        SyncAnimRunSpeedReference();
     }
+
+    void SyncAnimRunSpeedReference() => _motor?.SetAnimRunSpeedReference(_runMaxSpeed);
 }

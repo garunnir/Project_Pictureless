@@ -8,7 +8,7 @@ using UnityEngine;
 
 /// <summary>
 /// Spot은 <see cref="CharacterVision"/> 시야각·반경의 시각 동기. XZ 부채꼴 + 눈높이 3D topology LOS.
-/// 서 있는 층 가시성 판정 없음. 전방은 <see cref="CharacterState.GetFacingDir"/>.
+/// 서 있는 층 가시성 판정 없음. 전방은 <see cref="CharacterSightForward.ResolveXZ"/>.
 /// </summary>
 [DefaultExecutionOrder(51)]
 [DisallowMultipleComponent]
@@ -71,16 +71,7 @@ public sealed class CharacterSightFadeDriver : MonoBehaviour, IMapSightFadeDrive
             innerSpotAngle = spotAngle * CharacterVisionDefaults.InnerSpotAngleRatio;
         }
 
-        // Spot 리그 forward = 조명 부채꼴. GetFacingDir만 쓰면 정지 시 MoveDir=0으로 전 각 실패할 수 있음.
-        if (!PlayerSightVisionBinder.TryGetSightForwardXZ(out Vector3 forward))
-        {
-            forward = _playerState.GetFacingDir();
-            forward.y = 0f;
-            if (forward.sqrMagnitude < 1e-6f)
-                forward = Vector3.forward;
-            else
-                forward.Normalize();
-        }
+        Vector3 forward = CharacterSightForward.ResolveXZ(_playerState, _playerBody);
 
         Vector3 playerFeet = CharacterFeetPose.GetFeetWorld(_playerBody);
         MapTopologyLineCast lineCast = _tileMapManager != null
@@ -186,10 +177,7 @@ public sealed class CharacterSightFadeDriver : MonoBehaviour, IMapSightFadeDrive
                 innerSpotAngle = _playerVision.EffectiveInnerSpotAngleDegrees;
             }
 
-            if (!PlayerSightVisionBinder.TryGetSightForwardXZ(out forward))
-            {
-                forward = _playerState != null ? _playerState.GetFacingDir() : Vector3.forward;
-            }
+            forward = CharacterSightForward.ResolveXZ(_playerState, _playerBody);
         }
         else
         {
@@ -197,12 +185,8 @@ public sealed class CharacterSightFadeDriver : MonoBehaviour, IMapSightFadeDrive
             center = _playerBody != null
                 ? CharacterFeetPose.GetFeetWorld(_playerBody)
                 : transform.position;
-            forward = Vector3.forward;
+            forward = CharacterSightForward.ResolveXZ(_playerState, _playerBody);
         }
-
-        forward.y = 0f;
-        if (forward.sqrMagnitude < 1e-6f)
-            forward = Vector3.forward;
 
         inner = Mathf.Max(0f, outer - Mathf.Max(0f, _settings.FadeWidthMeters));
         CharacterSightFadeGizmoColors.DrawVisionSectorXZ(

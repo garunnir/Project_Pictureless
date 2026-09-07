@@ -434,10 +434,7 @@ public sealed class NpcManager : MonoBehaviour
         void RefreshTarget()
         {
             Vector3 selfFeet = CharacterFeetPose.GetFeetWorld(_transform);
-            Vector3 forward = _characterState != null
-                ? _characterState.GetFacingDir()
-                : _transform.forward;
-            forward.y = 0f;
+            Vector3 forward = CharacterSightForward.ResolveXZ(_characterState, _transform);
 
             if (_target != null)
             {
@@ -570,22 +567,12 @@ public sealed class NpcManager : MonoBehaviour
             if (visibility <= 0f)
                 return false;
 
-            if (_vision != null)
-            {
-                return CharacterVisionDefaults.IsWithinConeXZ(
-                    selfFeet,
-                    forward,
-                    targetFeet,
-                    _vision.EffectiveDetectRadius * visibility,
-                    _vision.EffectiveSpotAngleDegrees);
-            }
-
-            return CharacterVisionDefaults.IsWithinConeXZ(
+            return CharacterSightForward.IsWithinDetectCone(
+                _vision,
                 selfFeet,
                 forward,
                 targetFeet,
-                CharacterVisionDefaults.DetectRadius * visibility,
-                CharacterVisionDefaults.SpotAngleDegrees);
+                visibility);
         }
 
         bool EvaluateVisionKeep(Vector3 selfFeet, Vector3 forward, CharacterBodyHost targetHost)
@@ -598,22 +585,12 @@ public sealed class NpcManager : MonoBehaviour
             if (visibility <= 0f)
                 return false;
 
-            if (_vision != null)
-            {
-                return CharacterVisionDefaults.IsWithinConeXZ(
-                    selfFeet,
-                    forward,
-                    targetFeet,
-                    _vision.EffectiveLoseRadius * visibility,
-                    _vision.EffectiveSpotAngleDegrees);
-            }
-
-            return CharacterVisionDefaults.IsWithinConeXZ(
+            return CharacterSightForward.IsWithinKeepCone(
+                _vision,
                 selfFeet,
                 forward,
                 targetFeet,
-                CharacterVisionDefaults.LoseRadius * visibility,
-                CharacterVisionDefaults.SpotAngleDegrees);
+                visibility);
         }
 
         bool EvaluateHearingDetect(
@@ -633,7 +610,7 @@ public sealed class NpcManager : MonoBehaviour
         {
             if (host == null)
                 return false;
-            if (!host.TryGetComponent(out CharacterFactionHost otherFaction))
+            if (!CharacterBodyResolve.TryGetInBody(host, out CharacterFactionHost otherFaction))
                 return false;
             return CharacterHostility.IsHostile(_selfFactionHost, otherFaction);
         }

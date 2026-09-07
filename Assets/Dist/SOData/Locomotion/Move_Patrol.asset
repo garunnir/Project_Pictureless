@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a1cbf98a352b7a45a234dcecaf85b87, type: 3}
   m_Name: Move_Patrol
   m_EditorClassIdentifier: DistScript::MovementStyle
+  _speedSource: 1
   _moveSpeed: 2.2
   _stoppingDistance: 0.15

@@ -13,13 +13,14 @@ public interface ICharacterLocomotion
     void SetSpeed(float metersPerSecond);
     bool IsStuck { get; }
     float CurrentSpeed { get; }
-    /// <summary>애니 Speed 정규화 분모 (Player=RunMax, NPC=유효 이동속도).</summary>
+    /// <summary>애니 Speed 정규화 분모 — PC/NPC 공통 달리기 상한(m/s).</summary>
     float AnimSpeedReference { get; }
 }
 
 public static class CharacterLocomotionDefaults
 {
     public const float DefaultWalkSpeedMeters = 3f;
+    public const float DefaultRunMaxSpeedMeters = 12f;
     public const int HitBufferSize = 8;
     public const float ClimbAllowance = 0.3f;
     public const float BaseSkin = 0.02f;

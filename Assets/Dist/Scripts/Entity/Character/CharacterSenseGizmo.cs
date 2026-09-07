@@ -58,7 +58,7 @@ public sealed class CharacterSenseGizmo : MonoBehaviour
             out float innerSpotAngle);
 
         Vector3 center = CharacterFeetPose.GetFeetWorld(transform);
-        Vector3 forward = ResolveForward();
+        Vector3 forward = CharacterSightForward.ResolveXZ(_state, transform);
 
         if (_drawVisionDetect && detectRadius > 0f)
         {
@@ -114,19 +114,5 @@ public sealed class CharacterSenseGizmo : MonoBehaviour
         innerSpotAngle = spotAngle * CharacterVisionDefaults.InnerSpotAngleRatio;
     }
 
-    Vector3 ResolveForward()
-    {
-        if (_state != null)
-        {
-            Vector3 dir = _state.GetFacingDir();
-            dir.y = 0f;
-            if (dir.sqrMagnitude > 1e-6f)
-                return dir.normalized;
-        }
-
-        Vector3 forward = transform.forward;
-        forward.y = 0f;
-        return forward.sqrMagnitude > 1e-6f ? forward.normalized : Vector3.forward;
-    }
 #endif
 }

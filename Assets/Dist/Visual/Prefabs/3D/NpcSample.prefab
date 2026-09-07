@@ -134,6 +134,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3398725127384376997}
   - component: {fileID: 8822184184292685180}
+  - component: {fileID: 8108234709365560934}
   - component: {fileID: 8437009790115512890}
   - component: {fileID: 9023943957300074937}
   - component: {fileID: 1732678770107359936}
@@ -599,6 +600,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DistScript::CharacterMotor
   _moveSpeed: 3
+  _runMaxSpeedMeters: 12
   _activeStyle: {fileID: 0}
   _collision:
     ClimbAllowance: 0.3
@@ -827,7 +829,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2256797281874442075}
   - component: {fileID: 8368099272948703513}
-  - component: {fileID: 8108234709365560934}
   - component: {fileID: 4056474011877639334}
   - component: {fileID: 7471839959032261996}
   - component: {fileID: 1435471132163199116}
@@ -876,7 +877,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5977215017046968735}
+  m_GameObject: {fileID: 1795829373545432482}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82d3f4a5b6c7489dab0c1d2e3f445566, type: 3}
